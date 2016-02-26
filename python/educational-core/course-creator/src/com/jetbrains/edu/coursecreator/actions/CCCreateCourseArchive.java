@@ -6,16 +6,21 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
@@ -28,6 +33,7 @@ import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.List;
@@ -59,13 +65,14 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
+    final Module module = e.getData(LangDataKeys.MODULE);
+    if (project == null || module == null) {
       return;
     }
-    createCourseArchive(project);
+    createCourseArchive(project, module);
   }
 
-  private void createCourseArchive(final Project project) {
+  private void createCourseArchive(final Project project, Module module) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     if (course == null) return;
@@ -75,35 +82,128 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
     final VirtualFile baseDir = project.getBaseDir();
+
+    VirtualFile archiveFolder = getArchiveFolder(project, module);
+    if (archiveFolder == null) {
+      return;
+    }
+
+    CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+    if (manager == null) {
+      return;
+    }
+    FileFilter filter = new FileFilter() {
+      @Override
+      public boolean accept(File pathname) {
+        return !manager.doNotPackFile(pathname);
+      }
+    };
+
+    for (VirtualFile child : baseDir.getChildren()) {
+      String name = child.getName();
+      File fromFile = new File(child.getPath());
+      if (CCUtils.GENERATED_FILES_FOLDER.equals(name) || ".idea".equals(name)
+          || name.contains("iml") || manager.doNotPackFile(fromFile)) {
+        continue;
+      }
+      copyChild(archiveFolder, filter, child, fromFile);
+    }
+
     final List<Lesson> lessons = course.getLessons();
 
-    final Map<TaskFile, TaskFile> savedTaskFiles = new HashMap<TaskFile, TaskFile>();
-    for (Lesson lesson : lessons) {
-      final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
-      if (lessonDir == null) continue;
-      for (Task task : lesson.getTaskList()) {
-        final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(task.getIndex()));
-        if (taskDir == null) continue;
-        for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final Map<TaskFile, TaskFile> savedTaskFiles = new HashMap<TaskFile, TaskFile>();
+        replaceAnswerFilesWithTaskFiles(savedTaskFiles);
+        generateJson(project, archiveFolder);
+        resetTaskFiles(savedTaskFiles);
+        VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
+        packCourse(archiveFolder);
+        synchronize(project);
+      }
+
+      private void replaceAnswerFilesWithTaskFiles(Map<TaskFile, TaskFile> savedTaskFiles) {
+        for (Lesson lesson : lessons) {
+          final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
+          if (lessonDir == null) continue;
+          for (Task task : lesson.getTaskList()) {
+            final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(task.getIndex()));
+            if (taskDir == null) continue;
+            for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
               TaskFile taskFileCopy = new TaskFile();
               TaskFile taskFile = entry.getValue();
               TaskFile.copy(taskFile, taskFileCopy);
               savedTaskFiles.put(taskFile, taskFileCopy);
-              EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry.getKey(), taskFile);
+
+              VirtualFile userFileDir = VfsUtil.findRelativeFile(archiveFolder, lessonDir.getName(), taskDir.getName());
+              if (userFileDir == null) {
+                continue;
+              }
+              String taskFileName = entry.getKey();
+              EduUtils.createStudentFileFromAnswer(project, userFileDir, taskDir, taskFileName, taskFile);
+              VirtualFile answerFile = userFileDir.findChild(
+                FileUtilRt.getNameWithoutExtension(taskFileName) + ".answer." + FileUtilRt.getExtension(taskFileName));
+              if (answerFile != null) {
+                try {
+                  answerFile.delete(this);
+                }
+                catch (IOException e) {
+                  LOG.info(e);
+                }
+              }
             }
-          });
+          }
+        }
+      }
+    });
+
+
+  }
+
+  private static void copyChild(VirtualFile archiveFolder, FileFilter filter, VirtualFile child, File fromFile) {
+    File toFile = new File(archiveFolder.getPath(), child.getName());
+
+    try {
+      if (child.isDirectory()) {
+        FileUtil.copyDir(fromFile, toFile, filter);
+      }
+      else {
+        if (filter.accept(fromFile)) {
+          FileUtil.copy(fromFile, toFile);
         }
       }
     }
-    generateJson(project);
-    VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
-    packCourse(baseDir, course);
-    synchronize(project);
-    resetTaskFiles(savedTaskFiles);
+    catch (IOException e) {
+      LOG.info("Failed to copy" + fromFile.getPath(), e);
+    }
   }
+
+  @Nullable
+  private VirtualFile getArchiveFolder(@NotNull Project project, @NotNull Module module) {
+    VirtualFile generatedFilesRoot = CCUtils.getGeneratedFilesFolder(project, module);
+    if (generatedFilesRoot == null) {
+      return null;
+    }
+    VirtualFile zipRoot = generatedFilesRoot.findChild(myZipName);
+    final Ref<VirtualFile> archiveFolder = new Ref<>();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          if (zipRoot != null) {
+            zipRoot.delete(this);
+          }
+          archiveFolder.set(generatedFilesRoot.createChildDirectory(this, myZipName));
+        }
+        catch (IOException e) {
+          LOG.error("Failed to get zip root for " + myZipName, e);
+        }
+      }
+    });
+    return archiveFolder.get();
+  }
+
 
   private static void resetTaskFiles(Map<TaskFile, TaskFile> savedTaskFiles) {
     for (Map.Entry<TaskFile, TaskFile> entry : savedTaskFiles.entrySet()) {
@@ -116,25 +216,13 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     ProjectView.getInstance(project).refresh();
   }
 
-  private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Course course) {
+  private void packCourse(@NotNull final VirtualFile baseDir) {
     try {
       final File zipFile = new File(myLocationDir, myZipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
-      final CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
       VirtualFile[] courseFiles = baseDir.getChildren();
       for (VirtualFile file : courseFiles) {
-        ZipUtil.addFileOrDirRecursively(zos, null, new File(file.getPath()), file.getName(), new FileFilter() {
-          @Override
-          public boolean accept(File pathname) {
-            String name = pathname.getName();
-            String nameWithoutExtension = FileUtil.getNameWithoutExtension(pathname);
-            if (nameWithoutExtension.endsWith(".answer") || name.contains(EduNames.WINDOWS_POSTFIX) || name.contains(".idea")
-              || FileUtil.filesEqual(pathname, zipFile)) {
-              return false;
-            }
-            return manager != null && !manager.doNotPackFile(pathname);
-          }
-        }, null);
+        ZipUtil.addFileOrDirRecursively(zos, null, new File(file.getPath()), file.getName(), null, null);
       }
       zos.close();
       Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(), "Course Archive Was Created Successfully");
@@ -145,12 +233,12 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static void generateJson(@NotNull final Project project) {
+  private static void generateJson(@NotNull final Project project, VirtualFile parentDir) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
-    final File courseJson = new File(project.getBasePath(), EduNames.COURSE_META_FILE);
+    final File courseJson = new File(parentDir.getPath(), EduNames.COURSE_META_FILE);
     OutputStreamWriter outputStreamWriter = null;
     try {
       outputStreamWriter = new OutputStreamWriter(new FileOutputStream(courseJson), "UTF-8");

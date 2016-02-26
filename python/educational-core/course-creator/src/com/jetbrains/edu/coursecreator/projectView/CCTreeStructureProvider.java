@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,10 @@ public class CCTreeStructureProvider implements TreeStructureProvider, DumbAware
       Project project = node.getProject();
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
+          String name = ((PsiDirectory)node.getValue()).getName();
+          if (CCUtils.GENERATED_FILES_FOLDER.equals(name)) {
+            continue;
+          }
           PsiDirectory directory = (PsiDirectory)node.getValue();
           nodes.add(new CCDirectoryNode(project, directory, settings));
           continue;

@@ -25,6 +25,9 @@ class CCFileDeletedListener extends VirtualFileAdapter {
       return;
     }
     VirtualFile removedFile = event.getFile();
+    if (removedFile.getPath().contains(CCUtils.GENERATED_FILES_FOLDER)) {
+      return;
+    }
     final TaskFile taskFile = CCProjectService.getInstance(myProject).getTaskFile(removedFile);
     if (taskFile != null) {
       deleteAnswerFile(removedFile, taskFile);

@@ -2,9 +2,18 @@ package com.jetbrains.edu.coursecreator;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -24,6 +33,7 @@ import java.util.Comparator;
 
 public class CCUtils {
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
+  public static final String GENERATED_FILES_FOLDER = ".coursecreator";
 
   @Nullable
   public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
@@ -102,5 +112,41 @@ public class CCUtils {
       return true;
     }
     return false;
+  }
+
+
+  public static VirtualFile getGeneratedFilesFolder(@NotNull Project project, @NotNull Module module) {
+    VirtualFile baseDir = project.getBaseDir();
+    VirtualFile folder = baseDir.findChild(GENERATED_FILES_FOLDER);
+    if (folder != null) {
+      return folder;
+    }
+    final Ref<VirtualFile> generatedRoot = new Ref<>();
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
+              final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+              ContentEntry entry = MarkRootActionBase.findContentEntry(model, generatedRoot.get());
+              if (entry == null) {
+                LOG.info("Failed to find contentEntry for archive folder");
+                return;
+              }
+              entry.addExcludeFolder(generatedRoot.get());
+              model.commit();
+              module.getProject().save();
+            }
+            catch (IOException e) {
+              LOG.info("Failed to create folder for generated files", e);
+            }
+          }
+        });
+      }
+    });
+    return generatedRoot.get();
   }
 }
