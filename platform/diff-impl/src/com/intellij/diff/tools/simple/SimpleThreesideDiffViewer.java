@@ -222,12 +222,12 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   protected void destroyChangedBlocks() {
     super.destroyChangedBlocks();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
-      change.destroyHighlighter();
+      change.destroy();
     }
     myDiffChanges.clear();
 
     for (SimpleThreesideDiffChange change : myInvalidDiffChanges) {
-      change.destroyHighlighter();
+      change.destroy();
     }
     myInvalidDiffChanges.clear();
   }

@@ -18,20 +18,19 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
   @NotNull private final List<? extends EditorEx> myEditors;
   @NotNull private final MergeLineFragment myFragment;
-
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
 
   private int[] myLineStartShifts = new int[3];
   private int[] myLineEndShifts = new int[3];
@@ -43,56 +42,22 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     myEditors = editors;
     myFragment = fragment;
 
+    reinstallHighlighters();
+  }
+
+  @CalledInAwt
+  public void destroy() {
+    destroyHighlighter();
+    destroyInnerHighlighter();
+  }
+
+  @CalledInAwt
+  public void reinstallHighlighters() {
+    destroyHighlighter();
     installHighlighter();
-  }
 
-  public void installHighlighter() {
-    assert myHighlighters.isEmpty();
-
-    createHighlighter(ThreeSide.BASE);
-    if (getType().isLeftChange()) createHighlighter(ThreeSide.LEFT);
-    if (getType().isRightChange()) createHighlighter(ThreeSide.RIGHT);
-
-    createInnerHighlighter(ThreeSide.BASE);
-    if (getType().isLeftChange()) createInnerHighlighter(ThreeSide.LEFT);
-    if (getType().isRightChange()) createInnerHighlighter(ThreeSide.RIGHT);
-  }
-
-  public void destroyHighlighter() {
-    for (RangeHighlighter highlighter : myHighlighters) {
-      highlighter.dispose();
-    }
-    myHighlighters.clear();
-  }
-
-  //
-  // Highlighting
-  //
-
-  private void createHighlighter(@NotNull ThreeSide side) {
-    Editor editor = side.select(myEditors);
-
-    TextDiffType type = getDiffType();
-    int startLine = getStartLine(side);
-    int endLine = getEndLine(side);
-
-    boolean ignored = myFragment.getInnerFragments() != null;
-    boolean shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT);
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, shouldHideWithoutLineNumbers));
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));
-  }
-
-  private void createInnerHighlighter(@NotNull ThreeSide side) {
-    List<MergeWordFragment> innerFragments = myFragment.getInnerFragments();
-    if (innerFragments == null) return;
-
-    Editor editor = side.select(myEditors);
-    int start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset();
-    for (MergeWordFragment fragment : innerFragments) {
-      int innerStart = start + fragment.getStartOffset(side);
-      int innerEnd = start + fragment.getEndOffset(side);
-      myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, getDiffType()));
-    }
+    destroyInnerHighlighter();
+    installInnerHighlighter();
   }
 
   //
@@ -107,6 +72,23 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
   @Override
   public int getEndLine(@NotNull ThreeSide side) {
     return myFragment.getEndLine(side) + side.select(myLineEndShifts);
+  }
+
+  @Override
+  protected boolean isResolved(@NotNull ThreeSide side) {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  protected Editor getEditor(@NotNull ThreeSide side) {
+    return side.select(myEditors);
+  }
+
+  @Nullable
+  @Override
+  protected List<MergeWordFragment> getInnerFragments() {
+    return myFragment.getInnerFragments();
   }
 
   //
