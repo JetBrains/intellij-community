@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -886,6 +887,10 @@ public final class EditorUtil {
     int startOffset = editor.getDocument().getLineStartOffset(position.line);
     int endOffset = editor.logicalPositionToOffset(position);
     return editor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).size();
+  }
+
+  public static boolean attributesImpactFontStyle(@Nullable TextAttributes attributes) {
+    return attributes == TextAttributes.ERASE_MARKER || (attributes != null && attributes.getFontType() != Font.PLAIN);
   }
 }
 

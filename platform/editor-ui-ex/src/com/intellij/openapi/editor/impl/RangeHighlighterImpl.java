@@ -102,7 +102,10 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public void setTextAttributes(@NotNull TextAttributes textAttributes) {
     TextAttributes old = myTextAttributes;
     myTextAttributes = textAttributes;
-    if (!Comparing.equal(old, textAttributes)) {
+    if (old != textAttributes && (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER)) {
+      fireChanged(false, true);
+    }
+    else if (!Comparing.equal(old, textAttributes)) {
       fireChanged(false, getFontStyle(old) != getFontStyle(textAttributes));
     }
   }
