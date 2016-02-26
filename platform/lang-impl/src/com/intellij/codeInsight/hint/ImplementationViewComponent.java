@@ -446,7 +446,10 @@ public class ImplementationViewComponent extends JPanel {
     final ImplementationTextSelectioner implementationTextSelectioner =
       LanguageImplementationTextSelectioner.INSTANCE.forLanguage(elt.getLanguage());
     int start = implementationTextSelectioner.getTextStartOffset(elt);
-    final int end = implementationTextSelectioner.getTextEndOffset(elt);
+    int end = implementationTextSelectioner.getTextEndOffset(elt);
+    while (end > start && StringUtil.endsWithLineBreak(doc.getCharsSequence().subSequence(start, end))) {
+      end--;
+    }
 
     final int lineStart = doc.getLineStartOffset(doc.getLineNumber(start));
     final int lineEnd = end < doc.getTextLength() ? doc.getLineEndOffset(doc.getLineNumber(end)) : doc.getTextLength();
