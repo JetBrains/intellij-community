@@ -29,6 +29,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ public class ParameterInfoComponent extends JPanel {
   private int myCurrentParameterIndex;
 
   private PsiElement myParameterOwner;
+  private boolean myRequestFocus;
   private Object myHighlighted;
   @NotNull private final ParameterInfoHandler myHandler;
 
@@ -81,14 +83,15 @@ public class ParameterInfoComponent extends JPanel {
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex, @Nullable PsiElement parameterOwner) {
-    final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
+    final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler, false);
     infoComponent.setCurrentParameterIndex(currentParameterIndex);
     infoComponent.setParameterOwner(parameterOwner);
     return infoComponent.new MyParameterContext();
   } 
   
-  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, boolean requestFocus) {
     super(new BorderLayout());
+    myRequestFocus = requestFocus;
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       JComponent editorComponent = editor.getComponent();
@@ -111,6 +114,9 @@ public class ParameterInfoComponent extends JPanel {
       panel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
                                                     GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                     new Insets(0, 0, 0, 0), 0, 0));
+    }
+    if (myRequestFocus) {
+      AccessibleContextUtil.setName(this, "Parameter Info. Press TAB to navigate through each element. Press ESC to close.");
     }
 
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(panel);
@@ -370,6 +376,8 @@ public class ParameterInfoComponent extends JPanel {
 
       myLabel.setOpaque(true);
       myLabel.setFont(NORMAL_FONT);
+      if (myRequestFocus)
+        myLabel.setFocusable(true);
 
       add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                           new Insets(0, 0, 0, 0), 0, 0));
