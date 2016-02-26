@@ -29,6 +29,7 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
   @NotNull private final TextDiffType myDiffType;
   private final boolean myIgnoredFoldingOutline;
   private final boolean myResolved;
+  private final boolean myHideWithoutLineNumbers;
 
   private final boolean myEmptyRange;
   private final boolean myLastLine;
@@ -37,12 +38,14 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
                                 @NotNull TextDiffType diffType,
                                 boolean ignoredFoldingOutline,
                                 boolean resolved,
+                                boolean hideWithoutLineNumbers,
                                 boolean isEmptyRange,
                                 boolean isLastLine) {
     myHighlighter = highlighter;
     myDiffType = diffType;
     myIgnoredFoldingOutline = ignoredFoldingOutline;
     myResolved = resolved;
+    myHideWithoutLineNumbers = hideWithoutLineNumbers;
     myEmptyRange = isEmptyRange;
     myLastLine = isLastLine;
   }
@@ -66,11 +69,16 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
       height = myEmptyRange ? 0 : DiffDrawUtil.lineToY(editor, endLine) - y;
     }
 
-    int annotationsOffset = gutter.getAnnotationsAreaOffset();
-    int annotationsWidth = gutter.getAnnotationsAreaWidth();
-    if (annotationsWidth != 0) {
-      drawMarker(editor, g2, x1, annotationsOffset, y, height, false);
-      x1 = annotationsOffset + annotationsWidth;
+    if (myHideWithoutLineNumbers && !editor.getSettings().isLineNumbersShown()) {
+      x1 = gutter.getWhitespaceSeparatorOffset();
+    }
+    else {
+      int annotationsOffset = gutter.getAnnotationsAreaOffset();
+      int annotationsWidth = gutter.getAnnotationsAreaWidth();
+      if (annotationsWidth != 0) {
+        drawMarker(editor, g2, x1, annotationsOffset, y, height, false);
+        x1 = annotationsOffset + annotationsWidth;
+      }
     }
 
     if (myIgnoredFoldingOutline) {
@@ -85,6 +93,8 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
   private void drawMarker(Editor editor, Graphics2D g2,
                           int x1, int x2, int y, int height,
                           boolean ignoredOutline) {
+    if (x1 >= x2) return;
+
     Color color = myDiffType.getColor(editor);
     if (height > 2) {
       if (ignoredOutline) {

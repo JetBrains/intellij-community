@@ -18,10 +18,7 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.TextDiffType;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -78,7 +75,8 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
     int start = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine).getStartOffset();
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, hasInner));
+    boolean shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT);
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, hasInner, false, shouldHideWithoutLineNumbers));
     myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));
 
     if (hasInner) {
