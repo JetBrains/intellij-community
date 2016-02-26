@@ -189,10 +189,9 @@ public abstract class InspectionRVContentProvider {
             continue;
           }
         }
-        createdNodesConsumer.accept(moduleNode);
         for (InspectionPackageNode packageNode : packageNodes.values()) {
           if (packageNode.getPackageName() != null) {
-            moduleNode.add(packageNode);
+            insertByIndex(packageNode, moduleNode);
             for (UserObjectContainer<T> container : packageDescriptors.get(packageNode)) {
               appendDescriptor(context, toolWrapper, container, packageNode, canPackageRepeat);
             }
@@ -203,6 +202,7 @@ public abstract class InspectionRVContentProvider {
             }
           }
         }
+        createdNodesConsumer.accept(moduleNode);
       }
     }
     else {

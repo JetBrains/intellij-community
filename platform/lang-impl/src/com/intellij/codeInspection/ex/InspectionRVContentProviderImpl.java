@@ -151,7 +151,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
           if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
             continue;
           }
-          elemNode.add(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation));
+          insertByIndex(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation), elemNode);
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }
