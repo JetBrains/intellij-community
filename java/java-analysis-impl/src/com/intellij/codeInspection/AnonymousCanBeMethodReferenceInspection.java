@@ -36,7 +36,7 @@ import javax.swing.*;
 public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance("#" + AnonymousCanBeMethodReferenceInspection.class.getName());
 
-  public boolean reportNotAnnotatedInterfaces = false;
+  public boolean reportNotAnnotatedInterfaces = true;
 
   @Nls
   @NotNull
