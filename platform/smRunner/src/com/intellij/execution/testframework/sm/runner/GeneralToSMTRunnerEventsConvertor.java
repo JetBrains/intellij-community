@@ -264,7 +264,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         SMTestProxy newSuite = findChildByName(parentSuite, suiteName);
         if (newSuite == null) {
           //new suite
-          newSuite = new SMTestProxy(suiteName, true, locationUrl);
+          newSuite = new SMTestProxy(suiteName, true, locationUrl, parentSuite.isPreservePresentableName());
 
           if (myLocator != null) {
             newSuite.setLocator(myLocator);
