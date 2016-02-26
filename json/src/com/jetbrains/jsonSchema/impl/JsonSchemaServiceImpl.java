@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -156,7 +157,21 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     private DocumentationProvider myDocumentationProvider;
 
     public CompositeCodeInsightProviderWithWarning(List<JsonSchemaObjectCodeInsightWrapper> wrappers) {
-      myWrappers = wrappers;
+      final List<JsonSchemaObjectCodeInsightWrapper> userSchemaWrappers =
+        ContainerUtil.filter(wrappers, new Condition<JsonSchemaObjectCodeInsightWrapper>() {
+          @Override
+          public boolean value(JsonSchemaObjectCodeInsightWrapper wrapper) {
+            return wrapper.isUserSchema();
+          }
+        });
+      // filter for the case when there are one system schema and one (several) user schemas
+      // then do not use provided system schema: user schema will override it (maybe the user updated the version himself)
+      // if there are 2 or more system schemas - just go the common way: it is unclear what happened and why
+      if (!userSchemaWrappers.isEmpty() && ((userSchemaWrappers.size() + 1) == wrappers.size())) {
+        myWrappers = userSchemaWrappers;
+      } else {
+        myWrappers = wrappers;
+      }
       myContributor = new CompletionContributor() {
         @Override
         public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
