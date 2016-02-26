@@ -90,6 +90,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -296,9 +297,7 @@ public class DiffUtil {
     }.setCopyable(true);
     label.setForeground(UIUtil.getInactiveTextColor());
 
-    JPanel panel = new CenteredPanel(label);
-    panel.setBorder(JBUI.Borders.empty(5));
-    return panel;
+    return new CenteredPanel(label, JBUI.Borders.empty(5));
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -1287,12 +1286,17 @@ public class DiffUtil {
     }
   }
 
-  private static class CenteredPanel extends JPanel {
+  public static class CenteredPanel extends JPanel {
     private final JComponent myComponent;
 
     public CenteredPanel(@NotNull JComponent component) {
       myComponent = component;
       add(component);
+    }
+
+    public CenteredPanel(@NotNull JComponent component, @NotNull Border border) {
+      this(component);
+      setBorder(border);
     }
 
     @Override
