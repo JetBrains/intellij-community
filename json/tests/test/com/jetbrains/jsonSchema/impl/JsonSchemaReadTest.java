@@ -68,22 +68,25 @@ public class JsonSchemaReadTest {
 
   @Test
   public void testReadSchemaWithWrongRequired() throws Exception {
-    testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withWrongRequired.json"));
+    testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongRequired.json"));
   }
 
   @Test
   public void testReadSchemaWithWrongItems() throws Exception {
-    testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withWrongItems.json"));
+    testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongItems.json"));
   }
 
   private static void testSchemaReadNotHung(final File file) throws IOException {
+    // because of threading
+    if (Runtime.getRuntime().availableProcessors() < 2) return;
+
     Assert.assertTrue(file.exists());
 
     final AtomicBoolean done = new AtomicBoolean();
     final AtomicReference<IOException> error = new AtomicReference<>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    new Thread(new Runnable() {
+    final Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
         final JsonSchemaReader reader = new JsonSchemaReader();
@@ -93,13 +96,19 @@ public class JsonSchemaReadTest {
         }
         catch (IOException e) {
           error.set(e);
-        } finally {
+        }
+        finally {
           semaphore.up();
         }
       }
-    }, "read test json schema " + file.getName()).start();
-    semaphore.waitFor(TimeUnit.SECONDS.toMillis(60));
-    if (error.get() != null) throw error.get();
-    Assert.assertTrue("Reading test schema hung!", done.get());
+    }, "read test json schema " + file.getName());
+    try {
+      thread.start();
+      semaphore.waitFor(TimeUnit.SECONDS.toMillis(120));
+      if (error.get() != null) throw error.get();
+      Assert.assertTrue("Reading test schema hung!", done.get());
+    } finally {
+      thread.interrupt();
+    }
   }
 }
