@@ -217,7 +217,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   @Override
   public void log(Project project, @NonNls String msg, @Nullable CommitTask task, @NonNls Object... args) {
-    if (true) return;
+    //if (true) return;
 
     String indent = new SimpleDateFormat("hh:mm:ss:SSSS").format(new Date()) +
       (SwingUtilities.isEventDispatchThread() ?        "-(EDT) " :
