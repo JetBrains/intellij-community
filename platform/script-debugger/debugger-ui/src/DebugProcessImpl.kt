@@ -94,22 +94,26 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   val vm: Vm?
     get() = connection.vm
 
-  val activeVmOrMaster: Vm?
-    get() = (session.suspendContext.activeExecutionStack as? ExecutionStackBase)?.suspendContext?.vm ?: connection.vm
+  val mainVm: Vm?
+    get() = connection.vm
+
+  val activeOrMainVm: Vm?
+    get() = (session.suspendContext.activeExecutionStack as? ExecutionStackBase)?.suspendContext?.vm ?: mainVm
 
   protected abstract fun createBreakpointHandlers(): Array<XBreakpointHandler<*>>
 
-  private fun updateLastCallFrame() {
-    lastCallFrame = vm?.suspendContextManager?.context?.topFrame
+  private fun updateLastCallFrame(vm: Vm) {
+    lastCallFrame = vm.suspendContextManager.context?.topFrame
   }
 
-  override final fun checkCanPerformCommands() = vm != null
+  override final fun checkCanPerformCommands() = activeOrMainVm != null
 
   override final fun isValuesCustomSorted() = true
 
   override final fun startStepOver() {
-    updateLastCallFrame()
-    continueVm(activeVmOrMaster!!, StepAction.OVER)
+    val vm = activeOrMainVm!!
+    updateLastCallFrame(vm)
+    continueVm(vm, StepAction.OVER)
   }
 
   override final fun startForceStepInto() {
@@ -118,19 +122,20 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   override final fun startStepInto() {
-    updateLastCallFrame()
-    val vm = vm!!
+    val vm = activeOrMainVm!!
+    updateLastCallFrame(vm)
     continueVm(vm, if (vm.captureAsyncStackTraces) StepAction.IN_ASYNC else StepAction.IN)
   }
 
   override final fun startStepOut() {
+    val vm = activeOrMainVm!!
     if (isVmStepOutCorrect()) {
       lastCallFrame = null
     }
     else {
-      updateLastCallFrame()
+      updateLastCallFrame(vm)
     }
-    continueVm(activeVmOrMaster!!, StepAction.OUT)
+    continueVm(vm, StepAction.OUT)
   }
 
   // some VM (firefox for example) doesn't implement step out correctly, so, we need to fix it
@@ -139,7 +144,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   @Deprecated("Pass vm explicitly", ReplaceWith("resume(vm!!)"))
   override fun resume() {
     @Suppress("DEPRECATION")
-    continueVm(activeVmOrMaster!!, StepAction.CONTINUE)
+    continueVm(activeOrMainVm!!, StepAction.CONTINUE)
   }
 
   open fun resume(vm: Vm) {
@@ -148,7 +153,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   @Suppress("unused")
   @Deprecated("Pass vm explicitly", ReplaceWith("continueVm(vm!!, stepAction)"))
-  protected open fun continueVm(stepAction: StepAction) = continueVm(vm!!, stepAction)
+  protected open fun continueVm(stepAction: StepAction) = continueVm(activeOrMainVm!!, stepAction)
 
   /**
    * You can override this method to avoid SuspendContextManager implementation, but it is not recommended.
@@ -173,13 +178,14 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   protected fun setOverlay(context: SuspendContext<*>) {
+    val vm = mainVm
     if (context.vm == vm) {
-      vm!!.suspendContextManager.setOverlayMessage("Paused in debugger")
+      vm.suspendContextManager.setOverlayMessage("Paused in debugger")
     }
   }
 
   override final fun startPausing() {
-    connection.vm!!.suspendContextManager.suspend().rejected(RejectErrorReporter(session, "Cannot pause"))
+    activeOrMainVm!!.suspendContextManager.suspend().rejected(RejectErrorReporter(session, "Cannot pause"))
   }
 
   override final fun getCurrentStateMessage() = connection.state.message
@@ -194,7 +200,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   // go plugin compatibility
   @Suppress("unused")
-  open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = getLocationsForBreakpoint(vm!!, breakpoint)
+  open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = getLocationsForBreakpoint(activeOrMainVm!!, breakpoint)
 
   open fun getLocationsForBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
 
@@ -229,7 +235,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   protected open fun doInitBreakpoints(setBreakpoints: Boolean) {
     if (setBreakpoints) {
-      beforeInitBreakpoints(vm!!)
+      beforeInitBreakpoints(mainVm!!)
       runReadAction { session.initBreakpoints() }
     }
   }
@@ -257,10 +263,10 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, internal val manager: LineBreakpointManager)
     : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    manager.setBreakpoint(manager.debugProcess.vm!!, breakpoint)
+    manager.setBreakpoint(manager.debugProcess.mainVm!!, breakpoint)
   }
 
   override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
-    manager.removeBreakpoint(breakpoint, temporary)
+    manager.removeBreakpoint(manager.debugProcess.mainVm!!, breakpoint, temporary)
   }
 }
