@@ -170,8 +170,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     }
 
     if (expression instanceof PsiMethodReferenceExpression) {
-      final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)expression, false, true);
-      final PsiExpression callExpression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+      final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)expression);
       if (callExpression instanceof PsiCallExpression) {
         callExpression.replace(CodeInsightServicesUtil.invertCondition(callExpression));
       }

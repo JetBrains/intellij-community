@@ -35,6 +35,7 @@ import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,7 +45,13 @@ import java.util.Map;
 public class LambdaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance("#" + LambdaRefactoringUtil.class.getName());
 
-  @NotNull
+  @Nullable
+  public static PsiExpression convertToMethodCallInLambdaBody(PsiMethodReferenceExpression element) {
+    final PsiLambdaExpression lambdaExpression = convertMethodReferenceToLambda(element, false, true);
+    return lambdaExpression != null ? LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody()) : null;
+  }
+
+  @Nullable
   public static PsiLambdaExpression convertMethodReferenceToLambda(final PsiMethodReferenceExpression referenceExpression,
                                                                    final boolean ignoreCast, 
                                                                    final boolean simplifyToExpressionLambda) {
@@ -52,7 +59,9 @@ public class LambdaRefactoringUtil {
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
     final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
-    LOG.assertTrue(interfaceMethod != null);
+    if (interfaceMethod == null) {
+      return null;
+    }
     final PsiSubstitutor psiSubstitutor = LambdaUtil.getSubstitutor(interfaceMethod, functionalInterfaceResolveResult);
     final MethodSignature signature = interfaceMethod.getSignature(psiSubstitutor);
     final boolean isReceiver;
