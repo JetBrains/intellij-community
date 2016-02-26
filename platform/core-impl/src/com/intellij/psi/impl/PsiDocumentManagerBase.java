@@ -359,13 +359,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     finally {
-      myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: ", null, success, document);
+      myDocumentCommitProcessor.log("in PDI.finishDoc: ", null, synchronously, success, myUncommittedDocuments);
       if (success) {
         myUncommittedDocuments.remove(document);
-        myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: removed doc", null, document);
+        myDocumentCommitProcessor.log("in PDI.finishDoc: removed doc", null, synchronously, success, myUncommittedDocuments);
       }
       myIsCommitInProgress = false;
-      myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: exit", null, success, document);
+      myDocumentCommitProcessor.log("in PDI.finishDoc: exit", null, synchronously, success, myUncommittedDocuments);
     }
 
     return success;
@@ -553,7 +553,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           Runnable action = entry.getValue();
           Object key = entry.getKey();
           try {
-            myDocumentCommitProcessor.log(myProject, "Running after commit runnable: ", null, key, action);
+            myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
             action.run();
           }
           catch (Throwable e) {
@@ -784,7 +784,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (commitNecessary) {
       assert !(document instanceof DocumentWindow);
       myUncommittedDocuments.add(document);
-      myDocumentCommitProcessor.log(myProject, "documentChanged()", null, document, ((DocumentEx)document).isInBulkUpdate(), event);
+      myDocumentCommitProcessor.log("added uncommitted doc", null, false, myProject, document, ((DocumentEx)document).isInBulkUpdate());
       if (forceCommit) {
         commitDocument(document);
       }
