@@ -88,7 +88,7 @@ class Test {
     fun `test completion started`() {
         myFixture.type('.')
         myFixture.completeBasic()
-        verify(mockLogger).completionStarted(Matchers.anyListOf(LookupStringWithRelevance::class.java))
+        verify(mockLogger).completionStarted(Matchers.anyListOf(LookupStringWithRelevance::class.java), Matchers.anyBoolean(), Matchers.anyInt())
     }
     
     fun `test backspace`() {
@@ -119,7 +119,7 @@ class Test {
     fun `test if typed prefix is correct completion variant, pressing dot will select it`() {
         myFixture.completeBasic()
         myFixture.type('.')
-        verify(mockLogger, times(1)).completionStarted(Matchers.anyListOf(LookupStringWithRelevance::class.java))
+        verify(mockLogger, times(1)).completionStarted(Matchers.anyListOf(LookupStringWithRelevance::class.java), Matchers.anyBoolean(), Matchers.anyInt())
         verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
