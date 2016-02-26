@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package org.jetbrains.debugger
 
-interface MemberFilter {
-  fun isMemberVisible(variable: Variable) = variable.isReadable
+import com.intellij.icons.AllIcons
+import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XSuspendContext
 
-  val additionalVariables: Collection<Variable>
-    get() = emptyList()
+class SuspendContextBase() : XSuspendContext() {
 
-  fun rawNameToSource(variable: Variable) = variable.name
+}
 
-  fun sourceNameToRaw(name: String): String? = null
+// icon ThreadCurrent would be preferred for active thread, but it won't be updated on stack change
+abstract class ExecutionStackBase(val suspendContext: SuspendContext<*>, displayName: String) : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
 
-  fun hasNameMappings() = false
 }

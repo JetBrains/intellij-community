@@ -94,6 +94,9 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   val vm: Vm?
     get() = connection.vm
 
+  val activeVmOrMaster: Vm?
+    get() = (session.suspendContext.activeExecutionStack as? ExecutionStackBase)?.suspendContext?.vm ?: connection.vm
+
   protected abstract fun createBreakpointHandlers(): Array<XBreakpointHandler<*>>
 
   private fun updateLastCallFrame() {
@@ -106,7 +109,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   override final fun startStepOver() {
     updateLastCallFrame()
-    continueVm(StepAction.OVER)
+    continueVm(activeVmOrMaster!!, StepAction.OVER)
   }
 
   override final fun startForceStepInto() {
@@ -127,16 +130,24 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     else {
       updateLastCallFrame()
     }
-    continueVm(StepAction.OUT)
+    continueVm(activeVmOrMaster!!, StepAction.OUT)
   }
 
   // some VM (firefox for example) doesn't implement step out correctly, so, we need to fix it
   protected open fun isVmStepOutCorrect() = true
 
+  @Deprecated("Pass vm explicitly", ReplaceWith("resume(vm!!)"))
   override fun resume() {
-    continueVm(StepAction.CONTINUE)
+    @Suppress("DEPRECATION")
+    continueVm(activeVmOrMaster!!, StepAction.CONTINUE)
   }
 
+  open fun resume(vm: Vm) {
+    continueVm(vm, StepAction.CONTINUE)
+  }
+
+  @Suppress("unused")
+  @Deprecated("Pass vm explicitly", ReplaceWith("continueVm(vm!!, stepAction)"))
   protected open fun continueVm(stepAction: StepAction) = continueVm(vm!!, stepAction)
 
   /**

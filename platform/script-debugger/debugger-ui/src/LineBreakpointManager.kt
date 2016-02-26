@@ -200,7 +200,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
     synchronized (lock) {
       runToLocationBreakpoints.addAll(addedBreakpoints)
     }
-    debugProcess.resume()
+    debugProcess.resume(debugProcess.activeVmOrMaster!!)
   }
 
   protected abstract fun doRunToLocation(position: XSourcePosition): List<Breakpoint>
