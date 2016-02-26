@@ -76,7 +76,7 @@ public class JsonSchemaReadTest {
     testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongItems.json"));
   }
 
-  private static void testSchemaReadNotHung(final File file) throws IOException {
+  private void testSchemaReadNotHung(final File file) throws IOException {
     // because of threading
     if (Runtime.getRuntime().availableProcessors() < 2) return;
 
@@ -101,7 +101,8 @@ public class JsonSchemaReadTest {
           semaphore.up();
         }
       }
-    }, "read test json schema " + file.getName());
+    }, getClass().getName() + ": read test json schema " + file.getName());
+    thread.setDaemon(true);
     try {
       thread.start();
       semaphore.waitFor(TimeUnit.SECONDS.toMillis(120));
