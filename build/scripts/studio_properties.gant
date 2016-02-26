@@ -230,6 +230,14 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
+          dir("ndk-workspace") {
+            dir("lib") {
+              jar("ndk-workspace.jar") {
+                module("ndk-workspace")
+              }
+            }
+          }
+
           dir("sdk-updates") {
             dir("lib") {
               jar("sdk-updates.jar") {
