@@ -51,7 +51,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   
   @SuppressWarnings("GtkPreferredJComboBoxRenderer")
   @Override
-  public void setRenderer(ListCellRenderer<? super E> renderer) {
+  public void setRenderer(ListCellRenderer renderer) {
     super.setRenderer(new AdjustingListCellRenderer(this, renderer));
   }
 
