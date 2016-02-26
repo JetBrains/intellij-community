@@ -103,7 +103,7 @@ public class PyRunCythonExtensionsFilter implements Filter {
         PythonEnvUtil.setPythonDontWriteBytecode(environment);
         GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withEnvironment(environment);
 
-        final boolean canCreate = FileUtil.ensureCanCreateFile(new File(sdkPath));
+        final boolean canCreate = FileUtil.ensureCanCreateFile(new File(helpersPath));
         final boolean useSudo = !canCreate && !SystemInfo.isWindows;
         Process process;
         if (useSudo) {
