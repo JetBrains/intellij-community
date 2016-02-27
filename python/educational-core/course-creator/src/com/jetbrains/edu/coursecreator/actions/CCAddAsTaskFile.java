@@ -1,5 +1,6 @@
 package com.jetbrains.edu.coursecreator.actions;
 
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -25,6 +26,7 @@ public class CCAddAsTaskFile extends AnAction {
       return;
     }
     task.addTaskFile(file.getName(), task.getTaskFiles().size());
+    ProjectView.getInstance(project).refresh();
   }
 
 
