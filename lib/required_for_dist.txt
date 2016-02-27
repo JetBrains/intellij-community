@@ -17,7 +17,7 @@ httpclient-4.4.1.jar
 fluent-hc-4.4.1.jar
 httpmime-4.4.1.jar
 ecj-4.4.2.jar
-groovy-all-2.3.9.jar
+groovy-all-2.4.6.jar
 gson-2.5.jar
 guava-17.0.jar
 hamcrest-core-1.3.jar
