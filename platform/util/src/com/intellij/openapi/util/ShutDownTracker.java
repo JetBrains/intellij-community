@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,17 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ShutDownTracker implements Runnable {
   private final List<Thread> myThreads = new ArrayList<Thread>();
   private final LinkedList<Thread> myShutdownThreads = new LinkedList<Thread>();
   private final LinkedList<Runnable> myShutdownTasks = new LinkedList<Runnable>();
-  private volatile boolean myIsShutdownHookRunning = false;
+  private final Thread myThread;
 
   private ShutDownTracker() {
-    Runtime.getRuntime().addShutdownHook(new Thread(this, "Shutdown tracker"));
+    myThread = new Thread(this, "Shutdown tracker");
+    Runtime.getRuntime().addShutdownHook(myThread);
   }
 
   private static class ShutDownTrackerHolder {
@@ -45,13 +47,11 @@ public class ShutDownTracker implements Runnable {
   }
 
   public static boolean isShutdownHookRunning() {
-    return getInstance().myIsShutdownHookRunning;
+    return getInstance().myThread.isAlive();
   }
 
   @Override
   public void run() {
-    myIsShutdownHookRunning = true;
-
     ensureStopperThreadsFinished();
 
     for (Runnable task = removeLast(myShutdownTasks); task != null; task = removeLast(myShutdownTasks)) {
@@ -71,6 +71,19 @@ public class ShutDownTracker implements Runnable {
       }
       catch (InterruptedException ignored) { }
     }
+  }
+
+  // returns true if terminated
+  public boolean waitFor(long timeout, @NotNull TimeUnit unit) {
+    if (isShutdownHookRunning()) {
+      try {
+        myThread.join(unit.toMillis(timeout));
+      }
+      catch (InterruptedException ignored) {
+      }
+      return !myThread.isAlive();
+    }
+    return false;
   }
 
   public final void ensureStopperThreadsFinished() {
