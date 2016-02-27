@@ -22,7 +22,7 @@ public class PyCCLanguageManager implements CCLanguageManager {
     if (!extension.equals("py")) {
       return null;
     }
-    return getInternalTemplateByName(project, "task.answer.py");
+    return getInternalTemplateByName(project, "task.py");
   }
 
   @Nullable

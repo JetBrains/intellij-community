@@ -14,9 +14,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -33,7 +31,6 @@ import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.List;
@@ -83,7 +80,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
     final VirtualFile baseDir = project.getBaseDir();
 
-    VirtualFile archiveFolder = getArchiveFolder(project, module);
+    VirtualFile archiveFolder = CCUtils.generateFolder(project, module, this, myZipName);
     if (archiveFolder == null) {
       return;
     }
@@ -142,16 +139,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
               }
               String taskFileName = entry.getKey();
               EduUtils.createStudentFileFromAnswer(project, userFileDir, taskDir, taskFileName, taskFile);
-              VirtualFile answerFile = userFileDir.findChild(
-                FileUtilRt.getNameWithoutExtension(taskFileName) + ".answer." + FileUtilRt.getExtension(taskFileName));
-              if (answerFile != null) {
-                try {
-                  answerFile.delete(this);
-                }
-                catch (IOException e) {
-                  LOG.info(e);
-                }
-              }
             }
           }
         }
@@ -178,32 +165,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       LOG.info("Failed to copy" + fromFile.getPath(), e);
     }
   }
-
-  @Nullable
-  private VirtualFile getArchiveFolder(@NotNull Project project, @NotNull Module module) {
-    VirtualFile generatedFilesRoot = CCUtils.getGeneratedFilesFolder(project, module);
-    if (generatedFilesRoot == null) {
-      return null;
-    }
-    VirtualFile zipRoot = generatedFilesRoot.findChild(myZipName);
-    final Ref<VirtualFile> archiveFolder = new Ref<>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (zipRoot != null) {
-            zipRoot.delete(this);
-          }
-          archiveFolder.set(generatedFilesRoot.createChildDirectory(this, myZipName));
-        }
-        catch (IOException e) {
-          LOG.error("Failed to get zip root for " + myZipName, e);
-        }
-      }
-    });
-    return archiveFolder.get();
-  }
-
 
   private static void resetTaskFiles(Map<TaskFile, TaskFile> savedTaskFiles) {
     for (Map.Entry<TaskFile, TaskFile> entry : savedTaskFiles.entrySet()) {

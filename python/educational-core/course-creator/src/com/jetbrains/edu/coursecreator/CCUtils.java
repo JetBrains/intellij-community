@@ -15,9 +15,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
@@ -34,6 +33,8 @@ import java.util.Comparator;
 public class CCUtils {
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
+  public static final String TESTS = "coursecreatortests";
+  public static final String RESOURCES = "coursecreatorresources";
 
   @Nullable
   public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
@@ -41,21 +42,14 @@ public class CCUtils {
     return language == null ? null : CCLanguageManager.INSTANCE.forLanguage(language);
   }
 
-  public static boolean isAnswerFile(PsiElement element) {
-    if (!(element instanceof PsiFile)) {
-      return false;
-    }
-    VirtualFile file = ((PsiFile)element).getVirtualFile();
-    return CCProjectService.getInstance(element.getProject()).isAnswerFile(file);
-  }
-
   /**
    * This method decreases index and updates directory names of
    * all tasks/lessons that have higher index than specified object
-   * @param dirs              directories that are used to get tasks/lessons
+   *
+   * @param dirs         directories that are used to get tasks/lessons
    * @param getStudyItem function that is used to get task/lesson from VirtualFile. This function can return null
-   * @param threshold         index is used as threshold
-   * @param prefix            task or lesson directory name prefix
+   * @param threshold    index is used as threshold
+   * @param prefix       task or lesson directory name prefix
    */
   public static void updateHigherElements(VirtualFile[] dirs,
                                           @NotNull final Function<VirtualFile, ? extends StudyItem> getStudyItem,
@@ -148,5 +142,31 @@ public class CCUtils {
       }
     });
     return generatedRoot.get();
+  }
+
+  /**
+   * @param requestor {@link VirtualFileEvent#getRequestor}
+   */
+  @Nullable
+  public static VirtualFile generateFolder(@NotNull Project project, @NotNull Module module, @Nullable Object requestor, String name) {
+    VirtualFile generatedRoot = getGeneratedFilesFolder(project, module);
+    if (generatedRoot == null) {
+      return null;
+    }
+
+    final Ref<VirtualFile> folder = new Ref<>(generatedRoot.findChild(name));
+    //need to delete old folder
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        if (folder.get() != null) {
+          folder.get().delete(requestor);
+        }
+        folder.set(generatedRoot.createChildDirectory(requestor, name));
+      }
+      catch (IOException e) {
+        LOG.info("Failed to generate folder " + name, e);
+      }
+    });
+    return folder.get();
   }
 }
