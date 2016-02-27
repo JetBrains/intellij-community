@@ -58,7 +58,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -461,40 +460,22 @@ public class CodeCompletionHandlerBase {
     CompletionAssertions.checkEditorValid(initContext.getEditor());
 
     final PsiFile originalFile = initContext.getFile();
-    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(originalFile.getProject());
-    final PsiFile hostFile = manager.getTopLevelFile(originalFile);
+    final PsiFile hostFile = InjectedLanguageManager.getInstance(originalFile.getProject()).getTopLevelFile(originalFile);
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
     final OffsetMap hostMap = translateOffsetMapToHost(originalFile, hostFile, hostEditor, initContext.getOffsetMap());
 
-    final PsiFile[] hostCopy = {null};
-    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        hostCopy[0] = createFileCopy(hostFile, initContext.getStartOffset(), initContext.getSelectionEndOffset());
-      }
-    });
-
-    final Document copyDocument = hostCopy[0].getViewProvider().getDocument();
+    final PsiFile hostCopy = createFileCopy(hostFile, initContext.getStartOffset(), initContext.getSelectionEndOffset());
+    final Document copyDocument = hostCopy.getViewProvider().getDocument();
     assert copyDocument != null : "no document";
     final OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument);
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            String dummyIdentifier = initContext.getDummyIdentifier();
-            if (StringUtil.isEmpty(dummyIdentifier)) return;
-
-            int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
-            int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
-            copyDocument.replaceString(startOffset, endOffset, dummyIdentifier);
-          }
-        });
-      }
-    });
+    String dummyIdentifier = initContext.getDummyIdentifier();
+    if (!StringUtil.isEmpty(dummyIdentifier)) {
+      int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
+      int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+      copyDocument.replaceString(startOffset, endOffset, dummyIdentifier);
+    }
     CompletionAssertions.checkEditorValid(initContext.getEditor());
 
     final Project project = originalFile.getProject();
@@ -515,14 +496,14 @@ public class CodeCompletionHandlerBase {
             Disposer.dispose(translator);
             return;
           }
-          doComplete(initContext, hasModifiers, invocationCount, hostCopy[0], hostMap, translator);
+          doComplete(initContext, hasModifiers, invocationCount, hostCopy, hostMap, translator);
         }
       });
     }
     else {
       PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
 
-      doComplete(initContext, hasModifiers, invocationCount, hostCopy[0], hostMap, translator);
+      doComplete(initContext, hasModifiers, invocationCount, hostCopy, hostMap, translator);
     }
   }
 
