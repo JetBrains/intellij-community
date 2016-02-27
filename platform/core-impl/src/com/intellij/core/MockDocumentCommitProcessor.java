@@ -18,6 +18,7 @@ package com.intellij.core;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 */
 class MockDocumentCommitProcessor extends DocumentCommitProcessor {
   @Override
-  public void commitSynchronously(@NotNull Document document, @NotNull Project project) {
+  public void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile) {
   }
 
   @Override

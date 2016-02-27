@@ -54,7 +54,7 @@ import java.util.List;
 public abstract class DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
 
-  public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project);
+  public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile);
   public abstract void commitAsynchronously(@NotNull final Project project,
                                             @NotNull final Document document,
                                             @NonNls @NotNull Object reason,

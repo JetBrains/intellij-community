@@ -449,9 +449,8 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   }
 
   @Override
-  public void commitSynchronously(@NotNull Document document, @NotNull Project project) {
+  public void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile) {
     assert !isDisposed;
-    myApplication.assertWriteAccessAllowed();
 
     if (!project.isInitialized() && !project.isDefault()) {
       @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
@@ -464,12 +463,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       throw new RuntimeException(s);
     }
 
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-    PsiFile psiFile = documentManager.getPsiFile(document);
-    if (psiFile == null) {
-      documentManager.myUncommittedDocuments.remove(document);
-      return; // the project must be closing or file deleted
-    }
     CommitTask task = createNewTaskAndCancelSimilar(project, document, getAllFileNodes(psiFile), "Sync commit", ModalityState.current());
     assert !task.indicator.isCanceled();
     Pair<Runnable, Object> result = commitUnderProgress(task, true);
@@ -551,7 +544,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     };
     if (synchronously) {
-      myApplication.assertWriteAccessAllowed();
       runnable.run();
     }
     else if (!myApplication.tryRunReadAction(runnable)) {
