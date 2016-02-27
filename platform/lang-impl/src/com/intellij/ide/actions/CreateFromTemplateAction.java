@@ -91,7 +91,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
       });
     if (createdElement != null) {
       view.selectElement(createdElement);
-      postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
+      postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties(), e);
     }
   }
 
@@ -177,7 +177,8 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return dir;
   }
 
-  protected void postProcess(T createdElement, String templateName, Map<String, String> customProperties) {
+  // TODO: Remove the AnActionEvent parameter, as part of the API compatability fix.
+  protected void postProcess(T createdElement, String templateName, Map<String, String> customProperties, @NotNull AnActionEvent e) {
   }
 
   @Nullable
