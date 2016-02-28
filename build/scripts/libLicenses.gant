@@ -69,7 +69,7 @@ binding.setVariable("checkLibLicenses", {
     }
   }
 
-  def libWithLicenses = licensesList.collectAll {it.libraryNames}.flatten() as Set
+  def libWithLicenses = licensesList.collect {it.libraryNames}.flatten() as Set
   libWithLicenses.addAll(jetbrainsLibraries)
 
   List<String> withoutLicenses = []
