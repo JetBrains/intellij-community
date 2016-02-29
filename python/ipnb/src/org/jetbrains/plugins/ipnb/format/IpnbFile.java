@@ -4,14 +4,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 
 import java.util.List;
+import java.util.Map;
 
 public class IpnbFile {
-  private final IpnbParser.IpnbFileRaw myRawFile;
+  private final Map<String, Object> myMetadata;
+  private final int myNbformat;
   private final List<IpnbCell> myCells;
   private final String myPath;
 
-  IpnbFile(IpnbParser.IpnbFileRaw rawFile, List<IpnbCell> cells, String path) {
-    myRawFile = rawFile;
+  public IpnbFile(Map<String, Object> metadata, int nbformat, List<IpnbCell> cells, String path) {
+    myMetadata = metadata;
+    myNbformat = nbformat;
     myCells = cells;
     myPath = path;
   }
@@ -32,7 +35,12 @@ public class IpnbFile {
     return myPath;
   }
 
-  public IpnbParser.IpnbFileRaw getRawFile() {
-    return myRawFile;
+  public Map<String, Object> getMetadata () {
+    return myMetadata;
   }
+
+  public int getNbformat() {
+    return myNbformat;
+  }
+
 }
