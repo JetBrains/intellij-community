@@ -84,8 +84,6 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<CALL_FRAME>, CAL
 
   protected abstract fun doSuspend(): Promise<*>
 
-  override fun isContextObsolete(context: SuspendContext<*>) = this.context !== context
-
   override fun setOverlayMessage(message: String?) {
   }
 

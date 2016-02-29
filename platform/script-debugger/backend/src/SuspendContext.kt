@@ -42,7 +42,7 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
   /**
    * Call frames for the current suspended state (from the innermost (top) frame to the main (bottom) frame)
    */
-  val frames: Promise<Array<CALL_FRAME>>
+  val frames: Promise<Array<CallFrame>>
 
   /**
    * list of the breakpoints hit on VM suspension with which this
@@ -75,7 +75,7 @@ abstract class ContextDependentAsyncResultConsumer<T>(private val context: Suspe
 }
 
 
-inline fun <T> Promise<T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = (this).done(object : ContextDependentAsyncResultConsumer<T>(context) {
+inline fun <T> Promise<T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = done(object : ContextDependentAsyncResultConsumer<T>(context) {
   override fun consume(result: T, vm: Vm) = handler(result)
 })
 
