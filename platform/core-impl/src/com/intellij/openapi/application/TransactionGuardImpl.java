@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,6 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author peter
  */
 public class TransactionGuardImpl extends TransactionGuard {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Runnable> myQueue = new LinkedBlockingQueue<Runnable>();
   private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
   private boolean myInsideTransaction;
@@ -41,7 +43,8 @@ public class TransactionGuardImpl extends TransactionGuard {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
     if (myInsideTransaction) {
-      throw new IllegalStateException("Nested transactions are not allowed");
+      LOG.error("Nested transactions are not allowed");
+      //throw new IllegalStateException("Nested transactions are not allowed");
     }
     myInsideTransaction = true;
     return new AccessToken() {
