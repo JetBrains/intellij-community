@@ -282,12 +282,13 @@ public class IpnbParser {
           dataRaw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
           dataRaw.text = outputCell.getText();
           raw.data = dataRaw;
+          raw.execution_count = outputCell.getPromptNumber();
+          raw.output_type = outputCell.getPromptNumber() != null ? "execute_result" : "display_data";
         }
         else {
           raw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
           raw.text = outputCell.getText();
         }
-        raw.output_type = "display_data";
       }
       else if (outputCell instanceof IpnbSvgOutputCell) {
         if (nbformat == 4) {
