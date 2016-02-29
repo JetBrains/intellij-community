@@ -38,4 +38,16 @@ class OptionalWithoutIsPresent {
       System.out.println(string);
     }
   }
+
+  private void checkAsserts() {
+    Optional<String> o1 = Optional.empty();
+    assert o1.isPresent();
+    System.out.println(o1.get());
+    Optional<String> o2 = Optional.empty();
+    org.junit.Assert.assertTrue(o2.isPresent());
+    System.out.println(o2.get());
+    Optional<String> o3 = Optional.empty();
+    org.testng.Assert.assertTrue(o3.isPresent());
+    System.out.println(o3.get());
+  }
 }
