@@ -643,6 +643,82 @@ public abstract class PluginManagerMain implements Disposable {
     return descriptionSet.isEmpty();
   }
 
+  public static boolean suggestToEnableInstalledPlugins(PluginEnabler pluginEnabler,
+                                                         Set<IdeaPluginDescriptor> disabled,
+                                                         Set<IdeaPluginDescriptor> disabledDependants,
+                                                         List<PluginNode> list) {
+    if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
+      String message = "";
+      if (disabled.size() == 1) {
+        message += "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled.";
+      }
+      else if (!disabled.isEmpty()) {
+        message += "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
+          @Override
+          public String fun(IdeaPluginDescriptor pluginDescriptor) {
+            return pluginDescriptor.getName();
+          }
+        }, ", ") + " are disabled.";
+      }
+
+      if (!disabledDependants.isEmpty()) {
+        message += "<br>";
+        message += "Updated plugin" + (list.size() > 1 ? "s depend " : " depends ") + "on disabled";
+        if (disabledDependants.size() == 1) {
+          message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
+        }
+        else {
+          message += " plugins " + StringUtil.join(disabledDependants, new Function<IdeaPluginDescriptor, String>() {
+            @Override
+            public String fun(IdeaPluginDescriptor pluginDescriptor) {
+              return pluginDescriptor.getName();
+            }
+          }, ", ") + ".";
+        }
+      }
+      message += " Disabled plugins " + (disabled.isEmpty() ? "and plugins which depend on disabled " :"") + "won't be activated after restart.";
+
+      int result;
+      if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
+        result =
+          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), CommonBundle.getWarningTitle(), "Enable all",
+                                         "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
+                                         Messages.getQuestionIcon());
+        if (result == Messages.CANCEL) return false;
+      }
+      else {
+        message += "<br>Would you like to enable ";
+        if (!disabled.isEmpty()) {
+          message += "updated plugin" + (disabled.size() > 1 ? "s" : "");
+        }
+        else {
+          //noinspection SpellCheckingInspection
+          message += "plugin dependenc" + (disabledDependants.size() > 1 ? "ies" : "y");
+        }
+        message += "?";
+        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
+        if (result == Messages.NO) return false;
+      }
+
+      if (result == Messages.YES) {
+        disabled.addAll(disabledDependants);
+        pluginEnabler.enablePlugins(disabled);
+      }
+      else if (result == Messages.NO && !disabled.isEmpty()) {
+        pluginEnabler.enablePlugins(disabled);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  public interface PluginEnabler {
+    void enablePlugins(Set<IdeaPluginDescriptor> disabled);
+
+    boolean isDisabled(PluginId pluginId);
+
+  }
+
   public static void notifyPluginsUpdated(@Nullable Project project) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("update.notifications.title");
