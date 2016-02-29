@@ -41,17 +41,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -464,7 +460,7 @@ public class CodeCompletionHandlerBase {
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
     final OffsetMap hostMap = translateOffsetMapToHost(originalFile, hostFile, hostEditor, initContext.getOffsetMap());
 
-    final PsiFile hostCopy = createFileCopy(hostFile, initContext.getStartOffset(), initContext.getSelectionEndOffset());
+    final PsiFile hostCopy = createFileCopy(hostFile);
     final Document copyDocument = hostCopy.getViewProvider().getDocument();
     assert copyDocument != null : "no document";
     final OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument);
@@ -727,7 +723,7 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private static final Key<SoftReference<Trinity<PsiFile, Document, Long>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
+  private static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   private static boolean isCopyUpToDate(Document document, @NotNull PsiFile file) {
     if (!file.isValid()) {
@@ -739,28 +735,16 @@ public class CodeCompletionHandlerBase {
     return current != null && current.getViewProvider().getPsi(file.getLanguage()) == file;
   }
 
-  private static PsiFile createFileCopy(PsiFile file, long caret, long selEnd) {
+  private static PsiFile createFileCopy(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     boolean mayCacheCopy = file.isPhysical() &&
                            // we don't want to cache code fragment copies even if they appear to be physical
                            virtualFile != null && virtualFile.isInLocalFileSystem();
-    long combinedOffsets = caret + (selEnd << 32);
     if (mayCacheCopy) {
-      final Trinity<PsiFile, Document, Long> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
+      final Pair<PsiFile, Document> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
       if (cached != null && cached.first.getClass().equals(file.getClass()) && isCopyUpToDate(cached.second, cached.first)) {
         final PsiFile copy = cached.first;
-        if (copy.getViewProvider().getModificationStamp() > file.getViewProvider().getModificationStamp() && 
-            cached.third.longValue() != combinedOffsets) {
-          // the copy PSI might have some caches that are not cleared on its modification because there are no events in the copy
-          //   so, clear all the caches
-          // hopefully it's a rare situation that the user invokes completion in different parts of the file 
-          //   without modifying anything physical in between
-          ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
-        }
         final Document document = cached.second;
-        assert document != null;
-        file.putUserData(FILE_COPY_KEY, new SoftReference<Trinity<PsiFile,Document, Long>>(Trinity.create(copy, document, combinedOffsets)));
-
         Document originalDocument = file.getViewProvider().getDocument();
         assert originalDocument != null;
         assert originalDocument.getTextLength() == file.getTextLength() : originalDocument;
@@ -773,7 +757,7 @@ public class CodeCompletionHandlerBase {
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();
       assert document != null;
-      file.putUserData(FILE_COPY_KEY, new SoftReference<Trinity<PsiFile,Document, Long>>(Trinity.create(copy, document, combinedOffsets)));
+      file.putUserData(FILE_COPY_KEY, new SoftReference<>(Pair.create(copy, document)));
     }
     return copy;
   }
