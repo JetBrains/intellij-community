@@ -51,12 +51,8 @@ public class IpnbParser {
     final String path = virtualFile.getPath();
     IpnbFileRaw rawFile = gson.fromJson(fileText.toString(), IpnbFileRaw.class);
     if (rawFile == null) {
-      final IpnbFileRaw ipnbFileRaw = new IpnbFileRaw();
-
-      if (!isIpythonNewFormat(virtualFile)) {
-        ipnbFileRaw.nbformat = 3;
-      }
-      return new IpnbFile(ipnbFileRaw, Lists.<IpnbCell>newArrayList(), path);
+      int nbformat = isIpythonNewFormat(virtualFile) ? 4 : 3;
+      return new IpnbFile(Collections.emptyMap(), nbformat, Lists.newArrayList(), path);
     }
     List<IpnbCell> cells = new ArrayList<IpnbCell>();
     final IpnbWorksheet[] worksheets = rawFile.worksheets;
@@ -73,7 +69,7 @@ public class IpnbParser {
         }
       }
     }
-    return new IpnbFile(rawFile, cells, path);
+    return new IpnbFile(rawFile.metadata, rawFile.nbformat, cells, path);
   }
 
   public static boolean isIpythonNewFormat(@NotNull final VirtualFile virtualFile) {
@@ -118,18 +114,18 @@ public class IpnbParser {
       }
     }
 
-    final IpnbFileRaw fileRaw = ipnbFile.getRawFile();
-    if (fileRaw.nbformat == 4) {
-      fileRaw.cells.clear();
+    final IpnbFileRaw fileRaw = new IpnbFileRaw();
+    fileRaw.metadata = ipnbFile.getMetadata();
+    if (ipnbFile.getNbformat() == 4) {
       for (IpnbCell cell: ipnbFile.getCells()) {
-        fileRaw.cells.add(IpnbCellRaw.fromCell(cell, fileRaw.nbformat));
+        fileRaw.cells.add(IpnbCellRaw.fromCell(cell, ipnbFile.getNbformat()));
       }
     }
     else {
       final IpnbWorksheet worksheet = new IpnbWorksheet();
       worksheet.cells.clear();
       for (IpnbCell cell : ipnbFile.getCells()) {
-        worksheet.cells.add(IpnbCellRaw.fromCell(cell, fileRaw.nbformat));
+        worksheet.cells.add(IpnbCellRaw.fromCell(cell, ipnbFile.getNbformat()));
       }
       fileRaw.worksheets = new IpnbWorksheet[]{worksheet};
     }
