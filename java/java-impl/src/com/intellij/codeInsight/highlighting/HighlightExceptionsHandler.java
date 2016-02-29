@@ -29,7 +29,7 @@ import java.util.List;
 public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   private final PsiElement myTarget;
   private final PsiClassType[] myClassTypes;
-  private final PsiElement myPlace;
+  private final PsiElement myPlace, myOtherPlace;
   private final Condition<PsiType> myTypeFilter;
 
   public HighlightExceptionsHandler(Editor editor,
@@ -37,11 +37,13 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
                                     PsiElement target,
                                     PsiClassType[] classTypes,
                                     PsiElement place,
+                                    PsiElement otherPlace,
                                     Condition<PsiType> typeFilter) {
     super(editor, file);
     myTarget = target;
     myClassTypes = classTypes;
     myPlace = place;
+    myOtherPlace = otherPlace;
     myTypeFilter = typeFilter;
   }
 
@@ -66,14 +68,17 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(myEditor.getProject()).getElementFactory();
     for (PsiClass aClass : targets) {
-      addExceptionThrownPlaces(factory.createType(aClass));
+      addExceptionThrowPlaces(factory.createType(aClass), myPlace);
+      if (myOtherPlace != null) {
+        addExceptionThrowPlaces(factory.createType(aClass), myOtherPlace);
+      }
     }
 
     buildStatusText(LangBundle.message("java.terms.exception"), myReadUsages.size() - 1 /* exclude target */);
   }
 
-  private void addExceptionThrownPlaces(PsiClassType type) {
-    myPlace.accept(new JavaRecursiveElementWalkingVisitor() {
+  private void addExceptionThrowPlaces(PsiClassType type, PsiElement place) {
+    place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
@@ -82,7 +87,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
       @Override
       public void visitThrowStatement(PsiThrowStatement statement) {
         super.visitThrowStatement(statement);
-        List<PsiClassType> actualTypes = ExceptionUtil.getUnhandledExceptions(statement, myPlace);
+        List<PsiClassType> actualTypes = ExceptionUtil.getUnhandledExceptions(statement, place);
         for (PsiClassType actualType : actualTypes) {
           if (actualType != null && type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
             PsiExpression psiExpression = statement.getException();
@@ -110,7 +115,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
         super.visitMethodCallExpression(expression);
         PsiReference reference = expression.getMethodExpression().getReference();
         if (reference != null) {
-          List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, myPlace);
+          List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, place);
           for (final PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
               addOccurrence(expression.getMethodExpression());
@@ -125,10 +130,37 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
         super.visitNewExpression(expression);
         PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
         if (classReference != null) {
-          List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, myPlace);
+          List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, place);
           for (PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
               addOccurrence(classReference);
+              break;
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitResourceExpression(PsiResourceExpression expression) {
+        super.visitResourceExpression(expression);
+        List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledCloserExceptions(expression, place);
+        for (PsiClassType actualType : exceptionTypes) {
+          if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+            addOccurrence(expression);
+            break;
+          }
+        }
+      }
+
+      @Override
+      public void visitResourceVariable(PsiResourceVariable variable) {
+        super.visitResourceVariable(variable);
+        List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledCloserExceptions(variable, place);
+        for (PsiClassType actualType : exceptionTypes) {
+          if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+            PsiIdentifier name = variable.getNameIdentifier();
+            if (name != null) {
+              addOccurrence(name);
               break;
             }
           }

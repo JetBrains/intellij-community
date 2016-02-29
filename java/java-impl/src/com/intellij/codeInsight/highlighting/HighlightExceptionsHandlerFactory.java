@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * @author yole
@@ -56,7 +57,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
 
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
     PsiClassType[] types = unhandled.toArray(new PsiClassType[unhandled.size()]);
-    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, Conditions.alwaysTrue());
+    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, Conditions.alwaysTrue());
   }
 
   @Nullable
@@ -66,6 +67,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
     PsiTryStatement tryStatement = ((PsiCatchSection)parent).getTryStatement();
     PsiParameter parameter = ((PsiCatchSection)parent).getParameter();
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+    PsiResourceList resourceList = tryStatement.getResourceList();
     if (parameter == null || tryBlock == null) return null;
 
     PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
@@ -78,9 +80,12 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
       return false;
     };
 
-    Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
-    PsiClassType[] types = unhandled.stream().filter(filter::value).toArray(PsiClassType[]::new);
-    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, filter);
+    Stream<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock).stream();
+    if (resourceList != null) {
+      unhandled = Stream.concat(unhandled, ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList).stream());
+    }
+    PsiClassType[] types = unhandled.filter(filter::value).toArray(PsiClassType[]::new);
+    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, resourceList, filter);
   }
 
   @Nullable
@@ -94,6 +99,6 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
 
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(body, body);
     PsiClassType[] types = unhandled.toArray(new PsiClassType[unhandled.size()]);
-    return new HighlightExceptionsHandler(editor, file, target, types, body, Conditions.alwaysTrue());
+    return new HighlightExceptionsHandler(editor, file, target, types, body, null, Conditions.alwaysTrue());
   }
 }
