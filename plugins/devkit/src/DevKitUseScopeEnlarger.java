@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package org.jetbrains.idea.devkit;
 
-import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiClass;
@@ -25,10 +26,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+
+import java.util.Collection;
 
 /**
  * @author peter
@@ -42,7 +47,7 @@ public class DevKitUseScopeEnlarger extends UseScopeEnlarger {
       if (target instanceof DomTarget) {
         DomElement domElement = ((DomTarget)target).getDomElement();
         if (domElement instanceof ExtensionPoint) {
-          return createProjectXmlFilesScope(element);
+          return createAllPluginDescriptorFilesSearchScope(element);
         }
       }
     }
@@ -50,13 +55,16 @@ public class DevKitUseScopeEnlarger extends UseScopeEnlarger {
     if (element instanceof PsiClass &&
         PsiUtil.isIdeaProject(element.getProject()) &&
         ((PsiClass)element).hasModifierProperty(PsiModifier.PUBLIC)) {
-      return createProjectXmlFilesScope(element);
+      return createAllPluginDescriptorFilesSearchScope(element);
     }
     return null;
   }
 
-  private static SearchScope createProjectXmlFilesScope(PsiElement element) {
-    return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(element.getProject()),
-                                                           XmlFileType.INSTANCE);
+  private static SearchScope createAllPluginDescriptorFilesSearchScope(PsiElement element) {
+    final Project project = element.getProject();
+    final Collection<VirtualFile> pluginXmlFiles =
+      DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project,
+                                                    GlobalSearchScope.allScope(project));
+    return GlobalSearchScope.filesScope(project, pluginXmlFiles);
   }
 }
