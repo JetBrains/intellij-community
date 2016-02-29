@@ -249,7 +249,7 @@ public class ProcessListUtil {
 
   @Nullable
   static List<ProcessInfo> getProcessList_WindowsWMIC() {
-    return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline"),
+    return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline,ExecutablePath"),
                               new NullableFunction<String, List<ProcessInfo>>() {
                                 @Nullable
                                 @Override
@@ -272,11 +272,17 @@ public class ProcessListUtil {
     int pidStart = header.indexOf("ProcessId");
     if (pidStart == -1) return null;
 
+    int executablePathStart = header.indexOf("ExecutablePath");
+    if (executablePathStart == -1) return null;
+
+
     for (int i = 1; i < lines.length; i++) {
       String line = lines[i];
 
       int pid = StringUtil.parseInt(line.substring(pidStart, line.length()).trim(), -1);
       if (pid == -1 || pid == 0) continue;
+
+      String executablePath = line.substring(executablePathStart, pidStart).trim();
 
       String name = line.substring(0, commandLineStart).trim();
       if (name.isEmpty()) continue;
@@ -294,7 +300,7 @@ public class ProcessListUtil {
         }
       }
 
-      result.add(new ProcessInfo(pid, commandLine, name, args));
+      result.add(new ProcessInfo(pid, commandLine, name, args, executablePath));
     }
     return result;
   }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger.attach;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -53,7 +55,7 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
       List<XLocalAttachDebugger> result = contextHolder.getUserData(DEBUGGERS_KEY);
       if (result != null) return result;
 
-      result = ContainerUtil.map(PythonSdkType.getAllSdks(), new Function<Sdk, XLocalAttachDebugger>() {
+      result = ContainerUtil.map(sdksForAttachment(processInfo), new Function<Sdk, XLocalAttachDebugger>() {
         @Override
         public XLocalAttachDebugger fun(Sdk sdk) {
           return new PyLocalAttachDebugger(sdk);
@@ -72,6 +74,17 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
       return result;
     }
     return Collections.emptyList();
+  }
+
+  private static Collection<Sdk> sdksForAttachment(ProcessInfo info) {
+    if (info.getExecutablePath().isPresent()) {
+      Sdk sdk = PythonSdkType.findSdkByPath(info.getExecutablePath().get());
+      if (sdk != null) {
+        return Lists.newArrayList(sdk);
+      }
+    }
+
+    return PythonSdkType.getAllLocalCPythons();
   }
 
   private static class PyLocalAttachDebugger implements XLocalAttachDebugger {
