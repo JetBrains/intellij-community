@@ -89,6 +89,16 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
       "  public double getAsDouble() {" +
       "    return 0.0;" +
       "  }" +
+      "}",
+
+      "package org.junit;" +
+      "public class Assert {" +
+      "  public static void assertTrue(boolean b) {}" +
+      "}",
+
+      "package org.testng;" +
+      "public class Assert {" +
+      "  public static void assertTrue(boolean b) {}" +
       "}"
     };
   }
