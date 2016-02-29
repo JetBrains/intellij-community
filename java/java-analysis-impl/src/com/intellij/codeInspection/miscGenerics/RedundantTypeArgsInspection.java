@@ -21,7 +21,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSessionContainer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -130,16 +129,14 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
               }
             }
             else {
-              final PsiCall topLevelCall = InferenceSessionContainer.treeWalkUp(expression);
-              if (topLevelCall != null) {
-                final int offset = expression.getTextRange().getStartOffset() - topLevelCall.getTextRange().getStartOffset();
-                final PsiCall topLevelCopy = (PsiCall)topLevelCall.copy();
-                final PsiElement elementInCopy = topLevelCopy.getContainingFile().findElementAt(topLevelCopy.getTextRange().getStartOffset() + offset);
-                if (!isInferenceEquivalent(typeArguments, method, typeParameters, elementInCopy)) {
-                  return;
-                }
+              final int offset = expression.getTextRange().getStartOffset();
+              final PsiFile containingFile = expression.getContainingFile();
+              final PsiFile fileCopy = (PsiFile)containingFile.copy();
+              final PsiElement elementInCopy = fileCopy.findElementAt(offset);
+              if (method.getContainingFile() == containingFile) {
+                method = PsiTreeUtil.getParentOfType(fileCopy.findElementAt(method.getTextOffset()), PsiMethod.class);
               }
-              else {
+              if (!isInferenceEquivalent(typeArguments, method, typeParameters, elementInCopy)) {
                 return;
               }
             }

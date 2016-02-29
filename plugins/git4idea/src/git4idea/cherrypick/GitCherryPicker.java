@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
@@ -73,12 +72,6 @@ import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLIC
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
 public class GitCherryPicker extends VcsCherryPicker {
-
-  /**
-   * Name of the {@code .git/CHERRY_PICK_HEAD} file which is stored under {@code .git} when cherry-pick is in progress,
-   * and contains the hash of the commit being cherry-picked.
-   */
-  private static final String CHERRY_PICK_HEAD_FILE = "CHERRY_PICK_HEAD";
 
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
@@ -362,7 +355,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   private void removeCherryPickHead(@NotNull GitRepository repository) {
-    File cherryPickHeadFile = new File(repository.getGitDir().getPath(), CHERRY_PICK_HEAD_FILE);
+    File cherryPickHeadFile = repository.getRepositoryFiles().getCherryPickHead();
     final VirtualFile cherryPickHead = myPlatformFacade.getLocalFileSystem().refreshAndFindFileByIoFile(cherryPickHeadFile);
 
     if (cherryPickHead != null && cherryPickHead.exists()) {

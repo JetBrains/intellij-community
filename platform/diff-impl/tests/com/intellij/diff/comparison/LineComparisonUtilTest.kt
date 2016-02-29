@@ -270,6 +270,12 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
 
     lines {
+      ("A_B_o_o_Y_Z_ _A_B_ _ _Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_ _ _Y_Z")
+      default(ins(9, 9, 7))
+      testAll()
+    }
+
+    lines {
       ("A_B_o_o_ _A_B_z_z" - "A_B_o_o_ _A_B_u_u_ _A_B_z_z")
       default(ins(5, 5, 5))
       testAll()
@@ -278,6 +284,37 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     lines {
       ("o_o_Y_Z_ _z_z_Y_Z" - "o_o_Y_Z_ _u_u_Y_Z_ _z_z_Y_Z")
       default(ins(5, 5, 5))
+      testAll()
+    }
+  }
+
+  fun `test prefer chunks bounded by short line`() {
+    lines {
+      ("A====_B====_o====_o====_Y====_Z====_!_A====_B====_z====_z====_Y====_Z====" -
+       "A====_B====_o====_o====_Y====_Z====_!_A====_B====_u====_u====_Y====_Z====_!_A====_B====_z====_z====_Y====_Z====")
+      default(ins(7, 7, 7))
+      testAll()
+    }
+
+    lines {
+      ("A====_B====_o====_o====_Y====_Z====_ _A====_B====_!_!_Y====_Z====" -
+       "A====_B====_o====_o====_Y====_Z====_ _A====_B====_u====_u====_Y====_Z====_ _A====_B====_!_!_Y====_Z====")
+      default(ins(7, 7, 7))
+      testAll()
+    }
+
+    lines {
+      ("A====_B====_o====_o====_Y====_Z====_!_A====_B====_ _ _Y====_Z====" -
+       "A====_B====_o====_o====_Y====_Z====_!_A====_B====_u====_u====_Y====_Z====_!_A====_B====_ _ _Y====_Z====")
+      default(ins(9, 9, 7))
+      testAll()
+    }
+  }
+
+  fun `test prefer chunks bounded by empty line - using inserted content`() {
+    lines {
+      ("e_x_A_B_z" - "x_A_B_ _q_A_B_z")
+      default(del(0, 0, 1), ins(4, 3, 4))
       testAll()
     }
   }

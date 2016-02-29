@@ -106,7 +106,7 @@ public class VcsLogManager implements Disposable {
         }
       };
     }
-    refreshLogOnVcsEvents(logProviders, logRefresher);
+    refreshLogOnVcsEvents(logProviders, logRefresher, this);
     logDataHolder.initialize();
 
     // todo fix selection
@@ -122,14 +122,15 @@ public class VcsLogManager implements Disposable {
     return myUi.getMainFrame().getMainComponent();
   }
 
-  private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogRefresher refresher) {
+  private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogRefresher refresher, @NotNull Disposable parentDisposable) {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
       providers2roots.putValue(entry.getValue(), entry.getKey());
     }
 
     for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
-      entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
+      Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
+      Disposer.register(parentDisposable, disposable);
     }
   }
 

@@ -104,7 +104,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
         else {
           //noinspection ConstantConditions
           lines[i] = signatureToString(stringToSignature(file.
-            getCanonicalPath(), lines[i]).addAllArgs(signature));
+            getCanonicalPath(), lines[i]).addAllArgs(signature).addReturnType(signature.getReturnTypeQualifiedName()));
         }
       }
       i++;
@@ -140,7 +140,9 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   private static String signatureToString(PySignature signature) {
-    return signature.getFunctionName() + "\t" + StringUtil.join(arguments(signature), "\t");
+    return signature.getFunctionName() + "\t" + StringUtil.join(arguments(signature), "\t") +
+           (signature.getReturnType() != null
+            ? "\t" + StringUtil.join(signature.getReturnType().getTypesList(), "\t") : "");
   }
 
   private static List<String> arguments(PySignature signature) {
@@ -248,8 +250,11 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
         if (var.length == 2) {
           signature = signature.addArgument(var[0], var[1]);
         }
+        else if (var.length == 1) {
+          signature = signature.addReturnType(var[0]);
+        }
         else {
-          throw new IllegalStateException("Should be <name>:<type> format. " + parts[i] + " instead.");
+          throw new IllegalStateException("Should be <name>:<type> format for arg or <type> for return type; '" + parts[i] + "' instead.");
         }
       }
       return signature;
@@ -259,7 +264,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
 
   @Nullable
   private static VirtualFile getFile(@NotNull PySignature signature) {
-    return LocalFileSystem.getInstance().findFileByPath(signature.getFile());
+    return LocalFileSystem.getInstance().refreshAndFindFileByPath(signature.getFile());
   }
 
   @Nullable
@@ -291,7 +296,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
           }
         });
       }
-    }, "Cleaning the cache of dynamically collected types", true, myProject);
+    }, "Cleaning the Cache of Dynamically Collected Types", true, myProject);
 
 
     String message;

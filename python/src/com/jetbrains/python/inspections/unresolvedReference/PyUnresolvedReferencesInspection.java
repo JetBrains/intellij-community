@@ -42,6 +42,7 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PyFunctionTypeCommentReferenceContributor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
@@ -286,6 +287,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (comment instanceof PsiLanguageInjectionHost) {
         processInjection((PsiLanguageInjectionHost)comment);
       }
+      if (PyFunctionTypeCommentReferenceContributor.TYPE_COMMENT_PATTERN.accepts(comment)) {
+        for (PsiReference reference : comment.getReferences()) {
+          if (reference instanceof PsiPolyVariantReference) {
+            markTargetImportsAsUsed((PsiPolyVariantReference)reference);
+          }
+        }
+      }
     }
 
     @Override
@@ -323,18 +331,22 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               if (element instanceof PyReferenceOwner) {
                 final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
                 final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
-                final ResolveResult[] resolveResults = reference.multiResolve(false);
-                for (ResolveResult resolveResult : resolveResults) {
-                  if (resolveResult instanceof ImportedResolveResult) {
-                    final PyImportedNameDefiner definer = ((ImportedResolveResult)resolveResult).getDefiner();
-                    if (definer != null) {
-                      myUsedImports.add(definer);
-                    }
-                  }
-                }
+                markTargetImportsAsUsed(reference);
               }
             }
           }.visitElement(pair.getFirst());
+        }
+      }
+    }
+
+    private void markTargetImportsAsUsed(@NotNull PsiPolyVariantReference reference) {
+      final ResolveResult[] resolveResults = reference.multiResolve(false);
+      for (ResolveResult resolveResult : resolveResults) {
+        if (resolveResult instanceof ImportedResolveResult) {
+          final PyImportedNameDefiner definer = ((ImportedResolveResult)resolveResult).getDefiner();
+          if (definer != null) {
+            myUsedImports.add(definer);
+          }
         }
       }
     }

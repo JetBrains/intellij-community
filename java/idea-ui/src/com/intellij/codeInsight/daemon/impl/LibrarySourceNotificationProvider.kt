@@ -16,6 +16,9 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.ProjectTopics
+import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffManager
+import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.LanguageFileType
@@ -56,12 +59,19 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
         if (offender != null) {
           val panel = ColoredNotificationPanel(LightColors.RED)
           panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
-          panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
-            val classFile = offender.originalElement.containingFile?.virtualFile
-            if (classFile != null) {
-              OpenFileDescriptor(project, classFile, -1).navigate(true)
-            }
-          })
+
+          val clsFile = offender.originalElement.containingFile?.virtualFile
+          if (clsFile != null) {
+            panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
+              OpenFileDescriptor(project, clsFile, -1).navigate(true)
+            })
+            panel.createActionLabel(ProjectBundle.message("library.source.show.diff"), {
+              val cf = DiffContentFactory.getInstance()
+              val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
+              DiffManager.getInstance().showDiff(project, request)
+            })
+          }
+
           return panel
         }
       }

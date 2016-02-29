@@ -28,6 +28,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
@@ -159,7 +160,13 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
       expression = expression.getParent();
     }
 
-    if (!(expression.getParent() instanceof PsiExpressionStatement)) {
+    if (expression instanceof PsiMethodReferenceExpression) {
+      final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)expression);
+      if (callExpression instanceof PsiCallExpression) {
+        callExpression.replace(CodeInsightServicesUtil.invertCondition(callExpression));
+      }
+    }
+    else if (!(expression.getParent() instanceof PsiExpressionStatement)) {
       expression.replace(CodeInsightServicesUtil.invertCondition((PsiExpression)expression));
     }
   }
@@ -257,7 +264,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     for (UsageInfo info : usageInfos) {
       final PsiElement element = info.getElement();
       if (element instanceof PsiMethodReferenceExpression) {
-        conflicts.putValue(element, "Method is used in method reference expression");
+        conflicts.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
       }
     }
   }

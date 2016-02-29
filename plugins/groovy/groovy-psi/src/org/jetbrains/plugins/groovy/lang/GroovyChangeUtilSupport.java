@@ -20,6 +20,8 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -73,7 +75,8 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
       if (original.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT ||
           original.getElementType() == GroovyElementTypes.REFERENCE_EXPRESSION) {
         PsiElement psi = original.getPsi();
-        if (!PsiUtil.isThisOrSuperRef(psi) && psi.getProject().isInitialized()) {
+        Project project = psi.getProject();
+        if (!PsiUtil.isThisOrSuperRef(psi) && project.isInitialized() && !DumbService.isDumb(project)) {
           final GroovyResolveResult result = ((GrReferenceElement)psi).advancedResolve();
           if (result != null) {
             final PsiElement target = result.getElement();

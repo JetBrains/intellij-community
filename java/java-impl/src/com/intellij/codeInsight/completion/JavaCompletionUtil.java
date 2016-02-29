@@ -50,10 +50,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
 import com.intellij.ui.JBColor;
 import com.intellij.util.*;
@@ -269,16 +266,18 @@ public class JavaCompletionUtil {
           final PsiElement declarationScope = ((PsiParameter)resolve).getDeclarationScope();
           if (((PsiParameter)resolve).getType() instanceof PsiLambdaParameterType) {
             final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)declarationScope;
-            final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex((PsiParameter)resolve);
-            final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
-            final boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, functionalInterfaceType -> {
-              PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
-              if (qualifierType == null) return;
+            if (PsiTypesUtil.getExpectedTypeByParent(lambdaExpression) == null) {
+              final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex((PsiParameter)resolve);
+              final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+              final boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, functionalInterfaceType -> {
+                PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
+                if (qualifierType == null) return;
 
-              PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
-              set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, matcher, parameters));
-            });
-            if (overloadsFound) return set;
+                PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
+                set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, matcher, parameters));
+              });
+              if (overloadsFound) return set;
+            }
           }
         }
       }

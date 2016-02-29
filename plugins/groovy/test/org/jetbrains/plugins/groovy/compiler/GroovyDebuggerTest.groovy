@@ -552,6 +552,29 @@ public class Main {
     }
   }
 
+  public void "test evaluation of params in java context"() {
+    def starterFile = myFixture.addFileToProject 'Gr.groovy', '''
+new Main().foo((String[])["a", "b", "c"])
+'''
+    def file = myFixture.addFileToProject 'Main.java', '''
+import java.util.Arrays;
+import java.util.List;
+
+public class Main {
+  void foo(String[] a) {
+     int x = 5; // 6
+  }
+}
+'''
+    make()
+
+    addBreakpoint file.virtualFile, 6
+    runDebugger starterFile, {
+      waitForBreakpoint()
+      eval 'a[1]', 'b', GroovyFileType.GROOVY_FILE_TYPE
+    }
+  }
+
   private def addBreakpoint(String fileName, int line) {
     VirtualFile file = null
     edt {

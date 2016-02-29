@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,14 +172,20 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         PsiClass aClass = myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject()));
         assertNotNull(aClass);
 
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-        Document document = documentManager.getDocument(aClass.getContainingFile());
+        Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
         document.insertString(0, "/******/");
 
         SmartPointerEx pointer = (SmartPointerEx)createPointer(aClass.getNameIdentifier());
 
+        //noinspection UnusedAssignment
+        aClass = null;
+        PlatformTestUtil.tryGcSoftlyReachableObjects();
+        assertNull(pointer.getCachedElement());
+
+        assertNotNull(pointer.getElement());
+
         document.insertString(0, "/**/");
-        documentManager.commitAllDocuments();
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
         PsiElement element = pointer.getElement();
         assertNotNull(element);
@@ -527,7 +533,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
       PsiFile file = aClass.getContainingFile();
       Document document = documentManager.getCachedDocument(file);
       if (document == null) { //ignore already loaded documents
-        createPointer(aClass);
+        SmartPsiElementPointer pointer = createPointer(aClass);
         assertNull(documentManager.getCachedDocument(file));
         //System.out.println("file = " + file);
       }
@@ -704,7 +710,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
       @Override
       public void run() {
         PlatformTestUtil.startPerformanceTest("smart pointer range update", 10000, () -> {
-          document.setText(StringUtil.repeat("foo foo \n", 50000));
           for (int i = 0; i < 10000; i++) {
             document.insertString(i * 20 + 100, "x\n");
             assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));

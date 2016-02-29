@@ -34,7 +34,7 @@ public class LogEntry {
   public static final LogEntry EMPTY = new LogEntry.Builder().setRevision(-1).setHasChildren(false).build();
 
   private final long myRevision;
-  private final Date myDate;
+  @Nullable private final Date myDate;
   private final String myMessage;
   private final String myAuthor;
   @NotNull private final Map<String, LogEntryPath> myChangedPaths;
@@ -89,6 +89,7 @@ public class LogEntry {
     return myAuthor;
   }
 
+  @Nullable
   public Date getDate() {
     return myDate;
   }

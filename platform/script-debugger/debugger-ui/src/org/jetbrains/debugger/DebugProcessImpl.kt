@@ -17,6 +17,7 @@ package org.jetbrains.debugger
 
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
@@ -24,7 +25,10 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.breakpoints.*
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.breakpoints.XBreakpointHandler
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import org.jetbrains.concurrency.Promise
@@ -46,6 +50,9 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
   var processBreakpointConditionsAtIdeSide: Boolean = false
+
+  private val connectedListenerAdded = AtomicBoolean()
+  private val breakpointsInitiated = AtomicBoolean()
 
   private val _breakpointHandlers: Array<XBreakpointHandler<*>> by lazy(LazyThreadSafetyMode.NONE) { createBreakpointHandlers() }
 
@@ -174,12 +181,65 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
 
   override fun isLibraryFrameFilterSupported() = true
+
+  // todo make final (go plugin compatibility)
+  override fun checkCanInitBreakpoints(): Boolean {
+    if (connection.state.status == ConnectionStatus.CONNECTED) {
+      // breakpointsInitiated could be set in another thread and at this point work (init breakpoints) could be not yet performed
+      return initBreakpoints(false)
+    }
+
+    if (connectedListenerAdded.compareAndSet(false, true)) {
+      connection.stateChanged {
+        if (it.status == ConnectionStatus.CONNECTED) {
+          initBreakpoints(true)
+        }
+      }
+    }
+    return false
+  }
+
+  protected fun initBreakpoints(setBreakpoints: Boolean): Boolean {
+    if (breakpointsInitiated.compareAndSet(false, true)) {
+      doInitBreakpoints(setBreakpoints)
+      return true
+    }
+    else {
+      return false
+    }
+  }
+
+  protected open fun doInitBreakpoints(setBreakpoints: Boolean) {
+    if (setBreakpoints) {
+      beforeInitBreakpoints(vm!!)
+      runReadAction { session.initBreakpoints() }
+    }
+  }
+
+  protected open fun beforeInitBreakpoints(vm: Vm) {
+  }
+
+  protected fun addChildVm(vm: Vm) {
+    beforeInitBreakpoints(vm)
+
+    val breakpointManager = XDebuggerManager.getInstance(session.project).breakpointManager
+    @Suppress("UNCHECKED_CAST")
+    for (breakpointHandler in breakpointHandlers) {
+      if (breakpointHandler is LineBreakpointHandler) {
+        val breakpoints = runReadAction { breakpointManager.getBreakpoints(breakpointHandler.breakpointTypeClass) }
+        for (breakpoint in breakpoints) {
+          breakpointHandler.manager.setBreakpoint(vm, breakpoint)
+        }
+      }
+    }
+  }
 }
 
-class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>, private val manager: LineBreakpointManager)
-    : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, out XBreakpointProperties<*>>>) {
+@Suppress("UNCHECKED_CAST")
+class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, internal val manager: LineBreakpointManager)
+    : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    manager.setBreakpoint(breakpoint)
+    manager.setBreakpoint(manager.debugProcess.vm!!, breakpoint)
   }
 
   override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {

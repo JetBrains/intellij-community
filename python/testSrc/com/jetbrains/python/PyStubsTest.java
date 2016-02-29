@@ -371,28 +371,33 @@ public class PyStubsTest extends PyTestCase {
     VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.py");
     final Project project = myFixture.getProject();
     PsiFileImpl fooPyFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile);
+    assertNotNull(fooPyFile);
     final Document fooDocument = fooPyFile.getViewProvider().getDocument();
-    Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
-    assertEquals(classes.size(), 0);
+    assertNotNull(fooDocument);
+    final Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+    assertEquals(0, classes.size());
     new WriteCommandAction.Simple(project, fooPyFile) {
       public void run() {
         fooDocument.setText("class Foo: pass");
       }
     }.execute();
-    PsiDocumentManager.getInstance(project).commitDocument(fooDocument);
-    fooPyFile.setTreeElementPointer(null);
-    //classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
-    //fooPyFile.unloadContent();
-    DumbServiceImpl.getInstance(project).setDumb(true);
-    try {
-      assertEquals(1, ((PyFile) fooPyFile).getTopLevelClasses().size());
-      assertFalse(fooPyFile.isContentsLoaded());
-    }
-    finally {
-      DumbServiceImpl.getInstance(project).setDumb(false);
-    }
-    classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
-    assertEquals(classes.size(), 1);
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(fooDocument);
+    documentManager.performForCommittedDocument(fooDocument, () -> {
+      fooPyFile.setTreeElementPointer(null);
+      //classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+      //fooPyFile.unloadContent();
+      DumbServiceImpl.getInstance(project).setDumb(true);
+      try {
+        assertEquals(1, ((PyFile) fooPyFile).getTopLevelClasses().size());
+        assertFalse(fooPyFile.isContentsLoaded());
+      }
+      finally {
+        DumbServiceImpl.getInstance(project).setDumb(false);
+      }
+      final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+      assertEquals(1, committedClasses.size());
+    });
   }
 
   public void testTargetExpressionDocString() {

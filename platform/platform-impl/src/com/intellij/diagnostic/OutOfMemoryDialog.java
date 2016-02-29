@@ -164,8 +164,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
         String message = "";
         try {
           String name = ApplicationNamesInfo.getInstance().getLowercaseProductName();
-          String path = SystemProperties.getUserHome() + File.separator + "heapDump-" + name + '-' + System.currentTimeMillis() + ".hprof";
-          MemoryDumpHelper.captureMemoryDump(path);
+          String path = SystemProperties.getUserHome() + File.separator + "heapDump-" + name + '-' + System.currentTimeMillis() + ".hprof.zip";
+          MemoryDumpHelper.captureMemoryDumpZipped(path);
           message = "Dumped to " + path;
         }
         catch (Throwable t) {

@@ -1,12 +1,17 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.concurrency.Semaphore;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Irina.Chernushina on 8/29/2015.
@@ -59,5 +64,52 @@ public class JsonSchemaReadTest {
     final JsonSchemaReader reader = new JsonSchemaReader();
     final JsonSchemaObject read = reader.read(new FileReader(file));
     Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
+  }
+
+  @Test
+  public void testReadSchemaWithWrongRequired() throws Exception {
+    testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongRequired.json"));
+  }
+
+  @Test
+  public void testReadSchemaWithWrongItems() throws Exception {
+    testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongItems.json"));
+  }
+
+  private void testSchemaReadNotHung(final File file) throws IOException {
+    // because of threading
+    if (Runtime.getRuntime().availableProcessors() < 2) return;
+
+    Assert.assertTrue(file.exists());
+
+    final AtomicBoolean done = new AtomicBoolean();
+    final AtomicReference<IOException> error = new AtomicReference<>();
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    final Thread thread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        final JsonSchemaReader reader = new JsonSchemaReader();
+        try {
+          reader.read(new FileReader(file));
+          done.set(true);
+        }
+        catch (IOException e) {
+          error.set(e);
+        }
+        finally {
+          semaphore.up();
+        }
+      }
+    }, getClass().getName() + ": read test json schema " + file.getName());
+    thread.setDaemon(true);
+    try {
+      thread.start();
+      semaphore.waitFor(TimeUnit.SECONDS.toMillis(120));
+      if (error.get() != null) throw error.get();
+      Assert.assertTrue("Reading test schema hung!", done.get());
+    } finally {
+      thread.interrupt();
+    }
   }
 }

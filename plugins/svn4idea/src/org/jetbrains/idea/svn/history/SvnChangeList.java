@@ -170,6 +170,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return myAuthor;
   }
 
+  @Nullable
   public Date getCommitDate() {
     return myDate;
   }

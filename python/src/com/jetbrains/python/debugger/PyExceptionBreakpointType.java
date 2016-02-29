@@ -138,7 +138,7 @@ public class PyExceptionBreakpointType
     if (properties != null) {
       String exception = properties.getException();
       if (BASE_EXCEPTION.equals(exception)) {
-        return "All exceptions";
+        return "Any exception";
       }
       return exception;
     }

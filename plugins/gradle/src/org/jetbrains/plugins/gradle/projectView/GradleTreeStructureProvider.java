@@ -21,6 +21,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -29,8 +30,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -53,6 +56,10 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
                                              ViewSettings settings) {
     Project project = parent.getProject();
     if (project == null) return children;
+
+    if (parent instanceof ProjectViewProjectNode) {
+      return getProjectNodeChildren(project, children);
+    }
 
     if (parent instanceof ProjectViewModuleGroupNode) {
       Collection<AbstractTreeNode> modifiedChildren = ContainerUtil.newSmartList();
@@ -125,6 +132,52 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
     }
     return true;
   }
+
+  @NotNull
+  private static Collection<AbstractTreeNode> getProjectNodeChildren(@NotNull Project project,
+                                                                     @NotNull Collection<AbstractTreeNode> children) {
+    Collection<AbstractTreeNode> modifiedChildren = ContainerUtil.newSmartList();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    for (AbstractTreeNode child : children) {
+      Pair<VirtualFile, PsiDirectoryNode> parentNodePair = null;
+      if (child instanceof ProjectViewModuleGroupNode) {
+        final ProjectViewModuleGroupNode groupNode = (ProjectViewModuleGroupNode)child;
+        final Collection<AbstractTreeNode> groupNodeChildren = groupNode.getChildren();
+        for (final AbstractTreeNode node : groupNodeChildren) {
+          if (node instanceof PsiDirectoryNode) {
+            final PsiDirectoryNode psiDirectoryNode = (PsiDirectoryNode)node;
+            final PsiDirectory psiDirectory = psiDirectoryNode.getValue();
+            if (psiDirectory == null) {
+              parentNodePair = null;
+              break;
+            }
+
+            final VirtualFile virtualFile = psiDirectory.getVirtualFile();
+            final Module module = fileIndex.getModuleForFile(virtualFile);
+            if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+              parentNodePair = null;
+              break;
+            }
+
+            if (parentNodePair == null || VfsUtilCore.isAncestor(virtualFile, parentNodePair.first, false)) {
+              parentNodePair = Pair.pair(virtualFile, psiDirectoryNode);
+            }
+            else if (!VfsUtilCore.isAncestor(parentNodePair.first, virtualFile, false)) {
+              parentNodePair = null;
+              break;
+            }
+          }
+          else {
+            parentNodePair = null;
+            break;
+          }
+        }
+      }
+      modifiedChildren.add(parentNodePair != null ? parentNodePair.second : child);
+    }
+    return modifiedChildren;
+  }
+
 
   @Nullable
   private static GradleProjectViewModuleNode getGradleSourceSetNode(@NotNull Project project,
