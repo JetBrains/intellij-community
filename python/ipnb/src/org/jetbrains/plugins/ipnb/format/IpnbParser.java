@@ -28,10 +28,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class IpnbParser {
   private static final Logger LOG = Logger.getInstance(IpnbParser.class);
@@ -194,6 +191,9 @@ public class IpnbParser {
 
     public static IpnbCellRaw fromCell(@NotNull final IpnbCell cell, int nbformat) {
       final IpnbCellRaw raw = new IpnbCellRaw();
+      if (cell instanceof IpnbEditableCell) {
+        raw.metadata = ((IpnbEditableCell)cell).getMetadata();
+      }
       if (cell instanceof IpnbMarkdownCell) {
         raw.cell_type = "markdown";
         raw.source = ((IpnbMarkdownCell)cell).getSource();
@@ -231,7 +231,7 @@ public class IpnbParser {
     public IpnbCell createCell() {
       final IpnbCell cell;
       if (cell_type.equals("markdown")) {
-        cell = new IpnbMarkdownCell(source);
+        cell = new IpnbMarkdownCell(source, metadata);
       }
       else if (cell_type.equals("code")) {
         final List<IpnbOutputCell> outputCells = new ArrayList<IpnbOutputCell>();
@@ -240,13 +240,13 @@ public class IpnbParser {
         }
         final Integer prompt = prompt_number != null ? prompt_number : execution_count;
         cell = new IpnbCodeCell(language == null ? "python" : language, input == null ? source : input,
-                                prompt, outputCells);
+                                prompt, outputCells, metadata);
       }
       else if (cell_type.equals("raw")) {
         cell = new IpnbRawCell(source);
       }
       else if (cell_type.equals("heading")) {
-        cell = new IpnbHeadingCell(source, level);
+        cell = new IpnbHeadingCell(source, level, metadata);
       }
       else {
         cell = null;
@@ -261,7 +261,6 @@ public class IpnbParser {
     String evalue;
     OutputDataRaw data;
     Integer execution_count;
-    String output_type;
     String png;
     String stream;
     String jpeg;
@@ -269,61 +268,71 @@ public class IpnbParser {
     List<String> latex;
     List<String> svg;
     Integer prompt_number;
-    List<String> text;
     List<String> traceback;
     Map<String, Object> metadata;
+    String output_type;
+    List<String> text;
 
     public static CellOutputRaw fromOutput(@NotNull final IpnbOutputCell outputCell, int nbformat) {
       final CellOutputRaw raw = new CellOutputRaw();
-      if (!(outputCell instanceof IpnbStreamOutputCell) && !(outputCell instanceof IpnbErrorOutputCell)) {
-        raw.metadata = new HashMap<String, Object>();
+      raw.metadata = outputCell.getMetadata();
+      if (raw.metadata == null && !(outputCell instanceof IpnbStreamOutputCell) && !(outputCell instanceof IpnbErrorOutputCell)) {
+        raw.metadata = Collections.emptyMap();
       }
 
       if (outputCell instanceof IpnbPngOutputCell) {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
           dataRaw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
+          dataRaw.text = outputCell.getText();
           raw.data = dataRaw;
         }
         else {
           raw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
+          raw.text = outputCell.getText();
         }
-        raw.text = outputCell.getText();
         raw.output_type = "display_data";
       }
       else if (outputCell instanceof IpnbSvgOutputCell) {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
+          dataRaw.text = outputCell.getText();
           dataRaw.svg = ((IpnbSvgOutputCell)outputCell).getSvg();
           raw.data = dataRaw;
+          raw.execution_count = outputCell.getPromptNumber();
+          raw.output_type = outputCell.getPromptNumber() != null ? "execute_result" : "display_data";
         }
         else {
           raw.svg = ((IpnbSvgOutputCell)outputCell).getSvg();
+          raw.text = outputCell.getText();
         }
-        raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbJpegOutputCell) {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
+          dataRaw.text = outputCell.getText();
           dataRaw.jpeg = Lists.newArrayList(((IpnbJpegOutputCell)outputCell).getBase64String());
           raw.data = dataRaw;
         }
         else {
           raw.jpeg = ((IpnbJpegOutputCell)outputCell).getBase64String();
+          raw.text = outputCell.getText();
         }
-        raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbLatexOutputCell) {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
+          dataRaw.text = outputCell.getText();
           dataRaw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
           raw.data = dataRaw;
+          raw.execution_count = outputCell.getPromptNumber();
+          raw.output_type = "execute_result";
         }
         else {
           raw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+          raw.text = outputCell.getText();
+          raw.prompt_number = outputCell.getPromptNumber();
         }
-        raw.prompt_number = outputCell.getPromptNumber();
-        raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbStreamOutputCell) {
         if (nbformat == 4) {
@@ -332,13 +341,14 @@ public class IpnbParser {
         else {
           raw.stream = ((IpnbStreamOutputCell)outputCell).getStream();
         }
-        raw.output_type = "stream";
         raw.text = outputCell.getText();
+        raw.output_type = "stream";
       }
       else if (outputCell instanceof IpnbHtmlOutputCell) {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
           dataRaw.html = ((IpnbHtmlOutputCell)outputCell).getHtmls();
+          dataRaw.text = outputCell.getText();
           raw.data = dataRaw;
           raw.execution_count = outputCell.getPromptNumber();
         }
@@ -367,53 +377,60 @@ public class IpnbParser {
           raw.text = outputCell.getText();
         }
       }
+      else {
+        raw.text = outputCell.getText();
+      }
       return raw;
     }
 
     public IpnbOutputCell createOutput() {
       List<String> text = this.text != null ? this.text : data != null ? data.text : Lists.newArrayList();
+      Integer prompt = execution_count != null ? execution_count : prompt_number;
       final IpnbOutputCell outputCell;
       if (png != null || (data != null && data.png != null)) {
-        outputCell = new IpnbPngOutputCell(png == null ? StringUtil.join(data.png) : png, text, prompt_number);
+        outputCell = new IpnbPngOutputCell(png == null ? StringUtil.join(data.png) : png, text, prompt, metadata);
       }
       else if (jpeg != null || (data != null && data.jpeg != null)) {
-        outputCell = new IpnbJpegOutputCell(jpeg == null ? StringUtil.join(data.jpeg, "") : jpeg, text, prompt_number);
+        outputCell = new IpnbJpegOutputCell(jpeg == null ? StringUtil.join(data.jpeg, "") : jpeg, text, prompt, metadata);
       }
       else if (svg != null || (data != null && data.svg != null)) {
-        outputCell = new IpnbSvgOutputCell(svg == null ? data.svg : svg, text, prompt_number);
-      }
-      else if (latex != null || (data != null && data.latex != null)) {
-        outputCell = new IpnbLatexOutputCell(latex == null ? data.latex : latex, prompt_number, text);
-      }
-      else if (stream != null || name != null) {
-        outputCell = new IpnbStreamOutputCell(stream == null ? name : stream, text, prompt_number);
+        outputCell = new IpnbSvgOutputCell(svg == null ? data.svg : svg, text, prompt, metadata);
       }
       else if (html != null || (data != null && data.html != null)) {
-        outputCell = new IpnbHtmlOutputCell(html == null ? data.html : html, text, prompt_number);
+        outputCell = new IpnbHtmlOutputCell(html == null ? data.html : html, text, prompt, metadata);
+      }
+      else if (latex != null || (data != null && data.latex != null)) {
+        outputCell = new IpnbLatexOutputCell(latex == null ? data.latex : latex, prompt, text, metadata);
+      }
+      else if (stream != null || name != null) {
+        outputCell = new IpnbStreamOutputCell(stream == null ? name : stream, text, prompt, metadata);
       }
       else if ("pyerr".equals(output_type) || "error".equals(output_type)) {
-        outputCell = new IpnbErrorOutputCell(evalue, ename, traceback, prompt_number);
+        outputCell = new IpnbErrorOutputCell(evalue, ename, traceback, prompt, metadata);
       }
       else if ("pyout".equals(output_type)) {
-        outputCell = new IpnbOutOutputCell(text, prompt_number);
+        outputCell = new IpnbOutOutputCell(text, prompt, metadata);
       }
       else if ("execute_result".equals(output_type) && data != null) {
-        outputCell = new IpnbOutOutputCell(data.text, execution_count);
+        outputCell = new IpnbOutOutputCell(data.text, prompt, metadata);
+      }
+      else if ("display_data".equals(output_type)){
+        outputCell = new IpnbPngOutputCell(null, text, prompt, metadata);
       }
       else {
-        outputCell = new IpnbOutputCell(text, prompt_number);
+        outputCell = new IpnbOutputCell(text, prompt, metadata);
       }
       return outputCell;
     }
   }
 
   private static class OutputDataRaw {
-    @SerializedName("text/plain") List<String> text;
+    @SerializedName("image/png") String png;
     @SerializedName("text/html") List<String> html;
     @SerializedName("image/svg+xml") List<String> svg;
-    @SerializedName("image/png") String png;
     @SerializedName("image/jpeg") List<String> jpeg;
     @SerializedName("text/latex") List<String> latex;
+    @SerializedName("text/plain") List<String> text;
   }
 
   static class RawCellAdapter implements JsonSerializer<IpnbCellRaw> {
@@ -430,8 +447,10 @@ public class IpnbParser {
           jsonObject.addProperty("execution_count", count);
         }
       }
-      final JsonElement metadata = gson.toJsonTree(cellRaw.metadata);
-      jsonObject.add("metadata", metadata);
+      if (cellRaw.metadata != null) {
+        final JsonElement metadata = gson.toJsonTree(cellRaw.metadata);
+        jsonObject.add("metadata", metadata);
+      }
       if (cellRaw.level != null) {
         jsonObject.addProperty("level", cellRaw.level);
       }
@@ -533,16 +552,15 @@ public class IpnbParser {
       throws JsonParseException {
       final JsonObject object = json.getAsJsonObject();
       final OutputDataRaw dataRaw = new OutputDataRaw();
-      dataRaw.text = getStringOrArray("text/plain", object);
-      dataRaw.html = getStringOrArray("text/html", object);
-      dataRaw.svg = getStringOrArray("image/svg+xml", object);
       final JsonElement png = object.get("image/png");
       if (png != null) {
         dataRaw.png = png.getAsString();
       }
+      dataRaw.html = getStringOrArray("text/html", object);
+      dataRaw.svg = getStringOrArray("image/svg+xml", object);
       dataRaw.jpeg = getStringOrArray("image/jpeg", object);
       dataRaw.latex = getStringOrArray("text/latex", object);
-
+      dataRaw.text = getStringOrArray("text/plain", object);
       return dataRaw;
     }
   }
@@ -647,9 +665,6 @@ public class IpnbParser {
       if (cellRaw.execution_count != null) {
         jsonObject.addProperty("execution_count", cellRaw.execution_count);
       }
-      if (cellRaw.output_type != null) {
-        jsonObject.addProperty("output_type", cellRaw.output_type);
-      }
       if (cellRaw.png != null) {
         jsonObject.addProperty("png", cellRaw.png);
       }
@@ -678,10 +693,6 @@ public class IpnbParser {
       if (cellRaw.prompt_number != null) {
         jsonObject.addProperty("prompt_number", cellRaw.prompt_number);
       }
-      if (cellRaw.text != null) {
-        final JsonElement text = gson.toJsonTree(cellRaw.text);
-        jsonObject.add("text", text);
-      }
       if (cellRaw.traceback != null) {
         final JsonElement traceback = gson.toJsonTree(cellRaw.traceback);
         jsonObject.add("traceback", traceback);
@@ -690,6 +701,13 @@ public class IpnbParser {
       if (cellRaw.metadata != null) {
         final JsonElement metadata = gson.toJsonTree(cellRaw.metadata);
         jsonObject.add("metadata", metadata);
+      }
+      if (cellRaw.output_type != null) {
+        jsonObject.addProperty("output_type", cellRaw.output_type);
+      }
+      if (cellRaw.text != null) {
+        final JsonElement text = gson.toJsonTree(cellRaw.text);
+        jsonObject.add("text", text);
       }
 
       return jsonObject;
@@ -701,9 +719,8 @@ public class IpnbParser {
     public JsonElement serialize(OutputDataRaw cellRaw, Type typeOfSrc, JsonSerializationContext context) {
       final JsonObject jsonObject = new JsonObject();
 
-      if (cellRaw.text != null) {
-        final JsonElement text = gson.toJsonTree(cellRaw.text);
-        jsonObject.add("text/plain", text);
+      if (cellRaw.png != null) {
+        jsonObject.addProperty("image/png", cellRaw.png);
       }
       if (cellRaw.html != null) {
         final JsonElement html = gson.toJsonTree(cellRaw.html);
@@ -713,9 +730,6 @@ public class IpnbParser {
         final JsonElement svg = gson.toJsonTree(cellRaw.svg);
         jsonObject.add("image/svg+xml", svg);
       }
-      if (cellRaw.png != null) {
-        jsonObject.addProperty("image/png", cellRaw.png);
-      }
       if (cellRaw.jpeg != null) {
         final JsonElement jpeg = gson.toJsonTree(cellRaw.jpeg);
         jsonObject.add("image/jpeg", jpeg);
@@ -723,6 +737,10 @@ public class IpnbParser {
       if (cellRaw.latex != null) {
         final JsonElement latex = gson.toJsonTree(cellRaw.latex);
         jsonObject.add("text/latex", latex);
+      }
+      if (cellRaw.text != null) {
+        final JsonElement text = gson.toJsonTree(cellRaw.text);
+        jsonObject.add("text/plain", text);
       }
 
       return jsonObject;
