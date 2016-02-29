@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.ContentManager;
@@ -37,7 +38,8 @@ public class CloseLogTabAction extends CloseTabToolbarAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    if (getTabbedContent(getContentManager(e.getProject())) == null) {
+    ContentManager contentManager = getContentManager(e.getProject());
+    if (contentManager == null || getTabbedContent(contentManager) == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -49,6 +51,7 @@ public class CloseLogTabAction extends CloseTabToolbarAction {
     assert project != null;
 
     ContentManager contentManager = getContentManager(project);
+    if (contentManager == null) return;
     TabbedContent tabbedContent = getTabbedContent(contentManager);
     if (tabbedContent == null) return;
 
@@ -69,8 +72,10 @@ public class CloseLogTabAction extends CloseTabToolbarAction {
     return tabbedContent;
   }
 
-  @NotNull
+  @Nullable
   private static ContentManager getContentManager(@NotNull Project project) {
-    return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).getContentManager();
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    if (toolWindow == null) return null;
+    return toolWindow.getContentManager();
   }
 }

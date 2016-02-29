@@ -38,7 +38,6 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
-import com.intellij.vcs.log.ui.actions.RefreshLogAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.util.BekUtil;
 import net.miginfocom.swing.MigLayout;
@@ -199,11 +198,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private JComponent createActionsToolbar() {
-    AnAction refreshLogAction = ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_REFRESH_ACTION);
-    if (refreshLogAction instanceof RefreshLogAction) {
-      ((RefreshLogAction)refreshLogAction).registerShortcutOn(this);
-    }
-
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
 

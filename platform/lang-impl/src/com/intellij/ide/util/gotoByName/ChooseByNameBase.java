@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,6 +166,7 @@ public abstract class ChooseByNameBase {
   static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   private boolean myFixLostTyping = true;
   private boolean myAlwaysHasMore = false;
+  private Point myFocusPoint;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -509,6 +510,20 @@ public abstract class ChooseByNameBase {
       myTextField.addFocusListener(new FocusAdapter() {
         @Override
         public void focusLost(@NotNull final FocusEvent e) {
+          if (Registry.is("focus.follows.mouse.workarounds")) {
+            if (myFocusPoint != null) {
+              PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+              if (pointerInfo != null && myFocusPoint.equals(pointerInfo.getLocation())) {
+                // Ignore the loss of focus if the mouse hasn't moved between the last dropdown resize
+                // and the loss of focus event. This happens in focus follows mouse mode if the mouse is
+                // over the dropdown and it resizes to leave the mouse outside the dropdown.
+                IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
+                myFocusPoint = null;
+                return;
+              }
+            }
+            myFocusPoint = null;
+          }
           cancelListUpdater(); // cancel thread as early as possible
           myHideAlarm.addRequest(new Runnable() {
             @Override
@@ -1044,6 +1059,12 @@ public abstract class ChooseByNameBase {
   private void setElementsToList(int pos, @NotNull Collection<?> elements) {
     myListUpdater.cancelAll();
     if (checkDisposed()) return;
+    if (isCloseByFocusLost() && Registry.is("focus.follows.mouse.workarounds")) {
+      PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+      if (pointerInfo != null) {
+        myFocusPoint = pointerInfo.getLocation();
+      }
+    }
     if (elements.isEmpty()) {
       myListModel.clear();
       myTextField.setForeground(JBColor.red);

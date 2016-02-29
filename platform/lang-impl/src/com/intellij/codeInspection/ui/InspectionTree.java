@@ -40,15 +40,13 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.TreeWillExpandListener;
+import javax.swing.event.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
@@ -59,9 +57,10 @@ public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
   @NotNull private final GlobalInspectionContextImpl myContext;
   private SelectionPath mySelectionPath;
+  private boolean myQueueUpdate;
 
   public InspectionTree(@NotNull Project project, @NotNull GlobalInspectionContextImpl context) {
-    super(new InspectionRootNode(project));
+    setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(this))));
     myContext = context;
 
     setCellRenderer(new CellRenderer());
@@ -89,6 +88,14 @@ public class InspectionTree extends Tree {
         }
       }
     });
+  }
+
+  public void setQueueUpdate(boolean queueUpdate) {
+    myQueueUpdate = queueUpdate;
+  }
+
+  public boolean isUnderQueueUpdate() {
+    return myQueueUpdate;
   }
 
   public void removeAllNodes() {
@@ -297,9 +304,9 @@ public class InspectionTree extends Tree {
     }
   }
 
-  private void restoreExpansionStatus(InspectionTreeNode node) {
+  public void restoreExpansionStatus(InspectionTreeNode node) {
     if (myExpandedUserObjects.contains(node.getUserObject())) {
-      sortChildren(node);
+      //sortChildren(node);
       TreeNode[] pathToNode = node.getPath();
       expandPath(new TreePath(pathToNode));
       Enumeration children = node.children();

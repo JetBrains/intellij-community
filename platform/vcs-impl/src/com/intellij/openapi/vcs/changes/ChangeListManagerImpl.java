@@ -65,6 +65,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -1648,6 +1649,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     Future future = ourUpdateAlarm.get();
     if (future != null) {
       future.cancel(true);
+    }
+  }
+
+  @TestOnly
+  public void waitEverythingDoneInTestMode() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    Future future = ourUpdateAlarm.get();
+    if (future != null) {
+      try {
+        future.get();
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -100,6 +101,9 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   public FileStatus getFileStatus(@NotNull final VirtualFile virtualFile) {
     final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
     if (vcs == null) {
+      if (ScratchUtil.isScratch(virtualFile)) {
+        return FileStatus.SUPPRESSED;
+      }
       return FileStatusManagerImpl.getDefaultStatus(virtualFile);
     }
 

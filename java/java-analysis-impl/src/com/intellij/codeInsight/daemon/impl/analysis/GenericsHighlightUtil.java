@@ -502,7 +502,7 @@ public class GenericsHighlightUtil {
         if (unrelatedMethodContainingClass == null) continue;
         if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && astracts != null && unrelatedMethodContainingClass.isInterface()) {
           if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) && 
-              MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(PsiSubstitutor.EMPTY), 
+              MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(unrelatedMethodContainingClass, defaultMethodContainingClass, PsiSubstitutor.EMPTY)), 
                                                  defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
             continue;
           }

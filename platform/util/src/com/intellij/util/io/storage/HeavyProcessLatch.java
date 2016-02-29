@@ -31,11 +31,12 @@ import java.util.Set;
 
 public class HeavyProcessLatch {
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
-  private static final String UI_ACTIVITY = "UI Activity";
 
   private final Set<String> myHeavyProcesses = new THashSet<String>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
+  private final EventDispatcher<HeavyProcessListener> myUIProcessDispatcher = EventDispatcher.create(HeavyProcessListener.class);
   private volatile Thread myUiActivityThread;
+  private volatile long myPrioritizingDeadLine;
 
   private HeavyProcessLatch() {
   }
@@ -60,14 +61,6 @@ public class HeavyProcessLatch {
         processFinished(operationName);
       }
     };
-  }
-
-  /**
-   * @deprecated use {@link #processStarted(String)} instead
-   */
-  @Deprecated
-  public void processFinished() {
-    processFinished("");
   }
 
   private void processFinished(@NotNull String operationName) {
@@ -99,13 +92,21 @@ public class HeavyProcessLatch {
     myEventDispatcher.addListener(listener, parentDisposable);
   }
 
+  public void addUIActivityListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
+    myUIProcessDispatcher.addListener(listener, parentDisposable);
+  }
+
   /**
    * Gives current event processed on Swing thread higher priority
    * @see #stopThreadPrioritizing()
    */
   public void prioritizeUiActivity() {
+    // don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
+    // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
+    myPrioritizingDeadLine = System.currentTimeMillis() + 12 * 1000;
+
     myUiActivityThread = Thread.currentThread();
-    processStarted(UI_ACTIVITY);
+    myUIProcessDispatcher.getMulticaster().processStarted();
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
@@ -122,7 +123,7 @@ public class HeavyProcessLatch {
    */
   public void stopThreadPrioritizing() {
     myUiActivityThread = null;
-    processFinished(UI_ACTIVITY);
+    myUIProcessDispatcher.getMulticaster().processFinished();
   }
 
   /**
@@ -130,7 +131,14 @@ public class HeavyProcessLatch {
    */
   public boolean isInsideLowPriorityThread() {
     Thread thread = myUiActivityThread;
-    return thread != null && thread != Thread.currentThread();
+    if (thread != null && thread != Thread.currentThread()) {
+      if (System.currentTimeMillis() > myPrioritizingDeadLine) {
+        stopThreadPrioritizing();
+        return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   /**

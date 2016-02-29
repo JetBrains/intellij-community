@@ -17,7 +17,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
@@ -89,7 +89,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     }
   }
 
-  private class WatchEditorSessionListener extends XDebugSessionAdapter {
+  private class WatchEditorSessionListener implements XDebugSessionListener {
     private final XDebugSession mySession;
 
     public WatchEditorSessionListener(@NotNull XDebugSession session) {

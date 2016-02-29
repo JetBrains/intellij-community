@@ -59,7 +59,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NonNls;
@@ -72,6 +71,8 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitCheckinEnvironment implements CheckinEnvironment {
   private static final Logger log = Logger.getInstance(GitCheckinEnvironment.class.getName());
@@ -112,15 +113,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
-      VirtualFile mergeMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_MERGE_MSG);
-      VirtualFile squashMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_SQUASH_MSG);
+      GitRepository repository = assertNotNull(manager.getRepositoryForRoot(root));
+      File mergeMsg = repository.getRepositoryFiles().getMergeMessageFile();
+      File squashMsg = repository.getRepositoryFiles().getSquashMessageFile();
       try {
-        if (mergeMsg == null && squashMsg == null) {
+        if (!mergeMsg.exists() && !squashMsg.exists()) {
           continue;
         }
         String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
-        if (mergeMsg != null) {
+        if (mergeMsg.exists()) {
           messages.add(loadMessage(mergeMsg, encoding));
         }
         else {
@@ -136,8 +139,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return DvcsUtil.joinMessagesOrNull(messages);
   }
 
-  private static String loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
-    return FileUtil.loadFile(new File(messageFile.getPath()), encoding);
+  private static String loadMessage(@NotNull File messageFile, @NotNull String encoding) throws IOException {
+    return FileUtil.loadFile(messageFile, encoding);
   }
 
   public String getHelpId() {

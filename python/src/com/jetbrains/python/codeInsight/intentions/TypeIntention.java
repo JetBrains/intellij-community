@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.google.common.base.Function;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
@@ -80,7 +81,7 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   @Nullable
-  protected static PyExpression getProblemElement(@Nullable PsiElement elementAt) {
+  public static PyExpression getProblemElement(@Nullable PsiElement elementAt) {
     PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyReferenceExpression.class);
     if (problemElement == null) return null;
     if (problemElement instanceof PyQualifiedExpression) {
@@ -108,13 +109,22 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   private boolean isAvailableForReturn(@NotNull final PsiElement elementAt) {
+    return resolvesToFunction(elementAt, new Function<PyFunction, Boolean>() {
+      @Override
+      public Boolean apply(PyFunction input) {
+        return !isReturnTypeDefined(input);
+      }
+    });
+  }
+
+  static boolean resolvesToFunction(@NotNull PsiElement elementAt, Function<PyFunction, Boolean> isAvailableForFunction) {
     final PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
     if (parentFunction != null) {
       final ASTNode nameNode = parentFunction.getNameNode();
       if (nameNode != null) {
         final PsiElement prev = elementAt.getContainingFile().findElementAt(elementAt.getTextOffset()-1);
         if (nameNode.getPsi() == elementAt || nameNode.getPsi() == prev) {
-          return !isReturnTypeDefined(parentFunction);
+          return  isAvailableForFunction.apply(parentFunction);
         }
       }
     }
@@ -126,18 +136,19 @@ public abstract class TypeIntention implements IntentionAction {
     final PsiReference reference = callee.getReference();
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
-      if (results.length == 1) {
-        final PsiElement result = results[0].getElement();
-        if (!(result instanceof PyFunction)) return false;
-        final PsiFile psiFile = result.getContainingFile();
-        if (psiFile == null) return false;
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null) {
-          if (ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
-            return false;
+      for (int i = 0; i<results.length; i++) {
+        if (results[i].getElement() instanceof PyFunction) {
+          final PsiElement result = results[i].getElement();
+          final PsiFile psiFile = result.getContainingFile();
+          if (psiFile == null) return false;
+          final VirtualFile virtualFile = psiFile.getVirtualFile();
+          if (virtualFile != null) {
+            if (ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
+              return false;
+            }
           }
+          return isAvailableForFunction.apply((PyFunction)result);
         }
-        return !isReturnTypeDefined((PyFunction)result);
       }
     }
     return false;
@@ -148,7 +159,7 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   @Nullable
-  protected static PyCallExpression getCallExpression(PsiElement elementAt) {
+  static PyCallExpression getCallExpression(PsiElement elementAt) {
     final PyExpression problemElement = getProblemElement(elementAt);
     if (problemElement != null) {
       PsiReference reference = problemElement.getReference();
@@ -172,7 +183,7 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   @Nullable
-  protected PyCallable getCallable(PsiElement elementAt) {
+  static PyCallable getCallable(PsiElement elementAt) {
     PyCallExpression callExpression = getCallExpression(elementAt);
 
     if (callExpression != null && elementAt != null) {
@@ -182,7 +193,7 @@ public abstract class TypeIntention implements IntentionAction {
     return PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
   }
 
-  protected PyResolveContext getResolveContext(@NotNull PsiElement origin) {
+  protected static PyResolveContext getResolveContext(@NotNull PsiElement origin) {
     return PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(origin.getProject(), origin.getContainingFile()));
   }
 

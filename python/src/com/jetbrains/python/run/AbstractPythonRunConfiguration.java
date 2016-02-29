@@ -129,7 +129,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @NotNull
   @Override
   public final SettingsEditor<T> getConfigurationEditor() {
-    final SettingsEditor<T> runConfigurationEditor = createConfigurationEditor();
+    final SettingsEditor<T> runConfigurationEditor = PythonExtendedConfigurationEditor.create(createConfigurationEditor());
 
     final SettingsEditorGroup<T> group = new SettingsEditorGroup<T>();
 

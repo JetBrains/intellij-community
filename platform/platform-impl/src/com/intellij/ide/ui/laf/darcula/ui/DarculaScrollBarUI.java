@@ -27,6 +27,7 @@ import static com.intellij.util.ReflectionUtil.newInstance;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated
 public class DarculaScrollBarUI extends ButtonlessScrollBarUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})

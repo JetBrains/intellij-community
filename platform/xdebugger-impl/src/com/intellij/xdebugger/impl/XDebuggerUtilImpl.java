@@ -39,6 +39,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -152,7 +153,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
         XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
         if (breakpoint != null) {
-          breakpointManager.removeBreakpoint(breakpoint);
+          if (Registry.is("debugger.click.disable.breakpoints")) {
+            breakpoint.setEnabled(!breakpoint.isEnabled());
+          }
+          else {
+            breakpointManager.removeBreakpoint(breakpoint);
+          }
         }
         else {
           List<? extends XLineBreakpointType<P>.XLineBreakpointVariant> variants = type.computeVariants(project, position);

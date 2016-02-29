@@ -384,22 +384,36 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private void doCommit(@NotNull final Document document) {
     assert !myIsCommitInProgress : "Do not call commitDocument() from inside PSI change listener";
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+
+    // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
+    if (getSynchronizer().isDocumentAffectedByTransactions(document)) return;
+
+    final PsiFile psiFile = getPsiFile(document);
+    if (psiFile == null) {
+      myUncommittedDocuments.remove(document);
+      return; // the project must be closing or file deleted
+    }
+
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
-        if (getSynchronizer().isDocumentAffectedByTransactions(document)) return;
-
         myIsCommitInProgress = true;
         try {
-          myDocumentCommitProcessor.commitSynchronously(document, myProject);
+          myDocumentCommitProcessor.commitSynchronously(document, myProject, psiFile);
         }
         finally {
           myIsCommitInProgress = false;
         }
         assert !isInUncommittedSet(document) : "Document :" + document;
       }
-    });
+    };
+
+    if (Boolean.TRUE.equals(psiFile.getViewProvider().getVirtualFile().getUserData(SingleRootFileViewProvider.FREE_THREADED))) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().runWriteAction(runnable);
+    }
   }
 
   @Override
@@ -750,7 +764,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     final List<PsiFile> files = viewProvider.getAllFiles();
     boolean commitNecessary = true;
     for (PsiFile file : files) {

@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -77,10 +76,8 @@ public abstract class CCRunTestsAction extends AnAction {
     if (taskFile == null) {
       return;
     }
-    if (psiFile.getName().contains(".answer")) {
-      presentation.setEnabledAndVisible(true);
-      presentation.setText("Run tests from '" + FileUtil.getNameWithoutExtension(psiFile.getName()) + "'");
-    }
+    presentation.setEnabledAndVisible(true);
+    presentation.setText("Run tests from '" + FileUtil.getNameWithoutExtension(psiFile.getName()) + "'");
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -137,32 +134,20 @@ public abstract class CCRunTestsAction extends AnAction {
 
   private static void createTaskFileForTest(@NotNull final VirtualFile taskDir, final String fileName, @NotNull final TaskFile taskFile,
                                             @NotNull final Project project) {
-    try {
-      String answerFileName = FileUtil.getNameWithoutExtension(fileName) + ".answer";
-      final String extension = FileUtilRt.getExtension(fileName);
-      final VirtualFile answerFile = taskDir.findChild(answerFileName + "." + extension);
-      if (answerFile == null) {
-        LOG.debug("could not find answer file " + answerFileName);
-        return;
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-          documentManager.saveAllDocuments();
-        }
-      });
-      final VirtualFile oldTaskFile = taskDir.findChild(fileName);
-      if (oldTaskFile != null) {
-        oldTaskFile.delete(project);
-      }
-      VirtualFile copy = answerFile.copy(project, taskDir, fileName);
-      EduUtils.flushWindows(taskFile, copy, false);
-      createResourceFiles(answerFile, project);
+    final VirtualFile answerFile = taskDir.findChild(fileName);
+    if (answerFile == null) {
+      LOG.debug("could not find answer file " + fileName);
+      return;
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        documentManager.saveAllDocuments();
+      }
+    });
+    EduUtils.flushWindows(taskFile, answerFile, false);
+    createResourceFiles(answerFile, project);
   }
 
   public static void clearTestEnvironment(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
@@ -181,9 +166,6 @@ public abstract class CCRunTestsAction extends AnAction {
         if (file.getName().contains(EduNames.WINDOWS_POSTFIX)) {
           file.delete(project);
         }
-        if (CCProjectService.getInstance(project).isTaskFile(file)) {
-          file.delete(project);
-        }
       }
     }
     catch (IOException e) {
@@ -192,9 +174,9 @@ public abstract class CCRunTestsAction extends AnAction {
   }
 
   protected abstract void executeTests(@NotNull final Project project,
-                                   @NotNull final VirtualFile virtualFile,
-                                   @NotNull final VirtualFile taskDir,
-                                   @NotNull final VirtualFile testFile);
+                                       @NotNull final VirtualFile virtualFile,
+                                       @NotNull final VirtualFile taskDir,
+                                       @NotNull final VirtualFile testFile);
 
   //some tests could compare task files after user modifications with initial task files
   private static void createResourceFiles(@NotNull final VirtualFile file, @NotNull final Project project) {
@@ -229,12 +211,12 @@ public abstract class CCRunTestsAction extends AnAction {
     }
   }
 
-  private static VirtualFile findOrCreateDir(@NotNull final Project project, @NotNull final VirtualFile dir, String name) throws IOException {
+  private static VirtualFile findOrCreateDir(@NotNull final Project project, @NotNull final VirtualFile dir, String name)
+    throws IOException {
     VirtualFile targetDir = dir.findChild(name);
     if (targetDir == null) {
       targetDir = dir.createChildDirectory(project, name);
     }
     return targetDir;
   }
-
 }

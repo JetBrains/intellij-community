@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
 public class VfsImplUtil {
@@ -81,16 +82,23 @@ public class VfsImplUtil {
 
   @Nullable
   public static NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    return findCachedFileByPath(vfs, path).first;
+  }
+
+  @NotNull
+  public static Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
-    if (data == null) return null;
+    if (data == null) return Pair.empty();
 
     NewVirtualFile file = data.first;
     for (String pathElement : data.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
+
+      NewVirtualFile last = file;
       if ("..".equals(pathElement)) {
         if (file.is(VFileProperty.SYMLINK)) {
-          final String canonicalPath = file.getCanonicalPath();
-          final NewVirtualFile canonicalFile = canonicalPath != null ? findFileByPathIfCached(vfs, canonicalPath) : null;
+          String canonicalPath = file.getCanonicalPath();
+          NewVirtualFile canonicalFile = canonicalPath != null ? findCachedFileByPath(vfs, canonicalPath).first : null;
           file = canonicalFile != null ? canonicalFile.getParent() : null;
         }
         else {
@@ -101,10 +109,10 @@ public class VfsImplUtil {
         file = file.findChildIfCached(pathElement);
       }
 
-      if (file == null) return null;
+      if (file == null) return pair(null, last);
     }
 
-    return file;
+    return pair(file, null);
   }
 
   @Nullable

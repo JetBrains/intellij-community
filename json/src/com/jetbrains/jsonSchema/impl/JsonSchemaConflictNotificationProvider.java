@@ -63,7 +63,10 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
     final List<Pair<Boolean, String>> descriptors = myJsonSchemaService.getMatchingSchemaDescriptors(file);
     if (descriptors == null || descriptors.size() <= 1) return null;
 
-    final String message = createMessage(descriptors);
+    final Worker worker = new Worker();
+    final String message = worker.createMessage(descriptors);
+    if (message == null) return null;
+
     final EditorNotificationPanel panel = new EditorNotificationPanel() {
       @Override
       public Color getBackground() {
@@ -81,20 +84,27 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
     return panel;
   }
 
-  private static String createMessage(@NotNull final List<Pair<Boolean, String>> descriptors) {
-    boolean haveSystemSchemas = false;
-    for (Pair<Boolean, String> pair : descriptors) {
-      haveSystemSchemas |= !Boolean.TRUE.equals(pair.getFirst());
-    }
-    boolean withTypes = haveSystemSchemas;
-    final List<String> names = new ArrayList<>();
-    for (Pair<Boolean, String> pair : descriptors) {
-      if (withTypes) {
-        names.add((Boolean.TRUE.equals(pair.getFirst()) ? "user" : "system") + " schema '" + pair.getSecond() + "'");
-      } else {
-        names.add(pair.getSecond());
+  private static class Worker {
+    public String createMessage(@NotNull final List<Pair<Boolean, String>> descriptors) {
+      int numOfSystemSchemas = 0;
+      for (Pair<Boolean, String> pair : descriptors) {
+        if (!Boolean.TRUE.equals(pair.getFirst())) {
+          ++ numOfSystemSchemas;
+        }
       }
+      if (numOfSystemSchemas == 1) {
+        return null;
+      }
+      boolean withTypes = numOfSystemSchemas > 0;
+      final List<String> names = new ArrayList<>();
+      for (Pair<Boolean, String> pair : descriptors) {
+        if (withTypes) {
+          names.add((Boolean.TRUE.equals(pair.getFirst()) ? "user" : "system") + " schema '" + pair.getSecond() + "'");
+        } else {
+          names.add(pair.getSecond());
+        }
+      }
+      return "<html>There are several JSON Schemas mapped to this file: " + StringUtil.join(names, "; ") + "</html>";
     }
-    return "<html>There are several JSON Schemas mapped to this file: " + StringUtil.join(names, "; ") + "</html>";
   }
 }

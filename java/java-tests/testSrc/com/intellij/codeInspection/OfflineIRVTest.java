@@ -54,7 +54,7 @@ public class OfflineIRVTest extends TestSourceBasedTestCase {
   private LocalInspectionToolWrapper myToolWrapper;
 
   private static String varMessage(String name) {
-    return InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "<code>"+name+"</code>") + ".";
+    return InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "'" + name + "'");
   }
 
   @Override
@@ -146,7 +146,7 @@ public class OfflineIRVTest extends TestSourceBasedTestCase {
                                            + "      -f()\n"
                                            + "       -D\n"
                                            + "        -b()\n"
-                                           + "         " + InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "'" + "r" + "'") + "\n"
+                                           + "         " + varMessage("r") + "\n"
                                            + "         -anonymous (java.lang.Runnable)\n"
                                            + "          -run()\n"
                                            + "           " + varMessage("i") + "\n"

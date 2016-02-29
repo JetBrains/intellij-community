@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -158,11 +157,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
           final XmlTag currentTag = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlTag.class);
           final Map<String, XmlAttributeValue> fileIds = JavaFxPsiUtil.collectFileIds(currentTag);
           final PsiClass targetPropertyClass = JavaFxPsiUtil.getPropertyClass(xmlAttributeValue);
-          if (targetPropertyClass == null ||
-              Comparing.strEqual(targetPropertyClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING) ||
-              JavaFxPsiUtil.findValueOfMethod(targetPropertyClass) != null) {
-            return null;
-          }
+          if (targetPropertyClass == null || JavaFxPsiUtil.hasConversionFromAnyType(targetPropertyClass)) return null;
           final PsiClass valueClass;
           if (JavaFxPsiUtil.isExpressionBinding(value)) {
             final String expressionText = referencesId.substring(1, referencesId.length() - 1);

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -201,6 +202,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
     myDataManager = new VcsLogDataManager(myProject, myLogProviders);
+    Disposer.register(myProject, myDataManager);
     return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(),
                                    myTopDetailsCache, dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override

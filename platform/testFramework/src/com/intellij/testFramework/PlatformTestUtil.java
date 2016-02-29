@@ -80,8 +80,8 @@ import java.util.jar.JarFile;
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
-  private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
+  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -861,18 +861,9 @@ public class PlatformTestUtil {
     GCUtil.tryGcSoftlyReachableObjects();
   }
 
-  public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {
-    withEncoding(encoding, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        r.run();
-      }
-    });
-  }
-
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
-    Charset oldCharset = Charset.defaultCharset();
     try {
+      Charset oldCharset = Charset.defaultCharset();
       try {
         patchSystemFileEncoding(encoding);
         r.run();

@@ -272,7 +272,7 @@ public class GitRebaseDialog extends DialogWrapper {
       setOKActionEnabled(false);
       return;
     }
-    if (GitRebaseUtils.isRebaseInTheProgress(gitRoot())) {
+    if (GitRebaseUtils.isRebaseInTheProgress(myProject, gitRoot())) {
       setErrorText(GitBundle.getString("rebase.in.progress"));
       setOKActionEnabled(false);
       return;

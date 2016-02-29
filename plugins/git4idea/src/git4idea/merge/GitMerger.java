@@ -15,60 +15,58 @@
  */
 package git4idea.merge;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.repo.GitRepositoryFiles;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashSet;
 
-/**
- *
- * @author Kirill Likhodedov
- */
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static git4idea.GitUtil.getRootsFromRepositories;
+
 public class GitMerger {
 
   private final Project myProject;
-  private final GitVcs myVcs;
+  private final GitRepositoryManager myRepositoryManager;
 
-  public GitMerger(Project project) {
+  public GitMerger(@NotNull Project project) {
     myProject = project;
-    myVcs = GitVcs.getInstance(project);
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
   }
 
-
+  @NotNull
   public Collection<VirtualFile> getMergingRoots() {
-    final Collection<VirtualFile> mergingRoots = new HashSet<VirtualFile>();
-    for (VirtualFile root : ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs)) {
-      if (GitMergeUtil.isMergeInProgress(root)) {
-        mergingRoots.add(root);
+    return getRootsFromRepositories(filter(myRepositoryManager.getRepositories(), new Condition<GitRepository>() {
+      @Override
+      public boolean value(GitRepository repository) {
+        return repository.getState() == Repository.State.MERGING;
       }
-    }
-    return mergingRoots;
+    }));
   }
 
-  public void mergeCommit(Collection<VirtualFile> roots) throws VcsException {
+  public void mergeCommit(@NotNull Collection<VirtualFile> roots) throws VcsException {
     for (VirtualFile root : roots) {
       mergeCommit(root);
     }
   }
 
-  public void mergeCommit(VirtualFile root) throws VcsException {
+  public void mergeCommit(@NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
 
-    File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
-    File messageFile = new File(gitDir, GitRepositoryFiles.MERGE_MSG);
+    File messageFile = assertNotNull(myRepositoryManager.getRepositoryForRoot(root)).getRepositoryFiles().getMergeMessageFile();
     if (!messageFile.exists()) {
       final GitBranch branch = GitBranchUtil.getCurrentBranch(myProject, root);
       final String branchName = branch != null ? branch.getName() : "";

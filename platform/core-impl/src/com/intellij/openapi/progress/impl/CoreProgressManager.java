@@ -54,7 +54,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   private static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
-  private static final boolean ourMaySleepInCheckCanceled = Registry.is("ide.prioritize.ui.thread", false);
+  private static boolean ourMaySleepInCheckCanceled;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
   // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
@@ -73,7 +73,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
 
   public CoreProgressManager() {
-    HeavyProcessLatch.INSTANCE.addListener(this, new HeavyProcessLatch.HeavyProcessListener() {
+    HeavyProcessLatch.INSTANCE.addUIActivityListener(this, new HeavyProcessLatch.HeavyProcessListener() {
       @Override
       public void processStarted() {
         updateShouldCheckCanceled();
@@ -504,6 +504,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private static void updateShouldCheckCanceled() {
+    ourMaySleepInCheckCanceled = Registry.is("ide.prioritize.ui.thread", false);
     if (ourMaySleepInCheckCanceled && HeavyProcessLatch.INSTANCE.hasPrioritizedThread()) {
       shouldCheckCanceled = true;
       return;

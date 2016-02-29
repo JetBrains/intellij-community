@@ -31,7 +31,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
@@ -714,8 +713,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       myTextString = null;
       ImmutableText prevText = myText;
       myText = newText;
+      sequence.incrementAndGet(); // increment sequence before firing events so that modification sequence on commit will match this sequence now
       changedUpdate(event, newModificationStamp, prevText);
-      sequence.incrementAndGet();
     }
     finally {
       myChangeInProgress = false;

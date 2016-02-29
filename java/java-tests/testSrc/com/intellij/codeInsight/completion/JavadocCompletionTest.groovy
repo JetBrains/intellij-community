@@ -600,7 +600,7 @@ class Foo {
     myFixture.addClass('package zoo; public class Outer { public static class FooBarGoo{}}')
     myFixture.configureByText 'a.java', "/** FooBarGo<caret> */"
     myFixture.completeBasic()
-    myFixture.checkResult "/** {@link zoo.Outer#FooBarGoo<caret>} */"
+    myFixture.checkResult "/** {@link zoo.Outer.FooBarGoo<caret>} */"
   }
 
   public void "test insert link to imported class"() {
@@ -614,6 +614,13 @@ class Foo {
     myFixture.completeBasic()
     myFixture.type('\n')
     myFixture.checkResult "/** a. {@link #foo(int)}<caret> */ interface Foo { void foo(int a); }}"
+  }
+
+  public void "test insert link to field"() {
+    myFixture.configureByText 'a.java', "/** a. #fo<caret> */ interface Foo { int foo; }}"
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult "/** a. {@link #foo}<caret> */ interface Foo { int foo; }}"
   }
 
   public void "test wrap null into code tag"() {

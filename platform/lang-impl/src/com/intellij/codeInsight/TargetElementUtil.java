@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,19 +129,28 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (project == null) return null;
 
     Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = getFile(project, document);
     if (file == null) return null;
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
 
     offset = adjustOffset(file, document, offset);
 
-    if (file instanceof PsiCompiledFile) {
-      return ((PsiCompiledFile) file).getDecompiledPsiFile().findReferenceAt(offset);
+    return file.findReferenceAt(offset);
+  }
+
+  private static PsiFile getFile(Project project, Document document) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+
+    if (file != null) {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      }
+
+      if (file instanceof PsiCompiledFile) {
+        file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+      }
     }
 
-    return file.findReferenceAt(offset);
+    return file;
   }
 
   /**
@@ -234,10 +243,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
 
     Document document = editor.getDocument();
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = getFile(project, document);
     if (file == null) return null;
 
     offset = adjustOffset(file, document, offset);

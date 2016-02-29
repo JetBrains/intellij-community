@@ -13,6 +13,8 @@ import java.util.List;
 public class PySignature {
   private final String myFile;
   private final String myFunctionName;
+  
+  private NamedParameter myReturnType = null;
 
   private final List<NamedParameter> myArgs = Lists.newArrayList();
 
@@ -46,6 +48,22 @@ public class PySignature {
     return myArgs;
   }
 
+  public NamedParameter getReturnType() {
+    return myReturnType;
+  }
+
+  public PySignature addReturnType(@Nullable String returnType) {
+    if (StringUtil.isNotEmpty(returnType)) {
+      if (myReturnType != null) {
+        myReturnType.addType(returnType);
+      }
+      else {
+        myReturnType = new NamedParameter("", returnType);
+      }
+    }
+    return this;
+  }
+
   @NotNull
   public PySignature addAllArgs(@NotNull PySignature signature) {
     for (NamedParameter param : signature.getArgs()) {
@@ -69,6 +87,11 @@ public class PySignature {
     }
 
     return null;
+  }
+
+  @Nullable
+  public String getReturnTypeQualifiedName() {
+    return myReturnType != null ? myReturnType.getTypeQualifiedName() : null;
   }
 
 

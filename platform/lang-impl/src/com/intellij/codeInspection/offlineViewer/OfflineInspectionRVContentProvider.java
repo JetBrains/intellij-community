@@ -125,11 +125,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
             return new OfflineProblemDescriptorContainer(descriptor);
           }
         };
-      final List<InspectionTreeNode> list = buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure);
-      for (InspectionTreeNode node : list) {
-        toolNode.add(node);
-      }
       parentNode.add(toolNode);
+      buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure, toolNode::add);
     }
   }
 
@@ -175,13 +172,15 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                   @NotNull final InspectionToolWrapper toolWrapper,
                                   @NotNull final UserObjectContainer container,
-                                  @NotNull final InspectionPackageNode packageNode,
+                                  @NotNull final InspectionTreeNode packageNode,
                                   final boolean canPackageRepeat) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final RefElementNode elemNode = addNodeToParent(container, presentation, packageNode);
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      elemNode.add(new OfflineProblemDescriptorNode(((OfflineProblemDescriptorContainer)container).getUserObject(),
-                                                    (LocalInspectionToolWrapper)toolWrapper, presentation));
+      final OfflineProblemDescriptorNode child =
+        OfflineProblemDescriptorNode.create(((OfflineProblemDescriptorContainer)container).getUserObject(),
+                                            (LocalInspectionToolWrapper)toolWrapper, presentation);
+      insertByIndex(child, elemNode);
     }
   }
 

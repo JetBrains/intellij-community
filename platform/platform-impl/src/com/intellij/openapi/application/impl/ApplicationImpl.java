@@ -57,6 +57,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.WindowManager;
@@ -243,6 +244,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       assert Main.isCommandLine();
       new IdeaApplication(args);
     }
+    gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
+    writePauses = gatherWriteActionStatistics ? new PausesStat("Write action") : null;
   }
 
   private void registerShutdownHook() {
@@ -497,7 +500,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Runnable task = new Runnable() {
       @Override
       public void run() {
-        ApplicationImpl.super.createComponents(indicator);
+        try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionGuard.NO_MERGE)) {
+          ApplicationImpl.super.createComponents(indicator);
+        }
       }
     };
 
@@ -1217,12 +1222,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final boolean gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
-  private final PausesStat writePauses = gatherWriteActionStatistics ? new PausesStat("Write action") : null;
+  private final boolean gatherWriteActionStatistics;
+  private final PausesStat writePauses;
 
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
+    if (!TransactionGuard.getInstance().isInsideTransaction() && Registry.is("ide.require.transaction.for.model.changes", false)) {
+      LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
+      //todo throw new IllegalStateException("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
+    }
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
     if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {

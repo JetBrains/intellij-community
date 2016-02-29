@@ -42,7 +42,7 @@ public class DiffIterableUtil {
    * Compare two integer arrays
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull int[] data1, @NotNull int[] data2, @NotNull ProgressIndicator indicator) {
+  public static FairDiffIterable diff(@NotNull int[] data1, @NotNull int[] data2, @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
     try {

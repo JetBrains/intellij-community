@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +54,7 @@ public class ThreadTracker {
   private static final Method getThreads = ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads");
 
   @NotNull
-  private static Collection<Thread> getThreads() {
+  public static Collection<Thread> getThreads() {
     Thread[] threads;
     try {
       // faster than Thread.getAllStackTraces().keySet()
@@ -116,6 +117,7 @@ public class ThreadTracker {
   @TestOnly
   public void checkLeak() throws AssertionError {
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
+    ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
     try {
       if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
 

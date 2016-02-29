@@ -127,7 +127,7 @@ public class AppUIUtil {
   }
 
   public static void registerBundledFonts() {
-    if (Registry.is("ide.register.bundled.fonts")) {
+    if (Boolean.getBoolean("ide.register.bundled.fonts")) {
       registerFont("/fonts/Inconsolata.ttf");
       registerFont("/fonts/SourceCodePro-Regular.ttf");
       registerFont("/fonts/SourceCodePro-Bold.ttf");

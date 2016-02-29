@@ -39,7 +39,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   private final Project myProject;
   private final VirtualFile myFile;
-  private final SceneBuilderProvider myCreatorProvider;
 
   private final CardLayout myLayout = new CardLayout();
   private final JPanel myPanel = new JPanel(myLayout);
@@ -52,13 +51,11 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private final Document myDocument;
   private final ExternalChangeListener myChangeListener;
 
-  private SceneBuilderCreator myBuilderCreator;
   private SceneBuilder mySceneBuilder;
 
-  public SceneBuilderEditor(@NotNull Project project, @NotNull VirtualFile file, SceneBuilderProvider creatorProvider) {
+  public SceneBuilderEditor(@NotNull Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
-    myCreatorProvider = creatorProvider;
 
     myDocument = FileDocumentManager.getInstance().getDocument(file);
     myChangeListener = new ExternalChangeListener();
@@ -72,7 +69,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myErrorLabel.addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
-        initSceneBuilder(true);
+        updateState();
       }
     });
 
@@ -84,32 +81,14 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myPanel.add(myErrorPanel);
   }
 
-  private void showErrorPage(State state, Throwable e) {
+  private void showErrorPage(Throwable e) {
     if (e != null) {
       LOG.info(e);
     }
 
     removeSceneBuilder();
 
-    if (e == null) {
-      if (state == State.CREATE_ERROR) {
-        myErrorLabel.setHyperlinkText("JavaFX Scene Builder initialize error", "", "");
-        myErrorLabel.setIcon(Messages.getErrorIcon());
-      }
-      else {
-        if (state == State.EMPTY_PATH) {
-          myErrorLabel.setHyperlinkText("Please configure JavaFX Scene Builder ", "path", "");
-        }
-        else {
-          myErrorLabel.setHyperlinkText("Please reconfigure JavaFX Scene Builder ", "path", "");
-        }
-        myErrorLabel.setIcon(Messages.getWarningIcon());
-      }
-
-      myErrorStack.setText(null);
-      myErrorStack.setVisible(false);
-    }
-    else {
+    if (e != null) {
       String message = e.getMessage();
       if (message == null) {
         message = e.getClass().getName();
@@ -163,36 +142,13 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   public void handleError(final Throwable e) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        showErrorPage(null, e);
+        showErrorPage(e);
       }
     });
   }
 
-  private void initSceneBuilder(boolean choosePathIfEmpty) {
-    if (choosePathIfEmpty || myBuilderCreator == null) {
-      myBuilderCreator = myCreatorProvider.get(myProject, choosePathIfEmpty);
-      updateState();
-    }
-    else {
-      SceneBuilderCreator creator = myCreatorProvider.get(null, false);
-      if (myBuilderCreator.equals(creator)) {
-        if (myBuilderCreator.getState() == State.OK) {
-          myChangeListener.checkContent();
-        }
-      }
-      else {
-        updateState();
-      }
-    }
-  }
-
   private void updateState() {
-    if (myBuilderCreator.getState() == State.OK) {
-      addSceneBuilder();
-    }
-    else {
-      showErrorPage(myBuilderCreator.getState(), null);
-    }
+    addSceneBuilder();
   }
 
   private void addSceneBuilder() {
@@ -201,7 +157,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     try {
       FileDocumentManager.getInstance().saveDocument(myDocument);
 
-      mySceneBuilder = myBuilderCreator.create(new File(myFile.getPath()).toURI().toURL(), this);
+      mySceneBuilder = SceneBuilderKitWrapper.create(new File(myFile.getPath()).toURI().toURL(), this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
       myLayout.show(myPanel, SCENE_CARD);
@@ -209,7 +165,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       myChangeListener.start();
     }
     catch (Throwable e) {
-      showErrorPage(null, e);
+      showErrorPage(e);
     }
   }
 
@@ -249,7 +205,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public void selectNotify() {
-    initSceneBuilder(false);
+    updateState();
   }
 
   @Override

@@ -61,8 +61,8 @@ public class MqPatchTest extends HgPlatformTest {
     updateRepoConfig(myProject, myRepository);
 
     hg("qinit");
-    touch(FILENAME, "f1");
     hg("branch " + BRANCH);
+    touch(FILENAME, "f1");
     myRepository.refresh(false, true);
     hg("add " + FILENAME);
     hg("commit -m \'" + MESSAGE + "\'");
@@ -84,7 +84,9 @@ public class MqPatchTest extends HgPlatformTest {
   public void testMqPatchInfoAfterQNew() throws Exception {
     cd(myRepository);
     append(FILENAME, "modify");
+    myRepository.refresh(false,true);
     new HgQNewCommand(myProject, myHgRepository, MESSAGE, false).execute();
+    myRepository.refresh(false,true);
     MqPatchDetails patchDetails = updateAndGetDetails();
     assertEqualsCommitInfo(null, patchDetails);
   }

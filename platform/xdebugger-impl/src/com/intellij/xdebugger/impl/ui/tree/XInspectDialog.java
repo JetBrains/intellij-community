@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -69,7 +69,7 @@ public class XInspectDialog extends DialogWrapper {
     }
 
     if (session != null) {
-      session.addSessionListener(new XDebugSessionAdapter() {
+      session.addSessionListener(new XDebugSessionListener() {
         @Override
         public void sessionPaused() {
           if (myRebuildOnSessionEvents) {
