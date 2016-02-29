@@ -371,7 +371,7 @@ public class IpnbParser {
     }
 
     public IpnbOutputCell createOutput() {
-      List<String> text = this.text == null ? data.text : this.text;
+      List<String> text = this.text != null ? this.text : data != null ? data.text : Lists.newArrayList();
       final IpnbOutputCell outputCell;
       if (png != null || (data != null && data.png != null)) {
         outputCell = new IpnbPngOutputCell(png == null ? StringUtil.join(data.png) : png, text, prompt_number);
