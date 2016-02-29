@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 
 /**
  * @author spleaner
+ *
+ * @deprecated use {@link PinActiveTabAction}
  */
 public class PinToolwindowTabAction extends PinActiveTabAction.TW {
   public static final String ACTION_NAME = "PinToolwindowTab";

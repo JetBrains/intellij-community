@@ -21,7 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -34,9 +34,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Pins any kind of tab in context: editor tab, toolwindow tab or other tabs.
  *
- * todo drop TW and EW, pro: one action-one shortcut; contra: menu|Window changes
+ * todo drop TW and EW, both are only for menu|Window tab/editor sub-menus.
  */
-public class PinActiveTabAction extends ToggleAction implements DumbAware {
+public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
 
   public static abstract class Handler {
     public final boolean isPinned;
@@ -51,15 +51,12 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public void actionPerformed(AnActionEvent e) {
     Handler handler = getHandler(e);
-    return handler != null && handler.isPinned;
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    Handler handler = getHandler(e);
-    if (handler != null) handler.setPinned(state);
+    if (handler == null) return;
+    boolean selected = !handler.isPinned;
+    handler.setPinned(selected);
+    e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
   }
 
   @Override
@@ -89,24 +86,14 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
 
     Content content = currentWindow != null ? null : getContentFromEvent(e);
     if (content != null && content.isPinnable()) {
-      return new Handler(content.isPinned(), content.getManager().getSelectedContent() == content) {
-        @Override
-        void setPinned(boolean value) {
-          content.setPinned(value);
-        }
-      };
+      return createHandler(content);
     }
 
     final EditorWindow window = currentWindow != null ? currentWindow :
                                 project != null ? FileEditorManagerEx.getInstanceEx(project).getCurrentWindow() : null;
     VirtualFile selectedFile = window == null ? null : getFileFromEvent(e, window);
     if (selectedFile != null) {
-      return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(e.getData(CommonDataKeys.VIRTUAL_FILE))) {
-        @Override
-        void setPinned(boolean value) {
-          window.setFilePinned(selectedFile, value);
-        }
-      };
+      return createHandler(window, selectedFile);
     }
     return null;
   }
@@ -120,6 +107,26 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
   protected Content getContentFromEvent(@NotNull AnActionEvent e) {
     Content content = getNonToolWindowContent(e);
     return content != null ? content : getToolWindowContent(e);
+  }
+
+  @NotNull
+  private static Handler createHandler(final Content content) {
+    return new Handler(content.isPinned(), content.getManager().getSelectedContent() == content) {
+      @Override
+      void setPinned(boolean value) {
+        content.setPinned(value);
+      }
+    };
+  }
+
+  @NotNull
+  private static Handler createHandler(final EditorWindow window, final VirtualFile selectedFile) {
+    return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(window.getSelectedFile())) {
+      @Override
+      void setPinned(boolean value) {
+        window.setFilePinned(selectedFile, value);
+      }
+    };
   }
 
   @Nullable
@@ -165,6 +172,11 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
   }
 
   public static class EW extends PinActiveTabAction {
+    @Nullable
+    @Override
+    protected VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+      return window.getSelectedFile();
+    }
 
     @Override
     protected Content getContentFromEvent(@NotNull AnActionEvent e) {
