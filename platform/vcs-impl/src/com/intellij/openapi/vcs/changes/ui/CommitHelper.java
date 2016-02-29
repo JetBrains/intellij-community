@@ -202,6 +202,9 @@ public class CommitHelper {
   @NotNull
   private String getCommitSummary(@NotNull GeneralCommitProcessor processor) {
     StringBuilder content = new StringBuilder(getFileSummaryReport(processor.getChangesFailedToCommit()));
+    if (!StringUtil.isEmpty(myCommitMessage)) {
+      content.append(": ").append(escape(myCommitMessage));
+    }
     if (!myFeedback.isEmpty()) {
       content.append("<br/>");
       content.append(StringUtil.join(myFeedback, "<br/>"));
