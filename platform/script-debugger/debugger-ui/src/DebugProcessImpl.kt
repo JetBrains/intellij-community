@@ -98,7 +98,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     get() = connection.vm
 
   val activeOrMainVm: Vm?
-    get() = (session.suspendContext.activeExecutionStack as? ExecutionStackBase)?.suspendContext?.vm ?: mainVm
+    get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackBase)?.suspendContext?.vm ?: mainVm
 
   protected abstract fun createBreakpointHandlers(): Array<XBreakpointHandler<*>>
 
