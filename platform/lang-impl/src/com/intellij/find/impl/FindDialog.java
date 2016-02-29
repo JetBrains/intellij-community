@@ -290,7 +290,6 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void initCombobox(@NotNull final ComboBox comboBox) {
-    comboBox.setSwingPopup(false);
     comboBox.setEditable(true);
     comboBox.setMaximumRowCount(8);
 
@@ -1169,6 +1168,7 @@ public class FindDialog extends DialogWrapper {
       field.setColumns(40);
     }
     initCombobox(myDirectoryComboBox);
+    myDirectoryComboBox.setSwingPopup(false);
     myDirectoryComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
