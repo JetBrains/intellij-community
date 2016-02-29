@@ -483,7 +483,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   void disposeIndicator() {
     // our offset map should be disposed under write action, so that duringCompletion (read action) won't access it after disposing
-    TransactionGuard.getInstance().submitMergeableTransaction(TransactionGuard.TransactionKind.TEXT_EDITING, () ->
+    TransactionGuard.getInstance().submitMergeableTransaction(TransactionGuard.TEXT_EDITING, () ->
       ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(this)));
   }
 

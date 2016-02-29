@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A service managing model transactions.<p/>
@@ -39,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  * outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document)
  * should be allowed. For such cases, the framework should be notified which transaction kinds are allowed to merged into
  * the main transaction and executed immediately. Use {@link #acceptNestedTransactions(TransactionKind...)} for that. Inner transactions
- * should be given a non-null kind in such circumstances: {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+ * should be given some kind in such circumstances: {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
  *
  * @see Application#runReadAction(Runnable)
  * @see Application#runWriteAction(Runnable)
@@ -47,6 +46,26 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class TransactionGuard {
+  /**
+   * This kind represents document modifications via editor actions, code completion and document->PSI commit.
+   * @see com.intellij.psi.PsiDocumentManager#commitDocument(Document)
+   */
+  public static final TransactionKind TEXT_EDITING = new TransactionKind("TEXT_EDITING");
+  /**
+   * This kind represents any model modifications:
+   * <li>PSI or document changes
+   * <li>Virtual file system changes, e.g. files created/deleted/renamed/content-changed,
+   * caused by refresh process or explicit operations.
+   * <li>Project root set change
+   * <li>Dumb mode (reindexing) start/finish, (see {@link com.intellij.openapi.project.DumbService}).
+   */
+  public static final TransactionKind ANY_CHANGE = new TransactionKind("ANY_CHANGE");
+
+  /**
+   * Transactions of this kind won't be merged into other transactions
+   */
+  public static final TransactionKind NO_MERGE = new TransactionKind("NO_MERGE");
+
   public static TransactionGuard getInstance() {
     return ServiceManager.getService(TransactionGuard.class);
   }
@@ -55,11 +74,13 @@ public abstract class TransactionGuard {
    * Ensures that some code will be run in a transaction. It's guaranteed that no other transactions are run at the same time.
    * The code will be run on Swing thread immediately or after all other queued transactions (if any) have been completed.<p/>
    *
-   * For more advanced version, see {@link #submitMergeableTransaction(TransactionKind, Runnable)}
+   * For more advanced version, see {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+   * Transactions submitted via this method use {@link #NO_MERGE} kind.
+   *
    * @param transaction code to execute inside a transaction.
    */
   public static void submitTransaction(@NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(null, transaction);
+    getInstance().submitMergeableTransaction(NO_MERGE, transaction);
   }
 
   /**
@@ -69,14 +90,14 @@ public abstract class TransactionGuard {
    * @param transaction
    * @throws ProcessCanceledException if current thread is interrupted
    */
-  public abstract void submitTransactionAndWait(@Nullable TransactionKind kind, @NotNull Runnable transaction) throws ProcessCanceledException;
+  public abstract void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull Runnable transaction) throws ProcessCanceledException;
 
   /**
    * A synchronous version of {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
    * @return a token object for this transaction. Call {@link AccessToken#finish()} (inside finally) when the transaction is complete.
    */
   @NotNull
-  public abstract AccessToken startSynchronousTransaction(@Nullable TransactionKind kind);
+  public abstract AccessToken startSynchronousTransaction(@NotNull TransactionKind kind);
 
   /**
    * @return whether there's a transaction currently running
@@ -89,10 +110,10 @@ public abstract class TransactionGuard {
    * and executes the provided code immediately. Otherwise
    * adds the runnable to a queue. When all transactions scheduled before this one are finished, executes the given
    * runnable under a transaction.
-   * @param kind a kind object to enable transaction merging or null, if no merging is required.
+   * @param kind a kind object to enable transaction merging or {@link #NO_MERGE}, if no merging is required.
    * @param transaction code to execute inside a transaction.
    */
-  public abstract void submitMergeableTransaction(@Nullable TransactionKind kind, @NotNull Runnable transaction);
+  public abstract void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction);
 
   /**
    * Allow incoming transactions of the specified kinds to be executed immediately, instead of being queued until the current transaction is finished.<p/>
@@ -106,23 +127,10 @@ public abstract class TransactionGuard {
   @NotNull
   public abstract AccessToken acceptNestedTransactions(TransactionKind... kinds);
 
+  /**
+   * A kind of transaction used in {@link #acceptNestedTransactions(TransactionKind...)}
+   */
   public static final class TransactionKind {
-    /**
-     * This kind represents document modifications via editor actions, code completion and document->PSI commit.
-     * @see com.intellij.psi.PsiDocumentManager#commitDocument(Document)
-     */
-    public static final TransactionKind TEXT_EDITING = new TransactionKind("TEXT_EDITING");
-
-    /**
-     * This kind represents any model modifications:
-     * <li>PSI or document changes
-     * <li>Virtual file system changes, e.g. files created/deleted/renamed/content-changed,
-     * caused by refresh process or explicit operations.
-     * <li>Project root set change
-     * <li>Dumb mode (reindexing) start/finish, (see {@link com.intellij.openapi.project.DumbService}).
-     */
-    public static final TransactionKind ANY_CHANGE = new TransactionKind("ANY_CHANGE");
-
     private final String myName;
 
     public TransactionKind(@NotNull String name) {
