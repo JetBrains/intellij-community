@@ -46,20 +46,21 @@ import java.util.Collections;
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
 import static java.util.Collections.singletonList;
 
+@SuppressWarnings("Duplicates")
 public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase {
   EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
 
   public void testDefaults() {
     checkState(myScheme.getFontPreferences(),
-               Collections.<String>emptyList(),
-               Collections.<String>emptyList(),
+               Collections.emptyList(),
+               Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Collections.<String>emptyList(),
-               Collections.<String>emptyList(),
+               Collections.emptyList(),
+               Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getConsoleFontName());
