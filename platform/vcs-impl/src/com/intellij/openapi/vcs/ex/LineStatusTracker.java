@@ -16,10 +16,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -388,9 +385,8 @@ public class LineStatusTracker {
   }
 
   private void markFileUnchanged() {
-    TransactionGuard.submitTransaction(new Runnable() {
-      @Override
-      public void run() {
+    // later to avoid saving inside document change event processing.
+    ApplicationManager.getApplication().invokeLater(() -> TransactionGuard.submitTransaction(() -> {
         FileDocumentManager.getInstance().saveDocument(myDocument);
         boolean stillEmpty;
         synchronized (myLock) {
@@ -400,8 +396,7 @@ public class LineStatusTracker {
           // file was modified, and now it's not -> dirty local change
           myVcsDirtyScopeManager.fileDirty(myVirtualFile);
         }
-      }
-    });
+    }));
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
