@@ -667,7 +667,7 @@ public class IdeEventQueue extends EventQueue {
   
   static {
     Field field = null;
-    if (Registry.is("trace.clipboard.events") && SystemInfo.isJavaVersionAtLeast("1.8.0_60")) {
+    if (Boolean.getBoolean("trace.clipboard.events") && SystemInfo.isJavaVersionAtLeast("1.8.0_60")) {
       try {
         field = InvocationEvent.class.getDeclaredField("runnable");
         field.setAccessible(true);
