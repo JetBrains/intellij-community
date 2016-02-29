@@ -39,9 +39,9 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -270,8 +270,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   @Override
   public FileStatus getStatus(@NotNull final VirtualFile file) {
-    if (file instanceof LightVirtualFile) {
-      return FileStatus.NOT_CHANGED;  // do not leak light files via cache
+    if (file.getFileSystem() instanceof NonPhysicalFileSystem) {
+      return FileStatus.SUPPRESSED;  // do not leak light files via cache
     }
 
     FileStatus status = getCachedStatus(file);
