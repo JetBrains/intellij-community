@@ -118,27 +118,8 @@ public class InstallPluginAction extends AnAction implements DumbAware {
 
       final InstalledPluginsTableModel installedModel = (InstalledPluginsTableModel)myInstalled.getPluginsModel();
       PluginEnablerImpl pluginEnabler = new PluginEnablerImpl(installedModel);
-      final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
-      final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
-      for (PluginNode node : list) {
-        final PluginId pluginId = node.getPluginId();
-        if (pluginEnabler.isDisabled(pluginId)) {
-          disabled.add(node);
-        }
-        final List<PluginId> depends = node.getDepends();
-        if (depends != null) {
-          final Set<PluginId> optionalDeps = new HashSet<PluginId>(Arrays.asList(node.getOptionalDependentPluginIds()));
-          for (PluginId dependantId : depends) {
-            if (optionalDeps.contains(dependantId)) continue;
-            final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
-            if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
-              disabledDependants.add(pluginDescriptor);
-            }
-          }
-        }
-      }
 
-      if (PluginManagerMain.suggestToEnableInstalledPlugins(pluginEnabler, disabled, disabledDependants, list)) {
+      if (PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, list)) {
         myInstalled.setRequireShutdown(true);
       }
 
