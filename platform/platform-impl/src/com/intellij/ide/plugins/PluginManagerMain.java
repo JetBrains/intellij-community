@@ -73,10 +73,8 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
@@ -643,10 +641,28 @@ public abstract class PluginManagerMain implements Disposable {
     return descriptionSet.isEmpty();
   }
 
-  public static boolean suggestToEnableInstalledPlugins(PluginEnabler pluginEnabler,
-                                                         Set<IdeaPluginDescriptor> disabled,
-                                                         Set<IdeaPluginDescriptor> disabledDependants,
-                                                         List<PluginNode> list) {
+  public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
+                                                                 List<PluginNode> list) {
+    final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
+    final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
+    for (PluginNode node : list) {
+      final PluginId pluginId = node.getPluginId();
+      if (pluginEnabler.isDisabled(pluginId)) {
+        disabled.add(node);
+      }
+      final List<PluginId> depends = node.getDepends();
+      if (depends != null) {
+        final Set<PluginId> optionalDeps = new HashSet<PluginId>(Arrays.asList(node.getOptionalDependentPluginIds()));
+        for (PluginId dependantId : depends) {
+          if (optionalDeps.contains(dependantId)) continue;
+          final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
+          if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
+            disabledDependants.add(pluginDescriptor);
+          }
+        }
+      }
+    }
+
     if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
       String message = "";
       if (disabled.size() == 1) {

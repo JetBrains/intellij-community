@@ -91,26 +91,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
       }
     }
 
-    final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
-    final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
-    for (PluginNode node : nodes) {
-      final PluginId pluginId = node.getPluginId();
-      if (pluginHelper.isDisabled(pluginId)) {
-        disabled.add(node);
-      }
-      final List<PluginId> depends = node.getDepends();
-      if (depends != null) {
-        final Set<PluginId> optionalDeps = new HashSet<PluginId>(Arrays.asList(node.getOptionalDependentPluginIds()));
-        for (PluginId dependantId : depends) {
-          if (optionalDeps.contains(dependantId)) continue;
-          final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
-          if (pluginDescriptor != null && pluginHelper.isDisabled(dependantId)) {
-            disabledDependants.add(pluginDescriptor);
-          }
-        }
-      }
-    }
-    PluginManagerMain.suggestToEnableInstalledPlugins(pluginHelper, disabled, disabledDependants, nodes);
+    PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
 
     final Runnable notifyRunnable = new Runnable() {
       @Override
