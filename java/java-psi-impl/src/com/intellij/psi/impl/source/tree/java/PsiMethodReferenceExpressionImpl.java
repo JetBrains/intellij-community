@@ -365,6 +365,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     if (element instanceof PsiMethod) {
       return handleElementRename(((PsiMethod)element).getName());
     }
+    else if (element instanceof PsiClass) {
+      return this;
+    }
     else {
       throw new IncorrectOperationException(element.toString());
     }
