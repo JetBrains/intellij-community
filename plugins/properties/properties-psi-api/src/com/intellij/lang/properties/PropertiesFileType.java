@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.lang.properties;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.properties.charset.Native2AsciiCharset;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -63,9 +66,13 @@ public class PropertiesFileType extends LanguageFileType {
 
   @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
-    Charset charset = EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file);
+    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = LoadTextUtil.guessFromContent(file, content, content.length);
+    Charset charset = guessed == null || guessed.first == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed.first;
     if (charset == null) {
       charset = CharsetToolkit.getDefaultSystemCharset();
+    }
+    if (EncodingRegistry.getInstance().isNative2Ascii(file)) {
+      charset = Native2AsciiCharset.wrap(charset);
     }
     return charset.name();
   }
