@@ -29,7 +29,7 @@ class InternalUrlProvider: UrlProvider() {
     private val internalHost = "http://unit-617.labs.intellij.net"
 
     private val host: String
-        get() = if (System.getProperty("stats.collector.internal") == null) internalHost else localhost
+        get() = if (isPropertyExists("stats.collector.internal")) localhost else internalHost
     
     
     override val statsServerPostUrl = "$host:8080/stats/upload"
@@ -60,3 +60,5 @@ class PluginDirectoryFilePathProvider: FilePathProvider() {
     }
 
 }
+
+fun isPropertyExists(name: String) = System.getProperty(name) != null
