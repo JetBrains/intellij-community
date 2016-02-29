@@ -26,9 +26,10 @@
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
     <treeStructureProvider implementation="com.jetbrains.edu.coursecreator.projectView.CCTreeStructureProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.edu.coursecreator.CCRefactoringElementListenerProvider"/>
-    <renameHandler implementation="com.jetbrains.edu.coursecreator.CCRenameHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCLessonMoveHandlerDelegate" order="first"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCTaskMoveHandlerDelegate" order="first"/>
+    <renameHandler implementation="com.jetbrains.edu.coursecreator.CCTaskRenameHandler" order="first"/>
+    <renameHandler implementation="com.jetbrains.edu.coursecreator.CCLessonRenameHandler" order="first"/>
   </extensions>
 
   <application-components>
