@@ -56,7 +56,7 @@ public class PluginInstaller {
   private PluginInstaller() { }
 
   public static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                         List<PluginId> allPlugins,
+                                         List<IdeaPluginDescriptor> allPlugins,
                                          @NotNull ProgressIndicator indicator) {
     updateUrls(pluginsToInstall, indicator);
     Set<PluginNode> dependant = new THashSet<PluginNode>();
@@ -108,7 +108,7 @@ public class PluginInstaller {
   }
 
   private static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                          List<PluginId> allPlugins,
+                                          List<IdeaPluginDescriptor> allPlugins,
                                           Set<PluginNode> installedDependant,
                                           @NotNull ProgressIndicator indicator) {
     List<PluginId> pluginIds = new SmartList<PluginId>();
@@ -134,7 +134,7 @@ public class PluginInstaller {
 
   private static boolean prepareToInstall(PluginNode pluginNode,
                                           List<PluginId> pluginIds,
-                                          List<PluginId> allPlugins,
+                                          List<IdeaPluginDescriptor> allPlugins,
                                           Set<PluginNode> installedDependant,
                                           @NotNull ProgressIndicator indicator) throws IOException {
     installedDependant.add(pluginNode);
@@ -154,16 +154,22 @@ public class PluginInstaller {
           continue;
         }
 
-        PluginNode depPlugin = new PluginNode(depPluginId);
-        depPlugin.setSize("-1");
-        depPlugin.setName(depPluginId.getIdString()); //prevent from exceptions
+        IdeaPluginDescriptor depPluginDescriptor = findPluginInRepo(depPluginId, allPlugins);
+        PluginNode depPluginNode;
+        if (depPluginDescriptor instanceof PluginNode) {
+          depPluginNode = (PluginNode) depPluginDescriptor;
+        } else {
+          depPluginNode = new PluginNode(depPluginId);
+          depPluginNode.setSize("-1");
+          depPluginNode.setName(depPluginId.getIdString()); //prevent from exceptions
+        }
 
-        if (isPluginInRepo(depPluginId, allPlugins)) {
+        if (depPluginDescriptor != null) {
           if (ArrayUtil.indexOf(optionalDependentPluginIds, depPluginId) != -1) {
-            optionalDeps.add(depPlugin);
+            optionalDeps.add(depPluginNode);
           }
           else {
-            depends.add(depPlugin);
+            depends.add(depPluginNode);
           }
         }
       }
@@ -236,8 +242,13 @@ public class PluginInstaller {
     return true;
   }
 
-  private static boolean isPluginInRepo(PluginId depPluginId, List<PluginId> allPlugins) {
-    return allPlugins.contains(depPluginId);
+  private static IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId, List<IdeaPluginDescriptor> allPlugins) {
+    for (IdeaPluginDescriptor plugin : allPlugins) {
+      if (plugin.getPluginId().equals(depPluginId)) {
+        return plugin;
+      }
+    }
+    return null;
   }
 
   public static void prepareToUninstall(PluginId pluginId) throws IOException {

@@ -363,7 +363,7 @@ public class PluginsAdvertiser implements StartupActivity {
             }
 
             if (message != null) {
-              final ConfigurePluginsListener notificationListener = new ConfigurePluginsListener(unknownFeatures, project, PluginManagerMain.mapToPluginIds(myAllPlugins), myPlugins, myDisabledPlugins);
+              final ConfigurePluginsListener notificationListener = new ConfigurePluginsListener(unknownFeatures, project, myAllPlugins, myPlugins, myDisabledPlugins);
               NOTIFICATION_GROUP.createNotification(DISPLAY_ID, message, NotificationType.INFORMATION, notificationListener).notify(project);
             }
           }
@@ -490,13 +490,13 @@ public class PluginsAdvertiser implements StartupActivity {
   private static class ConfigurePluginsListener implements NotificationListener {
     private final Set<UnknownFeature> myUnknownFeatures;
     private final Project myProject;
-    private final List<PluginId> myAllPlugins;
+    private final List<IdeaPluginDescriptor> myAllPlugins;
     private final Set<PluginDownloader> myPlugins;
     private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins;
 
     public ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
                                     Project project,
-                                    List<PluginId> allPlugins,
+                                    List<IdeaPluginDescriptor> allPlugins,
                                     Set<PluginDownloader> plugins,
                                     Map<Plugin, IdeaPluginDescriptor> disabledPlugins) {
       myUnknownFeatures = unknownFeatures;
