@@ -24,7 +24,6 @@ import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbHeadingCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -264,7 +263,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
       else if (selectedItem.equals(markdownCellType)) {
         final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
         final int index = cells.indexOf(((IpnbHeadingPanel)selectedCell).getCell());
-        final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(cell.getSource());
+        final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(cell.getSource(), cell.getMetadata());
         if (index >= 0)
           cells.set(index, markdownCell);
         myIpnbFilePanel.replaceComponent(selectedCell, markdownCell);
@@ -272,7 +271,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
       else if (selectedItem.equals(codeCellType)) {
         final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
         final int index = cells.indexOf(((IpnbHeadingPanel)selectedCell).getCell());
-        final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.<IpnbOutputCell>newArrayList());
+        final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.newArrayList(),
+                                                       cell.getMetadata());
         if (index >= 0)
           cells.set(index, codeCell);
 
@@ -286,7 +286,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
         final int level = Character.getNumericValue(c);
         final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
         final int index = cells.indexOf(((IpnbMarkdownPanel)selectedCell).getCell());
-        final IpnbHeadingCell headingCell = new IpnbHeadingCell(cell.getSource(), level);
+        final IpnbHeadingCell headingCell = new IpnbHeadingCell(cell.getSource(), level, cell.getMetadata());
         if (index >= 0)
           cells.set(index, headingCell);
 
@@ -295,7 +295,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
       else if (selectedItem.equals(codeCellType)) {
         final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
         final int index = cells.indexOf(((IpnbMarkdownPanel)selectedCell).getCell());
-        final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.<IpnbOutputCell>newArrayList());
+        final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.newArrayList(), cell.getMetadata());
         if (index >= 0)
           cells.set(index, codeCell);
 
@@ -309,7 +309,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
         final int level = Character.getNumericValue(c);
         final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
         final int index = cells.indexOf(((IpnbCodePanel)selectedCell).getCell());
-        final IpnbHeadingCell headingCell = new IpnbHeadingCell(cell.getSource(), level);
+        final IpnbHeadingCell headingCell = new IpnbHeadingCell(cell.getSource(), level, cell.getMetadata());
         if (index >= 0)
           cells.set(index, headingCell);
         myIpnbFilePanel.replaceComponent(selectedCell, headingCell);
@@ -317,7 +317,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
       else if(selectedItem.equals(markdownCellType)) {
         final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
         final int index = cells.indexOf(((IpnbCodePanel)selectedCell).getCell());
-        final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(cell.getSource());
+        final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(cell.getSource(), cell.getMetadata());
         if (index >= 0)
           cells.set(index, markdownCell);
 
