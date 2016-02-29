@@ -89,6 +89,16 @@ public class GitTestUtil {
     }
   }
 
+  public static void cloneRepo(@NotNull String source, @NotNull String destination, boolean bare) {
+    cd(source);
+    if (bare) {
+      git("clone --bare -- . " + destination);
+    }
+    else {
+      git("clone -- . " + destination);
+    }
+  }
+
   public static void setupUsername() {
     git("config user.name '" + USER_NAME + "'");
     git("config user.email '" + USER_EMAIL + "'");

@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -100,10 +101,12 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
       @Override
       public void onFrameDeactivated() {
         LOG.debug("save(): enter");
-        if (canSyncOrSave()) {
-          saveProjectsAndDocuments();
-        }
-        LOG.debug("save(): exit");
+        TransactionGuard.submitTransaction(() -> {
+          if (canSyncOrSave()) {
+            saveProjectsAndDocuments();
+          }
+          LOG.debug("save(): exit");
+        });
       }
 
       @Override

@@ -181,10 +181,6 @@ public layoutCommunity(String classesPath, Set usedJars) {
   if (p("jdk.linux") != "false") {
     buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}.tar", [paths.distAll, paths.distUnix, "${home}/out/pycharm/jdk.linux"], ["jre/jre/bin/*"])
   }
-  requireProperty("jdk.custom.linux", "false")
-  if (p("jdk.custom.linux") != "false") {
-    buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}-custom-jdk-linux.tar", [paths.distAll, paths.distUnix, "${home}/out/pycharm/jdk.custom.linux"], ["jre/jre/bin/*"])
-  }
 
   String macAppRoot = isEap() ? "PyCharm CE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm CE.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharmPC-${buildNumber}.mac.zip", [paths.distAll], paths.distMac)

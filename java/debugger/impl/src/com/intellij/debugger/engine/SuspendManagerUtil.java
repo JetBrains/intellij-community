@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SuspendManagerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManagerUtil");
@@ -60,13 +61,9 @@ public class SuspendManagerUtil {
   @NotNull
   public static Set<SuspendContextImpl> getSuspendingContexts(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    Set<SuspendContextImpl> result = new SmartHashSet<SuspendContextImpl>();
-    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
-      if (suspendContext.suspends(thread)) {
-        result.add(suspendContext);
-      }
-    }
-    return result;
+    return suspendManager.getEventContexts().stream()
+      .filter(suspendContext -> suspendContext.suspends(thread))
+      .collect(Collectors.toCollection(SmartHashSet::new));
   }
 
   @Nullable
@@ -95,9 +92,7 @@ public class SuspendManagerUtil {
     LOG.assertTrue(context.myResumedThreads == null);
 
     if(data.myResumedThreads != null) {
-      for (ThreadReferenceProxyImpl resumedThreads : data.myResumedThreads) {
-        resumedThreads.resume();
-      }
+      data.myResumedThreads.forEach(ThreadReferenceProxyImpl::resume);
       context.myResumedThreads = data.myResumedThreads;
     }
   }
@@ -117,9 +112,7 @@ public class SuspendManagerUtil {
       LOG.debug("Resuming SuspendContextImpl...");
     }
     if(context.myResumedThreads != null) {
-      for (ThreadReferenceProxyImpl resumedThreads : context.myResumedThreads) {
-        resumedThreads.suspend();
-      }
+      context.myResumedThreads.forEach(ThreadReferenceProxyImpl::suspend);
       context.myResumedThreads = null;
     }
 

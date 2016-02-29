@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -131,8 +132,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       @Nullable
       @Override
       public Result<PsiMember> compute() {
-        return Result.createSingleDependency(getPotentiallyApplicableMemberInternal(),
-                                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return Result.create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, PsiMethodReferenceExpressionImpl.this);
       }
     });
   }
@@ -359,7 +359,18 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    return this;
+    CheckUtil.checkWritable(this);
+
+    if (isReferenceTo(element) || !isPhysical()) return this;
+    if (element instanceof PsiMethod) {
+      return handleElementRename(((PsiMethod)element).getName());
+    }
+    else if (element instanceof PsiClass) {
+      return this;
+    }
+    else {
+      throw new IncorrectOperationException(element.toString());
+    }
   }
 
   @Override

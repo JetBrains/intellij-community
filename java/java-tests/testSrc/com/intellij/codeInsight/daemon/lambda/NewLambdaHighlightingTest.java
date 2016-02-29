@@ -272,6 +272,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testInferenceFromReturnLambdaStatementWhereContainingMethodNonGeneric() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

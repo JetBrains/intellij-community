@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -29,7 +30,6 @@ import com.intellij.openapi.roots.NativeLibraryOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
-import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -70,12 +70,16 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   @NotNull
   @Override
   public List<? extends RootDetector> getRootDetectors() {
-    return Arrays.asList(new FileTypeBasedRootFilter(OrderRootType.CLASSES, false, StdFileTypes.CLASS, "classes"),
-                         new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"),
-                         PathUIUtils.JAVA_SOURCE_ROOT_DETECTOR,
-                         new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"),
-                         new JavadocRootDetector(),
-                         new AnnotationsRootFilter(), new NativeLibraryRootFilter());
+    List<RootDetector> results = new ArrayList<>();
+    results.add(new FileTypeBasedRootFilter(OrderRootType.CLASSES, false, StdFileTypes.CLASS, "classes"));
+    results.add(new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));
+    results.addAll(Arrays.asList(Extensions.getExtensions(RootDetector.JAVA_SOURCE_ROOT_DETECTOR)));
+    Collections.addAll(results,
+                       new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"),
+                       new JavadocRootDetector(),
+                       new AnnotationsRootFilter(),
+                       new NativeLibraryRootFilter());
+    return results;
   }
 
   private static boolean isNativeLibrary(VirtualFile file) {

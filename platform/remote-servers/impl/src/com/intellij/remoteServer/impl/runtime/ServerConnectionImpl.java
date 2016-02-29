@@ -188,15 +188,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       @Override
       public void addDeployment(@NotNull String deploymentName, @Nullable DeploymentRuntime deploymentRuntime) {
-        addDeployment(deploymentName, deploymentRuntime, null, null, null);
+        addDeployment(deploymentName, deploymentRuntime, null, null);
       }
 
       @Override
       public Deployment addDeployment(@NotNull String deploymentName,
                                       @Nullable DeploymentRuntime deploymentRuntime,
                                       @Nullable DeploymentStatus deploymentStatus,
-                                      @Nullable String deploymentStatusText,
-                                      @Nullable String deploymentGroup) {
+                                      @Nullable String deploymentStatusText) {
         DeploymentImpl result;
         if (deploymentStatus == null) {
           deploymentStatus = DeploymentStatus.DEPLOYED;
@@ -209,8 +208,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
                                         deploymentStatus,
                                         deploymentStatusText,
                                         deploymentRuntime,
-                                        null,
-                                        deploymentGroup);
+                                        null);
           }
           else if (!result.getStatus().isTransition()) {
             result.changeState(result.getStatus(), deploymentStatus, deploymentStatusText, deploymentRuntime);

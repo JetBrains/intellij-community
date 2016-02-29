@@ -63,7 +63,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (type != null) {
       return type;
     }
-    type = getNamedTupleType(referenceTarget, anchor);
+    type = getNamedTupleType(referenceTarget, context, anchor);
     if (type != null) {
       return type;
     }
@@ -226,7 +226,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getNamedTupleType(@NotNull PsiElement referenceTarget, @Nullable PsiElement anchor) {
+  private static PyType getNamedTupleType(@NotNull PsiElement referenceTarget,
+                                          @NotNull TypeEvalContext context,
+                                          @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       final QualifiedName calleeName = target.getCalleeName();
@@ -239,7 +241,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           if (callee != null) {
             final PyCallable callable = callee.getCallable();
             if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(callable.getQualifiedName())) {
-              return PyNamedTupleType.fromCall(call, 1);
+              return PyNamedTupleType.fromCall(call, context, 1);
             }
           }
         }
@@ -248,7 +250,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
       final PyFunction function = (PyFunction)referenceTarget;
       if (PyNames.NAMEDTUPLE.equals(function.getName()) && PyNames.COLLECTIONS_NAMEDTUPLE.equals(function.getQualifiedName())) {
-        return PyNamedTupleType.fromCall((PyCallExpression)anchor, 2);
+        return PyNamedTupleType.fromCall((PyCallExpression)anchor, context, 2);
       }
     }
     return null;

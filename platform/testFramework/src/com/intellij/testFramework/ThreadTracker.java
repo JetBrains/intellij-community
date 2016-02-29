@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,7 +54,7 @@ public class ThreadTracker {
   private static final Method getThreads = ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads");
 
   @NotNull
-  private static Collection<Thread> getThreads() {
+  public static Collection<Thread> getThreads() {
     Thread[] threads;
     try {
       // faster than Thread.getAllStackTraces().keySet()
@@ -116,8 +116,8 @@ public class ThreadTracker {
 
   @TestOnly
   public void checkLeak() throws AssertionError {
-    BaseOSProcessHandler.awaitQuiescence(100, TimeUnit.SECONDS);
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
+    ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
     try {
       if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
 

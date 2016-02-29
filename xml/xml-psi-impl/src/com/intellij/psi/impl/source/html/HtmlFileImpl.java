@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author maxim
@@ -90,5 +93,10 @@ public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver {
     else {
       return getManager().findFile(childFile);
     }
+  }
+
+  @Override
+  public Collection<Object> getVariants(@NotNull FileReference reference) {
+    return Collections.emptyList();
   }
 }

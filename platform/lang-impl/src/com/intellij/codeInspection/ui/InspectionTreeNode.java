@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
 import java.util.Enumeration;
 
 /**
@@ -28,6 +29,7 @@ import java.util.Enumeration;
  */
 public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   private boolean myResolved;
+  protected volatile InspectionTreeUpdater myUpdater;
   protected InspectionTreeNode(Object userObject) {
     super(userObject);
   }
@@ -78,4 +80,33 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       child.amnesty();
     }
   }
+
+  @Override
+  public void add(MutableTreeNode newChild) {
+    super.add(newChild);
+    if (myUpdater != null) {
+      ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
+      myUpdater.update();
+    }
+  }
+
+  @Override
+  public void insert(MutableTreeNode newChild, int childIndex) {
+    super.insert(newChild, childIndex);
+    if (myUpdater != null) {
+      ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
+      myUpdater.update();
+    }
+  }
+
+  private void propagateUpdater(InspectionTreeUpdater updater) {
+    if (myUpdater != null) return;
+    myUpdater = updater;
+    Enumeration enumeration = children();
+    while (enumeration.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+      child.propagateUpdater(updater);
+    }
+  }
+
 }

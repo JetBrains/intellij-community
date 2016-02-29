@@ -48,7 +48,7 @@ class SuperCalls {
       fakeSuper.processVariants(superProcessor);
 
       for (CompletionElement completionElement : superProcessor.getResults()) {
-        for (LookupElement item : JavaCompletionUtil.createLookupElements(completionElement, javaReference)) {
+        for (LookupElement item : JavaCompletionUtil.createLookupElements(completionElement, javaReference, superProcessor)) {
           set.add(withQualifiedSuper(className, item));
         }
       }

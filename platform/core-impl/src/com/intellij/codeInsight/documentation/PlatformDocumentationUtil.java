@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -45,7 +46,10 @@ public class PlatformDocumentationUtil {
       if (virtualFile != null) {
         if (virtualFile.getFileSystem() instanceof HttpFileSystem) {
           String url = virtualFile.getUrl();
-          if (!url.endsWith("/")) {
+          if (url.toLowerCase(Locale.getDefault()).endsWith("/index.html")) {
+            url = url.substring(0, url.length() - 10);
+          }
+          else if (!url.endsWith("/")) {
             url += "/";
           }
           result.add(url + relPath);

@@ -22,23 +22,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 
 public class VcsLogImpl implements VcsLog {
-  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogDataManager myDataManager;
   @NotNull private final VcsLogUiImpl myUi;
 
-  public VcsLogImpl(@NotNull VcsLogDataHolder holder, @NotNull VcsLogUiImpl ui) {
-    myDataHolder = holder;
+  public VcsLogImpl(@NotNull VcsLogDataManager manager, @NotNull VcsLogUiImpl ui) {
+    myDataManager = manager;
     myUi = ui;
   }
 
@@ -50,7 +49,7 @@ public class VcsLogImpl implements VcsLog {
       @NotNull
       @Override
       public CommitId get(int index) {
-        return ((GraphTableModel)myUi.getTable().getModel()).getCommitIdAtRow(rows[index]);
+        return getTable().getGraphTableModel().getCommitIdAtRow(rows[index]);
       }
 
       @Override
@@ -58,6 +57,10 @@ public class VcsLogImpl implements VcsLog {
         return rows.length;
       }
     };
+  }
+
+  private VcsLogGraphTable getTable() {
+    return myUi.getTable();
   }
 
   @NotNull
@@ -68,7 +71,7 @@ public class VcsLogImpl implements VcsLog {
       @NotNull
       @Override
       public VcsFullCommitDetails get(int index) {
-        return myDataHolder.getCommitDetailsGetter().getCommitData(rows[index], (GraphTableModel)myUi.getTable().getModel());
+        return getTable().getGraphTableModel().getFullDetails(rows[index]);
       }
 
       @Override
@@ -81,19 +84,19 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
-    myDataHolder.getCommitDetailsGetter().loadCommitsData(rowsList, (GraphTableModel)myUi.getTable().getModel(), consumer, indicator);
+    myDataManager.getCommitDetailsGetter().loadCommitsData(getTable().getGraphTableModel().convertToHashesAndRoots(rowsList), consumer, indicator);
   }
 
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root) {
-    return myDataHolder.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
+    return myDataManager.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
   }
 
   @NotNull
   @Override
   public Collection<VcsRef> getAllReferences() {
-    return myUi.getDataPack().getRefsModel().getAllRefs();
+    return myUi.getDataPack().getRefs().getAllRefs();
   }
 
   @NotNull
@@ -117,7 +120,7 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   @Override
   public Collection<VcsLogProvider> getLogProviders() {
-    return myDataHolder.getLogProviders();
+    return myDataManager.getLogProviders();
   }
 
 }

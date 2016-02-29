@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2015 Bas Leijdekkers
+ * Copyright 2005-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package com.siyeh.ig.inheritance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,8 +71,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiElement method = methodNameIdentifier.getParent();
       assert method != null;
@@ -84,8 +84,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     return new RedundantMethodOverrideVisitor();
   }
 
-  private static class RedundantMethodOverrideVisitor
-    extends BaseInspectionVisitor {
+  private static class RedundantMethodOverrideVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(PsiMethod method) {
@@ -112,10 +111,42 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (superReturnType == null || !superReturnType.equals(method.getReturnType())) {
         return;
       }
-      if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody)) {
+      if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody) && !isSuperCall(body, method)) {
         return;
       }
       registerMethodError(method);
+    }
+
+    private static boolean isSuperCall(PsiCodeBlock body, PsiMethod method) {
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length != 1) {
+        return false;
+      }
+      final PsiStatement statement = statements[0];
+      final PsiExpression expression;
+      if (PsiType.VOID.equals(method.getReturnType())) {
+        if (statement instanceof PsiExpressionStatement) {
+          final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+          expression = expressionStatement.getExpression();
+        }
+        else {
+          return false;
+        }
+      }
+      else {
+        if (statement instanceof PsiReturnStatement) {
+          final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+          expression = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
+        }
+        else {
+          return false;
+        }
+      }
+      if (!(expression instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      return MethodCallUtils.isSuperMethodCall(methodCallExpression, method);
     }
 
     private static boolean modifierListsAreEquivalent(@Nullable PsiModifierList list1, @Nullable PsiModifierList list2) {

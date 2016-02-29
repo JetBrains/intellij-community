@@ -191,6 +191,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     @Override
     public int compareTo(@NotNull MatchedValue o) {
+      int diff = o.getMatchingDegree() - getMatchingDegree();
+      if (diff != 0) return diff;
+
       boolean edt = ApplicationManager.getApplication().isDispatchThread();
 
       if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
@@ -218,9 +221,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
       if (value instanceof OptionDescription && !(o.value instanceof OptionDescription)) return 1;
       if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
-
-      int diff = o.getMatchingDegree() - getMatchingDegree();
-      if (diff != 0) return diff;
 
       diff = StringUtil.notNullize(getValueText()).length() - StringUtil.notNullize(o.getValueText()).length();
       if (diff != 0) return diff;
@@ -622,10 +622,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       Presentation oPresentation = o.getAction().getTemplatePresentation();
       String myText = myPresentation.getText();
       String oText = oPresentation.getText();
+      int byText = StringUtil.compare(StringUtil.trimEnd(myText, "..."), StringUtil.trimEnd(oText, "..."), true);
+      if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
       if (byTextLength != 0) return byTextLength;
-      int byText = StringUtil.compare(myText, oText, true);
-      if (byText != 0) return byText;
       int byGroup = Comparing.compare(myGroupName, o.getGroupName());
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);

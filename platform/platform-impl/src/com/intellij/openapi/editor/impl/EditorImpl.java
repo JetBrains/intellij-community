@@ -173,6 +173,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable private MouseEvent myMousePressedEvent;
   @Nullable private MouseEvent myMouseMovedEvent;
+  
+  private final MouseListener myMouseListener = new MyMouseAdapter();
+  private final MouseMotionListener myMouseMotionListener = new MyMouseMotionListener();
 
   /**
    * Holds information about area where mouse was pressed.
@@ -180,7 +183,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private EditorMouseEventArea myMousePressArea;
   private int mySavedSelectionStart = -1;
   private int mySavedSelectionEnd   = -1;
-  private int myLastColumnNumber;
 
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private MyEditable myEditable;
@@ -374,12 +376,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter), false);
+        attributesChanged(highlighter, areRenderersInvolved(highlighter), 
+                          EditorUtil.attributesImpactFontStyle(highlighter.getTextAttributes()));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter), false);
+        attributesChanged(highlighter, areRenderersInvolved(highlighter), 
+                          EditorUtil.attributesImpactFontStyle(highlighter.getTextAttributes()));
       }
 
       @Override
@@ -407,8 +411,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-        TextAttributes attributes = highlighter.getTextAttributes();
-        if (myUseNewRendering && start != end && (fontStyleChanged || attributes != null && attributes.getFontType() != Font.PLAIN)) {
+        if (myUseNewRendering && start != end && fontStyleChanged) {
           myView.invalidateRange(start, end);
         }
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
@@ -532,9 +535,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
-    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7") && Registry.is("editor.mac.smooth.scrolling")) {
-      PreciseMouseWheelScroller.install(myScrollPane);
-    }
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     myVerticalScrollBar.setOpaque(false);
     myPanel = new JPanel();
@@ -880,6 +880,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     isReleased = true;
     clearSettingsCache();
+    mySizeAdjustmentStrategy.cancelAllRequests();
 
     myFoldingModel.dispose();
     mySoftWrapModel.release();
@@ -897,6 +898,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusListeners.clear();
     myMouseListeners.clear();
     myMouseMotionListeners.clear();
+    
+    myEditorComponent.removeMouseListener(myMouseListener);
+    myGutterComponent.removeMouseListener(myMouseListener);
+    myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
+    myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
     if (myConnection != null) {
       myConnection.disconnect();
@@ -995,13 +1001,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-    MyMouseAdapter mouseAdapter = new MyMouseAdapter();
-    myEditorComponent.addMouseListener(mouseAdapter);
-    myGutterComponent.addMouseListener(mouseAdapter);
-
-    MyMouseMotionListener mouseMotionListener = new MyMouseMotionListener();
-    myEditorComponent.addMouseMotionListener(mouseMotionListener);
-    myGutterComponent.addMouseMotionListener(mouseMotionListener);
+    myEditorComponent.addMouseListener(myMouseListener);
+    myGutterComponent.addMouseListener(myMouseListener);
+    myEditorComponent.addMouseMotionListener(myMouseMotionListener);
+    myGutterComponent.addMouseMotionListener(myMouseMotionListener);
 
     myEditorComponent.addFocusListener(new FocusAdapter() {
       @Override
@@ -1479,7 +1482,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  @Override
   public LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware) {
     if (myUseNewRendering) return myView.offsetToLogicalPosition(offset);
     if (softWrapAware) {
@@ -2036,9 +2038,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
-      if (dim == null) {
-        return;
-      }
       myPreferredSize = dim;
 
       myGutterComponent.updateSize();
@@ -3910,7 +3909,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return logicalPositionToOffset(pos, true);
   }
 
-  @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos, boolean softWrapAware) {
     if (myUseNewRendering) return myView.logicalPositionToOffset(pos);
     if (softWrapAware) {
@@ -3941,18 +3939,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return end;
   }
 
-  @Override
-  public void setLastColumnNumber(int val) {
-    assertIsDispatchThread();
-    myLastColumnNumber = val;
-  }
-
-  @Override
-  public int getLastColumnNumber() {
-    assertReadAccess();
-    return myLastColumnNumber;
-  }
-
   /**
    * @return information about total number of lines that can be viewed by user. I.e. this is a number of all document
    *         lines (considering that single logical document line may be represented on multiple visual lines because of
@@ -3975,7 +3961,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return logicalToVisualPosition(logicalPos, true);
   }
 
-  @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
     if (myUseNewRendering) return myView.logicalToVisualPosition(logicalPos, false);
@@ -4119,7 +4104,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return visualToLogicalPosition(visiblePos, true);
   }
 
-  @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware) {
     if (myUseNewRendering) return myView.visualToLogicalPosition(visiblePos);
@@ -6547,6 +6531,72 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t) {
+    final EditorDropHandler dropHandler = editor.getDropHandler();
+    if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
+      dropHandler.handleDrop(t, editor.getProject(), null);
+      return true;
+    }
+
+    final int caretOffset = editor.getCaretModel().getOffset();
+    if (editor.myDraggedRange != null
+        && editor.myDraggedRange.getStartOffset() <= caretOffset && caretOffset < editor.myDraggedRange.getEndOffset()) {
+      return false;
+    }
+
+    if (editor.myDraggedRange != null) {
+      editor.getCaretModel().moveToOffset(editor.mySavedCaretOffsetForDNDUndoHack);
+    }
+
+    CommandProcessor.getInstance().executeCommand(editor.myProject, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              editor.getSelectionModel().removeSelection();
+
+              final int offset;
+              if (editor.myDraggedRange != null) {
+                editor.getCaretModel().moveToOffset(caretOffset);
+                offset = caretOffset;
+              }
+              else {
+                offset = editor.getCaretModel().getOffset();
+              }
+              if (editor.getDocument().getRangeGuard(offset, offset) != null) {
+                return;
+              }
+
+              editor.putUserData(LAST_PASTED_REGION, null);
+
+              EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
+              LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler);
+              ((EditorTextInsertHandler)pasteHandler).execute(editor, editor.getDataContext(), new Producer<Transferable>() {
+                @Override
+                public Transferable produce() {
+                  return t;
+                }
+              });
+
+              TextRange range = editor.getUserData(LAST_PASTED_REGION);
+              if (range != null) {
+                editor.getCaretModel().moveToOffset(range.getStartOffset());
+                editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+              }
+            }
+            catch (Exception exception) {
+              LOG.error(exception);
+            }
+          }
+        });
+      }
+    }, EditorBundle.message("paste.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+
+    return true;
+  }
+
   private static class MyTransferHandler extends TransferHandler {
     private static EditorImpl getEditor(@NotNull JComponent comp) {
       EditorComponentImpl editorComponent = (EditorComponentImpl)comp;
@@ -6555,73 +6605,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean importData(@NotNull final JComponent comp, @NotNull final Transferable t) {
-      final EditorImpl editor = getEditor(comp);
-
-      final EditorDropHandler dropHandler = editor.getDropHandler();
-      if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-        dropHandler.handleDrop(t, editor.getProject(), null);
-        return true;
-      }
-
-      final int caretOffset = editor.getCaretModel().getOffset();
-      if (editor.myDraggedRange != null
-          && editor.myDraggedRange.getStartOffset() <= caretOffset && caretOffset < editor.myDraggedRange.getEndOffset()) {
-        return false;
-      }
-
-      if (editor.myDraggedRange != null) {
-        editor.getCaretModel().moveToOffset(editor.mySavedCaretOffsetForDNDUndoHack);
-      }
-
-      CommandProcessor.getInstance().executeCommand(editor.myProject, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                editor.getSelectionModel().removeSelection();
-
-                final int offset;
-                if (editor.myDraggedRange != null) {
-                  editor.getCaretModel().moveToOffset(caretOffset);
-                  offset = caretOffset;
-                }
-                else {
-                  offset = editor.getCaretModel().getOffset();
-                }
-                if (editor.getDocument().getRangeGuard(offset, offset) != null) {
-                  return;
-                }
-
-                editor.putUserData(LAST_PASTED_REGION, null);
-
-                EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-                LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler);
-                ((EditorTextInsertHandler)pasteHandler).execute(editor, editor.getDataContext(), new Producer<Transferable>() {
-                  @Override
-                  public Transferable produce() {
-                    return t;
-                  }
-                });
-
-                TextRange range = editor.getUserData(LAST_PASTED_REGION);
-                if (range != null) {
-                  editor.getCaretModel().moveToOffset(range.getStartOffset());
-                  editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-                }
-              }
-              catch (Exception exception) {
-                LOG.error(exception);
-              }
-            }
-          });
-        }
-      }, EditorBundle.message("paste.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
-
-      return true;
+      return handleDrop(getEditor(comp), t);
     }
-
+    
     @Override
     public boolean canImport(@NotNull JComponent comp, @NotNull DataFlavor[] transferFlavors) {
       Editor editor = getEditor(comp);

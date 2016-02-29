@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -48,18 +49,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
 
-  public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project);
+  public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile);
   public abstract void commitAsynchronously(@NotNull final Project project,
                                             @NotNull final Document document,
                                             @NonNls @NotNull Object reason,
                                             @NotNull ModalityState currentModalityState);
 
   protected static class CommitTask {
+    static final Key<Object> CANCEL_REASON = Key.create("CANCEL_REASON");
     @NotNull final Document document;
     @NotNull final Project project;
+    private final int modificationSequence; // store initial document modification sequence here to check if it changed later before commit in EDT
 
     // when queued it's not started
     // when dequeued it's started
@@ -68,27 +73,32 @@ public abstract class DocumentCommitProcessor {
     @NotNull final Object reason;
     @NotNull final ModalityState myCreationModalityState;
     private final CharSequence myLastCommittedText;
-    public boolean removed; // task marked as removed should be ignored.
+    @NotNull final List<Pair<PsiFileImpl, FileASTNode>> myOldFileNodes;
 
-    protected CommitTask(@NotNull Document document,
-                      @NotNull Project project,
-                      @NotNull ProgressIndicator indicator,
-                      @NotNull Object reason,
-                      @NotNull ModalityState currentModalityState) {
+    protected CommitTask(@NotNull final Project project,
+                         @NotNull final Document document,
+                         @NotNull final List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes,
+                         @NotNull ProgressIndicator indicator,
+                         @NotNull Object reason,
+                         @NotNull ModalityState currentModalityState) {
       this.document = document;
       this.project = project;
       this.indicator = indicator;
       this.reason = reason;
       myCreationModalityState = currentModalityState;
       myLastCommittedText = PsiDocumentManager.getInstance(project).getLastCommittedText(document);
+      myOldFileNodes = oldFileNodes;
+      modificationSequence = ((DocumentEx)document).getModificationSequence();
     }
 
     @NonNls
     @Override
     public String toString() {
-      return "Project: " + project.getName()
-             + ", Doc: "+ document +" ("+  StringUtil.first(document.getImmutableCharSequence(), 12, true).toString().replaceAll("\n", " ")+")"
-             +(indicator.isCanceled() ? " (Canceled)" : "") + (removed ? "Removed" : "");
+      return "Doc: " + document + " (\"" + StringUtil.first(document.getImmutableCharSequence(), 40, true).toString().replaceAll("\n", " ") + "\")"
+             + (indicator.isCanceled() ? " (Canceled: " + ((UserDataHolder)indicator).getUserData(CANCEL_REASON) + ")":"")
+             +" Reason: " + reason
+             + (isStillValid() ? "" : "; changed: old seq="+modificationSequence+", new seq="+ ((DocumentEx)document).getModificationSequence())
+        ;
     }
 
     @Override
@@ -107,18 +117,29 @@ public abstract class DocumentCommitProcessor {
       result = 31 * result + project.hashCode();
       return result;
     }
+
+    public boolean isStillValid() {
+      return ((DocumentEx)document).getModificationSequence() == modificationSequence;
+    }
+
+    public void cancel(@NotNull Object reason, @NotNull DocumentCommitProcessor commitProcessor) {
+      if (!indicator.isCanceled()) {
+        commitProcessor.log(project, "indicator cancel", this);
+
+        indicator.cancel();
+        ((UserDataHolder)indicator).putUserData(CANCEL_REASON, reason);
+      }
+    }
   }
 
   // public for Upsource
   @Nullable("returns runnable to execute under write action in AWT to finish the commit")
   public Processor<Document> doCommit(@NotNull final CommitTask task,
                                       @NotNull final PsiFile file,
-                                      final boolean synchronously) {
+                                      @NotNull final FileASTNode oldFileNode) {
     Document document = task.document;
-    final long startDocModificationTimeStamp = document.getModificationStamp();
-    final FileElement myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
-    final CharSequence chars = document.getImmutableCharSequence();
-    final TextRange changedPsiRange = getChangedPsiRange(file, myTreeElementBeingReparsedSoItWontBeCollected, chars);
+    final CharSequence newDocumentText = document.getImmutableCharSequence();
+    final TextRange changedPsiRange = getChangedPsiRange(file, task.myLastCommittedText, newDocumentText);
     if (changedPsiRange == null) {
       return null;
     }
@@ -130,21 +151,20 @@ public abstract class DocumentCommitProcessor {
     }
 
     BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-    final DiffLog diffLog = blockSupport.reparseRange(file, changedPsiRange, chars, task.indicator, task.myLastCommittedText);
+    final DiffLog diffLog = blockSupport.reparseRange(file, oldFileNode, changedPsiRange, newDocumentText, task.indicator, task.myLastCommittedText);
 
     return new Processor<Document>() {
       @Override
       public boolean process(Document document) {
         ApplicationManager.getApplication().assertWriteAccessAllowed();
-        log("Finishing", task, synchronously, document.getModificationStamp(), startDocModificationTimeStamp);
-        if (document.getModificationStamp() != startDocModificationTimeStamp ||
+        if (!task.isStillValid() ||
             ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getCachedViewProvider(document) != file.getViewProvider()) {
           return false; // optimistic locking failed
         }
 
         doActualPsiChange(file, diffLog);
 
-        assertAfterCommit(document, file, myTreeElementBeingReparsedSoItWontBeCollected);
+        assertAfterCommit(document, file, (FileElement)oldFileNode);
 
         return true;
       }
@@ -181,7 +201,7 @@ public abstract class DocumentCommitProcessor {
           if (matchingLength != chars.length()) {
             break;
           }
-          patternIndex += (fromStart ? matchingLength : -matchingLength);
+          patternIndex += fromStart ? matchingLength : -matchingLength;
         }
       }
       leaf = fromStart ? TreeUtil.nextLeaf(leaf, false) : TreeUtil.prevLeaf(leaf, false);
@@ -202,6 +222,24 @@ public abstract class DocumentCommitProcessor {
     }
 
     int commonSuffixLength = Math.min(getMatchingLength(treeElement, newDocumentText, false), psiLength - commonPrefixLength);
+    return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
+  }
+
+  @Nullable
+  private static TextRange getChangedPsiRange(@NotNull PsiFile file,
+                                              @NotNull CharSequence oldDocumentText,
+                                              @NotNull CharSequence newDocumentText) {
+    int psiLength = oldDocumentText.length();
+    if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
+      return new TextRange(0, psiLength);
+    }
+
+    int commonPrefixLength = StringUtil.commonPrefixLength(oldDocumentText, newDocumentText);
+    if (commonPrefixLength == newDocumentText.length() && newDocumentText.length() == psiLength) {
+      return null;
+    }
+
+    int commonSuffixLength = Math.min(StringUtil.commonSuffixLength(oldDocumentText, newDocumentText), psiLength - commonPrefixLength);
     return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
   }
 
@@ -238,24 +276,25 @@ public abstract class DocumentCommitProcessor {
 
   private void assertAfterCommit(@NotNull Document document,
                                  @NotNull final PsiFile file,
-                                 @NotNull FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
-    if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
+                                 @NotNull FileElement oldFileNode) {
+    if (oldFileNode.getTextLength() != document.getTextLength()) {
       final String documentText = document.getText();
       String fileText = file.getText();
-      LOG.error("commitDocument left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
-                "; node len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
-                "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText),
+      boolean sameText = Comparing.equal(fileText, documentText);
+      LOG.error("commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
+                "; node.length=" + oldFileNode.getTextLength() +
+                "; doc.text" + (sameText ? "==" : "!=") + "file.text",
                 new Attachment("file psi text", fileText),
                 new Attachment("old text", documentText));
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {
         BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-        final DiffLog diffLog = blockSupport.reparseRange(file, new TextRange(0, documentText.length()), documentText, createProgressIndicator(),
-                                                          myTreeElementBeingReparsedSoItWontBeCollected.getText());
+        final DiffLog diffLog = blockSupport.reparseRange(file, file.getNode(), new TextRange(0, documentText.length()), documentText, createProgressIndicator(),
+                                                          oldFileNode.getText());
         doActualPsiChange(file, diffLog);
 
-        if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
+        if (oldFileNode.getTextLength() != document.getTextLength()) {
           LOG.error("PSI is broken beyond repair in: " + file);
         }
       }
@@ -265,7 +304,7 @@ public abstract class DocumentCommitProcessor {
     }
   }
 
-  public void log(@NonNls String msg, @Nullable CommitTask task, boolean synchronously, @NonNls Object... args) {
+  public void log(Project project, @NonNls String msg, @Nullable CommitTask task, @NonNls Object... args) {
   }
 
   @NotNull

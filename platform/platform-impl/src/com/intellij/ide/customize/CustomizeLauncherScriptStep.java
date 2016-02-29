@@ -18,7 +18,6 @@ package com.intellij.ide.customize;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -50,10 +49,9 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
     });
 
     myScriptPathTextField = new JTextField();
-    myScriptPathTextField.setOpaque(false);
     myScriptPathTextField.setText(CreateLauncherScriptAction.defaultScriptPath());
 
-    JPanel content = createBigButtonPanel(createSmallBorderLayout(), myCreateScriptCheckBox, EmptyRunnable.INSTANCE);
+    JPanel content = new JPanel(createSmallBorderLayout());
     content.setBorder(createSmallEmptyBorder());
 
     JPanel controls = new JPanel(new GridBagLayout());

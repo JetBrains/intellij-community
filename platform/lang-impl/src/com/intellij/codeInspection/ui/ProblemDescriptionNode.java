@@ -38,32 +38,18 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
 public class ProblemDescriptionNode extends InspectionTreeNode {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
-  protected final InspectionToolWrapper myToolWrapper;
+  protected final InspectionToolWrapper toolWrapper;
   @NotNull
   protected final InspectionToolPresentation myPresentation;
 
-  public ProblemDescriptionNode(@NotNull Object userObject,
-                                @NotNull InspectionToolWrapper toolWrapper,
-                                @NotNull InspectionToolPresentation presentation) {
-    this(userObject, null, null, toolWrapper, presentation);
-  }
-
-  public ProblemDescriptionNode(@NotNull RefEntity element,
-                                @NotNull CommonProblemDescriptor descriptor,
-                                @NotNull InspectionToolWrapper toolWrapper,
-                                @NotNull InspectionToolPresentation presentation) {
-    this(descriptor, element, descriptor, toolWrapper, presentation);
-  }
-
-  private ProblemDescriptionNode(@NotNull Object userObject,
-                                RefEntity element,
+  public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolWrapper toolWrapper,
                                 @NotNull InspectionToolPresentation presentation) {
-    super(userObject);
+    super(descriptor);
     myElement = element;
     myDescriptor = descriptor;
-    myToolWrapper = toolWrapper;
+    this.toolWrapper = toolWrapper;
     myPresentation = presentation;
   }
 

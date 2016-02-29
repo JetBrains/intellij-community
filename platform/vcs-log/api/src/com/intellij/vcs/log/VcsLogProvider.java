@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,13 +68,15 @@ public interface VcsLogProvider {
 
   /**
    * <p>Starts listening to events from the certain VCS, which should lead to the log refresh.</p>
-   * <p>It is the responsibility of the certain VcsLogProvider to carefully unsubscribe on project dispose.
-   *    Using a {@link MessageBus} topic can help to avoid this task.</p>
+   * <p>Returns disposable that unsubscribes from events.
+   *    Using a {@link MessageBus} topic can help to accomplish that.</p>
    *
    * @param roots     VCS roots which should be listened to.
    * @param refresher The refresher which should be notified about the need of refresh.
+   * @return          Disposable that unsubscribes from events on dispose.
    */
-  void subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
+  @NotNull
+  Disposable subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
   /**
    * <p>Return commits, which correspond to the given filters.</p>

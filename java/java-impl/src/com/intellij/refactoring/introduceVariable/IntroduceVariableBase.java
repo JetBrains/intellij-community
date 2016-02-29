@@ -158,10 +158,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
   
   public static boolean selectLineAtCaret(int offset, PsiElement[] statementsInRange) {
-    return !PsiUtil.isStatement(statementsInRange[0]) ||
-            statementsInRange[0].getTextRange().getStartOffset() > offset ||
-            statementsInRange[0].getTextRange().getEndOffset() < offset ||
-            isPreferStatements();
+    TextRange range = statementsInRange[0].getTextRange();
+    if (statementsInRange[0] instanceof PsiExpressionStatement) {
+      range = ((PsiExpressionStatement)statementsInRange[0]).getExpression().getTextRange();
+    }
+
+    return range.getStartOffset() > offset ||
+           range.getEndOffset() <= offset ||
+           isPreferStatements();
   }
 
   public static int preferredSelection(PsiElement[] statementsInRange, List<PsiExpression> expressions) {

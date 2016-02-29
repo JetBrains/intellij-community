@@ -97,8 +97,7 @@ def set_ide_os(os):
     if os == 'UNIX':
         normcase = lambda f:f #Change to no-op if the client side is on unix/mac.
     else:
-        import platform
-        if platform.system() == 'Windows':
+        if sys.platform == 'win32':
             normcase = norm_case
         else:
             normcase = os_normcase

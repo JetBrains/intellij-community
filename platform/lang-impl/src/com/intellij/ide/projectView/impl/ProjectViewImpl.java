@@ -438,10 +438,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       AbstractProjectViewPane pane = myId2Pane.get(id);
 
       int comp = PANE_WEIGHT_COMPARATOR.compare(pane, newPane);
-      if (comp == 0) {
-        System.out.println("here");
-      }
-      LOG.assertTrue(comp != 0);
+      LOG.assertTrue(comp != 0, "Project view pane " + newPane + " has the same weight as " + pane +
+                                ". Please make sure that you overload getWeight() and return a distinct weight value.");
       if (comp > 0) {
         break;
       }

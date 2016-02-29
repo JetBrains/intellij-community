@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +46,37 @@ public class BalloonLayoutConfiguration {
   public final int allActionsOffset;
   public final int beforeGearSpace;
 
-  public static final int MaxWidth = JBUI.scale(350);
+  public static final int FixedWidth;
+  public static final int MaxWidth;
+
   public static final int MinWidth = JBUI.scale(100);
+
+  public static final String MaxWidthStyle;
+
+  static {
+    int width;
+    int styleWidth;
+
+    if (SystemInfo.isMac) {
+      width = 360;
+      styleWidth = 240;
+    }
+    else if (SystemInfo.isLinux) {
+      width = 410;
+      styleWidth = 270;
+    }
+    else {
+      width = 330;
+      styleWidth = 205;
+    }
+
+    width += AllIcons.Ide.Notification.Shadow.Left.getIconWidth();
+    width += AllIcons.Ide.Notification.Shadow.Right.getIconWidth();
+
+    FixedWidth = JBUI.scale(width);
+    MaxWidth = JBUI.scale(width - 60);
+    MaxWidthStyle = "width:" + JBUI.scale(styleWidth) + "px;";
+  }
 
   public static final int NotificationSpace = JBUI.scale(10);
 

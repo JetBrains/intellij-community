@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @State(
@@ -448,6 +449,20 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     @Override
     public void loadState(FindRecents state) {
       XmlSerializerUtil.copyBean(state, this);
+      //Avoid duplicates
+      LinkedHashSet<String> tmp = new LinkedHashSet<>(findStrings);
+      findStrings.clear();
+      findStrings.addAll(tmp);
+
+      tmp.clear();
+      tmp.addAll(replaceStrings);
+      replaceStrings.clear();
+      replaceStrings.addAll(tmp);
+
+      tmp.clear();
+      tmp.addAll(dirStrings);
+      dirStrings.clear();
+      dirStrings.addAll(tmp);
     }
 
     @Override

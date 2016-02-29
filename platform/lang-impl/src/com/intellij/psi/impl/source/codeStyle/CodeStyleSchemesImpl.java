@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   protected static final String DEFAULT_SCHEME_NAME = "Default";
 
   @NonNls
   static final String CODE_STYLES_DIR_PATH = "codestyles";
 
-  protected final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
+  protected final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemeManager;
 
   public CodeStyleSchemesImpl(@NotNull SchemesManagerFactory schemesManagerFactory) {
-    mySchemesManager = schemesManagerFactory.create(CODE_STYLES_DIR_PATH, new SchemeProcessor<CodeStyleSchemeImpl>() {
+    mySchemeManager = schemesManagerFactory.create(CODE_STYLES_DIR_PATH, new SchemeProcessor<CodeStyleSchemeImpl>() {
       @NotNull
       @Override
       public CodeStyleSchemeImpl readScheme(@NotNull Element element) {
@@ -61,29 +58,23 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
 
       @Override
       public void initScheme(@NotNull CodeStyleSchemeImpl scheme) {
-        scheme.init(CodeStyleSchemesImpl.this);
+        scheme.init(mySchemeManager);
       }
     });
 
-    mySchemesManager.loadSchemes();
+    mySchemeManager.loadSchemes();
     addScheme(new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null));
     setCurrentScheme(getDefaultScheme());
   }
 
   @Override
-  public CodeStyleScheme[] getSchemes() {
-    Collection<CodeStyleScheme> schemes = mySchemesManager.getAllSchemes();
-    return schemes.toArray(new CodeStyleScheme[schemes.size()]);
-  }
-
-  @Override
   public CodeStyleScheme getCurrentScheme() {
-    return mySchemesManager.getCurrentScheme();
+    return mySchemeManager.getCurrentScheme();
   }
 
   @Override
   public void setCurrentScheme(CodeStyleScheme scheme) {
-    mySchemesManager.setCurrent(scheme);
+    mySchemeManager.setCurrent(scheme);
   }
 
   @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
@@ -96,7 +87,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
       name = null;
       for (int i = 1; name == null; i++) {
         String currName = parentScheme.getName() + " (" + i + ")";
-        if (findSchemeByName(currName) == null) {
+        if (mySchemeManager.findSchemeByName(currName) == null) {
           name = currName;
         }
       }
@@ -105,7 +96,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
       name = null;
       for (int i = 0; name == null; i++) {
         String currName = i == 0 ? preferredName : preferredName + " (" + i + ")";
-        if (findSchemeByName(currName) == null) {
+        if (mySchemeManager.findSchemeByName(currName) == null) {
           name = currName;
         }
       }
@@ -126,32 +117,27 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
       }
       setCurrentScheme(newCurrentScheme);
     }
-    mySchemesManager.removeScheme(scheme);
-  }
-
-  @Override
-  public void setSchemes(@NotNull List<CodeStyleScheme> schemes) {
-    mySchemesManager.setSchemes(schemes);
-  }
-
-  @NotNull
-  public SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemeManager() {
-    return mySchemesManager;
+    mySchemeManager.removeScheme(scheme);
   }
 
   @Override
   public CodeStyleScheme getDefaultScheme() {
-    return findSchemeByName(DEFAULT_SCHEME_NAME);
+    return mySchemeManager.findSchemeByName(DEFAULT_SCHEME_NAME);
   }
 
   @Nullable
   @Override
   public CodeStyleScheme findSchemeByName(@NotNull String name) {
-    return mySchemesManager.findSchemeByName(name);
+    return mySchemeManager.findSchemeByName(name);
   }
 
   @Override
   public void addScheme(@NotNull CodeStyleScheme scheme) {
-    mySchemesManager.addScheme(scheme);
+    mySchemeManager.addScheme(scheme);
+  }
+
+  @NotNull
+  public static SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemeManager() {
+    return ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).mySchemeManager;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package com.intellij.internal;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
 import com.intellij.util.net.NetUtils;
 
 import java.lang.management.ManagementFactory;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author egor
@@ -33,11 +34,11 @@ import java.lang.management.ManagementFactory;
 public class DebugAttachDetector {
   private static final Logger LOG = Logger.getInstance(DebugAttachDetector.class);
 
-  private String myHost = null;
+  private String myHost;
   private int myPort = -1;
-  private SingleAlarm myAlarm;
+  private ScheduledFuture<?> myTask;
   private boolean myAttached;
-  private boolean myReady = false;
+  private boolean myReady;
 
   public DebugAttachDetector() {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
@@ -74,24 +75,22 @@ public class DebugAttachDetector {
 
     if (myPort < 0) return;
 
-    myAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
-        if (!myReady) {
-          myAttached = attached;
-          myReady = true;
+    myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+        @Override
+        public void run() {
+          boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
+          if (!myReady) {
+            myAttached = attached;
+            myReady = true;
+          }
+          else if (attached != myAttached) {
+            myAttached = attached;
+            Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                                      "Remote debugger",
+                                                      myAttached ? "attached" : "detached",
+                                                      NotificationType.WARNING));
+          }
         }
-        else if (attached != myAttached) {
-          myAttached = attached;
-          Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                                    "Remote debugger",
-                                                    myAttached ? "attached" : "detached",
-                                                    NotificationType.WARNING));
-        }
-        myAlarm.request();
-      }
-    }, 5000, Alarm.ThreadToUse.POOLED_THREAD, app);
-    myAlarm.request();
+      }, 5, 5, TimeUnit.SECONDS);
   }
 }

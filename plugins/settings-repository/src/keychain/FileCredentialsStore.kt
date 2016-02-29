@@ -1,11 +1,32 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.keychain
 
 import com.intellij.openapi.util.PasswordUtil
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.delete
+import com.intellij.util.exists
+import com.intellij.util.inputStream
 import com.intellij.util.io.IOUtil
-import java.io.*
+import com.intellij.util.outputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.IOException
+import java.nio.file.Path
 
-class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
+class FileCredentialsStore(private val storeFile: Path) : CredentialsStore {
   // we store only one for any URL, don't want to add complexity, OS keychain should be used
   private var credentials: Credentials? = null
 
@@ -20,7 +41,7 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
     if (storeFile.exists()) {
       try {
         var hasErrors = true
-        val `in` = DataInputStream(FileInputStream(storeFile).buffered())
+        val `in` = DataInputStream(storeFile.inputStream().buffered())
         try {
           credentials = Credentials(PasswordUtil.decodePassword(IOUtil.readString(`in`)), PasswordUtil.decodePassword(IOUtil.readString(`in`)))
           hasErrors = false
@@ -61,8 +82,7 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
     this.credentials = credentials
 
     try {
-      FileUtil.createParentDirs(storeFile)
-      val out = DataOutputStream(FileOutputStream(storeFile).buffered())
+      val out = DataOutputStream(storeFile.outputStream().buffered())
       try {
         IOUtil.writeString(PasswordUtil.encodePassword(credentials.id), out)
         IOUtil.writeString(PasswordUtil.encodePassword(credentials.token), out)

@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="jira" />
     <orderEntry type="module" module-name="ShortcutPromoter" />
     <orderEntry type="module" module-name="ipnb" />
+    <orderEntry type="module" module-name="settings-repository" />
   </component>
 </module>

@@ -72,6 +72,13 @@ public class IpnbPyFragment extends PyFileImpl {
     return getManager().findDirectory(parentFile);
   }
 
+  @NotNull
+  @Override
+  public PsiFile getOriginalFile() {
+    final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myFilePanel.getDocument());
+    return psiFile != null ? psiFile : super.getOriginalFile();
+  }
+
   @Override
   public PsiElement getNextSibling() {
     return null;

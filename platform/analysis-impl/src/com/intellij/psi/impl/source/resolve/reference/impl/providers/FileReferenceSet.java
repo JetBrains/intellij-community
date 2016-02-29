@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -329,7 +329,9 @@ public class FileReferenceSet {
         final Collection<PsiFileSystemItem> roots = value.fun(file);
         if (roots != null) {
           for (PsiFileSystemItem root : roots) {
-            LOG.assertTrue(root != null, "Default path evaluator " + value + " produced a null root for " + file);
+            if (root == null) {
+              LOG.error("Default path evaluator " + value + " produced a null root for " + file);
+            }
           }
           return roots;
         }
@@ -444,7 +446,9 @@ public class FileReferenceSet {
         }
         final Collection<PsiFileSystemItem> roots = helper.getRoots(module);
         for (PsiFileSystemItem root : roots) {
-          LOG.assertTrue(root != null, "Helper " + helper + " produced a null root for " + file);
+          if (root == null) {
+            LOG.error("Helper " + helper + " produced a null root for " + file);
+          }
         }
         list.addAll(roots);
       }

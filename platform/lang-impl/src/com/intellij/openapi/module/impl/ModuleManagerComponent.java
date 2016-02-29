@@ -63,7 +63,9 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
     myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
       @Override
-      public void projectComponentsInitialized(final Project project) {
+      public void projectComponentsInitialized(@NotNull final Project project) {
+        if (project != myProject) return;
+
         long t = System.currentTimeMillis();
         loadModules(myModuleModel);
         t = System.currentTimeMillis() - t;

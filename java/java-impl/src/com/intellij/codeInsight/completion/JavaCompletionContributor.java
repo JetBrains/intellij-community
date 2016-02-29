@@ -99,6 +99,9 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                             JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
   private static final ElementPattern<PsiElement> IMPORT_REFERENCE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
+  private static final ElementPattern<PsiElement> CATCH_OR_FINALLY = psiElement().afterLeaf(
+    psiElement().withText("}").withParent(
+      psiElement(PsiCodeBlock.class).afterLeaf(PsiKeyword.TRY)));
 
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
@@ -126,7 +129,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return ElementClassFilter.CLASS;
     }
 
-    if (isCatchFinallyPosition(position) ||
+    if (CATCH_OR_FINALLY.accepts(position) ||
         JavaKeywordCompletion.START_SWITCH.accepts(position) ||
         JavaKeywordCompletion.isInstanceofPlace(position) ||
         JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
@@ -164,15 +167,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return TrueFilter.INSTANCE;
-  }
-
-  private static boolean isCatchFinallyPosition(PsiElement position) {
-    PsiElement leaf = PsiTreeUtil.prevVisibleLeaf(position);
-    return leaf != null &&
-           leaf.textMatches("}") &&
-           leaf.getParent() instanceof PsiCodeBlock &&
-           leaf.getParent().getParent() instanceof PsiTryStatement &&
-           ((PsiTryStatement)leaf.getParent().getParent()).getResourceList() == null;
   }
 
   private static boolean isInsideAnnotationName(PsiElement position) {

@@ -42,12 +42,13 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PyFunctionTypeCommentReferenceContributor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
-import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
+import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
@@ -286,6 +287,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (comment instanceof PsiLanguageInjectionHost) {
         processInjection((PsiLanguageInjectionHost)comment);
       }
+      if (PyFunctionTypeCommentReferenceContributor.TYPE_COMMENT_PATTERN.accepts(comment)) {
+        for (PsiReference reference : comment.getReferences()) {
+          if (reference instanceof PsiPolyVariantReference) {
+            markTargetImportsAsUsed((PsiPolyVariantReference)reference);
+          }
+        }
+      }
     }
 
     @Override
@@ -323,18 +331,22 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               if (element instanceof PyReferenceOwner) {
                 final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
                 final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
-                final ResolveResult[] resolveResults = reference.multiResolve(false);
-                for (ResolveResult resolveResult : resolveResults) {
-                  if (resolveResult instanceof ImportedResolveResult) {
-                    final PyImportedNameDefiner definer = ((ImportedResolveResult)resolveResult).getDefiner();
-                    if (definer != null) {
-                      myUsedImports.add(definer);
-                    }
-                  }
-                }
+                markTargetImportsAsUsed(reference);
               }
             }
           }.visitElement(pair.getFirst());
+        }
+      }
+    }
+
+    private void markTargetImportsAsUsed(@NotNull PsiPolyVariantReference reference) {
+      final ResolveResult[] resolveResults = reference.multiResolve(false);
+      for (ResolveResult resolveResult : resolveResults) {
+        if (resolveResult instanceof ImportedResolveResult) {
+          final PyImportedNameDefiner definer = ((ImportedResolveResult)resolveResult).getDefiner();
+          if (definer != null) {
+            myUsedImports.add(definer);
+          }
         }
       }
     }
@@ -593,7 +605,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           description = PyBundle.message("INSP.unresolved.ref.$0", refText);
 
           // look in other imported modules for this whole name
-          if (PythonReferenceImporter.isImportable(element)) {
+          if (PythonImportUtils.isImportable(element)) {
             addAutoImportFix(node, reference, actions);
           }
 
@@ -918,7 +930,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private static void addAutoImportFix(PyElement node, PsiReference reference, List<LocalQuickFix> actions) {
       final PsiFile file = InjectedLanguageManager.getInstance(node.getProject()).getTopLevelFile(node);
       if (!(file instanceof PyFile)) return;
-      AutoImportQuickFix importFix = PythonReferenceImporter.proposeImportFix(node, reference);
+      AutoImportQuickFix importFix = PythonImportUtils.proposeImportFix(node, reference);
       if (importFix != null) {
         if (!suppressHintForAutoImport(node, importFix) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
           final AutoImportHintAction autoImportHintAction = new AutoImportHintAction(importFix);

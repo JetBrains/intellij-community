@@ -4,6 +4,7 @@ except :
     import _thread as thread
 
 import threading
+from time import sleep
 
 def bar(y):
     z = 100 + y
@@ -22,5 +23,5 @@ def foo(x):
 id = thread.start_new_thread(foo, (1,))
 
 while True:
-    pass
+    sleep(1)
 

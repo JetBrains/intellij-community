@@ -103,7 +103,7 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
   @NotNull
   @Override
   protected String getLookupString(@NotNull final Task task) {
-    return task.getId();
+    return task.getPresentableId();
   }
 
   @Override

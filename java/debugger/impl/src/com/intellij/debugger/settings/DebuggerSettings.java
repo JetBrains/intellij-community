@@ -89,7 +89,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
-  private Map<String, ContentState> myContentStates = new LinkedHashMap<String, ContentState>();
+  private Map<String, ContentState> myContentStates = new LinkedHashMap<>();
 
   // transient - custom serialization
   @Transient
@@ -175,7 +175,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public DebuggerSettings clone() {
     try {
       final DebuggerSettings cloned = (DebuggerSettings)super.clone();
-      cloned.myContentStates = new HashMap<String, ContentState>();
+      cloned.myContentStates = new HashMap<>();
       for (Map.Entry<String, ContentState> entry : myContentStates.entrySet()) {
         cloned.myContentStates.put(entry.getKey(), entry.getValue().clone());
       }

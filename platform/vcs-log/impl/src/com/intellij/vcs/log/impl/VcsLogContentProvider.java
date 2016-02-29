@@ -16,24 +16,20 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.util.Function;
+import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.vcs.log.VcsLogSettings;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,55 +41,16 @@ import java.util.Arrays;
  * Delegates to the VcsLogManager.
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider {
-
   public static final String TAB_NAME = "Log";
-  private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogManager myLogManager;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
   private MessageBusConnection myConnection;
 
-  public VcsLogContentProvider(@NotNull Project project,
-                               @NotNull ProjectLevelVcsManager manager,
-                               @NotNull VcsLogSettings settings,
-                               @NotNull VcsLogUiProperties uiProperties) {
+  public VcsLogContentProvider(@NotNull Project project, @NotNull VcsLogManager logManager) {
     myProject = project;
-    myVcsManager = manager;
-    myLogManager = new VcsLogManager(project, settings, uiProperties);
-  }
-
-  @Nullable
-  public static VcsLogManager findLogManager(@NotNull Project project) {
-    final ChangesViewContentEP[] eps = project.getExtensions(ChangesViewContentEP.EP_NAME);
-    ChangesViewContentEP ep = ContainerUtil.find(eps, new Condition<ChangesViewContentEP>() {
-      @Override
-      public boolean value(ChangesViewContentEP ep) {
-        return ep.getClassName().equals(VcsLogContentProvider.class.getName());
-      }
-    });
-    if (ep == null) {
-      LOG.warn("Proper content provider ep not found among [" + toString(eps) + "]");
-      return null;
-    }
-    ChangesViewContentProvider instance = ep.getInstance(project);
-    if (!(instance instanceof VcsLogContentProvider)) {
-      LOG.error("Class name matches, but the class doesn't. class name: " + ep.getClassName() + ", class: " + ep.getClass());
-      return null;
-    }
-    VcsLogContentProvider provider = (VcsLogContentProvider)instance;
-    return provider.myLogManager;
-  }
-
-  @NotNull
-  private static String toString(@NotNull ChangesViewContentEP[] eps) {
-    return StringUtil.join(eps, new Function<ChangesViewContentEP, String>() {
-      @Override
-      public String fun(ChangesViewContentEP ep) {
-        return String.format("%s-%s-%s", ep.tabName, ep.className, ep.predicateClassName);
-      }
-    }, ",");
+    myLogManager = logManager;
   }
 
   @Override
@@ -106,14 +63,34 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   private void initContentInternal() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myContainer.add(myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()), TAB_NAME), BorderLayout.CENTER);
+    myContainer.add(myLogManager.initMainLog(TAB_NAME), BorderLayout.CENTER);
   }
 
   @Override
   public void disposeContent() {
     myConnection.disconnect();
     myContainer.removeAll();
-    Disposer.dispose(myLogManager);
+    myLogManager.disposeLog();
+  }
+
+  public static void openAnotherLogTab(@NotNull Project project) {
+    VcsLogManager logManager = VcsLogManager.getInstance(project);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+
+    TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), TAB_NAME);
+    String shortName = String.valueOf(tabbedContent == null ? 1 : tabbedContent.getTabs().size() + 1);
+    VcsLogUiImpl logUi = logManager.createLog(ContentUtilEx.getFullName(TAB_NAME, shortName));
+    addLogTab(logManager, toolWindow, logUi, shortName);
+  }
+
+  private static void addLogTab(@NotNull VcsLogManager logManager,
+                                @NotNull ToolWindow toolWindow,
+                                @NotNull VcsLogUiImpl logUi,
+                                @NotNull String shortName) {
+    logManager.watchTab(ContentUtilEx.getFullName(TAB_NAME, shortName), logUi);
+    logUi.requestFocus();
+    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), logUi.getMainFrame().getMainComponent(), TAB_NAME, shortName, true, logUi);
+    toolWindow.activate(null);
   }
 
   private class MyVcsListener implements VcsListener {
@@ -123,7 +100,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
         @Override
         public void run() {
           myContainer.removeAll();
-          Disposer.dispose(myLogManager);
+          myLogManager.disposeLog();
 
           initContentInternal();
         }

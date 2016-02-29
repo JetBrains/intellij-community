@@ -63,44 +63,46 @@ public class GoToHashOrRefPopup {
   @Nullable private VcsRef mySelectedRef;
 
   public GoToHashOrRefPopup(@NotNull final Project project,
-                            @NotNull Collection<VcsRef> variants, Collection<VirtualFile> roots,
+                            @NotNull Collection<VcsRef> variants,
+                            Collection<VirtualFile> roots,
                             @NotNull Function<String, Future> onSelectedHash,
                             @NotNull Function<VcsRef, Future> onSelectedRef,
                             @NotNull VcsLogColorManager colorManager,
                             @NotNull Comparator<VcsRef> comparator) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
-    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(project, variants, roots, colorManager, comparator)) {
-      @Override
-      public void onOk() {
-        if (myFuture == null) {
-          final Future future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(getText().trim())))
-                                 ? myOnSelectedHash.fun(getText().trim())
-                                 : myOnSelectedRef.fun(mySelectedRef));
-          myFuture = future;
-          showProgress();
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                future.get();
-                okPopup();
+    myTextField =
+      new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(project, variants, roots, colorManager, comparator)) {
+        @Override
+        public void onOk() {
+          if (myFuture == null) {
+            final Future future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(getText().trim())))
+                                   ? myOnSelectedHash.fun(getText().trim())
+                                   : myOnSelectedRef.fun(mySelectedRef));
+            myFuture = future;
+            showProgress();
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  future.get();
+                  okPopup();
+                }
+                catch (CancellationException ex) {
+                  cancelPopup();
+                }
+                catch (InterruptedException ex) {
+                  cancelPopup();
+                }
+                catch (ExecutionException ex) {
+                  LOG.error(ex);
+                  cancelPopup();
+                }
               }
-              catch (CancellationException ex) {
-                cancelPopup();
-              }
-              catch (InterruptedException ex) {
-                cancelPopup();
-              }
-              catch (ExecutionException ex) {
-                LOG.error(ex);
-                cancelPopup();
-              }
-            }
-          });
+            });
+          }
         }
-      }
-    };
+      };
     myTextField.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     JBLabel label = new JBLabel("Enter hash or branch/tag name:");
@@ -226,7 +228,19 @@ public class GoToHashOrRefPopup {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
           mySelectedRef = (VcsRef)item.getObject();
-          myTextField.onOk();
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              // handleInsert is called in the middle of some other code that works with editor
+              // (see CodeCompletionHandlerBase.insertItem)
+              // for example, scrolls editor
+              // problem is that in onOk we make text field not editable
+              // by some reason this is done by disposing its editor and creating a new one
+              // so editor gets disposed here and CodeCompletionHandlerBase can not finish doing whatever it is doing with it
+              // I counter this by invoking onOk in invokeLater
+              myTextField.onOk();
+            }
+          });
         }
       };
     }

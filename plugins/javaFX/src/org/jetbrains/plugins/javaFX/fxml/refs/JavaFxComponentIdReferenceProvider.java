@@ -15,9 +15,13 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -32,6 +36,7 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
 * User: anna
@@ -46,42 +51,21 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     final String value = xmlAttributeValue.getValue();
     final boolean startsWithDollar = value.startsWith("$");
     final String referencesId = startsWithDollar ? value.substring(1) : value;
-    final Map<String, XmlAttributeValue> fileIds = new HashMap<String, XmlAttributeValue>();
-    xmlAttributeValue.getContainingFile().accept(new XmlRecursiveElementVisitor() {
-      @Override
-      public void visitXmlTag(XmlTag tag) {
-        super.visitXmlTag(tag);
-        if (currentTag != tag) {
-          final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ID);
-          if (attribute != null) {
-            fileIds.put(attribute.getValue(), attribute.getValueElement());
-          }
-        }
-      }
-    });
+    final Map<String, XmlAttributeValue> fileIds = JavaFxPsiUtil.collectFileIds(currentTag);
 
     if (JavaFxPsiUtil.isExpressionBinding(value)) {
       final String expressionText = referencesId.substring(1, referencesId.length() - 1);
       final String newId = StringUtil.getPackageName(expressionText);
       final String fieldRef = StringUtil.getShortName(expressionText);
 
-      final PsiReferenceBase idReferenceBase;
-
       final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(element.getContainingFile());
-      final PsiField controllerField = controllerClass != null ? controllerClass.findFieldByName(newId, false) : null;
-      if (controllerField == null) {
-        idReferenceBase = new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, newId);
-      } else {
-        idReferenceBase = new JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef(xmlAttributeValue, controllerField, controllerClass); 
-      }
-
+      final PsiReferenceBase idReferenceBase = getIdReferenceBase(xmlAttributeValue, newId, fileIds, Collections.emptyMap(), controllerClass);
       final TextRange range = idReferenceBase.getRangeInElement();
       final int startOffset = range.getStartOffset() + 2;
       final int endOffset = startOffset + newId.length();
       idReferenceBase.setRangeInElement(new TextRange(startOffset, endOffset));
       if (fileIds.containsKey(newId)) {
-        final XmlAttributeValue attributeValue = fileIds.get(newId);
-        final PsiClass tagClass = JavaFxPsiUtil.getTagClass(attributeValue);
+        final PsiClass tagClass = FxmlConstants.CONTROLLER.equals(newId) ? controllerClass : JavaFxPsiUtil.getTagClass(fileIds.get(newId));
         if (tagClass != null) {
           final JavaFxExpressionReferenceBase referenceBase = new JavaFxExpressionReferenceBase(xmlAttributeValue, tagClass, fieldRef);
           final TextRange textRange = referenceBase.getRangeInElement();
@@ -92,7 +76,18 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       return new PsiReference[] {idReferenceBase};
     }
     if (startsWithDollar) {
-      final JavaFxIdReferenceBase idReferenceBase = new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, referencesId);
+      final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(element.getContainingFile());
+
+      final PsiClass targetPropertyClass = JavaFxPsiUtil.getPropertyClass(xmlAttributeValue);
+      final boolean isConvertible = targetPropertyClass != null && JavaFxPsiUtil.hasConversionFromAnyType(targetPropertyClass);
+
+      final Map<String, TypeMatch> typeMatches = fileIds.entrySet().stream().collect(
+        Collectors.toMap(Map.Entry::getKey, e -> {
+          final PsiClass valueClass = JavaFxPsiUtil.getTagClassById(e.getKey(), xmlAttributeValue, e.getValue());
+          return TypeMatch.getMatch(valueClass, targetPropertyClass, isConvertible);
+        }));
+
+      final PsiReferenceBase idReferenceBase = getIdReferenceBase(xmlAttributeValue, referencesId, fileIds, typeMatches, controllerClass);
       final TextRange rangeInElement = idReferenceBase.getRangeInElement();
       idReferenceBase.setRangeInElement(new TextRange(rangeInElement.getStartOffset() + 1, rangeInElement.getEndOffset()));
       return new PsiReference[]{idReferenceBase};
@@ -112,9 +107,50 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     }
   }
 
+  @NotNull
+  private static PsiReferenceBase getIdReferenceBase(XmlAttributeValue xmlAttributeValue,
+                                                     String referencesId,
+                                                     Map<String, XmlAttributeValue> fileIds,
+                                                     Map<String, TypeMatch> typeMatches,
+                                                     PsiClass controllerClass) {
+    if (controllerClass != null && !FxmlConstants.CONTROLLER.equals(referencesId)) {
+      final PsiField controllerField = controllerClass.findFieldByName(referencesId, false);
+      if (controllerField != null) {
+        return new JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef(xmlAttributeValue, controllerField, controllerClass);
+      }
+    }
+    return new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, typeMatches, referencesId);
+  }
+
+  private enum TypeMatch {
+    ASSIGNABLE(3.0),
+    CONVERTIBLE(2.0),
+    UNDEFINED(1.0),
+    INCOMPATIBLE(0.0);
+
+    private final double myPriority;
+
+    TypeMatch(double priority) {
+      myPriority = priority;
+    }
+
+    public static double getPriority(TypeMatch match) {
+      return match != null ? match.myPriority : 0.0;
+    }
+
+    @NotNull
+    public static TypeMatch getMatch(PsiClass valueClass, PsiClass targetPropertyClass, boolean isConvertible) {
+      if (valueClass == null || targetPropertyClass == null) return UNDEFINED;
+      if (InheritanceUtil.isInheritorOrSelf(valueClass, targetPropertyClass, true)) return ASSIGNABLE;
+      if (isConvertible) return CONVERTIBLE;
+      return INCOMPATIBLE;
+    }
+  }
+
   private static class JavaFxIdReferenceBase extends PsiReferenceBase<XmlAttributeValue> {
     private final Map<String, XmlAttributeValue> myFileIds;
     private final Set<String> myAcceptableIds;
+    private final Map<String, TypeMatch> myTypeMatches;
     private final String myReferencesId;
 
     private JavaFxIdReferenceBase(XmlAttributeValue element,
@@ -125,13 +161,16 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       myFileIds = fileIds;
       myAcceptableIds = acceptableIds;
       myReferencesId = referencesId;
+      myTypeMatches = Collections.emptyMap();
     }
 
     public JavaFxIdReferenceBase(XmlAttributeValue xmlAttributeValue,
                                  Map<String, XmlAttributeValue> fileIds,
+                                 Map<String, TypeMatch> typeMatches,
                                  String referencesId) {
       super(xmlAttributeValue);
       myFileIds = fileIds;
+      myTypeMatches = typeMatches;
       myReferencesId = referencesId;
       myAcceptableIds = myFileIds.keySet();
     }
@@ -145,7 +184,9 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     @NotNull
     @Override
     public Object[] getVariants() {
-      return ArrayUtil.toStringArray(myAcceptableIds);
+      return myAcceptableIds.stream()
+        .map(id -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(id), TypeMatch.getPriority(myTypeMatches.get(id))))
+        .toArray(LookupElement[]::new);
     }
   }
 
@@ -183,7 +224,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
 
     private Object[] collectProperties(@NotNull PsiField psiField) {
       final PsiType type = psiField.getType();
-      final PsiType propertyType = JavaFxPsiUtil.getPropertyType(type, psiField.getProject());
+      final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(type, psiField.getProject());
       final List<PsiField> objs = new ArrayList<PsiField>();
       for (PsiField field : myTagClass.getAllFields()) {
         if (field.hasModifierProperty(PsiModifier.STATIC)) continue;

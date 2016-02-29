@@ -32,7 +32,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
@@ -61,7 +61,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull private final VcsLogUiImpl myUi;
 
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final VcsLogDataManager myLogDataManager;
   @NotNull private final VcsLogUiProperties myUiProperties;
 
   @NotNull private VcsLogDataPack myDataPack;
@@ -73,11 +73,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final TextFilterModel myTextFilterModel;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
-                               @NotNull VcsLogDataHolder logDataHolder,
+                               @NotNull VcsLogDataManager logDataManager,
                                @NotNull VcsLogUiProperties uiProperties,
                                @NotNull VcsLogDataPack initialDataPack) {
     myUi = ui;
-    myLogDataHolder = logDataHolder;
+    myLogDataManager = logDataManager;
     myUiProperties = uiProperties;
     myDataPack = initialDataPack;
 
@@ -104,7 +104,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         @Override
         public void run() {
           myUi.applyFiltersAndUpdateUi();
-          myBranchFilterModel.onStructureFilterChanged(new HashSet<VirtualFile>(myLogDataHolder.getRoots()), myStructureFilterModel.getFilter());
+          myBranchFilterModel.onStructureFilterChanged(new HashSet<VirtualFile>(myLogDataManager.getRoots()), myStructureFilterModel.getFilter());
         }
       });
     }
@@ -159,7 +159,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new UserFilterPopupComponent(myUiProperties, myLogDataHolder, myUserFilterModel).initUi();
+        return new UserFilterPopupComponent(myUiProperties, myLogDataManager, myUserFilterModel).initUi();
       }
     }));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {

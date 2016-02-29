@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,28 @@ package com.intellij.testIntegration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.testframework.TestIconMapper;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.Function;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.Time;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 public class ShowRecentTests extends AnAction {
@@ -51,21 +58,43 @@ public class ShowRecentTests extends AnAction {
     final Project project = e.getProject();
     if (project == null) return;
 
-    Map<String, TestStateStorage.Record> records = TestStateStorage.getInstance(project).getRecentTests(TEST_LIMIT, getSinceDate());
-    RecentTestRunner testRunner = new RecentTestRunnerImpl(project);
+    final TestStateStorage testStorage = TestStateStorage.getInstance(project);
+    final TestLocator testLocator = new TestLocator(project);
+    final RecentTestRunnerImpl testRunner = new RecentTestRunnerImpl();
     
-    SelectTestStep selectStepTest = new SelectTestStep(records, testRunner);
-    RecentTestsListPopup popup = new RecentTestsListPopup(selectStepTest, testRunner);
+    final Map<String, TestStateStorage.Record> records = testStorage.getRecentTests(TEST_LIMIT, getSinceDate());
+    RecentTestsListProvider listProvider = new RecentTestsListProvider(records);
+    List<String> urls = listProvider.getUrlsToShowFromHistory();
+    Map<String, Icon> icons = ContainerUtil.map2Map(urls, new Function<String, Pair<String, Icon>>() {
+      @Override
+      public Pair<String, Icon> fun(String url) {
+        return Pair.create(url, getIconFor(url, records));
+      }
+    });
+    SelectTestStep selectStepTest = new SelectTestStep(urls, icons, testRunner, testLocator);
+
+    RecentTestsListPopup popup = new RecentTestsListPopup(selectStepTest, testRunner, testLocator);
     popup.showCenteredInCurrentWindow(project);
+    
+    ApplicationManager.getApplication().executeOnPooledThread(new DeadTestsCleaner(testStorage, urls, testLocator));
+  }
+  
+  private static Icon getIconFor(String value, Map<String, TestStateStorage.Record> records) {
+    TestStateStorage.Record record = records.get(value);
+    TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(record.magnitude);
+    return TestIconMapper.getIcon(magnitude);
   }
 }
 
 class RecentTestsListPopup extends ListPopupImpl {
   private final RecentTestRunner myTestRunner;
+  private final TestLocator myLocator;
 
-  public RecentTestsListPopup(ListPopupStep<String> popupStep, RecentTestRunner testRunner) {
+  public RecentTestsListPopup(ListPopupStep<String> popupStep, RecentTestRunner testRunner, TestLocator locator) {
     super(popupStep);
     myTestRunner = testRunner;
+    myLocator = locator;
+    
     shiftReleased();
     registerActions(this);
     
@@ -97,7 +126,7 @@ class RecentTestsListPopup extends ListPopupImpl {
       public void actionPerformed(ActionEvent e) {
         Object[] values = getSelectedValues();
         if (values.length == 1) {
-          Location location = myTestRunner.getLocation(values[0].toString());
+          Location location = myLocator.getLocation(values[0].toString());
           if (location != null) {
             cancel();
             PsiNavigateUtil.navigate(location.getPsiElement());

@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +35,7 @@ import java.util.Set;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorStacked {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
+  private static final CoreProgressManager ourProgressManager = (CoreProgressManager)ProgressManager.getInstance();
 
   private volatile String myText;
   private volatile double myFraction;
@@ -125,6 +127,11 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void checkCanceled() {
     if (isCanceled() && isCancelable()) {
       throw new ProcessCanceledException();
+    }
+    if (ourProgressManager.sleepIfNeeded()) {
+      if (isCanceled() && isCancelable()) {
+        throw new ProcessCanceledException();
+      }
     }
   }
 

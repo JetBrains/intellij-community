@@ -23,6 +23,7 @@ import com.intellij.ide.actions.getExportableComponentsMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
+import com.intellij.util.directoryStreamIfExists
 import com.intellij.util.isFile
 import com.intellij.util.systemIndependentPath
 import java.nio.file.Files
@@ -55,19 +56,16 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
 }
 
 private fun saveDirectory(parent: Path, parentFileSpec: String, roamingType: RoamingType, streamProvider: IcsManager.IcsStreamProvider) {
-  if (!Files.isDirectory(parent)) {
-    return
-  }
-
-
-  for (file in Files.newDirectoryStream(parent)) {
-    val childFileSpec = "$parentFileSpec/${file.fileName}"
-    if (file.isFile()) {
-      val fileBytes = Files.readAllBytes(file)
-      streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size, roamingType)
-    }
-    else {
-      saveDirectory(file, childFileSpec, roamingType, streamProvider)
+  parent.directoryStreamIfExists {
+    for (file in it) {
+      val childFileSpec = "$parentFileSpec/${file.fileName}"
+      if (file.isFile()) {
+        val fileBytes = Files.readAllBytes(file)
+        streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size, roamingType)
+      }
+      else {
+        saveDirectory(file, childFileSpec, roamingType, streamProvider)
+      }
     }
   }
 }

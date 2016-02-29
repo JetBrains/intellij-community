@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -404,7 +404,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
                                         new LibraryInvocationHandler((Library)result));
         }
         else if (result instanceof LibraryTable.ModifiableModel) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTableBase.ModifiableModelEx.class},
+          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTableBase.ModifiableModel.class},
                                         new LibraryTableModelInvocationHandler((LibraryTable.ModifiableModel)result));
         }
         if (result instanceof Library[]) {

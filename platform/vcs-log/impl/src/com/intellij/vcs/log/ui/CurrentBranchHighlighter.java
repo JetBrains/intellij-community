@@ -18,7 +18,7 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,12 +27,12 @@ import java.awt.*;
 
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
-  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogDataManager myDataManager;
   @NotNull private final VcsLogUi myLogUi;
   @Nullable private String mySingleFilteredBranch;
 
-  public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
-    myDataHolder = logDataHolder;
+  public CurrentBranchHighlighter(@NotNull VcsLogDataManager logDataManager, @NotNull VcsLogUi logUi) {
+    myDataManager = logDataManager;
     myLogUi = logUi;
   }
 
@@ -40,11 +40,11 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @Override
   public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails details, boolean isSelected) {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
+    VcsLogProvider provider = myDataManager.getLogProvider(details.getRoot());
     String currentBranch = provider.getCurrentBranch(details.getRoot());
     if (currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
       Condition<CommitId> condition =
-        myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
+        myDataManager.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
       if (condition.value(new CommitId(details.getId(), details.getRoot()))) {
         return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
       }
@@ -63,8 +63,8 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
-      return new CurrentBranchHighlighter(logDataHolder, logUi);
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataManager logDataManager, @NotNull VcsLogUi logUi) {
+      return new CurrentBranchHighlighter(logDataManager, logUi);
     }
 
     @NotNull

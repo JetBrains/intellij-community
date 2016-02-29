@@ -108,7 +108,7 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
       if (parameterList.getParametersCount() != 0) {
         return;
       }
-      if (MethodCallUtils.containsSuperMethodCall(HardcodedMethodConstants.FINALIZE, method)) {
+      if (MethodCallUtils.containsSuperMethodCall(method)) {
         return;
       }
       if (ignoreTrivialFinalizers && MethodUtils.isTrivial(method, false)) {

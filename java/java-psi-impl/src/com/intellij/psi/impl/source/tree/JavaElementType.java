@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import sun.reflect.ConstructorAccessor;
 import java.lang.reflect.Constructor;
 
 public interface JavaElementType {
+  @SuppressWarnings("deprecation")
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
     private final ConstructorAccessor myConstructor;
 
@@ -240,12 +241,24 @@ public interface JavaElementType {
     }
   };
 
-  IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", JavaLanguage.INSTANCE) {
+  IElementType TYPE_WITH_DISJUNCTIONS_TEXT = new TypeTextElementType("TYPE_WITH_DISJUNCTIONS_TEXT", ReferenceParser.DISJUNCTIONS);
+  IElementType TYPE_WITH_CONJUNCTIONS_TEXT = new TypeTextElementType("TYPE_WITH_CONJUNCTIONS_TEXT", ReferenceParser.CONJUNCTIONS);
+
+  class TypeTextElementType extends ICodeFragmentElementType {
+    private final int myFlags;
+
+    public TypeTextElementType(@NonNls String debugName, int flags) {
+      super(debugName, JavaLanguage.INSTANCE);
+      myFlags = flags;
+    }
+
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
-                                                                    ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
+        JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT |
+                                                                    ReferenceParser.ELLIPSIS |
+                                                                    ReferenceParser.WILDCARD |
+                                                                    myFlags);
       }
     };
 
@@ -254,7 +267,7 @@ public interface JavaElementType {
     public ASTNode parseContents(final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
-  };
+  }
 
   class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType {
     private JavaDummyElementType() {

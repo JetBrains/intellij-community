@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
           }
           else {
             final String defaultText = valueDescriptor.getName();
-            final Ref<Pair<ValueMarkup,Boolean>> result = new Ref<Pair<ValueMarkup, Boolean>>(null);
+            final Ref<Pair<ValueMarkup,Boolean>> result = new Ref<>(null);
             try {
               final boolean suggestAdditionalMarkup = canSuggestAdditionalMarkup(debugProcess, valueDescriptor.getValue());
               SwingUtilities.invokeAndWait(new Runnable() {
@@ -182,7 +182,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
   }
 
   private static Map<ObjectReference, ValueMarkup> suggestMarkup(ObjectReference objRef) {
-    final Map<ObjectReference, ValueMarkup> result = new HashMap<ObjectReference, ValueMarkup>();
+    final Map<ObjectReference, ValueMarkup> result = new HashMap<>();
     for (ObjectReference ref : getReferringObjects(objRef)) {
       if (!(ref instanceof ClassObjectReference)) {
         // consider references from statisc fields only

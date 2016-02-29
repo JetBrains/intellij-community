@@ -40,9 +40,11 @@ import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -63,6 +65,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,6 +181,7 @@ public class FindInProjectUtil {
       }
     }
 
+    if (pattern.isEmpty()) pattern = PatternUtil.convertToRegex("*");
     final String finalPattern = pattern;
     final String finalNegativePattern = negativePattern;
 
@@ -410,7 +414,11 @@ public class FindInProjectUtil {
 
         @Override
         public String fun(PsiElement element) {
-          return regExpCharPsiClass.isInstance(element) ? element.getText() : " ";
+          if(regExpCharPsiClass.isInstance(element)) {
+            String text = element.getText();
+            if (!text.startsWith("\\")) return text;
+          }
+          return " ";
         }
       }, "");
     } finally {
@@ -531,18 +539,42 @@ public class FindInProjectUtil {
                                                         @NotNull VirtualFile directory,
                                                         @NotNull Collection<VirtualFile> outSourceRoots) {
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    // if we already are in the sources, search just in this directory only
+    if (!index.isInLibraryClasses(directory)) return;
     VirtualFile classRoot = index.getClassRootForFile(directory);
     if (classRoot == null) return;
     String relativePath = VfsUtilCore.getRelativePath(directory, classRoot);
     if (relativePath == null) return;
-    for (OrderEntry orderEntry : index.getOrderEntriesForFile(directory)) {
-      for (VirtualFile sourceRoot : orderEntry.getFiles(OrderRootType.SOURCES)) {
+
+    Collection<VirtualFile> otherSourceRoots = new THashSet<>();
+
+    // if we are in the library sources, return (to search in this directory only)
+    // otherwise, if we outside sources or in a jar directory, add directories from other source roots
+    searchForOtherSourceDirs:
+    for (OrderEntry entry : index.getOrderEntriesForFile(directory)) {
+      if (entry instanceof LibraryOrderEntry) {
+        Library library = ((LibraryOrderEntry)entry).getLibrary();
+        if (library == null) continue;
+        // note: getUrls() returns jar directories too
+        String[] sourceUrls = library.getUrls(OrderRootType.SOURCES);
+        for (String sourceUrl : sourceUrls) {
+          if (VfsUtilCore.isEqualOrAncestor(sourceUrl, directory.getUrl())) {
+            // already in this library sources, no need to look for another source root
+            otherSourceRoots.clear();
+            break searchForOtherSourceDirs;
+          }
+          // otherwise we may be inside the jar file in a library which is configured as a jar directory
+          // in which case we have no way to know whether this is a source jar or classes jar - so try to locate the source jar
+        }
+      }
+      for (VirtualFile sourceRoot : entry.getFiles(OrderRootType.SOURCES)) {
         VirtualFile sourceFile = sourceRoot.findFileByRelativePath(relativePath);
         if (sourceFile != null) {
-          outSourceRoots.add(sourceFile);
+          otherSourceRoots.add(sourceFile);
         }
       }
     }
+    outSourceRoots.addAll(otherSourceRoots);
   }
 
   @NotNull

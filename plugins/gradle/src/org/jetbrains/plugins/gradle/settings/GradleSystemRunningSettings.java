@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "GradleSystemRunningSettings", storages = @Storage("gradle.run.settings.xml"))
 public class GradleSystemRunningSettings implements PersistentStateComponent<GradleSystemRunningSettings.MyState> {
 
-  @Nullable private PreferredTestRunner myPreferredTestRunner = PreferredTestRunner.PLATFORM_TEST_RUNNER;
+  @NotNull private PreferredTestRunner myPreferredTestRunner = PreferredTestRunner.PLATFORM_TEST_RUNNER;
 
   @NotNull
   public static GradleSystemRunningSettings getInstance() {
@@ -51,12 +51,12 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
     myPreferredTestRunner = state.preferredTestRunner;
   }
 
-  @Nullable
+  @NotNull
   public PreferredTestRunner getPreferredTestRunner() {
     return myPreferredTestRunner;
   }
 
-  public void setPreferredTestRunner(@Nullable PreferredTestRunner preferredTestRunner) {
+  public void setPreferredTestRunner(@NotNull PreferredTestRunner preferredTestRunner) {
     myPreferredTestRunner = preferredTestRunner;
   }
 
@@ -78,6 +78,6 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
   }
 
   public enum PreferredTestRunner {
-    PLATFORM_TEST_RUNNER, GRADLE_TEST_RUNNER
+    PLATFORM_TEST_RUNNER, GRADLE_TEST_RUNNER, CHOOSE_PER_TEST
   }
 }

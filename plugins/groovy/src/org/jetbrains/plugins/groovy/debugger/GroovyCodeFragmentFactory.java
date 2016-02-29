@@ -247,7 +247,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           return;
         }
 
-        if (resolved instanceof PsiLocalVariable) {
+        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
           String name = referenceExpression.getReferenceName();
           parameters.put(name, name);
         }

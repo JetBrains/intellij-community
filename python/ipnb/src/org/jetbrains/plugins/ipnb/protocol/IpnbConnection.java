@@ -286,40 +286,40 @@ public class IpnbConnection {
   protected static void addCellOutput(@NotNull final PyContent content, ArrayList<IpnbOutputCell> output) {
     if (content instanceof PyErrContent) {
       output.add(new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
-                                 ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null));
+                                         ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null, null));
     }
     else if (content instanceof PyStreamContent) {
       final String data = ((PyStreamContent)content).getData();
-      output.add(new IpnbStreamOutputCell(((PyStreamContent)content).getName(), Lists.newArrayList(data), null));
+      output.add(new IpnbStreamOutputCell(((PyStreamContent)content).getName(), Lists.newArrayList(data), null, null));
     }
     else if (content instanceof PyOutContent) {
       final Map<String, Object> data = ((PyOutContent)content).getData();
       final String plainText = (String)data.get("text/plain");
       if (data.containsKey("text/latex")) {
         final String text = (String)data.get("text/latex");
-        output.add(new IpnbLatexOutputCell(Lists.newArrayList(text), null, Lists.newArrayList(plainText)));
+        output.add(new IpnbLatexOutputCell(Lists.newArrayList(text), null, Lists.newArrayList(plainText), null));
       }
       else if (data.containsKey("text/html")) {
         final String html = (String)data.get("text/html");
         output.add(new IpnbHtmlOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(html)),
                                           Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(html)),
-                                          ((PyOutContent)content).getExecutionCount()));
+                                          ((PyOutContent)content).getExecutionCount(), null));
       }
       else if (data.containsKey("image/png")) {
         final String png = (String)data.get("image/png");
-        output.add(new IpnbPngOutputCell(png, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null));
+        output.add(new IpnbPngOutputCell(png, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
       }
       else if (data.containsKey("image/jpeg")) {
         final String jpeg = (String)data.get("image/jpeg");
-        output.add(new IpnbJpegOutputCell(jpeg, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null));
+        output.add(new IpnbJpegOutputCell(jpeg, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
       }
       else if (data.containsKey("image/svg")) {
         final String svg = (String)data.get("image/svg");
         output.add(new IpnbSvgOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(svg)),
-                                         Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null));
+                                         Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
       }
       else if (plainText != null){
-        output.add(new IpnbOutOutputCell(Lists.newArrayList(plainText), ((PyOutContent)content).getExecutionCount()));
+        output.add(new IpnbOutOutputCell(Lists.newArrayList(plainText), ((PyOutContent)content).getExecutionCount(), null));
       }
     }
   }

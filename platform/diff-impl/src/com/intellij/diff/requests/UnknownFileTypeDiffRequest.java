@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   @Override
   public JComponent getComponent(@NotNull final DiffContext context) {
     final SimpleColoredComponent label = new SimpleColoredComponent();
+    label.setTextAlign(SwingConstants.CENTER);
     label.append("Can't show diff for unknown file type. ",
                  new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor()));
     if (myFileName != null) {
@@ -69,7 +71,7 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
       });
       LinkMouseListenerBase.installSingleTagOn(label);
     }
-    return DiffUtil.createMessagePanel(label);
+    return new DiffUtil.CenteredPanel(label, JBUI.Borders.empty(5));
   }
 
   @Nullable

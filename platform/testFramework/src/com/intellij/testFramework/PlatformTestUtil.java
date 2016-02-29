@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,10 +56,7 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -76,9 +73,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarFile;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 /**
  * @author yole
  */
@@ -86,8 +80,8 @@ import static org.junit.Assert.assertNotNull;
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
-  private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
+  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -245,7 +239,7 @@ public class PlatformTestUtil {
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    assertEquals(expected, treeStringPresentation);
+    Assert.assertEquals(expected, treeStringPresentation);
   }
 
   public static void assertTreeEqualIgnoringNodesOrder(JTree tree, String expected, boolean checkSelected) {
@@ -392,12 +386,12 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
-    assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString());
+    Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString());
   }
 
   public static void invokeNamedAction(final String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    assertNotNull(action);
+    Assert.assertNotNull(action);
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
@@ -442,6 +436,7 @@ public class PlatformTestUtil {
   /**
    * example usage: startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();
    */
+  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expectedMs, @NotNull ThrowableRunnable test) {
     return new TestInfo(test, expectedMs,message);
   }
@@ -468,7 +463,7 @@ public class PlatformTestUtil {
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
     if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
     if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
-    assertEquals(expected, actual);
+    Assert.assertEquals(expected, actual);
   }
 
   @NotNull
@@ -498,7 +493,7 @@ public class PlatformTestUtil {
     private final String message;         // to print on fail
     private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
     private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
-    private boolean useLegacyScaling = false;
+    private boolean useLegacyScaling;
 
     private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, String message) {
       this.test = test;
@@ -507,16 +502,22 @@ public class PlatformTestUtil {
       this.message = message;
     }
 
+    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
+    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo usesAllCPUCores() { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usesAllCPUCores = true; return this; }
+    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
+    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
+    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
     /**
      * @deprecated Enables procedure for nonlinear scaling of results between different machines. This was historically enabled, but doesn't
      * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
      * expected execution time accordingly.
      */
+    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo useLegacyScaling() { useLegacyScaling = true; return this; }
 
     public void assertTiming() {
@@ -693,7 +694,7 @@ public class PlatformTestUtil {
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
-    assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
+    Assert.assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
 
     for (String name : keySetAfter) {
       VirtualFile fileAfter = mapAfter.get(name);
@@ -720,7 +721,7 @@ public class PlatformTestUtil {
       }
     }
 
-    assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
+    Assert.assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
   }
 
   private static String sortAndJoin(List<String> strings) {
@@ -757,7 +758,7 @@ public class PlatformTestUtil {
                        : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString();
 
       if (textA != null && textB != null) {
-        assertEquals(fileAfter.getPath(), textA, textB);
+        Assert.assertEquals(fileAfter.getPath(), textA, textB);
       }
       else {
         Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
@@ -787,9 +788,9 @@ public class PlatformTestUtil {
     }
 
     final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
-    assertNotNull(tempDirectory1.toString(), dirAfter);
+    Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
-    assertNotNull(tempDirectory2.toString(), dirBefore);
+    Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -802,7 +803,7 @@ public class PlatformTestUtil {
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      assertEquals(printElement(expected), printElement(actual));
+      Assert.assertEquals(printElement(expected), printElement(actual));
     }
   }
 
@@ -810,10 +811,7 @@ public class PlatformTestUtil {
     try {
       assertElementsEqual(JDOMUtil.loadDocument(expected).getRootElement(), actual);
     }
-    catch (IOException e) {
-      throw new AssertionError(e);
-    }
-    catch (JDOMException e) {
+    catch (IOException | JDOMException e) {
       throw new AssertionError(e);
     }
   }
@@ -850,7 +848,7 @@ public class PlatformTestUtil {
 
   @NotNull
   public static <T> T notNull(@Nullable T t) {
-    assertNotNull(t);
+    Assert.assertNotNull(t);
     return t;
   }
 
@@ -863,18 +861,9 @@ public class PlatformTestUtil {
     GCUtil.tryGcSoftlyReachableObjects();
   }
 
-  public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {
-    withEncoding(encoding, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        r.run();
-      }
-    });
-  }
-
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
-    Charset oldCharset = Charset.defaultCharset();
     try {
+      Charset oldCharset = Charset.defaultCharset();
       try {
         patchSystemFileEncoding(encoding);
         r.run();
@@ -913,7 +902,7 @@ public class PlatformTestUtil {
   public static void assertSuccessful(@NotNull GeneralCommandLine command) {
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
-      assertEquals(output.getStdout(), 0, output.getExitCode());
+      Assert.assertEquals(output.getStdout(), 0, output.getExitCode());
     }
     catch (ExecutionException e) {
       throw new RuntimeException(e);

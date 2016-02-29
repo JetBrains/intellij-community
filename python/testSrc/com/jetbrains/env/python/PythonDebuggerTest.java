@@ -17,10 +17,14 @@ import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -259,25 +263,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval("x").hasValue("2");
         resume();
         waitForPause();
-        stepIntoMyCode();
-        waitForPause();
-        eval("stopped_in_user_file").hasValue("True");
-      }
-    });
-  }
-
-  public void testStepIntoMyCodeFromLib() throws Exception {
-    runPythonTest(new PyDebuggerTask("/debug", "test_my_code.py") {
-      @Override
-      public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 7);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        stepInto();
-        waitForPause();
+        eval("x").hasValue("3");
         stepIntoMyCode();
         waitForPause();
         eval("stopped_in_user_file").hasValue("True");
@@ -437,7 +423,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  private static void createExceptionBreak(IdeaProjectTestFixture fixture,
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
                                            boolean notifyOnTerminate,
                                            boolean notifyOnFirst,
                                            boolean ignoreLibraries) {
@@ -501,8 +487,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_multithread.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 9);
-        toggleBreakpoint(getScriptPath(), 15);
+        toggleBreakpoint(getScriptPath(), 10);
+        toggleBreakpoint(getScriptPath(), 16);
       }
 
       @Override
@@ -767,6 +753,37 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return Sets.newHashSet("python34");
+      }
+    });
+  }
+
+  public void testSteppingFilter() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_stepping_filter.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 4);
+        List<PySteppingFilter> filters = new ArrayList<>();
+        filters.add(new PySteppingFilter(true, "*/test_m?_code.py"));
+        final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+        debuggerSettings.setLibrariesFilterEnabled(true);
+        debuggerSettings.setSteppingFiltersEnabled(true);
+        debuggerSettings.setSteppingFilters(filters);
+      }
+
+      @Override
+      public void after() throws Exception {
+        PyDebuggerSettings.getInstance().setSteppingFilters(Collections.emptyList());
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        stepInto();
+        waitForPause();
+        eval("stopped_in_user_file").hasValue("True");
+        stepInto();
+        waitForPause();
+        eval("stopped_in_user_file").hasValue("True");
       }
     });
   }

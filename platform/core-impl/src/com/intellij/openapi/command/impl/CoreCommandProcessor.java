@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -106,8 +107,14 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                              final Object groupId,
                              @NotNull UndoConfirmationPolicy confirmationPolicy,
                              Document document) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (project != null && project.isDisposed()) return;
+    Application application = ApplicationManager.getApplication();
+    application.assertIsDispatchThread();
+    if (project != null && project.isDisposed()) {
+      if (application.isUnitTestMode()) {
+        CommandLog.LOG.error("Project "+project+" already disposed");
+      }
+      return;
+    }
 
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId);

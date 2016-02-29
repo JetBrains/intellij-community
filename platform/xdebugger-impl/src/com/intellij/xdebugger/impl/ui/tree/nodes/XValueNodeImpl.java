@@ -50,12 +50,7 @@ import java.util.Comparator;
  * @author nik
  */
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
-  public static final Comparator<XValueNodeImpl> COMPARATOR = new Comparator<XValueNodeImpl>() {
-    @Override
-    public int compare(XValueNodeImpl o1, XValueNodeImpl o2) {
-      return StringUtil.naturalCompare(o1.getName(), o2.getName());
-    }
-  };
+  public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   private static final int MAX_NAME_LENGTH = 100;
 
@@ -153,12 +148,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       };
 
       if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-        getValueContainer().computeSourcePosition(new XNavigatable() {
-          @Override
-          public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-            callback.computed(sourcePosition);
-          }
-        });
+        getValueContainer().computeSourcePosition(callback::computed);
       }
     }
     catch (Exception ignore) {
@@ -167,12 +157,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   @Override
   public void setFullValueEvaluator(@NotNull final XFullValueEvaluator fullValueEvaluator) {
-    invokeNodeUpdate(new Runnable() {
-      @Override
-      public void run() {
-        myFullValueEvaluator = fullValueEvaluator;
-        fireNodeChanged();
-      }
+    invokeNodeUpdate(() -> {
+      myFullValueEvaluator = fullValueEvaluator;
+      fireNodeChanged();
     });
   }
 

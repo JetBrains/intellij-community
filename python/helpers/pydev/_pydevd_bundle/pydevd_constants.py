@@ -262,7 +262,7 @@ def get_thread_id(thread):
             if tid is None:
                 pid = get_pid()
                 try:
-                    tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, thread.ident)
+                    tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, thread.get_ident())
                 except:
                     # thread.ident isn't always there... (use id(thread) instead if it's not there).
                     tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, id(thread))

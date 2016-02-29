@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,6 +221,32 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
         myFixture.file.text.substring(it.startOffset, it.endOffset) == 'foo'
       }.size() == 3
     }
+  }
+
+  public void testExceptionsInTryWithResources() {
+    myFixture.configureByText 'A.java', '''
+      import java.io.*;
+      class A {
+        void test() throws IOException {
+          try (InputStream in = new FileInputStream("file.name")) { }
+          <caret>catch (FileNotFoundException e) { throw new FileNotFoundException("no highlighting here"); }
+        }
+      }'''.stripIndent()
+    ctrlShiftF7()
+    assertRangeText 'FileInputStream', 'catch'
+  }
+
+  public void testExceptionsResourceCloser() {
+    myFixture.configureByText 'A.java', '''
+      import java.io.*;
+      class A {
+        void test() {
+          try (InputStream in = new FileInputStream("file.name")) { }
+          <caret>catch (IOException e) { }
+        }
+      }'''.stripIndent()
+    ctrlShiftF7()
+    assertRangeText 'in', 'FileInputStream', 'FileInputStream', 'catch'
   }
 
   private void configureFile() {

@@ -65,8 +65,8 @@ internal class DirectoryBasedStorageTest {
   @Rule fun getChain() = ruleChain
 
   @Test fun save() {
-    val dir = tempDirManager.newPath()
-    val storage = DirectoryBasedStorage(dir.toFile(), TestStateSplitter())
+    val dir = tempDirManager.newPath(refreshVfs = true)
+    val storage = DirectoryBasedStorage(dir, TestStateSplitter())
 
     val componentName = "test"
 

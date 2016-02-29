@@ -37,7 +37,7 @@ public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
 
   @NotNull
-  public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
+  public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
     return groupByRoot(refs, new Function<VcsRef, VirtualFile>() {
       @NotNull
       @Override
@@ -48,7 +48,7 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static <T extends VcsShortCommitDetails> MultiMap<VirtualFile, T> groupByRoot(@NotNull Collection<T> commits) {
+  public static <T extends VcsShortCommitDetails> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> commits) {
     return groupByRoot(commits, new Function<T, VirtualFile>() {
       @NotNull
       @Override
@@ -59,21 +59,22 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  private static <T> MultiMap<VirtualFile, T> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
-    MultiMap<VirtualFile, T> map = new MultiMap<VirtualFile, T>() {
-      @NotNull
-      @Override
-      protected Map<VirtualFile, Collection<T>> createMap() {
-        return new TreeMap<VirtualFile, Collection<T>>(new Comparator<VirtualFile>() { // TODO some common VCS root sorting method
-          @Override
-          public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
-            return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-          }
-        });
-      }
-    };
+  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
+    Map<VirtualFile, Set<T>> map =
+      new TreeMap<VirtualFile, Set<T>>(new Comparator<VirtualFile>() { // TODO some common VCS root sorting method
+        @Override
+        public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
+          return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+        }
+      });
     for (T item : items) {
-      map.putValue(rootGetter.fun(item), item);
+      VirtualFile root = rootGetter.fun(item);
+      Set<T> set = map.get(root);
+      if (set == null) {
+        set = ContainerUtil.newHashSet();
+        map.put(root, set);
+      }
+      set.add(item);
     }
     return map;
   }

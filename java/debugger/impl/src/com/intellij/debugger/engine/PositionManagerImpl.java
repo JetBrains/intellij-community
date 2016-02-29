@@ -92,7 +92,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return ApplicationManager.getApplication().runReadAction(new Computable<List<ClassPrepareRequest>>() {
       @Override
       public List<ClassPrepareRequest> compute() {
-        List<ClassPrepareRequest> res = new ArrayList<ClassPrepareRequest>();
+        List<ClassPrepareRequest> res = new ArrayList<>();
         for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
           ClassPrepareRequestor prepareRequestor = requestor;
           String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
@@ -205,7 +205,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           }
         });
       if (lambdas.size() > 1) {
-        ArrayList<Method> lambdasList = new ArrayList<Method>(lambdas);
+        ArrayList<Method> lambdasList = new ArrayList<>(lambdas);
         Collections.sort(lambdasList, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
         lambdaOrdinal = lambdasList.indexOf(method);
       }
@@ -329,7 +329,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   private static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Set<PsiClass> res = new HashSet<PsiClass>();
+    Set<PsiClass> res = new HashSet<>();
     for (PsiElement element : getLineElements(file, lineNumber)) {
       PsiClass aClass = getEnclosingClass(element);
       if (aClass != null) {
@@ -403,7 +403,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       @Override
       public List<ReferenceType> compute() {
-        List<ReferenceType> res = new ArrayList<ReferenceType>();
+        List<ReferenceType> res = new ArrayList<>();
         for (PsiClass aClass : getLineClasses(position.getFile(), position.getLine())) {
           res.addAll(getClassReferences(aClass, position));
         }
@@ -413,10 +413,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   private List<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
-    final Ref<String> baseClassNameRef = new Ref<String>(null);
-    final Ref<PsiClass> classAtPositionRef = new Ref<PsiClass>(null);
-    final Ref<Boolean> isLocalOrAnonymous = new Ref<Boolean>(Boolean.FALSE);
-    final Ref<Integer> requiredDepth = new Ref<Integer>(0);
+    final Ref<String> baseClassNameRef = new Ref<>(null);
+    final Ref<PsiClass> classAtPositionRef = new Ref<>(null);
+    final Ref<Boolean> isLocalOrAnonymous = new Ref<>(Boolean.FALSE);
+    final Ref<Integer> requiredDepth = new Ref<>(0);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         classAtPositionRef.set(psiClass);
@@ -460,7 +460,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     
     // the name is a parent class for a local or anonymous class
     final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(className);
-    final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
+    final List<ReferenceType> result = new ArrayList<>(outers.size());
     for (ReferenceType outer : outers) {
       final ReferenceType nested = findNested(outer, 0, classAtPositionRef.get(), requiredDepth.get(), position);
       if (nested != null) {

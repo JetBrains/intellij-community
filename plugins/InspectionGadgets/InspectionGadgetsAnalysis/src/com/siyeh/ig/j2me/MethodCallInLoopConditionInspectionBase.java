@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,21 @@
  */
 package com.siyeh.ig.j2me;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class MethodCallInLoopConditionInspectionBase extends BaseInspection {
+
+  public boolean ignoreIterationMethods = true;
+
   @Override
   @NotNull
   public String getDisplayName() {
@@ -39,12 +47,18 @@ public class MethodCallInLoopConditionInspectionBase extends BaseInspection {
     return true;
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore iteration method calls", this, "ignoreIterationMethods");
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodCallInLoopConditionVisitor();
   }
 
-  private static class MethodCallInLoopConditionVisitor extends BaseInspectionVisitor {
+  private class MethodCallInLoopConditionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitForStatement(@NotNull PsiForStatement statement) {
@@ -80,9 +94,17 @@ public class MethodCallInLoopConditionInspectionBase extends BaseInspection {
       final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
 
           @Override
-          public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression expression) {
+          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
+            if (ignoreIterationMethods) {
+              final PsiMethod method = expression.resolveMethod();
+              if (MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, PsiType.BOOLEAN, "hasNext") ||
+                  MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiType.BOOLEAN, "hasPrevious") ||
+                  MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiType.BOOLEAN, "next") ||
+                  MethodCallUtils.isCallToMethod(expression, "java.util.Enumeration", PsiType.BOOLEAN, "hasMoreElements")) {
+                return;
+              }
+            }
             registerMethodCallError(expression);
           }
         };

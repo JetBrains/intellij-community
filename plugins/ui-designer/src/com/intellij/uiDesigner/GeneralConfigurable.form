@@ -93,7 +93,7 @@
         <properties>
           <model>
             <item value="private"/>
-            <item value="package local"/>
+            <item value="package-private"/>
             <item value="protected"/>
             <item value="public"/>
           </model>

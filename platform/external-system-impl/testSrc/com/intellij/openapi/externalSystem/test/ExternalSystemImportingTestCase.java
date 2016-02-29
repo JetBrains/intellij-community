@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -192,6 +193,17 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
 
     assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
+  }
+
+  protected void assertModuleOutputs(String moduleName, String... outputs) {
+    String[] outputPaths = ContainerUtil.map2Array(CompilerPathsEx.getOutputPaths(new Module[]{getModule(moduleName)}), String.class,
+                                                   new Function<String, String>() {
+                                                     @Override
+                                                     public String fun(String s) {
+                                                       return getAbsolutePath(s);
+                                                     }
+                                                   });
+    assertUnorderedElementsAreEqual(outputPaths, outputs);
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {

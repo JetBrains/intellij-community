@@ -37,6 +37,8 @@ public final class NotificationGroup {
   @Nullable private final String myToolWindowId;
   private final Icon myIcon;
 
+  private String myParentId;
+
   public NotificationGroup(@NotNull String displayId, @NotNull NotificationDisplayType defaultDisplayType, boolean logByDefault) {
     this(displayId, defaultDisplayType, logByDefault, null);
   }
@@ -138,6 +140,17 @@ public final class NotificationGroup {
                                          @Nullable NotificationListener listener) {
     LOG.assertTrue(myIcon != null);
     return new Notification(myDisplayId, myIcon, title, subtitle, content, type, listener);
+  }
+
+  @Nullable
+  public String getParentId() {
+    return myParentId;
+  }
+
+  @NotNull
+  public NotificationGroup setParentId(@NotNull String parentId) {
+    myParentId = parentId;
+    return this;
   }
 
   @NotNull

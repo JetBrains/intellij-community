@@ -58,6 +58,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -72,8 +73,10 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
@@ -1256,37 +1259,6 @@ public abstract class DesignerEditorPanel extends JPanel
       myAfterLinkText = afterLinkText;
       myQuickFix = quickFix;
       myAdditionalFixes = additionalFixes;
-    }
-  }
-
-  private static class FixedHashMap<K, V> extends HashMap<K, V> {
-    private final int mySize;
-    private final List<K> myKeys = new LinkedList<K>();
-
-    public FixedHashMap(int size) {
-      mySize = size;
-    }
-
-    @Override
-    public V put(K key, V value) {
-      if (!myKeys.contains(key)) {
-        if (myKeys.size() >= mySize) {
-          remove(myKeys.remove(0));
-        }
-        myKeys.add(key);
-      }
-      return super.put(key, value);
-    }
-
-    @Override
-    public V get(Object key) {
-      if (myKeys.contains(key)) {
-        int index = myKeys.indexOf(key);
-        int last = myKeys.size() - 1;
-        myKeys.set(index, myKeys.get(last));
-        myKeys.set(last, (K)key);
-      }
-      return super.get(key);
     }
   }
 }

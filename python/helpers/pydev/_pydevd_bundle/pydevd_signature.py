@@ -19,6 +19,7 @@ class Signature(object):
         self.name = name
         self.args = []
         self.args_str = []
+        self.return_type = None
 
     def add_arg(self, name, type):
         self.args.append((name, type))
@@ -28,32 +29,39 @@ class Signature(object):
         return "%s %s(%s)"%(self.file, self.name, ", ".join(self.args_str))
 
 
+def get_type_of_value(value, ignore_module_name=('__main__', '__builtin__', 'builtins')):
+    tp = type(value)
+    class_name = tp.__name__
+    if class_name == 'instance':  # old-style classes
+        tp = value.__class__
+        class_name = tp.__name__
+
+    if hasattr(tp, '__module__') and tp.__module__ and tp.__module__ not in ignore_module_name:
+        class_name = "%s.%s"%(tp.__module__, class_name)
+
+    return class_name
+
+
 class SignatureFactory(object):
     def __init__(self):
         self._caller_cache = {}
-        self._ignore_module_name = ('__main__', '__builtin__', 'builtins')
+        self.cache = CallSignatureCache()
 
     def is_in_scope(self, filename):
         return not pydevd_utils.not_in_project_roots(filename)
 
-    def create_signature(self, frame):
+    def create_signature(self, frame, with_args=True):
         try:
             code = frame.f_code
             locals = frame.f_locals
             filename, modulename, funcname = self.file_module_function_of(frame)
             res = Signature(filename, funcname)
-            for i in xrange(0, code.co_argcount):
-                name = code.co_varnames[i]
-                tp = type(locals[name])
-                class_name = tp.__name__
-                if class_name == 'instance':  # old-style classes
-                    tp = locals[name].__class__
-                    class_name = tp.__name__
-
-                if hasattr(tp, '__module__') and tp.__module__ and tp.__module__ not in self._ignore_module_name:
-                    class_name = "%s.%s"%(tp.__module__, class_name)
-
-                res.add_arg(name, class_name)
+            if with_args:
+                for i in xrange(0, code.co_argcount):
+                    name = code.co_varnames[i]
+                    class_name = get_type_of_value(locals[name])
+    
+                    res.add_arg(name, class_name)
             return res
         except:
             import traceback
@@ -109,6 +117,33 @@ class SignatureFactory(object):
 
         return filename, modulename, funcname
 
+
+def get_signature_info(signature):
+    return signature.file, signature.name, ' '.join([arg[1]for arg in signature.args])
+
+
+def get_frame_info(frame):
+    co = frame.f_code
+    return co.co_name, frame.f_lineno, co.co_filename
+
+
+class CallSignatureCache(object):
+    def __init__(self):
+        self.cache = {}
+
+    def add(self, signature):
+        filename, name, args_type = get_signature_info(signature)
+        calls_from_file = self.cache.setdefault(filename, {})
+        name_calls = calls_from_file.setdefault(name, {})
+        name_calls[args_type] = None
+
+    def is_in_cache(self, signature):
+        filename, name, args_type = get_signature_info(signature)
+        if args_type in self.cache.get(filename, {}).get(name, {}):
+            return True
+        return False
+
+
 def create_signature_message(signature):
     cmdTextList = ["<xml>"]
 
@@ -116,14 +151,40 @@ def create_signature_message(signature):
 
     for arg in signature.args:
         cmdTextList.append('<arg name="%s" type="%s"></arg>' % (pydevd_vars.make_valid_xml_value(arg[0]), pydevd_vars.make_valid_xml_value(arg[1])))
+        
+    if signature.return_type is not None:
+        cmdTextList.append('<return type="%s"></return>' % (pydevd_vars.make_valid_xml_value(signature.return_type)))
 
     cmdTextList.append("</call_signature></xml>")
     cmdText = ''.join(cmdTextList)
     return NetCommand(CMD_SIGNATURE_CALL_TRACE, 0, cmdText)
 
+
 def send_signature_call_trace(dbg, frame, filename):
-    if dbg.signature_factory.is_in_scope(filename):
-        dbg.writer.add_command(create_signature_message(dbg.signature_factory.create_signature(frame)))
+    if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename):
+        signature = dbg.signature_factory.create_signature(frame)
+        if dbg.signature_factory.cache is not None:
+            if not dbg.signature_factory.cache.is_in_cache(signature):
+                dbg.signature_factory.cache.add(signature)
+                dbg.writer.add_command(create_signature_message(signature))
+                return True
+            else:
+                # we don't send signature if it is cached
+                return False
+        else:
+            dbg.writer.add_command(create_signature_message(signature))
+            return True
+    return False
+
+
+def send_signature_return_trace(dbg, frame, filename, return_value):
+    if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename):
+        signature = dbg.signature_factory.create_signature(frame, with_args=False)
+        signature.return_type = get_type_of_value(return_value)
+        dbg.writer.add_command(create_signature_message(signature))
+        return True
+
+    return False
 
 
 

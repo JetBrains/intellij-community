@@ -18,10 +18,12 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
 
@@ -35,19 +37,22 @@ public class StripeTable extends JBTable {
 
   public StripeTable(TableModel model) {
     super(model);
-
-    setAutoResizeMode(AUTO_RESIZE_OFF);
-    setTableHeader(createTableHeader());
-    getTableHeader().setReorderingAllowed(false);
-    //setOpaque(false);
-    setGridColor(GRID_COLOR);
-    setIntercellSpacing(new Dimension(1, 0));
-    setShowGrid(false);
-    setStriped(true);
+    apply(this);
   }
 
-  private JTableHeader createTableHeader() {
-    return new JTableHeader(getColumnModel()) {
+  public static void apply(@NotNull JBTable table) {
+    table.setAutoResizeMode(AUTO_RESIZE_OFF);
+    table.setTableHeader(createTableHeader(table.getColumnModel()));
+    table.getTableHeader().setReorderingAllowed(false);
+    //setOpaque(false);
+    table.setGridColor(GRID_COLOR);
+    table.setIntercellSpacing(new Dimension(1, 0));
+    table.setShowGrid(false);
+    table.setStriped(true);
+  }
+
+  private static JTableHeader createTableHeader(@NotNull TableColumnModel columnModel) {
+    return new JTableHeader(columnModel) {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);

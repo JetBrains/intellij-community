@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -213,7 +212,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
+    if (!EventQueue.isDispatchThread()) {
       return;
     }
     myUpdateAlarm.cancelAllRequests();

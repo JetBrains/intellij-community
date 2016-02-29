@@ -36,4 +36,6 @@ public class BalloonLayoutData {
   public Project project;
 
   public BalloonLayoutConfiguration configuration;
+
+  public Runnable lafHandler;
 }

@@ -297,6 +297,9 @@ public class JavaGenericsUtil {
         }
       }
     }
+    if (type instanceof PsiCapturedWildcardType) {
+      return getCollectionItemType(((PsiCapturedWildcardType)type).getUpperBound(), scope);
+    }
     return null;
   }
 

@@ -63,6 +63,8 @@ public class ComplementaryFontsRegistry {
     FONT_NAME_TO_STYLE.put("AnkaCoder-bi",          Font.BOLD | Font.ITALIC);
     FONT_NAME_TO_STYLE.put("SourceCodePro-It",      Font.ITALIC);
     FONT_NAME_TO_STYLE.put("SourceCodePro-BoldIt",  Font.BOLD | Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("Hasklig-It",            Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("Hasklig-BoldIt",        Font.BOLD | Font.ITALIC);
   }
 
   static {

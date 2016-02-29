@@ -108,6 +108,9 @@ public class InferenceSessionContainer {
                 .collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
             }
           }
+          else if (topLevelCall instanceof PsiMethodCallExpression) {
+            return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent).prepareSubstitution();
+          }
         }
       }
     }
@@ -248,7 +251,7 @@ public class InferenceSessionContainer {
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(psiCall.getArgumentList());
       if (properties != null) {
         if (properties.isApplicabilityCheck() || 
-            parent instanceof PsiLambdaExpression && ((PsiLambdaExpression)parent).hasFormalParameterTypes()) {
+            lambdaExpression != null && lambdaExpression.hasFormalParameterTypes()) {
           break;
         }
       }

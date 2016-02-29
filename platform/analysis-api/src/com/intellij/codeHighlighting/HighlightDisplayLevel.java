@@ -180,7 +180,9 @@ public class HighlightDisplayLevel {
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
       g.setColor(getColor());
-      g.fillRect(x + 2, y + 2, 10, 10);
+      int shift = JBUI.scale(2);
+      int size = JBUI.scale(10);
+      g.fillRect(x + shift, y + shift, size, size);
     }
 
     @Override

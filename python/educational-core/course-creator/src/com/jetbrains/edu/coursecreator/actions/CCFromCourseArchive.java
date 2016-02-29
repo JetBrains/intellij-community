@@ -134,29 +134,11 @@ public class CCFromCourseArchive extends DumbAwareAction {
     final TaskFile taskFile = taskFileEntry.getValue();
     VirtualFile file = userFileDir.findChild(name);
     assert file != null;
-    String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
-    VirtualFile answerFile = answerFileDir.findChild(answerFileName);
-    if (answerFile != null) {
-      try {
-        answerFile.delete(project);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    try {
-      answerFile = userFileDir.createChildData(project, answerFileName);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    if (answerFile == null) return;
-
     final Document originDocument = FileDocumentManager.getInstance().getDocument(file);
     if (originDocument == null) {
       return;
     }
-    final Document document = FileDocumentManager.getInstance().getDocument(answerFile);
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {

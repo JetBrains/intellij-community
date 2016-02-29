@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
@@ -89,7 +89,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     }
   }
 
-  private class WatchEditorSessionListener extends XDebugSessionAdapter {
+  private class WatchEditorSessionListener implements XDebugSessionListener {
     private final XDebugSession mySession;
 
     public WatchEditorSessionListener(@NotNull XDebugSession session) {
@@ -106,12 +106,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     }
 
     private void cancel() {
-      AppUIUtil.invokeOnEdt(new Runnable() {
-        @Override
-        public void run() {
-          cancelEditing();
-        }
-      });
+      AppUIUtil.invokeOnEdt(WatchInplaceEditor.this::cancelEditing);
     }
 
     @Override

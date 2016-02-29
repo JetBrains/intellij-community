@@ -124,7 +124,9 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     CharSequence docText = document.getCharsSequence();
     String textBeforeCaret = docText.subSequence(lineStartOffset, offset).toString();
     final String afterCaret = docText.subSequence(offset, document.getLineEndOffset(line)).toString();
-    if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) && !editor.getSelectionModel().hasSelection()) {
+    final PsiElement lBrace = aClass.getLBrace();
+    if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) &&
+        (lBrace == null || lBrace.getTextOffset() < offset) && !editor.getSelectionModel().hasSelection()) {
       EnterAction.insertNewLineAtCaret(editor);
       PsiDocumentManager.getInstance(project).commitDocument(document);
       offset = editor.getCaretModel().getOffset();

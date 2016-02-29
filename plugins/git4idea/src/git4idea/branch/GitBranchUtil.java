@@ -45,6 +45,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -375,7 +377,8 @@ public class GitBranchUtil {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
       String head;
       try {
-        head = FileUtil.loadFile(new File(root.getPath(), GitRepositoryFiles.GIT_HEAD), CharsetToolkit.UTF8_CHARSET).trim();
+        File headFile = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)).getRepositoryFiles().getHeadFile();
+        head = FileUtil.loadFile(headFile, CharsetToolkit.UTF8_CHARSET).trim();
         final String prefix = "ref: refs/heads/";
         return head.startsWith(prefix) ?
                Collections.singletonList(head.substring(prefix.length())) :

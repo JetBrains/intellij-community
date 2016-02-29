@@ -41,7 +41,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
@@ -78,7 +78,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static final String STANDARD_LAYER = "Standard";
   private static final String MESSAGE_LAYER = "Message";
 
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final VcsLogDataManager myLogDataManager;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final ReferencesPanel myReferencesPanel;
@@ -93,24 +93,27 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private VisiblePack myDataPack;
   @Nullable private VcsFullCommitDetails myCurrentCommitDetails;
 
-  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder,
+  DetailsPanel(@NotNull VcsLogDataManager logDataManager,
                @NotNull VcsLogGraphTable graphTable,
                @NotNull VcsLogColorManager colorManager,
                @NotNull VisiblePack initialDataPack) {
-    myLogDataHolder = logDataHolder;
+    myLogDataManager = logDataManager;
     myGraphTable = graphTable;
     myColorManager = colorManager;
     myDataPack = initialDataPack;
 
     myReferencesPanel = new ReferencesPanel(myColorManager);
-    myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot(), logDataHolder);
+    myCommitDetailsPanel = new DataPanel(logDataManager.getProject(), logDataManager.isMultiRoot(), logDataManager);
 
-    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(8);
     myMainContentPanel = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
+        if (myCommitDetailsPanel.isExpanded()) {
+          return size;
+        }
         size.width = myScrollPane.getViewport().getWidth() - 5;
         return size;
       }
@@ -124,7 +127,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myMainContentPanel.add(myReferencesPanel, "");
     myMainContentPanel.add(myCommitDetailsPanel, "");
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataManager, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Color getBackground() {
         return getDetailsBackground();
@@ -139,6 +142,11 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     add(myMessagePanel, MESSAGE_LAYER);
 
     showMessage("No commits selected");
+  }
+
+  @NotNull
+  public static String formatDateTime(long time) {
+    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
   }
 
   @Override
@@ -171,7 +179,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
       GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
-      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
+      VcsFullCommitDetails commitData = tableModel.getFullDetails(row);
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
         myCommitDetailsPanel.setData(null);
@@ -188,7 +196,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
-        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
+        branches = myLogDataManager.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
       }
       myCommitDetailsPanel.setBranches(branches);
 
@@ -227,8 +235,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
-    Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(hash, root);
-    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+    Collection<VcsRef> refs = myDataPack.getRefs().refsToCommit(hash, root);
+    return ContainerUtil.sorted(refs, myLogDataManager.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
   }
 
   private static class DataPanel extends JEditorPane {
@@ -324,8 +332,24 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
       if (myExpanded) {
         int rowCount = (int)Math.ceil((double)myBranches.size() / BRANCHES_TABLE_COLUMN_COUNT);
-        HtmlTableBuilder builder = new HtmlTableBuilder();
 
+        int[] means = new int[BRANCHES_TABLE_COLUMN_COUNT - 1];
+        int[] max = new int[BRANCHES_TABLE_COLUMN_COUNT - 1];
+
+        for (int i = 0; i < rowCount; i++){
+          for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT - 1; j++) {
+            int index = rowCount * j + i;
+            if (index < myBranches.size()) {
+              means[j] += myBranches.get(index).length();
+              max[j] = Math.max(myBranches.get(index).length(), max[j]);
+            }
+          }
+        }
+        for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT - 1; j++) {
+          means[j] /= rowCount;
+        }
+
+        HtmlTableBuilder builder = new HtmlTableBuilder();
         for (int i = 0; i < rowCount; i++) {
           builder.startRow();
           if (i == 0) {
@@ -340,11 +364,18 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
             if (index >= myBranches.size()) {
               builder.append("");
             }
-            else if (index != myBranches.size() - 1) {
-              builder.append(myBranches.get(index) + "," + StringUtil.repeat("&nbsp;", 20), LEFT_ALIGN);
-            }
             else {
-              builder.append(myBranches.get(index), LEFT_ALIGN);
+              String branch = myBranches.get(index);
+              if (index != myBranches.size() - 1) {
+                int space = 0;
+                if (j < BRANCHES_TABLE_COLUMN_COUNT - 1 && branch.length() == max[j]) {
+                  space = Math.max(means[j] + 20 - max[j], 5);
+                }
+                builder.append(branch + "," + StringUtil.repeat("&nbsp;", space), LEFT_ALIGN);
+              }
+              else {
+                builder.append(branch, LEFT_ALIGN);
+              }
             }
           }
 
@@ -423,11 +454,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       return authorText;
     }
 
-    @NotNull
-    private static String formatDateTime(long time) {
-      return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
-    }
-
     @Override
     public String getSelectedText() {
       Document doc = getDocument();
@@ -454,6 +480,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @Override
     public Color getBackground() {
       return getDetailsBackground();
+    }
+
+    public boolean isExpanded() {
+      return myExpanded;
     }
   }
 

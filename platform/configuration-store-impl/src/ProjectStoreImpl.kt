@@ -55,10 +55,8 @@ const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
 val IProjectStore.nameFile: Path
   get() = Paths.get(projectBasePath, Project.DIRECTORY_STORE_FOLDER, ProjectImpl.NAME_FILE)
 
-internal val PROJECT_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation()
-internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = object : ProjectFileStorageAnnotation() {
-  override fun deprecated() = true
-}
+internal val PROJECT_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation(PROJECT_FILE, false)
+internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation(PROJECT_FILE, true)
 
 abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
@@ -72,6 +70,9 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   override final fun getStorageScheme() = scheme
 
   override abstract val storageManager: StateStorageManagerImpl
+
+  protected val isDirectoryBased: Boolean
+    get() = scheme == StorageScheme.DIRECTORY_BASED
 
   override final fun setOptimiseTestLoadSpeed(value: Boolean) {
     // we don't load default state in tests as app store does because
@@ -153,6 +154,64 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       }
     }
   }
+
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+    val storages = stateSpec.storages
+    if (storages.isEmpty()) {
+      return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+    }
+
+    if (isDirectoryBased) {
+      var result: MutableList<Storage>? = null
+      for (storage in storages) {
+        @Suppress("DEPRECATION")
+        if (storage.path != PROJECT_FILE) {
+          if (result == null) {
+            result = SmartList()
+          }
+          result.add(storage)
+        }
+      }
+
+      if (result.isNullOrEmpty()) {
+        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+      }
+      else {
+        result!!.sortWith(deprecatedComparator)
+        // if we create project from default, component state written not to own storage file, but to project file,
+        // we don't have time to fix it properly, so, ancient hack restored
+        result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
+        return result.toTypedArray()
+      }
+    }
+    else {
+      var result: MutableList<Storage>? = null
+      // FlexIdeProjectLevelCompilerOptionsHolder, FlexProjectLevelCompilerOptionsHolderImpl and CustomBeanRegistry
+      var hasOnlyDeprecatedStorages = true
+      for (storage in storages) {
+        @Suppress("DEPRECATION")
+        if (storage.path == PROJECT_FILE || storage.path == StoragePathMacros.WORKSPACE_FILE) {
+          if (result == null) {
+            result = SmartList()
+          }
+          result.add(storage)
+          if (!storage.deprecated) {
+            hasOnlyDeprecatedStorages = false
+          }
+        }
+      }
+      if (result.isNullOrEmpty()) {
+        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+      }
+      else {
+        if (hasOnlyDeprecatedStorages) {
+          result!!.add(PROJECT_FILE_STORAGE_ANNOTATION)
+        }
+        result!!.sortWith(deprecatedComparator)
+        return result.toTypedArray()
+      }
+    }
+  }
 }
 
 private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
@@ -200,9 +259,6 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       return temp
     }
   }
-
-  private val isDirectoryBased: Boolean
-    get() = scheme == StorageScheme.DIRECTORY_BASED
 
   private fun saveProjectName() {
     if (!isDirectoryBased) {
@@ -287,64 +343,6 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
 
   protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
   }
-
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
-    val storages = stateSpec.storages
-    if (storages.isEmpty()) {
-      return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
-    }
-
-    if (isDirectoryBased) {
-      var result: MutableList<Storage>? = null
-      for (storage in storages) {
-        @Suppress("DEPRECATION")
-        if (storage.path != PROJECT_FILE) {
-          if (result == null) {
-            result = SmartList()
-          }
-          result.add(storage)
-        }
-      }
-
-      if (result.isNullOrEmpty()) {
-        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
-      }
-      else {
-        result!!.sortWith(deprecatedComparator)
-        // if we create project from default, component state written not to own storage file, but to project file,
-        // we don't have time to fix it properly, so, ancient hack restored
-        result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
-        return result.toTypedArray()
-      }
-    }
-    else {
-      var result: MutableList<Storage>? = null
-      // FlexIdeProjectLevelCompilerOptionsHolder, FlexProjectLevelCompilerOptionsHolderImpl and CustomBeanRegistry
-      var hasOnlyDeprecatedStorages = true
-      for (storage in storages) {
-        @Suppress("DEPRECATION")
-        if (storage.path == PROJECT_FILE || storage.path == StoragePathMacros.WORKSPACE_FILE) {
-          if (result == null) {
-            result = SmartList()
-          }
-          result.add(storage)
-          if (!storage.deprecated) {
-            hasOnlyDeprecatedStorages = false
-          }
-        }
-      }
-      if (result.isNullOrEmpty()) {
-        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
-      }
-      else {
-        if (hasOnlyDeprecatedStorages) {
-          result!!.add(PROJECT_FILE_STORAGE_ANNOTATION)
-        }
-        result!!.sortWith(deprecatedComparator)
-        return result.toTypedArray()
-      }
-    }
-  }
 }
 
 private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: Array<VirtualFile>) {
@@ -369,7 +367,8 @@ private class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager
   }
 }
 
-private class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
+// used in upsource
+class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
   override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
     return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectWithModulesStoreImpl::class.java
   }

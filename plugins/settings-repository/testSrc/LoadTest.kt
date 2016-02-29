@@ -28,7 +28,6 @@ import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
 import org.junit.ClassRule
 import org.junit.Test
-import java.io.File
 
 class LoadTest : IcsTestCase() {
   companion object {
@@ -38,7 +37,7 @@ class LoadTest : IcsTestCase() {
 
   private val dirPath = "\$ROOT_CONFIG$/keymaps"
 
-  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), provider, tempDirManager.newDirectory("schemes"))
+  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), provider, tempDirManager.newPath("schemes"))
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
@@ -112,7 +111,7 @@ class LoadTest : IcsTestCase() {
 
   fun Repository.createAndRegisterReadOnlySource(): ReadonlySource {
     val source = ReadonlySource(workTree.absolutePath)
-    assertThat(cloneBare(source.url!!, File(icsManager.readOnlySourcesManager.rootDir, source.path!!)).objectDatabase.exists()).isTrue()
+    assertThat(cloneBare(source.url!!, icsManager.readOnlySourcesManager.rootDir.resolve(source.path!!)).objectDatabase.exists()).isTrue()
     icsManager.readOnlySourcesManager.setSources(listOf(source))
     return source
   }

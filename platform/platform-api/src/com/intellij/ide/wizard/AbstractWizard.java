@@ -473,7 +473,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected void updateButtons() {
-    if (isLastStep()) {
+    boolean lastStep = isLastStep();
+    updateButtons(lastStep, lastStep ? canFinish() : canGoNext(), isFirstStep());
+  }
+
+  public void updateButtons(boolean lastStep, boolean canGoNext, boolean firstStep) {
+    if (lastStep) {
       if (mySteps.size() > 1) {
         myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.finish")));
         myNextButton.setMnemonic('F');
@@ -481,19 +486,23 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       else {
         myNextButton.setText(IdeBundle.message("button.ok"));
       }
-      myNextButton.setEnabled(canFinish());
+      myNextButton.setEnabled(canGoNext);
     }
     else {
       myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.wizard.next")));
       myNextButton.setMnemonic('N');
-      myNextButton.setEnabled(canGoNext());
+      myNextButton.setEnabled(canGoNext);
     }
 
     if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
       getRootPane().setDefaultButton(myNextButton);
     }
 
-    myPreviousButton.setEnabled(myCurrentStep > 0);
+    myPreviousButton.setEnabled(!firstStep);
+  }
+
+  protected boolean isFirstStep() {
+    return myCurrentStep == 0;
   }
 
   protected boolean isLastStep() {

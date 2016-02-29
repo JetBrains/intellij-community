@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -447,6 +447,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @NotNull @Override public RangeMarker createRangeMarker(@NotNull TextRange textRange) { return null; }
     @Override public int getLineSeparatorLength(int line) { return 0; }
+    @Override
+    public int getModificationSequence() { return 0; }
   }
 
 }

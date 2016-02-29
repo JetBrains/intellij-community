@@ -62,7 +62,7 @@ internal class ApplicationStoreTest {
   private var componentStore: MyComponentStore by Delegates.notNull()
 
   @Before fun setUp() {
-    testAppConfig = tempDirManager.newPath(refreshVfs = false)
+    testAppConfig = tempDirManager.newPath()
     componentStore = MyComponentStore(testAppConfig.systemIndependentPath)
   }
 
@@ -220,7 +220,7 @@ internal class ApplicationStoreTest {
   @Test fun `don't save if only format is changed`() {
     val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
     val file = writeConfig("a.xml", oldContent)
-    val oldModificationTime = file.getLastModifiedTime()
+    val oldModificationTime = file.lastModified()
     testAppConfig.refreshVfs()
 
     val component = A()
@@ -230,7 +230,7 @@ internal class ApplicationStoreTest {
     saveStore()
 
     assertThat(file).hasContent(oldContent)
-    assertThat(oldModificationTime).isEqualTo(file.getLastModifiedTime())
+    assertThat(oldModificationTime).isEqualTo(file.lastModified())
 
     component.options.bar = "2"
     component.options.foo = "1"

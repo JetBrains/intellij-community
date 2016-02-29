@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
@@ -54,7 +53,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -133,39 +131,30 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     if (myProgress.isCanceled()) {
       myProgress = new DaemonProgressIndicator();
     }
-    final Set<DocumentWindow> newDocuments = Collections.synchronizedSet(new THashSet());
-    final Processor<DocumentWindow> commitProcessor = new Processor<DocumentWindow>() {
-      @Override
-      public boolean process(DocumentWindow documentWindow) {
-        if (myProject.isDisposed()) return false;
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null && indicator.isCanceled()) return false;
-        if (documentManager.isUncommited(hostDocument) || !hostPsiFile.isValid()) return false; // will be committed later
+    final Set<DocumentWindow> newDocuments = Collections.synchronizedSet(new THashSet<>());
+    final Processor<DocumentWindow> commitProcessor = documentWindow -> {
+      if (myProject.isDisposed()) return false;
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null && indicator.isCanceled()) return false;
+      if (documentManager.isUncommited(hostDocument) || !hostPsiFile.isValid()) return false; // will be committed later
 
-        // it is here where the reparse happens and old file contents replaced
-        InjectedLanguageUtil.enumerate(documentWindow, hostPsiFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-          @Override
-          public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-            DocumentWindow newDocument = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
-            if (newDocument != null) {
-              PsiDocumentManagerBase.checkConsistency(injectedPsi, newDocument);
-              newDocuments.add(newDocument);
-            }
-          }
-        });
-        return true;
-      }
-    };
-    final Runnable commitInjectionsRunnable = new Runnable() {
-      @Override
-      public void run() {
-        if (myProgress.isCanceled()) return;
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, true, commitProcessor);
-
-        synchronized (PsiLock.LOCK) {
-          injected.clear();
-          injected.addAll(newDocuments);
+      // it is here where the reparse happens and old file contents replaced
+      InjectedLanguageUtil.enumerate(documentWindow, hostPsiFile, (injectedPsi, places) -> {
+        DocumentWindow newDocument = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
+        if (newDocument != null) {
+          PsiDocumentManagerBase.checkConsistency(injectedPsi, newDocument);
+          newDocuments.add(newDocument);
         }
+      });
+      return true;
+    };
+    final Runnable commitInjectionsRunnable = () -> {
+      if (myProgress.isCanceled()) return;
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), myProgress, true, commitProcessor);
+
+      synchronized (PsiLock.LOCK) {
+        injected.clear();
+        injected.addAll(newDocuments);
       }
     };
 
@@ -173,19 +162,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       if (Thread.holdsLock(PsiLock.LOCK)) {
         // hack for the case when docCommit was called from within PSI modification, e.g. in formatter.
         // we can't spawn threads to do injections there, otherwise a deadlock is imminent
-        ContainerUtil.process(new ArrayList<DocumentWindow>(injected), commitProcessor);
+        ContainerUtil.process(new ArrayList<>(injected), commitProcessor);
       }
       else {
         commitInjectionsRunnable.run();
       }
     }
     else {
-      JobLauncher.getInstance().submitToJobThread(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable);
-        }
-      }, null);
+      JobLauncher.getInstance().submitToJobThread(() -> ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable), null);
     }
   }
 
@@ -257,7 +241,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
 
-    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<MultiHostInjector>(injectors, new MultiHostInjector[0]);
+    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<>(injectors, new MultiHostInjector[0]);
     cachedInjectors = result;
     return result;
   }
@@ -334,7 +318,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
             count = 1;
           }
           else {
-            List<TextRange> list = new ArrayList<TextRange>();
+            List<TextRange> list = new ArrayList<>();
             list.add(range);
             list.add(intersection);
             result = list;
@@ -349,7 +333,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
       offset += shred.getPrefix().length() + shred.getRangeInsideHost().getLength() + shred.getSuffix().length();
     }
-    return count == 0 ? Collections.<TextRange>emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
+    return count == 0 ? Collections.emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
   }
 
   @Override
@@ -421,7 +405,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return start + length;
   }
 
-  private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
+  private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<>();
   @TestOnly
   public static void pushInjectors(@NotNull Project project) {
     InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
@@ -448,7 +432,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         if (cachedManager.myInjectorsClone.isEmpty()) return;
         MultiHostInjector[] oldInjectors = cachedManager.myInjectorsClone.get(key);
         for (MultiHostInjector injector : entry.getValue()) {
-          if (!ArrayUtil.contains(injector, oldInjectors)) {
+          if (ArrayUtil.indexOf(oldInjectors, injector) == -1) {
             throw new AssertionError("Injector was not disposed: " + key + " -> " + injector);
           }
         }
@@ -459,10 +443,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     }
   }
 
-  public interface InjProcessor {
+  interface InjProcessor {
     boolean process(PsiElement element, MultiHostInjector injector);
   }
-  public void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {
+  void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {
     MultiHostInjector[] infos = getInjectorMap().get(element.getClass());
     if (infos != null) {
       final boolean dumb = myDumbService.isDumb();
@@ -483,14 +467,11 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       return null;
     }
     final PsiElement inTree = InjectedLanguageUtil.loadTree(host, host.getContainingFile());
-    final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
-    InjectedLanguageUtil.enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        for (PsiLanguageInjectionHost.Shred place : places) {
-          if (place.getHost() == inTree) {
-            result.add(new Pair<PsiElement, TextRange>(injectedPsi, place.getRangeInsideHost()));
-          }
+    final List<Pair<PsiElement, TextRange>> result = new SmartList<>();
+    InjectedLanguageUtil.enumerate(inTree, (injectedPsi, places) -> {
+      for (PsiLanguageInjectionHost.Shred place : places) {
+        if (place.getHost() == inTree) {
+          result.add(new Pair<>(injectedPsi, place.getRangeInsideHost()));
         }
       }
     });
@@ -502,15 +483,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     @Override
     public void getLanguagesToInject(@NotNull final MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement context) {
       final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
-      InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
-        @Override
-        public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @NonNls @Nullable String prefix, @NonNls @Nullable String suffix) {
-          injectionPlacesRegistrar
-            .startInjecting(language)
-            .addPlace(prefix, suffix, host, rangeInsideHost)
-            .doneInjecting();
-        }
-      };
+      InjectedLanguagePlaces placesRegistrar = (language, rangeInsideHost, prefix, suffix) -> injectionPlacesRegistrar
+        .startInjecting(language)
+        .addPlace(prefix, suffix, host, rangeInsideHost)
+        .doneInjecting();
       for (LanguageInjector injector : Extensions.getExtensions(LanguageInjector.EXTENSION_POINT_NAME)) {
         injector.getLanguagesToInject(host, placesRegistrar);
       }
@@ -519,7 +495,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     @Override
     @NotNull
     public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-      return Arrays.asList(PsiLanguageInjectionHost.class);
+      return Collections.singletonList(PsiLanguageInjectionHost.class);
     }
   }
 }

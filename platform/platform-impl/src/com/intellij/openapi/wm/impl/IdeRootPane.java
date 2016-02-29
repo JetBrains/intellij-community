@@ -433,7 +433,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
+  public static boolean isFrameDecorated() {
+    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration");
+  }
+
   public boolean isDecoratedMenu() {
-    return SystemInfo.isWindows && getUI() instanceof DarculaRootPaneUI && Registry.is("ide.win.frame.decoration");
+    return getUI() instanceof DarculaRootPaneUI && isFrameDecorated();
   }
 }

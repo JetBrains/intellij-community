@@ -16,13 +16,16 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.exists
 import com.intellij.util.io.URLUtil
+import com.intellij.util.isDirectory
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.transport.URIish
 import org.jetbrains.settingsRepository.git.createBareRepository
 import java.awt.Container
-import java.io.File
 import java.io.IOException
+import java.nio.file.Path
+import java.nio.file.Paths
 
 interface RepositoryService {
   fun checkUrl(uriString: String, messageParent: Container? = null): Boolean {
@@ -43,9 +46,9 @@ interface RepositoryService {
 
   fun checkFileRepo(url: String, messageParent: Container): Boolean {
     val suffix = "/${Constants.DOT_GIT}"
-    val file = File(if (url.endsWith(suffix)) url.substring(0, url.length - suffix.length) else url)
+    val file = Paths.get(if (url.endsWith(suffix)) url.substring(0, url.length - suffix.length) else url)
     if (file.exists()) {
-      if (!file.isDirectory) {
+      if (!file.isDirectory()) {
         //noinspection DialogTitleCapitalization
         Messages.showErrorDialog(messageParent, "Specified path is not a directory", "Specified Path is Invalid")
         return false
@@ -75,5 +78,5 @@ interface RepositoryService {
   }
 
   // must be protected, kotlin bug
-  fun isValidRepository(file: File): Boolean
+  fun isValidRepository(file: Path): Boolean
 }

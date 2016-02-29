@@ -33,12 +33,12 @@ import java.util.*;
 public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManager");
 
-  private final LinkedList<SuspendContextImpl> myEventContexts  = new LinkedList<SuspendContextImpl>();
+  private final LinkedList<SuspendContextImpl> myEventContexts  = new LinkedList<>();
   /**
    * contexts, paused at breakpoint or another debugger event requests. Note that thread, explicitly paused by user is not considered as
    * "paused at breakpoint" and JDI prohibits data queries on its stack frames
    */
-  private final LinkedList<SuspendContextImpl> myPausedContexts = new LinkedList<SuspendContextImpl>();
+  private final LinkedList<SuspendContextImpl> myPausedContexts = new LinkedList<>();
   private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<ThreadReferenceProxyImpl>());
 
   private final DebugProcessImpl myDebugProcess;
@@ -278,7 +278,7 @@ public class SuspendManagerImpl implements SuspendManager {
     LOG.assertTrue(!context.isExplicitlyResumed(thread));
 
     if(context.myResumedThreads == null) {
-      context.myResumedThreads = new HashSet<ThreadReferenceProxyImpl>();
+      context.myResumedThreads = new HashSet<>();
     }
     context.myResumedThreads.add(thread);
     thread.resume();

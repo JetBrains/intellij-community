@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,9 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
-
   public static final int MAX_RIGHT_MARGIN = 1000;
   
-  private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettings.class.getName());
+  private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
 
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
 
@@ -123,6 +122,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
     synchronized (myCustomSettings) {
+      //noinspection unchecked
       return (T)myCustomSettings.get(aClass);
     }
   }
@@ -490,37 +490,34 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
       }
     }
-    for (final CustomCodeStyleSettings settings : getCustomSettingsValues()) {
+    for (CustomCodeStyleSettings settings : getCustomSettingsValues()) {
       settings.readExternal(element);
       settings.importLegacySettings();
     }
 
-    final List list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
+    List<Element> list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
     if (list != null) {
-      for(Object o:list) {
-        if (o instanceof Element) {
-          final Element additionalIndentElement = (Element)o;
-          final String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
-
-          if (fileTypeId != null && !fileTypeId.isEmpty()) {
-            FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
-              target = new TempFileType(fileTypeId);
-            }
-
-            final IndentOptions options = getDefaultIndentOptions(target);
-            options.readExternal(additionalIndentElement);
-            registerAdditionalIndentOptions(target, options);
+      for (Element additionalIndentElement : list) {
+        String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
+        if (!StringUtil.isEmpty(fileTypeId)) {
+          FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
+          if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
+            target = new TempFileType(fileTypeId);
           }
+
+          IndentOptions options = getDefaultIndentOptions(target);
+          options.readExternal(additionalIndentElement);
+          registerAdditionalIndentOptions(target, options);
         }
       }
     }
 
     myCommonSettingsManager.readExternal(element);
 
-    if (USE_SAME_INDENTS) IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
+    if (USE_SAME_INDENTS) {
+      IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
+    }
   }
-
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
@@ -528,12 +525,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
     List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(getCustomSettingsValues());
     
-    Collections.sort(customSettings, new Comparator<CustomCodeStyleSettings>(){
-      @Override
-      public int compare(final CustomCodeStyleSettings o1, final CustomCodeStyleSettings o2) {
-        return o1.getTagName().compareTo(o2.getTagName());
-      }
-    });
+    Collections.sort(customSettings, (o1, o2) -> o1.getTagName().compareTo(o2.getTagName()));
 
     for (final CustomCodeStyleSettings settings : customSettings) {
       final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
@@ -544,12 +536,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     }
 
     final FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
-    Arrays.sort(fileTypes, new Comparator<FileType>() {
-      @Override
-      public int compare(final FileType o1, final FileType o2) {
-        return o1.getDefaultExtension().compareTo(o2.getDefaultExtension());
-      }
-    });
+    Arrays.sort(fileTypes, (o1, o2) -> o1.getDefaultExtension().compareTo(o2.getDefaultExtension()));
 
     for (FileType fileType : fileTypes) {
       final IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
@@ -563,7 +550,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     
     myCommonSettingsManager.writeExternal(element);
   }
-
 
   private static IndentOptions getDefaultIndentOptions(FileType fileType) {
     final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);

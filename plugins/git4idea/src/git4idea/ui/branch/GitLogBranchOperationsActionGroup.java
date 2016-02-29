@@ -68,7 +68,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     if (root == null) return AnAction.EMPTY_ARRAY;
 
     VcsLogDataPack dataPack = logUI.getDataPack();
-    Collection<VcsRef> allVcsRefs = ((RefsModel)dataPack.getRefs()).refsToCommit(commit.getHash(), commit.getRoot());
+    Collection<VcsRef> allVcsRefs = dataPack.getRefs().refsToCommit(commit.getHash(), commit.getRoot());
 
     List<VcsRef> vcsRefs = ContainerUtil.filter(allVcsRefs, new Condition<VcsRef>() {
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class MuteBreakpointAction extends ToggleAction {
+  @Override
   public boolean isSelected(final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
@@ -40,6 +41,7 @@ public class MuteBreakpointAction extends ToggleAction {
     return false;
   }
 
+  @Override
   public void setSelected(final AnActionEvent e, final boolean state) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
@@ -53,6 +55,7 @@ public class MuteBreakpointAction extends ToggleAction {
     }
   }
 
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     Project project = e.getData(CommonDataKeys.PROJECT);

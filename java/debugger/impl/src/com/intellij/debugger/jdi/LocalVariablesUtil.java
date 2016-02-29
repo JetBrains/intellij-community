@@ -146,7 +146,7 @@ public class LocalVariablesUtil {
   }
 
   public static Map<DecompiledLocalVariable, Value> fetchValues(@NotNull StackFrameProxyImpl frameProxy, DebugProcess process) throws Exception {
-    Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<DecompiledLocalVariable, Value>(); // LinkedHashMap for correct order
+    Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<>(); // LinkedHashMap for correct order
 
     com.sun.jdi.Method method = frameProxy.location().method();
     final int firstLocalVariableSlot = getFirstLocalsSlot(method);
@@ -284,7 +284,7 @@ public class LocalVariablesUtil {
       final byte[] bytecodes = method.bytecodes();
       if (bytecodes != null && bytecodes.length > 0) {
         final int firstLocalVariableSlot = getFirstLocalsSlot(method);
-        final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<Integer, DecompiledLocalVariable>();
+        final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<>();
         new InstructionParser(bytecodes, location.codeIndex()) {
           @Override
           protected void localVariableInstructionFound(int opcode, int slot, String typeSignature) {
@@ -302,7 +302,7 @@ public class LocalVariablesUtil {
           return Collections.emptyList();
         }
 
-        List<DecompiledLocalVariable> vars = new ArrayList<DecompiledLocalVariable>(usedVars.values());
+        List<DecompiledLocalVariable> vars = new ArrayList<>(usedVars.values());
         Collections.sort(vars, DecompiledLocalVariable.COMPARATOR);
         return vars;
       }
@@ -325,7 +325,7 @@ public class LocalVariablesUtil {
           PsiElement element = position.getElementAt();
           PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
-            MultiMap<Integer, String> res = new MultiMap<Integer, String>();
+            MultiMap<Integer, String> res = new MultiMap<>();
             int slot = Math.max(0, firstLocalsSlot - getFirstLocalsSlot(method));
             for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
               res.putValue(slot, parameter.getName());
@@ -362,7 +362,7 @@ public class LocalVariablesUtil {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;
-      myIndexStack = new Stack<Integer>();
+      myIndexStack = new Stack<>();
 
     }
 

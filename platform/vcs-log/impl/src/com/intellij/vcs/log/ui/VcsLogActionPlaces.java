@@ -17,7 +17,7 @@ package com.intellij.vcs.log.ui;
 
 public class VcsLogActionPlaces {
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
-  public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
+  public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar.Internal";
   public static final String SETTINGS_ACTION_GROUP = "Vcs.Log.Settings";
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";

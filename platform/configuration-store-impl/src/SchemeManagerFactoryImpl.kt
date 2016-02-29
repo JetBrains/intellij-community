@@ -27,7 +27,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
 const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
@@ -59,7 +60,7 @@ sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingC
     return originalPath
   }
 
-  abstract fun pathToFile(path: String, storageManager: StateStorageManager): File
+  abstract fun pathToFile(path: String, storageManager: StateStorageManager): Path
 
   fun process(processor: (SchemeManagerImpl<Scheme, ExternalizableScheme>) -> Unit) {
     for (manager in managers) {
@@ -100,12 +101,12 @@ sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingC
       return path
     }
 
-    override fun pathToFile(path: String, storageManager: StateStorageManager) = File(storageManager.expandMacros("$ROOT_CONFIG/$path"))
+    override fun pathToFile(path: String, storageManager: StateStorageManager) = Paths.get(storageManager.expandMacros(ROOT_CONFIG), path)
   }
 
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
-    override fun pathToFile(path: String, storageManager: StateStorageManager) = File(project.basePath, if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
+    override fun pathToFile(path: String, storageManager: StateStorageManager) = Paths.get(project.basePath, if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
   }
 }

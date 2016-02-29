@@ -35,7 +35,7 @@ private class BuiltInWebServerTest : BuiltInServerTestCase() {
 
   private fun testIndex(vararg paths: String) {
     val project = BuiltInServerTestCase.projectRule.project
-    val newPath = tempDirManager.newPath(refreshVfs = false)
+    val newPath = tempDirManager.newPath()
     newPath.writeChild(manager.filePath!!, "hello")
     newPath.refreshVfs()
 

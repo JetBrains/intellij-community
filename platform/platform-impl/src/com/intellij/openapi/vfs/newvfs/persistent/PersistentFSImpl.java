@@ -20,9 +20,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -861,7 +858,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   @Nullable
-  public VirtualFileSystemEntry findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
+  public VirtualFileSystemEntry findRoot(@NotNull final String basePath, @NotNull NewVirtualFileSystem fs) {
     if (basePath.isEmpty()) {
       LOG.error("Invalid root, fs=" + fs);
       return null;
@@ -872,30 +869,21 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     VirtualFileSystemEntry root = myRoots.get(rootUrl);
     if (root != null) return root;
 
-    final VirtualFileSystemEntry newRoot;
-    String rootPathBeforeSplash;
     String rootName;
-
-    if (fs instanceof JarFileSystem) {
-      String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
-      VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
-      if (parentFile == null) return null;
-      FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(parentFile.getName());
-      if (type != FileTypes.ARCHIVE) return null;
-      rootName = parentFile.getName();
-      rootPathBeforeSplash = parentFile.getPath() + "!";
+    if (fs instanceof ArchiveFileSystem) {
+      VirtualFile localFile = ((ArchiveFileSystem)fs).findLocalByRootPath(basePath);
+      if (localFile == null) return null;
+      rootName = localFile.getName();
     }
     else {
       rootName = basePath;
-      rootPathBeforeSplash = StringUtil.trimEnd(basePath, "/");
     }
 
-    final String finalRootPathBeforeSplash = rootPathBeforeSplash;
     FileAttributes attributes = fs.getAttributes(new StubVirtualFile() {
       @NotNull
       @Override
       public String getPath() {
-        return finalRootPathBeforeSplash + "/";
+        return basePath;
       }
 
       @Nullable
@@ -912,7 +900,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     VfsData.Segment segment = VfsData.getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
-    newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, rootPathBeforeSplash);
+    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimEnd(basePath, "/"));
 
     boolean mark;
     synchronized (myRoots) {
@@ -1312,7 +1300,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     @NotNull
     @Override
     public String getPath() {
-      return myPathBeforeSlash + "/";
+      return myPathBeforeSlash + '/';
     }
 
     @NotNull
@@ -1321,5 +1309,4 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       return getFileSystem().getProtocol() + "://" + getPath();
     }
   }
-
 }
