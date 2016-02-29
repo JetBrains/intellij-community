@@ -38,8 +38,6 @@ interface Vm : UserDataHolderEx {
 
   val suspendContextManager: SuspendContextManager<out CallFrame>
 
-  val workerManager: WorkerManager
-
   /**
    * Controls whether VM stops on exceptions
    */

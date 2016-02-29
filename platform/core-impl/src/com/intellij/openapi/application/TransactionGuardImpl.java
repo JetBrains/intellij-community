@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Queue;
@@ -36,9 +35,9 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   @NotNull
-  public AccessToken startSynchronousTransaction(@Nullable TransactionKind kind) throws IllegalStateException {
+  public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (kind != null && myMergeableKinds.contains(kind)) {
+    if (kind != NO_MERGE && myMergeableKinds.contains(kind)) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
     if (myInsideTransaction) {
@@ -66,13 +65,13 @@ public class TransactionGuardImpl extends TransactionGuard {
 
         Runnable next = myQueue.poll();
         if (next != null) {
-          runSyncTransaction(null, next);
+          runSyncTransaction(NO_MERGE, next);
         }
       }
     }, app.getDisposed());
   }
 
-  private void runSyncTransaction(@Nullable TransactionKind kind, @NotNull Runnable code) {
+  private void runSyncTransaction(@NotNull TransactionKind kind, @NotNull Runnable code) {
     AccessToken token = startSynchronousTransaction(kind);
     try {
       code.run();
@@ -89,17 +88,17 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitMergeableTransaction(@Nullable final TransactionKind kind, @NotNull final Runnable transaction) {
+  public void submitMergeableTransaction(@NotNull final TransactionKind kind, @NotNull final Runnable transaction) {
     submitTransaction(kind, transaction, ModalityState.defaultModalityState());
   }
 
-  public void submitTransaction(@Nullable final TransactionKind kind,
-                                 @NotNull final Runnable transaction,
-                                 ModalityState modalityState) {
+  public void submitTransaction(@NotNull final TransactionKind kind,
+                                @NotNull final Runnable transaction,
+                                ModalityState modalityState) {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (!myInsideTransaction || kind != null && myMergeableKinds.contains(kind)) {
+        if (!myInsideTransaction || kind != NO_MERGE && myMergeableKinds.contains(kind)) {
           runSyncTransaction(kind, transaction);
         }
         else {
@@ -121,9 +120,12 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   @NotNull
   public AccessToken acceptNestedTransactions(TransactionKind... kinds) {
+    //todo enable when transactions are mandatory
+    /*
     if (!isInsideTransaction()) {
       throw new IllegalStateException("acceptNestedTransactions must be called inside a transaction");
     }
+    */
     final List<TransactionKind> toRemove = ContainerUtil.newArrayList();
     for (TransactionKind kind : kinds) {
       if (myMergeableKinds.add(kind)) {
@@ -139,11 +141,11 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionAndWait(@Nullable TransactionKind kind, @NotNull final Runnable transaction) throws ProcessCanceledException {
+  public void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Runnable transaction) throws ProcessCanceledException {
     submitTransactionAndWait(kind, transaction, ModalityState.defaultModalityState());
   }
 
-  public void submitTransactionAndWait(@Nullable TransactionKind kind,
+  public void submitTransactionAndWait(@NotNull TransactionKind kind,
                                         @NotNull final Runnable transaction,
                                         ModalityState modalityState) {
     Application app = ApplicationManager.getApplication();

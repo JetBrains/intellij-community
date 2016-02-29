@@ -131,9 +131,9 @@ public class GitShelveUtils {
   @Nullable
   public static ShelvedChangeList shelveChanges(final Project project, final ShelveChangesManager shelveManager, Collection<Change> changes,
                                                 final String description,
-                                                final List<VcsException> exceptions, boolean rollback) {
+                                                final List<VcsException> exceptions, boolean rollback, boolean markToBeDeleted) {
     try {
-      ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description, rollback);
+      ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description, rollback, markToBeDeleted);
       project.getMessageBus().syncPublisher(ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(GitStashUtils.class));
       return shelve;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -573,9 +573,12 @@ public class ExprProcessor implements CodeConstants {
 
             if (instr.opcode == opc_invokedynamic && bootstrap != null) {
               List<PooledConstant> bootstrap_arguments = bootstrap.getMethodArguments(invoke_constant.index1);
-              LinkConstant content_method_handle = (LinkConstant)bootstrap_arguments.get(1);
-
-              dynamic_invokation_type = content_method_handle.index1;
+              if (bootstrap_arguments.size() > 1) { // INVOKEDYNAMIC is used not only for lambdas
+                PooledConstant link = bootstrap_arguments.get(1);
+                if (link instanceof LinkConstant) {
+                  dynamic_invokation_type = ((LinkConstant)link).index1;
+                }
+              }
             }
 
             InvocationExprent exprinv = new InvocationExprent(instr.opcode, invoke_constant, stack, dynamic_invokation_type, bytecode_offsets);

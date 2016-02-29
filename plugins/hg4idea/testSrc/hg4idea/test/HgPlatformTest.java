@@ -97,7 +97,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
+      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
       myProjectFixture.tearDown();
     }
     finally {

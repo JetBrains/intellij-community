@@ -500,7 +500,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Runnable task = new Runnable() {
       @Override
       public void run() {
-        ApplicationImpl.super.createComponents(indicator);
+        try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionGuard.NO_MERGE)) {
+          ApplicationImpl.super.createComponents(indicator);
+        }
       }
     };
 

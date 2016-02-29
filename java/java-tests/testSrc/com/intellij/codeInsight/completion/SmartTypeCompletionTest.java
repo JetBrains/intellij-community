@@ -698,6 +698,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testUseIntConstantsFromTargetClass() throws Throwable { doTest(); }
+  public void testUseObjectConstantsFromTargetClass() { doTest(); }
   public void testUseIntConstantsFromTargetClassReturnValue() throws Throwable { doTest(); }
   public void testUseIntConstantsFromConstructedClass() throws Throwable { doTest(); }
   public void testUseIntConstantsInPlus() throws Throwable { doTest(); }
@@ -836,7 +837,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testIDEADEV2626() throws Exception {
-    doActionTest();
+    doItemTest();
   }
 
   public void testDontSuggestWildcardGenerics() { doItemTest(); }

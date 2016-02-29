@@ -19,7 +19,7 @@ for i, arg in enumerate(sys.argv[1:]):
         print(('Usage:\n' +
                '  {0} -h |-? | --help\n' +
                '  {0} [-l|--line line] file[:line]\n' +
-               '  {0} diff <left> <right>' +
+               '  {0} diff <left> <right>\n' +
                '  {0} merge <local> <remote> [base] <merged>').format(sys.argv[0]))
         exit(0)
     elif arg == 'diff' and i == 0:

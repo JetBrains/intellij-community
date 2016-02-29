@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.*;
  * Date: 04-Jun-2006
  */
 
-public class LibrariesModifiableModel implements LibraryTableBase.ModifiableModelEx {
+public class LibrariesModifiableModel implements LibraryTableBase.ModifiableModel {
   //todo[nik] remove LibraryImpl#equals method instead of using identity maps
   private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap =
     ContainerUtil.<Library, ExistingLibraryEditor>newIdentityTroveMap();

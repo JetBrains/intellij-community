@@ -19,13 +19,10 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class SuspendContextManagerBase<T : SuspendContextBase<CALL_FRAME>, CALL_FRAME : CallFrame> : SuspendContextManager<CALL_FRAME> {
   val contextRef = AtomicReference<T>()
-  val threadSuspendContexts: MutableMap<String, JSExecutionStackSuspendContext<T, CALL_FRAME>> =
-      Collections.synchronizedMap(LinkedHashMap<String, JSExecutionStackSuspendContext<T, CALL_FRAME>>())
 
   protected val suspendCallback = AtomicReference<AsyncPromise<Void>>()
 
@@ -41,16 +38,9 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<CALL_FRAME>, CAL
   }
 
   // dismiss context on resumed
-  protected fun dismissContext(workerId: String?) {
-    val context = contextRef.get()
-    val resumed = threadSuspendContexts.remove(workerId ?: "")?.suspendContext ?: context ?: return
-    val currentThreadResumed = context != null && context == resumed
-    if (currentThreadResumed) {
-      contextRef.set(null)
-    }
-    resumed.valueManager.markObsolete()
-    if (currentThreadResumed) {
-      debugListener.resumed()
+  protected fun dismissContext() {
+    contextRef.get()?.let {
+      contextDismissed(it)
     }
   }
 
@@ -74,17 +64,9 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<CALL_FRAME>, CAL
   override val contextOrFail: T
     get() = contextRef.get() ?: throw IllegalStateException("No current suspend context")
 
-  override fun suspend(): Promise<*> {
-    val callback = suspendCallback.get()
-    if (callback != null) {
-      return callback
-    }
-    return if (context == null) doSuspend() else resolvedPromise()
-  }
+  override fun suspend() = suspendCallback.get() ?: if (context == null) doSuspend() else resolvedPromise()
 
   protected abstract fun doSuspend(): Promise<*>
-
-  override fun isContextObsolete(context: SuspendContext<*>) = this.context !== context
 
   override fun setOverlayMessage(message: String?) {
   }
@@ -97,9 +79,3 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<CALL_FRAME>, CAL
 
   override val isRestartFrameSupported = false
 }
-
-data class JSExecutionStackSuspendContext<T : SuspendContextBase<CALL_FRAME>, CALL_FRAME : CallFrame>(
-    val suspendContext: T,
-    val script: Script?,
-    val additionalData: Any?
-)
