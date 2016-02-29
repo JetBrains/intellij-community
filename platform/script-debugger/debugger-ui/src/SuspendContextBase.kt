@@ -30,10 +30,18 @@ import org.jetbrains.debugger.frame.CallFrameView
 import org.jetbrains.debugger.values.StringValue
 import java.util.*
 
-abstract class SuspendContextView() : XSuspendContext() {
+abstract class SuspendContextView(protected val activeStack: ExecutionStackView) : XSuspendContext() {
+  protected open val stacks by lazy {
+    arrayOf(activeStack)
+  }
+
+  override fun getActiveExecutionStack() = activeStack
+
+  override fun getExecutionStacks(): Array<out XExecutionStack> = stacks
+
   fun evaluateExpression(expression: String): Promise<String> {
-    val frame = activeExecutionStack?.topFrame ?: return rejectedPromise("Top frame is null")
-    return evaluateExpression((frame as CallFrameView).callFrame.evaluateContext, expression)
+    val frame = activeStack.topFrame ?: return rejectedPromise("Top frame is null")
+    return evaluateExpression(frame.callFrame.evaluateContext, expression)
   }
 
   private fun evaluateExpression(evaluateContext: EvaluateContext, expression: String) = evaluateContext.evaluate(expression)
@@ -46,17 +54,16 @@ abstract class SuspendContextView() : XSuspendContext() {
           resolvedPromise(value.valueString!!)
         }
       }
-
-  open fun hasPausedExecutionStack(suspendContext: SuspendContext<*>): Boolean = suspendContext.vm.suspendContextManager.isContextObsolete(suspendContext)
 }
 
+const val MAIN_LOOP_NAME = "main loop"
+
 // icon ThreadCurrent would be preferred for active thread, but it won't be updated on stack change
-class ExecutionStackView(private val suspendContextView: SuspendContextView,
-                         val suspendContext: SuspendContext<*>,
-                         protected val viewSupport: DebuggerViewSupport,
-                         private val topFrameScript: Script?,
-                         private val topFrameSourceInfo: SourceInfo? = null,
-                         displayName: String) : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
+open class ExecutionStackView(val suspendContext: SuspendContext<*>,
+                              private val viewSupport: DebuggerViewSupport,
+                              private val topFrameScript: Script?,
+                              private val topFrameSourceInfo: SourceInfo? = null,
+                              displayName: String = MAIN_LOOP_NAME) : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
   private var topCallFrameView: CallFrameView? = null
 
   override fun getTopFrame(): CallFrameView? {
@@ -70,7 +77,7 @@ class ExecutionStackView(private val suspendContextView: SuspendContextView,
   override fun computeStackFrames(firstFrameIndex: Int, container: XExecutionStack.XStackFrameContainer) {
     // WipSuspendContextManager set context to null on resume _before_ vm.getDebugListener().resumed() call() (in any case, XFramesView can queue event to EDT), so, IDE state could be outdated compare to VM (our) state
     suspendContext.frames
-        .done(suspendContext, suspendContextView) { frames ->
+        .done(suspendContext) { frames ->
           val count = frames.size - firstFrameIndex
           val result: List<XStackFrame>
           if (count < 1) {
@@ -104,21 +111,6 @@ class ExecutionStackView(private val suspendContextView: SuspendContextView,
           }
           container.addStackFrames(result, true)
         }
-  }
-}
-
-inline fun <T> Promise<T>.done(context: SuspendContext<*>, suspendContextView: SuspendContextView, crossinline handler: (result: T) -> Unit) = done {
-  checkContextAndConsume(context, suspendContextView, handler, it)
-}
-
-inline fun <T> Promise<T>.rejected(context: SuspendContext<*>, suspendContextView: SuspendContextView, crossinline handler: (result: T) -> Unit) = done {
-  checkContextAndConsume(context, suspendContextView, handler, it)
-}
-
-inline fun <T> checkContextAndConsume(context: SuspendContext<*>, suspendContextView: SuspendContextView, handler: (T) -> Unit, it: T) {
-  val vm = context.vm
-  if (vm.attachStateManager.isAttached && suspendContextView.hasPausedExecutionStack(context)) {
-    handler(it)
   }
 }
 
