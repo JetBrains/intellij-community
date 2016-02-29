@@ -81,7 +81,8 @@ public class IpnbParser {
         if (sdk != null) {
           try {
             final PyPackage ipython = PyPackageManager.getInstance(sdk).findPackage("ipython", true);
-            if (ipython != null && VersionComparatorUtil.compare(ipython.getVersion(), "3.0") <= 0) {
+            final PyPackage jupyter = PyPackageManager.getInstance(sdk).findPackage("jupyter", true);
+            if (jupyter == null && ipython != null && VersionComparatorUtil.compare(ipython.getVersion(), "3.0") <= 0) {
               return false;
             }
           }
