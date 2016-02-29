@@ -10,9 +10,9 @@ public class IpnbFile {
   private final Map<String, Object> myMetadata;
   private final int myNbformat;
   private final List<IpnbCell> myCells;
-  private final String myPath;
+  @NotNull private final String myPath;
 
-  public IpnbFile(Map<String, Object> metadata, int nbformat, List<IpnbCell> cells, String path) {
+  public IpnbFile(Map<String, Object> metadata, int nbformat, List<IpnbCell> cells, @NotNull String path) {
     myMetadata = metadata;
     myNbformat = nbformat;
     myCells = cells;
@@ -31,6 +31,7 @@ public class IpnbFile {
     myCells.remove(index);
   }
 
+  @NotNull
   public String getPath() {
     return myPath;
   }
@@ -43,4 +44,27 @@ public class IpnbFile {
     return myNbformat;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    IpnbFile file = (IpnbFile)o;
+
+    if (myNbformat != file.myNbformat) return false;
+    if (myMetadata != null ? !myMetadata.equals(file.myMetadata) : file.myMetadata != null) return false;
+    if (myCells != null ? !myCells.equals(file.myCells) : file.myCells != null) return false;
+    if (!myPath.equals(file.myPath)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myMetadata != null ? myMetadata.hashCode() : 0;
+    result = 31 * result + myNbformat;
+    result = 31 * result + (myCells != null ? myCells.hashCode() : 0);
+    result = 31 * result + (myPath.hashCode());
+    return result;
+  }
 }

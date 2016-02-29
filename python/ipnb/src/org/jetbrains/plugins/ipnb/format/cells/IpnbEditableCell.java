@@ -34,4 +34,24 @@ public abstract class IpnbEditableCell implements IpnbCell {
   public Map<String, Object> getMetadata() {
     return myMetadata;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    IpnbEditableCell cell = (IpnbEditableCell)o;
+
+    if (!mySource.equals(cell.mySource)) return false;
+    if (myMetadata != null ? !myMetadata.equals(cell.myMetadata) : cell.myMetadata != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = mySource.hashCode();
+    result = 31 * result + (myMetadata != null ? myMetadata.hashCode() : 0);
+    return result;
+  }
 }
