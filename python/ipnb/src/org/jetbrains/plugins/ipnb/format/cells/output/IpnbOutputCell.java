@@ -37,4 +37,26 @@ public class IpnbOutputCell implements IpnbCell {
   public Map<String, Object> getMetadata() {
     return myMetadata;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    IpnbOutputCell cell = (IpnbOutputCell)o;
+
+    if (myPromptNumber != null ? !myPromptNumber.equals(cell.myPromptNumber) : cell.myPromptNumber != null) return false;
+    if (myText != null ? !myText.equals(cell.myText) : cell.myText != null) return false;
+    if (myMetadata != null ? !myMetadata.equals(cell.myMetadata) : cell.myMetadata != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPromptNumber != null ? myPromptNumber.hashCode() : 0;
+    result = 31 * result + (myText != null ? myText.hashCode() : 0);
+    result = 31 * result + (myMetadata != null ? myMetadata.hashCode() : 0);
+    return result;
+  }
 }

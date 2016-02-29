@@ -105,6 +105,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     try {
       IpnbFile file = IpnbParser.parseIpnbFile(myDocument, myVirtualFile);
       if (file.equals(myIpnbFile)) return;
+      removeAll();
       myIpnbFile = file;
       myIpnbPanels.clear();
       mySelectedCell = null;
@@ -348,7 +349,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       final IpnbEditablePanel selectedCell = getSelectedCell();
       final int index = myIpnbPanels.indexOf(selectedCell);
       myInitialSelection = index >= 0 && index < myIpnbPanels.size() ? index : myIpnbPanels.size() - 1;
-      removeAll();
       readFromFile(false);
     }
   }
