@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
@@ -75,6 +76,8 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     loadFile();
     startChangeListener();
+
+    UsageTrigger.trigger("scene-builder.open");
   }
 
   @Override
@@ -100,6 +103,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
         if (!mySkipChanges) {
           myEditorCallback.saveChanges(myEditorController.getFxmlText());
+          UsageTrigger.trigger("scene-builder.edit");
         }
       }
     };
