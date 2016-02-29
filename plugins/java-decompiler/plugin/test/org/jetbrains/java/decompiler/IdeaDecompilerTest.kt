@@ -86,7 +86,13 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
       assertEquals(2, myFixture.doHighlighting().size)
+      myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
+      assertEquals(2, myFixture.doHighlighting().size)
+      myFixture.editor.caretModel.moveToOffset(offset(14, 17))  // int i: usage, declaration
+      assertEquals(2, myFixture.doHighlighting().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
+      assertEquals(2, myFixture.doHighlighting().size)
+      myFixture.editor.caretModel.moveToOffset(offset(15, 13))  // int r: usage, declaration
       assertEquals(2, myFixture.doHighlighting().size)
       myFixture.editor.caretModel.moveToOffset(offset(16, 28))  // int r: usage, declaration
       assertEquals(2, myFixture.doHighlighting().size)
