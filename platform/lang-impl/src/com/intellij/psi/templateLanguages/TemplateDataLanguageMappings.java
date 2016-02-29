@@ -23,7 +23,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,11 +56,6 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
 
   @Override
   public Language getDefaultMapping(@Nullable VirtualFile file) {
-    return getDefaultMappingForFile(file);
-  }
-
-  @Nullable
-  public static Language getDefaultMappingForFile(@Nullable VirtualFile file) {
     return file == null? null : TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
   }
 
@@ -77,11 +71,4 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
     });
   }
 
-  private final FilePropertyPusher<Language> myPropertyPusher = new TemplateDataLanguagePusher();
-
-  @Nullable
-  @Override
-  protected FilePropertyPusher<Language> getFilePropertyPusher() {
-    return myPropertyPusher;
-  }
 }
