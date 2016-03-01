@@ -80,6 +80,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   private static final String VISIBILITY_PACKAGE_PRIVATE = "visibility_package_private";
   private static final String VISIBILITY_PUBLIC = "visibility_public";
+  private final Map<String, String> myCreationOptions = new HashMap<String, String>();
 
   protected CreateFileFromTemplateDialog(@NotNull Project project, @NotNull PsiDirectory defaultDirectory) {
     super(project);
@@ -110,8 +111,6 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     setKindComponentsVisible(false);
     initVisibilityButtons();
 
-    // TODO: Remove this when the overrides work is done.
-    myShowSelectOverridesDialogCheckBox.setVisible(false);
     myKindCombo.getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
@@ -259,10 +258,8 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         myAbstractCheckBox.setVisible(false);
         myFinalCheckBox.setSelected(false);
         myFinalCheckBox.setVisible(false);
-        // TODO: Uncomment this when the overrides work is done.
-        //
-        // myShowSelectOverridesDialogCheckBox.setSelected(false);
-        // myShowSelectOverridesDialogCheckBox.setVisible(false);
+        myShowSelectOverridesDialogCheckBox.setSelected(false);
+        myShowSelectOverridesDialogCheckBox.setVisible(false);
         break;
       case CLASS:
       case SINGLETON:
@@ -271,10 +268,13 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         mySuperclassField.setFocusable(true);
         myAbstractCheckBox.setVisible(true);
         myFinalCheckBox.setVisible(true);
-        // TODO: Uncomment this when the overrides work is done.
-        // myShowSelectOverridesDialogCheckBox.setVisible(true);
+        myShowSelectOverridesDialogCheckBox.setVisible(true);
         break;
     }
+  }
+
+  Map<String, String> getCreationOptions() {
+    return myCreationOptions;
   }
 
   protected JTextField getNameField() {
@@ -328,18 +328,17 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   protected void doOKAction() {
     processNewInterface();
     List<String> imports = new ArrayList<String>();
-    Map<String, String> creationOptions = new HashMap<String, String>();
     String localPackage = getPackage();
     String superclassAsString = getSuperclass();
     if (!superclassAsString.isEmpty()) {
       Type superclassAsType = Type.newType(superclassAsString, myProject);
-      creationOptions.put(FileTemplate.ATTRIBUTE_SUPERCLASS, superclassAsType.getClassWithNesting());
+      myCreationOptions.put(FileTemplate.ATTRIBUTE_SUPERCLASS, superclassAsType.getClassWithNesting());
       if (superclassAsType.requiresImport(localPackage)) {
         imports.add(superclassAsType.getClassToImport());
       }
     }
     else {
-      creationOptions.put(FileTemplate.ATTRIBUTE_SUPERCLASS, "");
+      myCreationOptions.put(FileTemplate.ATTRIBUTE_SUPERCLASS, "");
     }
 
     // There are three types of interfaces to deal with: those local to the new file's package (locals), those that are not local, but
@@ -376,14 +375,16 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       }
     }
 
-    creationOptions.put(FileTemplate.ATTRIBUTE_INTERFACES, Joiner.on(", ").join(interfaces));
-    creationOptions.put(FileTemplate.ATTRIBUTE_PACKAGE_NAME, localPackage);
+    myCreationOptions.put(FileTemplate.ATTRIBUTE_INTERFACES, Joiner.on(", ").join(interfaces));
+    myCreationOptions.put(FileTemplate.ATTRIBUTE_PACKAGE_NAME, localPackage);
     Visibility visibility = myPublicRadioButton.isSelected() ? Visibility.PUBLIC : Visibility.PACKAGE_PRIVATE;
-    creationOptions.put(FileTemplate.ATTRIBUTE_VISIBILITY, visibility.toString());
-    creationOptions.put(FileTemplate.ATTRIBUTE_ABSTRACT, Boolean.toString(myAbstractCheckBox.isSelected()).toUpperCase(Locale.ROOT));
-    creationOptions.put(FileTemplate.ATTRIBUTE_FINAL, Boolean.toString(myFinalCheckBox.isSelected()).toUpperCase(Locale.ROOT));
-    creationOptions.put(FileTemplate.ATTRIBUTE_IMPORT_BLOCK, formatImports(imports));
-    if (myCreator != null && myCreator.tryCreate(getName(), creationOptions).length == 0) {
+    myCreationOptions.put(FileTemplate.ATTRIBUTE_VISIBILITY, visibility.toString());
+    myCreationOptions.put(FileTemplate.ATTRIBUTE_ABSTRACT, Boolean.toString(myAbstractCheckBox.isSelected()).toUpperCase(Locale.ROOT));
+    myCreationOptions.put(FileTemplate.ATTRIBUTE_SHOW_OVERRIDES_DIALOG,
+                          Boolean.toString(myShowSelectOverridesDialogCheckBox.isSelected()).toUpperCase(Locale.ROOT));
+    myCreationOptions.put(FileTemplate.ATTRIBUTE_FINAL, Boolean.toString(myFinalCheckBox.isSelected()).toUpperCase(Locale.ROOT));
+    myCreationOptions.put(FileTemplate.ATTRIBUTE_IMPORT_BLOCK, formatImports(imports));
+    if (myCreator != null && myCreator.tryCreate(getName(), myCreationOptions).length == 0) {
       return;
     }
 
@@ -492,7 +493,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @Nullable
     @Override
     public Map<String, String> getCustomProperties() {
-      return Collections.emptyMap();
+      return myDialog.getCreationOptions();
     }
   }
 

@@ -22,6 +22,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -113,8 +114,9 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   @Override
-  protected void postProcess(PsiClass createdElement, String templateName, Map<String, String> customProperties) {
-    super.postProcess(createdElement, templateName, customProperties);
+  // TODO: Remove the AnActionEvent parameter, as part of the API compatability fix.
+  protected void postProcess(PsiClass createdElement, String templateName, Map<String, String> customProperties, AnActionEvent e) {
+    super.postProcess(createdElement, templateName, customProperties, e);
 
     moveCaretAfterNameIdentifier(createdElement);
   }
