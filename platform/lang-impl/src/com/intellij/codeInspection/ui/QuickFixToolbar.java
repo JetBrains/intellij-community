@@ -39,8 +39,6 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -58,25 +56,14 @@ public class QuickFixToolbar extends JPanel {
     int problemCount = descriptors.length;
     final boolean multipleDescriptors = problemCount > 1;
 
-    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-    List<JPanel> panels = new ArrayList<>();
-    for (int i = 0; i < (multipleDescriptors ? 2 : 1); i++) {
-      final JPanel line = new JPanel();
-      line.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      panels.add((JPanel)add(line));
-    }
-    if (multipleDescriptors || !hasFixes) {
-      panels.get(0).setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
-    }
+    setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 0, 0));
 
-    //fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
-    fill(getDescriptionLabelPlacement(multipleDescriptors),
-         () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), panels);
-    fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(fixes), panels);
-    fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(tree.getSelectedToolWrapper()
-      , tree.getSelectionPaths(), project, multipleDescriptors), panels);
-    fill(multipleDescriptors && editor != null ? 1 : -1, () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
-      editor, descriptors), true).getComponent(), panels);
+    fill(multipleDescriptors, () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), this);
+    fill(hasFixes, () -> createFixPanel(fixes), this);
+    fill(true, () -> createSuppressionCombo(tree.getSelectedToolWrapper(), tree.getSelectionPaths(), project, multipleDescriptors), this);
+    fill(multipleDescriptors && editor != null, () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
+      editor, descriptors), true).getComponent(), this);
   }
 
   @NotNull
@@ -84,16 +71,10 @@ public class QuickFixToolbar extends JPanel {
     final String targetName = targetNode instanceof RefElementNode ? ((RefElementNode)targetNode).getElement().getName() : null;
     SimpleColoredComponent label = new SimpleColoredComponent();
     boolean hasFixesNonIntersectedFixes = fixes != null && fixes.length == 0;
-    boolean hasFixes = fixes != null && fixes.length != 0;
-    label.append((hasFixes ? " Fix " : " ") + problemsCount + " problems" + (targetName == null ? "" : (" in " + targetName)) + (
-      hasFixesNonIntersectedFixes
-      ? ":" : ""), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    label.append(problemsCount + " problems" + (targetName == null ? "" : (" in " + targetName)) + (hasFixesNonIntersectedFixes ? ":" : ""),
+                 SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     if (hasFixesNonIntersectedFixes) {
       label.append(" select a single problem to see its quick fixes");
-    }
-
-    if (!hasFixes) {
-      label.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 6, 0));
     }
     return label;
   }
@@ -150,30 +131,12 @@ public class QuickFixToolbar extends JPanel {
     return fixPanel;
   }
 
-  private static void fill(int row,
+  private static void fill(boolean add,
                            @NotNull Supplier<JComponent> componentSupplier,
-                           @NotNull List<JPanel> parent) {
-    if (row == -1) {
-      return;
+                           @NotNull JPanel parent) {
+    if (add) {
+      parent.add(componentSupplier.get());
     }
-    final JPanel rowPanel = parent.get(row);
-    rowPanel.add(componentSupplier.get());
-  }
-
-  private static int getSuppressPlacement(boolean multipleDescriptors) {
-    return multipleDescriptors ? 1 : 0;
-  }
-
-  private static int getFixesPlacement(boolean hasQuickFixes, boolean multipleDescriptors) {
-    return hasQuickFixes ? multipleDescriptors ? 1 : 0 : -1;
-  }
-
-  private static int getDescriptionLabelPlacement(boolean multipleDescriptors) {
-    return multipleDescriptors ? 0 : -1;
-  }
-
-  private static int getBulbPlacement(boolean hasQuickFixes) {
-    return hasQuickFixes ? 0 : -1;
   }
 
   private static JComponent createQuickFixButton(@NotNull QuickFixAction fix) {
