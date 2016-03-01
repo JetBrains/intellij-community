@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,4 +110,17 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   }
 
+  public RefEntity getContainingFileLocalEntity() {
+    final Enumeration children = children();
+    RefEntity current = null;
+    while (children.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
+      final RefEntity entity = child.getContainingFileLocalEntity();
+      if (entity == null || current != null) {
+        return null;
+      }
+      current = entity;
+    }
+    return current;
+  }
 }

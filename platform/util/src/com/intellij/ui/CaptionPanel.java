@@ -18,9 +18,10 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -106,11 +107,12 @@ public class CaptionPanel extends JPanel {
     repaint();
   }
 
-  public void setButtonComponent(@NotNull ActiveComponent component) {
+  public void setButtonComponent(@NotNull ActiveComponent component, @Nullable Border border) {
     if (myButtonComponent != null) {
       remove(myButtonComponent.getComponent());
     }
     JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(border);
     panel.add(new JLabel(" "), BorderLayout.WEST);
     panel.add(component.getComponent(), BorderLayout.CENTER);
     panel.setOpaque(false);

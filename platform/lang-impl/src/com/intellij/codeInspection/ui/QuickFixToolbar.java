@@ -57,10 +57,10 @@ public class QuickFixToolbar extends JPanel {
     final boolean multipleDescriptors = problemCount > 1;
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(hasFixes ? 0 : 5, 5, 0, 0));
 
     fill(multipleDescriptors, () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), this);
-    fill(hasFixes, () -> createFixPanel(fixes), this);
+    fill(hasFixes, () -> createFixPanel(fixes, multipleDescriptors), this);
     fill(true, () -> createSuppressionCombo(tree.getSelectedToolWrapper(), tree.getSelectionPaths(), project, multipleDescriptors), this);
     fill(multipleDescriptors && editor != null, () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
       editor, descriptors), true).getComponent(), this);
@@ -71,7 +71,10 @@ public class QuickFixToolbar extends JPanel {
     final String targetName = targetNode instanceof RefElementNode ? ((RefElementNode)targetNode).getElement().getName() : null;
     SimpleColoredComponent label = new SimpleColoredComponent();
     boolean hasFixesNonIntersectedFixes = fixes != null && fixes.length == 0;
-    label.append(problemsCount + " problems" + (targetName == null ? "" : (" in " + targetName)) + (hasFixesNonIntersectedFixes ? ":" : ""),
+    label.append(problemsCount + " problems" +
+                 (targetName == null ? "" : (" in " + targetName)) +
+                 (problemsCount > 1 && (fixes != null && fixes.length == MAX_FIX_COUNT) ? "    Fix all:" : "") +
+                 (hasFixesNonIntersectedFixes ? ":" : "" ),
                  SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     if (hasFixesNonIntersectedFixes) {
       label.append(" select a single problem to see its quick fixes");
@@ -101,12 +104,12 @@ public class QuickFixToolbar extends JPanel {
   }
 
   @NotNull
-  private static JPanel createFixPanel(QuickFixAction[] fixes) {
+  private static JPanel createFixPanel(QuickFixAction[] fixes, boolean multipleDescriptors) {
     JPanel fixPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, JBUI.scale(3), JBUI.scale(5)));
     if (fixes.length > MAX_FIX_COUNT) {
       final ComboBoxAction fixComboBox = new ComboBoxAction() {
         {
-          getTemplatePresentation().setText("Apply quick fixes");
+          getTemplatePresentation().setText("Apply quick fixes" + (multipleDescriptors ? " to all the problems" : ""));
           getTemplatePresentation().setIcon(AllIcons.Actions.CreateFromUsage);
           setSmallVariant(false);
         }
@@ -124,8 +127,9 @@ public class QuickFixToolbar extends JPanel {
       fixPanel.add(fixComboBox.createCustomComponent(fixComboBox.getTemplatePresentation()));
     }
     else {
+      final boolean multipleFixes = fixes.length > 1;
       for (QuickFixAction fix : fixes) {
-        fixPanel.add(createQuickFixButton(fix));
+        fixPanel.add(createQuickFixButton(fix, multipleDescriptors && !multipleFixes));
       }
     }
     return fixPanel;
@@ -139,8 +143,11 @@ public class QuickFixToolbar extends JPanel {
     }
   }
 
-  private static JComponent createQuickFixButton(@NotNull QuickFixAction fix) {
+  private static JComponent createQuickFixButton(@NotNull QuickFixAction fix, boolean multipleFixes) {
     final MyCustomComponentLocalQuickFixWrapper action = new MyCustomComponentLocalQuickFixWrapper(fix);
+    if (multipleFixes) {
+      action.getTemplatePresentation().setText("Fix all '" + fix.getText() + "'");
+    }
     return action.createCustomComponent(action.getTemplatePresentation());
   }
 

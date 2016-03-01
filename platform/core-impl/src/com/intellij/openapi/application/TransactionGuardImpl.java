@@ -92,12 +92,6 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public void submitMergeableTransaction(@NotNull final TransactionKind kind, @NotNull final Runnable transaction) {
-    submitTransaction(kind, transaction, ModalityState.defaultModalityState());
-  }
-
-  public void submitTransaction(@NotNull final TransactionKind kind,
-                                @NotNull final Runnable transaction,
-                                ModalityState modalityState) {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -111,12 +105,12 @@ public class TransactionGuardImpl extends TransactionGuard {
       }
     };
 
-    //todo replace with SwingUtilities when write actions are required to run under a guard
     final Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       runnable.run();
     } else {
-      app.invokeLater(runnable, modalityState, app.getDisposed());
+      //todo add ModalityState.any() when write actions are required to run under a guard
+      app.invokeLater(runnable, app.getDisposed());
     }
   }
 
@@ -145,12 +139,6 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Runnable transaction) throws ProcessCanceledException {
-    submitTransactionAndWait(kind, transaction, ModalityState.defaultModalityState());
-  }
-
-  public void submitTransactionAndWait(@NotNull TransactionKind kind,
-                                        @NotNull final Runnable transaction,
-                                        ModalityState modalityState) {
     Application app = ApplicationManager.getApplication();
     assert !app.isDispatchThread() : "submitTransactionAndWait should not be invoked on dispatch thread";
     assert !app.isReadAccessAllowed() : "submitTransactionAndWait should not be invoked from a read action";
@@ -158,7 +146,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitTransaction(kind, new Runnable() {
+    submitMergeableTransaction(kind, new Runnable() {
       @Override
       public void run() {
         try {
@@ -171,7 +159,7 @@ public class TransactionGuardImpl extends TransactionGuard {
           semaphore.up();
         }
       }
-    }, modalityState);
+    });
     semaphore.waitFor();
     if (exception[0] != null) {
       throw new RuntimeException(exception[0]);

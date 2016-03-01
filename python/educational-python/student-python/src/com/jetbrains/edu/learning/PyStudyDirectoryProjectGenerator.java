@@ -51,12 +51,6 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
 
   @Nullable
   @Override
-  public Object showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public Icon getLogo() {
     return InteractiveLearningPythonIcons.EducationalProjectType;
   }
