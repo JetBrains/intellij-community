@@ -467,17 +467,6 @@ FunctionEnd
 
 
 Function uninstallOldVersion
-  ;check if the uninstalled application is running
-remove_previous_installation:
-  ;prepare a copy of launcher
-  CopyFiles "$3\bin\${PRODUCT_EXE_FILE}" "$3\bin\${PRODUCT_EXE_FILE}_copy"
-  ClearErrors
-  ;copy launcher to itself
-  CopyFiles "$3\bin\${PRODUCT_EXE_FILE}_copy" "$3\bin\${PRODUCT_EXE_FILE}"
-  Delete "$3\bin\${PRODUCT_EXE_FILE}_copy"
-  IfErrors 0 +3
-  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL complete
-  goto complete
   ; uninstallation mode
   !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
   ${If} $9 == "1"
@@ -1035,8 +1024,38 @@ complete:
   ${UnStrRep} $2 $2 "/" "\"
 FunctionEnd
 
+Function un.isIDEInUse
+  IfFileExists $R0 0 done
+  CopyFiles $R0 "$R0_copy"
+  ClearErrors
+  Delete $R0"
+  IfFileExists $R0 done
+  CopyFiles "$R0_copy" $R0
+done:
+  Delete "$R0_copy"
+FunctionEnd
+
+
+Function un.checkIfIDEInUse
+remove_previous_installation:
+  StrCpy $R0 "$INSTDIR\IdeaWin32.dll"
+  Call un.isIDEInUse
+  IfErrors remove_dialog 0
+  StrCpy $R0 "$INSTDIR\IdeaWin64.dll"
+  Call un.isIDEInUse
+  IfErrors remove_dialog done
+remove_dialog:
+  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL cancel
+cancel:
+  StrCpy $R0 "cancel"
+done:
+FunctionEnd
+
 
 Section "Uninstall"
+  ;check if the uninstalled application is running
+  Call un.checkIfIDEInUse
+  StrCmp $R0 "cancel" end_of_uninstall 0
   ; Uninstaller is in the \bin directory, we need upper level dir
   StrCpy $productDir $INSTDIR
   StrCpy $INSTDIR $INSTDIR\..

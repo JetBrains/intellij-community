@@ -41,12 +41,6 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
 
   @Nullable
   @Override
-  public Object showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public Icon getLogo() {
     return CourseCreatorPythonIcons.CourseCreationProjectType;
   }
