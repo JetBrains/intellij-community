@@ -126,15 +126,29 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
       StudyStatus taskFileStatus = getStatus(taskFile);
       if (taskFileStatus == StudyStatus.Unchecked) {
         task.setStatus(StudyStatus.Unchecked);
+        removeObsoleteTaskStatus(task);
         return StudyStatus.Unchecked;
       }
       if (taskFileStatus == StudyStatus.Failed) {
         task.setStatus(StudyStatus.Failed);
+        removeObsoleteTaskStatus(task);
         return StudyStatus.Failed;
       }
     }
     task.setStatus(StudyStatus.Solved);
+    removeObsoleteTaskStatus(task);
     return StudyStatus.Solved;
+  }
+  
+  private void removeObsoleteTaskStatus(Task task) {
+    for (TaskFile taskFile: task.taskFiles.values()) {
+      myTaskStatusMap.remove(taskFile);
+      
+      for (AnswerPlaceholder answerPlaceholder: taskFile.getAnswerPlaceholders()) {
+        myStudyStatusMap.remove(answerPlaceholder);
+      }
+    }
+    
   }
 
   private StudyStatus getStatus(@NotNull final TaskFile file) {
