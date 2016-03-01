@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -33,10 +34,10 @@ import java.util.List;
  *
  * @author Constantine.Plotnikov
  */
-public class PathUIUtils {
-  public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new JavaSourceRootDetector();
+public class LibrarySourceRootDetectorUtil {
+  public static ExtensionPointName<RootDetector> JAVA_SOURCE_ROOT_DETECTOR = ExtensionPointName.create("com.intellij.library.javaSourceRootDetector");
 
-  private PathUIUtils() {
+  private LibrarySourceRootDetectorUtil() {
   }
 
   /**
@@ -49,7 +50,7 @@ public class PathUIUtils {
    */
   public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Component parentComponent, final VirtualFile[] rootCandidates) {
     final List<OrderRoot> orderRoots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, null,
-                                                                     new LibraryRootsDetectorImpl(Arrays.asList(Extensions.getExtensions(RootDetector.JAVA_SOURCE_ROOT_DETECTOR))),
+                                                                     new LibraryRootsDetectorImpl(Arrays.asList(Extensions.getExtensions(JAVA_SOURCE_ROOT_DETECTOR))),
                                                                      new OrderRootType[] {OrderRootType.SOURCES});
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (OrderRoot root : orderRoots) {
