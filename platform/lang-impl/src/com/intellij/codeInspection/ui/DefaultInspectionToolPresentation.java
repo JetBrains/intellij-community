@@ -682,7 +682,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
                   final QuickFixAction quickFixAction = result.get(clazz);
                   try {
                     String familyName = fix.getFamilyName();
-                    familyName = !familyName.isEmpty() ? "\'" + familyName + "\'" : familyName;
                     ((LocalQuickFixWrapper)quickFixAction)
                       .setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", familyName));
                   }

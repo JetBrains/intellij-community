@@ -74,7 +74,7 @@ public class QuickFixToolbar extends JPanel {
          () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), panels);
     fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(fixes), panels);
     fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(tree.getSelectedToolWrapper()
-      , tree.getSelectionPath(), project), panels);
+      , tree.getSelectionPaths(), project, multipleDescriptors), panels);
     fill(multipleDescriptors && editor != null ? 1 : -1, () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
       editor, descriptors), true).getComponent(), panels);
   }
@@ -98,26 +98,20 @@ public class QuickFixToolbar extends JPanel {
     return label;
   }
 
-  @NotNull
-  private static JLabel createBulbIcon() {
-    final JLabel label = new JLabel(AllIcons.Actions.IntentionBulb);
-    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
-    return label;
-  }
-
   private static JComponent createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
-                                                   @NotNull final TreePath path,
-                                                   @NotNull final Project project) {
+                                                   @NotNull final TreePath[] paths,
+                                                   @NotNull final Project project,
+                                                   boolean multipleDescriptors) {
     final ComboBoxAction action = new ComboBoxAction() {
       {
-        getTemplatePresentation().setText("Suppress");
+        getTemplatePresentation().setText(multipleDescriptors ? "Suppress All" : "Suppress");
       }
 
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
         DefaultActionGroup group = new DefaultActionGroup();
-        group.addAll(new SuppressActionWrapper(project, toolWrapper, path).getChildren(null));
+        group.addAll(new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null));
         return group;
       }
     };
