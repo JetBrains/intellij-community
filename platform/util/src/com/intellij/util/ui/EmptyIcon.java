@@ -42,6 +42,7 @@ public class EmptyIcon implements Icon, ScalableIcon {
   private final int width;
   private final int height;
   protected float scale = 1f;
+  private EmptyIcon myScaledCache;
 
   public static Icon create(int size) {
     Icon icon = cache.get(size);
@@ -123,17 +124,27 @@ public class EmptyIcon implements Icon, ScalableIcon {
 
   @Override
   public Icon scale(float scaleFactor) {
-    if (scaleFactor != scale) {
-      EmptyIcon icon;
-      if (scale != 1f) {
-        icon = this;
-      } else {
-        icon = this instanceof UIResource ? new EmptyIconUIResource(width, height) : new EmptyIcon(width, height);
-      }
-      icon.scale = scaleFactor;
-      return icon;
+    if (scale == scaleFactor) {
+      return this;
     }
-    return this;
+
+    if (myScaledCache != null && myScaledCache.scale == scaleFactor) {
+      return myScaledCache;
+    }
+
+    myScaledCache = createScaledInstance(scaleFactor);
+    myScaledCache.scale = scaleFactor;
+    return myScaledCache;
+  }
+
+  protected EmptyIcon createScaledInstance(float scale) {
+    final EmptyIcon icon;
+    if (scale != 1f) {
+      icon = this;
+    } else {
+     icon = this instanceof UIResource ? new EmptyIconUIResource(width, height) : new EmptyIcon(width, height);
+    }
+    return icon;
   }
 
   public static class EmptyIconUIResource extends EmptyIcon implements UIResource {

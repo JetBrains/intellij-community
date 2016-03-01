@@ -18,7 +18,6 @@ package com.intellij.util.ui;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -28,7 +27,6 @@ public class ColorIcon extends EmptyIcon {
   private final Color myColor;
   private boolean myBorder;
   private int myColorSize;
-  private ColorIcon myScaledCache;
 
   public ColorIcon(int size, int colorSize, @NotNull Color color, final boolean border) {
     super(size, size);
@@ -68,20 +66,13 @@ public class ColorIcon extends EmptyIcon {
   }
 
   protected int getColorSize() {
-    return scale == 1f ? myColorSize : (int)(myColorSize * scale);
+    return scale(myColorSize);
   }
 
+
   @Override
-  public Icon scale(float scaleFactor) {
-    if (scale == scaleFactor) {
-      return this;
-    }
-    if (myScaledCache != null && myScaledCache.scale == scaleFactor) {
-      return myScaledCache;
-    }
-    myScaledCache = new ColorIcon(getIconWidth(), myColorSize, myColor, myBorder);
-    myScaledCache.scale = scaleFactor;
-    return myScaledCache;
+  protected EmptyIcon createScaledInstance(float scale) {
+    return new ColorIcon(getIconWidth(), myColorSize, myColor, myBorder);
   }
 
   @Override
