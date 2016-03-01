@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -694,21 +695,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     phase.ignoreCurrentDocumentChange();
 
     final Project project = getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        CompletionAutoPopupHandler.runLaterWithCommitted(project, myEditor.getDocument(), new Runnable() {
-          @Override
-          public void run() {
-            if (phase.checkExpired()) return;
+    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+      if (phase.checkExpired()) return;
 
-            CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
-                                                        isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(),
-                                                        true);
-          }
-        });
-      }
-    }, project.getDisposed());
+      CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
+                                                  isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(),
+                                                  true);
+    });
   }
 
   @Override

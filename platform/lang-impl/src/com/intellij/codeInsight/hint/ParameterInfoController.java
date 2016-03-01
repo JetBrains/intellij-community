@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
@@ -44,7 +45,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JRootPane;
+import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -253,17 +254,11 @@ public class ParameterInfoController implements Disposable {
   }
 
   private void addAlarmRequest(){
-    Runnable request = new Runnable(){
-      @Override
-      public void run(){
-        if (!myDisposed && !myProject.isDisposed()) {
-          DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
-            @Override
-            public void run() {
-              updateComponent();
-            }
-          });
-        }
+    Runnable request = () -> {
+      if (!myDisposed && !myProject.isDisposed()) {
+        AutoPopupController.runLaterWithEverythingCommitted(myProject, () ->
+          DumbService.getInstance(myProject).withAlternativeResolveEnabled(this::updateComponent)
+        );
       }
     };
     myAlarm.addRequest(request, DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
@@ -274,8 +269,6 @@ public class ParameterInfoController implements Disposable {
       Disposer.dispose(this);
       return;
     }
-
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     CharSequence chars = myEditor.getDocument().getCharsSequence();

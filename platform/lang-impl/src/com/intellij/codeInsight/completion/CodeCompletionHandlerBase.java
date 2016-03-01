@@ -16,10 +16,10 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
@@ -485,15 +485,12 @@ public class CodeCompletionHandlerBase {
 
       final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
 
-      CompletionAutoPopupHandler.runLaterWithCommitted(project, copyDocument, new Runnable() {
-        @Override
-        public void run() {
-          if (phase.checkExpired()) {
-            Disposer.dispose(translator);
-            return;
-          }
-          doComplete(initContext, hasModifiers, invocationCount, hostCopy, hostMap, translator);
+      AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+        if (phase.checkExpired()) {
+          Disposer.dispose(translator);
+          return;
         }
+        doComplete(initContext, hasModifiers, invocationCount, hostCopy, hostMap, translator);
       });
     }
     else {
