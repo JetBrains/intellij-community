@@ -21,10 +21,8 @@ abstract class CompletionLogger {
                                    isExperimentPerformed: Boolean,
                                    experimentVersion: Int)
     
-    abstract fun beforeCharTyped(c: Char, completionList: List<LookupStringWithRelevance>)
     abstract fun afterCharTyped(c: Char, completionList: List<LookupStringWithRelevance>)
     
-    abstract fun beforeBackspacePressed(completionList: List<LookupStringWithRelevance>)
     abstract fun afterBackspacePressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
 
     abstract fun downPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
