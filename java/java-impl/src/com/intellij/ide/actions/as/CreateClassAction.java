@@ -22,6 +22,12 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -35,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> implements DumbAware {
@@ -105,9 +112,25 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   @Override
-  protected void postProcess(PsiClass createdElement, String templateName, Map<String, String> customProperties) {
-    super.postProcess(createdElement, templateName, customProperties);
-
+  // TODO: Remove the AnActionEvent parameter, as part of the API compatability fix.
+  protected void postProcess(PsiClass createdElement,
+                             String templateName,
+                             @NotNull Map<String, String> customProperties,
+                             @NotNull AnActionEvent e) {
+    super.postProcess(createdElement, templateName, customProperties, e);
     moveCaretAfterNameIdentifier(createdElement);
+    showOverridesDialog(customProperties, e);
+  }
+
+  private void showOverridesDialog(@NotNull Map<String, String> customProperties, @NotNull AnActionEvent e) {
+    if (Boolean.TRUE.toString().toUpperCase(Locale.ROOT).equals(customProperties.get(FileTemplate.ATTRIBUTE_SHOW_OVERRIDES_DIALOG))) {
+      Editor editor = FileEditorManager.getInstance(e.getProject()).getSelectedTextEditor();
+      if (editor instanceof EditorEx) {
+        EditorEx editorEx = (EditorEx)editor;
+        AnActionEvent event = new AnActionEvent(e.getInputEvent(), editorEx.getDataContext(), ActionPlaces.UNKNOWN,
+                                                e.getPresentation(), e.getActionManager(), 0);
+        ActionManager.getInstance().getAction("OverrideMethods").actionPerformed(event);
+      }
+    }
   }
 }
