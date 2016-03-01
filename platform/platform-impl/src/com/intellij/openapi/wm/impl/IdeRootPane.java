@@ -298,6 +298,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return myStatusBar;
   }
 
+  public int getStatusBarHeight() {
+    return myStatusBar.isVisible() ? myStatusBar.getHeight() : 0;
+  }
+
   private void updateToolbarVisibility(){
     myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
   }

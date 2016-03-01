@@ -81,7 +81,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   public static boolean newEnabled() {
-    return Registry.is("ide.new.notification.enabled", false);
+    return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.notification.enabled", false);
   }
 
   @Override
@@ -227,7 +227,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       final ProjectManager projectManager = ProjectManager.getInstance();
       final boolean noProjects = projectManager.getOpenProjects().length == 0;
       final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
-      Ref<Object> layoutDataRef = newEnabled() && notification.getIcon() != null ? new Ref<Object>() : null;
+      Ref<Object> layoutDataRef = newEnabled() ? new Ref<Object>() : null;
       final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef);
       Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
 
