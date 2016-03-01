@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Computable;
@@ -124,4 +125,11 @@ public class RefElementNode extends InspectionTreeNode {
     return mySingleDescriptor;
   }
 
+  @Override
+  public RefEntity getContainingFileLocalEntity() {
+    final RefEntity element = getElement();
+    return element instanceof RefElement && !(element instanceof RefDirectory)
+           ? element
+           : super.getContainingFileLocalEntity();
+  }
 }
