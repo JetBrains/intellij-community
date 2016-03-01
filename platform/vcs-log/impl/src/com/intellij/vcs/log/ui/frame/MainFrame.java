@@ -66,11 +66,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final JComponent myToolbar;
   @NotNull private final RepositoryChangesBrowser myChangesBrowser;
+  @NotNull private final Splitter myChangesBrowserSplitter;
+  @NotNull private final SearchTextField myTextFilter;
+
   @NotNull private Runnable myTaskCompletedListener;
   @NotNull private Runnable myFullDetailsLoadedListener;
   @NotNull private Runnable myMiniDetailsLoadedListener;
-  private Splitter myChangesBrowserSplitter;
-  @NotNull private final SearchTextField myTextFilter;
 
   public MainFrame(@NotNull VcsLogDataManager logDataManager,
                    @NotNull VcsLogUiImpl ui,
@@ -104,7 +105,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
     updateWhenDetailsAreLoaded();
 
-    // layout
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
 
