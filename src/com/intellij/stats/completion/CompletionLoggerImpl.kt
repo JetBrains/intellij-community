@@ -43,9 +43,7 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction = { items ->
             val builder = logBuilder(Action.COMPLETION_STARTED)
             builder.addPair("EXPERIMENT_PERFORMED", isExperimentPerformed)
-            if (isExperimentPerformed) {
-                builder.addPair("EXPERIMENT_VERSION", experimentVersion)
-            }
+            builder.addPair("EXPERIMENT_VERSION", experimentVersion)
             builder.addPair("COMP_LIST_LEN", items.size)
             builder.addText(firstCompletionListText(items))
             log(builder)
