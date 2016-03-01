@@ -160,7 +160,7 @@ public class ConcatenationHelper {
       if (constant.type == CodeConstants.CONSTANT_String) {
         String recipe = ((PrimitiveConstant)constant).getString();
 
-        List<Exprent> res = new ArrayList<>();
+        List<Exprent> res = new ArrayList<Exprent>();
         StringBuilder acc = new StringBuilder();
         int parameterId = 0;
         for (int i = 0; i < recipe.length(); i++) {
@@ -195,7 +195,7 @@ public class ConcatenationHelper {
         return res;
       }
     }
-    return new ArrayList<>(parameters);
+    return new ArrayList<Exprent>(parameters);
   }
 
   private static boolean isAppendConcat(InvocationExprent expr, VarType cltype) {
