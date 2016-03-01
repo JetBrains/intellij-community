@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,14 +133,7 @@ public class ConsoleBuffer {
   }
 
   public static int getLegacyCycleBufferSize() {
-    String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
-    if (cycleBufferSizeProperty == null) return 1024 * 1024;
-    try {
-      return Integer.parseInt(cycleBufferSizeProperty) * 1024;
-    }
-    catch (NumberFormatException e) {
-      return 1024 * 1024;
-    }
+    return SystemProperties.getIntProperty("idea.cycle.buffer.size", 1024 * 1024);
   }
 
   public boolean isUseCyclicBuffer() {
