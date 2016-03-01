@@ -385,8 +385,15 @@ public class PlatformTestUtil {
     return print(tree, false);
   }
 
-  public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
-    Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString());
+  public static void updateRecursively(@NotNull AbstractTreeNode<?> node) {
+    node.update();
+    for (AbstractTreeNode child : node.getChildren()) {
+      updateRecursively(child);
+    }
+  }
+
+  public static void assertTreeStructureEquals(@NotNull AbstractTreeStructure treeStructure, @NotNull String expected) {
+    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString().trim());
   }
 
   public static void invokeNamedAction(final String actionId) {
