@@ -25,10 +25,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.config.GitSharedSettings;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -395,16 +398,42 @@ class GitBranchPopupActions {
 
   private static class MergeAction extends DumbAwareAction {
 
+
     private final Project myProject;
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
+    private final boolean myNoFfLogMerge;
+    private final GitVcsSettings mySettings;
+    private final GitSharedSettings mySharedSettings;
     private final boolean myLocalBranch;
+
+    private boolean isNoFfLogMerge(String target) {
+      return ContainerUtil.exists(mySharedSettings.getNoFfPatterns(), new Condition<String>() {
+        @Override
+        public boolean value(String pattern) {
+          return target.matches("^" + pattern + "$"); // let "master" match only "master" and not "any-master-here" by default
+        }
+      });
+    }
 
     public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        boolean localBranch) {
       super("Merge");
       myProject = project;
       myRepositories = repositories;
+      mySettings = GitVcsSettings.getInstance(project);
+      mySharedSettings = ServiceManager.getService(project, GitSharedSettings.class);
+      if (mySettings.isNoFfLogMerge()) {
+        myNoFfLogMerge = ContainerUtil.exists(repositories, new Condition<GitRepository>() {
+          @Override
+          public boolean value(GitRepository gitRepository) {
+            String name = gitRepository.getCurrentBranch().getName();
+            return isNoFfLogMerge(name);
+          }
+        });
+      } else {
+        myNoFfLogMerge = false;
+      }
       myBranchName = branchName;
       myLocalBranch = localBranch;
     }
@@ -412,7 +441,7 @@ class GitBranchPopupActions {
     @Override
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-      brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
+      brancher.merge(myBranchName, deleteOnMerge(), myNoFfLogMerge, myRepositories);
       reportUsage("git.branch.merge");
     }
 

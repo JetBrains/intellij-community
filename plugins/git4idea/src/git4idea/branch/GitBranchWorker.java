@@ -112,13 +112,13 @@ public final class GitBranchWorker {
   }
 
   public void merge(@NotNull final String branchName, @NotNull final GitBrancher.DeleteOnMergeOption deleteOnMerge,
-                    @NotNull final List<GitRepository> repositories) {
+                    boolean noFastForward, @NotNull final List<GitRepository> repositories) {
     updateInfo(repositories);
     Map<GitRepository, String> revisions = new HashMap<GitRepository, String>();
     for (GitRepository repository : repositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myFacade, myGit, myUiHandler, repositories, branchName, deleteOnMerge, revisions).execute();
+    new GitMergeOperation(myProject, myFacade, myGit, myUiHandler, repositories, branchName, deleteOnMerge, noFastForward, revisions).execute();
   }
 
   public void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName) {

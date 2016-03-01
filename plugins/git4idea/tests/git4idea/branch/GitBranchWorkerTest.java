@@ -918,7 +918,7 @@ public class GitBranchWorkerTest extends GitPlatformTest {
 
   private void mergeBranch(String name, GitBranchUiHandler uiHandler) {
     GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler);
-    brancher.merge(name, GitBrancher.DeleteOnMergeOption.PROPOSE, myRepositories);
+    brancher.merge(name, GitBrancher.DeleteOnMergeOption.PROPOSE, false, myRepositories);
   }
 
   private void deleteBranch(String name, GitBranchUiHandler uiHandler) {

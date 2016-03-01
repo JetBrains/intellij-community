@@ -52,6 +52,7 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final String myBranchToMerge;
   private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
+  private final boolean myNoFastForward;
   @NotNull private final Map<GitRepository, String> myCurrentRevisionsBeforeMerge;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
@@ -60,11 +61,12 @@ class GitMergeOperation extends GitBranchOperation {
 
   GitMergeOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                     @NotNull Collection<GitRepository> repositories,
-                    @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge,
+                    @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge, boolean noFastForward,
                     @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge) {
     super(project, facade, git, uiHandler, repositories);
     myBranchToMerge = branchToMerge;
     myDeleteOnMerge = deleteOnMerge;
+    myNoFastForward = noFastForward;
     myCurrentRevisionsBeforeMerge = currentRevisionsBeforeMerge;
     myChangeListManager = myFacade.getChangeListManager(myProject);
   }
@@ -90,9 +92,13 @@ class GitMergeOperation extends GitBranchOperation {
         GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
         GitSimpleEventDetector alreadyUpToDateDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
 
-        GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.<String>emptyList(),
-                                            localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
-                                            alreadyUpToDateDetector);
+        List<String> additionalParams = new ArrayList<String>();
+        if (myNoFastForward) {
+          additionalParams.add("--no-ff");
+        }
+        GitCommandResult result = myGit.merge(repository, myBranchToMerge, additionalParams,
+                                              localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
+                                              alreadyUpToDateDetector);
         if (result.success()) {
           LOG.info("Merged successfully");
           refresh(repository);
