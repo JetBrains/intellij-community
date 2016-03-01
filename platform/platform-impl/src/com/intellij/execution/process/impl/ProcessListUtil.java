@@ -205,7 +205,7 @@ public class ProcessListUtil {
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.substring(command.length()).trim();
 
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args));
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command));
     }
     return result;
   }
