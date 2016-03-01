@@ -361,7 +361,6 @@ public abstract class InspectionRVContentProvider {
     }
     final int i = TreeUtil.indexedBinarySearch(parent, child, InspectionResultsViewComparator.getInstance());
     if (i >= 0){
-      parent.add(child);
       return;
     }
     parent.insert(child, -i -1);
