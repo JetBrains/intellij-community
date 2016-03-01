@@ -63,7 +63,7 @@ open class ExecutionStackView(val suspendContext: SuspendContext<*>,
                               private val viewSupport: DebuggerViewSupport,
                               private val topFrameScript: Script?,
                               private val topFrameSourceInfo: SourceInfo? = null,
-                              displayName: String = MAIN_LOOP_NAME) : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
+                              displayName: String = "") : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
   private var topCallFrameView: CallFrameView? = null
 
   override fun getTopFrame(): CallFrameView? {
