@@ -169,13 +169,13 @@ public abstract class LRUPopupBuilder<T> {
       new BaseListPopupStep<T>(myTitle, combinedItems) {
         @NotNull
         @Override
-        public String getTextFor(@NotNull T t) {
-          return getPresentation(t).first;
+        public String getTextFor(T t) {
+          return t == null ? "" : getPresentation(t).first;
         }
 
         @Override
-        public Icon getIconFor(@NotNull T t) {
-          return getPresentation(t).second;
+        public Icon getIconFor(T t) {
+          return t == null ? null : getPresentation(t).second;
         }
 
         @Override
