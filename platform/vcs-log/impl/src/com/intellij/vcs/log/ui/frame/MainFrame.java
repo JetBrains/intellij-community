@@ -55,7 +55,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull private final VcsLogDataManager myLogDataManager;
-  @NotNull private final VcsLogUiImpl myUI;
+  @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
 
@@ -73,23 +73,23 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final SearchTextField myTextFilter;
 
   public MainFrame(@NotNull VcsLogDataManager logDataManager,
-                   @NotNull VcsLogUiImpl vcsLogUI,
+                   @NotNull VcsLogUiImpl ui,
                    @NotNull Project project,
                    @NotNull VcsLogUiProperties uiProperties,
                    @NotNull VcsLog log,
                    @NotNull VisiblePack initialDataPack) {
     // collect info
     myLogDataManager = logDataManager;
-    myUI = vcsLogUI;
+    myUi = ui;
     myLog = log;
-    myFilterUi = new VcsLogClassicFilterUi(myUI, logDataManager, uiProperties, initialDataPack);
+    myFilterUi = new VcsLogClassicFilterUi(myUi, logDataManager, uiProperties, initialDataPack);
 
     // initialize components
-    myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataManager, initialDataPack);
-    myBranchesPanel = new BranchesPanel(logDataManager, vcsLogUI, initialDataPack.getRefs());
+    myGraphTable = new VcsLogGraphTable(ui, logDataManager, initialDataPack);
+    myBranchesPanel = new BranchesPanel(logDataManager, ui, initialDataPack.getRefs());
     JComponent branchScrollPane = myBranchesPanel.createScrollPane();
     branchScrollPane.setVisible(uiProperties.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
+    myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, ui.getColorManager(), initialDataPack);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
@@ -260,7 +260,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return myLog;
     }
     else if (VcsLogDataKeys.VCS_LOG_UI.is(dataId)) {
-      return myUI;
+      return myUi;
     }
     else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER.is(dataId)) {
       return myLogDataManager;
