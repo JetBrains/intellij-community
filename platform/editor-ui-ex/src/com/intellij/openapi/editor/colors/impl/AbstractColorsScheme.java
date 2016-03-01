@@ -598,7 +598,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       Element element = new Element(OPTION_ELEMENT);
       element.setAttribute(NAME_ATTR, key.getExternalName());
       if (baseKey != null && value.isFallbackEnabled()) {
-        if (defaultFallbackAttr != null && defaultAttr != null && defaultAttr != defaultFallbackAttr) {
+        if (isParentOverwritingInheritance(key)) {
           element.setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName());
           attrElements.addContent(element);
         }
@@ -612,6 +612,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         }
       }
     }
+  }
+
+  private boolean isParentOverwritingInheritance(@NotNull TextAttributesKey key) {
+    TextAttributes parentAttrs =
+      myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
+    if (parentAttrs != null) {
+      return !parentAttrs.isFallbackEnabled();
+    }
+    return false;
   }
 
   protected Color getOwnColor(ColorKey key) {

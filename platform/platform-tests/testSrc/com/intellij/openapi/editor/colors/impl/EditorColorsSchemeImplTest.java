@@ -293,7 +293,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
   }
   
   @SuppressWarnings("unused")
-  public void _testIdea152156() throws Exception {
+  public void testIdea152156() throws Exception {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();
     parentScheme.setName("DefaultTest");
