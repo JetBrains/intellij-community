@@ -65,6 +65,7 @@ class Test {
 
         myFixture.type('r')
         myFixture.type('u')
+        myFixture.type('n')
         verify(mockLogger).afterCharTyped(eq('r'), Matchers.anyListOf(LookupStringWithRelevance::class.java))
         verify(mockLogger).afterCharTyped(eq('u'), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
@@ -74,6 +75,8 @@ class Test {
         myFixture.completeBasic()
         
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+        
         verify(mockLogger).upPressed(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
@@ -82,12 +85,14 @@ class Test {
         myFixture.completeBasic()
 
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
         verify(mockLogger).downPressed(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test completion started`() {
         myFixture.type('.')
         myFixture.completeBasic()
+        myFixture.type("r")
         verify(mockLogger).completionStarted(Matchers.anyListOf(LookupStringWithRelevance::class.java), Matchers.anyBoolean(), Matchers.anyInt())
     }
     
@@ -96,6 +101,8 @@ class Test {
         myFixture.completeBasic()
         
         myFixture.type('\b')
+        myFixture.type('x') //normally it should be cancelled automatically, but in tests it is not, figure it out
+        
         verify(mockLogger).afterBackspacePressed(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
