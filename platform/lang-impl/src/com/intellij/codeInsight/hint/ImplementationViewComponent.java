@@ -50,6 +50,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usages.UsageView;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.PairFunction;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -446,10 +447,10 @@ public class ImplementationViewComponent extends JPanel {
     final ImplementationTextSelectioner implementationTextSelectioner =
       LanguageImplementationTextSelectioner.INSTANCE.forLanguage(elt.getLanguage());
     int start = implementationTextSelectioner.getTextStartOffset(elt);
-    int end = implementationTextSelectioner.getTextEndOffset(elt);
-    while (end > start && StringUtil.endsWithLineBreak(doc.getCharsSequence().subSequence(start, end))) {
-      end--;
-    }
+    
+    CharSequence rawDefinition = doc.getCharsSequence().subSequence(start, 
+                                                                    implementationTextSelectioner.getTextEndOffset(elt));
+    int end = CharArrayUtil.shiftBackward(rawDefinition, rawDefinition.length(), "\r\n"); // deleting trailing EOLs
 
     final int lineStart = doc.getLineStartOffset(doc.getLineNumber(start));
     final int lineEnd = end < doc.getTextLength() ? doc.getLineEndOffset(doc.getLineNumber(end)) : doc.getTextLength();
