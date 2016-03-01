@@ -1,0 +1,27 @@
+package java9;
+
+public class TestJava9StringConcat {
+   public String test1(String var1, int var2) {
+      return var1 + var2;// 20
+   }
+
+   public String test2(String var1, int var2, Object var3) {
+      return "(" + var1 + "-" + var2 + "---" + var3 + ")";// 24
+   }
+}
+
+class 'java9/TestJava9StringConcat' {
+   method 'test1 (Ljava/lang/String;I)Ljava/lang/String;' {
+      2      4
+      7      4
+   }
+
+   method 'test2 (Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;' {
+      3      8
+      8      8
+   }
+}
+
+Lines mapping:
+20 <-> 5
+24 <-> 9
