@@ -200,7 +200,6 @@ class CompletionFileLogger(private val installationUID: String,
     }
 
     private fun firstCompletionListText(items: List<LookupStringWithRelevance>): String {
-        check(items.size > 0)
         val builder = StringBuilder()
         with(builder, {
             append("[")
