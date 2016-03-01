@@ -50,4 +50,14 @@ class OptionalWithoutIsPresent {
     org.testng.Assert.assertTrue(o3.isPresent());
     System.out.println(o3.get());
   }
+
+  public static String demo() {
+    Optional<String> holder = Optional.empty();
+
+    if (! holder.isPresent()) {
+      holder = Optional.of("hello world");
+    }
+
+    return holder.get();
+  }
 }
