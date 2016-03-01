@@ -44,4 +44,7 @@ interface Vm : UserDataHolderEx {
   fun setBreakOnException(catchMode: ExceptionCatchMode) = resolvedPromise()
 
   var captureAsyncStackTraces: Boolean
+
+  val name: String?
+    get() = null
 }

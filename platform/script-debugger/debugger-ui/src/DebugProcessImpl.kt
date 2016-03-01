@@ -36,11 +36,15 @@ import org.jetbrains.debugger.connection.VmConnection
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 
+interface MultiVmDebugProcess {
+  val childConnections: List<VmConnection<*>>
+}
+
 abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
                                                      val connection: C,
                                                      private val editorsProvider: XDebuggerEditorsProvider,
                                                      private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
-                                                     protected val executionResult: ExecutionResult? = null) : XDebugProcess(session) {
+                                                     protected val executionResult: ExecutionResult? = null) : XDebugProcess(session), MultiVmDebugProcess {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
@@ -55,6 +59,29 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   private val breakpointsInitiated = AtomicBoolean()
 
   private val _breakpointHandlers: Array<XBreakpointHandler<*>> by lazy(LazyThreadSafetyMode.NONE) { createBreakpointHandlers() }
+
+  protected final val realProcessHandler: ProcessHandler?
+    get() = executionResult?.processHandler
+
+  override final fun getSmartStepIntoHandler() = smartStepIntoHandler
+
+  override final fun getBreakpointHandlers() = when (connection.state.status) {
+    ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED, ConnectionStatus.CONNECTION_FAILED -> XBreakpointHandler.EMPTY_ARRAY
+    else -> _breakpointHandlers
+  }
+
+  override final fun getEditorsProvider() = editorsProvider
+
+  val vm: Vm?
+    get() = connection.vm
+
+  val mainVm: Vm?
+    get() = connection.vm
+
+  val activeOrMainVm: Vm?
+    get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
+
+  override val childConnections = ContainerUtil.createConcurrentList<C>()
 
   init {
     connection.stateChanged {
@@ -78,27 +105,6 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
       }
     }
   }
-
-  protected final val realProcessHandler: ProcessHandler?
-    get() = executionResult?.processHandler
-
-  override final fun getSmartStepIntoHandler() = smartStepIntoHandler
-
-  override final fun getBreakpointHandlers() = when (connection.state.status) {
-    ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED, ConnectionStatus.CONNECTION_FAILED -> XBreakpointHandler.EMPTY_ARRAY
-    else -> _breakpointHandlers
-  }
-
-  override final fun getEditorsProvider() = editorsProvider
-
-  val vm: Vm?
-    get() = connection.vm
-
-  val mainVm: Vm?
-    get() = connection.vm
-
-  val activeOrMainVm: Vm?
-    get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
 
   protected abstract fun createBreakpointHandlers(): Array<XBreakpointHandler<*>>
 
@@ -254,6 +260,15 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
         for (breakpoint in breakpoints) {
           breakpointHandler.manager.setBreakpoint(vm, breakpoint)
         }
+      }
+    }
+  }
+
+  open protected fun initChildConnection(childConnection: C) {
+    childConnections.add(childConnection)
+    childConnection.stateChanged {
+      if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
+        childConnections.remove(childConnection)
       }
     }
   }
