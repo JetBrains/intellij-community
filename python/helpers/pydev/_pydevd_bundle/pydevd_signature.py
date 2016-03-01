@@ -10,7 +10,7 @@ else:
 import gc
 from _pydevd_bundle.pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_constants import xrange
+from _pydevd_bundle.pydevd_constants import xrange, dict_iter_items
 from _pydevd_bundle import pydevd_utils
 
 class Signature(object):
@@ -25,11 +25,23 @@ class Signature(object):
         self.args.append((name, type))
         self.args_str.append("%s:%s"%(name, type))
 
+    def set_args(self, frame, recursive=False):
+        self.args = []
+
+        code = frame.f_code
+        locals = frame.f_locals
+
+        for i in xrange(0, code.co_argcount):
+            name = code.co_varnames[i]
+            class_name = get_type_of_value(locals[name], recursive=recursive)
+
+            self.add_arg(name, class_name)
+
     def __str__(self):
         return "%s %s(%s)"%(self.file, self.name, ", ".join(self.args_str))
 
 
-def get_type_of_value(value, ignore_module_name=('__main__', '__builtin__', 'builtins')):
+def get_type_of_value(value, ignore_module_name=('__main__', '__builtin__', 'builtins'), recursive=False):
     tp = type(value)
     class_name = tp.__name__
     if class_name == 'instance':  # old-style classes
@@ -38,6 +50,28 @@ def get_type_of_value(value, ignore_module_name=('__main__', '__builtin__', 'bui
 
     if hasattr(tp, '__module__') and tp.__module__ and tp.__module__ not in ignore_module_name:
         class_name = "%s.%s"%(tp.__module__, class_name)
+
+    if class_name == 'list':
+        class_name = 'List'
+        if len(value) > 0 and recursive:
+            class_name += '[%s]' % get_type_of_value(value[0], recursive=recursive)
+        return class_name
+
+    if class_name == 'dict':
+        class_name = 'Dict'
+        if len(value) > 0 and recursive:
+            for (k, v) in dict_iter_items(value):
+                class_name += '[%s, %s]' % (get_type_of_value(k, recursive=recursive), 
+                                            get_type_of_value(v, recursive=recursive))
+                break
+        return class_name
+
+    if class_name == 'tuple':
+        class_name = 'Tuple'
+        if len(value) > 0 and recursive:
+            class_name += '['
+            class_name += ', '.join(get_type_of_value(v, recursive=recursive) for v in value)
+            class_name += ']'
 
     return class_name
 
@@ -52,17 +86,11 @@ class SignatureFactory(object):
 
     def create_signature(self, frame, with_args=True):
         try:
-            code = frame.f_code
-            locals = frame.f_locals
             filename, modulename, funcname = self.file_module_function_of(frame)
-            res = Signature(filename, funcname)
+            signature = Signature(filename, funcname)
             if with_args:
-                for i in xrange(0, code.co_argcount):
-                    name = code.co_varnames[i]
-                    class_name = get_type_of_value(locals[name])
-    
-                    res.add_arg(name, class_name)
-            return res
+                signature.set_args(frame, recursive=True)
+            return signature
         except:
             import traceback
             traceback.print_exc()
@@ -119,7 +147,7 @@ class SignatureFactory(object):
 
 
 def get_signature_info(signature):
-    return signature.file, signature.name, ' '.join([arg[1]for arg in signature.args])
+    return signature.file, signature.name, ' '.join([arg[1] for arg in signature.args])
 
 
 def get_frame_info(frame):
@@ -180,7 +208,7 @@ def send_signature_call_trace(dbg, frame, filename):
 def send_signature_return_trace(dbg, frame, filename, return_value):
     if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename):
         signature = dbg.signature_factory.create_signature(frame, with_args=False)
-        signature.return_type = get_type_of_value(return_value)
+        signature.return_type = get_type_of_value(return_value, recursive=True)
         dbg.writer.add_command(create_signature_message(signature))
         return True
 
