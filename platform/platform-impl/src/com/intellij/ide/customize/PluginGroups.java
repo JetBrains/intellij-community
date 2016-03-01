@@ -121,14 +121,14 @@ public class PluginGroups {
       "com.intellij.spring," +
       "com.intellij.spring.webflow," +
       "com.intellij.spring.ws,com.intellij.aop",
-      "J2EE:com.intellij.javaee.batch," +
+      "Java EE:com.intellij.javaee.batch," +
       "com.intellij.beanValidation," +
       "com.intellij.cdi," +
       "com.intellij.javaee," +
       "com.intellij.jsf," +
       "com.intellij.javaee.extensions," +
       "com.jetbrains.restWebServices," +
-      "Java EE: Web Services (JAX-WS)," +
+      "Web Services (JAX-WS)," +
       "com.intellij.javaee.webSocket," +
       "com.intellij.jsp," +
       "com.intellij.persistence",

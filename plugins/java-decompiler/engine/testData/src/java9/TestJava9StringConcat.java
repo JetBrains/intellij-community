@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration;
+package java9;
 
-import com.intellij.openapi.roots.libraries.ui.RootDetector;
+public class TestJava9StringConcat {
+  public String test1(String prefix, int a) {
+    return prefix + a;
+  }
 
-/**
- * @deprecated please use {@link LibrarySourceRootDetectorUtil} directly
- */
-public class PathUIUtils extends LibrarySourceRootDetectorUtil {
-  public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new LibraryJavaSourceRootDetector();
-
+  public String test2(String var, int b, Object c) {
+    return "(" + var + "-" + b + "---" + c + ")";
+  }
 }

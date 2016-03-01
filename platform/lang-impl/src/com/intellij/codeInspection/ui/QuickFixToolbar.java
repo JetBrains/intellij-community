@@ -86,16 +86,18 @@ public class QuickFixToolbar extends JPanel {
                                                    @NotNull final TreePath[] paths,
                                                    @NotNull final Project project,
                                                    boolean multipleDescriptors) {
+    final AnAction[] suppressors = new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null);
     final ComboBoxAction action = new ComboBoxAction() {
       {
         getTemplatePresentation().setText(multipleDescriptors ? "Suppress All" : "Suppress");
+        getTemplatePresentation().setEnabledAndVisible(suppressors.length != 0);
       }
 
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
         DefaultActionGroup group = new DefaultActionGroup();
-        group.addAll(new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null));
+        group.addAll(suppressors);
         return group;
       }
     };

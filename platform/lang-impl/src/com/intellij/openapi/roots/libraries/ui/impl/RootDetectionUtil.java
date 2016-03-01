@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.libraries.ui.DetectedLibraryRoot;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsDetector;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -119,20 +120,37 @@ public class RootDetectionUtil {
       }
       LOG.assertTrue(!types.isEmpty(), "No allowed root types found for " + detector);
       List<String> names = new ArrayList<String>(types.keySet());
-      String title = "Choose Categories of Selected Files";
-      String description = XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getProductName() + " cannot determine what kind of files the chosen items contain.<br>" +
-                           "Choose the appropriate categories from the list.");
-      ChooseElementsDialog<String> dialog;
-      if (parentComponent != null) {
-        dialog = new ChooseRootTypeElementsDialog(parentComponent, names, title, description);
+      if (names.size() == 1) {
+        String title = "Attach Roots";
+        String typeName = names.get(0);
+        String message = ApplicationNamesInfo.getInstance().getProductName() + " cannot determine what kind of files the chosen items contain. " +
+                         "Do you want to attach them as '" + typeName + "'?";
+        int answer = parentComponent != null
+                     ? Messages.showYesNoDialog(parentComponent, message, title, null)
+                     : Messages.showYesNoDialog(project, message, title, null);
+        if (answer == Messages.YES) {
+          Pair<OrderRootType, Boolean> pair = types.get(typeName);
+          for (VirtualFile candidate : rootCandidates) {
+            result.add(new OrderRoot(candidate, pair.getFirst(), pair.getSecond()));
+          }
+        }
       }
       else {
-        dialog = new ChooseRootTypeElementsDialog(project, names, title, description);
-      }
-      for (String rootType : dialog.showAndGetResult()) {
-        final Pair<OrderRootType, Boolean> pair = types.get(rootType);
-        for (VirtualFile candidate : rootCandidates) {
-          result.add(new OrderRoot(candidate, pair.getFirst(), pair.getSecond()));
+        String title = "Choose Categories of Selected Files";
+        String description = XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getProductName() + " cannot determine what kind of files the chosen items contain.<br>" +
+                                                      "Choose the appropriate categories from the list.");
+        ChooseElementsDialog<String> dialog;
+        if (parentComponent != null) {
+          dialog = new ChooseRootTypeElementsDialog(parentComponent, names, title, description);
+        }
+        else {
+          dialog = new ChooseRootTypeElementsDialog(project, names, title, description);
+        }
+        for (String rootType : dialog.showAndGetResult()) {
+          final Pair<OrderRootType, Boolean> pair = types.get(rootType);
+          for (VirtualFile candidate : rootCandidates) {
+            result.add(new OrderRoot(candidate, pair.getFirst(), pair.getSecond()));
+          }
         }
       }
     }

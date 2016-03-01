@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.NativeLibraryOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
+import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,7 +74,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     List<RootDetector> results = new ArrayList<>();
     results.add(new FileTypeBasedRootFilter(OrderRootType.CLASSES, false, StdFileTypes.CLASS, "classes"));
     results.add(new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));
-    results.addAll(Arrays.asList(Extensions.getExtensions(RootDetector.JAVA_SOURCE_ROOT_DETECTOR)));
+    results.addAll(Arrays.asList(Extensions.getExtensions(LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR)));
     Collections.addAll(results,
                        new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"),
                        new JavadocRootDetector(),
