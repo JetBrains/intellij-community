@@ -272,8 +272,6 @@ public class CommitHelper {
       }
 
       processor.doBeforeRefresh();
-
-      AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     }
     catch (ProcessCanceledException pce) {
       throw pce;
