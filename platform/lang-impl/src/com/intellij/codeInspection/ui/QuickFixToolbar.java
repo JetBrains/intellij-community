@@ -57,7 +57,7 @@ public class QuickFixToolbar extends JPanel {
     final boolean multipleDescriptors = problemCount > 1;
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(hasFixes ? 5 : 10, 5, 0, 0));
 
     fill(multipleDescriptors, () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), this);
     fill(hasFixes, () -> createFixPanel(fixes), this);

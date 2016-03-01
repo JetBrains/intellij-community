@@ -37,8 +37,6 @@ import java.awt.event.MouseEvent;
  * @author Dmitry Batkovich
  */
 public class InspectionNodeInfo extends JPanel {
-  private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
-
   private final JButton myButton;
   private final SimpleColoredComponent myTitle;
   private final HighlightDisplayKey myKey;
@@ -48,7 +46,7 @@ public class InspectionNodeInfo extends JPanel {
 
   public InspectionNodeInfo(final InspectionToolWrapper toolWrapper, Project project) {
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(5, 3, 0, 0));
     myProject = project;
     myTitle = new SimpleColoredComponent();
     myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
@@ -69,7 +67,7 @@ public class InspectionNodeInfo extends JPanel {
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, true));
 
     add(ScrollPaneFactory.createScrollPane(description, true),
-        new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+        new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new JBInsets(5, 5, 0, 0), 0, 0));
     add(myButton,
         new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
@@ -101,7 +99,7 @@ public class InspectionNodeInfo extends JPanel {
     }
     myButton.setText((isEnabled ? "Disable" : "Enable") + " inspection");
     myTitle.clear();
-    myTitle.append(myName);
+    myTitle.append(myName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     if (!isEnabled) {
       myTitle.append(" Disabled", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
