@@ -90,7 +90,7 @@ public class ProcessListUtil {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine(command));
       int exitCode = processOutput.getExitCode();
       if (exitCode != 0) {
-        LOG.error("Cannot get process list, 'ps' exited with code " + exitCode + ", stdout:\n" 
+        LOG.error("Cannot get process list, 'ps' exited with code " + exitCode + ", stdout:\n"
                   + processOutput.getStdout()
                   + "\nstderr:\n"
                   + processOutput.getStderr());
@@ -98,7 +98,7 @@ public class ProcessListUtil {
       output = processOutput.getStdout();
     }
     catch (ExecutionException e) {
-      LOG.error("Cannot get process list", e);                                                                                                                                                                                                   
+      LOG.error("Cannot get process list", e);
       return null;
     }
     return parser.fun(output);
@@ -110,7 +110,7 @@ public class ProcessListUtil {
 
     File[] processes = proc.listFiles();
     if (processes == null) {
-      LOG.error("Cannot read /proc, not mounted?");                                                                                                                                                                                                   
+      LOG.error("Cannot read /proc, not mounted?");
       return null;
     }
 
@@ -232,16 +232,21 @@ public class ProcessListUtil {
     for (int i = 1; i < lines.length; i++) {
       String line = lines[i];
 
-      int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
-      if (pid == -1) continue;
+      try {
+        int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
+        if (pid == -1) continue;
 
-      String state = line.substring(statStart, userStart).trim();
-      if (state.contains("Z")) continue; // zombie
+        String state = line.substring(statStart, userStart).trim();
+        if (state.contains("Z")) continue; // zombie
 
-      String user = line.substring(userStart, commandStart).trim();
-      String commandLine = line.substring(commandStart).trim();
+        String user = line.substring(userStart, commandStart).trim();
+        String commandLine = line.substring(commandStart).trim();
 
-      result.add(new MacProcessInfo(pid, commandLine, user, state));
+        result.add(new MacProcessInfo(pid, commandLine, user, state));
+      }
+      catch (Exception e) {
+        LOG.error("Can't parse line '" + line + "'", e);
+      }
     }
     return result;
   }
