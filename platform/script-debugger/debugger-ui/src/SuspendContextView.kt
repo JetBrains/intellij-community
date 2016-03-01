@@ -37,23 +37,41 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
     val childConnections = debugProcess.childConnections
     if (childConnections.isNotEmpty()) {
       val list = ArrayList<XExecutionStack>(1 + childConnections.size)
-      list.add(activeStack)
+
+      val mainVm = debugProcess.mainVm
+      if (activeStack.suspendContext.vm == mainVm) {
+        list.add(activeStack)
+      }
+      else {
+        list.add(createStackView(mainVm?.suspendContextManager?.context, MAIN_LOOP_NAME))
+      }
+
       childConnections.mapNotNullTo(list) {
         it.vm?.let {
           val context = it.suspendContextManager.context
-          val displayName = it.name ?: throw IllegalStateException("Name must be not null for child VM")
-          if (context == null) {
-            RunningThreadExecutionStackView(displayName)
+          if (context == activeStack.suspendContext) {
+            activeStack
           }
           else {
-            ExecutionStackView(context, activeStack.viewSupport, null, null, displayName)
+            val displayName = it.name ?: throw IllegalStateException("Name must be not null for child VM")
+            createStackView(context, displayName)
           }
         }
       }
       list.toTypedArray()
     }
+    else {
+      arrayOf(activeStack)
+    }
+  }
 
-    arrayOf(activeStack)
+  private fun createStackView(context: SuspendContext<*>?, displayName: String): XExecutionStack {
+    return if (context == null) {
+      RunningThreadExecutionStackView(displayName)
+    }
+    else {
+      ExecutionStackView(context, activeStack.viewSupport, null, null, displayName)
+    }
   }
 
   override fun getActiveExecutionStack() = activeStack

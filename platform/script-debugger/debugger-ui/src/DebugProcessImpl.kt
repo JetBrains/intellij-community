@@ -37,6 +37,8 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 interface MultiVmDebugProcess {
+  val mainVm: Vm?
+  val activeOrMainVm: Vm?
   val childConnections: List<VmConnection<*>>
 }
 
@@ -75,13 +77,13 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   val vm: Vm?
     get() = connection.vm
 
-  val mainVm: Vm?
+  override final val mainVm: Vm?
     get() = connection.vm
 
-  val activeOrMainVm: Vm?
+  override final val activeOrMainVm: Vm?
     get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
 
-  override val childConnections = ContainerUtil.createConcurrentList<C>()
+  override final val childConnections = ContainerUtil.createConcurrentList<C>()
 
   init {
     connection.stateChanged {
