@@ -1,10 +1,6 @@
 #if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")package ${PACKAGE_NAME};#end
-
 #parse("File Header.java")
-
-#if (${IMPORT_BLOCK})${IMPORT_BLOCK}
-#end
-#if (${VISIBILITY} == "PUBLIC")public #end class ${NAME} #if (${SUPERCLASS} != "")extends ${SUPERCLASS} #end #if (${INTERFACES} != "")implements ${INTERFACES} #end {
+public class ${NAME}{
     private static ${NAME} ourInstance = new ${NAME}();
 
     public static ${NAME} getInstance() {

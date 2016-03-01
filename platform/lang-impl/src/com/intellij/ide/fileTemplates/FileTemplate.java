@@ -49,14 +49,6 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";
   String ATTRIBUTE_NAME = "NAME";
   String ATTRIBUTE_FILE_NAME = "FILE_NAME";
-  // TODO: Move these to something AS specific.
-  String ATTRIBUTE_INTERFACES = "INTERFACES";
-  String ATTRIBUTE_VISIBILITY = "VISIBILITY";
-  String ATTRIBUTE_SUPERCLASS = "SUPERCLASS";
-  String ATTRIBUTE_FINAL = "FINAL";
-  String ATTRIBUTE_ABSTRACT = "ABSTRACT";
-  String ATTRIBUTE_SHOW_OVERRIDES_DIALOG = "SHOW_OVERRIDES_DIALOG";
-  String ATTRIBUTE_IMPORT_BLOCK = "IMPORT_BLOCK";
 
   /** Name without extension */
   @NotNull String getName();

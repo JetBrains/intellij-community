@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -106,7 +105,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
   }
 
   @Override
-  protected PsiFile createFile(String name, String templateName, Map<String, String> creationOptions, PsiDirectory dir) {
+  protected PsiFile createFile(String name, String templateName, PsiDirectory dir) {
     final FileTemplate template = FileTemplateManager.getInstance(dir.getProject()).getInternalTemplate(templateName);
     return createFileFromTemplate(name, template, dir);
   }

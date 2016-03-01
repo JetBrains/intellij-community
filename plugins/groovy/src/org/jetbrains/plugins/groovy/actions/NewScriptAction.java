@@ -33,8 +33,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-import java.util.Map;
-
 public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
 
   public NewScriptAction() {
@@ -67,8 +65,7 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
 
   @Override
   @NotNull
-  protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName, Map<String, String> creationOptions)
-    throws IncorrectOperationException {
+  protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
     String fileName = newName + "." + extractExtension(templateName);
     PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, newName, fileName, templateName, true);
     if (file instanceof GroovyFile) return (GroovyFile)file;
