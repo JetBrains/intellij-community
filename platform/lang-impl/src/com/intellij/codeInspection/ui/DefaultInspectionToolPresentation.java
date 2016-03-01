@@ -682,13 +682,11 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
                   final QuickFixAction quickFixAction = result.get(clazz);
                   try {
                     String familyName = fix.getFamilyName();
-                    ((LocalQuickFixWrapper)quickFixAction)
-                      .setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", familyName));
+                    ((LocalQuickFixWrapper)quickFixAction).setText(familyName);
                   }
                   catch (AbstractMethodError e) {
                     //for plugin compatibility
-                    ((LocalQuickFixWrapper)quickFixAction)
-                      .setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", ""));
+                    ((LocalQuickFixWrapper)quickFixAction).setText("Name is not available");
                   }
                   break;
                 }
