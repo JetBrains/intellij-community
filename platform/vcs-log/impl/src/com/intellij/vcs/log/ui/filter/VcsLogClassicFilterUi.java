@@ -144,7 +144,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         }
       }
     });
-    textFilter.getTextEditor().setToolTipText("Use " + KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER) + " to switch between text filter and commits list");
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER);
+    if (!shortcutText.isEmpty()) {
+      textFilter.getTextEditor().setToolTipText("Use " + shortcutText + " to switch between text filter and commits list");
+    }
     return textFilter;
   }
 
