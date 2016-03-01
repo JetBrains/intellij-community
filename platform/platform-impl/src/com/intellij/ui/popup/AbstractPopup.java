@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -1392,19 +1393,25 @@ public class AbstractPopup implements JBPopup {
 
     if (myFinalRunnable != null) {
       final ActionCallback typeAheadDone = new ActionCallback();
-      Runnable runFinal = new Runnable() {
-        @Override
-        public void run() {
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
+
+      ModalityState modalityState = ModalityState.current();
+      Runnable finalRunnable = myFinalRunnable;
+
+      getFocusManager().doWhenFocusSettlesDown(() -> {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(myFinalRunnable);
+          SwingUtilities.invokeLater(() -> {
+            if (ModalityState.current().equals(modalityState)) {
+              finalRunnable.run();
+            }
+            // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
+            // And we don't want finalRunnable to perform potentially destructive actions
+            //   in the context of a suddenly appeared modal dialog.
+          });
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
           myFinalRunnable = null;
-        }
-      };
-
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
-      getFocusManager().doWhenFocusSettlesDown(runFinal);
+      });
     }
 
     if (LOG.isDebugEnabled()) {
