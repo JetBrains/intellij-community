@@ -269,24 +269,14 @@ public class AbstractPopup implements JBPopup {
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton("Open as Tool Window", 
                          AllIcons.General.AutohideOff, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffInactive),
-          new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-              pinCallback.process(AbstractPopup.this);
-            }
-          }
-        ));
+          e -> pinCallback.process(this)
+        ), JBUI.Borders.empty(4));
       }
       else if (cancelButton != null) {
-        myCaption.setButtonComponent(new InplaceButton(cancelButton, new ActionListener() {
-          @Override
-          public void actionPerformed(final ActionEvent e) {
-            cancel();
-          }
-        }));
+        myCaption.setButtonComponent(new InplaceButton(cancelButton, e -> cancel()), JBUI.Borders.empty(4));
       }
       else if (commandButton != null) {
-        myCaption.setButtonComponent(commandButton);
+        myCaption.setButtonComponent(commandButton, null);
       }
     }
     else {
