@@ -41,7 +41,7 @@ public class PathUIUtils {
 
   /**
    * This method takes a candidates for the project root, then scans the candidates and
-   * if multiple candidates or non root source directories are found whithin some
+   * if multiple candidates or non root source directories are found within some
    * directories, it shows a dialog that allows selecting or deselecting them.
    * @param parent a parent parent or project
    * @param rootCandidates a candidates for roots
@@ -50,7 +50,7 @@ public class PathUIUtils {
   public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Component parentComponent, final VirtualFile[] rootCandidates) {
     final List<OrderRoot> orderRoots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, null,
                                                                      new LibraryRootsDetectorImpl(Arrays.asList(Extensions.getExtensions(RootDetector.JAVA_SOURCE_ROOT_DETECTOR))),
-                                                                     new OrderRootType[0]);
+                                                                     new OrderRootType[] {OrderRootType.SOURCES});
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (OrderRoot root : orderRoots) {
       result.add(root.getFile());
