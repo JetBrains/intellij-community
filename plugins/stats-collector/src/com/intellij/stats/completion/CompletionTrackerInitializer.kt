@@ -53,14 +53,18 @@ class CompletionTrackerInitializer(project: Project, experimentHelper: ABTesterH
 
 
 interface CompletionPopupListener {
+    fun beforeDownPressed()
     fun downPressed()
+    fun beforeUpPressed()
     fun upPressed()
     fun beforeBackspacePressed()
     fun afterBackspacePressed()
     fun beforeCharTyped(c: Char)
     
     class Adapter: CompletionPopupListener {
+        override fun beforeDownPressed() = Unit
         override fun downPressed() = Unit
+        override fun beforeUpPressed() = Unit
         override fun upPressed() = Unit
         override fun afterBackspacePressed() = Unit
         override fun beforeBackspacePressed() = Unit
@@ -96,8 +100,10 @@ class LookupActionsListener : AnActionListener.Adapter() {
     }
 
     override fun beforeActionPerformed(action: AnAction?, dataContext: DataContext?, event: AnActionEvent?) {
-        logThrowables { 
+        logThrowables {
             when (action) {
+                down -> listener.beforeDownPressed()
+                up -> listener.beforeUpPressed()
                 backspace -> listener.beforeBackspacePressed()
             }
         }
@@ -155,14 +161,18 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
     private var completionStarted = false
     private var selectedByDotTyping = false
+
+    private var lastAction: () -> Unit = { }
     
     private fun isCompletionActive(): Boolean {
         return completionStarted && !lookup.isLookupDisposed
                 || ApplicationManager.getApplication().isUnitTestMode
-    } 
+    }
     
     override fun lookupCanceled(event: LookupEvent) {
         if (!completionStarted) return
+
+        logLastAction()
         
         val items = lookup.items
         if (lookup.currentItem == null) {
@@ -180,9 +190,22 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         }
     }
 
+    fun logLastAction() {
+        lastAction()
+        lastAction = {}
+    }
+
+    fun setLastAction(block: () -> Unit) {
+        lastAction = block
+    }
+    
     override fun currentItemChanged(event: LookupEvent) {
-        if (!completionStarted) {
-            completionStarted = true
+        if (completionStarted) {
+            return
+        }
+
+        completionStarted = true
+        lastAction = {
             //this is not robust -> since at the moment of completion here could be another values
             //real approach would be to somehow detect if completion list is reordered 
             val isPerformExperiment = experimentHelper.isPerformExperiment()
@@ -193,50 +216,66 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     
     override fun itemSelected(event: LookupEvent) {
         if (!completionStarted) return
-        
-        val currentItem = lookup.currentItem
-        val index = lookup.items.indexOf(currentItem)
-        logger.itemSelectedCompletionFinished(index, currentItem?.lookupString ?: "NULL", lookup.toRelevanceDataList())
+
+        logLastAction()
+        setLastAction {
+            val currentItem = lookup.currentItem
+            val index = lookup.items.indexOf(currentItem)
+            logger.itemSelectedCompletionFinished(index, currentItem?.lookupString ?: "NULL", lookup.toRelevanceDataList())
+        }
+    }
+
+    override fun beforeDownPressed() {
+        logLastAction()
     }
 
     override fun downPressed() {
         if (!isCompletionActive()) return
-        
-        val current = lookup.currentItem
-        val index = lookup.items.indexOf(current)
-        logger.downPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
+
+        logLastAction()
+        setLastAction {
+            val current = lookup.currentItem
+            val index = lookup.items.indexOf(current)
+            logger.downPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
+        }
+    }
+
+    override fun beforeUpPressed() {
+        logLastAction()
     }
 
     override fun upPressed() {
         if (!isCompletionActive()) return
-        
-        val current = lookup.currentItem
-        val index = lookup.items.indexOf(current)
-        logger.upPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
+
+        logLastAction()
+        setLastAction {
+            val current = lookup.currentItem
+            val index = lookup.items.indexOf(current)
+            logger.upPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
+        }
     }
 
     override fun beforeBackspacePressed() {
         if (!isCompletionActive()) return
-        logger.beforeBackspacePressed(lookup.toRelevanceDataList())
+        logLastAction()
     }
 
     override fun afterBackspacePressed() {
         if (!isCompletionActive()) return
-        
-        val current = lookup.currentItem
-        val index = lookup.items.indexOf(current)
-        
-        logger.afterBackspacePressed(index, current?.lookupString ?: "NULL", lookup.toRelevanceDataList())
-    }
-    
-    override fun afterAppend(c: Char) {
-        if (!isCompletionActive()) return
-        
-        logger.afterCharTyped(c, lookup.toRelevanceDataList())
+
+        logLastAction()
+        setLastAction {
+            val current = lookup.currentItem
+            val index = lookup.items.indexOf(current)
+            logger.afterBackspacePressed(index, current?.lookupString ?: "NULL", lookup.toRelevanceDataList())
+        }
     }
 
     override fun beforeCharTyped(c: Char) {
         if (!isCompletionActive()) return
+
+        logLastAction()
+        
         if (c == '.') {
             val item = lookup.currentItem
             if (item == null) {
@@ -248,9 +287,15 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
                 selectedByDotTyping = true
             }
         }
-        else {
-            logger.beforeCharTyped(c, lookup.toRelevanceDataList())
+    }
+
+    
+    override fun afterAppend(c: Char) {
+        if (!isCompletionActive()) return
+
+        logLastAction()
+        setLastAction {
+            logger.afterCharTyped(c, lookup.toRelevanceDataList())
         }
     }
-    
 }
