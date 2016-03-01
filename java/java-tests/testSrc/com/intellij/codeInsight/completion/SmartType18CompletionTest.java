@@ -175,4 +175,9 @@ public void testConvertToObjectStream() {
     }
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
+
+  public void testOnlyCompatibleTypes() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
+  }
 }
