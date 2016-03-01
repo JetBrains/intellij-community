@@ -137,9 +137,22 @@ public class ProcessListUtil {
       }
       if (cmdline.isEmpty()) continue;
 
+      String executablePath = null;
+
+      try {
+        File exe = new File(each, "exe");
+        if (!exe.getAbsolutePath().equals(exe.getCanonicalPath())) {
+          executablePath = exe.getCanonicalPath();
+        }
+      }
+      catch (IOException e) {
+        // couldn't resolve symlink
+      }
+
       result.add(new ProcessInfo(pid, StringUtil.join(cmdline, " "),
                                  PathUtil.getFileName(cmdline.get(0)),
-                                 StringUtil.join(cmdline.subList(1, cmdline.size()), " ")
+                                 StringUtil.join(cmdline.subList(1, cmdline.size()), " "),
+                                 executablePath
       ));
     }
     return result;
