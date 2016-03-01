@@ -213,16 +213,15 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
             logger.completionStarted(lookup.toRelevanceDataList(), isPerformExperiment, experimentVersion)
         }
     }
-    
+
     override fun itemSelected(event: LookupEvent) {
         if (!completionStarted) return
 
         logLastAction()
-        setLastAction {
-            val currentItem = lookup.currentItem
-            val index = lookup.items.indexOf(currentItem)
-            logger.itemSelectedCompletionFinished(index, currentItem?.lookupString ?: "NULL", lookup.toRelevanceDataList())
-        }
+
+        val currentItem = lookup.currentItem
+        val index = lookup.items.indexOf(currentItem)
+        logger.itemSelectedCompletionFinished(index, currentItem?.lookupString ?: "NULL", lookup.toRelevanceDataList())
     }
 
     override fun beforeDownPressed() {
