@@ -88,13 +88,20 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
         final PsiIfStatement ifStatement = (PsiIfStatement)sibling;
         final PsiExpression condition = ifStatement.getCondition();
         if (condition != null) {
-          if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch())) {
+          final PsiElement target = optionalReference.resolve();
+          if (!(target instanceof PsiVariable)) {
+            return true;
+          }
+          final PsiVariable variable = (PsiVariable)target;
+          final PsiStatement thenBranch = ifStatement.getThenBranch();
+          if (!ControlFlowUtils.statementMayCompleteNormally(thenBranch) || VariableAccessUtils.variableIsAssigned(variable, thenBranch)) {
             checker.negate = true;
             if (checker.checkExpression(condition)) {
               return true;
             }
           }
-          else if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getElseBranch())) {
+          final PsiStatement elseBranch = ifStatement.getElseBranch();
+          if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch) || VariableAccessUtils.variableIsAssigned(variable, elseBranch)) {
             checker.negate = false;
             if (checker.checkExpression(condition)) {
               return true;

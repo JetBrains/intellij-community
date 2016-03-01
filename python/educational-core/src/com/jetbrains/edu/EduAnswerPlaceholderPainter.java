@@ -51,7 +51,7 @@ public class EduAnswerPlaceholderPainter {
 
   public static void createGuardedBlock(Editor editor, List<RangeMarker> blocks, int start, int end) {
     RangeHighlighter rh = editor.getMarkupModel()
-      .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, null, HighlighterTargetArea.EXACT_RANGE);
+      .addRangeHighlighter(start, end, PLACEHOLDERS_LAYER, null, HighlighterTargetArea.EXACT_RANGE);
     blocks.add(rh);
   }
 

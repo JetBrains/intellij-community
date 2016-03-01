@@ -41,7 +41,7 @@ public class EmptyIcon implements Icon, ScalableIcon {
 
   private final int width;
   private final int height;
-  private float scale = 1f;
+  protected float scale = 1f;
 
   public static Icon create(int size) {
     Icon icon = cache.get(size);

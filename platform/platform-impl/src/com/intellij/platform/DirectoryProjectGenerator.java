@@ -37,9 +37,6 @@ public interface DirectoryProjectGenerator<T> {
   @Nls
   String getName();
 
-  @Nullable
-  T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException;
-
   /**
    * @return 16x16 icon or null, if no icon is available
    */

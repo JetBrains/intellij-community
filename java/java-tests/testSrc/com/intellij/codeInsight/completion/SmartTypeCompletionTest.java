@@ -1232,4 +1232,9 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   private CommonCodeStyleSettings getCodeStyleSettings() {
     return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
+
+  public void testOnlyCompatibleTypes() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
+  }
 }
