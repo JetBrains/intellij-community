@@ -159,8 +159,20 @@ class CompletionFileLogger(private val installationUID: String,
         
         val builder = logBuilder(Action.EXPLICIT_SELECT)
         builder.addPair("POS", pos)
-        val id = getItemId(itemName)!!
-        builder.addPair("ID", id)
+        
+        var id = getItemId(itemName)
+        var ids = ""
+        if (id == null) {
+            ids = createIdListAddUntrackedItems(completionList)
+            id = getItemId(itemName)
+        }
+        
+        builder.addPair("ID", id!!)
+
+        if (ids.isNotEmpty()) {
+            builder.addText(ids)
+        }
+        
         log(builder)
     }
 
