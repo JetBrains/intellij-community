@@ -37,7 +37,7 @@ import java.util.List;
 public class LibrarySourceRootDetectorUtil {
   public static ExtensionPointName<RootDetector> JAVA_SOURCE_ROOT_DETECTOR = ExtensionPointName.create("com.intellij.library.javaSourceRootDetector");
 
-  private LibrarySourceRootDetectorUtil() {
+  protected LibrarySourceRootDetectorUtil() {
   }
 
   /**
