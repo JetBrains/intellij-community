@@ -20,7 +20,7 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
     private val LOG = Logger.getInstance(SenderComponent::class.java)
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
-    private val sendInterval = 30 * Time.MINUTE
+    private val sendInterval = 1 * Time.MINUTE
 
     private fun send() {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
