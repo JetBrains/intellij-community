@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,45 +25,59 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * User: Vassiliy.Kudryashov
+ * @author Vassiliy Kudryashov
+ * @author Konstantin Bulenkov
  */
-public class TwoColorsIcon extends EmptyIcon {
-  @NotNull private final Paint myColor1;
-  @NotNull private final Paint myColor2;
-  private static final int SQUARE_SIZE = 6;
+public class TwoColorsIcon extends ColorIcon {
+  @NotNull private final Color mySecondColor;
+  private static final int SQUARE_SIZE = JBUI.scale(6);
   private static final BufferedImage CHESS_IMAGE = UIUtil.createImage(SQUARE_SIZE, SQUARE_SIZE, BufferedImage.TYPE_INT_RGB);
+  private static final TexturePaint CHESS;
+
   static {
     Graphics2D graphics = CHESS_IMAGE.createGraphics();
     graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-    graphics.setColor(Color.LIGHT_GRAY);
+    graphics.setColor(JBColor.LIGHT_GRAY);
     graphics.fillRect(0, 0, SQUARE_SIZE + 1, SQUARE_SIZE + 1);
-    graphics.setColor(Color.GRAY);
+    graphics.setColor(JBColor.GRAY);
     graphics.fillRect(0, 0, SQUARE_SIZE / 2, SQUARE_SIZE / 2);
     graphics.fillRect(SQUARE_SIZE / 2, SQUARE_SIZE / 2, SQUARE_SIZE / 2, SQUARE_SIZE / 2);
+    graphics.dispose();
+    CHESS = new TexturePaint(CHESS_IMAGE, new Rectangle(0, 0, SQUARE_SIZE, SQUARE_SIZE));
   }
-  private TexturePaint CHESS = new TexturePaint(CHESS_IMAGE, new Rectangle(0, 0, SQUARE_SIZE, SQUARE_SIZE));
 
-  public TwoColorsIcon(int size, @Nullable Color color1, @Nullable Color color2) {
-    super(size, size);
-    myColor1 = color1 != null ? color1 : CHESS;
-    myColor2 = color2 != null ? color2 : CHESS;
+  public TwoColorsIcon(int size, @Nullable Color color1, @Nullable Color secondColor) {
+    super(size, size, color1 != null ? color1 : Gray.TRANSPARENT, false);
+    mySecondColor = secondColor != null ? secondColor : Gray.TRANSPARENT;
   }
 
   @Override
-  public void paintIcon(final Component component, final Graphics g, final int x, final int y) {
+  public void paintIcon(final Component component, Graphics g, int x, int y) {
     Graphics2D g2d = (Graphics2D)g.create();
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g2d);
     try {
       final int w = getIconWidth();
       final int h = getIconHeight();
-      GraphicsUtil.setupAAPainting(g2d);
-      g2d.setPaint(myColor1);
+      g2d.setPaint(getPaint(getIconColor()));
       g2d.fillPolygon(new int[]{x, x + w, x}, new int[]{y, y, y + h}, 3);
-      g2d.setPaint(myColor2);
+      g2d.setPaint(getPaint(mySecondColor));
       g2d.fillPolygon(new int[]{x + w, x + w, x}, new int[]{y, y + h, y + h}, 3);
     }
     catch (Exception e) {
       g2d.dispose();
     }
+    finally {
+      config.restore();
+    }
+  }
+
+  protected Paint getPaint(Color color) {
+    return color == null || color.getAlpha() == 0 ? CHESS : color;
+  }
+
+  @Override
+  protected EmptyIcon createScaledInstance(float scale) {
+    return new TwoColorsIcon(getColorSize(), getIconColor(), mySecondColor);
   }
 
   @Override
@@ -73,16 +90,14 @@ public class TwoColorsIcon extends EmptyIcon {
 
     if (getIconWidth() != icon.getIconWidth()) return false;
     if (getIconHeight() != icon.getIconHeight()) return false;
-    if (!myColor1.equals(icon.myColor1)) return false;
-    if (!myColor2.equals(icon.myColor2)) return false;
+    if (!mySecondColor.equals(icon.mySecondColor)) return false;
     return true;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myColor1.hashCode();
-    result = 31 * result + myColor2.hashCode();
+    result = 31 * result + mySecondColor.hashCode();
     return result;
   }
 }

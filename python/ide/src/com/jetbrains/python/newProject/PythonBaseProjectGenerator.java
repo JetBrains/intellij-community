@@ -42,12 +42,6 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator implement
     return "Pure Python";
   }
 
-  @Nullable
-  @Override
-  public Object showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
-    return null;
-  }
-
   @Override
   @Nullable
   public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {

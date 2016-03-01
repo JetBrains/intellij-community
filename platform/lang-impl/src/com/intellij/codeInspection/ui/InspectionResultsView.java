@@ -71,7 +71,6 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -399,16 +398,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
       if (pathSelected != null) {
         final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
-        if (node instanceof RefElementNode) {
-          final RefElementNode refElementNode = (RefElementNode)node;
-          final RefEntity refSelected = refElementNode.getElement();
-          showInRightPanel(refSelected);
-        }
-        else if (node instanceof ProblemDescriptionNode) {
+        if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
           showInRightPanel(problemNode.getElement());
         }
-        else if (node instanceof InspectionNode || node instanceof InspectionPackageNode || node instanceof InspectionModuleNode) {
+        else if (node instanceof InspectionPackageNode ||
+                 node instanceof InspectionModuleNode ||
+                 node instanceof RefElementNode) {
+          showInRightPanel(node.getContainingFileLocalEntity());
+        }
+        else if (node instanceof InspectionNode) {
           showInRightPanel(null);
         }
         else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
@@ -499,7 +498,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             myPreviewEditor.getCaretModel().moveToOffset(finalSelectedElement.getTextOffset());
             myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.any());
       }
       return myPreviewEditor.getComponent();
     }
