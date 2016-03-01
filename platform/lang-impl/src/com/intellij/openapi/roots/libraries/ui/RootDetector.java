@@ -62,6 +62,4 @@ public abstract class RootDetector {
    */
   @NotNull
   public abstract Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator);
-
-  public static ExtensionPointName<RootDetector> JAVA_SOURCE_ROOT_DETECTOR = ExtensionPointName.create("com.intellij.library.javaSourceRootDetector");
 }

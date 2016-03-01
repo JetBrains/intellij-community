@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -33,15 +34,15 @@ import java.util.List;
  *
  * @author Constantine.Plotnikov
  */
-public class PathUIUtils {
-  public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new JavaSourceRootDetector();
+public class LibrarySourceRootDetectorUtil {
+  public static ExtensionPointName<RootDetector> JAVA_SOURCE_ROOT_DETECTOR = ExtensionPointName.create("com.intellij.library.javaSourceRootDetector");
 
-  private PathUIUtils() {
+  private LibrarySourceRootDetectorUtil() {
   }
 
   /**
    * This method takes a candidates for the project root, then scans the candidates and
-   * if multiple candidates or non root source directories are found whithin some
+   * if multiple candidates or non root source directories are found within some
    * directories, it shows a dialog that allows selecting or deselecting them.
    * @param parent a parent parent or project
    * @param rootCandidates a candidates for roots
@@ -49,8 +50,8 @@ public class PathUIUtils {
    */
   public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Component parentComponent, final VirtualFile[] rootCandidates) {
     final List<OrderRoot> orderRoots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, null,
-                                                                     new LibraryRootsDetectorImpl(Arrays.asList(Extensions.getExtensions(RootDetector.JAVA_SOURCE_ROOT_DETECTOR))),
-                                                                     new OrderRootType[0]);
+                                                                     new LibraryRootsDetectorImpl(Arrays.asList(Extensions.getExtensions(JAVA_SOURCE_ROOT_DETECTOR))),
+                                                                     new OrderRootType[] {OrderRootType.SOURCES});
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (OrderRoot root : orderRoots) {
       result.add(root.getFile());
