@@ -72,6 +72,9 @@ public class GitVcsPanel {
   private TextFieldWithBrowseButton myProtectedBranchesButton;
   private JBLabel myProtectedBranchesLabel;
   private JComboBox myUpdateMethodComboBox;
+  private JBLabel myNoFfBranchesLabel;
+  private TextFieldWithBrowseButton myNoFfBranchesButton;
+  private JCheckBox myNoFfLogMerge;
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
@@ -97,6 +100,7 @@ public class GitVcsPanel {
     }
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
     myProtectedBranchesLabel.setLabelFor(myProtectedBranchesButton);
+    myNoFfBranchesLabel.setLabelFor(myNoFfBranchesButton);
     myEnableForcePush.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -104,7 +108,13 @@ public class GitVcsPanel {
         UIUtil.setEnabled(myProtectedBranchesLabel, myEnableForcePush.isSelected(), false);
       }
     });
-  }
+    myNoFfLogMerge.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        UIUtil.setEnabled(myNoFfBranchesButton, myNoFfLogMerge.isSelected(), true);
+        UIUtil.setEnabled(myNoFfBranchesLabel, myNoFfLogMerge.isSelected(), false);
+      }
+    });  }
 
   /**
    * Test availability of the connection
@@ -167,8 +177,10 @@ public class GitVcsPanel {
     myWarnAboutCrlf.setSelected(settings.warnAboutCrlf());
     myWarnAboutDetachedHead.setSelected(settings.warnAboutDetachedHead());
     myEnableForcePush.setSelected(settings.isForcePushAllowed());
+    myNoFfLogMerge.setSelected(settings.isNoFfLogMerge());
     myUpdateMethodComboBox.setSelectedItem(settings.getUpdateType());
     myProtectedBranchesButton.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
+    myNoFfBranchesButton.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getNoFfPatterns()));
   }
 
   /**
@@ -185,7 +197,10 @@ public class GitVcsPanel {
            settings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
            settings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
            settings.isForcePushAllowed() != myEnableForcePush.isSelected() ||
+           settings.isNoFfLogMerge() != myNoFfLogMerge.isSelected() ||
            settings.getUpdateType() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
+           !ContainerUtil.sorted(sharedSettings.getNoFfPatterns()).equals(
+             ContainerUtil.sorted(getNoFfBranchesPatterns())) ||
            !ContainerUtil.sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(
             ContainerUtil.sorted(getProtectedBranchesPatterns())));
   }
@@ -208,13 +223,20 @@ public class GitVcsPanel {
     settings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
     settings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
     settings.setForcePushAllowed(myEnableForcePush.isSelected());
+    settings.setNoFfLogMerge(myNoFfLogMerge.isSelected());
     settings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
     sharedSettings.setForcePushProhibitedPatters(getProtectedBranchesPatterns());
+    sharedSettings.setNoFfPatterns(getNoFfBranchesPatterns());
   }
 
   @NotNull
   private List<String> getProtectedBranchesPatterns() {
     return ParametersListUtil.COLON_LINE_PARSER.fun(myProtectedBranchesButton.getText());
+  }
+
+  @NotNull
+  private List<String> getNoFfBranchesPatterns() {
+    return ParametersListUtil.COLON_LINE_PARSER.fun(myNoFfBranchesButton.getText());
   }
 
   private void createUIComponents() {
@@ -226,6 +248,15 @@ public class GitVcsPanel {
       }
     });
     myProtectedBranchesButton.setButtonIcon(AllIcons.Actions.ShowViewer);
+    myNoFfBranchesButton = new TextFieldWithBrowseButton.NoPathCompletion(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Messages.showTextAreaDialog(myNoFfBranchesButton.getTextField(), "Protected Branches", "Git.Log.Merge.NoFF.Branches",
+                                    ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
+      }
+    });
+    myNoFfBranchesButton.setButtonIcon(AllIcons.Actions.ShowViewer);
+
     myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<UpdateMethod>(UpdateMethod.class));
     myUpdateMethodComboBox.setRenderer(new ListCellRendererWrapper<UpdateMethod>() {
       @Override

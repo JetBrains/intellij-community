@@ -77,6 +77,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean WARN_ABOUT_DETACHED_HEAD = true;
     public GitResetMode RESET_MODE = null;
     public boolean FORCE_PUSH_ALLOWED = false;
+    public boolean NO_FF_LOG_MERGE = false;
     public GitPushTagMode PUSH_TAGS = null;
 
     @AbstractCollection(surroundWithTag = false)
@@ -230,6 +231,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setForcePushAllowed(boolean allowed) {
     myState.FORCE_PUSH_ALLOWED = allowed;
+  }
+
+  public boolean isNoFfLogMerge() {
+    return myState.NO_FF_LOG_MERGE;
+  }
+
+  public void setNoFfLogMerge(boolean allowed) {
+    myState.NO_FF_LOG_MERGE = allowed;
   }
 
   @Nullable

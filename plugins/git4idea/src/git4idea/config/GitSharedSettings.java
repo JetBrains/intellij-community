@@ -31,6 +31,7 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
 
   public static class State {
     public List<String> FORCE_PUSH_PROHIBITED_PATTERNS = ContainerUtil.newArrayList("master");
+    public List<String> NO_FF_PATTERNS = ContainerUtil.newArrayList("master");
   }
 
   private State myState = new State();
@@ -55,4 +56,12 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
     myState.FORCE_PUSH_PROHIBITED_PATTERNS = new ArrayList<String>(patterns);
   }
 
+  @NotNull
+  public List<String> getNoFfPatterns() {
+    return Collections.unmodifiableList(myState.NO_FF_PATTERNS);
+  }
+
+  public void setNoFfPatterns(@NotNull List<String> patterns) {
+    myState.NO_FF_PATTERNS = new ArrayList<String>(patterns);
+  }
 }

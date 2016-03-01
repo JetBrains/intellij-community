@@ -67,6 +67,7 @@ public final class GitOptionsTopHitProvider extends OptionsTopHitProvider {
           options.add(option(project, "Git: Warn if CRLF line separators are about to be committed", "warnAboutCrlf", "setWarnAboutCrlf"));
           options.add(option(project, "Git: Warn when committing in detached HEAD or during rebase", "warnAboutDetachedHead", "setWarnAboutDetachedHead"));
           options.add(option(project, "Git: Allow force push", "isForcePushAllowed", "setForcePushAllowed"));
+          options.add(option(project, "Git: Disable fast forward for merge from log", "isNoFfLogMerge", "setNoFfLogMerge"));
           return Collections.unmodifiableCollection(options);
         }
       }
