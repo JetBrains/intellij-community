@@ -10,7 +10,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
 
-
 class ABTesterHelperTest : LightIdeaTestCase() {
 
     fun `test experiment info is fetched`() {
@@ -22,7 +21,8 @@ class ABTesterHelperTest : LightIdeaTestCase() {
         `when`(urlProvider.experimentDataUrl).thenReturn("http://qq.da")
 
         val helper = ABTesterHelper(requestSender, urlProvider)
-
+        helper.unsetLastUpdate()
+        
         val performExperiment = helper.isPerformExperiment()
         val version = helper.getExperimentVersion()
         

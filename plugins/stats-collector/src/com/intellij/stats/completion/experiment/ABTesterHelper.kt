@@ -7,6 +7,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.UrlProvider
 import com.intellij.util.Time
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 class ABTesterHelper(private val requestSender: RequestService, private val urlProvider: UrlProvider) {
@@ -16,6 +17,17 @@ class ABTesterHelper(private val requestSender: RequestService, private val urlP
     @Volatile private var experimentInfo = loadInfo()
     
     private val delay = 30 * Time.MINUTE
+    
+    companion object {
+        private val performExperimentString = "completion.stats.collector.perform.experiment"
+        private val experimentVersionString = "completion.stats.collector.perform.experiment.version"
+        private val lastDayString = "completion.stats.collector.perform.last.update"
+    }
+    
+    @TestOnly
+    fun unsetLastUpdate() {
+        lastUpdate = Date(0)
+    }
 
     fun isPerformExperiment(): Boolean {
         if (isOutdated(lastUpdate)) {
@@ -53,25 +65,25 @@ class ABTesterHelper(private val requestSender: RequestService, private val urlP
 
     private fun loadInfo(): ExperimentInfo {
         val component = PropertiesComponent.getInstance()
-        val isPerformExperiment = component.getBoolean("completion.stats.collector.perform.experiment", false)
-        val experimentVersion = component.getInt("completion.stats.collector.perform.experiment.version", 0)
+        val isPerformExperiment = component.getBoolean(performExperimentString, false)
+        val experimentVersion = component.getInt(experimentVersionString, 0)
         return ExperimentInfo(isPerformExperiment, experimentVersion)
     }
 
     private fun saveInfo(info: ExperimentInfo) {
         val component = PropertiesComponent.getInstance()
-        component.setValue("completion.stats.collector.perform.experiment", info.performExperiment)
-        component.setValue("completion.stats.collector.perform.experiment.version", info.experimentVersion.toString())
+        component.setValue(performExperimentString, info.performExperiment)
+        component.setValue(experimentVersionString, info.experimentVersion.toString())
     }
     
     private fun saveLastUpdated(date: Date) {
         val component = PropertiesComponent.getInstance()
-        component.setValue("completion.stats.collector.perform.last.update", date.time.toString())
+        component.setValue(lastDayString, date.time.toString())
     }
 
     private fun loadLastUpdated(): Date {
         val component = PropertiesComponent.getInstance()
-        val time = component.getOrInitLong("completion.stats.collector.perform.last.update", 0)
+        val time = component.getOrInitLong(lastDayString, 0)
         return Date(time)
     }
     
