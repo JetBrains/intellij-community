@@ -77,8 +77,8 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
   }
 
   private static Collection<Sdk> sdksForAttachment(ProcessInfo info) {
-    if (info.getExecutablePath().isPresent()) {
-      Sdk sdk = PythonSdkType.findSdkByPath(info.getExecutablePath().get());
+    if (info.getExecutableCannonicalPath().isPresent()) {
+      Sdk sdk = PythonSdkType.findSdkByPath(info.getExecutableCannonicalPath().get());
       if (sdk != null) {
         return Lists.newArrayList(sdk);
       }

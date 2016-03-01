@@ -19,6 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 
 
@@ -69,8 +71,15 @@ public class ProcessInfo {
   }
 
   @NotNull
-  public Optional<String> getExecutablePath() {
-    return myExecutablePath;
+  public Optional<String> getExecutableCannonicalPath() {
+    return myExecutablePath.map(s -> {
+      try {
+        return new File(s).getCanonicalPath();
+      }
+      catch (IOException e) {
+        return s;
+      }
+    });
   }
 
   @NotNull
