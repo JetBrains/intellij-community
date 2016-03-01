@@ -105,14 +105,16 @@ public class PyAnnotateTypesIntention implements IntentionAction {
     List<Pair<Integer, String>> templates = Lists.newArrayList();
 
     for (int i = 0; i < params.length; i++) {
-      String type = parameterType(params[i]);
+      if (!params[i].isSelf()) {
+        String type = parameterType(params[i]);
 
-      templates.add(Pair.create(replacementTextBuilder.length(), type));
+        templates.add(Pair.create(replacementTextBuilder.length(), type));
 
-      replacementTextBuilder.append(type);
+        replacementTextBuilder.append(type);
 
-      if (i < params.length - 1) {
-        replacementTextBuilder.append(", ");
+        if (i < params.length - 1) {
+          replacementTextBuilder.append(", ");
+        }
       }
     }
 
@@ -209,12 +211,14 @@ public class PyAnnotateTypesIntention implements IntentionAction {
 
       for (int i = params.length - 1; i >= 0; i--) {
         if (params[i] instanceof PyNamedParameter) {
-          params[i] = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(params[i]);
-          PyAnnotation annotation = ((PyNamedParameter)params[i]).getAnnotation();
-          if (annotation != null) {
-            PyExpression annotationValue = annotation.getValue();
-            if (annotationValue != null) {
-              builder.replaceElement(annotationValue, annotationValue.getText());
+          if (!params[i].isSelf()) {
+            params[i] = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(params[i]);
+            PyAnnotation annotation = ((PyNamedParameter)params[i]).getAnnotation();
+            if (annotation != null) {
+              PyExpression annotationValue = annotation.getValue();
+              if (annotationValue != null) {
+                builder.replaceElement(annotationValue, annotationValue.getText());
+              }
             }
           }
         }
