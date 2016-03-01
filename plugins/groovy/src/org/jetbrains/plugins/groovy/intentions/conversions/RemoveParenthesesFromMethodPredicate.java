@@ -43,16 +43,14 @@ class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
     newStatementText.append(expression.getInvokedExpression().getText()).append(' ');
     GrArgumentList argumentList = expression.getArgumentList();
 
-    final GroovyPsiElement[] allArguments = argumentList != null ? argumentList.getAllArguments() : GroovyPsiElement.EMPTY_ARRAY;
+    final GroovyPsiElement[] allArguments = argumentList.getAllArguments();
 
-    if (argumentList != null) {
-      argumentList = (GrArgumentList)argumentList.copy();
-      final PsiElement leftParen = argumentList.getLeftParen();
-      final PsiElement rightParen = argumentList.getRightParen();
-      if (leftParen != null) leftParen.delete();
-      if (rightParen != null) rightParen.delete();
-      newStatementText.append(argumentList.getText());
-    }
+    argumentList = (GrArgumentList)argumentList.copy();
+    final PsiElement leftParen = argumentList.getLeftParen();
+    final PsiElement rightParen = argumentList.getRightParen();
+    if (leftParen != null) leftParen.delete();
+    if (rightParen != null) rightParen.delete();
+    newStatementText.append(argumentList.getText());
     final GrStatement newStatement;
     try {
       newStatement = GroovyPsiElementFactory.getInstance(element.getProject()).createStatementFromText(newStatementText.toString());
@@ -62,8 +60,7 @@ class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
     }
     if (newStatement instanceof GrApplicationStatement) {
       final GrCommandArgumentList newArgList = ((GrApplicationStatement)newStatement).getArgumentList();
-      if (newArgList == null && argumentList == null ||
-          newArgList != null && newArgList.getAllArguments().length == allArguments.length) {
+      if (newArgList.getAllArguments().length == allArguments.length) {
         return true;
       }
     }
