@@ -57,7 +57,7 @@ public class PyMissingTypeHintsInspection extends PyInspection {
           if (flag) {
             ASTNode nameNode = function.getNameNode();
             if (nameNode != null) {
-              holder.registerProblem(nameNode.getPsi(), 
+              holder.registerProblem(nameNode.getPsi(),
                                      "Type hinting is missing for function definition",
                                      new AddTypeHintsQuickFix(function.getName()));
             }
@@ -70,11 +70,17 @@ public class PyMissingTypeHintsInspection extends PyInspection {
   private boolean shouldRegisterProblem(PyFunction function) {
     if (m_onlyWhenTypesAreKnown) {
       PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
-      return signature != null;
+      return signature != null && canAnnotate(signature);
     }
     else {
       return true;
     }
+  }
+
+  private static boolean canAnnotate(@NotNull PySignature signature) {
+    return !"NoneType".equals(signature.getReturnTypeQualifiedName())
+           || signature.getArgs().size() > 1
+           || (signature.getArgs().size() == 1 && !"self".equals(signature.getArgs().get(0).getName()));
   }
 
   private static boolean typeAnnotationsExist(PyFunction function) {
