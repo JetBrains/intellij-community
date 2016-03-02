@@ -15,8 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.text.StringUtilRt;
-
 public class Base64 {
   private Base64() { }
 
@@ -25,7 +23,7 @@ public class Base64 {
   }
 
   public static String encode(byte[] bytes, int offset, int length) {
-    if (length == 0) return StringUtilRt.EMPTY_STRING;
+    if (length == 0) return "";
 
     StringBuilder builder = new StringBuilder();
     for (int i = offset; i < length; i += 3) {

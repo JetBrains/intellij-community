@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -71,24 +72,27 @@ public abstract class DiffActionExecutor {
     final ContentRevision fileRevision = myDiffProvider.createFileContent(revisionNumber, mySelectedFile);
     if (fileRevision == null) return null;
 
+    DiffContent diffContent;
     if (fileRevision instanceof BinaryContentRevision) {
       FilePath filePath = fileRevision.getFile();
       final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
       if (content == null) return null;
 
-      return DiffContentFactory.getInstance().createBinary(myProject, filePath.getName(), filePath.getFileType(), content);
+      diffContent = DiffContentFactory.getInstance().createBinary(myProject, filePath.getName(), filePath.getFileType(), content);
     }
-
-    if (fileRevision instanceof ByteBackedContentRevision) {
+    else if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
       if (content == null) throw new VcsException("Failed to load content");
-      return FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
+      diffContent = FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
     }
     else {
       String content = fileRevision.getContent();
       if (content == null) throw new VcsException("Failed to load content");
-      return FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
+      diffContent = FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
     }
+
+    diffContent.putUserData(VcsHistoryUtil.REVISION_INFO_KEY, Pair.create(fileRevision.getFile(), fileRevision.getRevisionNumber()));
+    return diffContent;
   }
 
   public void showDiff() {

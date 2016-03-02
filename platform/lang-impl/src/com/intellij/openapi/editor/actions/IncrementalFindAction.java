@@ -46,7 +46,7 @@ public class IncrementalFindAction extends EditorAction {
       if (!editor.isOneLineMode()) {
         EditorSearchSession search = EditorSearchSession.get(editor);
         if (search != null) {
-          IdeFocusManager.getInstance(project).requestFocus(search.getComponent());
+          search.getComponent().requestFocusInTheSearchFieldAndSelectContent(project);
           FindUtil.configureFindModel(myReplace, editor, search.getFindModel(), false);
         } else {
           FindManager findManager = FindManager.getInstance(project);
@@ -58,7 +58,8 @@ public class IncrementalFindAction extends EditorAction {
             model.copyFrom(findManager.getFindInFileModel());
           }
           FindUtil.configureFindModel(myReplace, editor, model, true);
-          EditorSearchSession.start(editor, model, project).getComponent().requestFocus();
+          EditorSearchSession.start(editor, model, project).getComponent()
+            .requestFocusInTheSearchFieldAndSelectContent(project);
         }
       }
     }

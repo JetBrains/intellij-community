@@ -73,6 +73,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.util.*;
@@ -201,6 +203,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               }
             }
           }
+          else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
+            Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
+            if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+              EditorImpl.handleDrop(myEditor, transferable);
+            }
+          }
         }
       })
       .setTargetChecker(new DnDTargetChecker() {
@@ -217,6 +225,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               }
             }
           }
+          else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
+            Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
+            if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+              final int line = convertPointToLineNumber(e.getPoint());
+              if (line != -1) {
+                e.setDropPossible(true);
+                myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getLineStartOffset(line));
+              }
+            }
+          }
           return true;
         }
       })
@@ -227,6 +245,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
         }
       })
+      .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
       .install();
   }
 
@@ -545,6 +564,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
+    if (myEditor.isDisposed()) return null;
+    
     if (EditorGutter.KEY.is(dataId)) {
       return this;
     }
@@ -1057,9 +1078,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void drawFoldingAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
                                  DisplayedFoldingAnchor.Type type, boolean active) {
-
-    final int off = (int)(JBUI.scale(2) * myEditor.getScale());
+    int off = (int)((float)width / 4);
     int height = width + off;
+    int baseHeight = height - width / 2;
     int y = getFoldAnchorY(visualLine, width);
     switch (type) {
       case COLLAPSED:
@@ -1069,14 +1090,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         break;
       case EXPANDED_TOP:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, height, width - off, active);
+          drawDirectedBox(g, anchorX, y, width, height, baseHeight, active);
         }
         break;
       case EXPANDED_BOTTOM:
         //noinspection SuspiciousNameCombination
         y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, -height, -width + off, active);
+          drawDirectedBox(g, anchorX, y, width, -height, -baseHeight, active);
         }
         break;
     }
@@ -1156,12 +1177,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private int getFoldingAnchorWidth() {
     // have to be odd number to be perfectly symmetric (as long as we have plus sign inside)
-    return floorToOdd(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
+    return roundToEven(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
   }
 
-  private static int floorToOdd(float f) {
-    int res = (int)f;
-    return res % 2 == 0 && res > 0 ? res : res - 1;
+  private static int roundToEven(float f) {
+    int lower = (int)Math.floor(f);
+    int upper = (int)Math.ceil(f);
+    if (lower % 2 == 0) return lower;
+    if (upper % 2 == 0) return upper;
+    return lower > 0 ? lower - 1 : 0; // lower == upper == f
   }
 
   public int getFoldingAreaOffset() {

@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
@@ -101,6 +102,25 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
   @Nullable
   PyAnnotation getAnnotation();
 
+  /**
+   * Returns a comment that immediately follows function header and precedes any child statement (including docstring).
+   * It must start with conventional "type:" prefix and contain function type in PEP 484 compatible format
+   * (https://www.python.org/dev/peps/pep-0484/#suggested-syntax-for-python-2-7-and-straddling-code).
+   * <p/>
+   * Use {@link #getTypeCommentAnnotation()} to get its content with the prefix stripped accessing either stubs or AST.
+   *
+   * @see #getTypeCommentAnnotation()
+   */
+  @Nullable
+  PsiComment getTypeComment();
+
+  /**
+   * Returns type annotation after the "type:" prefix extracted from the commentary returned by {@link #getTypeComment()}.
+   *
+   * @see #getTypeComment()
+   */
+  @Nullable
+  String getTypeCommentAnnotation();
 
   /**
    * Searches for function attributes.

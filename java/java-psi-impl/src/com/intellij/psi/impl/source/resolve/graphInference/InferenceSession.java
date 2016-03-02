@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -47,22 +46,23 @@ public class InferenceSession {
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = new Function<Pair<PsiType, PsiType>, PsiType>() {
     @Override
     public PsiType fun(Pair<PsiType, PsiType> pair) {
-      if (pair.first instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)pair.first, pair.second)) {
-        return null;
-      }
-      if (pair.second instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)pair.second, pair.first)) {
-        return null;
-      }
-      
-      if (pair.first instanceof PsiCapturedWildcardType && TypesDistinctProver.provablyDistinct(((PsiCapturedWildcardType)pair.first).getUpperBound(), pair.second)) {
-        return null;
-      }
+      if (!isValidGlb(pair.first, pair.second)) return null;
+      if (!isValidGlb(pair.second, pair.first)) return null;
 
-      if (pair.second instanceof PsiCapturedWildcardType && TypesDistinctProver.provablyDistinct(((PsiCapturedWildcardType)pair.second).getUpperBound(), pair.first)) {
-        return null;
-      }
-      
       return GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
+    }
+
+    private boolean isValidGlb(PsiType first, PsiType second) {
+      if (second instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)second, first)) {
+        return false;
+      }
+      if (second instanceof PsiCapturedWildcardType && !first.isAssignableFrom(second)) {
+        final PsiClass conjunct = PsiUtil.resolveClassInType(first);
+        if (conjunct != null && !conjunct.isInterface() ) {
+          return false;
+        }
+      }
+      return true;
     }
   };
 
@@ -359,7 +359,7 @@ public class InferenceSession {
         return;
       }
 
-      if (parameters != null && args != null && !MethodCandidateInfo.isOverloadCheck()) {
+      if (parameters != null && args != null && !isOverloadCheck()) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
           collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs(), initialSubstitutor);
@@ -394,6 +394,21 @@ public class InferenceSession {
         mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
       }
     }
+  }
+
+  private boolean isOverloadCheck() {
+    if (myContext != null) {
+      for (Object o : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
+        final PsiExpressionList element = (PsiExpressionList)o;
+        for (PsiExpression expression : element.getExpressions()) {
+          if (expression == myContext) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+    return MethodCandidateInfo.isOverloadCheck();
   }
 
   private void collectAdditionalConstraints(PsiParameter[] parameters,
@@ -791,8 +806,9 @@ public class InferenceSession {
             return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor());
           }
 
-          if (inferParent) {
-            final JavaResolveResult result = ((PsiCall)gParent).resolveMethodGenerics();
+          final JavaResolveResult result = ((PsiCall)gParent).resolveMethodGenerics();
+          final PsiElement element = result.getElement();
+          if (element instanceof PsiMethod && (inferParent || !((PsiMethod)element).hasTypeParameters())) {
             final boolean varargs = result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
             return getTypeByMethod(context, argumentList, result.getElement(), varargs, result.getSubstitutor());
           }
@@ -981,6 +997,13 @@ public class InferenceSession {
                                     final PsiSubstitutor substitutor) {
     for (InferenceVariable typeParameter : typeParams) {
       if (typeParameter.getInstantiation() != PsiType.NULL) continue;
+      final PsiType type = substitutor.substitute(typeParameter);
+      if (type instanceof PsiClassType) {
+        final PsiClass aClass = ((PsiClassType)type).resolve();
+        if (aClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)aClass)) {
+          continue;
+        }
+      }
       final List<PsiType> extendsTypes = typeParameter.getBounds(InferenceBound.UPPER);
       final PsiType[] bounds = extendsTypes.toArray(new PsiType[extendsTypes.size()]);
       if (GenericsUtil.findTypeParameterBoundError(typeParameter, bounds, substitutor, myContext, true) != null) {
@@ -995,10 +1018,18 @@ public class InferenceSession {
     final Collection<InferenceVariable> allVars = new ArrayList<InferenceVariable>(inferenceVariables);
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
-      if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
+      List<InferenceVariable> unresolved = new ArrayList<InferenceVariable>();
+      for (InferenceVariable var : vars) {
+        final PsiType eqBound = getEqualsBound(var, substitutor);
+        if (eqBound == PsiType.NULL) {
+          unresolved.add(var);
+        }
+      }
+      if (!myIncorporationPhase.hasCaptureConstraints(unresolved)) {
         PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor);
         if (hasBoundProblems(vars, firstSubstitutor)) {
           firstSubstitutor = null;
+          unresolved = vars;
         }
         if (firstSubstitutor != null) {
           substitutor = firstSubstitutor;
@@ -1007,7 +1038,7 @@ public class InferenceSession {
         }
       }
 
-      if (!initFreshVariables(substitutor, vars)) {
+      if (!initFreshVariables(substitutor, unresolved)) {
         return null;
       }
 
@@ -1144,6 +1175,13 @@ public class InferenceSession {
   }
 
   public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, String incompatibleTypesMessage) {
+    variables = new ArrayList<InferenceVariable>(variables);
+    Collections.sort((ArrayList<InferenceVariable>)variables, new Comparator<InferenceVariable>() {
+      @Override
+      public int compare(InferenceVariable v1, InferenceVariable v2) {
+        return Comparing.compare(v1.getName(), v2.getName());
+      }
+    });
     final String variablesEnumeration = StringUtil.join(variables, new Function<InferenceVariable, String>() {
       @Override
       public String fun(InferenceVariable variable) {
@@ -1498,8 +1536,9 @@ public class InferenceSession {
                                        final PsiExpression[] args,
                                        final PsiElement context,
                                        final boolean varargs) {
+    final PsiTypeParameter[] typeParameters = m1.getTypeParameters();
     try {
-      for (PsiTypeParameter parameter : m1.getTypeParameters()) {
+      for (PsiTypeParameter parameter : typeParameters) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
         if (types.length > 0) {
           final List<PsiType> conjuncts = ContainerUtil.map(types, new Function<PsiClassType, PsiType>() {
@@ -1517,7 +1556,7 @@ public class InferenceSession {
       return isMoreSpecificInternal(m1, m2, siteSubstitutor1, args, context, varargs);
     }
     finally {
-      for (PsiTypeParameter parameter : m1.getTypeParameters()) {
+      for (PsiTypeParameter parameter : typeParameters) {
         LambdaUtil.getFunctionalTypeMap().remove(parameter);
       }
     }
@@ -1782,8 +1821,9 @@ public class InferenceSession {
     return myContext;
   }
 
-  public void propagateVariables(Collection<InferenceVariable> variables) {
+  public void propagateVariables(Collection<InferenceVariable> variables, PsiSubstitutor substitution) {
     myInferenceVariables.addAll(variables);
+    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(substitution);
   }
 
   public PsiType substituteWithInferenceVariables(PsiType type) {
@@ -1792,6 +1832,10 @@ public class InferenceSession {
 
   public PsiSubstitutor getInferenceSubstitution() {
     return myInferenceSubstitution;
+  }
+
+  public PsiSubstitutor getRestoreNameSubstitution() {
+    return myRestoreNameSubstitution;
   }
 
   public InferenceSessionContainer getInferenceSessionContainer() {

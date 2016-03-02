@@ -68,7 +68,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   }
 
   @Override
-  public RunConfiguration clone() {
+  public ExternalSystemRunConfiguration clone() {
     ExternalSystemRunConfiguration result = (ExternalSystemRunConfiguration)super.clone();
     result.mySettings = mySettings.clone();
     return result;
@@ -234,7 +234,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
         }
       });
       DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
-      result.setRestartActions(consoleManager.getRestartActions());
+      result.setRestartActions(consoleManager.getRestartActions(consoleView));
       return result;
     }
   }

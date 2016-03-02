@@ -87,7 +87,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @NotNull
   @Override
   public Breakpoint<JavaLineBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
-    return new LineBreakpoint<JavaLineBreakpointProperties>(project, breakpoint);
+    return new LineBreakpoint<>(project, breakpoint);
   }
 
   @Override
@@ -120,7 +120,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       return Collections.emptyList();
     }
 
-    List<JavaBreakpointVariant> res = new SmartList<JavaBreakpointVariant>();
+    List<JavaBreakpointVariant> res = new SmartList<>();
     res.add(new JavaBreakpointVariant(position)); //all
 
     if (!(startMethod instanceof PsiLambdaExpression)) {
@@ -130,7 +130,10 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     int ordinal = 0;
     for (PsiLambdaExpression lambda : lambdas) { //lambdas
       PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambda, document, position.getLine());
-      res.add(new ExactJavaBreakpointVariant(XSourcePositionImpl.createByElement(firstElem), lambda, ordinal++));
+      XSourcePositionImpl elementPosition = XSourcePositionImpl.createByElement(firstElem);
+      if (elementPosition != null) {
+        res.add(new ExactJavaBreakpointVariant(elementPosition, lambda, ordinal++));
+      }
     }
 
     return res;
@@ -166,7 +169,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public class JavaBreakpointVariant extends XLineBreakpointAllVariant {
-    public JavaBreakpointVariant(XSourcePosition position) {
+    public JavaBreakpointVariant(@NotNull XSourcePosition position) {
       super(position);
     }
   }
@@ -175,7 +178,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     private final PsiElement myElement;
     private final Integer myLambdaOrdinal;
 
-    public ExactJavaBreakpointVariant(XSourcePosition position, PsiElement element, Integer lambdaOrdinal) {
+    public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, PsiElement element, Integer lambdaOrdinal) {
       super(position);
       myElement = element;
       myLambdaOrdinal = lambdaOrdinal;

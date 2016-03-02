@@ -15,7 +15,7 @@
    </description>
   <version>8.1</version>
   <category>VCS Integration</category>
-  <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <resource-bundle>git4idea.i18n.GitBundle</resource-bundle>
 

@@ -15,9 +15,13 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBInsets;
@@ -29,6 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +72,8 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
   };
 
+  private LafManagerListener myLafListener;
+
   public BalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     myParent = parent;
     myLayeredPane = parent.getLayeredPane();
@@ -74,6 +82,15 @@ public class BalloonLayoutImpl implements BalloonLayout {
       @Override
       public void componentResized(@NotNull ComponentEvent e) {
         queueRelayout();
+      }
+    });
+    UIUtil.addParentChangeListener(parent, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent event) {
+        if (event.getOldValue() != null && event.getNewValue() == null && myLafListener != null) {
+          LafManager.getInstance().removeLafManagerListener(myLafListener);
+          myLafListener = null;
+        }
       }
     });
   }
@@ -98,6 +115,20 @@ public class BalloonLayoutImpl implements BalloonLayout {
         queueRelayout();
       }
     });
+
+    if (myLafListener == null && layoutData != null) {
+      myLafListener = new LafManagerListener() {
+        @Override
+        public void lookAndFeelChanged(LafManager source) {
+          for (BalloonLayoutData layoutData : myLayoutData.values()) {
+            if (layoutData.lafHandler != null) {
+              layoutData.lafHandler.run();
+            }
+          }
+        }
+      };
+      LafManager.getInstance().addLafManagerListener(myLafListener);
+    }
 
     calculateSize();
     relayout();
@@ -133,21 +164,18 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   private void calculateSize() {
     myWidth = null;
-    if (myLayoutData.isEmpty()) {
+    if (myLayoutData.isEmpty() && !NotificationsManagerImpl.newEnabled()) {
       return;
     }
 
-    int width = 0;
     for (Balloon balloon : myBalloons) {
-      Dimension size = balloon.getPreferredSize();
-      width = Math.max(width, size.width);
       BalloonLayoutData layoutData = myLayoutData.get(balloon);
       if (layoutData != null) {
-        layoutData.height = size.height;
+        layoutData.height = balloon.getPreferredSize().height;
       }
     }
 
-    myWidth = width;
+    myWidth = BalloonLayoutConfiguration.FixedWidth;
   }
 
   private void relayout() {
@@ -172,6 +200,11 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
     JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
+
+    if (NotificationsManagerImpl.newEnabled()) {
+      newLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());
+      return;
+    }
 
     if (myLayoutData.isEmpty()) {
       for (int i = 0; i < columns.size(); i++) {
@@ -201,14 +234,8 @@ public class BalloonLayoutImpl implements BalloonLayout {
         int eachY = toolbarsOffset;
         int columnSize = eachColumn.size();
 
-        if (columnSize > 0) {
-          BalloonImpl balloon = (BalloonImpl)eachColumn.get(0);
-          if (balloon.hasShadow()) {
-            eachY -= balloon.getShadowBorderInsets().top;
-          }
-          else {
-            eachY += 4;
-          }
+        if (columnSize > 0 && !((BalloonImpl)eachColumn.get(0)).hasShadow()) {
+          eachY += 4;
         }
         eachColumnX -= eachWidth.intValue();
 
@@ -252,12 +279,31 @@ public class BalloonLayoutImpl implements BalloonLayout {
             }
             else if (hasShadow) {
               eachY += space - shadow.top;
-            } else {
+            }
+            else {
               eachY += space - next.getShadowBorderInsets().bottom;
             }
           }
         }
       }
+    }
+  }
+
+  private void newLayout(List<Balloon> balloons, int startX, int bottomY) {
+    int y = bottomY;
+    ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
+    if (pane != null) {
+      y -= pane.getBottomHeight();
+    }
+    if (myParent instanceof IdeRootPane) {
+      y -= ((IdeRootPane)myParent).getStatusBarHeight();
+    }
+
+    for (Balloon balloon : balloons) {
+      Rectangle bounds = new Rectangle(getSize(balloon));
+      y -= bounds.height;
+      bounds.setLocation(startX - bounds.width, y);
+      balloon.setBounds(bounds);
     }
   }
 

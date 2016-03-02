@@ -27,12 +27,12 @@ RequestExecutionLevel user
 !include StrFunc.nsh
 !include LogicLib.nsh
 
-!include "customInstallActions.nsi"
-
 ${UnStrStr}
 ${UnStrLoc}
 ${UnStrRep}
 ${StrRep}
+
+!include "customInstallActions.nsi"
 
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
@@ -55,8 +55,8 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 Var baseRegKey
 Var IS_UPGRADE_60
 
-!define MUI_LANGDLL_REGISTRY_ROOT "HKCU" 
-!define MUI_LANGDLL_REGISTRY_KEY "Software\JetBrains\${MUI_PRODUCT}\${VER_BUILD}\" 
+!define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
+!define MUI_LANGDLL_REGISTRY_KEY "Software\JetBrains\${MUI_PRODUCT}\${VER_BUILD}\"
 !define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
 
 
@@ -419,7 +419,7 @@ UAC_Admin:
     StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
     SetShellVarContext all
     StrCpy $baseRegKey "HKLM"
-UAC_Done:	
+UAC_Done:
 ;  !insertmacro MUI_LANGDLL_DISPLAY
 FunctionEnd
 
@@ -462,22 +462,11 @@ Function searchCurrentVersion
   StrCmp $0 "complete" Done
   StrCpy $0 "HKLM"
   Call checkVersion
-Done:  
+Done:
 FunctionEnd
 
 
 Function uninstallOldVersion
-  ;check if the uninstalled application is running
-remove_previous_installation:
-  ;prepare a copy of launcher
-  CopyFiles "$3\bin\${PRODUCT_EXE_FILE}" "$3\bin\${PRODUCT_EXE_FILE}_copy"
-  ClearErrors
-  ;copy launcher to itself
-  CopyFiles "$3\bin\${PRODUCT_EXE_FILE}_copy" "$3\bin\${PRODUCT_EXE_FILE}"
-  Delete "$3\bin\${PRODUCT_EXE_FILE}_copy"
-  IfErrors 0 +3
-  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL complete
-  goto complete
   ; uninstallation mode
   !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
   ${If} $9 == "1"
@@ -597,7 +586,7 @@ getPath:
   StrCpy $1 "$1\$3"
   Call OMReadRegStr
   Pop $1
-  IfFileExists $3$5 done 0 
+  IfFileExists $3$5 done 0
   IntOp $4 $4 + 1
   goto loop
 done:
@@ -649,12 +638,12 @@ enum_versions_hkcu:
   IntCmp $1 $3 continue_enum_versions_hkcu continue_enum_versions_hkcu
   StrCpy $3 $1
   ReadRegStr $INSTDIR "HKCU" "Software\${MANUFACTURER}\${MUI_PRODUCT}\$3" ""
-  
+
 continue_enum_versions_hkcu:
   IntOp $0 $0 + 1
   Goto enum_versions_hkcu
-  
-end_enum_versions_hkcu:  
+
+end_enum_versions_hkcu:
 
   StrCpy $0 "0"        # registry key index
 
@@ -664,11 +653,11 @@ enum_versions_hklm:
   IntCmp $1 $3 continue_enum_versions_hklm continue_enum_versions_hklm
   StrCpy $3 $1
   ReadRegStr $INSTDIR "HKLM" "Software\${MANUFACTURER}\${MUI_PRODUCT}\$3" ""
-  
+
 continue_enum_versions_hklm:
   IntOp $0 $0 + 1
   Goto enum_versions_hklm
-  
+
 end_enum_versions_hklm:
 
   StrCmp $INSTDIR "" 0 skip_default_instdir
@@ -726,30 +715,19 @@ FunctionEnd
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
-;  StrCpy $baseRegKey "HKCU"
-;  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
-;  StrCmp $R2 1 continue_for_current_user
-;  SetShellVarContext all
-;  StrCpy $baseRegKey "HKLM"
-;  continue_for_current_user:
 
 ; create shortcuts
-
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 1" "State"
-  StrCmp $R2 1 "" skip_desktop_shortcut
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
+  StrCmp $R2 1 "" exe_64
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
+exe_64:
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
+  StrCmp $R2 1 "" skip_desktop_shortcut
+  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk" \
+                 "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
 
 skip_desktop_shortcut:
-  ; OS is not win7
-  Call winVersion
-  ${If} $0 == "0"
-    !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
-    StrCmp $R2 1 "" skip_quicklaunch_shortcut
-    CreateShortCut "$QUICKLAUNCH\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
-                   "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-  ${EndIf}
-skip_quicklaunch_shortcut:
   !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
   IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
 do_association:
@@ -765,7 +743,7 @@ next_association:
 
 done:
 
-  Call customInstallActions 
+  Call customInstallActions
 
   ;registration application to be presented in Open With list
   call ProductRegistration
@@ -947,7 +925,7 @@ Function un.ReturnBackupRegValue
   StrCmp $0 "" "noBackup"
     WriteRegStr HKCR $1 "" $0
     DeleteRegValue HKCR $1 $2
-noBackup:  
+noBackup:
   Pop $0
 FunctionEnd
 
@@ -1046,8 +1024,38 @@ complete:
   ${UnStrRep} $2 $2 "/" "\"
 FunctionEnd
 
+Function un.isIDEInUse
+  IfFileExists $R0 0 done
+  CopyFiles $R0 "$R0_copy"
+  ClearErrors
+  Delete $R0"
+  IfFileExists $R0 done
+  CopyFiles "$R0_copy" $R0
+done:
+  Delete "$R0_copy"
+FunctionEnd
+
+
+Function un.checkIfIDEInUse
+remove_previous_installation:
+  StrCpy $R0 "$INSTDIR\IdeaWin32.dll"
+  Call un.isIDEInUse
+  IfErrors remove_dialog 0
+  StrCpy $R0 "$INSTDIR\IdeaWin64.dll"
+  Call un.isIDEInUse
+  IfErrors remove_dialog done
+remove_dialog:
+  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL cancel
+cancel:
+  StrCpy $R0 "cancel"
+done:
+FunctionEnd
+
 
 Section "Uninstall"
+  ;check if the uninstalled application is running
+  Call un.checkIfIDEInUse
+  StrCmp $R0 "cancel" end_of_uninstall 0
   ; Uninstaller is in the \bin directory, we need upper level dir
   StrCpy $productDir $INSTDIR
   StrCpy $INSTDIR $INSTDIR\..
@@ -1111,14 +1119,14 @@ shortcuts:
   SetShellVarContext all
 keep_current_user:
   DetailPrint "Start Menu: $SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}"
- 
+
   Delete "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
 ;  Delete "$SMPROGRAMS\$R9\Uninstall ${PRODUCT_FULL_NAME_WITH_VER}.lnk"
 ; Delete only if empty (last IDEA version is uninstalled)
   RMDir  "$SMPROGRAMS\$R9"
 
   Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  Delete "$QUICKLAUNCH\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk"
 
 registry:
   StrCpy $5 "Software\${MANUFACTURER}"

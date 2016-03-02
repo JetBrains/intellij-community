@@ -22,6 +22,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
+import com.intellij.ide.util.newProjectWizard.WizardDelegate;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.*;
@@ -650,6 +651,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     if (builder != null) {
       myWizard.getSequence().setType(builder.getBuilderId());
     }
+    myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
   }
 
   @TestOnly

@@ -156,13 +156,13 @@ public class DomGenPanel {
   public boolean validate() {
     if (!new File(mySchemaLocation.getText()).exists()) {
       Messages.showErrorDialog(myProject, "Schema location doesn't exist", "Error");
-      IdeFocusManager.getInstance(myProject).requestFocus(mySchemaLocation);
+      IdeFocusManager.getInstance(myProject).requestFocus(mySchemaLocation, true);
       return false;
     }
 
     if (!new File(myOutputDir.getText()).exists()) {
       Messages.showErrorDialog(myProject, "Output dir doesn't exist", "Error");
-      IdeFocusManager.getInstance(myProject).requestFocus(myOutputDir);
+      IdeFocusManager.getInstance(myProject).requestFocus(myOutputDir, true);
       return false;
     }
 

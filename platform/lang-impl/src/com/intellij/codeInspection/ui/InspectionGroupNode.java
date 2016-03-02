@@ -25,7 +25,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-class InspectionGroupNode extends InspectionTreeNode {
+public class InspectionGroupNode extends InspectionTreeNode {
   private static final Icon EMPTY = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
   InspectionGroupNode(@NotNull String groupTitle) {

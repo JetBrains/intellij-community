@@ -185,7 +185,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     getTableView().clearSelection();
     getTableView().addRowSelectionInterval(index, index);
     ScrollingUtil.ensureIndexIsVisible(getTableView(), index, 0);
-    IdeFocusManager.getGlobalInstance().requestFocus(getTableView());
+    IdeFocusManager.getGlobalInstance().requestFocus(getTableView(), false);
   }
 
   void reset() {

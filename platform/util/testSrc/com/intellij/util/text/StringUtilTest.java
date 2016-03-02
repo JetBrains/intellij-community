@@ -110,6 +110,7 @@ public class StringUtilTest {
     assertEquals("fixes", StringUtil.pluralize("fix"));
     assertEquals("men", StringUtil.pluralize("man"));
     assertEquals("media", StringUtil.pluralize("medium"));
+    assertEquals("stashes", StringUtil.pluralize("stash"));
   }
 
   @Test

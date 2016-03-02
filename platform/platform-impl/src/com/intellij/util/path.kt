@@ -21,12 +21,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.FileTime
 
 fun Path.exists() = Files.exists(this)
 
@@ -74,7 +70,7 @@ fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(this, obje
   }
 }) else this
 
-fun Path.getLastModifiedTime(): FileTime? = Files.getLastModifiedTime(this)
+fun Path.lastModified() = Files.getLastModifiedTime(this)
 
 val Path.systemIndependentPath: String
   get() = toString().replace(File.separatorChar, '/')
@@ -90,14 +86,32 @@ fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePat
 
 fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
 
-fun Path.write(data: ByteArray): Path {
-  parent?.createDirectories()
-  return Files.write(this, data)
+fun Path.write(data: ByteArray, offset: Int = 0, length: Int = data.size): Path {
+  outputStream().use { it.write(data, offset, length) }
+  return this
 }
+
+fun Path.size() = Files.size(this)
+
+fun Path.sizeOrNull(): Long {
+  val attributes: BasicFileAttributes
+  try {
+    attributes = Files.readAttributes(this, BasicFileAttributes::class.java)
+  }
+  catch (ignored: IOException) {
+    return -1
+  }
+
+  return attributes.size()
+}
+
+fun Path.isHidden() = Files.isHidden(this)
 
 fun Path.isDirectory() = Files.isDirectory(this)
 
 fun Path.isFile() = Files.isRegularFile(this)
+
+fun Path.move(target: Path) = Files.move(this, target)
 
 /**
  * Opposite to Java, parent directories will be created
@@ -115,4 +129,22 @@ fun Path.refreshVfs() {
       VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
     }
   }
+}
+
+inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? {
+  try {
+    Files.newDirectoryStream(this).use(task)
+  }
+  catch (ignored: NoSuchFileException) {
+  }
+  return null
+}
+
+inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
+  try {
+    Files.newDirectoryStream(this, { filter.invoke(it) }).use(task)
+  }
+  catch (ignored: NoSuchFileException) {
+  }
+  return null
 }

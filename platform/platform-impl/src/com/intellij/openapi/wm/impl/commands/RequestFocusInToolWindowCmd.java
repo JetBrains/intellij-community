@@ -46,15 +46,11 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private final boolean myForced;
   private final Expirable myTimestamp;
 
-  private final Throwable myAllocation;
-
   public RequestFocusInToolWindowCmd(IdeFocusManager focusManager, final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, boolean forced) {
     super(finishCallBack);
     myToolWindow = toolWindow;
     myFocusWatcher = focusWatcher;
     myForced = forced;
-
-    myAllocation = new Throwable();
 
     myTimestamp = focusManager.getTimestamp(true);
   }
@@ -180,7 +176,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
               public ActionCallback run() {
                 return ActionCallback.DONE;
               }
-            }).doWhenProcessed(new Runnable() {
+            }, myForced).doWhenProcessed(new Runnable() {
               @Override
               public void run() {
                 updateToolWindow(c);
@@ -188,7 +184,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
             }).notify(result);
           }
           else {
-            myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent(), myAllocation))
+            myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent(), new Exception()), myForced)
               .doWhenProcessed(new Runnable() {
                 @Override
                 public void run() {

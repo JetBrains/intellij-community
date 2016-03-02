@@ -23,7 +23,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface VcsLogFilterer {
 
-  void onRefresh(@NotNull DataPack dataPack);
+  void addVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener);
+
+  void removeVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener);
+
+  void onRefresh();
+
+  void invalidate();
 
   void onFiltersChange(@NotNull VcsLogFilterCollection filters);
 
@@ -31,4 +37,5 @@ public interface VcsLogFilterer {
 
   void moreCommitsNeeded(@NotNull Runnable onLoaded);
 
+  boolean isValid();
 }

@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,10 +109,10 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     simplifyExpression(expression);
   }
 
-  public static void simplifyIfStatement(final PsiExpression expression) throws IncorrectOperationException {
+  public static boolean simplifyIfStatement(final PsiExpression expression) throws IncorrectOperationException {
     PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiIfStatement) || ((PsiIfStatement)parent).getCondition() != expression) return;
-    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return;
+    if (!(parent instanceof PsiIfStatement) || ((PsiIfStatement)parent).getCondition() != expression) return false;
+    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
     boolean condition = Boolean.parseBoolean(expression.getText());
     PsiIfStatement ifStatement = (PsiIfStatement)parent;
     if (condition) {
@@ -126,6 +127,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         replaceWithStatements(ifStatement, elseBranch);
       }
     }
+    return true;
   }
 
   private static void replaceWithStatements(final PsiStatement orig, final PsiStatement statement) throws IncorrectOperationException {
@@ -208,7 +210,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         return;
       }
     }
-    simplifyIfStatement(newExpression);
+    if (!simplifyIfStatement(newExpression)) {
+      ParenthesesUtils.removeParentheses(newExpression, false);
+    }
   }
 
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {

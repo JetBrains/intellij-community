@@ -1421,7 +1421,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   }
 
   private static class MyUndoableAction extends BasicUndoableAction {
-    private final WeakReference<TextMergeViewer> myViewerRef;
+    @NotNull private final WeakReference<TextMergeViewer> myViewerRef;
     @NotNull private final List<TextMergeChange.State> myStates;
     private final boolean myUndo;
 

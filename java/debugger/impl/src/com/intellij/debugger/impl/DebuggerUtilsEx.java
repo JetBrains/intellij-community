@@ -31,6 +31,7 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.execution.filters.ExceptionFilters;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
@@ -58,7 +59,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -88,7 +88,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
     final DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
-    final List<CodeFragmentFactory> suitableFactories = new ArrayList<CodeFragmentFactory>(providers.length);
+    final List<CodeFragmentFactory> suitableFactories = new ArrayList<>(providers.length);
     if (providers.length > 0) {
       for (CodeFragmentFactory factory : providers) {
         if (factory != defaultFactory && factory.isContextAccepted(context)) {
@@ -197,7 +197,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static boolean isCharOrIntegerArray(Value value) {
     if (value == null) return false;
     if (myCharOrIntegers == null) {
-      myCharOrIntegers = new HashSet<String>();
+      myCharOrIntegers = new HashSet<>();
       myCharOrIntegers.add("C");
       myCharOrIntegers.add("B");
       myCharOrIntegers.add("S");
@@ -285,8 +285,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (filters1.length != filters2.length) {
       return false;
     }
-    final Set<ClassFilter> f1 = new HashSet<ClassFilter>(Math.max((int) (filters1.length/.75f) + 1, 16));
-    final Set<ClassFilter> f2 = new HashSet<ClassFilter>(Math.max((int) (filters2.length/.75f) + 1, 16));
+    final Set<ClassFilter> f1 = new HashSet<>(Math.max((int)(filters1.length / .75f) + 1, 16));
+    final Set<ClassFilter> f2 = new HashSet<>(Math.max((int)(filters2.length / .75f) + 1, 16));
     Collections.addAll(f1, filters1);
     Collections.addAll(f2, filters2);
     return f2.equals(f1);
@@ -372,7 +372,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if(events == null) {
       return Collections.emptyList();
     }
-    final List<Pair<Breakpoint, Event>> eventDescriptors = new SmartList<Pair<Breakpoint, Event>>();
+    final List<Pair<Breakpoint, Event>> eventDescriptors = new SmartList<>();
 
     final RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
     for (final Event event : events) {
@@ -565,16 +565,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String methodNameWithArguments(Method m) {
-    StringBuilder res = new StringBuilder();
-    res.append(m.name()).append("(");
-    res.append(StringUtil.join(m.argumentTypeNames(), new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return getSimpleName(s);
-      }
-    }, ", "));
-    res.append(")");
-    return res.toString();
+    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), DebuggerUtilsEx::getSimpleName, ", ") + ")";
   }
 
   public static String getSimpleName(String fqn) {
@@ -716,7 +707,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static void setAlternativeSourceUrl(String className, String source, Project project) {
     Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
     if (map == null) {
-      map = new ConcurrentHashMap<String, String>();
+      map = new ConcurrentHashMap<>();
       project.putUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING, map);
     }
     map.put(className, source);
@@ -965,5 +956,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     catch (UnsupportedOperationException ignored) {
       // ignore: some J2ME implementations does not provide this operation
     }
+  }
+
+  public static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file != null) {
+      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+      if (mapping != null) {
+        int line = mapping.bytecodeToSource(originalLine + 1);
+        if (line > -1) {
+          return line;
+        }
+      }
+    }
+    return -1;
   }
 }

@@ -39,30 +39,10 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
 
   @Override
   @NotNull
-  public ActionCallback requestFocus(@NotNull final Component c) {
-    return getGlobalInstance().requestFocus(c, new Throwable());
-  }
-
-  @Override
-  @NotNull
-  public ActionCallback requestFocus(@NotNull final FocusCommand command) {
-    return getGlobalInstance().requestFocus(command);
-  }
-
-  @NotNull
-  @Override
-  public ActionCallback requestFocus(@NotNull Component c, @NotNull Throwable creationTrace) {
-    return getGlobalInstance().requestFocus(c, creationTrace);
-  }
-
-  @Deprecated
-  @Override
-  @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
     return getGlobalInstance().requestFocus(c, forced);
   }
 
-  @Deprecated
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {

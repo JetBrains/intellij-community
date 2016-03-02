@@ -15,9 +15,11 @@
  */
 package com.intellij.notification.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
@@ -108,7 +110,8 @@ public class NotificationsUtil {
       result.append("<b").append(titleColor == null ? ">" : " color=\"" + titleColor + "\">").append(title).append("</b>");
     }
     if (!StringUtil.isEmpty(subtitle)) {
-      result.append("&nbsp;").append(subtitle);
+      result.append("&nbsp;").append(titleColor == null ? "" : "<span color=\"" + titleColor + "\">").append(subtitle)
+        .append(titleColor == null ? "" : "</span>");
     }
     if (!StringUtil.isEmpty(content)) {
       result.append("<p").append(contentStyle == null ? "" : " style=\"" + contentStyle + "\"")
@@ -156,7 +159,23 @@ public class NotificationsUtil {
   @NotNull
   public static Icon getIcon(@NotNull final Notification notification) {
     Icon icon = notification.getIcon();
-    return icon != null ? icon : getMessageType(notification).getDefaultIcon();
+    if (icon != null) {
+      return icon;
+    }
+
+    if (!NotificationsManagerImpl.newEnabled()) {
+      return getMessageType(notification).getDefaultIcon();
+    }
+
+    switch (notification.getType()) {
+      case WARNING:
+        return AllIcons.General.BalloonWarning;
+      case ERROR:
+        return AllIcons.Ide.FatalError;
+      case INFORMATION:
+      default:
+        return AllIcons.General.BalloonInformation;
+    }
   }
 
   @NotNull

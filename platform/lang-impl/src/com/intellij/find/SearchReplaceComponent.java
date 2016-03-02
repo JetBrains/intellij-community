@@ -211,11 +211,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     }
   }
 
-  @Override
-  public void requestFocus() {
+  public void requestFocusInTheSearchFieldAndSelectContent (Project project) {
     mySearchTextComponent.setSelectionStart(0);
     mySearchTextComponent.setSelectionEnd(mySearchTextComponent.getText().length());
-    mySearchTextComponent.requestFocus();
+    IdeFocusManager.getInstance(project).requestFocus(mySearchTextComponent, true);
   }
 
   public void setStatusText(@NotNull String status) {
@@ -332,7 +331,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                                        close();
                                                      }
                                                      else {
-                                                       IdeFocusManager.getInstance(myProject).requestFocus(myTargetComponent);
+                                                       IdeFocusManager.getInstance(myProject).requestFocus(myTargetComponent, true);
                                                        addTextToRecent(mySearchTextComponent);
                                                      }
                                                    }

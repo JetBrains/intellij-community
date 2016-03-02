@@ -39,8 +39,8 @@ import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.settingsRepository.AuthenticationException
 import org.jetbrains.settingsRepository.LOG
-import java.io.File
 import java.io.InputStream
+import java.nio.file.Path
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   if (e is org.eclipse.jgit.errors.NoRemoteRepositoryException || e.status == TransportException.Status.CANNOT_RESOLVE_REPO) {
@@ -91,14 +91,14 @@ fun Repository.disableAutoCrLf(): Repository {
   return this
 }
 
-fun createBareRepository(dir: File): Repository {
-  val repository = FileRepositoryBuilder().setBare().setGitDir(dir).build()
+fun createBareRepository(dir: Path): Repository {
+  val repository = FileRepositoryBuilder().setBare().setGitDir(dir.toFile()).build()
   repository.create(true)
   return repository
 }
 
-fun createRepository(dir: File): Repository {
-  val repository = FileRepositoryBuilder().setWorkTree(dir).build()
+fun createRepository(dir: Path): Repository {
+  val repository = FileRepositoryBuilder().setWorkTree(dir.toFile()).build()
   repository.create()
   return repository
 }
@@ -165,7 +165,7 @@ fun Repository.computeIndexDiff(): IndexDiff {
   }
 }
 
-fun cloneBare(uri: String, dir: File, credentialsStore: NotNullLazyValue<CredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
+fun cloneBare(uri: String, dir: Path, credentialsStore: NotNullLazyValue<CredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
   val repository = createBareRepository(dir)
   val config = repository.setUpstream(uri)
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)

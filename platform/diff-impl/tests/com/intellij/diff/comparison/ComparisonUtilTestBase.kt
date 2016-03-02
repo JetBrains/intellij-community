@@ -25,9 +25,10 @@ import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
 abstract class ComparisonUtilTestBase : DiffTestCase() {
-  private fun doLineTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
+  private fun doLineTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
     val fragments = MANAGER.compareLines(before.charsSequence, after.charsSequence, policy, INDICATOR)
     checkConsistency(fragments, before, after)
+    if (matchings != null) checkLineMatching(fragments, matchings)
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
@@ -109,6 +110,18 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun checkDiffChanges(fragments: List<DiffFragment>, expected: List<Change>) {
     val changes = convertDiffFragments(fragments)
     assertOrderedEquals(changes, expected)
+  }
+
+  private fun checkLineMatching(fragments: List<LineFragment>, matchings: Couple<BitSet>) {
+    val set1 = BitSet()
+    val set2 = BitSet()
+    for (fragment in fragments) {
+      set1.set(fragment.startLine1, fragment.endLine1)
+      set2.set(fragment.startLine2, fragment.endLine2)
+    }
+
+    assertEquals(matchings.first, set1)
+    assertEquals(matchings.second, set2)
   }
 
   private fun checkDiffMatching(fragments: List<DiffFragment>, matchings: Couple<BitSet>) {
@@ -201,7 +214,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
         assertTrue(change != null || matchings != null)
 
         when (type) {
-          TestType.LINE -> doLineTest(before!!, after!!, change, policy)
+          TestType.LINE -> doLineTest(before!!, after!!, matchings, change, policy)
           TestType.WORD -> doWordTest(before!!, after!!, matchings, change, policy)
           TestType.CHAR -> doCharTest(before!!, after!!, matchings, change, policy)
           TestType.SPLITTER -> {
@@ -266,6 +279,47 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
 
       fun ignore() {
         ignoreMatching = parseMatching(before, after)
+      }
+
+      private fun parseMatching(before: String, after: String): Couple<BitSet> {
+        if (type == TestType.LINE) {
+          val builder = this@TestBuilder
+          return Couple.of(parseLineMatching(before, builder.before!!), parseLineMatching(after, builder.after!!))
+        }
+        else {
+          return Couple.of(parseMatching(before), parseMatching(after))
+        }
+      }
+
+      fun parseLineMatching(matching: String, document: Document): BitSet {
+        assertEquals(matching.length, document.textLength)
+
+        val lines1 = matching.split('_', '*')
+        val lines2 = document.charsSequence.split('\n')
+        assertEquals(lines1.size, lines2.size)
+        for (i in 0..lines1.size - 1) {
+          assertEquals(lines1[i].length, lines2[i].length, "line $i")
+        }
+
+
+        val set = BitSet()
+
+        var index = 0
+        var lineNumber = 0
+        while (index < matching.length) {
+          var end = matching.indexOfAny(listOf("_", "*"), index) + 1
+          if (end == 0) end = matching.length
+
+          val line = matching.subSequence(index, end)
+          if (line.find { it != ' ' && it != '_' } != null) {
+            assert(!line.contains(' '))
+            set.set(lineNumber)
+          }
+          lineNumber++
+          index = end
+        }
+
+        return set
       }
     }
 

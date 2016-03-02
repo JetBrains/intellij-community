@@ -21,13 +21,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.tasks.*;
+import com.intellij.tasks.CustomTaskState;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskManagerImpl;
-
-import java.util.ArrayList;
 
 /**
  * @author Dmitry Avdeev
@@ -52,18 +50,6 @@ public class CloseTaskAction extends BaseTaskAction {
         catch (Exception e1) {
           Messages.showErrorDialog(project, e1.getMessage(), "Cannot Set State For Issue");
         }
-      }
-      if (dialog.isCommitChanges()) {
-        ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-        for (ChangeListInfo info : task.getChangeLists()) {
-          LocalChangeList list = changeListManager.getChangeList(info.id);
-          if (list != null) {
-            changeListManager.commitChanges(list, new ArrayList<Change>(list.getChanges()));
-          }
-        }
-      }
-      if (dialog.isMergeBranch()) {
-        taskManager.mergeBranch(task);
       }
     }
   }

@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -135,23 +135,20 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final ShowParameterInfoHandler.BestLocationPointProvider provider = new MyBestLocationPointProvider(editor);
     final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.UNDER);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (editor.isDisposed() || DumbService.isDumb(project)) return;
+    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+      if (editor.isDisposed() || DumbService.isDumb(project)) return;
 
-        final Document document = editor.getDocument();
-        if (document.getTextLength() < elementStart) return;
+      final Document document = editor.getDocument();
+      if (document.getTextLength() < elementStart) return;
 
-        HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
-        hintHint.setExplicitClose(true);
+      HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
+      hintHint.setExplicitClose(true);
 
-        Editor editorToShow = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-        // is case of injection we need to calculate position for EditorWindow
-        // also we need to show the hint in the main editor because of intention bulb
-        hintManager.showEditorHint(hint, editorToShow, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
-        new ParameterInfoController(project, editor, elementStart, hint, handler, provider);
-      }
+      Editor editorToShow = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      // is case of injection we need to calculate position for EditorWindow
+      // also we need to show the hint in the main editor because of intention bulb
+      hintManager.showEditorHint(hint, editorToShow, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
+      new ParameterInfoController(project, editor, elementStart, hint, handler, provider);
     });
   }
 

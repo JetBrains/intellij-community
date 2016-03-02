@@ -109,7 +109,7 @@ public class ExportTestResultsForm {
       b = myCustomTemplateRb;
     }
     b.setSelected(true);
-    IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(b);
+    IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(b, true);
     myFolderField.setText(defaultFolder);
     myCustomTemplateField.setText(FileUtil.toSystemDependentName(StringUtil.notNullize(config.getUserTemplatePath())));
     myOpenExportedFileCb.setSelected(config.isOpenResults());
@@ -129,7 +129,7 @@ public class ExportTestResultsForm {
   private void updateOnFormatChange() {
     if (getExportFormat() == ExportTestResultsConfiguration.ExportFormat.UserTemplate) {
       myCustomTemplateField.setEnabled(true);
-      IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(myCustomTemplateField.getChildComponent());
+      IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(myCustomTemplateField.getChildComponent(), true);
     }
     else {
       myCustomTemplateField.setEnabled(false);

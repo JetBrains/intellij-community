@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myRunPanel.setOpaque(false);
         myRunPanel.add(component, BorderLayout.CENTER);
 
-        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 0, 0));
+        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 1, 0));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }

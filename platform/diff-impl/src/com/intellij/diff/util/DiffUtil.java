@@ -84,12 +84,13 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -284,24 +285,19 @@ public class DiffUtil {
 
   @NotNull
   public static JPanel createMessagePanel(@NotNull String message) {
-    Pair<JPanel, JLabel> pair = createMessagePanel();
-    pair.getSecond().setText(message);
-    return pair.getFirst();
-  }
-
-  @NotNull
-  public static Pair<JPanel, JLabel> createMessagePanel() {
-    JLabel label = new JLabel();
+    String text = StringUtil.replace(message, "\n", "<br>");
+    JLabel label = new JBLabel(text) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension size = super.getMinimumSize();
+        size.width = Math.min(size.width, 200);
+        size.height = Math.min(size.height, 100);
+        return size;
+      }
+    }.setCopyable(true);
     label.setForeground(UIUtil.getInactiveTextColor());
-    JPanel wrapper = createMessagePanel(label);
-    return Pair.create(wrapper, label);
-  }
 
-  @NotNull
-  public static JPanel createMessagePanel(@NotNull JComponent comp) {
-    JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(comp, new GridBag().insets(JBUI.insets(1)));
-    return wrapper;
+    return new CenteredPanel(label, JBUI.Borders.empty(5));
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -560,7 +556,7 @@ public class DiffUtil {
 
   public static void requestFocus(@Nullable Project project, @Nullable Component component) {
     if (component == null) return;
-    IdeFocusManager.getInstance(project).requestFocus(component);
+    IdeFocusManager.getInstance(project).requestFocus(component, true);
   }
 
   //
@@ -1287,6 +1283,56 @@ public class DiffUtil {
         height = Math.max(height, component.getPreferredSize().height);
       }
       return height;
+    }
+  }
+
+  public static class CenteredPanel extends JPanel {
+    private final JComponent myComponent;
+
+    public CenteredPanel(@NotNull JComponent component) {
+      myComponent = component;
+      add(component);
+    }
+
+    public CenteredPanel(@NotNull JComponent component, @NotNull Border border) {
+      this(component);
+      setBorder(border);
+    }
+
+    @Override
+    public void doLayout() {
+      final Dimension size = getSize();
+      final Dimension preferredSize = myComponent.getPreferredSize();
+
+      Insets insets = getInsets();
+      JBInsets.removeFrom(size, insets);
+
+      int width = Math.min(size.width, preferredSize.width);
+      int height = Math.min(size.height, preferredSize.height);
+      int x = Math.max(0, (size.width - preferredSize.width) / 2);
+      int y = Math.max(0, (size.height - preferredSize.height) / 2);
+
+      myComponent.setBounds(insets.left + x, insets.top + y, width, height);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return addInsets(myComponent.getPreferredSize());
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return addInsets(myComponent.getMinimumSize());
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return addInsets(myComponent.getMaximumSize());
+    }
+
+    private Dimension addInsets(Dimension dimension) {
+      JBInsets.addTo(dimension, getInsets());
+      return dimension;
     }
   }
 }

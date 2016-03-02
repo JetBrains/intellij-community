@@ -34,10 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-@State(
-  name = "EclipseModuleManager",
-  storages = @Storage(StoragePathMacros.MODULE_FILE)
-)
+@State(name = "EclipseModuleManager")
 public class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element>, StateStorageChooserEx {
   @NonNls private static final String VALUE_ATTR = "value";
   @NonNls private static final String VARELEMENT = "varelement";

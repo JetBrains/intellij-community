@@ -53,7 +53,7 @@ abstract class IcsTestCase {
     get() = fsRule.fs
 
   val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-    val icsManager = IcsManager(tempDirManager.newDirectory())
+    val icsManager = IcsManager(tempDirManager.newPath())
     icsManager.repositoryManager.createRepositoryIfNeed()
     icsManager.repositoryActive = true
     icsManager
@@ -62,4 +62,4 @@ abstract class IcsTestCase {
   val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.ApplicationLevelProvider() }
 }
 
-fun TemporaryDirectory.createRepository(directoryName: String? = null) = createGitRepository(newDirectory(directoryName))
+fun TemporaryDirectory.createRepository(directoryName: String? = null) = createGitRepository(newPath(directoryName))

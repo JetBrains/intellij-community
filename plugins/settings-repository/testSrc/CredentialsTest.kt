@@ -18,12 +18,11 @@ class CredentialsTest {
   private var storeFile: File? = null
 
   private fun createProvider(credentialsStore: CredentialsStore): JGitCredentialsProvider {
-    return JGitCredentialsProvider(NotNullLazyValue.createConstantValue<CredentialsStore>(credentialsStore), FileRepositoryBuilder().setBare().setGitDir(File("/tmp/fake")).build())
+    return JGitCredentialsProvider(NotNullLazyValue.createConstantValue(credentialsStore), FileRepositoryBuilder().setBare().setGitDir(File("/tmp/fake")).build())
   }
 
   private fun createFileStore(): FileCredentialsStore {
-    storeFile = FileUtil.generateRandomTemporaryPath()
-    return FileCredentialsStore(storeFile!!)
+    return FileCredentialsStore(FileUtil.generateRandomTemporaryPath().toPath())
   }
 
   @After fun tearDown() {

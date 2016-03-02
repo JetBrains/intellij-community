@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Medvedev
  */
 public interface EditorTextProvider {
-  LanguageExtension<EditorTextProvider> EP = new LanguageExtension<EditorTextProvider>("com.intellij.debuggerEditorTextProvider");
+  LanguageExtension<EditorTextProvider> EP = new LanguageExtension<>("com.intellij.debuggerEditorTextProvider");
 
   @Nullable
   TextWithImports getEditorText(PsiElement elementAtCaret);

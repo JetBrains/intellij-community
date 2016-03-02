@@ -287,12 +287,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(parameterInitializer, selectedType);
       if (lambda != null) {
         final PsiParameter[] lambdaParameters = ((PsiLambdaExpression)lambda).getParameterList().getParameters();
-        final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(((PsiLambdaExpression)lambda).getBody(), lambdaParameters, selectedType);
-        if (toConvertCall != null) {
-          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, selectedType, lambdaParameters);
-          if (methodReferenceText != null) {
-            lambda = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(methodReferenceText, lambda);
-          }
+        final String methodReferenceText = LambdaCanBeMethodReferenceInspection.convertToMethodReference(((PsiLambdaExpression)lambda).getBody(), lambdaParameters, selectedType, null);
+        if (methodReferenceText != null) {
+          lambda = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(methodReferenceText, lambda);
         }
 
         processor.setParameterInitializer(lambda);

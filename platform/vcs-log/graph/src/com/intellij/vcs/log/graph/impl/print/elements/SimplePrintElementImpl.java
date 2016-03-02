@@ -49,5 +49,4 @@ public class SimplePrintElementImpl extends PrintElementWithGraphElement impleme
     result = 31 * result + myPositionInCurrentRow;
     return result;
   }
-
 }

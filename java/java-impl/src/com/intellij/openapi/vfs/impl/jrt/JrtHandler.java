@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
@@ -74,7 +73,7 @@ class JrtHandler extends ArchiveHandler {
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
     Map<String, EntryInfo> map = ContainerUtil.newHashMap();
-    map.put(StringUtilRt.EMPTY_STRING, createRootEntry());
+    map.put("", createRootEntry());
 
     Path root = getFileSystem().getPath("/modules");
     if (!Files.exists(root)) throw new FileNotFoundException("JRT root missing");
@@ -94,20 +93,23 @@ class JrtHandler extends ArchiveHandler {
 
       private void process(Path entry, BasicFileAttributes attrs) throws IOException {
         int pathLength = entry.getNameCount();
-        if (pathLength > 2) {
-          Path relativePath = entry.subpath(2, pathLength);
-          EntryInfo parent = map.get(pathLength > 3 ? relativePath.getParent().toString() : StringUtilRt.EMPTY_STRING);
-          if (parent == null) throw new IOException("Out of order: " + entry);
-          String path = relativePath.toString(), shortName = entry.getFileName().toString();
-          long length = attrs.size();
-          long modified = attrs.lastModifiedTime().toMillis();
-          if (attrs.isDirectory()) {
-            map.put(path, new EntryInfo(shortName, true, length, modified, parent));
-          }
-          else {
-            String module = myInterner.intern(entry.getName(1).toString());
-            map.put(path, new JrtEntryInfo(shortName, module, length, modified, parent));
-          }
+        if (pathLength <= 2) return;
+
+        Path relativePath = entry.subpath(2, pathLength);
+        String path = relativePath.toString(), shortName = entry.getFileName().toString();
+        if (map.containsKey(path) || "module-info.class".equals(shortName)) return;
+
+        EntryInfo parent = map.get(pathLength > 3 ? relativePath.getParent().toString() : "");
+        if (parent == null) throw new IOException("Out of order: " + entry);
+
+        long length = attrs.size();
+        long modified = attrs.lastModifiedTime().toMillis();
+        if (attrs.isDirectory()) {
+          map.put(path, new EntryInfo(shortName, true, length, modified, parent));
+        }
+        else {
+          String module = myInterner.intern(entry.getName(1).toString());
+          map.put(path, new JrtEntryInfo(shortName, module, length, modified, parent));
         }
       }
     });

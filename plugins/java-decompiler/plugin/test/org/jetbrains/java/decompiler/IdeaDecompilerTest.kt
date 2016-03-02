@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,17 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -86,7 +92,13 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
       assertEquals(2, myFixture.doHighlighting().size)
+      myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
+      assertEquals(2, myFixture.doHighlighting().size)
+      myFixture.editor.caretModel.moveToOffset(offset(14, 17))  // int i: usage, declaration
+      assertEquals(2, myFixture.doHighlighting().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
+      assertEquals(2, myFixture.doHighlighting().size)
+      myFixture.editor.caretModel.moveToOffset(offset(15, 13))  // int r: usage, declaration
       assertEquals(2, myFixture.doHighlighting().size)
       myFixture.editor.caretModel.moveToOffset(offset(16, 28))  // int r: usage, declaration
       assertEquals(2, myFixture.doHighlighting().size)
@@ -115,7 +127,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   fun testPerformance() {
     val decompiler = IdeaDecompiler()
     val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JTable.class")
-    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 4000, { decompiler.getText(file) }).cpuBound().useLegacyScaling().assertTiming()
+    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000, { decompiler.getText(file) }).cpuBound().assertTiming()
   }
 
   fun testCancellation() {
@@ -124,8 +136,11 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
       return
     }
 
-    val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JTable.class")
+    val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JComponent.class")
     val decompiler = ClassFileDecompilers.find(file) as IdeaDecompiler
+
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(file))
+    assertNull(decompiler.getProgress(file))
 
     val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, project)
     alarm.addRequest(object : Runnable {
@@ -142,9 +157,36 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
 
     try {
       FileDocumentManager.getInstance().getDocument(file)
+      alarm.cancelAllRequests()
       fail("should have been cancelled")
     }
     catch (ignored: ProcessCanceledException) { }
+  }
+
+  fun testStructureView() {
+    val file = getTestFile("StructureView.class")
+    file.parent.children ; file.parent.refresh(false, true)  // inner classes
+
+    val editor = FileEditorManager.getInstance(project).openFile(file, false)[0]
+    val builder = StructureViewBuilder.PROVIDER.getStructureViewBuilder(StdFileTypes.CLASS, file, project)!!
+    val viewComponent = builder.createStructureView(editor, project) as StructureViewComponent
+    Disposer.register(testRootDisposable, viewComponent)
+    viewComponent.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
+
+    val treeStructure = viewComponent.treeStructure
+    PlatformTestUtil.updateRecursively(treeStructure.rootElement as AbstractTreeNode<*>)
+    PlatformTestUtil.assertTreeStructureEquals(treeStructure, """
+      StructureView.java
+       StructureView
+        B
+         B()
+         build(int): StructureView
+          $1
+           class initializer
+        StructureView()
+        getData(): int
+        setData(int): void
+        data: int""".trimIndent())
   }
 
 

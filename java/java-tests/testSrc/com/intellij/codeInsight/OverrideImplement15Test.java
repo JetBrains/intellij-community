@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -163,19 +164,27 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     PsiElement context = getFile().findElementAt(offset);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
     assert psiClass != null;
-    if (toImplement == null) {
-      PsiClassType[] implement = psiClass.getImplementsListTypes();
-      final PsiClass superClass = implement.length == 0 ? psiClass.getSuperClass() : implement[0].resolve();
-      assert superClass != null;
-      PsiMethod method = superClass.getMethods()[0];
-      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
-      final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method, 
-                                                                                             OverrideImplementExploreUtil.correctSubstitutor(method, substitutor)));
-      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
-    }
-    else {
-      OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
-    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        if (toImplement == null) {
+          PsiClassType[] implement = psiClass.getImplementsListTypes();
+          final PsiClass superClass = implement.length == 0 ? psiClass.getSuperClass() : implement[0].resolve();
+          assert superClass != null;
+          PsiMethod method = superClass.getMethods()[0];
+          final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
+          final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method,
+                                                                                                 OverrideImplementExploreUtil
+                                                                                                   .correctSubstitutor(method,
+                                                                                                                       substitutor)));
+          OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
+        }
+        else {
+          OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
+        }
+      }
+    });
+
     checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }

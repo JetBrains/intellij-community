@@ -137,6 +137,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
+    <xdebugger.settings implementation="com.jetbrains.python.debugger.settings.PyDebuggerSettings"/>
     <xdebugger.localAttachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
@@ -149,7 +150,6 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
 
-    <!-- <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/> -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
@@ -182,6 +182,11 @@
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention</className>
       <category>Python</category>
     </intentionAction>
 
@@ -375,7 +380,11 @@
     <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" displayName="PEP 8 naming convention violation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyAssignmentToLoopOrWithParameterInspection" suppressId="PyAssignmentToLoopOrWithParameter" displayName="Assignment to 'for' loop or 'with' statement parameter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAssignmentToLoopOrWithParameterInspection"/>
 
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType"/>
+    <localInspection language="Python" shortName="PyMissingTypeHintsInspection" suppressId="PyMissingTypeHints" displayName="Type hinting is missing for function definition" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingTypeHintsInspection"/>
+
+    <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
+    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
+    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>
@@ -388,6 +397,7 @@
     <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineLocalHandler"/>
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
+    <gotoDeclarationHandler implementation="com.jetbrains.python.psi.impl.PyGotoDeclarationHandler"/>
     <lang.smartEnterProcessor language="Python"
                               implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
     <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover" id="statement"
@@ -417,8 +427,6 @@
     <applicationService serviceInterface="com.jetbrains.python.sdk.PySdkService"
                         serviceImplementation="com.jetbrains.python.sdk.PySdkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
-
-    <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
@@ -490,6 +498,7 @@
                    serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"/>
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyFunctionTypeCommentReferenceContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>
 
@@ -565,6 +574,10 @@
     <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
     <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
                         serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
+
+    <!-- postfix templates!-->
+    <codeInsight.template.postfixTemplateProvider language="Python"
+                                                  implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -606,6 +619,8 @@
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
     <extensionPoint qualifiedName="Pythonid.testLocator" interface="com.jetbrains.python.testing.PythonTestLocator"/>
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension"/>
+    <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider" interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -816,10 +831,6 @@
   <application-components>
     <component>
       <implementation-class>com.jetbrains.python.testing.VFSTestFrameworkListener</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
-      <implementation-class>com.jetbrains.python.console.PydevConsoleRunnerFactory</implementation-class>
     </component>
   </application-components>
 </idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,11 @@ public class StatefulEpInspection extends DevKitInspectionBase {
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     PsiField[] fields = psiClass.getFields();
     if (fields.length == 0) return super.checkClass(psiClass, manager, isOnTheFly);
+
     final boolean isQuickFix = InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getCanonicalName());
-    final boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
     if (isQuickFix || ExtensionPointLocator.isRegisteredExtension(psiClass)) {
+      final boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
+
       List<ProblemDescriptor> result = ContainerUtil.newArrayList();
       for (final PsiField field : fields) {
         for (Class c : new Class[]{PsiElement.class, PsiReference.class, Project.class}) {

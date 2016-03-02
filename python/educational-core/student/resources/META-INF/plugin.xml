@@ -92,5 +92,7 @@
     <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
     <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+                        serviceImplementation="com.jetbrains.edu.learning.StudyInstructionPainter" overrides="true"/>
   </extensions>
 </idea-plugin>

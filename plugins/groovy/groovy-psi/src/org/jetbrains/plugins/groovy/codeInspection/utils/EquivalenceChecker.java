@@ -151,13 +151,7 @@ public class EquivalenceChecker {
     }
 
     final GrArgumentList argumentList1 = statement1.getArgumentList();
-    if (argumentList1 == null) {
-      return false;
-    }
     final GrArgumentList argumentList2 = statement2.getArgumentList();
-    if (argumentList2 == null) {
-      return false;
-    }
     final GrExpression[] args1 = argumentList1.getExpressionArguments();
     final GrExpression[] args2 = argumentList2.getExpressionArguments();
     if (!expressionListsAreEquivalent(args1, args2)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,7 +252,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
         invalidPaths.add(pointer.getUrl());
       }
     }
-    return invalidPaths == null ? Collections.<String>emptyList() : invalidPaths;
+    return ContainerUtil.notNullize(invalidPaths);
   }
 
   @Override
@@ -332,17 +332,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   //
   public static List<OrderRootType> sortRootTypes(Collection<OrderRootType> rootTypes) {
     List<OrderRootType> allTypes = new ArrayList<OrderRootType>(rootTypes);
-    Collections.sort(allTypes, new Comparator<OrderRootType>() {
-      @Override
-      public int compare(@NotNull final OrderRootType o1, @NotNull final OrderRootType o2) {
-        return o1.name().compareToIgnoreCase(o2.name());
-      }
-    });
+    Collections.sort(allTypes, (o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;
   }
 
   @Override
-  public void writeExternal(Element rootElement) throws WriteExternalException {
+  public void writeExternal(Element rootElement) {
     checkDisposed();
 
     Element element = new Element(ELEMENT);
@@ -353,8 +348,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       element.setAttribute(LIBRARY_TYPE_ATTR, myKind.getKindId());
       final Object state = myProperties.getState();
       if (state != null) {
-        final Element propertiesElement = XmlSerializer.serialize(state, SERIALIZATION_FILTERS);
-        if (propertiesElement != null && (!propertiesElement.getContent().isEmpty() || !propertiesElement.getAttributes().isEmpty())) {
+        final Element propertiesElement = XmlSerializer.serializeIfNotDefault(state, SERIALIZATION_FILTERS);
+        if (!JDOMUtil.isEmpty(propertiesElement)) {
           element.addContent(propertiesElement.setName(PROPERTIES_ELEMENT));
         }
       }
@@ -366,7 +361,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     }
     for (OrderRootType rootType : sortRootTypes(storableRootTypes)) {
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
-      if (roots.size() == 0 && rootType.skipWriteIfEmpty()) continue; //compatibility iml/ipr
+      if (roots.size() == 0 && rootType.skipWriteIfEmpty()) {
+        //compatibility iml/ipr
+        continue;
+      }
+
       final Element rootTypeElement = new Element(rootType.name());
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
       element.addContent(rootTypeElement);

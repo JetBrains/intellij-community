@@ -63,8 +63,8 @@ public class CCCreateTaskFile extends DumbAwareAction {
     if (dialog.getExitCode() != OK_EXIT_CODE) {
       return;
     }
-    final String taskFileName = dialog.getFileName();
-    if (taskFileName == null) return;
+    final String name = dialog.getFileName();
+    if (name == null) return;
     FileType type = dialog.getFileType();
     if (type == null) {
       return;
@@ -78,15 +78,15 @@ public class CCCreateTaskFile extends DumbAwareAction {
       @Override
       public void run() {
         final FileTemplate taskTemplate = CCLanguageManager.getTaskFileTemplateForExtension(project, extension);
-        final String answerFileName = taskFileName + ".answer." + extension;
+        final String taskFileName = name + "." + extension;
         try {
           if (taskTemplate == null) {
-            VirtualFile file = taskDir.getVirtualFile().createChildData(this, answerFileName);
+            VirtualFile file = taskDir.getVirtualFile().createChildData(this, taskFileName);
             ProjectView.getInstance(project).select(file, file, false);
             FileEditorManager.getInstance(project).openFile(file, true);
           }
           else {
-            final PsiElement taskFile = FileTemplateUtil.createFromTemplate(taskTemplate, answerFileName, null, taskDir);
+            final PsiElement taskFile = FileTemplateUtil.createFromTemplate(taskTemplate, taskFileName, null, taskDir);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
@@ -95,7 +95,7 @@ public class CCCreateTaskFile extends DumbAwareAction {
               }
             });
           }
-          task.addTaskFile(taskFileName + "." + extension, index);
+          task.addTaskFile(taskFileName, index);
         }
         catch (Exception ignored) {
         }

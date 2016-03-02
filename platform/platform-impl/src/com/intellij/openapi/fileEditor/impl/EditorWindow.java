@@ -251,7 +251,7 @@ public class EditorWindow {
               JComponent otherComponent = splitter.getOtherComponent(myPanel);
 
               if (otherComponent != null) {
-                IdeFocusManager.findInstance().requestFocus(otherComponent);
+                IdeFocusManager.findInstance().requestFocus(otherComponent, true);
               }
             }
 
@@ -505,7 +505,7 @@ public class EditorWindow {
     else {
       EditorWithProviderComposite editor = getSelectedEditor();
       JComponent preferred = editor == null ? null : editor.getPreferredFocusedComponent();
-      IdeFocusManager.findInstanceByComponent(preferred == null ? myPanel : preferred).requestFocus(myPanel);
+      IdeFocusManager.findInstanceByComponent(preferred == null ? myPanel : preferred).requestFocus(myPanel, forced);
     }
   }
 
@@ -537,7 +537,7 @@ public class EditorWindow {
               if (!TComp.this.hasFocus()) return;
               final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
               if (focus != null && !focus.hasFocus()) {
-                IdeFocusManager.getGlobalInstance().requestFocus(focus);
+                IdeFocusManager.getGlobalInstance().requestFocus(focus, true);
               }
             }
           });

@@ -22,6 +22,7 @@ import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CloseAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -1399,6 +1400,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     public Object getData(@NonNls final String dataId) {
       if (KEY.is(dataId)) {
         return RunnerContentUi.this;
+      }
+      else if (CloseAction.CloseTarget.KEY.is(dataId)) {
+        Content content = getContentManager().getSelectedContent();
+        if (content != null && content.getManager().canCloseContents() && content.isCloseable()) {
+          return new CloseAction.CloseTarget() {
+            @Override
+            public void close() {
+              content.getManager().removeContent(content, true, true, true);
+            }
+          };
+        }
       }
 
       ContentManager originalContentManager = myOriginal == null ? null : myOriginal.getContentManager();

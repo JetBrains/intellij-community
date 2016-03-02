@@ -158,7 +158,7 @@ contribute(currentType("java.lang.String")) { property name:"foo" }
 
   public void testAssertVersionFail() {
     checkHighlighting '''
-assertVersion intellij:'239.0'
+assertVersion intellij:'23942.0'
 contribute(currentType("java.lang.String")) { property name:"foo" }
 ''',
                       'println "".<warning>foo</warning>'

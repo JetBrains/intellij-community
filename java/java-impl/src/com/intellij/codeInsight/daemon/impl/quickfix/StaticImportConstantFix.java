@@ -97,6 +97,6 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   @Override
   protected PsiElement resolveRef() {
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
-    return referenceElement != null ? referenceElement.resolve() : null;
+    return referenceElement != null ? referenceElement.advancedResolve(true).getElement() : null;
   }
 }

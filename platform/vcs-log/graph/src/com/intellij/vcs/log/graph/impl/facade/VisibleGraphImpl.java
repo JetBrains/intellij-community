@@ -40,14 +40,18 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getCursor;
 public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull private final LinearGraphController myGraphController;
   @NotNull private final PermanentGraphInfo<CommitId> myPermanentGraph;
+  @NotNull private final GraphColorManager<CommitId> myColorManager;
 
   private PrintElementManagerImpl myPrintElementManager;
   private PrintElementGenerator myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
-  public VisibleGraphImpl(@NotNull LinearGraphController graphController, @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
+  public VisibleGraphImpl(@NotNull LinearGraphController graphController,
+                          @NotNull PermanentGraphInfo<CommitId> permanentGraph,
+                          @NotNull GraphColorManager<CommitId> colorManager) {
     myGraphController = graphController;
     myPermanentGraph = permanentGraph;
+    myColorManager = colorManager;
     updatePrintElementGenerator();
   }
 
@@ -111,8 +115,16 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   }
 
   private void updatePrintElementGenerator() {
-    myPrintElementManager = new PrintElementManagerImpl(myGraphController.getCompiledGraph(), myPermanentGraph);
+    myPrintElementManager = new PrintElementManagerImpl(myGraphController.getCompiledGraph(), myPermanentGraph, myColorManager);
     myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(), myPrintElementManager, myShowLongEdges);
+  }
+
+  @NotNull
+  public SimpleGraphInfo<CommitId> buildSimpleGraphInfo() {
+    return SimpleGraphInfo
+      .build(myGraphController.getCompiledGraph(), myPermanentGraph.getPermanentGraphLayout(), myPermanentGraph.getPermanentCommitsInfo(),
+             myPermanentGraph.getLinearGraph().nodesCount(),
+             myPermanentGraph.getBranchNodeIds());
   }
 
   private class ActionControllerImpl implements ActionController<CommitId> {
@@ -151,11 +163,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
       if (action.getType() == GraphAction.Type.MOUSE_OVER) {
         myPrintElementManager.setSelectedElement(affectedElement);
-        return new GraphAnswerImpl<CommitId>(getCursor(true), null, null);
+        return new GraphAnswerImpl<CommitId>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
+                                             false);
       }
 
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
-        return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null);
+        return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
+                                             true);
       }
 
       return null;
@@ -197,17 +211,14 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     }
 
     private GraphAnswer<CommitId> convert(@NotNull final LinearGraphController.LinearGraphAnswer answer) {
-      CommitId commitToJump = null;
-      Integer nodeId = answer.getCommitToJump();
-      if (nodeId != null) commitToJump = myPermanentGraph.getPermanentCommitsInfo().getCommitId(nodeId);
       final Runnable graphUpdater = answer.getGraphUpdater();
-      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), commitToJump, graphUpdater == null ? null : new Runnable() {
+      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), null, graphUpdater == null ? null : new Runnable() {
         @Override
         public void run() {
           graphUpdater.run();
           updatePrintElementGenerator();
         }
-      });
+      }, false);
     }
   }
 
@@ -215,11 +226,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Nullable private final Cursor myCursor;
     @Nullable private final CommitId myCommitToJump;
     @Nullable private final Runnable myUpdater;
+    private final boolean myDoJump;
 
-    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump, @Nullable Runnable updater) {
+    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump, @Nullable Runnable updater, boolean doJump) {
       myCursor = cursor;
       myCommitToJump = commitToJump;
       myUpdater = updater;
+      myDoJump = doJump;
     }
 
     @Nullable
@@ -238,6 +251,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public Runnable getGraphUpdater() {
       return myUpdater;
+    }
+
+    @Override
+    public boolean doJump() {
+      return myDoJump;
     }
   }
 

@@ -494,6 +494,7 @@ public class AllIcons {
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
     public static final Icon ReadHelp = IconLoader.getIcon("/general/readHelp.png"); // 32x32
+    public static final Icon Recursive = IconLoader.getIcon("/general/recursive.png"); // 12x12
     public static final Icon Remove = IconLoader.getIcon("/general/remove.png"); // 16x16
     public static final Icon Reset = IconLoader.getIcon("/general/reset.png"); // 16x16
     public static final Icon Run = IconLoader.getIcon("/general/run.png"); // 7x10
@@ -558,7 +559,7 @@ public class AllIcons {
     public static final Icon Colors = IconLoader.getIcon("/gutter/colors.png"); // 12x12
     public static final Icon ExtAnnotation = IconLoader.getIcon("/gutter/extAnnotation.png"); // 12x12
     public static final Icon ImplementedMethod = IconLoader.getIcon("/gutter/implementedMethod.png"); // 12x12
-    public static final Icon ImplementingFunctional = IconLoader.getIcon("/gutter/implementingFunctional.png"); // 12x12
+    public static final Icon ImplementingFunctionalInterface = IconLoader.getIcon("/gutter/implementingFunctionalInterface.png"); // 12x12
     public static final Icon ImplementingMethod = IconLoader.getIcon("/gutter/implementingMethod.png"); // 12x12
     public static final Icon OverridenMethod = IconLoader.getIcon("/gutter/overridenMethod.png"); // 12x12
     public static final Icon OverridingMethod = IconLoader.getIcon("/gutter/overridingMethod.png"); // 12x12
@@ -862,7 +863,6 @@ public class AllIcons {
     public static final Icon HomeFolder = IconLoader.getIcon("/nodes/homeFolder.png"); // 16x16
     public static final Icon IdeaModule = IconLoader.getIcon("/nodes/ideaModule.png"); // 16x16
     public static final Icon IdeaProject = IconLoader.getIcon("/nodes/ideaProject.png"); // 16x16
-    public static final Icon IdeaWorkspace = IconLoader.getIcon("/nodes/ideaWorkspace.png"); // 16x16
     public static final Icon InspectionResults = IconLoader.getIcon("/nodes/inspectionResults.png"); // 16x16
     public static final Icon Interface = IconLoader.getIcon("/nodes/interface.png"); // 16x16
     public static final Icon J2eeParameter = IconLoader.getIcon("/nodes/j2eeParameter.png"); // 16x16

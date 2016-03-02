@@ -48,6 +48,9 @@ public class MethodCallUsageInfo extends UsageInfo {
 
   private static JavaResolveResult resolveMethod(final PsiElement ref) {
     if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).resolveMethodGenerics();
+    if (ref instanceof PsiCallExpression) {
+      return ((PsiCallExpression)ref).resolveMethodGenerics();
+    }
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiCall) {
       return ((PsiCall)parent).resolveMethodGenerics();

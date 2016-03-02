@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class ConcatenationHelper {
 
@@ -50,6 +54,12 @@ public class ConcatenationHelper {
         }
         if (cltype != null) {
           exprTmp = iex.getInstance();
+        }
+      }
+      else if ("makeConcatWithConstants".equals(iex.getName())) { // java 9 style
+        List<Exprent> parameters = extractParameters(iex.getBootstrapArguments(), iex);
+        if (parameters.size() >= 2) {
+          return createConcatExprent(parameters, expr.bytecode);
         }
       }
     }
@@ -125,18 +135,67 @@ public class ConcatenationHelper {
         lstOperands.set(i, rep);
       }
     }
+    return createConcatExprent(lstOperands, expr.bytecode);
+  }
 
+  private static Exprent createConcatExprent(List<Exprent> lstOperands, Set<Integer> bytecode) {
     // build exprent to return
     Exprent func = lstOperands.get(0);
 
     for (int i = 1; i < lstOperands.size(); i++) {
-      List<Exprent> lstTmp = new ArrayList<Exprent>();
-      lstTmp.add(func);
-      lstTmp.add(lstOperands.get(i));
-      func = new FunctionExprent(FunctionExprent.FUNCTION_STR_CONCAT, lstTmp, expr.bytecode);
+      func = new FunctionExprent(FunctionExprent.FUNCTION_STR_CONCAT, Arrays.asList(func, lstOperands.get(i)), bytecode);
     }
 
     return func;
+  }
+
+  // See StringConcatFactory in jdk sources
+  private static final char TAG_ARG = '\u0001';
+  private static final char TAG_CONST = '\u0002';
+
+  private static List<Exprent> extractParameters(List<PooledConstant> bootstrapArguments, InvocationExprent expr) {
+    List<Exprent> parameters = expr.getLstParameters();
+    if (bootstrapArguments != null) {
+      PooledConstant constant = bootstrapArguments.get(0);
+      if (constant.type == CodeConstants.CONSTANT_String) {
+        String recipe = ((PrimitiveConstant)constant).getString();
+
+        List<Exprent> res = new ArrayList<Exprent>();
+        StringBuilder acc = new StringBuilder();
+        int parameterId = 0;
+        for (int i = 0; i < recipe.length(); i++) {
+          char c = recipe.charAt(i);
+
+          if (c == TAG_CONST || c == TAG_ARG) {
+            // Detected a special tag, flush all accumulated characters
+            // as a constant first:
+            if (acc.length() > 0) {
+              res.add(new ConstExprent(VarType.VARTYPE_STRING, acc.toString(), expr.bytecode));
+              acc.setLength(0);
+            }
+            if (c == TAG_CONST) {
+              // skip for now
+            }
+            if (c == TAG_ARG) {
+              res.add(parameters.get(parameterId++));
+            }
+          }
+          else {
+            // Not a special characters, this is a constant embedded into
+            // the recipe itself.
+            acc.append(c);
+          }
+        }
+
+        // Flush the remaining characters as constant:
+        if (acc.length() > 0) {
+          res.add(new ConstExprent(VarType.VARTYPE_STRING, acc.toString(), expr.bytecode));
+        }
+
+        return res;
+      }
+    }
+    return new ArrayList<Exprent>(parameters);
   }
 
   private static boolean isAppendConcat(InvocationExprent expr, VarType cltype) {

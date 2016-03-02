@@ -286,7 +286,7 @@ public class ProjectUtil {
       AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
       cmd.run();
     } else {
-      IdeFocusManager.getInstance(p).requestFocus(cmd);
+      IdeFocusManager.getInstance(p).requestFocus(cmd, true);
     }
   }
 

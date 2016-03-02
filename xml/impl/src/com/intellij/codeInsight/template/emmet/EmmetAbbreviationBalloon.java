@@ -134,7 +134,7 @@ public class EmmetAbbreviationBalloon {
     focusManager.doWhenFocusSettlesDown(new Runnable() {
       @Override
       public void run() {
-        focusManager.requestFocus(field);
+        focusManager.requestFocus(field, true);
         field.selectText();
       }
     });

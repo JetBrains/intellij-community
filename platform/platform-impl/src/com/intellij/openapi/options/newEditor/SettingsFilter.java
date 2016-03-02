@@ -63,7 +63,7 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
         // request focus if needed on changing the filter text
         IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(mySearch);
         if (manager.getFocusedDescendantFor(mySearch) == null) {
-          manager.requestFocus(mySearch);
+          manager.requestFocus(mySearch, true);
         }
       }
     });

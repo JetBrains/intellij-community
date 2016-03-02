@@ -247,6 +247,8 @@ class PyDB:
 
         self._filename_to_not_in_scope = {}
         self.first_breakpoint_reached = False
+        self.is_filter_enabled = pydevd_utils.is_filter_enabled()
+        self.is_filter_libraries = pydevd_utils.is_filter_libraries()
 
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
@@ -255,6 +257,9 @@ class PyDB:
 
     def not_in_scope(self, filename):
         return pydevd_utils.not_in_project_roots(filename)
+
+    def is_ignored_by_filters(self, filename):
+        return pydevd_utils.is_ignored_by_filter(filename)
 
     def first_appearance_in_scope(self, trace):
         if trace is None or self.not_in_scope(trace.tb_frame.f_code.co_filename):

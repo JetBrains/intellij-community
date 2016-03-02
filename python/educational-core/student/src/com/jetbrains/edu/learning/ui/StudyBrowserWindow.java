@@ -7,6 +7,8 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
 import javafx.application.Platform;
@@ -129,7 +131,7 @@ class StudyBrowserWindow extends JFrame {
         myEngine.loadContent(withCodeHighlighting);        
       });
   }
-  
+
   @Nullable
   private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyToolWindowConfigurator configurator) {
     String template = null;
@@ -152,11 +154,15 @@ class StudyBrowserWindow extends JFrame {
     if (template == null) {
       LOG.warn("Code mirror template is null");
       return null;
-    }   
+    }
+
+    final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int fontSize = editorColorsScheme.getEditorFontSize();
     
+    template = template.replace("${font_size}", String.valueOf(fontSize- 2));
     template = template.replace("${highlight_mode}", getClass().getResource("/code-mirror/clike.js").toExternalForm());
     template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
-    template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());    
+    template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());
     template = template.replace("${runmode}", getClass().getResource("/code-mirror/runmode.js").toExternalForm());
     template = template.replace("${colorize}", getClass().getResource("/code-mirror/colorize.js").toExternalForm());
     template = template.replace("${javascript}", getClass().getResource("/code-mirror/javascript.js").toExternalForm());
@@ -170,7 +176,7 @@ class StudyBrowserWindow extends JFrame {
     }
     template = template.replace("${default-mode}", configurator.getDefaultHighlightingMode());
     template = template.replace("${code}", content);
-    
+
     return template;
   }
 
@@ -211,26 +217,19 @@ class StudyBrowserWindow extends JFrame {
           myEngine.setJavaScriptEnabled(true);
           myEngine.getLoadWorker().cancel();
           ev.preventDefault();
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            
-            final String href = getLink((Element)ev.getTarget());
-            if (href == null) return;
-            final StudyBrowserWindow studyBrowserWindow = new StudyBrowserWindow(false, true);
-            studyBrowserWindow.addBackAndOpenButtons();
-            studyBrowserWindow.load(href);
-            studyBrowserWindow.setVisible(true);
-          });
-
+          final String href = getLink((Element)ev.getTarget());
+          if (href == null) return;
+          BrowserUtil.browse(href);
+          
         }
       }
-      
+
       @Nullable
       private String getLink(@NotNull Element element) {
         final String href = element.getAttribute("href");
         return href == null ? getLinkFromNodeWithCodeTag(element) : href;
       }
-      
+
       @Nullable
       private String getLinkFromNodeWithCodeTag(@NotNull Element element) {
         Node parentNode = element.getParentNode();

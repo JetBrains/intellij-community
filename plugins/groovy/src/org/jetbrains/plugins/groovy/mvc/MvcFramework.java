@@ -182,7 +182,9 @@ public abstract class MvcFramework {
   }
 
   @Nullable
-  protected abstract GeneralCommandLine getCreationCommandLine(Module module);
+  protected GeneralCommandLine getCreationCommandLine(Module module) {
+    return null;
+  }
 
   public abstract void updateProjectStructure(@NotNull final Module module);
 

@@ -241,7 +241,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     }
 
     private void requestFocusToTree() {
-      IdeFocusManager.getInstance(myArtifactsEditor.getContext().getProject()).requestFocus(LayoutTree.this);
+      IdeFocusManager.getInstance(myArtifactsEditor.getContext().getProject()).requestFocus(LayoutTree.this, true);
     }
   }
 }

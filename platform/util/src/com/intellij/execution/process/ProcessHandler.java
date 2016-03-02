@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
@@ -242,7 +243,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
       runPendingTasks();
     }
 
-    public void execute(Runnable task) {
+    public void execute(@NotNull Runnable task) {
       if (isStartNotified()) {
         task.run();
       }

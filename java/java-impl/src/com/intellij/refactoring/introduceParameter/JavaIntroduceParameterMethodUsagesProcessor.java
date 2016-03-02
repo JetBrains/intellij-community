@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,9 @@ import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.FieldConflictsResolver;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
@@ -60,8 +63,17 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   }
 
   public boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!isMethodUsage(usage)) return true;
-    final PsiElement ref = usage.getElement();
+    PsiElement ref = usage.getElement();
+    if (ref instanceof PsiMethodReferenceExpression) {
+      final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)ref);
+      if (callExpression == null) {
+        return true;
+      }
+      ref = callExpression;
+    }
+    else if (!isMethodUsage(usage)) {
+      return true;
+    }
     PsiCall callExpression = RefactoringUtil.getCallExpressionByMethodReference(ref);
     PsiExpressionList argList = RefactoringUtil.getArgumentListByMethodReference(ref);
     if (argList == null) return true;
@@ -113,7 +125,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
     final PsiExpressionList argumentList = callExpression.getArgumentList();
     LOG.assertTrue(argumentList != null, callExpression.getText());
-    removeParametersFromCall(argumentList, data.getParametersToRemove());
+    removeParametersFromCall(argumentList, data.getParametersToRemove(), methodToSearchFor);
     return false;
   }
 
@@ -130,12 +142,19 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
                                                      JavaPsiFacade.getElementFactory(project));
   }
 
-  private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, TIntArrayList parametersToRemove) {
+  private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, TIntArrayList parametersToRemove, PsiMethod method) {
+    final int parametersCount = method.getParameterList().getParametersCount();
     final PsiExpression[] exprs = argList.getExpressions();
     parametersToRemove.forEachDescending(new TIntProcedure() {
-      public boolean execute(final int paramNum) {
+      public boolean execute(int paramNum) {
         try {
-          if (paramNum < exprs.length) {
+          //parameter was introduced before varargs
+          if (method.isVarArgs() && paramNum == parametersCount - 1) {
+            for (int i = paramNum + 1; i < exprs.length; i++) {
+              exprs[i].delete();
+            }
+          }
+          else if (paramNum < exprs.length) {
             exprs[paramNum].delete();
           }
         }
@@ -164,8 +183,11 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     final PsiMethod method = data.getMethodToReplaceIn();
     final int parametersCount = method.getParameterList().getParametersCount();
     for (UsageInfo usage : usages) {
-      if (!isMethodUsage(usage)) continue;
       final PsiElement element = usage.getElement();
+      if (element instanceof PsiMethodReferenceExpression && !ApplicationManager.getApplication().isUnitTestMode()) {
+        conflicts.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
+      }
+      if (!isMethodUsage(usage)) continue;
       final PsiCall call = RefactoringUtil.getCallExpressionByMethodReference(element);
       final PsiExpressionList argList = call.getArgumentList();
       if (argList != null) {

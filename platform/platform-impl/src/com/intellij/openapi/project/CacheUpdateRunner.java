@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,12 +51,12 @@ public class CacheUpdateRunner {
                                   Collection<VirtualFile> files,
                                   Project project, Consumer<FileContent> processor) {
     indicator.checkCanceled();
-    final FileContentQueue queue = new FileContentQueue();
+    final FileContentQueue queue = new FileContentQueue(files, indicator);
     final double total = files.size();
-    queue.queue(files, indicator);
+    queue.startLoading();
 
     Consumer<VirtualFile> progressUpdater = new Consumer<VirtualFile>() {
-      // need set here to handle queue.pushbacks after checkCancelled() in order
+      // need set here to handle queue push-backs after checkCancelled() in order
       // not to count the same file several times
       final Set<VirtualFile> processed = new THashSet<VirtualFile>();
       private boolean fileNameWasShown;
@@ -256,7 +256,7 @@ public class CacheUpdateRunner {
             );
           }
           catch (ProcessCanceledException e) {
-            myQueue.pushback(fileContent);
+            myQueue.pushBack(fileContent);
             return;
           }
           finally {

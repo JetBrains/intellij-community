@@ -1356,7 +1356,7 @@ class RunConfigurable extends BaseConfigurable {
           ((ConfigurationFactoryEx)factory).onConfigurationCopied(settings.getConfiguration());
         }
         final SingleConfigurationConfigurable<RunConfiguration> configurable = createNewConfiguration(settings, typeNode, getSelectedNode());
-        IdeFocusManager.getInstance(myProject).requestFocus(configurable.getNameTextField());
+        IdeFocusManager.getInstance(myProject).requestFocus(configurable.getNameTextField(), true);
         configurable.getNameTextField().setSelectionStart(0);
         configurable.getNameTextField().setSelectionEnd(copyName.length());
       }

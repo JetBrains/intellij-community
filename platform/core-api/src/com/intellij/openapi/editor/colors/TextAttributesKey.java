@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -26,7 +27,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 
@@ -34,6 +38,8 @@ import java.util.concurrent.ConcurrentMap;
  * A type of item with a distinct highlighting in an editor or in other views.
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
+  private static final Logger LOG = Logger.getInstance("#" + TextAttributesKey.class.getName());
+  
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
   private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = ContainerUtil.newConcurrentMap();
   private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider = new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
@@ -182,9 +188,49 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
   public void setFallbackAttributeKey(TextAttributesKey fallbackAttributeKey) {
     myFallbackAttributeKey = fallbackAttributeKey;
+    if (fallbackAttributeKey != null) {
+      checkDependencies(fallbackAttributeKey, new HashSet<TextAttributesKey>());
+    }
+  }
+  
+  @TestOnly
+  public static void removeTextAttributesKey(@NonNls @NotNull String externalName) {
+    if (ourRegistry.containsKey(externalName)) {
+      ourRegistry.remove(externalName);
+    }
   }
 
   public interface TextAttributeKeyDefaultsProvider {
     TextAttributes getDefaultAttributes(TextAttributesKey key);
+  }
+
+  private void checkDependencies(@Nullable TextAttributesKey key, Set<TextAttributesKey> referencedKeys) {
+    if (key != null) {
+      if (!referencedKeys.contains(key)) {
+        referencedKeys.add(key);
+        TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+        if (fallbackKey != null) {
+          checkDependencies(fallbackKey, referencedKeys);
+        }
+      }
+      else {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Cyclic TextAttributesKey dependency found: ");
+        printDependencyLoop(sb, key);
+        myFallbackAttributeKey = null;
+        LOG.error(sb.toString());
+      }
+    }
+  }
+
+  private void printDependencyLoop(@NotNull StringBuilder stringBuilder,
+                                   @NotNull TextAttributesKey currNode) {
+    stringBuilder.append(currNode.getExternalName()).append("->");
+    TextAttributesKey fallbackKey = currNode.getFallbackAttributeKey();
+    if (fallbackKey == this) {
+      stringBuilder.append(getExternalName());
+      return;
+    }
+    printDependencyLoop(stringBuilder, fallbackKey);
   }
 }

@@ -50,7 +50,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public boolean SHOW_ONLY_DIFF = false;
   public boolean SHOW_STRUCTURE = false;
 
-  public boolean ANALYSIS_IN_BACKGROUND = false;
+  public boolean ANALYSIS_IN_BACKGROUND = true;
 
   public AnalysisUIOptions() {
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {

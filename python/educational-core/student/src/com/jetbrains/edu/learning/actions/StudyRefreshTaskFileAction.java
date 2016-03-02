@@ -77,7 +77,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent());
+        IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
       }
     });
 

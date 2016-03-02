@@ -70,8 +70,17 @@ public class DfaPsiUtil {
       return Nullness.UNKNOWN;
     }
 
-    if (owner instanceof PsiEnumConstant) {
+    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
       return Nullness.NOT_NULL;
+    }
+    if (owner instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)owner;
+      if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && containingClass.isEnum()) {
+          return Nullness.NOT_NULL;
+        }
+      }
     }
 
     if (resultType != null) {
@@ -244,14 +253,14 @@ public class DfaPsiUtil {
 
   @Nullable
   public static PsiCodeBlock getTopmostBlockInSameClass(@NotNull PsiElement position) {
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, false, PsiMember.class, PsiFile.class);
+    PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, false, PsiMember.class, PsiFile.class, PsiLambdaExpression.class);
     if (block == null) {
       return null;
     }
 
     PsiCodeBlock lastBlock = block;
     while (true) {
-      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class, true, PsiMember.class, PsiFile.class);
+      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class, true, PsiMember.class, PsiFile.class, PsiLambdaExpression.class);
       if (block == null) {
         return lastBlock;
       }

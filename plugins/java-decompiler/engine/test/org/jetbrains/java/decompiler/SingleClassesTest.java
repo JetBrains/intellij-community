@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,8 @@ public class SingleClassesTest {
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
   @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
   @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
+  @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
+  @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
 
   protected void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

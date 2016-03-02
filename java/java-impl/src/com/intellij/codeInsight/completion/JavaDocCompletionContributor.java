@@ -180,7 +180,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         suggestSimilarParameterDescriptions(result, position, param);
       }
 
-      suggestLinkWrappingVariants(parameters, result, position);
+      suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
 
       if (!result.getPrefixMatcher().getPrefix().isEmpty()) {
         for (String keyword : ContainerUtil.ar("null", "true", "false")) {
@@ -230,10 +230,13 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       document.insertString(startOffset - sharpLength, link);
       document.insertString(context.getTailOffset(), "}");
       context.setTailOffset(context.getTailOffset() - 1);
-      context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, startOffset + link.length() + sharpLength);
+      context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, startOffset + link.length());
 
       context.commitDocument();
       delegate.handleInsert(context, item);
+      if (item.getObject() instanceof PsiField) {
+        context.getEditor().getCaretModel().moveToOffset(context.getTailOffset() + 1);
+      }
     };
   }
 

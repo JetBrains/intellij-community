@@ -224,6 +224,11 @@ public class RedundantCastUtil {
             final PsiExpression nestedCastOperand = ((PsiTypeCastExpression)castOperand).getOperand();
             operandType = nestedCastOperand != null ? nestedCastOperand.getType() : null;
           }
+          else if (castOperand instanceof PsiFunctionalExpression && lType != null) {
+            final PsiTypeElement typeElement = ((PsiTypeCastExpression)rExpr).getCastType();
+            final PsiType castType = typeElement != null ? typeElement.getType() : null;
+            operandType = lType.equals(castType) ? castOperand.getType() : null;
+          }
           else {
             operandType = castOperand.getType();
           }
@@ -354,31 +359,29 @@ public class RedundantCastUtil {
             LOG.assertTrue(argList != null);
             PsiExpression[] newArgs = argList.getExpressions();
             PsiTypeCastExpression castExpression = (PsiTypeCastExpression) deparenthesizeExpression(newArgs[i]);
+            final PsiTypeElement castTypeElement = cast.getCastType();
+            final PsiType castType = castTypeElement != null ? castTypeElement.getType() : null;
             PsiExpression castOperand = castExpression.getOperand();
             if (castOperand == null) return;
-            final PsiMethod oldFunctionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(castOperand);
             newArgs[i] = (PsiExpression)castExpression.replace(castOperand);
+            final JavaResolveResult newResult;
             if (newCall instanceof PsiEnumConstant) {
               // do this manually, because PsiEnumConstantImpl.resolveMethodGenerics() will assert (no containing class for the copy)
               final PsiEnumConstant enumConstant = (PsiEnumConstant)expression;
               PsiClass containingClass = enumConstant.getContainingClass();
               final JavaPsiFacade facade = JavaPsiFacade.getInstance(enumConstant.getProject());
               final PsiClassType type = facade.getElementFactory().createType(containingClass);
-              final JavaResolveResult newResult = facade.getResolveHelper().resolveConstructor(type, newCall.getArgumentList(), enumConstant);
-              if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult()) {
+              newResult = facade.getResolveHelper().resolveConstructor(type, newCall.getArgumentList(), enumConstant);
+            }
+            else {
+              newResult = newCall.resolveMethodGenerics();
+            }
+
+            if (oldMethod.equals(newResult.getElement()) &&
+                (!(newCall instanceof PsiCallExpression) || Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) &&
+                newResult.isValidResult()) {
+              if (!(newArgs[i] instanceof PsiFunctionalExpression) || castType != null && castType.equals(((PsiFunctionalExpression)newArgs[i]).getFunctionalInterfaceType())) {
                 addToResults(cast);
-              }
-            } else {
-              final JavaResolveResult newResult = newCall.resolveMethodGenerics();
-              if (oldMethod.equals(newResult.getElement()) &&
-                  Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType()) &&
-                  newResult.isValidResult()) {
-                final PsiMethod newFunctionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(newArgs[i]);
-                if (oldFunctionalInterfaceMethod == null ||
-                    newFunctionalInterfaceMethod != null && (newFunctionalInterfaceMethod == oldFunctionalInterfaceMethod || 
-                                                             MethodSignatureUtil.isSuperMethod(newFunctionalInterfaceMethod, oldFunctionalInterfaceMethod))) {
-                  addToResults(cast);
-                }
               }
             }
           }

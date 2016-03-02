@@ -537,6 +537,17 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-18254
+  public void testVarargsAnnotatedWithFunctionComment() {
+    doTest();
+  }
+
+  // PY-18521
+  public void testFunctionTypeCommentUsesImportsFromTyping() {
+    myFixture.copyDirectoryToProject("typing", "");
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

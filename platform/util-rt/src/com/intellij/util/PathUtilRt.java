@@ -17,7 +17,6 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,7 @@ import java.util.Set;
 public class PathUtilRt {
   @NotNull
   public static String getFileName(@NotNull String path) {
-    if (path.length() == 0) return StringUtilRt.EMPTY_STRING;
+    if (path.length() == 0) return "";
     char c = path.charAt(path.length() - 1);
     int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
     int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
@@ -41,12 +40,12 @@ public class PathUtilRt {
 
   @NotNull
   public static String getParentPath(@NotNull String path) {
-    if (path.length() == 0) return StringUtilRt.EMPTY_STRING;
+    if (path.length() == 0) return "";
     int end = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
     if (end == path.length() - 1) {
       end = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
     }
-    return end == -1 ? StringUtilRt.EMPTY_STRING : path.substring(0, end);
+    return end == -1 ? "" : path.substring(0, end);
   }
 
   @NotNull

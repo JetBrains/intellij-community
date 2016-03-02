@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,17 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+
+import static com.intellij.testFramework.PlatformTestUtil.SKIP_HEADLESS;
+import static com.intellij.testFramework.PlatformTestUtil.SKIP_SLOW;
+import static org.junit.Assume.assumeFalse;
 
 public abstract class BareTestFixtureTestCase {
   @Rule public final TestName myNameRule = new TestName();
@@ -30,14 +36,21 @@ public abstract class BareTestFixtureTestCase {
 
   @Before
   public final void setupFixture() throws Exception {
+    boolean headless = SKIP_HEADLESS && getClass().getAnnotation(SkipInHeadlessEnvironment.class) != null;
+    assumeFalse("Class '" + getClass().getName() + "' is skipped because it requires working UI environment", headless);
+    boolean slow = SKIP_SLOW && getClass().getAnnotation(SkipSlowTestLocally.class) != null;
+    assumeFalse("Class '" + getClass().getName() + "' is skipped because it is dog slow", slow);
+
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createBareFixture();
     myFixture.setUp();
   }
 
   @After
   public final void tearDownFixture() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
+    if (myFixture != null) {
+      myFixture.tearDown();
+      myFixture = null;
+    }
   }
 
   @NotNull

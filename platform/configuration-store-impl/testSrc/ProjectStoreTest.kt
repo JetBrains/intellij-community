@@ -27,11 +27,11 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.util.PathUtil
 import com.intellij.util.readText
+import com.intellij.util.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
@@ -52,7 +52,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
   runInEdtAndWait {
     var filePath: String
     if (projectCreator == null) {
-      filePath = tempDirManager.newDirectory("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
+      filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
     }
     else {
       filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }

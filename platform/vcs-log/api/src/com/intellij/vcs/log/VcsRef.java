@@ -48,5 +48,4 @@ public interface VcsRef {
    */
   @NotNull
   VirtualFile getRoot();
-
 }

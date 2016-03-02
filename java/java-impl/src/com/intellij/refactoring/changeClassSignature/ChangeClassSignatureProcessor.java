@@ -185,7 +185,9 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     for (final TypeParameterInfo info : myNewSignature) {
       newTypeParameters.add(info.getTypeParameter(originalTypeParameters, myProject));
     }
-    ChangeSignatureUtil.synchronizeList(myClass.getTypeParameterList(), newTypeParameters, TypeParameterList.INSTANCE, toRemoveParms);
+    final PsiTypeParameterList parameterList = myClass.getTypeParameterList();
+    ChangeSignatureUtil.synchronizeList(parameterList, newTypeParameters, TypeParameterList.INSTANCE, toRemoveParms);
+    JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(parameterList);
   }
 
   private boolean[] detectRemovedParameters(final PsiTypeParameter[] original) {

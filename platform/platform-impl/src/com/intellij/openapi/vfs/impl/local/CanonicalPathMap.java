@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.concurrency.Futures;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -34,7 +31,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -66,25 +66,19 @@ class CanonicalPathMap {
   }
 
   private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
-    final Map<String, String> resolvedPaths = ContainerUtil.newConcurrentMap();
+    Map<String, String> result = ContainerUtil.newConcurrentMap();
 
-    final BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
-    Futures.invokeAll(JBIterable.from(recursiveRoots).append(flatRoots).transform(new Function<String, Future<?>>() {
-      @Override
-      public Future<?> fun(final String root) {
-        return executor.submit(new Runnable() {
-          @Override
-          public void run() {
-            String canonicalPath = FileSystemUtil.resolveSymLink(root);
-            if (canonicalPath != null) {
-              resolvedPaths.put(root, canonicalPath);
-            }
-          }
-        });
-      }
-    }).toList());
+    ExecutorService pool = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
+    CompletableFuture<?>[] futures = Stream.concat(recursiveRoots.stream(), flatRoots.stream())
+      .map(root -> CompletableFuture.runAsync(() -> ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result), pool))
+      .toArray(CompletableFuture[]::new);
 
-    return resolvedPaths;
+    try { CompletableFuture.allOf(futures).get(); }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.error(e);
+    }
+
+    return result;
   }
 
   private static List<String> mapPaths(Map<String, String> resolvedPaths, List<String> paths, Collection<Pair<String, String>> mapping) {

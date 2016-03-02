@@ -47,7 +47,7 @@ internal class ModuleStoreRenameTest {
     object : ExternalResource() {
       override fun before() {
         runInEdtAndWait {
-          module = projectRule.createModule(tempDirManager.newPath().resolve("m.iml"))
+          module = projectRule.createModule(tempDirManager.newPath(refreshVfs = true).resolve("m.iml"))
         }
 
         module.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {

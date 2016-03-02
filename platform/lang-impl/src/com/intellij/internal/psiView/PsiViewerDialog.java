@@ -534,15 +534,15 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   private void focusEditor() {
-    IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent());
+    IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true);
   }
 
   private void focusTree() {
-    IdeFocusManager.getInstance(myProject).requestFocus(myPsiTree);
+    IdeFocusManager.getInstance(myProject).requestFocus(myPsiTree, true);
   }
 
   private void focusRefs() {
-    IdeFocusManager.getInstance(myProject).requestFocus(myRefs);
+    IdeFocusManager.getInstance(myProject).requestFocus(myRefs, true);
     if (myRefs.getModel().getSize() > 0) {
       if (myRefs.getSelectedIndex() == -1) {
         myRefs.setSelectedIndex(0);
@@ -551,7 +551,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   private void focusBlockTree() {
-    IdeFocusManager.getInstance(myProject).requestFocus(myBlockTree);
+    IdeFocusManager.getInstance(myProject).requestFocus(myBlockTree, true);
   }
 
   private void initMnemonics() {

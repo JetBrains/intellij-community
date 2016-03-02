@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,11 +195,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
 
-    for (ReferenceType refType : debugProcess.getPositionManager().getAllClasses(classPosition)) {
-      if (refType.isPrepared()) {
-        processClassPrepare(debugProcess, refType);
-      }
-    }
+    debugProcess.getPositionManager().getAllClasses(classPosition).stream()
+      .filter(ReferenceType::isPrepared)
+      .forEach(refType -> processClassPrepare(debugProcess, refType));
   }
 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
@@ -271,10 +269,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
           final TextWithImports expressionToEvaluate = getLogMessage();
           try {
-            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
               @Override
               public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl.build(expressionToEvaluate, ContextUtil.getContextElement(context), ContextUtil.getSourcePosition(context));
+                return EvaluatorBuilderImpl.build(expressionToEvaluate,
+                                                  ContextUtil.getContextElement(context),
+                                                  ContextUtil.getSourcePosition(context),
+                                                  myProject);
               }
             });
             final Value eval = evaluator.evaluate(context);
@@ -355,7 +356,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
 
     try {
-      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+      final Project project = context.getProject();
+      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
         @Override
         public ExpressionEvaluator compute() throws EvaluateException {
           final SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
@@ -366,7 +368,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           if (contextPsiElement == null) {
             contextPsiElement = getEvaluationElement(); // as a last resort
           }
-          return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition);
+          return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition, project);
         }
       });
       Object value = UnBoxingEvaluator.unbox(evaluator.evaluate(context), context);

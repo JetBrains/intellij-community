@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public interface UpdateParameterInfoContext extends ParameterInfoContext {
   void setHighlightedParameter(final Object parameter);
   void setCurrentParameter(final int index);
   boolean isUIComponentEnabled(int index);
-  void setUIComponentEnabled(int index, boolean b);
+  void setUIComponentEnabled(int index, boolean enabled);
 
   int getParameterListStart();
 

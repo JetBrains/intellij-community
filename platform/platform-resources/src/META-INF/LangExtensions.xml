@@ -151,7 +151,8 @@
     <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
                         serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
+                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
 
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
@@ -471,10 +472,11 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceUnderscoresToCamelCaseMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceDashesToCamelCaseMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$CapitalizeAndUnderscoreMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SnakeCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$LowercaseAndDash"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SpaceSeparated"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>

@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
@@ -710,7 +711,7 @@ public abstract class DialogWrapper {
           final char mnemonic = (char)eachInfo.getMnemonic();
           JRootPane rootPane = getPeer().getRootPane();
           if (rootPane != null) {
-            new AnAction() {
+            new DumbAwareAction() {
               @Override
               public void actionPerformed(AnActionEvent e) {
                 final JBOptionButton buttonToActivate = eachInfo.getButton();
@@ -1250,7 +1251,7 @@ public abstract class DialogWrapper {
     myPeer.setContentPane(root);
 
     final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
-    final AnAction toggleShowOptions = new AnAction() {
+    final AnAction toggleShowOptions = new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         expandNextOptionButton();
@@ -1306,7 +1307,7 @@ public abstract class DialogWrapper {
   }
 
   private static void installEnterHook(JComponent root, Disposable disposable) {
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -1835,7 +1836,7 @@ public abstract class DialogWrapper {
       ValidationInfo info = doValidate();
       if (info != null) {
         if (info.component != null && info.component.isVisible()) {
-          IdeFocusManager.getInstance(null).requestFocus(info.component);
+          IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
         DialogEarthquakeShaker.shake((JDialog)getPeer().getWindow());
         startTrackingValidation();

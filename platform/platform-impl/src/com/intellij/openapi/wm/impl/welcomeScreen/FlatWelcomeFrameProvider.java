@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,6 @@ public class FlatWelcomeFrameProvider implements WelcomeFrameProvider {
   }
 
   public static boolean isAvailable() {
-    return Registry.is("ide.new.welcome.screen.force") ||
-           Registry.is("ide.new.welcome.screen")
-            && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr() || PlatformUtils.isWebStorm() ||
-                PlatformUtils.isPyCharm() || PlatformUtils.isRubyMine() || PlatformUtils.isPhpStorm());
+    return Registry.is("ide.new.welcome.screen.force") || PlatformUtils.isJetBrainsProduct();
   }
 }

@@ -74,7 +74,7 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
               target.selectIn(context, requestFocus);
               return ActionCallback.DONE;
             }
-          });
+          }, true);
         }
         else {
           target.selectIn(context, requestFocus);

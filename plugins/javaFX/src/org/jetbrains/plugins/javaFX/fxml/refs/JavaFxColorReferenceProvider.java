@@ -22,7 +22,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 
@@ -44,7 +44,7 @@ class JavaFxColorReferenceProvider extends PsiReferenceProvider {
         if (declaration instanceof PsiField) {
           final PsiField field = (PsiField)declaration;
           final PsiClassType propertyClassType = JavaFxPsiUtil.getPropertyClassType(field);
-          if (propertyClassType != null && InheritanceUtil.isInheritor(propertyClassType, JavaFxCommonClassNames.JAVAFX_SCENE_PAINT)) {
+          if (propertyClassType != null && InheritanceUtil.isInheritor(propertyClassType, JavaFxCommonNames.JAVAFX_SCENE_PAINT)) {
             return new PsiReference[] {new JavaFxColorReference(attributeValue)};
           }
         }

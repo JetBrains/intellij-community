@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.index
+
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -189,11 +190,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.deleteString(0, document.getTextLength());
     assertNotNull(findClass("Foo"));
 
-    //noinspection GroovyUnusedAssignment
-    psiFile = null;
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
-    assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
-
     PsiClass foo = findClass("Foo");
     assertNotNull(foo);
     assertTrue(foo.isValid());
@@ -215,12 +211,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.deleteString(0, document.getTextLength());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     document.insertString(0, " ");
-    //assertNotNull(myJavaFacade.findClass("Foo", scope));
-
-    //noinspection GroovyUnusedAssignment
-    psiFile = null;
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
-    assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
 
     PsiClass foo = findClass("Foo");
     assertNull(foo);
@@ -401,13 +391,13 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     FileDocumentManager.instance.getDocument(vFile).text = "import zoo.Zoo; class Foo1 {}"
     assert PsiDocumentManager.getInstance(project).uncommittedDocuments
 
+    FileDocumentManager.instance.saveAllDocuments()
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     //noinspection GroovyUnusedAssignment
     psiFile = null
     PlatformTestUtil.tryGcSoftlyReachableObjects()
-
     assert !((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)
-
-    FileDocumentManager.instance.saveAllDocuments()
 
     VfsUtil.saveText(vFile, "class Foo3 {}")
 

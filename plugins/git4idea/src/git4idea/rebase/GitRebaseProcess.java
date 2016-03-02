@@ -241,7 +241,7 @@ public class GitRebaseProcess {
       }
       else if (rebaseDetector.isNoChangeError()) {
         LOG.info("'No changes' situation detected in " + repoName);
-        GitRebaseUtils.CommitInfo currentRebaseCommit = GitRebaseUtils.getCurrentRebaseCommit(root);
+        GitRebaseUtils.CommitInfo currentRebaseCommit = GitRebaseUtils.getCurrentRebaseCommit(myProject, root);
         if (currentRebaseCommit != null) skippedCommits.add(currentRebaseCommit);
         customMode = GitRebaseResumeMode.SKIP;
       }

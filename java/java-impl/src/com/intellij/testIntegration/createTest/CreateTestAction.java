@@ -22,12 +22,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,9 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CreateTestAction extends PsiElementBaseIntentionAction {
 
@@ -98,6 +100,8 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   @Override
   public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final Module srcModule = ModuleUtilCore.findModuleForPsiElement(element);
+    if (srcModule == null) return;
+
     final PsiClass srcClass = getContainingClass(element);
 
     if (srcClass == null) return;
@@ -106,19 +110,20 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     PsiPackage srcPackage = JavaDirectoryService.getInstance().getPackage(srcDir);
 
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-    final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
-    checkForTestRoots(srcModule, testFolders);
-    if (testFolders.isEmpty() && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT)) {
-      if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) !=
-          Messages.OK) {
-        return;
+    Module testModule = suggestModuleForTests(project, srcModule);
+    final List<VirtualFile> testRootUrls = computeTestRoots(testModule);
+    if (testRootUrls.isEmpty() && computeSuitableTestRootUrls(testModule).isEmpty()) {
+      testModule = srcModule;
+      if (!propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT)) {
+        if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) !=
+            Messages.OK) {
+          return;
+        }
+        propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, true);
       }
-
-      propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, true);
     }
 
-    final Module targetModule = selectTargetModule(project, srcModule, testFolders);
-    final CreateTestDialog d = createTestDialog(project, targetModule, srcClass, srcPackage);
+    final CreateTestDialog d = createTestDialog(project, testModule, srcClass, srcPackage);
     if (!d.showAndGet()) {
       return;
     }
@@ -138,44 +143,59 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     }, CodeInsightBundle.message("intention.create.test"), this);
   }
 
-  private static Module selectTargetModule(Project project, Module srcModule, HashSet<VirtualFile> testFolders) {
-    Module targetModule = null;
-    for (VirtualFile testFolder : testFolders) {
-      Module targetModuleCandidate = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(testFolder);
-      if (targetModuleCandidate == srcModule) {
-        targetModule = srcModule;
-        break;
-      }
-      else if (targetModule == null || TestModuleProperties.getInstance(targetModule).getProductionModule() != srcModule) {
-        targetModule = targetModuleCandidate;
+  @NotNull
+  private static Module suggestModuleForTests(@NotNull Project project, @NotNull Module productionModule) {
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (productionModule.equals(TestModuleProperties.getInstance(module).getProductionModule())) {
+        return module;
       }
     }
-    return targetModule == null ? srcModule : targetModule;
+    return productionModule;
   }
 
   protected CreateTestDialog createTestDialog(Project project, Module srcModule, PsiClass srcClass, PsiPackage srcPackage) {
     return new CreateTestDialog(project, getText(), srcClass, srcPackage, srcModule);
   }
 
-  protected static void checkForTestRoots(Module srcModule, Set<VirtualFile> testFolders) {
-    List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(srcModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE);
-    for (VirtualFile sourceRoot : sourceRoots) {
-      if (!JavaProjectRootsUtil.isInGeneratedCode(sourceRoot, srcModule.getProject())) {
-        testFolders.add(sourceRoot);
-      }
+  static List<String> computeSuitableTestRootUrls(@NotNull Module module) {
+    return suitableTestSourceFolders(module).map(SourceFolder::getUrl).collect(Collectors.toList());
+  }
+
+  static List<VirtualFile> computeTestRoots(@NotNull Module mainModule) {
+    if (!computeSuitableTestRootUrls(mainModule).isEmpty()) {
+      //create test in the same module, if the test source folder doesn't exist yet it will be created
+      return suitableTestSourceFolders(mainModule)
+        .map(SourceFolder::getFile)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
     }
-    //create test in the same module
-    if (!testFolders.isEmpty()) return;
 
     //suggest to choose from all dependencies modules
     final HashSet<Module> modules = new HashSet<Module>();
-    ModuleUtilCore.collectModulesDependsOn(srcModule, modules);
-    for (Module module : modules) {
-      testFolders.addAll(ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE));
-    }
+    ModuleUtilCore.collectModulesDependsOn(mainModule, modules);
+    return modules.stream()
+      .flatMap(CreateTestAction::suitableTestSourceFolders)
+      .map(SourceFolder::getFile)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 
-  @Nullable
+  private static Stream<SourceFolder> suitableTestSourceFolders(@NotNull Module module) {
+    Predicate<SourceFolder> forGeneratedSources = JavaProjectRootsUtil::isForGeneratedSources;
+    return Arrays.stream(ModuleRootManager.getInstance(module).getContentEntries())
+      .flatMap(entry -> entry.getSourceFolders(JavaSourceRootType.TEST_SOURCE).stream())
+      .filter(forGeneratedSources.negate());
+  }
+
+  /**
+   * @deprecated use {@link #computeTestRoots(Module)} instead
+   */
+  @Deprecated
+  protected static void checkForTestRoots(Module srcModule, Set<VirtualFile> testFolders) {
+    testFolders.addAll(computeTestRoots(srcModule));
+  }
+
+    @Nullable
   protected static PsiClass getContainingClass(PsiElement element) {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (psiClass == null) {

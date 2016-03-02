@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ public class ColorIcon extends EmptyIcon {
   private boolean myBorder;
   private int myColorSize;
 
-
   public ColorIcon(int size, int colorSize, @NotNull Color color, final boolean border) {
     super(size, size);
     myColor = color;
@@ -53,16 +52,27 @@ public class ColorIcon extends EmptyIcon {
     final int iconWidth = getIconWidth();
     final int iconHeight = getIconHeight();
     g.setColor(getIconColor());
+
+    final int size = getColorSize();
+    final int x = i + (iconWidth - size) / 2;
+    final int y = j + (iconHeight - size) / 2;
     
-    final int x = i + (iconWidth - myColorSize) / 2;
-    final int y = j + (iconHeight - myColorSize) / 2;
-    
-    g.fillRect(x, y, myColorSize, myColorSize);
+    g.fillRect(x, y, size, size);
     
     if (myBorder) {
       g.setColor(Gray.x00.withAlpha(40));
-      g.drawRect(x, y, myColorSize, myColorSize);
+      g.drawRect(x, y, size, size);
     }
+  }
+
+  protected int getColorSize() {
+    return scale(myColorSize);
+  }
+
+
+  @Override
+  protected EmptyIcon createScaledInstance(float scale) {
+    return new ColorIcon(getIconWidth(), myColorSize, myColor, myBorder);
   }
 
   @Override

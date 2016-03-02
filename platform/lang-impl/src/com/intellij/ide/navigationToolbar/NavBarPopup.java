@@ -76,7 +76,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         if (e.getComponent() != getList()) return;
         if (!e.isConsumed() && e.isPopupTrigger()) {
           myPanel.getModel().setSelectedIndex(selectedIndex);
-          IdeFocusManager.getInstance(myPanel.getProject()).requestFocus(myPanel);
+          IdeFocusManager.getInstance(myPanel.getProject()).requestFocus(myPanel, true);
           myPanel.rightClick(selectedIndex);
           e.consume();
         } else {

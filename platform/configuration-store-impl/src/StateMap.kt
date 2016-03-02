@@ -203,7 +203,7 @@ class StateMap private constructor(private val names: Array<String>, private val
     }
 
     val currentState = states.get(index)
-    LOG.assertTrue(currentState is Element)
+    LOG.assertTrue(currentState is Element, currentState?.let { it.javaClass.name } ?: "null")
     states.set(index, if (state == null) null else archiveState(state).toByteArray())
   }
 }

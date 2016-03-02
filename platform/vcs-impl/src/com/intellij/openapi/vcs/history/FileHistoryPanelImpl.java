@@ -398,12 +398,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     listener.installOn(myDualView.getTreeView());
     setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
+    myPopupActions = createPopupActions();
+
     createDualView();
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(isStaticEmbedded);
     }
-
-    myPopupActions = createPopupActions();
 
     myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
       public void finished() {
@@ -596,22 +596,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private void createDualView() {
     myDualView.setShowGrid(true);
-    myDualView.getTreeView().addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionPopupMenu popupMenu = ActionManager.getInstance()
-          .createActionPopupMenu(ActionPlaces.UPDATE_POPUP, myPopupActions);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    });
-
-    myDualView.getFlatView().addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionPopupMenu popupMenu = ActionManager.getInstance()
-          .createActionPopupMenu(ActionPlaces.UPDATE_POPUP, myPopupActions);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    });
-
+    PopupHandler.installPopupHandler(myDualView.getTreeView(), myPopupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(myDualView.getFlatView(), myPopupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
     myDualView.requestFocus();
 
     myDualView.addListSelectionListener(new ListSelectionListener() {

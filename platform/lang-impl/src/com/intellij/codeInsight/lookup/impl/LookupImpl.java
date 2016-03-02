@@ -83,7 +83,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     protected void processKeyEvent(@NotNull final KeyEvent e) {
       final char keyChar = e.getKeyChar();
       if (keyChar == KeyEvent.VK_ENTER || keyChar == KeyEvent.VK_TAB) {
-        IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent()).doWhenDone(new Runnable() {
+        IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(new Runnable() {
           @Override
           public void run() {
             IdeEventQueue.getInstance().getKeyEventDispatcher().dispatchKeyEvent(e);

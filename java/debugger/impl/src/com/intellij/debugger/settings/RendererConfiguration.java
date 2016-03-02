@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
 
   private static final int VERSION = 8;
 
-  private List<NodeRenderer> myRepresentationNodes = new CopyOnWriteArrayList<NodeRenderer>();
+  private List<NodeRenderer> myRepresentationNodes = new CopyOnWriteArrayList<>();
   private final NodeRendererSettings myRendererSettings;
 
   protected RendererConfiguration(NodeRendererSettings rendererSettings) {
@@ -49,9 +49,9 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     catch (CloneNotSupportedException e) {
       LOG.error(e);
     }
-    result.myRepresentationNodes = new CopyOnWriteArrayList<NodeRenderer>();
+    result.myRepresentationNodes = new CopyOnWriteArrayList<>();
 
-    final ArrayList<NodeRenderer> cloned = new ArrayList<NodeRenderer>();
+    final ArrayList<NodeRenderer> cloned = new ArrayList<>();
     for (NodeRenderer renderer : myRepresentationNodes) {
       cloned.add((NodeRenderer)renderer.clone());
     }
@@ -91,7 +91,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     }
 
     final List<Element> children = root.getChildren(NodeRendererSettings.RENDERER_TAG);
-    final List<NodeRenderer> renderers = new ArrayList<NodeRenderer>(children.size());
+    final List<NodeRenderer> renderers = new ArrayList<>(children.size());
     for (Element nodeElement : children) {
       try {
         renderers.add((NodeRenderer)myRendererSettings.readRenderer(nodeElement));

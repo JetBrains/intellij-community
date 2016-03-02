@@ -136,7 +136,7 @@ public class PsiScopesUtil {
       final PsiType upperBound =
         PsiClassImplUtil.correctType(((PsiCapturedWildcardType)type).getUpperBound(), place.getResolveScope());
       if (upperBound != null) {
-        processTypeDeclarations(upperBound, place, processor);
+        processTypeDeclarations(PsiUtil.captureToplevelWildcards(upperBound, place), place, processor);
       }
     }
     else {
@@ -368,7 +368,7 @@ public class PsiScopesUtil {
             final PsiType upperBound =
               PsiClassImplUtil.correctType(((PsiCapturedWildcardType)type).getUpperBound(), methodCall.getResolveScope());
             if (upperBound != null) {
-              processQualifierType(upperBound, processor, manager, methodCall);
+              processQualifierType(PsiUtil.captureToplevelWildcards(upperBound, methodCall), processor, manager, methodCall);
             }
           }
           else {

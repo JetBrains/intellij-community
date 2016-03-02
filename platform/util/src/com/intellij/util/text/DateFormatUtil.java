@@ -159,7 +159,7 @@ public class DateFormatUtil {
   }
 
   @NotNull
-  public static String formatPrettyDateTime(Date date) {
+  public static String formatPrettyDateTime(@NotNull Date date) {
     return formatPrettyDateTime(date.getTime());
   }
 

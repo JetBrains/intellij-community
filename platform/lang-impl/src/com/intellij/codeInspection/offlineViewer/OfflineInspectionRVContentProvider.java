@@ -21,7 +21,6 @@
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
@@ -31,7 +30,6 @@ import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +67,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     final TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths == null) return QuickFixAction.EMPTY; 
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
-    final Map<RefEntity, Set<QuickFix>> actions = new HashMap<RefEntity, Set<QuickFix>>();
+    final Map<RefEntity, CommonProblemDescriptor[]> actions = new HashMap<>();
     for (TreePath selectionPath : treePaths) {
       TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
         @Override
@@ -79,18 +77,13 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
             final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
             final RefEntity element = descriptorNode.getElement();
             selectedElements.add(element);
-            Set<QuickFix> quickFixes = actions.get(element);
-            if (quickFixes == null) {
-              quickFixes = new HashSet<QuickFix>();
-              actions.put(element, quickFixes);
-            }
+            CommonProblemDescriptor[] descriptors = actions.get(element);
             final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
-            if (descriptor != null) {
-              final QuickFix[] fixes = descriptor.getFixes();
-              if (fixes != null) {
-                ContainerUtil.addAll(quickFixes, fixes);
-              }
-            }
+            final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
+                                                                                   : new CommonProblemDescriptor[]{descriptor};
+            actions.put(element, descriptors == null ?
+                                 descriptorAsArray :
+                                 DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
           }
           else if (node instanceof RefElementNode) {
             selectedElements.add(((RefElementNode)node).getElement());
@@ -106,7 +99,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return presentation.extractActiveFixes(selectedRefElements, actions);
+    return presentation.extractActiveFixes(selectedRefElements, actions, tree.getSelectedDescriptors());
   }
 
   @Override
@@ -132,11 +125,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
             return new OfflineProblemDescriptorContainer(descriptor);
           }
         };
-      final List<InspectionTreeNode> list = buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure);
-      for (InspectionTreeNode node : list) {
-        toolNode.add(node);
-      }
       parentNode.add(toolNode);
+      buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure, toolNode::add);
     }
   }
 
@@ -182,13 +172,15 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                   @NotNull final InspectionToolWrapper toolWrapper,
                                   @NotNull final UserObjectContainer container,
-                                  @NotNull final InspectionPackageNode packageNode,
+                                  @NotNull final InspectionTreeNode packageNode,
                                   final boolean canPackageRepeat) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final RefElementNode elemNode = addNodeToParent(container, presentation, packageNode);
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      elemNode.add(new OfflineProblemDescriptorNode(((OfflineProblemDescriptorContainer)container).getUserObject(),
-                                                    (LocalInspectionToolWrapper)toolWrapper, presentation));
+      final OfflineProblemDescriptorNode child =
+        OfflineProblemDescriptorNode.create(((OfflineProblemDescriptorContainer)container).getUserObject(),
+                                            (LocalInspectionToolWrapper)toolWrapper, presentation);
+      insertByIndex(child, elemNode);
     }
   }
 

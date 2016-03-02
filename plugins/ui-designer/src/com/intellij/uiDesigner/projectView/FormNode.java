@@ -76,6 +76,16 @@ public class FormNode extends ProjectViewNode<Form>{
     }
   }
 
+  @Override
+  protected boolean shouldPostprocess() {
+    return true;
+  }
+
+  @Override
+  public boolean someChildContainsFile(VirtualFile file) {
+    return contains(file);
+  }
+
   public void navigate(final boolean requestFocus) {
     getValue().navigate(requestFocus);
   }

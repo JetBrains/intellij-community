@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions.fillParagraph;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * The action came from Emacs users // PY-4775
  */
-public class FillParagraphAction extends BaseCodeInsightAction {
+public class FillParagraphAction extends BaseCodeInsightAction implements DumbAware {
 
   @NotNull
   @Override

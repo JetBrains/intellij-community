@@ -34,7 +34,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
+import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -98,7 +98,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       PsiFile pyFile = targetFile.getManager().findFile(file);
       PsiFileSystemItem importable = (PsiFileSystemItem) PyUtil.turnInitIntoDir(pyFile);
       if (importable == null) continue;
-      if (PythonReferenceImporter.isImportableModule(targetFile, importable)) {
+      if (PythonImportUtils.isImportableModule(targetFile, importable)) {
         LookupElementBuilder element = PyModuleType.buildFileLookupElement(importable, null);
         if (element != null) {
           result.addElement(element.withInsertHandler(inStringLiteral ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER));

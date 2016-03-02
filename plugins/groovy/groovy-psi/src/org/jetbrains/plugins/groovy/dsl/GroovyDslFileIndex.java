@@ -477,7 +477,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
             // => cache globally by file instance
             vfile.putUserData(CACHED_EXECUTOR, Pair.create(executor, stamp));
             if (executor != null) {
-              activate(vfile);
+              setStatusAndError(vfile, Status.ACTIVE, null);
             }
           }
         }

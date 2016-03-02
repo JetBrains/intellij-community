@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,73 +18,49 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.concurrency.Futures;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
   private static final String FS_ROOT = "/";
+  private static final int STATUS_UPDATE_PERIOD = 1000;
 
-  private final Object myLock = new Object();
-  private final Set<WatchRequestImpl> myRootsToWatch = new THashSet<WatchRequestImpl>();
-  private TreeNode myNormalizedTree;
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
+
+  private final Object myLock = new Object();
+  private final Set<WatchRequestImpl> myRootsToWatch = new THashSet<>();
+  private TreeNode myNormalizedTree;
 
   private static class WatchRequestImpl implements WatchRequest {
     private final String myFSRootPath;
     private final boolean myWatchRecursively;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, boolean isDirectory, boolean watchRecursively) throws FileNotFoundException {
-      int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
-      if (index >= 0) rootPath = rootPath.substring(0, index);
-
-      File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
-      if (!rootFile.isAbsolute()) {
-        throw new FileNotFoundException("Invalid path: " + rootPath);
-      }
-
-      if (index > 0 || !(FileUtil.isRootPath(rootFile) || isDirectory)) {
-        File parentFile = rootFile.getParentFile();
-        if (parentFile == null) {
-          throw new FileNotFoundException(rootPath);
-        }
-        if (!parentFile.getPath().equals(PathManager.getSystemPath()) || !rootFile.mkdir()) {
-          rootFile = parentFile;
-        }
-      }
-
-      myFSRootPath = rootFile.getAbsolutePath();
+    public WatchRequestImpl(String rootPath, boolean watchRecursively) {
+      myFSRootPath = rootPath;
       myWatchRecursively = watchRecursively;
     }
 
@@ -110,20 +86,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private final Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
-  public LocalFileSystemImpl(@NotNull ManagingFS managingFS) {
+  public LocalFileSystemImpl(@NotNull Application app, @NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
     myWatcher = new FileWatcher(myManagingFS);
     if (myWatcher.isOperational()) {
-      final int PERIOD = 1000;
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          final Application application = ApplicationManager.getApplication();
-          if (application == null || application.isDisposed()) return;
-          storeRefreshStatusToFiles();
-        }
-      };
-      JobScheduler.getScheduler().scheduleWithFixedDelay(runnable, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
+      JobScheduler.getScheduler().scheduleWithFixedDelay(
+        () -> { if (!app.isDisposed()) storeRefreshStatusToFiles(); },
+        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -146,7 +115,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return "LocalFileSystem";
   }
 
-  private WatchRequestImpl[] normalizeRootsForRefresh() {
+  private List<WatchRequestImpl> normalizeRootsForRefresh() {
     final List<WatchRequestImpl> result = new ArrayList<WatchRequestImpl>();
 
     // no need to call for a read action here since we're only called with it on hands already
@@ -213,13 +182,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       myNormalizedTree = rootNode;
     }
 
-    return result.toArray(new WatchRequestImpl[result.size()]);
+    return result;
   }
 
   @NotNull
   private static List<String> splitPath(@NotNull String path) {
     if (path.isEmpty()) {
-      return ContainerUtil.emptyList();
+      return Collections.emptyList();
     }
 
     if (FS_ROOT.equals(path)) {
@@ -271,7 +240,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private void markPathsDirty(List<String> dirtyPaths) {
+  private void markPathsDirty(Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
       VirtualFile file = findFileByPathIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
@@ -280,40 +249,34 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private void markFlatDirsDirty(List<String> dirtyPaths) {
+  private void markFlatDirsDirty(Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
-      VirtualFile file = findFileOrParentIfCached(dirtyPath);
-      if (file instanceof NewVirtualFile) {
-        NewVirtualFile nvf = (NewVirtualFile)file;
-        nvf.markDirty();
-        for (VirtualFile child : nvf.getCachedChildren()) {
+      Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+      if (pair.first != null) {
+        pair.first.markDirty();
+        for (VirtualFile child : pair.first.getCachedChildren()) {
           ((NewVirtualFile)child).markDirty();
         }
       }
+      else if (pair.second != null) {
+        pair.second.markDirty();
+      }
     }
   }
 
-  private void markRecursiveDirsDirty(List<String> dirtyPaths) {
+  private void markRecursiveDirsDirty(Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
-      VirtualFile file = findFileOrParentIfCached(dirtyPath);
-      if (file instanceof NewVirtualFile) {
-        ((NewVirtualFile)file).markDirtyRecursively();
+      Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+      if (pair.first != null) {
+        pair.first.markDirtyRecursively();
+      }
+      else if (pair.second != null) {
+        pair.second.markDirty();
       }
     }
   }
 
-  private VirtualFile findFileOrParentIfCached(String path) {
-    VirtualFile file = findFileByPathIfCached(path);
-    if (file == null) {
-      String parentPath = new File(path).getParent();
-      if (parentPath != null) {
-        file = findFileByPathIfCached(parentPath);
-      }
-    }
-    return file;
-  }
-
-  public void markSuspiciousFilesDirty(List<VirtualFile> files) {
+  public void markSuspiciousFilesDirty(@NotNull List<VirtualFile> files) {
     storeRefreshStatusToFiles();
 
     if (myWatcher.isOperational()) {
@@ -334,25 +297,19 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   private void setUpFileWatcher() {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDisposeInProgress() || !myWatcher.isOperational()) return;
-    application.assertReadAccessAllowed();
+    Application app = ApplicationManager.getApplication();
+    app.assertReadAccessAllowed();
+    if (app.isDisposeInProgress() || !myWatcher.isOperational()) return;
 
     synchronized (myLock) {
-      final WatchRequestImpl[] watchRequests = normalizeRootsForRefresh();
-      final List<String> myRecursiveRoots = new ArrayList<String>();
-      final List<String> myFlatRoots = new ArrayList<String>();
+      List<String> recursiveRoots = new ArrayList<>();
+      List<String> flatRoots = new ArrayList<>();
 
-      for (WatchRequestImpl watchRequest : watchRequests) {
-        if (watchRequest.isToWatchRecursively()) {
-          myRecursiveRoots.add(watchRequest.myFSRootPath);
-        }
-        else {
-          myFlatRoots.add(watchRequest.myFSRootPath);
-        }
+      for (WatchRequestImpl request : normalizeRootsForRefresh()) {
+        (request.isToWatchRecursively() ? recursiveRoots : flatRoots).add(request.myFSRootPath);
       }
 
-      myWatcher.setWatchRoots(myRecursiveRoots, myFlatRoots);
+      myWatcher.setWatchRoots(recursiveRoots, flatRoots);
     }
   }
 
@@ -362,25 +319,24 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     if (rootPaths.isEmpty() || !myWatcher.isOperational()) {
       return Collections.emptySet();
     }
-    if (watchRecursively) {
-      return replaceWatchedRoots(Collections.<WatchRequest>emptySet(), rootPaths, null);
+    else if (watchRecursively) {
+      return replaceWatchedRoots(Collections.emptySet(), rootPaths, null);
     }
-    return replaceWatchedRoots(Collections.<WatchRequest>emptySet(), null, rootPaths);
+    else {
+      return replaceWatchedRoots(Collections.emptySet(), null, rootPaths);
+    }
   }
 
   @Override
   public void removeWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests) {
     if (watchRequests.isEmpty()) return;
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myLock) {
-          final boolean update = doRemoveWatchedRoots(watchRequests);
-          if (update) {
-            myNormalizedTree = null;
-            setUpFileWatcher();
-          }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myLock) {
+        boolean update = doRemoveWatchedRoots(watchRequests);
+        if (update) {
+          myNormalizedTree = null;
+          setUpFileWatcher();
         }
       }
     });
@@ -388,51 +344,38 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests,
-                                               @Nullable final Collection<String> _recursiveRoots,
-                                               @Nullable final Collection<String> _flatRoots) {
-    final Collection<String> recursiveRoots = _recursiveRoots != null ? _recursiveRoots : Collections.<String>emptyList();
-    final Collection<String> flatRoots = _flatRoots != null ? _flatRoots : Collections.<String>emptyList();
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+                                               @Nullable Collection<String> _recursiveRoots,
+                                               @Nullable Collection<String> _flatRoots) {
+    Collection<String> recursiveRoots = ObjectUtils.notNull(_recursiveRoots, Collections.<String>emptyList());
+    Collection<String> flatRoots = ObjectUtils.notNull(_flatRoots, Collections.<String>emptyList());
 
     if (recursiveRoots.isEmpty() && flatRoots.isEmpty() || !myWatcher.isOperational()) {
       removeWatchedRoots(watchRequests);
       return Collections.emptySet();
     }
 
-    final Set<WatchRequest> result = new HashSet<WatchRequest>();
-    final Set<VirtualFile> filesToSync = new HashSet<VirtualFile>();
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myLock) {
-          boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result, filesToSync) |
-                           doRemoveWatchedRoots(watchRequests);
-          if (update) {
-            myNormalizedTree = null;
-            setUpFileWatcher();
-          }
+    Set<WatchRequest> result = new HashSet<WatchRequest>();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myLock) {
+        boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result) |
+                         doRemoveWatchedRoots(watchRequests);
+        if (update) {
+          myNormalizedTree = null;
+          setUpFileWatcher();
         }
       }
     });
-
-    syncFiles(filesToSync);
-
     return result;
   }
 
-  private boolean doAddRootsToWatch(@NotNull final Collection<String> recursiveRoots,
-                                    @NotNull final Collection<String> flatRoots,
-                                    @NotNull final Set<WatchRequest> results,
-                                    @NotNull final Set<VirtualFile> filesToSync) {
+  private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<WatchRequest> results) {
     boolean update = false;
 
-    Set<String> directories = findDirectories(recursiveRoots, flatRoots);
-
     for (String root : recursiveRoots) {
-      WatchRequestImpl request = watch(root, directories.contains(root), true);
+      WatchRequestImpl request = watch(root, true);
       if (request == null) continue;
-      final boolean alreadyWatched = isAlreadyWatched(request);
+      boolean alreadyWatched = isAlreadyWatched(request);
 
       request.myDominated = alreadyWatched;
       myRootsToWatch.add(request);
@@ -442,16 +385,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
 
     for (String root : flatRoots) {
-      WatchRequestImpl request = watch(root, directories.contains(root), false);
+      WatchRequestImpl request = watch(root, false);
       if (request == null) continue;
-      final boolean alreadyWatched = isAlreadyWatched(request);
-
-      if (!alreadyWatched) {
-        final VirtualFile existingFile = findFileByPathIfCached(root);
-        if (existingFile != null && existingFile.isDirectory() && existingFile instanceof NewVirtualFile) {
-          filesToSync.addAll(((NewVirtualFile)existingFile).getCachedChildren());
-        }
-      }
+      boolean alreadyWatched = isAlreadyWatched(request);
 
       request.myDominated = alreadyWatched;
       myRootsToWatch.add(request);
@@ -463,48 +399,18 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return update;
   }
 
-  private static Set<String> findDirectories(Collection<String> recursiveRoots, Collection<String> flatRoots) {
-    final Set<String> directories = ContainerUtil.newConcurrentSet();
-
-    final BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
-    Futures.invokeAll(JBIterable.from(recursiveRoots).append(flatRoots).transform(new Function<String, Future<?>>() {
-      @Override
-      public Future<?> fun(final String root) {
-        return executor.submit(new Runnable() {
-          @Override
-          public void run() {
-            if (!root.contains(JarFileSystem.JAR_SEPARATOR) && new File(root).isDirectory()) {
-              directories.add(root);
-            }
-          }
-        });
-      }
-    }).toList());
-
-    return directories;
-  }
-
   @Nullable
-  private static WatchRequestImpl watch(final String root, boolean isDirectory, final boolean recursively) {
-    try {
-      return new WatchRequestImpl(root, isDirectory, recursively);
-    }
-    catch (FileNotFoundException e) {
-      LOG.warn(e);
+  private static WatchRequestImpl watch(String rootPath, boolean recursively) {
+    int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
+    if (index >= 0) rootPath = rootPath.substring(0, index);
+
+    File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
+    if (!rootFile.isAbsolute()) {
+      LOG.warn("Invalid path: " + rootPath);
       return null;
     }
-  }
 
-  private void syncFiles(@NotNull final Set<VirtualFile> filesToSync) {
-    if (filesToSync.isEmpty() || ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    for (VirtualFile file : filesToSync) {
-      if (file instanceof NewVirtualFile && file.getFileSystem() instanceof LocalFileSystem) {
-        ((NewVirtualFile)file).markDirtyRecursively();
-      }
-    }
-
-    refreshFiles(filesToSync, true, false, null);
+    return new WatchRequestImpl(rootFile.getAbsolutePath(), recursively);
   }
 
   private boolean doRemoveWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests) {
@@ -540,7 +446,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  @NonNls
+  @Override
   public String toString() {
     return "LocalFileSystem";
   }

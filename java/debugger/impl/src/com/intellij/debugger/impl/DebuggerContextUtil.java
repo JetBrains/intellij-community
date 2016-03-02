@@ -61,6 +61,7 @@ public class DebuggerContextUtil {
             @Override
             public void run() {
               manager.setState(newContext, session.getState(), DebuggerSession.Event.REFRESH, null);
+              SourceCodeChecker.checkSource(newContext);
             }
           });
         }

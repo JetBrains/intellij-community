@@ -2,6 +2,7 @@
 !define MUI_PRODUCT  "IntelliJ IDEA"
 !define PRODUCT_FULL_NAME "IntelliJ IDEA"
 !define PRODUCT_EXE_FILE "idea.exe"
+!define PRODUCT_EXE_FILE_64 "idea64.exe"
 !define PRODUCT_ICON_FILE "idea_inst.ico"
 !define PRODUCT_UNINST_ICON_FILE "idea_uninst.ico"
 !define PRODUCT_LOGO_FILE "logo.bmp"

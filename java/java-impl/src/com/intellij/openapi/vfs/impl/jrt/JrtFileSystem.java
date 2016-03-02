@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -63,7 +64,7 @@ public class JrtFileSystem extends ArchiveFileSystem {
 
   private static void scheduleConfiguredSdkCheck() {
     if (isSupported()) return;
-    final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appStarting(Project project) {
@@ -84,6 +85,13 @@ public class JrtFileSystem extends ArchiveFileSystem {
   @Override
   public String getProtocol() {
     return PROTOCOL;
+  }
+
+  @Nullable
+  @Override
+  protected String normalize(@NotNull String path) {
+    int p = path.indexOf(SEPARATOR);
+    return p > 0 ? FileUtil.normalize(path.substring(0, p)) + path.substring(p) : super.normalize(path);
   }
 
   @NotNull
@@ -111,14 +119,14 @@ public class JrtFileSystem extends ArchiveFileSystem {
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     checkSubscription();
 
-    final String homePath = extractLocalPath(extractRootPath(entryFile.getPath()));
+    String homePath = extractLocalPath(extractRootPath(entryFile.getPath()));
     ArchiveHandler handler = myHandlers.get(homePath);
     if (handler == null) {
       handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
       myHandlers.put(homePath, handler);
       ApplicationManager.getApplication().invokeLater(() -> {
-        VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/lib/modules");
-        if (dir != null) dir.getChildren();
+        VirtualFile modules = LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/lib/modules");
+        if (modules != null && modules.isDirectory()) modules.getChildren();
       }, ModalityState.defaultModalityState());
     }
     return handler;
@@ -136,9 +144,11 @@ public class JrtFileSystem extends ArchiveFileSystem {
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem && event instanceof VFileContentChangeEvent) {
             VirtualFile file = event.getFile();
-            if (file != null && "jimage".equals(file.getExtension())) {
-              String homePath = file.getParent().getParent().getParent().getPath();
-              if (myHandlers.remove(homePath) != null) {
+            if (file != null) {
+              String homePath = null;
+              if ("modules".equals(file.getName())) homePath = file.getParent().getParent().getPath();
+              else if ("jimage".equals(file.getExtension())) homePath = file.getParent().getParent().getParent().getPath();
+              if (homePath != null && myHandlers.remove(homePath) != null) {
                 VirtualFile root = findFileByPath(composeRootPath(homePath));
                 if (root != null) {
                   ((NewVirtualFile)root).markDirtyRecursively();
@@ -178,12 +188,17 @@ public class JrtFileSystem extends ArchiveFileSystem {
     VfsImplUtil.refresh(this, asynchronous);
   }
 
+  @Override
+  protected boolean isCorrectFileType(@NotNull VirtualFile local) {
+    return isModularJdk(FileUtil.toSystemDependentName(local.getPath()));
+  }
+
   public static boolean isSupported() {
     return SUPPORTED;
   }
 
   public static boolean isModularJdk(@NotNull String homePath) {
-    return new File(homePath, "lib/modules").isDirectory();
+    return new File(homePath, "lib/modules").exists() && new File(homePath, "jrt-fs.jar").isFile();
   }
 
   public static boolean isRoot(@NotNull VirtualFile file) {

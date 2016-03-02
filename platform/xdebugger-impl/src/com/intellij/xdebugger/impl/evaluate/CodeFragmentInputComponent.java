@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
                                     Disposable parentDisposable) {
     super(XDebuggerBundle.message("dialog.title.evaluate.code.fragment"));
     myMultilineEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateCodeFragment", sourcePosition,
-                                                      statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT, true);
+                                                      statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT, true, true);
     myMainPanel = new JPanel(new BorderLayout());
     JPanel editorPanel = new JPanel(new BorderLayout());
     editorPanel.add(myMultilineEditor.getComponent(), BorderLayout.CENTER);
@@ -64,6 +64,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     mySplitterProportionKey = splitterProportionKey;
   }
 
+  @Override
   @NotNull
   protected XDebuggerEditorBase getInputEditor() {
     return myMultilineEditor;

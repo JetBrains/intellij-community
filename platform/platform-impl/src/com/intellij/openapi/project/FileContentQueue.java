@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,21 +32,23 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
+import java.util.Deque;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author peter
  */
-@SuppressWarnings({"SynchronizeOnThis"})
 public class FileContentQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
+
   private static final long MAX_SIZE_OF_BYTES_IN_QUEUE = 1024 * 1024;
   private static final long PROCESSED_FILE_BYTES_THRESHOLD = 1024 * 1024 * 3;
   private static final long LARGE_SIZE_REQUEST_THRESHOLD = PROCESSED_FILE_BYTES_THRESHOLD - 1024 * 300; // 300k for other threads
+
+  private static final int ourTasksNumber =
+    SystemProperties.getBooleanProperty("idea.allow.parallel.file.reading", true) ? CacheUpdateRunner.indexingThreadCount() : 1;
+  private static final ExecutorService ourExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, ourTasksNumber);
 
   // Unbounded (!)
   private final LinkedBlockingDeque<FileContent> myLoadedContents = new LinkedBlockingDeque<FileContent>();
@@ -58,62 +60,66 @@ public class FileContentQueue {
   private volatile long myBytesBeingProcessed;
   private volatile boolean myLargeSizeRequested;
   private final Object myProceedWithProcessingLock = new Object();
-  private static final boolean ourAllowParallelFileReading = SystemProperties.getBooleanProperty("idea.allow.parallel.file.reading", true);
+  private final BlockingQueue<VirtualFile> myFilesQueue;
+  private final ProgressIndicator myProgressIndicator;
+  private static final Deque<FileContentQueue> ourContentLoadingQueues = new LinkedBlockingDeque<>();
 
-  private static final BoundedTaskExecutor ourLoadingContentsExecutor = new BoundedTaskExecutor(
-    PooledThreadExecutor.INSTANCE,
-    ourAllowParallelFileReading ? CacheUpdateRunner.indexingThreadCount() : 1
-  );
-
-  public void queue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
+  public FileContentQueue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
     int numberOfFiles = files.size();
-    if (numberOfFiles == 0) return;
     myContentsToLoad.set(numberOfFiles);
-
     // ABQ is more memory efficient for significant number of files (e.g. 500K)
-    final BlockingQueue<VirtualFile> filesQueue = new ArrayBlockingQueue<VirtualFile>(numberOfFiles, false, files);
-    int maxFilesToBeLoadedInTheSameTime = ourAllowParallelFileReading ? CacheUpdateRunner.indexingThreadCount() : 1;
+    myFilesQueue = numberOfFiles > 0 ? new ArrayBlockingQueue<VirtualFile>(numberOfFiles, false, files) : null;
+    myProgressIndicator = indicator;
+  }
 
-    for(int i = 0 ; i < maxFilesToBeLoadedInTheSameTime; ++i) {
+  public void startLoading() {
+    if (myContentsToLoad.get() == 0) return;
+
+    for (int i = 0; i < ourTasksNumber; ++i) {
+      ourContentLoadingQueues.addLast(this);
       Runnable task = new Runnable() {
         @Override
         public void run() {
-          VirtualFile file = filesQueue.poll();
-          if (file == null) return;
-          try {
-            indicator.checkCanceled();
-            myLoadedContents.offer(loadContent(file, indicator));
-            // With loop contents of second / remaining projects will start loading only after finishing loading contents from first project.
-            // With resubmit loading of contents of second/remaining projects will also proceed
-            ourLoadingContentsExecutor.submit(this);
-          }
-          catch (ProcessCanceledException e) {
-            // Do nothing, exit the thread.
-          }
-          catch (InterruptedException e) {
-            LOG.error(e);
-          }
-          finally {
-            myContentsToLoad.addAndGet(-1);
+          FileContentQueue contentQueue = ourContentLoadingQueues.pollFirst();
+          while (contentQueue != null) {
+            if (contentQueue.loadNextContent()) {
+              ourContentLoadingQueues.addLast(contentQueue);
+            }
+            if (myContentsToLoad.get() == 0) {
+              return;
+            }
+            contentQueue = ourContentLoadingQueues.pollFirst();
           }
         }
       };
-      ourLoadingContentsExecutor.submit(task);
+      ourExecutor.submit(task);
     }
   }
 
-  private FileContent loadContent(@NotNull VirtualFile file, @NotNull final ProgressIndicator indicator) throws InterruptedException {
-    FileContent content = new FileContent(file);
-
-    if (isValidFile(file)) {
-      if (!doLoadContent(content, indicator)) {
-        content.setEmptyContent();
-      }
+  private boolean loadNextContent() {
+    VirtualFile file = myFilesQueue.poll();
+    if (file == null || myProgressIndicator.isCanceled()) return false;
+    try {
+      myProgressIndicator.checkCanceled();
+      myLoadedContents.offer(loadContent(file, myProgressIndicator));
     }
-    else {
+    catch (ProcessCanceledException e) {
+      return false;
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+    finally {
+      myContentsToLoad.addAndGet(-1);
+    }
+    return true;
+  }
+
+  private FileContent loadContent(@NotNull VirtualFile file, @NotNull ProgressIndicator indicator) throws InterruptedException {
+    FileContent content = new FileContent(file);
+    if (!isValidFile(file) || !doLoadContent(content, indicator)) {
       content.setEmptyContent();
     }
-
     return content;
   }
 
@@ -180,7 +186,7 @@ public class FileContentQueue {
         indicator.checkCanceled();
       }
       catch (ProcessCanceledException e) {
-        pushback(content);
+        pushBack(content);
         throw e;
       }
 
@@ -246,7 +252,7 @@ public class FileContentQueue {
     }
   }
 
-  public void pushback(@NotNull FileContent content) {
+  public void pushBack(@NotNull FileContent content) {
     synchronized (myProceedWithLoadingLock) {
       myLoadedBytesInQueue += content.getLength();
     }

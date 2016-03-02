@@ -181,10 +181,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     }
   }
 
-  public class ExactBreakpointVariant extends XLineBreakpointAllVariant {
+  public class XLinePsiElementBreakpointVariant extends XLineBreakpointAllVariant {
     private final PsiElement myElement;
 
-    public ExactBreakpointVariant(@NotNull XSourcePosition position, PsiElement element) {
+    public XLinePsiElementBreakpointVariant(@NotNull XSourcePosition position, PsiElement element) {
       super(position);
 
       myElement = element;

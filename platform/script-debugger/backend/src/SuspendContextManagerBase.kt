@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *, CALL_FRAME>, CALL_FRAME : CallFrame> : SuspendContextManager<CALL_FRAME> {
+abstract class SuspendContextManagerBase<T : SuspendContextBase<CALL_FRAME>, CALL_FRAME : CallFrame> : SuspendContextManager<CALL_FRAME> {
   val contextRef = AtomicReference<T>()
 
   protected val suspendCallback = AtomicReference<AsyncPromise<Void>>()
@@ -34,17 +34,19 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *, CALL_FRAME
     }
   }
 
+  open fun updateContext(newContext: SuspendContext<*>) {
+  }
+
   // dismiss context on resumed
   protected fun dismissContext() {
-    val context = contextRef.get()
-    if (context != null) {
-      contextDismissed(context)
+    contextRef.get()?.let {
+      contextDismissed(it)
     }
   }
 
   protected fun dismissContextOnDone(promise: Promise<*>): Promise<*> {
     val context = contextOrFail
-    (promise as Promise<Any?>).done { contextDismissed(context) }
+    promise.done { contextDismissed(context) }
     return promise
   }
 
@@ -62,17 +64,9 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *, CALL_FRAME
   override val contextOrFail: T
     get() = contextRef.get() ?: throw IllegalStateException("No current suspend context")
 
-  override fun suspend(): Promise<*> {
-    val callback = suspendCallback.get()
-    if (callback != null) {
-      return callback
-    }
-    return if (context != null) resolvedPromise() else doSuspend()
-  }
+  override fun suspend() = suspendCallback.get() ?: if (context == null) doSuspend() else resolvedPromise()
 
   protected abstract fun doSuspend(): Promise<*>
-
-  override fun isContextObsolete(context: SuspendContext<*>) = this.context !== context
 
   override fun setOverlayMessage(message: String?) {
   }

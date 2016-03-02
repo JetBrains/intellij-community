@@ -59,6 +59,6 @@ public class WebDeploymentCredentialsHandler extends RemoteCredentialsHandlerBas
   @NotNull
   private String constructSftpCredentialsFullPath() {
     RemoteCredentials cred = getCredentials().getSshCredentials();
-    return SFTP_DEPLOYMENT_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
+    return SFTP_DEPLOYMENT_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 }

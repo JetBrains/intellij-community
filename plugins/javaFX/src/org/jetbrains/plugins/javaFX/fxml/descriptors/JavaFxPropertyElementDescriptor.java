@@ -20,7 +20,7 @@ import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -87,8 +87,8 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
         });
         descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
       }
-    } else if (InheritanceUtil.isInheritor(psiType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY)) {
-      final PsiType propertyType = JavaFxPsiUtil.getPropertyType(psiType, project);
+    } else if (InheritanceUtil.isInheritor(psiType, JavaFxCommonNames.JAVAFX_BEANS_PROPERTY)) {
+      final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(psiType, project);
       final PsiClass aClass = PsiUtil.resolveClassInType(propertyType);
       if (aClass != null) {
         descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));

@@ -1,0 +1,61 @@
+<!--
+  ~ Copyright 2000-2016 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<project name="Patches and repackages ASM library" default="package">
+  <!-- set this property to the path to a downloaded ASM source .jar file -->
+  <property name="asm.src" value=""/>
+
+  <property name="src.dir" value="${basedir}/src"/>
+  <property name="out.dir" value="${basedir}/out"/>
+  <property name="src.zip" value="${basedir}/asm5-src.zip"/>
+  <property name="out.jar" value="${basedir}/asm-all.jar"/>
+
+  <target name="check">
+    <available file="${asm.src}" type="file" property="asm.src.present"/>
+    <fail message="Please edit the file ${ant.file} and fill in the 'asm.src' property" unless="asm.src.present"/>
+  </target>
+
+  <target name="clean" depends="check">
+    <delete dir="${src.dir}" quiet="true"/>
+    <delete dir="${out.dir}" quiet="true"/>
+    <delete file="${src.zip}" quiet="true"/>
+    <delete file="${out.jar}" quiet="true"/>
+  </target>
+
+  <target name="unpack" depends="clean">
+    <unzip src="${asm.src}" dest="${src.dir}"/>
+  </target>
+
+  <target name="patch" depends="unpack">
+    <patch dir="${src.dir}" strip="0" patchfile="1_version_check.patch" failonerror="true"/>
+    <patch dir="${src.dir}" strip="0" patchfile="2_coverage_fix.patch" failonerror="true"/>
+  </target>
+
+  <target name="repackage" depends="patch">
+    <replace dir="${src.dir}" token="org.objectweb.asm" value="org.jetbrains.org.objectweb.asm"/>
+    <mkdir dir="${src.dir}/org/jetbrains/org"/>
+    <move file="${src.dir}/org/objectweb" todir="${src.dir}/org/jetbrains/org"/>
+  </target>
+
+  <target name="compile" depends="repackage">
+    <mkdir dir="${out.dir}"/>
+    <javac srcdir="${src.dir}" destdir="${out.dir}" source="1.5" target="1.5" debug="true"/>
+  </target>
+
+  <target name="package" depends="compile">
+    <zip destfile="${src.zip}" basedir="${src.dir}" duplicate="fail"/>
+    <jar destfile="${out.jar}" basedir="${out.dir}" duplicate="fail"/>
+  </target>
+</project>

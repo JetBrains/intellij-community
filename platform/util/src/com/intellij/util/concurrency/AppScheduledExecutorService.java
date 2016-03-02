@@ -79,7 +79,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     error();
   }
 
-  private static List<Runnable> error() {
+  static List<Runnable> error() {
     throw new IncorrectOperationException("You must not call this method on the global app pool");
   }
 
@@ -101,12 +101,18 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   public int getBackendPoolExecutorSize() {
-    return ((ThreadPoolExecutor)backendExecutorService).getPoolSize();
+    return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
+  }
+  void setBackendPoolCorePoolSize(int size) {
+    ((BackendThreadPoolExecutor)backendExecutorService).doSetCorePoolSize(size);
+  }
+  int getBackendPoolCorePoolSize() {
+    return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
     BackendThreadPoolExecutor() {
-      super(1, Integer.MAX_VALUE, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+      super(1, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
     }
 
     @Override
@@ -149,6 +155,10 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     public void setCorePoolSize(int corePoolSize) {
       error();
+    }
+
+    private void doSetCorePoolSize(int corePoolSize) {
+      super.setCorePoolSize(corePoolSize);
     }
 
     @Override

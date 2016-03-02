@@ -30,7 +30,6 @@ import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
-import com.intellij.vcs.log.ui.tables.GraphTableModel
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
@@ -150,11 +149,11 @@ class VisiblePackBuilderTest {
       }.toMap()
 
       val commitDetailsGetter = object : DataGetter<VcsFullCommitDetails> {
-        override fun getCommitData(row: Int, tableModel: GraphTableModel): VcsFullCommitDetails? {
+        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails? {
           return null
         }
 
-        override fun loadCommitsData(rows: MutableList<Int>, tableModel: GraphTableModel, consumer: Consumer<MutableList<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
+        override fun loadCommitsData(hashes: MutableList<Int>, consumer: Consumer<MutableList<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
         }
 
         override fun getCommitDataIfAvailable(hash: Int): VcsFullCommitDetails? {
@@ -238,6 +237,9 @@ class VisiblePackBuilderTest {
     override fun getCommitId(commitIndex: Int) = CommitId(reverseMap[commitIndex]!!, root)
 
     override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
+
+    override fun flush() {
+    }
   }
 }
 

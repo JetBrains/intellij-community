@@ -149,3 +149,37 @@ def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
         # at this point it must be loaded.
         return filename_to_not_in_scope_cache[filename]
 
+
+def is_filter_enabled():
+    return os.getenv('PYDEVD_FILTERS') is not None
+
+
+def is_filter_libraries():
+    return os.getenv('PYDEVD_FILTER_LIBRARIES') is not None
+
+
+def _get_stepping_filters(filters_cache=[]):
+    if not filters_cache:
+        filters = os.getenv('PYDEVD_FILTERS', '').split(';')
+        new_filters = []
+        for new_filter in filters:
+            new_filters.append(new_filter)
+        filters_cache.append(new_filters)
+    return filters_cache[-1]
+
+
+def is_ignored_by_filter(filename, filename_to_ignored_by_filters_cache={}):
+    try:
+        return filename_to_ignored_by_filters_cache[filename]
+    except:
+        import fnmatch
+        for stepping_filter in _get_stepping_filters():
+            if fnmatch.fnmatch(filename, stepping_filter):
+                pydev_log.debug("File %s ignored by filter %s" % (filename, stepping_filter))
+                filename_to_ignored_by_filters_cache[filename] = True
+                break
+        else:
+            filename_to_ignored_by_filters_cache[filename] = False
+
+        return filename_to_ignored_by_filters_cache[filename]
+

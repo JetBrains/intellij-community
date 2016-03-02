@@ -946,6 +946,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     Collection<VirtualFile> files = new THashSet<VirtualFile>(activeTextEditors.size());
     final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
     for (FileEditor tabEditor : tabEditors) {
+      if (!tabEditor.isValid()) continue;
       VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
       if (file != null) {
         files.add(file);

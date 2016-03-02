@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2709,12 +2709,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s2_2 = "@Modifier({\"packageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
     String s2_3 = "@Modifier({\"PackageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
 
-    assertEquals("Finding package local dcls",1,findMatchesCount(s1,s2));
-    assertEquals("Finding package local dcls",3,findMatchesCount(s1,s2_2));
+    assertEquals("Finding package-private dcls",1,findMatchesCount(s1,s2));
+    assertEquals("Finding package-private dcls",3,findMatchesCount(s1,s2_2));
 
     try {
       findMatchesCount(s1,s2_3);
-      assertTrue("Finding package local dcls",false);
+      assertTrue("Finding package-private dcls",false);
     } catch(MalformedPatternException ex) {
 
     }

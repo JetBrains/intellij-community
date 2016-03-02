@@ -43,7 +43,7 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
   }
 
   @Override
-  public Collection<CompiledClass> getTargetCompiledClasses(BuildTarget<?> target) {
+  public Collection<CompiledClass> getTargetCompiledClasses(@NotNull BuildTarget<?> target) {
     final Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
     if (classes != null) {
       return Collections.unmodifiableCollection(classes);
@@ -65,21 +65,25 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
   }
 
   @Override
-  public void registerCompiledClass(BuildTarget<?> target, CompiledClass compiled) throws IOException {
+  public void registerCompiledClass(@Nullable BuildTarget<?> target, CompiledClass compiled) throws IOException {
     if (compiled.getClassName() != null) {
       myClasses.put(compiled.getClassName(), compiled);
-      Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
-      if (classes == null) {
-        classes = new ArrayList<CompiledClass>();
-        myTargetToClassesMap.put(target, classes);
+      if (target != null) {
+        Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
+        if (classes == null) {
+          classes = new ArrayList<CompiledClass>();
+          myTargetToClassesMap.put(target, classes);
+        }
+        classes.add(compiled);
       }
-      classes.add(compiled);
     }
-    registerOutputFile(target, compiled.getOutputFile(), Collections.<String>singleton(compiled.getSourceFile().getPath()));
+    if (target != null) {
+      registerOutputFile(target, compiled.getOutputFile(), Collections.<String>singleton(compiled.getSourceFile().getPath()));
+    }
   }
 
   @Override
-  public void registerOutputFile(BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException {
+  public void registerOutputFile(@NotNull BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException {
     BuildOutputConsumerImpl consumer = myTarget2Consumer.get(target);
     if (consumer == null) {
       consumer = new BuildOutputConsumerImpl(target, myContext);

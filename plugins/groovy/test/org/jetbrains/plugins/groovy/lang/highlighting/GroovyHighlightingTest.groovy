@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1961,5 +1961,14 @@ class Target {
     private static void callMe() {}
 }
 ''')
+  }
+
+  void 'test no exception for @Field annotation without variable'() {
+    testHighlighting '''\
+import groovy.transform.Field
+
+@Field
+def (,<error descr="Identifier expected">)</error>
+'''
   }
 }

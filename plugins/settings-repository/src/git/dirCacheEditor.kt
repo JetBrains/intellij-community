@@ -17,6 +17,7 @@ package org.jetbrains.jgit.dirCache
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.exists
 import org.eclipse.jgit.dircache.BaseDirCacheEditor
 import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.dircache.DirCacheEntry
@@ -252,8 +253,8 @@ fun Repository.deletePath(path: String, isFile: Boolean = true, fromWorkingTree:
   edit((if (isFile) DeleteFile(path) else DeleteDirectory(path)))
 
   if (fromWorkingTree) {
-    val workTree = workTree
-    val ioFile = File(workTree, path)
+    val workTree = workTree.toPath()
+    val ioFile = workTree.resolve(path)
     if (ioFile.exists()) {
       ioFile.removeWithParentsIfEmpty(workTree, isFile)
     }

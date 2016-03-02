@@ -1,17 +1,16 @@
+import os
+import sys
+import time
+import traceback
+from _pydev_bundle import pydev_imports
+from _pydevd_bundle.pydevd_utils import save_main_module
 from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import socket
-import time
-import sys
-import traceback
-import os
-
-from prof_io import ProfWriter, ProfReader
-from pydevd_utils import save_main_module
-import pydev_imports
-from prof_util import generate_snapshot_filepath, statsToResponse
 
 from _prof_imports import ProfilerResponse
+from prof_io import ProfWriter, ProfReader
+from prof_util import generate_snapshot_filepath, statsToResponse
 
 base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 remote_run = bool(os.getenv('PYCHARM_REMOTE_RUN', ''))

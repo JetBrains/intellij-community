@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,6 +136,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
     final Set<File> moduleExcludes = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     moduleExcludes.addAll(index.getModuleExcludes(myModule));
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myModule.getProject());
 
     roots_loop:
     for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
@@ -147,8 +149,19 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
         }
       }
       final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
-      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix,
-                                             computeRootExcludes(sourceRoot.getFile(), index)));
+
+      // consider annotation processors output for generated sources, if contained under some source root
+      Set<File> excludes = computeRootExcludes(sourceRoot.getFile(), index);
+      final ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(myModule);
+      if (profile.isEnabled()) {
+        final File outputDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(myModule, JavaSourceRootType.TEST_SOURCE == sourceRoot.getRootType(), profile);
+        if (outputDir != null && FileUtil.isAncestor(sourceRoot.getFile(), outputDir, true)) {
+          excludes = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY, excludes);
+          excludes.add(outputDir);
+        }
+      }
+
+      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, excludes));
     }
     return roots;
   }

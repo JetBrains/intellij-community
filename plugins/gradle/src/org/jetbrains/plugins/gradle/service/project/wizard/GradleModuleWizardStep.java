@@ -146,7 +146,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField);
+          IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true);
         }
       });
       throw new ConfigurationException("Please, specify artifactId");

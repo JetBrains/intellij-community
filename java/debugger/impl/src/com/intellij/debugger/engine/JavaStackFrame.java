@@ -251,7 +251,7 @@ public class JavaStackFrame extends XStackFrame {
                               XValueChildrenList children,
                               ObjectReference thisObjectReference,
                               Location location) throws EvaluateException {
-    final Set<String> visibleLocals = new HashSet<String>();
+    final Set<String> visibleLocals = new HashSet<>();
     if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
       if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute()) {
         final ReferenceType thisRefType = thisObjectReference.referenceType();
@@ -346,11 +346,11 @@ public class JavaStackFrame extends XStackFrame {
   private static Set<TextWithImports> computeExtraVars(Pair<Set<String>, Set<TextWithImports>> usedVars,
                                                        @NotNull SourcePosition sourcePosition,
                                                        @NotNull EvaluationContextImpl evalContext) {
-    Set<String> alreadyCollected = new HashSet<String>(usedVars.first);
+    Set<String> alreadyCollected = new HashSet<>(usedVars.first);
     for (TextWithImports text : usedVars.second) {
       alreadyCollected.add(text.getText());
     }
-    Set<TextWithImports> extra = new HashSet<TextWithImports>();
+    Set<TextWithImports> extra = new HashSet<>();
     for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensions()) {
       if (provider.isAvailable(sourcePosition, evalContext)) {
         extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
@@ -423,8 +423,8 @@ public class JavaStackFrame extends XStackFrame {
   private static class VariablesCollector extends JavaRecursiveElementVisitor {
     private final Set<String> myVisibleLocals;
     private final TextRange myLineRange;
-    private final Set<TextWithImports> myExpressions = new HashSet<TextWithImports>();
-    private final Set<String> myVars = new HashSet<String>();
+    private final Set<TextWithImports> myExpressions = new HashSet<>();
+    private final Set<String> myVars = new HashSet<>();
     private final boolean myCollectExpressions = XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions();
 
     public VariablesCollector(Set<String> visibleLocals, TextRange lineRange) {
@@ -656,7 +656,7 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
-    final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
+    final Ref<TextRange> rangeRef = new Ref<>(originalRange);
     element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();

@@ -298,6 +298,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return myStatusBar;
   }
 
+  public int getStatusBarHeight() {
+    return myStatusBar.isVisible() ? myStatusBar.getHeight() : 0;
+  }
+
   private void updateToolbarVisibility(){
     myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
   }
@@ -433,7 +437,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
+  public static boolean isFrameDecorated() {
+    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration");
+  }
+
   public boolean isDecoratedMenu() {
-    return SystemInfo.isWindows && getUI() instanceof DarculaRootPaneUI && Registry.is("ide.win.frame.decoration");
+    return getUI() instanceof DarculaRootPaneUI && isFrameDecorated();
   }
 }

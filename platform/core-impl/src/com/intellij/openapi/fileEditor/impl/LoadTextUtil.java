@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -119,32 +118,28 @@ public final class LoadTextUtil {
   }
 
   @NotNull
-  public static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content, @NotNull FileType fileType) {
+  private static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content, @NotNull FileType fileType) {
     Charset charset = null;
 
+    String charsetName = fileType.getCharset(virtualFile, content);
     Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, content.length);
-    if (guessed != null && guessed.first != null) {
-      charset = guessed.first;
+
+    Charset hardCodedCharset = guessed == null ? null : guessed.first;
+    if (charsetName != null) {
+      charset = CharsetToolkit.forName(charsetName);
+    }
+    else if (hardCodedCharset == null) {
+      Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
+      if (specifiedExplicitly != null) {
+        charset = specifiedExplicitly;
+      }
     }
     else {
-      String charsetName = fileType.getCharset(virtualFile, content);
-
-      if (charsetName == null) {
-        Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
-        if (specifiedExplicitly != null) {
-          charset = specifiedExplicitly;
-        }
-      }
-      else {
-        charset = CharsetToolkit.forName(charsetName);
-      }
+      charset = hardCodedCharset;
     }
 
     if (charset == null) {
       charset = EncodingRegistry.getInstance().getDefaultCharset();
-    }
-    if (fileType.getName().equals("Properties") && EncodingRegistry.getInstance().isNative2Ascii(virtualFile)) {
-      charset = Native2AsciiCharset.wrap(charset);
     }
     virtualFile.setCharset(charset);
     return charset;

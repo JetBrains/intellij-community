@@ -26,5 +26,4 @@ public interface VcsLogDataProvider {
   CommitId getCommitId(int commitIndex);
 
   int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
-
 }

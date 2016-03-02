@@ -6,10 +6,13 @@ import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
 
 import javax.swing.*;
 
-public class IpnbMarkdownPanel extends IpnbEditablePanel<JEditorPane, IpnbMarkdownCell> {
+public class IpnbMarkdownPanel extends IpnbEditablePanel<JComponent, IpnbMarkdownCell> {
 
-  public IpnbMarkdownPanel(@NotNull final IpnbMarkdownCell cell) {
+  private final IpnbFilePanel myParent;
+
+  public IpnbMarkdownPanel(@NotNull final IpnbMarkdownCell cell, @NotNull final IpnbFilePanel parent) {
     super(cell);
+    myParent = parent;
     initPanel();
   }
 
@@ -19,8 +22,9 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JEditorPane, IpnbMarkdo
   }
 
   @Override
-  protected JEditorPane createViewPanel() {
-    return IpnbUtils.createLatexPane(myCell.getSourceAsString());
+  protected JComponent createViewPanel() {
+    int width = myParent.getWidth();
+    return IpnbUtils.createLatexPane(myCell.getSourceAsString(), width);
   }
 
   @Override
@@ -32,6 +36,6 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JEditorPane, IpnbMarkdo
   @SuppressWarnings("CloneDoesntCallSuperClone")
   @Override
   protected Object clone() {
-    return new IpnbMarkdownPanel((IpnbMarkdownCell)myCell.clone());
+    return new IpnbMarkdownPanel((IpnbMarkdownCell)myCell.clone(), myParent);
   }
 }

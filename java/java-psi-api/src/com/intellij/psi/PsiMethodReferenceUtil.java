@@ -119,9 +119,6 @@ public class PsiMethodReferenceUtil {
           }
 
           methodReturnType = subst.substitute(methodReturnType);
-          if (methodReturnType != null) {
-            methodReturnType = PsiUtil.captureToplevelWildcards(methodReturnType, expression);
-          }
         }
       }
       else if (resolve instanceof PsiClass) {
@@ -144,6 +141,8 @@ public class PsiMethodReferenceUtil {
         }
         methodReturnType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass, subst);
       }
+
+      methodReturnType = PsiUtil.captureToplevelWildcards(methodReturnType, expression);
 
       if (TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) {
         return true;

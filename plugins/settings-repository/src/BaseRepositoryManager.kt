@@ -19,62 +19,53 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.PathUtilRt
-import java.io.File
-import java.io.FileInputStream
+import com.intellij.util.*
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-abstract class BaseRepositoryManager(protected val dir: File) : RepositoryManager {
+abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManager {
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
-    var files: Array<out File>? = null
-    lock.read {
-      files = File(dir, path).listFiles({ file, name -> filter(name) })
-    }
-
-    if (files == null || files!!.isEmpty()) {
-      return
-    }
-
-    for (file in files!!) {
-      if (file.isDirectory || file.isHidden) {
-        continue;
-      }
-
-      // we ignore empty files as well - delete if corrupted
-      if (file.length() == 0L) {
-        if (file.exists()) {
-          try {
-            LOG.warn("File $path is empty (length 0), will be removed")
-            delete(file, path)
-          }
-          catch (e: Exception) {
-            LOG.error(e)
-          }
+    dir.resolve(path).directoryStreamIfExists {
+      for (file in it) {
+        if (file.isDirectory() || file.isHidden()) {
+          continue;
         }
-        continue;
-      }
 
-      if (!processor(file.name, file.inputStream())) {
-        break;
+        // we ignore empty files as well - delete if corrupted
+        if (file.size() == 0L) {
+          if (file.exists()) {
+            try {
+              LOG.warn("File $path is empty (length 0), will be removed")
+              delete(file, path)
+            }
+            catch (e: Exception) {
+              LOG.error(e)
+            }
+          }
+          continue;
+        }
+
+        if (!processor(file.fileName.toString(), file.inputStream())) {
+          break;
+        }
       }
     }
   }
 
   override fun deleteRepository() {
-    FileUtil.delete(dir)
+    dir.deleteRecursively()
   }
 
   protected open fun isPathIgnored(path: String): Boolean = false
@@ -85,21 +76,22 @@ abstract class BaseRepositoryManager(protected val dir: File) : RepositoryManage
       return null
     }
 
-    var fileToDelete: File? = null
+    var fileToDelete: Path? = null
     lock.read {
-      val file = File(dir, path)
-      // we ignore empty files as well - delete if corrupted
-      if (file.length() == 0L) {
-        fileToDelete = file
-      }
-      else {
-        return FileInputStream(file)
+      val file = dir.resolve(path)
+      when (file.sizeOrNull()) {
+        -1L -> return null
+        0L -> {
+          // we ignore empty files as well - delete if corrupted
+          fileToDelete = file
+        }
+        else -> return file.inputStream()
       }
     }
 
     try {
       lock.write {
-        if (fileToDelete!!.exists() && fileToDelete!!.length() == 0L) {
+        if (fileToDelete!!.sizeOrNull() == 0L) {
           LOG.warn("File $path is empty (length 0), will be removed")
           delete(fileToDelete!!, path)
         }
@@ -121,9 +113,8 @@ abstract class BaseRepositoryManager(protected val dir: File) : RepositoryManage
 
     try {
       lock.write {
-        val file = File(dir, path)
-        FileUtil.writeToFile(file, content, 0, size)
-
+        val file = dir.resolve(path)
+        file.write(content, 0, size)
         addToIndex(file, path, content, size)
       }
     }
@@ -137,13 +128,13 @@ abstract class BaseRepositoryManager(protected val dir: File) : RepositoryManage
   /**
    * path relative to repository root
    */
-  protected abstract fun addToIndex(file: File, path: String, content: ByteArray, size: Int)
+  protected abstract fun addToIndex(file: Path, path: String, content: ByteArray, size: Int)
 
   override fun delete(path: String) {
     LOG.debug { "Remove $path"}
 
     lock.write {
-      val file = File(dir, path)
+      val file = dir.resolve(path)
       // delete could be called for non-existent file
       if (file.exists()) {
         delete(file, path)
@@ -151,25 +142,26 @@ abstract class BaseRepositoryManager(protected val dir: File) : RepositoryManage
     }
   }
 
-  private fun delete(file: File, path: String) {
-    val isFile = file.isFile
+  private fun delete(file: Path, path: String) {
+    val isFile = file.isFile()
     file.removeWithParentsIfEmpty(dir, isFile)
     deleteFromIndex(path, isFile)
   }
 
   protected abstract fun deleteFromIndex(path: String, isFile: Boolean)
 
-  override fun has(path: String) = lock.read { File(dir, path).exists() }
+  override fun has(path: String) = lock.read { dir.resolve(path).exists() }
 }
 
-fun File.removeWithParentsIfEmpty(root: File, isFile: Boolean = true) {
-  FileUtil.delete(this)
+fun Path.removeWithParentsIfEmpty(root: Path, isFile: Boolean = true) {
+  delete()
 
   if (isFile) {
     // remove empty directories
-    var parent = this.parentFile
-    while (parent != null && parent != root && parent.delete()) {
-      parent = parent.parentFile
+    var parent = this.parent
+    while (parent != null && parent != root) {
+      parent.delete()
+      parent = parent.parent
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
@@ -44,10 +45,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.text.Normalizer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -286,12 +286,18 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private static class MyProcessHandler extends OSProcessHandler {
+    private static final Charset CHARSET = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : null;
+
     private final BufferedWriter myWriter;
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
-      super(process, commandLine, null);  // do not access EncodingManager here
-      myWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+      super(process, commandLine, CHARSET);
+      myWriter = new BufferedWriter(writer(process.getOutputStream()));
+    }
+
+    private static OutputStreamWriter writer(OutputStream stream) {
+      return CHARSET != null ? new OutputStreamWriter(stream, CHARSET) :  new OutputStreamWriter(stream);
     }
 
     private void writeLine(String line) throws IOException {
@@ -421,6 +427,10 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       if ((op == WatcherOp.CHANGE || op == WatcherOp.STATS) && isRepetition(path)) {
         if (LOG.isTraceEnabled()) LOG.trace("repetition: " + path);
         return;
+      }
+
+      if (SystemInfo.isMac) {
+        path = Normalizer.normalize(path, Normalizer.Form.NFC);
       }
 
       switch (op) {

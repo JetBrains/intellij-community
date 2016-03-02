@@ -137,7 +137,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     //Create tests common suite root
     //noinspection HardCodedStringLiteral
-    myTestsRootNode = new SMTestProxy.SMRootTestProxy();
+    myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName());
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
     // Fire selection changed and move focus on SHIFT+ENTER
@@ -727,7 +727,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
             // Request focus if necessary
             if (requestFocus) {
               //myTreeView.requestFocusInWindow();
-              IdeFocusManager.getInstance(myProject).requestFocus(myTreeView);
+              IdeFocusManager.getInstance(myProject).requestFocus(myTreeView, true);
             }
           }
         });

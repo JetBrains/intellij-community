@@ -37,16 +37,9 @@ public interface DebugEventListener extends EventListener {
   }
 
   /**
-   * Reports the debug connection has terminated and {@link Vm} has stopped operating.
-   * This event is not reported if connection was closed explicitly on our side
-   */
-  default void disconnected() {
-  }
-
-  /**
    * Reports that a new script has been loaded.
    */
-  default void scriptAdded(@NotNull Script script, @Nullable String sourceMapUrl) {
+  default void scriptAdded(@NotNull Vm vm, @NotNull Script script, @Nullable String sourceMapUrl) {
   }
 
   /**

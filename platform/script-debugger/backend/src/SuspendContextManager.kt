@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ interface SuspendContextManager<CALL_FRAME : CallFrame> {
 
   val contextOrFail: SuspendContext<CALL_FRAME>
 
-  fun isContextObsolete(context: SuspendContext<*>): Boolean
+  fun isContextObsolete(context: SuspendContext<*>) = this.context !== context
 
   fun setOverlayMessage(message: String?)
 
@@ -67,7 +67,6 @@ enum class StepAction {
    * Step into the current statement.
    */
   IN,
-
 
   /**
    * Step into first scheduled async handler.

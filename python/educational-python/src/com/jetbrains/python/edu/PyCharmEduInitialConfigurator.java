@@ -225,7 +225,7 @@ public class PyCharmEduInitialConfigurator {
                   return;
                 }
                 ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Project");
-                if (toolWindow.getType() != ToolWindowType.SLIDING) {
+                if (toolWindow !=null && toolWindow.getType() != ToolWindowType.SLIDING) {
                   toolWindow.activate(null);
                 }
               }

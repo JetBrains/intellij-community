@@ -28,7 +28,8 @@
                      key="chain.of.instanceof.checks.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.InstanceofChainInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="InstanceofInterfaces" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" suppressId="InstanceofConcreteClass" alternativeId="InstanceofInterfaces"
+                     shortName="InstanceofInterfaces" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="instanceof.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.InstanceofInterfacesInspection"/>
@@ -327,6 +328,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ObjectToString" bundle="com.siyeh.InspectionGadgetsBundle" key="default.tostring.call.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.ObjectToStringInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalGetWithoutIsPresent" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="optional.get.without.is.present.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.OptionalGetWithoutIsPresentInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="PrimitiveArrayArgumentToVarargsMethod" alternativeId="PrimitiveArrayArgumentToVariableArgMethod"
                      shortName="PrimitiveArrayArgumentToVariableArgMethod" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="primitive.array.argument.to.var.arg.method.display.name" groupBundle="messages.InspectionsBundle"
@@ -2411,6 +2416,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="NestedMethodCall" bundle="com.siyeh.InspectionGadgetsBundle" key="nested.method.call.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.style.NestedMethodCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalContainsCollection" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="optional.contains.collection.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.OptionalContainsCollectionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantFieldInitialization" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="redundant.field.initialization.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"

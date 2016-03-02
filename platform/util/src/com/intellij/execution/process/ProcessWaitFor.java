@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
@@ -76,7 +74,34 @@ public class ProcessWaitFor {
     myWaitForThreadFuture.cancel(true);
   }
 
-  public void setTerminationCallback(Consumer<Integer> r) {
+  public void setTerminationCallback(@NotNull Consumer<Integer> r) {
     myTerminationCallback.offer(r);
   }
+
+  public void waitFor() throws InterruptedException {
+    try {
+      myWaitForThreadFuture.get();
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+    catch (CancellationException ignored) {
+    }
+  }
+
+  public boolean waitFor(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+    try {
+      myWaitForThreadFuture.get(timeout, unit);
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+    catch (CancellationException ignored) {
+    }
+    catch (TimeoutException ignored) {
+    }
+
+    return myWaitForThreadFuture.isDone();
+  }
+
 }

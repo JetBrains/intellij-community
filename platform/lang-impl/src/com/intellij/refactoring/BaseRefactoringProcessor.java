@@ -543,7 +543,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      LOG.info(new Exception());
+      LOG.error(new Exception());
       DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
         @Override
         public void run() {
@@ -585,7 +585,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     @Override
     public String getMessage() {
-      return StringUtil.join(messages, "\n");
+      List<String> result = new ArrayList<>(messages);
+      Collections.sort(result);
+      return StringUtil.join(result, "\n");
     }
   }
 
