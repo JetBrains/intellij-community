@@ -627,7 +627,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
         if (severityGroupNode == newNode) {
           InspectionTreeNode root = myTree.getRoot();
-          insertByIndex(root, severityGroupNode);
+          insertByIndex(severityGroupNode, root);
         }
       }
       return severityGroupNode;
