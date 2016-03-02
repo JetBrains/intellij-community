@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 // TODO: Propogate typization to all class like in PsiTypedQuery
 
@@ -77,17 +78,18 @@ public class PsiQuery {
     return new PsiQuery(result.toArray(new PsiElement[result.size()]));
   }
 
-  
+
   /**
    * Searches for string literals with specific text
-   * @param clazz string literal class
+   * @param clazz        string literal class
    * @param expectedText expected text
    * @return query {@link com.jetbrains.python.psi.PsiQuery}
    */
   @NotNull
-  public final PsiQuery childrenStringLiterals(@NotNull final Class<? extends PyStringLiteralExpression> clazz, @NotNull final String expectedText) {
+  public final PsiQuery childrenStringLiterals(@NotNull final Class<? extends PyStringLiteralExpression> clazz,
+                                               @NotNull final String expectedText) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
-    for ( final PyStringLiteralExpression element : getChildrenElements(clazz)) {
+    for (final PyStringLiteralExpression element : getChildrenElements(clazz)) {
       if (element.getStringValue().equals(expectedText)) {
         result.add(element);
       }
@@ -151,6 +153,19 @@ public class PsiQuery {
       }
     }
     return new PsiQuery(result);
+  }
+
+  /**
+   * Get qualifiers of all elements if elements do have any
+   */
+  @NotNull
+  public PsiQuery qualifiers() {
+    return new PsiQuery(Arrays.stream(myPsiElements)
+                          .filter(o -> o instanceof PyQualifiedExpression)
+                          .map(o -> ((PyQualifiedExpression)o).getQualifier())
+                          .filter(o -> o != null)
+                          .collect(Collectors.toList())
+    );
   }
 
 
