@@ -312,7 +312,7 @@ public class GitRepositoryFiles {
   }
 
   @NotNull
-  Collection<VirtualFile> getRootDirs() {
+  public Collection<VirtualFile> getRootDirs() {
     return ContainerUtil.newHashSet(myMainDir, myWorktreeDir);
   }
 }
