@@ -191,6 +191,7 @@ def getProperties(String home, String buildNumber) {
               }
               fileset(dir: "${home}/../studio/google/appindexing/lib") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
             }
           }
