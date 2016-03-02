@@ -2,10 +2,7 @@ package com.intellij.updater;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -21,11 +18,11 @@ public class Digester {
     myAlgorithm = algorithm;
   }
 
-  public long digestRegularFile(File file, boolean normalize) throws IOException {
+  public long digestRegularFile(File file) throws IOException {
     if (file.isDirectory()) {
       return DIRECTORY;
     }
-    InputStream in = new BufferedInputStream(Utils.newFileInputStream(file, normalize));
+    InputStream in = new BufferedInputStream(new FileInputStream(file));
     try {
       return digestStream(in);
     }
@@ -40,7 +37,7 @@ public class Digester {
       zipFile = new ZipFile(file);
     } catch (ZipException e) {
       // This was not a zip file...
-      return digestRegularFile(file, false);
+      return digestRegularFile(file);
     }
     try {
       List<ZipEntry> sorted = new ArrayList<ZipEntry>();
