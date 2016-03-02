@@ -133,7 +133,7 @@ public class ConsoleBuffer {
   }
 
   public static int getLegacyCycleBufferSize() {
-    return SystemProperties.getIntProperty("idea.cycle.buffer.size", 1024 * 1024);
+    return SystemProperties.getIntProperty("idea.cycle.buffer.size", 1024) * 1024;
   }
 
   public boolean isUseCyclicBuffer() {
