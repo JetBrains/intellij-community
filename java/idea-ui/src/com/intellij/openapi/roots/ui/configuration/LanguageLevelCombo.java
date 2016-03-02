@@ -34,7 +34,7 @@ import javax.swing.*;
  */
 @SuppressWarnings("unchecked")
 public abstract class LanguageLevelCombo extends ComboBox {
-
+  private boolean myDefaultWasSelectedBeforeRemoving;
   private final String myDefaultItem;
 
   public LanguageLevelCombo(String defaultItem) {
@@ -91,16 +91,26 @@ public abstract class LanguageLevelCombo extends ComboBox {
 
   private void updateDefaultLevel(LanguageLevel newLevel, boolean isDefaultProject) {
     if (newLevel == null && !isDefaultProject) {
-      if (getSelectedItem() == myDefaultItem) {
-        setSelectedItem(getDefaultLevel());
+      if (isDefaultItemAdded()) {
+        boolean defaultSelected = getSelectedItem() == myDefaultItem;
+        if (defaultSelected) {
+          setSelectedItem(getDefaultLevel());
+        }
+        myDefaultWasSelectedBeforeRemoving = defaultSelected;
+        removeItem(myDefaultItem);
       }
-      removeItem(myDefaultItem);
     }
-    else if (!(getItemAt(0) instanceof String)) {
+    else if (!(isDefaultItemAdded())) {
       addDefaultItem();
-      setSelectedIndex(0);
+      if (myDefaultWasSelectedBeforeRemoving) {
+        setSelectedIndex(0);
+      }
     }
     repaint();
+  }
+
+  private boolean isDefaultItemAdded() {
+    return getItemAt(0) instanceof String;
   }
 
   void addDefaultItem() {
