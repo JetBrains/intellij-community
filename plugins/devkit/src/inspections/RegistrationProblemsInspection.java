@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -53,20 +52,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   public boolean CHECK_PLUGIN_XML = true;
   public boolean CHECK_JAVA_CODE = true;
   public boolean CHECK_ACTIONS = true;
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @NotNull
-  public String getDisplayName() {
-    return DevKitBundle.message("inspections.registration.problems.name");
-  }
 
   @NotNull
   @NonNls
