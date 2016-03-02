@@ -41,7 +41,7 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * BUT if one tries to get an option which was not specified to the GitLogParser, one will get null.
  * @see git4idea.history.GitLogParser
  */
-class GitLogRecord {
+public class GitLogRecord {
 
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
@@ -52,7 +52,7 @@ class GitLogRecord {
 
   private GitHandler myHandler;
 
-  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options, @NotNull List<String> paths, @NotNull List<GitLogStatusInfo> statusInfo, boolean supportsRawBody) {
+  public GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options, @NotNull List<String> paths, @NotNull List<GitLogStatusInfo> statusInfo, boolean supportsRawBody) {
     myOptions = options;
     myPaths = paths;
     myStatusInfo = statusInfo;
@@ -85,20 +85,20 @@ class GitLogRecord {
   }
 
   // trivial access methods
-  String getHash() { return lookup(HASH); }
-  String getAuthorName() { return lookup(AUTHOR_NAME); }
-  String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
-  String getCommitterName() { return lookup(COMMITTER_NAME); }
-  String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
-  String getSubject() { return lookup(SUBJECT); }
-  String getBody() { return lookup(BODY); }
-  String getRawBody() { return lookup(RAW_BODY); }
-  String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
+  public String getHash() { return lookup(HASH); }
+  public String getAuthorName() { return lookup(AUTHOR_NAME); }
+  public String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
+  public String getCommitterName() { return lookup(COMMITTER_NAME); }
+  public String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
+  public String getSubject() { return lookup(SUBJECT); }
+  public String getBody() { return lookup(BODY); }
+  public String getRawBody() { return lookup(RAW_BODY); }
+  public String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
 
   // access methods with some formatting or conversion
 
   @NotNull
-  Date getDate() {
+  public Date getDate() {
     return new Date(getCommitTime());
   }
 

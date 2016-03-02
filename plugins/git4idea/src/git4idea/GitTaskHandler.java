@@ -61,7 +61,7 @@ public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
 
   @Override
   protected void mergeAndClose(@NotNull String branch, @NotNull List<GitRepository> repositories) {
-    myBrancher.merge(branch, GitBrancher.DeleteOnMergeOption.DELETE, repositories);
+    myBrancher.merge(branch, GitBrancher.DeleteOnMergeOption.DELETE, false, repositories);
   }
 
   @Override

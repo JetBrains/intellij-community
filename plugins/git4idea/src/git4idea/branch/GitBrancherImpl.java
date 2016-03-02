@@ -122,11 +122,11 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void merge(@NotNull final String branchName, @NotNull final DeleteOnMergeOption deleteOnMerge,
+  public void merge(@NotNull final String branchName, @NotNull final DeleteOnMergeOption deleteOnMerge, boolean noFastForward,
                     @NotNull final List<GitRepository> repositories) {
     new CommonBackgroundTask(myProject, "Merging " + branchName, null) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).merge(branchName, deleteOnMerge, repositories);
+        newWorker(indicator).merge(branchName, deleteOnMerge, noFastForward, repositories);
       }
     }.runInBackground();
   }

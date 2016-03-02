@@ -21,14 +21,21 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.config.GitSharedSettings;
+import git4idea.config.GitVcsSettings;
+import git4idea.merge.TrivialMergeDetector;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +51,8 @@ class GitBranchPopupActions {
 
   private final Project myProject;
   private final GitRepository myRepository;
+
+  private final static Logger LOG = Logger.getInstance(GitBranchPopupActions.class.getName());
 
   GitBranchPopupActions(Project project, GitRepository repository) {
     myProject = project;
@@ -395,16 +404,30 @@ class GitBranchPopupActions {
 
   private static class MergeAction extends DumbAwareAction {
 
+
     private final Project myProject;
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
+    private final GitVcsSettings mySettings;
+    private final GitSharedSettings mySharedSettings;
     private final boolean myLocalBranch;
+
+    private boolean isNoFfLogMerge(String target) {
+      return ContainerUtil.exists(mySharedSettings.getNoFfPatterns(), new Condition<String>() {
+        @Override
+        public boolean value(String pattern) {
+          return target.matches("^" + pattern + "$"); // let "master" match only "master" and not "any-master-here" by default
+        }
+      });
+    }
 
     public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        boolean localBranch) {
       super("Merge");
       myProject = project;
       myRepositories = repositories;
+      mySettings = GitVcsSettings.getInstance(project);
+      mySharedSettings = ServiceManager.getService(project, GitSharedSettings.class);
       myBranchName = branchName;
       myLocalBranch = localBranch;
     }
@@ -412,7 +435,33 @@ class GitBranchPopupActions {
     @Override
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-      brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
+
+      boolean noFfLogMerge;
+      if (mySettings.isNoFfLogMerge()) {
+        noFfLogMerge = ContainerUtil.exists(myRepositories, new Condition<GitRepository>() {
+          @Override
+          public boolean value(GitRepository repository) {
+            GitLocalBranch currentBranch = repository.getCurrentBranch();
+            if (currentBranch != null) {
+
+              VirtualFile mergeRoot = repository.getRoot();
+              TrivialMergeDetector mergeDetector = new TrivialMergeDetector(myProject, mergeRoot, myBranchName);
+
+              try {
+                return !mergeDetector.isTrivial() && isNoFfLogMerge(currentBranch.getName());
+              } catch (VcsException e) {
+                LOG.warn("Error when checking for trivial commits in " + mergeRoot, e);
+              }
+            }
+
+            return false;
+          }
+        });
+      } else {
+        noFfLogMerge = false;
+      }
+
+      brancher.merge(myBranchName, deleteOnMerge(), noFfLogMerge, myRepositories);
       reportUsage("git.branch.merge");
     }
 

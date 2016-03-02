@@ -125,9 +125,10 @@ public interface GitBrancher {
    *
    * @param branchName    the branch to be merged into HEAD.
    * @param deleteOnMerge specify whether the branch should be automatically deleted or proposed to be deleted after merge.
+   * @param noFastForward do not allow fast forward (-no-ff)
    * @param repositories  repositories to operate on.
    */
-  void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<GitRepository> repositories);
+  void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, boolean noFastForward, @NotNull List<GitRepository> repositories);
 
   /**
    * Call {@code git rebase <branchName>} for each of the given repositories.

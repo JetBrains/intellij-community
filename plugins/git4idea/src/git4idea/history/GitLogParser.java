@@ -109,7 +109,7 @@ public class GitLogParser {
    * Options which may be passed to 'git log --pretty=format:' as placeholders and then parsed from the result.
    * These are the pieces of information about a commit which we want to get from 'git log'.
    */
-  enum GitLogOption {
+  public enum GitLogOption {
     HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
     COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
     RAW_BODY("B");
@@ -122,7 +122,7 @@ public class GitLogParser {
   /**
    * Constructs new parser with the given options and no names of changed files in the output.
    */
-  GitLogParser(Project project, GitLogOption... options) {
+  public GitLogParser(Project project, GitLogOption... options) {
     this(project, NameStatus.NONE, options);
   }
 
@@ -130,7 +130,7 @@ public class GitLogParser {
    * Constructs new parser with the specified options.
    * Only these options will be parsed out and thus will be available from the GitLogRecord.
    */
-  GitLogParser(Project project, NameStatus nameStatusOption, GitLogOption... options) {
+  public GitLogParser(Project project, NameStatus nameStatusOption, GitLogOption... options) {
     myFormat = makeFormatFromOptions(options);
     myOptions = options;
     myNameStatusOption = nameStatusOption;
@@ -147,7 +147,7 @@ public class GitLogParser {
     return RECORD_START_GIT + StringUtil.join(options, function, ITEMS_SEPARATOR_GIT) + RECORD_END_GIT;
   }
 
-  String getPretty() {
+  public String getPretty() {
     return "--pretty=format:" + myFormat;
   }
 
@@ -158,7 +158,7 @@ public class GitLogParser {
    *         The list is sorted as usual for git log - the first is the newest, the last is the oldest.
    */
   @NotNull
-  List<GitLogRecord> parse(@NotNull String output) {
+  public List<GitLogRecord> parse(@NotNull String output) {
     // Here is what git log returns for --pretty=tformat:^%H#%s$
     // ^2c815939f45fbcfda9583f84b14fe9d393ada790#sample commit$
     //
