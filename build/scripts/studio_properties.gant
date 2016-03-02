@@ -148,6 +148,7 @@ def getProperties(String home, String buildNumber) {
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/android-studio-plugin/lib") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
             }
           }
@@ -159,15 +160,19 @@ def getProperties(String home, String buildNumber) {
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/lib") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/third_party/gradle-appengine-builder-model") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/third_party/org-eclipse-jgit") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/third_party/org-eclipse-jgit-junit") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
             }
           }
@@ -202,19 +207,22 @@ def getProperties(String home, String buildNumber) {
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/google-login-plugin/lib") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/google-login-plugin/third_party/jackson-core-asl") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/google-login-plugin/third_party/javax-servlet-api") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/google-login-plugin/third_party/repackaged") {
                 include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
               }
               // Additional libraries that need to be manually copied, this is exported to cloud tools/testing
-              fileset(
-                      file: "${home}/../../prebuilts/tools/common/google-api-java-client/1.20.0/google-api-java-client-min-repackaged-1.20.0.jar")
+              fileset(file: "${home}/../../prebuilts/tools/common/google-api-java-client/1.20.0/google-api-java-client-min-repackaged-1.20.0.jar")
             }
           }
 
