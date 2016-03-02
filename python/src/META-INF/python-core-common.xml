@@ -380,7 +380,7 @@
     <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" displayName="PEP 8 naming convention violation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyAssignmentToLoopOrWithParameterInspection" suppressId="PyAssignmentToLoopOrWithParameter" displayName="Assignment to 'for' loop or 'with' statement parameter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAssignmentToLoopOrWithParameterInspection"/>
 
-    <localInspection language="Python" shortName="PyMissingTypeHintsInspection" suppressId="PyMissingTypeHints" displayName="Type hinting is missing for function definition" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingTypeHintsInspection"/>
+    <localInspection language="Python" shortName="PyMissingTypeHintsInspection" suppressId="PyMissingTypeHints" displayName="Missing type hinting for function definition" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingTypeHintsInspection"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
