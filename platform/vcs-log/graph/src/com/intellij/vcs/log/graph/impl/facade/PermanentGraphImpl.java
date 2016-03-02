@@ -208,11 +208,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public GraphColorManager<CommitId> getGraphColorManager() {
-    return myGraphColorManager;
-  }
-
-  @NotNull
   public Set<Integer> getBranchNodeIds() {
     return myBranchNodeIds;
   }
