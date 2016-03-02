@@ -21,6 +21,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -450,7 +451,7 @@ public class CommitHelper {
           moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
                            VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
         }
-      });
+      }, ModalityState.defaultModalityState(), o -> myProject.isDisposed());
     }
 
     public void doBeforeRefresh() {
