@@ -63,7 +63,7 @@ public class HgRegularUpdater implements HgUpdater {
     }
 
 
-    List<HgRevisionNumber> branchHeadsBeforePull = new HgHeadsCommand(project, repoRoot).execute();
+    List<HgRevisionNumber> branchHeadsBeforePull = new HgHeadsCommand(project, repoRoot).executeInCurrentThread();
 
     if (branchHeadsBeforePull.size() > 1) {
       reportWarning(warnings, HgVcsMessages.message("hg4idea.update.warning.multipleHeadsBeforeUpdate", repoRoot.getPath()));
@@ -91,7 +91,7 @@ public class HgRegularUpdater implements HgUpdater {
 
     indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
 
-    List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).execute();
+    List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).executeInCurrentThread();
     List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
     List<HgRevisionNumber> remainingOriginalBranchHeads =
       determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
@@ -172,7 +172,7 @@ public class HgRegularUpdater implements HgUpdater {
 
   private @Nullable HgRevisionNumber findCommonParent(HgRevisionNumber newHead, HgRevisionNumber parentBeforeUpdate) {
     // hg log -r 0:source --prune dest --limit 1
-    final List<HgRevisionNumber> pulledRevisions = new HgMergePreviewCommand(project, newHead, parentBeforeUpdate, 1).execute(repoRoot);
+    final List<HgRevisionNumber> pulledRevisions = new HgMergePreviewCommand(project, newHead, parentBeforeUpdate, 1).executeInCurrentThread(repoRoot);
     if (pulledRevisions == null || pulledRevisions.isEmpty()) {
       return null;
     }

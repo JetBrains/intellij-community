@@ -115,10 +115,10 @@ public class HgRemoteStatusUpdater implements HgUpdater {
     final List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();
     for (VirtualFile root : roots) {
       if (incoming) {
-        changesets.addAll(new HgIncomingCommand(project).execute(root));
+        changesets.addAll(new HgIncomingCommand(project).executeInCurrentThread(root));
       }
       else {
-        changesets.addAll(new HgOutgoingCommand(project).execute(root));
+        changesets.addAll(new HgOutgoingCommand(project).executeInCurrentThread(root));
       }
     }
     status.setChanges(changesets.size(), new ChangesetFormatter(status, changesets));
