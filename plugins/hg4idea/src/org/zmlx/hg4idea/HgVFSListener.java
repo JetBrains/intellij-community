@@ -181,13 +181,13 @@ public class HgVFSListener extends VcsVFSListener {
 
         // add for all files at once
         if (!adds.isEmpty()) {
-          new HgAddCommand(myProject).execute(adds);
+          new HgAddCommand(myProject).executeInCurrentThread(adds);
         }
 
         // copy needs to be run for each file separately
         if (!copies.isEmpty()) {
-          for(Map.Entry<VirtualFile, VirtualFile> copy : copies.entrySet()) {
-            new HgCopyCommand(myProject).execute(copy.getKey(), copy.getValue());
+          for (Map.Entry<VirtualFile, VirtualFile> copy : copies.entrySet()) {
+            new HgCopyCommand(myProject).executeInCurrentThread(copy.getKey(), copy.getValue());
           }
         }
 

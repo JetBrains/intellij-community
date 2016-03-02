@@ -40,47 +40,54 @@ public class HgAddCommand {
 
   /**
    * Adds given files to their Mercurial repositories.
-   * @param hgFiles files to be added.
+   * @param files files to be added.
    */
-  public void execute(@NotNull Collection<VirtualFile> files) {
-    execute(files, null);
+  public void executeInCurrentThread(@NotNull Collection<VirtualFile> files) {
+    executeInCurrentThread(files, null);
   }
 
   public void addWithProgress(final Collection<VirtualFile> files) {
     if (files.size() >= HgUtil.MANY_FILES) {
-      new Task.Backgroundable(myProject, "Adding files to Mercurial", true) {
-        @Override public void run(@NotNull ProgressIndicator indicator) {
+      new Task.Backgroundable(myProject, "Adding Files to Mercurial", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(false);
-          execute(files, indicator);
+          executeInCurrentThread(files, indicator);
         }
       }.queue();
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override public void run() {
-          execute(files);
+        @Override
+        public void run() {
+          executeInCurrentThread(files);
         }
       });
     }
   }
 
-  private void execute(@NotNull Collection<VirtualFile> files, @Nullable ProgressIndicator indicator) {
+  private void executeInCurrentThread(@NotNull Collection<VirtualFile> files, @Nullable ProgressIndicator indicator) {
     final Map<VirtualFile, Collection<VirtualFile>> sorted = HgUtil.sortByHgRoots(myProject, files);
     for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sorted.entrySet()) {
       if (indicator != null) {
-        if (indicator.isCanceled()) { return; }
+        if (indicator.isCanceled()) {
+          return;
+        }
         indicator.setFraction(0);
         indicator.setText2("Adding files to " + entry.getKey().getPresentableUrl());
       }
-      addFiles(entry.getKey(), entry.getValue(), indicator);
+      addFilesSynchronously(entry.getKey(), entry.getValue(), indicator);
     }
   }
 
-  private void addFiles(VirtualFile repo, Collection<VirtualFile> files, @Nullable ProgressIndicator indicator) {
+  private void addFilesSynchronously(VirtualFile repo, Collection<VirtualFile> files, @Nullable ProgressIndicator indicator) {
     final List<List<String>> chunks = VcsFileUtil.chunkFiles(repo, files);
     int currentChunk = 0;
     for (List<String> paths : chunks) {
       if (indicator != null) {
-        if (indicator.isCanceled()) { return; }
+        if (indicator.isCanceled()) {
+          return;
+        }
         indicator.setFraction((double)currentChunk / chunks.size());
         currentChunk++;
       }
