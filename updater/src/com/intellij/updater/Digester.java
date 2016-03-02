@@ -93,7 +93,12 @@ public class Digester {
   }
 
   public static boolean isValidAlgorithm(String hashAlgorithm) {
-    return createChecksum(hashAlgorithm) != null;
+    try {
+      return createChecksum(hashAlgorithm) != null;
+    }
+    catch (Exception e) {
+      return false;
+    }
   }
 
   private static class MessageDigestChecksum implements Checksum {
