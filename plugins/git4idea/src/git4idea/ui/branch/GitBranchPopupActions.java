@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -50,6 +51,8 @@ class GitBranchPopupActions {
 
   private final Project myProject;
   private final GitRepository myRepository;
+
+  private final static Logger LOG = Logger.getInstance(GitBranchPopupActions.class.getName());
 
   GitBranchPopupActions(Project project, GitRepository repository) {
     myProject = project;
@@ -447,7 +450,7 @@ class GitBranchPopupActions {
               try {
                 return !mergeDetector.isTrivial() && isNoFfLogMerge(currentBranch.getName());
               } catch (VcsException e) {
-                // TODO: handle / display exceptions somewhere?
+                LOG.warn("Error when checking for trivial commits in " + mergeRoot, e);
               }
             }
 
