@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class InnerClassVariableHidesOuterClassVariableInspectionBase
-  extends BaseInspection {
+public class InnerClassVariableHidesOuterClassVariableInspectionBase extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -73,8 +72,7 @@ public class InnerClassVariableHidesOuterClassVariableInspectionBase
     return new InnerClassVariableHidesOuterClassVariableVisitor();
   }
 
-  private class InnerClassVariableHidesOuterClassVariableVisitor
-    extends BaseInspectionVisitor {
+  private class InnerClassVariableHidesOuterClassVariableVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(@NotNull PsiField field) {
@@ -86,21 +84,17 @@ public class InnerClassVariableHidesOuterClassVariableInspectionBase
       if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
         return;    //special case
       }
-      boolean reportStaticsOnly = false;
-      if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        reportStaticsOnly = true;
-      }
-      PsiClass ancestorClass =
-        ClassUtils.getContainingClass(aClass);
+      boolean reportStaticsOnly = aClass.hasModifierProperty(PsiModifier.STATIC);
+      PsiClass ancestorClass = ClassUtils.getContainingClass(aClass);
       while (ancestorClass != null) {
-        final PsiField ancestorField =
-          ancestorClass.findFieldByName(fieldName, false);
+        final PsiField ancestorField = ancestorClass.findFieldByName(fieldName, false);
         if (ancestorField != null) {
-          if (!m_ignoreInvisibleFields ||
-              !reportStaticsOnly ||
-              field.hasModifierProperty(PsiModifier.STATIC)) {
+          if (!m_ignoreInvisibleFields || !reportStaticsOnly || ancestorField.hasModifierProperty(PsiModifier.STATIC)) {
             registerFieldError(field);
           }
+        }
+        if (ancestorClass.hasModifierProperty(PsiModifier.STATIC)) {
+          reportStaticsOnly = true;
         }
         ancestorClass = ClassUtils.getContainingClass(ancestorClass);
       }
