@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,9 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.concurrency.Futures;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -48,8 +45,11 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
   private static final String FS_ROOT = "/";
@@ -464,22 +464,21 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   private static Set<String> findDirectories(Collection<String> recursiveRoots, Collection<String> flatRoots) {
-    final Set<String> directories = ContainerUtil.newConcurrentSet();
+    Set<String> directories = ContainerUtil.newConcurrentSet();
 
-    final BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
-    Futures.invokeAll(JBIterable.from(recursiveRoots).append(flatRoots).transform(new Function<String, Future<?>>() {
-      @Override
-      public Future<?> fun(final String root) {
-        return executor.submit(new Runnable() {
-          @Override
-          public void run() {
-            if (!root.contains(JarFileSystem.JAR_SEPARATOR) && new File(root).isDirectory()) {
-              directories.add(root);
-            }
-          }
-        });
-      }
-    }).toList());
+    ExecutorService pool = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
+    CompletableFuture<?>[] futures = Stream.concat(recursiveRoots.stream(), flatRoots.stream())
+      .map(root -> CompletableFuture.runAsync(() -> {
+        if (!root.contains(JarFileSystem.JAR_SEPARATOR) && new File(root).isDirectory()) {
+          directories.add(root);
+        }
+      }, pool))
+      .toArray(CompletableFuture[]::new);
+
+    try { CompletableFuture.allOf(futures).get(); }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.error(e);
+    }
 
     return directories;
   }
