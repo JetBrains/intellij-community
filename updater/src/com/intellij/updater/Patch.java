@@ -1,12 +1,14 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.zip.ZipFile;
 
 public class Patch {
   private List<PatchAction> myActions = new ArrayList<PatchAction>();
   private boolean myIsBinary;
+  private String myHashAlgorithm;
   private boolean myIsStrict;
   private boolean myIsNormalized;
   private String myOldBuild;
@@ -14,6 +16,8 @@ public class Patch {
   private String myRoot;
   private Map<String, String> myWarnings;
   private List<String> myDeleteFiles;
+
+  private Digester myDigester;
 
   private static final int CREATE_ACTION_KEY = 1;
   private static final int UPDATE_ACTION_KEY = 2;
@@ -30,6 +34,8 @@ public class Patch {
     myWarnings = spec.getWarnings();
     myDeleteFiles = spec.getDeleteFiles();
     myRoot = spec.getRoot();
+    myHashAlgorithm = spec.getHashAlgorithm();
+    myDigester = new Digester(myHashAlgorithm);
 
     calculateActions(spec, ui);
   }
@@ -106,12 +112,21 @@ public class Patch {
       dataOut.writeBoolean(myIsBinary);
       dataOut.writeBoolean(myIsStrict);
       dataOut.writeBoolean(myIsNormalized);
+      writeString(dataOut, myHashAlgorithm);
       writeMap(dataOut, myWarnings);
       writeList(dataOut, myDeleteFiles);
       writeActions(dataOut, myActions);
     }
     finally {
       dataOut.flush();
+    }
+  }
+
+  private static void writeString(DataOutputStream dataOut, String s) throws IOException {
+    byte[] bytes = s.getBytes(Charset.forName("UTF-8"));
+    dataOut.writeInt(bytes.length);
+    for (byte b : bytes) {
+      dataOut.write(b);
     }
   }
 
@@ -170,6 +185,11 @@ public class Patch {
     myIsBinary = in.readBoolean();
     myIsStrict = in.readBoolean();
     myIsNormalized = in.readBoolean();
+    myHashAlgorithm = readString(in);
+    if (!Digester.isValidAlgorithm(myHashAlgorithm)) {
+      throw new IOException("Failed to find hash algorithm!");
+    }
+    myDigester = new Digester(myHashAlgorithm);
     myWarnings = readMap(in);
     myDeleteFiles = readList(in);
     myActions = readActions(in);
@@ -193,6 +213,14 @@ public class Patch {
     }
     return map;
   }
+
+  private static String readString(DataInputStream dataIn) throws IOException {
+    int len = dataIn.readInt();
+    byte[] bytes = new byte[len];
+    dataIn.readFully(bytes);
+    return new String(bytes, Charset.forName("UTF-8"));
+  }
+
 
   private List<PatchAction> readActions(DataInputStream in) throws IOException {
     List<PatchAction> actions = new ArrayList<PatchAction>();
@@ -365,10 +393,10 @@ public class Patch {
 
   public long digestFile(File toFile, boolean normalize) throws IOException {
     if (!myIsBinary && Utils.isZipFile(toFile.getName())) {
-      return Digester.digestZipFile(toFile);
+      return myDigester.digestZipFile(toFile);
     }
     else {
-      return Digester.digestRegularFile(toFile, normalize);
+      return myDigester.digestRegularFile(toFile, normalize);
     }
   }
 
@@ -409,6 +437,10 @@ public class Patch {
       }
     }
     return true;
+  }
+
+  public Digester getDigester() {
+    return myDigester;
   }
 
   public interface ActionsProcessor {

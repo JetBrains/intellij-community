@@ -28,6 +28,7 @@ public class PatchSpec {
   private String myJarFile;
   private boolean myIsBinary;
   private boolean myIsStrict;
+  private String myHashAlgorithm = "crc";
   private List<String> myIgnoredFiles = Collections.emptyList();
   private List<String> myCriticalFiles = Collections.emptyList();
   private List<String> myOptionalFiles = Collections.emptyList();
@@ -133,6 +134,15 @@ public class PatchSpec {
 
   public boolean isBinary() {
     return myIsBinary;
+  }
+
+  public PatchSpec setHashAlgorithm(String hashAlgorithm) {
+    myHashAlgorithm = hashAlgorithm;
+    return this;
+  }
+
+  public String getHashAlgorithm() {
+    return myHashAlgorithm;
   }
 
   public boolean isNormalized() {

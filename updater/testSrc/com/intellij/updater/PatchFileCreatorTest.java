@@ -42,6 +42,13 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
   }
 
   @Test
+  public void testCreatingAndApplyingMD5() throws Exception {
+    myPatchSpec.setHashAlgorithm("md5");
+    Patch patch = createPatch();
+    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+  }
+
+  @Test
   public void testCreatingAndApplyingOnADifferentRoot() throws Exception {
     myPatchSpec.setRoot("bin/");
     myPatchSpec.setStrict(true);

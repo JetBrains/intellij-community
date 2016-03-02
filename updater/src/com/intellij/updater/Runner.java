@@ -36,6 +36,13 @@ public class Runner {
       boolean binary = Arrays.asList(args).contains("--zip_as_binary");
       boolean strict = Arrays.asList(args).contains("--strict");
       boolean normalized = Arrays.asList(args).contains("--normalized");
+      String hashAlgorithm = getArgument(args, "hash_algorithm");
+      // Ensure the hashAlgorithm is valid
+      if (!Digester.isValidAlgorithm(hashAlgorithm)) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.err.println(hashAlgorithm + " is not a valid hash algorithm.");
+        System.exit(1);
+      }
 
       String root = getArgument(args, "root");
       root = root == null ? "" : (root.endsWith("/") ? root : root + "/");
@@ -55,6 +62,7 @@ public class Runner {
         .setPatchFile(patchFile)
         .setJarFile(jarFile)
         .setStrict(strict)
+        .setHashAlgorithm(hashAlgorithm)
         .setBinary(binary)
         .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
@@ -194,7 +202,10 @@ public class Runner {
       "                  A normalized patch must be used to move from an installation that was patched\n" +
       "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but the\n" +
       "                  generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
-      "                  guarantees that the patched version will match exactly the original one.\n");
+      "                  guarantees that the patched version will match exactly the original one.\n" +
+      "    --hash_algorithm=<hashAlgorithm>: The digest algorithm used to detect differences in files.\n" +
+      "                                      hashAlgorithm can be any MessageDigest algorithm (MD5, SHA-1, SHA-256), or \n" +
+      "                                      \"crc\" (the default).");
   }
 
   private static void create(PatchSpec spec) throws IOException, OperationCancelledException {
