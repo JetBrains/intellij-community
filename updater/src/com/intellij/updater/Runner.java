@@ -35,7 +35,6 @@ public class Runner {
       // See usage for an explanation of these flags
       boolean binary = Arrays.asList(args).contains("--zip_as_binary");
       boolean strict = Arrays.asList(args).contains("--strict");
-      boolean normalized = Arrays.asList(args).contains("--normalized");
       String hashAlgorithm = getArgument(args, "hash_algorithm");
       // Ensure the hashAlgorithm is valid
       if (!Digester.isValidAlgorithm(hashAlgorithm)) {
@@ -43,6 +42,7 @@ public class Runner {
         System.err.println(hashAlgorithm + " is not a valid hash algorithm.");
         System.exit(1);
       }
+      boolean supportLargeFiles = Arrays.asList(args).contains("--large_files");
 
       String root = getArgument(args, "root");
       root = root == null ? "" : (root.endsWith("/") ? root : root + "/");
@@ -63,8 +63,8 @@ public class Runner {
         .setJarFile(jarFile)
         .setStrict(strict)
         .setHashAlgorithm(hashAlgorithm)
+        .setSupportLargeFiles(supportLargeFiles)
         .setBinary(binary)
-        .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
         .setCriticalFiles(criticalFiles)
         .setOptionalFiles(optionalFiles)
@@ -198,14 +198,11 @@ public class Runner {
       "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be" +
       "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root." +
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators." +
-      "    --normalized: This creates a normalized patch. This flag only makes sense in addition to --zip_as_binary\n" +
-      "                  A normalized patch must be used to move from an installation that was patched\n" +
-      "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but the\n" +
-      "                  generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
-      "                  guarantees that the patched version will match exactly the original one.\n" +
       "    --hash_algorithm=<hashAlgorithm>: The digest algorithm used to detect differences in files.\n" +
       "                                      hashAlgorithm can be any MessageDigest algorithm (MD5, SHA-1, SHA-256), or \n" +
-      "                                      \"crc\" (the default).");
+      "                                      \"crc\" (the default).\n" +
+      "    --large_files: Support large files. When encountering a large file, a slightly less-efficient but faster\n" +
+      "                   diffing algorithm will be used.");
   }
 
   private static void create(PatchSpec spec) throws IOException, OperationCancelledException {
@@ -252,6 +249,7 @@ public class Runner {
 
   private static void install(final String jarFile, final String destFolder) throws Exception {
     new SwingUpdaterUI(new SwingUpdaterUI.InstallOperation() {
+                         @Override
                          public boolean execute(UpdaterUI ui) throws OperationCancelledException {
                            logger.info("installing patch to the " + destFolder);
                            return doInstall(jarFile, ui, destFolder);
