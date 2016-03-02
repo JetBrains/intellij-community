@@ -349,6 +349,7 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Didea.home.path=$home",
     "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
     "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
+    "-Djava.io.tmpdir=${p("teamcity.build.tempDir")}",
     // We don't want this on the Jenkins build server
     // "-Xdebug",
     // jdwp
