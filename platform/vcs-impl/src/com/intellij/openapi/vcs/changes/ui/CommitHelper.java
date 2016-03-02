@@ -48,8 +48,9 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.ConfirmationDialog;
-import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,38 +116,30 @@ public class CommitHelper {
   }
 
   private boolean doCommit(final GeneralCommitProcessor processor) {
+    Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        vcsManager.startBackgroundVcsOperation();
+        try {
+          delegateCommitToVcsThread(processor);
+        }
+        finally {
+          vcsManager.stopBackgroundVcsOperation();
+        }
+      }
 
-    final Runnable action = new Runnable() {
-      public void run() {
-        delegateCommitToVcsThread(processor);
+      @Override
+      public boolean shouldStartInBackground() {
+        return !myForceSyncCommit && super.shouldStartInBackground();
+      }
+
+      @Override
+      public boolean isConditionalModal() {
+        return myForceSyncCommit;
       }
     };
-
-    if (myForceSyncCommit) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
-      boolean success = doesntContainErrors(processor.getVcsExceptions());
-      if (success) {
-        reportResult(processor);
-      }
-      return success;
-    }
-    else {
-      Task.Backgroundable task =
-        new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
-          public void run(@NotNull final ProgressIndicator indicator) {
-            final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-            vcsManager.startBackgroundVcsOperation();
-            try {
-              action.run();
-            }
-            finally {
-              vcsManager.stopBackgroundVcsOperation();
-            }
-          }
-        };
-      ProgressManager.getInstance().run(task);
-      return false;
-    }
+    ProgressManager.getInstance().run(task);
+    return doesntContainErrors(processor.getVcsExceptions());
   }
 
   private void delegateCommitToVcsThread(final GeneralCommitProcessor processor) {
