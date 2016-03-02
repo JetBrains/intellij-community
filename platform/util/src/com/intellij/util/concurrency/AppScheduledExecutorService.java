@@ -79,7 +79,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     error();
   }
 
-  private static List<Runnable> error() {
+  static List<Runnable> error() {
     throw new IncorrectOperationException("You must not call this method on the global app pool");
   }
 

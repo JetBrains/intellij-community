@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -68,7 +69,9 @@ public class Alarm implements Disposable {
       myDisposed = true;
       cancelAllRequests();
 
-      myExecutorService.shutdownNow();
+      if (myThreadToUse != ThreadToUse.SWING_THREAD) {
+        myExecutorService.shutdownNow();
+      }
     }
   }
 
@@ -123,7 +126,12 @@ public class Alarm implements Disposable {
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
 
-    myExecutorService = // have to restrict the number of running tasks because otherwise the (implicit) contract of
+    myExecutorService = threadToUse == ThreadToUse.SWING_THREAD ?
+                        // pass straight to EDT
+                        EdtExecutorService.getScheduledExecutorInstance() :
+
+                        // or pass to app pooled thread.
+                        // have to restrict the number of running tasks because otherwise the (implicit) contract of
                         // "addRequests with the same delay are executed in order" will be broken
                         AppExecutorUtil.createBoundedScheduledExecutorService(1);
 
