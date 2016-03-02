@@ -398,7 +398,7 @@ public class AboutPopup {
             g2.setFont(myFont);
             g2.setColor(myLinkColor);
             final int xOffset = myImage.getIconWidth() - width - 10;
-            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, myShowCopyAlpha);
+            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, Math.max(0, Math.min(1, myShowCopyAlpha)));
             g2.drawString(copyString, xOffset, yBase + y);
             config.restore();
             myLinks.add(new Link(new Rectangle(xOffset, yBase + y - fontAscent, width, fontHeight), COPY_URL));
