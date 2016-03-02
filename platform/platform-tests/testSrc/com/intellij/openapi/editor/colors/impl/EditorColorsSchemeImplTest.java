@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -45,20 +46,21 @@ import java.util.Collections;
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
 import static java.util.Collections.singletonList;
 
+@SuppressWarnings("Duplicates")
 public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase {
   EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
 
   public void testDefaults() {
     checkState(myScheme.getFontPreferences(),
-               Collections.<String>emptyList(),
-               Collections.<String>emptyList(),
+               Collections.emptyList(),
+               Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Collections.<String>emptyList(),
-               Collections.<String>emptyList(),
+               Collections.emptyList(),
+               Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getConsoleFontName());
@@ -289,6 +291,37 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
       TextAttributesKey.removeTextAttributesKey("D");
     }
     
+  }
+  
+  @SuppressWarnings("unused")
+  public void testIdea152156() throws Exception {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();
+    parentScheme.setName("DefaultTest");
+    EditorColorsScheme editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
+    editorColorsScheme.setName("test");
+    TextAttributes defaultAttributes = new TextAttributes(null, null, Color.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+    TextAttributes attributes = new TextAttributes(null, null, null, EffectType.BOXED, Font.PLAIN);
+    attributes.setEnforceEmpty(false);
+    assertTrue(attributes.isFallbackEnabled());
+    TextAttributesKey testKey = TextAttributesKey.createTextAttributesKey("TEST_KEY", DefaultLanguageHighlighterColors.PARAMETER);
+    parentScheme.setAttributes(testKey, defaultAttributes);
+    editorColorsScheme.setAttributes(testKey, attributes);
+    try {
+      Element root = new Element("scheme");
+      ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
+      EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(parentScheme);
+      for (final Element child : root.getChildren()) {
+        if ("attributes".equals(child.getName())) {
+          ((EditorColorsSchemeImpl)targetScheme).readAttributes(child);
+        }
+      }
+      TextAttributes targetAttributes = ((AbstractColorsScheme)targetScheme).getDirectlyDefinedAttributes(testKey);
+      assertTrue(targetAttributes != null && targetAttributes.isFallbackEnabled());
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
+    }
   }
 
 

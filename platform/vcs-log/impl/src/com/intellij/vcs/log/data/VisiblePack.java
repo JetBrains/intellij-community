@@ -28,14 +28,18 @@ import java.util.Map;
 
 public class VisiblePack implements VcsLogDataPack {
   @NotNull
-  public static final VisiblePack EMPTY = new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterCollectionImpl.EMPTY);
+  public static final VisiblePack EMPTY =
+    new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterCollectionImpl.EMPTY);
 
   @NotNull private final DataPackBase myDataPack;
   @NotNull private final VisibleGraph<Integer> myVisibleGraph;
   private final boolean myCanRequestMore;
   @NotNull private final VcsLogFilterCollection myFilters;
 
-  VisiblePack(@NotNull DataPackBase dataPack, @NotNull VisibleGraph<Integer> graph, boolean canRequestMore, @NotNull VcsLogFilterCollection filters) {
+  VisiblePack(@NotNull DataPackBase dataPack,
+              @NotNull VisibleGraph<Integer> graph,
+              boolean canRequestMore,
+              @NotNull VcsLogFilterCollection filters) {
     myDataPack = dataPack;
     myVisibleGraph = graph;
     myCanRequestMore = canRequestMore;

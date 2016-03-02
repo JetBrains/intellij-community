@@ -40,7 +40,8 @@ public class RefreshLogAction extends RefreshAction {
     Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
-    } else {
+    }
+    else {
       VcsLogDataManager dataManager = VcsLogManager.getInstance(project).getDataManager();
       e.getPresentation().setEnabledAndVisible(dataManager != null && e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
     }

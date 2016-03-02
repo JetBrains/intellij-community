@@ -46,7 +46,9 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   private PrintElementGenerator myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
-  public VisibleGraphImpl(@NotNull LinearGraphController graphController, @NotNull PermanentGraphInfo<CommitId> permanentGraph, @NotNull GraphColorManager<CommitId> colorManager) {
+  public VisibleGraphImpl(@NotNull LinearGraphController graphController,
+                          @NotNull PermanentGraphInfo<CommitId> permanentGraph,
+                          @NotNull GraphColorManager<CommitId> colorManager) {
     myGraphController = graphController;
     myPermanentGraph = permanentGraph;
     myColorManager = colorManager;
@@ -161,11 +163,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
       if (action.getType() == GraphAction.Type.MOUSE_OVER) {
         myPrintElementManager.setSelectedElement(affectedElement);
-        return new GraphAnswerImpl<CommitId>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null, false);
+        return new GraphAnswerImpl<CommitId>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
+                                             false);
       }
 
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
-        return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null, true);
+        return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
+                                             true);
       }
 
       return null;

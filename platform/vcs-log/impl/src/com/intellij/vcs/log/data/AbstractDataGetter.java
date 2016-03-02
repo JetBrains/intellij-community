@@ -263,7 +263,8 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
         List<? extends T> details = readDetails(logProvider, entry.getKey(), ContainerUtil.newArrayList(entry.getValue()));
         result.addAll(details);
         saveInCache(details);
-      } else {
+      }
+      else {
         LOG.error("No log provider for root " + entry.getKey().getPath() + ". All known log providers " + myLogProviders);
       }
     }

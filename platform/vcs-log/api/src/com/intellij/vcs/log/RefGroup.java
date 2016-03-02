@@ -35,5 +35,4 @@ public interface RefGroup {
    */
   @NotNull
   Color getBgColor();
-
 }

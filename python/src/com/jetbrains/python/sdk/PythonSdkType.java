@@ -89,6 +89,8 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
@@ -107,6 +109,12 @@ public final class PythonSdkType extends SdkType {
   private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
+  public static final Predicate<Sdk> REMOTE_SDK_PREDICATE = new Predicate<Sdk>() {
+    @Override
+    public boolean test(Sdk sdk) {
+      return isRemote(sdk);
+    }
+  };
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -793,6 +801,10 @@ public final class PythonSdkType extends SdkType {
       }
     }
     return null;
+  }
+
+  public static List<Sdk> getAllLocalCPythons() {
+    return getAllSdks().stream().filter(REMOTE_SDK_PREDICATE.negate()).collect(Collectors.toList());
   }
 
   @Nullable

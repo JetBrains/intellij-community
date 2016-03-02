@@ -112,5 +112,4 @@ public class PermanentListIntToIntMap extends AbstractIntToIntMap implements Int
     throw new IllegalStateException(
       "Not found long index for short index: " + shortIndex + ". Long & short size is: " + myLongSize + ", " + myShortSize + ".");
   }
-
 }

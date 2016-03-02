@@ -24,7 +24,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.RefsModel;
-import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -132,7 +131,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
       VcsLogRefManager refManager1 = myRefManagers.get(root1);
       VcsLogRefManager refManager2 = myRefManagers.get(root2);
       if (!refManager1.equals(refManager2)) {
-        return VcsLogUtil.compareRoots(root1, root2);
+        return refManager1.toString().compareTo(refManager2.toString());
       }
 
       VcsRef bestRef = ContainerUtil.sorted(ContainerUtil.concat(refs1, refs2), refManager1.getBranchLayoutComparator()).get(0);

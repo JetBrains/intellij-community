@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -11,9 +11,9 @@ import java.util.List;
 
 /**
  * <p>We suppose that the Hash is the unique identifier of the Commit,
- *    i. e. it is the only value that should be checked in equals() and hashCode().</p>
+ * i. e. it is the only value that should be checked in equals() and hashCode().</p>
  * <p>equals() and hashCode() are made final to ensure that any descendants of this class are considered equal
- *    if and only if their hashes are equals.</p>
+ * if and only if their hashes are equals.</p>
  * <p>It is highly recommended to use this standard implementation of the VcsCommit because of the above reasons.</p>
  *
  * @author erokhins
@@ -73,5 +73,4 @@ public class TimedVcsCommitImpl implements TimedVcsCommit {
   public final long getTimestamp() {
     return myTime;
   }
-
 }

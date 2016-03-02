@@ -47,8 +47,8 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.ConfirmationDialog;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -202,6 +202,9 @@ public class CommitHelper {
   @NotNull
   private String getCommitSummary(@NotNull GeneralCommitProcessor processor) {
     StringBuilder content = new StringBuilder(getFileSummaryReport(processor.getChangesFailedToCommit()));
+    if (!StringUtil.isEmpty(myCommitMessage)) {
+      content.append(": ").append(escape(myCommitMessage));
+    }
     if (!myFeedback.isEmpty()) {
       content.append("<br/>");
       content.append(StringUtil.join(myFeedback, "<br/>"));
@@ -269,8 +272,6 @@ public class CommitHelper {
       }
 
       processor.doBeforeRefresh();
-
-      AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     }
     catch (ProcessCanceledException pce) {
       throw pce;
@@ -443,8 +444,13 @@ public class CommitHelper {
     }
 
     public void afterFailedCheckIn() {
-      moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
-                       VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
+                           VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
+        }
+      });
     }
 
     public void doBeforeRefresh() {
@@ -626,6 +632,7 @@ public class CommitHelper {
     }
   }
 
+  @CalledInAwt
   public static void moveToFailedList(final ChangeList changeList,
                                       final String commitMessage,
                                       final List<Change> failedChanges,

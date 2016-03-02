@@ -336,7 +336,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         int[] means = new int[BRANCHES_TABLE_COLUMN_COUNT - 1];
         int[] max = new int[BRANCHES_TABLE_COLUMN_COUNT - 1];
 
-        for (int i = 0; i < rowCount; i++){
+        for (int i = 0; i < rowCount; i++) {
           for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT - 1; j++) {
             int index = rowCount * j + i;
             if (index < myBranches.size()) {

@@ -64,5 +64,4 @@ public class VcsShortCommitDetailsImpl extends TimedVcsCommitImpl implements Vcs
   public String toString() {
     return getId().toShortString() + "(" + getSubject() + ")";
   }
-
 }

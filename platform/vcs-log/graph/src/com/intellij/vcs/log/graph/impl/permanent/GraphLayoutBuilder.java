@@ -73,7 +73,6 @@ public class GraphLayoutBuilder {
 
     myHeadNodeIndex = headNodeIndex;
     myStartLayoutIndexForHead = new int[headNodeIndex.size()];
-
   }
 
   private void dfs(int nodeIndex) {
@@ -114,5 +113,4 @@ public class GraphLayoutBuilder {
 
     return new GraphLayoutImpl(myLayoutIndex, myHeadNodeIndex, myStartLayoutIndexForHead);
   }
-
 }
