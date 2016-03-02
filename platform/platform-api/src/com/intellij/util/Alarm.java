@@ -53,8 +53,8 @@ public class Alarm implements Disposable {
 
   private volatile boolean myDisposed;
 
-  private final List<Request> myRequests = new SmartList<Request>(); // guarded by LOCK
-  private final List<Request> myPendingRequests = new SmartList<Request>(); // guarded by LOCK
+  private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
+  private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
 
@@ -266,7 +266,7 @@ public class Alarm implements Disposable {
         return;
       }
 
-      requests = new SmartList<Pair<Request, Runnable>>();
+      requests = new SmartList<>();
       for (Request request : myRequests) {
         Runnable existingTask = request.cancel();
         if (existingTask != null) {
@@ -288,7 +288,7 @@ public class Alarm implements Disposable {
   void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     List<Request> requests;
     synchronized (LOCK) {
-      requests = new ArrayList<Request>(myRequests);
+      requests = new ArrayList<>(myRequests);
     }
 
     for (Request request : requests) {
@@ -365,12 +365,9 @@ public class Alarm implements Disposable {
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
-              EdtInvocationManager.getInstance().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  if (!myDisposed) {
-                    QueueProcessor.runSafely(task);
-                  }
+              EdtInvocationManager.getInstance().invokeLater(() -> {
+                if (!myDisposed) {
+                  QueueProcessor.runSafely(task);
                 }
               });
             }
