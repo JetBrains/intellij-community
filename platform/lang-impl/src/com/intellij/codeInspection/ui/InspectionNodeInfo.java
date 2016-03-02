@@ -46,7 +46,7 @@ public class InspectionNodeInfo extends JPanel {
 
   public InspectionNodeInfo(final InspectionToolWrapper toolWrapper, Project project) {
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(5, 3, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(5, 12, 0, 0));
     myProject = project;
     myTitle = new SimpleColoredComponent();
     myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
@@ -55,7 +55,7 @@ public class InspectionNodeInfo extends JPanel {
     myButton = new JButton();
 
     add(myTitle,
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new JBInsets(0, 2, 0, 0),
+        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
                                0, 0));
 
     JEditorPane description = new JEditorPane();
@@ -64,14 +64,14 @@ public class InspectionNodeInfo extends JPanel {
     description.setOpaque(false);
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     final String toolDescription = toolWrapper.loadDescription();
-    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, true));
+    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
 
     add(ScrollPaneFactory.createScrollPane(description, true),
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                               new JBInsets(5, 5, 0, 0), 0, 0));
+                               new Insets(0, 0, 0, 0), 0, 0));
     add(myButton,
         new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                               new JBInsets(15, 0, 0, 0), 0, 0));
+                               new Insets(15, 0, 0, 0), 0, 0));
     updateEnableButtonText(false);
 
     new ClickListener() {
@@ -99,9 +99,9 @@ public class InspectionNodeInfo extends JPanel {
     }
     myButton.setText((isEnabled ? "Disable" : "Enable") + " inspection");
     myTitle.clear();
-    myTitle.append(myName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    myTitle.append(myName + " inspection", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     if (!isEnabled) {
-      myTitle.append(" Disabled", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      myTitle.append("   Disabled", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 }
