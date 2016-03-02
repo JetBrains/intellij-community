@@ -25,9 +25,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.config.GitSharedSettings;
@@ -427,8 +427,8 @@ class GitBranchPopupActions {
         myNoFfLogMerge = ContainerUtil.exists(repositories, new Condition<GitRepository>() {
           @Override
           public boolean value(GitRepository gitRepository) {
-            String name = gitRepository.getCurrentBranch().getName();
-            return isNoFfLogMerge(name);
+            GitLocalBranch currentBranch = gitRepository.getCurrentBranch();
+            return currentBranch != null && isNoFfLogMerge(currentBranch.getName());
           }
         });
       } else {
