@@ -170,7 +170,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
   }
 
   private void assertIsChanged(HgFileStatusEnum status, String... filepath) {
-    Set<HgChange> localChanges = new HgStatusCommand.Builder(true).build(myProject).execute(projectRepoVirtualFile);
+    Set<HgChange> localChanges = new HgStatusCommand.Builder(true).build(myProject).executeInCurrentThread(projectRepoVirtualFile);
     assertTrue(localChanges.contains(new HgChange(getHgFile(filepath), status)));
   }
 

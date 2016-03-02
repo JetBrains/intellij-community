@@ -257,7 +257,7 @@ public class HgRegularUpdater implements HgUpdater {
 
   private Set<HgChange> getLocalChanges() {
     HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).unknown(false).ignored(false).build(project);
-    return statusCommand.execute(repoRoot);
+    return statusCommand.executeInCurrentThread(repoRoot);
   }
 
   private HgCommandExitCode pull(@NotNull VirtualFile repo, @NotNull ProgressIndicator indicator) {
@@ -304,7 +304,7 @@ public class HgRegularUpdater implements HgUpdater {
     }
     HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).baseRevision(parentBeforeUpdate).targetRevision(
       parentAfterUpdate).build(project);
-    Set<HgChange> changes = statusCommand.execute(repo);
+    Set<HgChange> changes = statusCommand.executeInCurrentThread(repo);
     for (HgChange change : changes) {
       HgFileStatusEnum status = change.getStatus();
       switch (status) {

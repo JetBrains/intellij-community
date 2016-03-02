@@ -176,7 +176,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     HgStatusCommand statusCommand =
       new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
-    Set<HgChange> allChangedFilesInRepo = statusCommand.execute(repo);
+    Set<HgChange> allChangedFilesInRepo = statusCommand.executeInCurrentThread(repo);
 
     Set<HgFile> filesNotIncluded = new HashSet<HgFile>();
 

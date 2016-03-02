@@ -153,7 +153,7 @@ public class HgVFSListener extends VcsVFSListener {
         HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).unknown(true).ignored(true).build(myProject);
         for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sortedSourceFilesByRepos.entrySet()) {
           Set<HgChange> changes =
-            statusCommand.execute(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<VirtualFile, FilePath>() {
+            statusCommand.executeInCurrentThread(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<VirtualFile, FilePath>() {
               @Override
               public FilePath fun(VirtualFile virtualFile) {
                 return VcsUtil.getFilePath(virtualFile);
