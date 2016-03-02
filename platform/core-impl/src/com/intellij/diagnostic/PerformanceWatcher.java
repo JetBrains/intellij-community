@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,8 +70,8 @@ public class PerformanceWatcher implements ApplicationComponent {
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
   private volatile long myLastSampling = System.currentTimeMillis();
   private volatile long myLastAliveEdt = System.currentTimeMillis();
-  private long myLastDumpTime = 0;
-  private long myFreezeStart = 0;
+  private long myLastDumpTime;
+  private long myFreezeStart;
 
   /**
    * If the product is unresponsive for UNRESPONSIVE_THRESHOLD_SECONDS, dump threads every UNRESPONSIVE_INTERVAL_SECONDS
@@ -104,55 +105,36 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    if (!shouldWatch()) return;
+    UNRESPONSIVE_THRESHOLD_SECONDS = SystemProperties.getIntProperty("performance.watcher.threshold", 5);
+    UNRESPONSIVE_INTERVAL_SECONDS = SystemProperties.getIntProperty("performance.watcher.interval", 5);
 
-    final AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-    service.setNewThreadListener(new Consumer<Thread>() {
-      private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
+    if (shouldWatch()) {
+      final AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+      service.setNewThreadListener(new Consumer<Thread>() {
+        private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
-      @Override
-      public void consume(Thread thread) {
-        if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
-            && ApplicationInfoImpl.getShadowInstance().isEAP()) {
-          File file = dumpThreads("newPooledThread/", true);
-          LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
+        @Override
+        public void consume(Thread thread) {
+          if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
+              && ApplicationInfoImpl.getShadowInstance().isEAP()) {
+            File file = dumpThreads("newPooledThread/", true);
+            LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
+          }
         }
-      }
-    });
+      });
 
-    final String threshold = System.getProperty("performance.watcher.threshold");
-    if (threshold != null) {
-      try {
-        UNRESPONSIVE_THRESHOLD_SECONDS = Integer.parseInt(threshold);
-      }
-      catch (NumberFormatException e) {
-        // ignore
-      }
-    }
-    final String interval = System.getProperty("performance.watcher.interval");
-    if (interval != null) {
-      try {
-        UNRESPONSIVE_INTERVAL_SECONDS = Integer.parseInt(interval);
-      }
-      catch (NumberFormatException e) {
-        // ignore
-      }
-    }
-    if (UNRESPONSIVE_THRESHOLD_SECONDS == 0 || UNRESPONSIVE_INTERVAL_SECONDS == 0) {
-      return;
-    }
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          deleteOldThreadDumps();
+        }
+      });
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        deleteOldThreadDumps();
-      }
-    });
-
-    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-      if ("Code Cache".equals(bean.getName())) {
-        watchCodeCache(bean);
-        return;
+      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+        if ("Code Cache".equals(bean.getName())) {
+          watchCodeCache(bean);
+          break;
+        }
       }
     }
   }
@@ -206,8 +188,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   private boolean shouldWatch() {
-    return !ApplicationManager.getApplication().isUnitTestMode() &&
-           !ApplicationManager.getApplication().isHeadlessEnvironment() &&
+    return !ApplicationManager.getApplication().isHeadlessEnvironment() &&
            UNRESPONSIVE_INTERVAL_SECONDS != 0 &&
            UNRESPONSIVE_THRESHOLD_SECONDS != 0;
   }
