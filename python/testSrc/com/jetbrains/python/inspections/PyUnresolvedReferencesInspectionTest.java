@@ -587,6 +587,22 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-2748
+  public void testFormatStringDictLiteralArgumentWithReferenceExprKeys() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringDictLiteralArgumentWithReferenceExprKeys() {
+    doTest();
+  }
+  
+  // PY-2748
+  public void testFormatStringDictLiteralArgumentWithNumericExprKeys() {
+    doTest();
+  }
+
+
   // PY-18254
   public void testVarargsAnnotatedWithFunctionComment() {
     doTest();
