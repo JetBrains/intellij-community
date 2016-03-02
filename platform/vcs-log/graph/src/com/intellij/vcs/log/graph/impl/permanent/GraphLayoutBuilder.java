@@ -52,7 +52,7 @@ public class GraphLayoutBuilder {
       // protection against possible comparator flaws
       LOG.error(e);
     }
-    GraphLayoutBuilder builder = new GraphLayoutBuilder(graph, heads, new DfsUtil());
+    GraphLayoutBuilder builder = new GraphLayoutBuilder(graph, heads);
     return builder.build();
   }
 
@@ -62,13 +62,12 @@ public class GraphLayoutBuilder {
   @NotNull private final List<Integer> myHeadNodeIndex;
   @NotNull private final int[] myStartLayoutIndexForHead;
 
-  @NotNull private final DfsUtil myDfsUtil;
+  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
 
   private int currentLayoutIndex = 1;
 
-  private GraphLayoutBuilder(@NotNull LinearGraph graph, @NotNull List<Integer> headNodeIndex, @NotNull DfsUtil dfsUtil) {
+  private GraphLayoutBuilder(@NotNull LinearGraph graph, @NotNull List<Integer> headNodeIndex) {
     myGraph = graph;
-    myDfsUtil = dfsUtil;
     myLayoutIndex = new int[graph.nodesCount()];
 
     myHeadNodeIndex = headNodeIndex;
