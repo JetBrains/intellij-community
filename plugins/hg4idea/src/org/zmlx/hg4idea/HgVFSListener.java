@@ -301,7 +301,7 @@ public class HgVFSListener extends VcsVFSListener {
     }
 
     if (!deletes.isEmpty()) {
-      new HgRemoveCommand(myProject).execute(deletes);
+      new HgRemoveCommand(myProject).executeInCurrentThread(deletes);
     }
 
     for (HgFile file : deletes) {

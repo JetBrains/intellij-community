@@ -222,11 +222,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       }
       filesWithRoots.add(new HgFile(vcsRoot, filePath));
     }
-    new Task.Backgroundable(myProject, "Removing files...") {
+    new Task.Backgroundable(myProject, "Removing Files...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        HgRemoveCommand command = new HgRemoveCommand(myProject);
-        command.execute(filesWithRoots);
+        new HgRemoveCommand(myProject).executeInCurrentThread(filesWithRoots);
       }
     }.queue();
     return null;

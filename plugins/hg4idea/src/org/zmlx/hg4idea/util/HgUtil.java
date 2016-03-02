@@ -192,7 +192,7 @@ public abstract class HgUtil {
       if (vcsRoot == null) {
         continue;
       }
-      command.execute(new HgFile(vcsRoot, filePath));
+      command.executeInCurrentThread(new HgFile(vcsRoot, filePath));
     }
   }
 
