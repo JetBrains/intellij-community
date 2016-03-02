@@ -34,9 +34,9 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
   @Nullable
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if ("getFamilyName".equals(method.getName()) && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if ("getFamilyName".equals(method.getName()) && method.getParameterList().getParametersCount() == 0 && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final PsiClass aClass = method.getContainingClass();
-      if (InheritanceUtil.isInheritor(aClass, QuickFix.class.getName()) && !isPureMethod(method)) {
+      if (InheritanceUtil.isInheritor(aClass, QuickFix.class.getName()) && doesMethodViolate(method)) {
         final PsiIdentifier identifier = method.getNameIdentifier();
         LOG.assertTrue(identifier != null);
         //noinspection DialogTitleCapitalization
@@ -47,33 +47,37 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
     return null;
   }
 
-  private static boolean isPureMethod(final PsiMethod method) {
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return true;
+  private static boolean doesMethodViolate(final PsiMethod method) {
+    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     final PsiCodeBlock body = method.getBody();
-    if (body == null) return true;
+    if (body == null) return false;
     final Collection<PsiJavaCodeReferenceElement> referenceIterator =
       PsiTreeUtil.findChildrenOfType(body, PsiJavaCodeReferenceElement.class);
     for (PsiJavaCodeReferenceElement reference : referenceIterator) {
 
       final PsiElement resolved = reference.resolve();
       if (resolved instanceof PsiVariable) {
-        if (resolved instanceof PsiParameter || (resolved instanceof PsiLocalVariable && !PsiTreeUtil.isAncestor(body, resolved, false))) {
-          return false;
+        if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !PsiTreeUtil.isAncestor(body, resolved, false)) {
+          return true;
         }
         if (resolved instanceof PsiField && !((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-          return false;
+          return true;
         }
       }
 
       if (resolved instanceof PsiMethod && !((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC)) {
         final PsiClass resolvedContainingClass = ((PsiMethod)resolved).getContainingClass();
-        if (resolvedContainingClass == method.getContainingClass()) {
-          if (!isPureMethod((PsiMethod)resolved)) {
-            return false;
+        final PsiClass methodContainingClass = method.getContainingClass();
+        if (resolvedContainingClass != null &&
+            methodContainingClass != null &&
+            (methodContainingClass == resolvedContainingClass ||
+             methodContainingClass.isInheritor(resolvedContainingClass, true))) {
+          if (doesMethodViolate((PsiMethod)resolved)) {
+            return true;
           }
         }
       }
     }
-    return true;
+    return false;
   }
 }
