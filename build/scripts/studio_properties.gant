@@ -260,6 +260,8 @@ def getProperties(String home, String buildNumber) {
           }
         }
       }
+      ant.copy(file: "${home}/../../prebuilts/tools/common/m2/repository/tightvnc/NOTICE",
+               tofile: "$targetDirectory/plugins/google-cloud-testing/lib/licenses/tightvnc.jar-NOTICE")
       ant.unzip(src: "${home}/../external/gradle/gradle-$gradleVersion-bin.zip", dest: "${targetDirectory}/gradle")
     }
 
