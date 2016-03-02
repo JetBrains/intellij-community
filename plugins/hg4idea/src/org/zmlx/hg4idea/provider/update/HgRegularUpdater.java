@@ -265,7 +265,7 @@ public class HgRegularUpdater implements HgUpdater {
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);
     final String defaultPath = HgUtil.getRepositoryDefaultPath(project, repo);
     hgPullCommand.setSource(defaultPath);
-    return hgPullCommand.execute();
+    return hgPullCommand.executeInCurrentThread();
   }
 
   private void update(@NotNull VirtualFile repo, ProgressIndicator indicator, UpdatedFiles updatedFiles, List<VcsException> warnings) throws VcsException {
