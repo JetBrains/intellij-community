@@ -604,7 +604,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         myModulesProblems.add((RefModule)element);
       }
       else {
-        String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : null;
+        String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
         Set<RefEntity> content = myContents.get(groupName);
         if (content == null) {
           content = new HashSet<RefEntity>();
