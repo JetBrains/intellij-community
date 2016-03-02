@@ -871,7 +871,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
       final AnAction[] actions = groupToBuild.getChildren(null);
       if (!Arrays.equals(actions, myContextActions.get(entry.getKey()))) {
-        ActionToolbar tb = myActionManager.createActionToolbar(myActionsPlace, groupToBuild, true);
+        String adjustedPlace = myActionsPlace == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : myActionsPlace;
+        ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, groupToBuild, true);
         tb.getComponent().setBorder(null);
         tb.setTargetComponent(contextComponent);
         eachPlaceholder.setContent(tb.getComponent());
