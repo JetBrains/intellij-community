@@ -37,5 +37,4 @@ public interface VcsLogRefresher {
    * Triggered by some event from the VCS which indicates that the log could change (e.g. new commits arrived).
    */
   void refresh(@NotNull Collection<VirtualFile> rootsToRefresh);
-
 }

@@ -182,5 +182,4 @@ public class LinearGraphUtils {
     });
     return ContainerUtil.newHashSet(result);
   }
-
 }

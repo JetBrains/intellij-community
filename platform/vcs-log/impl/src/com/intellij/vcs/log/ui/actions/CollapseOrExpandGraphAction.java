@@ -89,5 +89,4 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private static boolean isIconHidden(@NotNull AnActionEvent e) {
     return e.getPlace().equals(ToolWindowContentUi.POPUP_PLACE);
   }
-
 }

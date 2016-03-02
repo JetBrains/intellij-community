@@ -69,11 +69,11 @@ public interface VcsLogProvider {
   /**
    * <p>Starts listening to events from the certain VCS, which should lead to the log refresh.</p>
    * <p>Returns disposable that unsubscribes from events.
-   *    Using a {@link MessageBus} topic can help to accomplish that.</p>
+   * Using a {@link MessageBus} topic can help to accomplish that.</p>
    *
    * @param roots     VCS roots which should be listened to.
    * @param refresher The refresher which should be notified about the need of refresh.
-   * @return          Disposable that unsubscribes from events on dispose.
+   * @return Disposable that unsubscribes from events on dispose.
    */
   @NotNull
   Disposable subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
@@ -102,9 +102,10 @@ public interface VcsLogProvider {
 
   /**
    * In order to tune log for it's VCS, provider may set value to one of the properties specified in {@link com.intellij.vcs.log.VcsLogProperties}.
+   *
    * @param property Property instance to return value for.
    * @param <T>      Type of property value.
-   * @return         Property value or null if unset.
+   * @return Property value or null if unset.
    */
   @Nullable
   <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
@@ -125,23 +126,27 @@ public interface VcsLogProvider {
      * (of course it may return less commits if the repository is small)
      */
     int getCommitCount();
-
   }
 
   /**
    * Container for references and users.
    */
   interface LogData {
-    @NotNull Set<VcsRef> getRefs();
-    @NotNull Set<VcsUser> getUsers();
+    @NotNull
+    Set<VcsRef> getRefs();
+
+    @NotNull
+    Set<VcsUser> getUsers();
   }
 
   /**
    * Container for the ordered list of commits together with their details, and references.
    */
   interface DetailedLogData {
-    @NotNull List<VcsCommitMetadata> getCommits();
-    @NotNull Set<VcsRef> getRefs();
-  }
+    @NotNull
+    List<VcsCommitMetadata> getCommits();
 
+    @NotNull
+    Set<VcsRef> getRefs();
+  }
 }

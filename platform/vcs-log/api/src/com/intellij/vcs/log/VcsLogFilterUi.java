@@ -18,5 +18,4 @@ public interface VcsLogFilterUi {
    * <b>Note:</b> only VcsLogBranchFilter is currently supported.
    */
   void setFilter(@NotNull VcsLogFilter filter);
-
 }

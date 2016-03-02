@@ -63,7 +63,6 @@ public class DataPack extends DataPackBase {
       StopWatch sw = StopWatch.start("building graph");
       permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
       sw.report();
-
     }
 
     return new DataPack(refsModel, permanentGraph, providers, full);
@@ -118,7 +117,8 @@ public class DataPack extends DataPackBase {
 
   @NotNull
   private static DataPack createEmptyInstance() {
-    RefsModel emptyModel = new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY);
+    RefsModel emptyModel =
+      new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY);
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 

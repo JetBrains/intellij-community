@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogRefresherImpl implements VcsLogRefresher {
-  
+
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
 
   @NotNull private final Project myProject;
@@ -459,6 +459,5 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     public Set<VcsRef> getRefs(@NotNull VirtualFile root) {
       return myRefs.get(root);
     }
-
   }
 }

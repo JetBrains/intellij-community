@@ -107,7 +107,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         @Override
         public void run() {
           myUi.applyFiltersAndUpdateUi();
-          myBranchFilterModel.onStructureFilterChanged(new HashSet<VirtualFile>(myLogDataManager.getRoots()), myStructureFilterModel.getFilter());
+          myBranchFilterModel
+            .onStructureFilterChanged(new HashSet<VirtualFile>(myLogDataManager.getRoots()), myStructureFilterModel.getFilter());
         }
       });
     }
@@ -194,8 +195,12 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
                                           filtersFromText.second,
                                           myDateFilterModel.getFilter(),
                                           filtersFromText.first,
-                                          myStructureFilterModel.getFilter() == null ? null : myStructureFilterModel.getFilter().getStructureFilter(),
-                                          myStructureFilterModel.getFilter() == null ? null : myStructureFilterModel.getFilter().getRootFilter());
+                                          myStructureFilterModel.getFilter() == null
+                                          ? null
+                                          : myStructureFilterModel.getFilter().getStructureFilter(),
+                                          myStructureFilterModel.getFilter() == null
+                                          ? null
+                                          : myStructureFilterModel.getFilter().getRootFilter());
   }
 
   @NotNull
@@ -275,7 +280,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     public void onStructureFilterChanged(@NotNull Set<VirtualFile> roots, @Nullable VcsLogFileFilter filter) {
       if (filter == null) {
         myVisibleRoots = null;
-      } else {
+      }
+      else {
         myVisibleRoots = VcsLogUtil.getAllVisibleRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
       }
     }

@@ -71,7 +71,6 @@ public class ColorGetterByLayoutIndex<CommitId> {
     else {
       return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex);
     }
-
   }
 
   private int getHeadNodeId(int upNodeIndex) {
@@ -93,5 +92,4 @@ public class ColorGetterByLayoutIndex<CommitId> {
   private int getNodeId(int upNodeIndex) {
     return myLinearGraph.getNodeId(upNodeIndex);
   }
-
 }

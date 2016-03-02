@@ -89,7 +89,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
                                 @NotNull String shortName) {
     logManager.watchTab(ContentUtilEx.getFullName(TAB_NAME, shortName), logUi);
     logUi.requestFocus();
-    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), logUi.getMainFrame().getMainComponent(), TAB_NAME, shortName, true, logUi);
+    ContentUtilEx
+      .addTabbedContent(toolWindow.getContentManager(), logUi.getMainFrame().getMainComponent(), TAB_NAME, shortName, true, logUi);
     toolWindow.activate(null);
   }
 

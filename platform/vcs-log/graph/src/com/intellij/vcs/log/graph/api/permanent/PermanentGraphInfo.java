@@ -34,5 +34,4 @@ public interface PermanentGraphInfo<CommitId> {
 
   @NotNull
   Set<Integer> getBranchNodeIds();
-
 }

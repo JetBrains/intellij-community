@@ -20,7 +20,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -173,5 +172,4 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       return users.hashCode();
     }
   }
-
 }

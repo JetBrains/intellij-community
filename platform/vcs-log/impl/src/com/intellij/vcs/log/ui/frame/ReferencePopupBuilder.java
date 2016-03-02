@@ -97,18 +97,18 @@ class ReferencePopupBuilder {
   private JBPopup createPopup() {
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(ListWithFilter.wrap(myList, ScrollPaneFactory.createScrollPane(myList), new Function<VcsRef, String>() {
-                                     @Override
-                                     public String fun(VcsRef vcsRef) {
-                                       return vcsRef.getName();
-                                     }
-                                   }), myList).
-      setCancelOnClickOutside(true).
-      setCancelOnWindowDeactivation(true).
-      setFocusable(true).
-      setRequestFocus(true).
-      setResizable(true).
-      setDimensionServiceKey(myUi.getProject(), "Vcs.Log.Branch.Panel.RefGroup.Popup", false).
-      createPopup();
+        @Override
+        public String fun(VcsRef vcsRef) {
+          return vcsRef.getName();
+        }
+      }), myList).
+        setCancelOnClickOutside(true).
+        setCancelOnWindowDeactivation(true).
+        setFocusable(true).
+        setRequestFocus(true).
+        setResizable(true).
+        setDimensionServiceKey(myUi.getProject(), "Vcs.Log.Branch.Panel.RefGroup.Popup", false).
+        createPopup();
   }
 
   private static DefaultListModel createListModel(RefGroup group) {

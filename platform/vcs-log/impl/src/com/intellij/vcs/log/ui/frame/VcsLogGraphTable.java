@@ -71,7 +71,9 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.EventObject;
 import java.util.List;
 
 public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvider {
@@ -569,7 +571,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       }
       return Pair.create(rowsToSelect, rowToScroll);
     }
-
   }
 
   private class MyMouseAdapter extends MouseAdapter {
@@ -634,7 +635,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     public void mouseExited(MouseEvent e) {
       // Do nothing
     }
-
   }
 
   @NotNull
@@ -751,7 +751,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       append(value.toString(), applyHighlighters(this, row, column, value.toString(), hasFocus, selected));
       setBorder(null);
     }
-
   }
 
   private class MyDummyTableCellEditor implements TableCellEditor {
