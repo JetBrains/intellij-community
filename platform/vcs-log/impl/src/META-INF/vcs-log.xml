@@ -49,6 +49,7 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowBranchesPanelAction" id="Vcs.Log.ShowBranchesPanelAction"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
     </action>
     <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
