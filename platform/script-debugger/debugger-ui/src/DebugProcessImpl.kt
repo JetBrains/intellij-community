@@ -30,6 +30,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.connection.VmConnection
@@ -118,25 +119,28 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   override final fun isValuesCustomSorted() = true
 
-  override final fun startStepOver() {
-    val vm = activeOrMainVm!!
+  override final fun startStepOver(context: XSuspendContext?) {
+    val vm = context.vm
     updateLastCallFrame(vm)
     continueVm(vm, StepAction.OVER)
   }
+
+  val XSuspendContext?.vm: Vm
+    get() = (this as? SuspendContextView)?.activeExecutionStack?.suspendContext?.vm ?: mainVm!!
 
   override final fun startForceStepInto() {
     isForceStep = true
     startStepInto()
   }
 
-  override final fun startStepInto() {
-    val vm = activeOrMainVm!!
+  override final fun startStepInto(context: XSuspendContext?) {
+    val vm = context.vm
     updateLastCallFrame(vm)
     continueVm(vm, if (vm.captureAsyncStackTraces) StepAction.IN_ASYNC else StepAction.IN)
   }
 
-  override final fun startStepOut() {
-    val vm = activeOrMainVm!!
+  override final fun startStepOut(context: XSuspendContext?) {
+    val vm = context.vm
     if (isVmStepOutCorrect()) {
       lastCallFrame = null
     }
@@ -149,10 +153,8 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   // some VM (firefox for example) doesn't implement step out correctly, so, we need to fix it
   protected open fun isVmStepOutCorrect() = true
 
-  @Deprecated("Pass vm explicitly", ReplaceWith("resume(vm!!)"))
-  override fun resume() {
-    @Suppress("DEPRECATION")
-    continueVm(activeOrMainVm!!, StepAction.CONTINUE)
+  override fun resume(context: XSuspendContext?) {
+    continueVm(context.vm, StepAction.CONTINUE)
   }
 
   open fun resume(vm: Vm) {

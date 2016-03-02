@@ -24,7 +24,7 @@ import java.util.Collection;
 
 public class PySuspendContext extends XSuspendContext {
 
-  private final XExecutionStack myActiveStack;
+  private final PyExecutionStack myActiveStack;
   private PyDebugProcess myDebugProcess;
 
   public PySuspendContext(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo) {
@@ -33,7 +33,8 @@ public class PySuspendContext extends XSuspendContext {
   }
 
   @Override
-  public XExecutionStack getActiveExecutionStack() {
+  @NotNull
+  public PyExecutionStack getActiveExecutionStack() {
     return myActiveStack;
   }
 

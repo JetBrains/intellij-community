@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -92,7 +93,13 @@ public abstract class XDebugProcess {
    * when next line in current method/function is reached.
    * Do not call this method directly. Use {@link XDebugSession#stepOver} instead
    */
-  public abstract void startStepOver();
+  public void startStepOver() {
+    throw new AbstractMethodError();
+  }
+
+  public void startStepOver(@Nullable XSuspendContext context) {
+    startStepOver();
+  }
 
   /**
    * Steps into suppressed call
@@ -104,19 +111,36 @@ public abstract class XDebugProcess {
   public void startForceStepInto(){
     startStepInto();
   }
+
+  public void startForceStepInto(@Nullable XSuspendContext context) {
+    startForceStepInto();
+  }
+
   /**
    * Resume execution and call {@link XDebugSession#positionReached}
    * when next line is reached.
    * Do not call this method directly. Use {@link XDebugSession#stepInto} instead
    */
-  public abstract void startStepInto();
+  public void startStepInto() {
+    throw new AbstractMethodError();
+  }
+
+  public void startStepInto(@Nullable XSuspendContext context) {
+    startStepInto();
+  }
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached}
    * after returning from current method/function.
    * Do not call this method directly. Use {@link XDebugSession#stepOut} instead
    */
-  public abstract void startStepOut();
+  public void startStepOut() {
+    throw new AbstractMethodError();
+  }
+
+  public void startStepOut(@Nullable XSuspendContext context) {
+    startStepOut();
+  }
 
   /**
    * Implement {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
@@ -145,7 +169,13 @@ public abstract class XDebugProcess {
    * Resume execution.
    * Do not call this method directly. Use {@link XDebugSession#resume} instead
    */
-  public abstract void resume();
+  public void resume() {
+    throw new AbstractMethodError();
+  }
+
+  public void resume(@Nullable XSuspendContext context) {
+    resume();
+  }
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
@@ -153,7 +183,13 @@ public abstract class XDebugProcess {
    * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead
    * @param position position in source code
    */
-  public abstract void runToPosition(@NotNull XSourcePosition position);
+  public void runToPosition(@NotNull XSourcePosition position) {
+    throw new AbstractMethodError();
+  }
+
+  public void runToPosition(@NotNull XSourcePosition position, @Nullable XSuspendContext context) {
+    runToPosition(position);
+  }
 
   /**
    * Check is it is possible to perform commands such as resume, step etc. And notify user if necessary
