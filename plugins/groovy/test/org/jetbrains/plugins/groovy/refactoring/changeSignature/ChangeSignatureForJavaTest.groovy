@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 @CompileStatic
 public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase {
 
-  final String basePath = TestUtils.getTestDataPath() + "/refactoring/changeSignatureForJava/"
+  final String basePath = TestUtils.testDataPath + "/refactoring/changeSignatureForJava/"
 
   public void testSimple() throws Exception {
     doTest null, null, null, [], [], false
@@ -216,6 +216,20 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
     }, false);
   }
   */
+
+  void testAddConstructorParameter() {
+    myFixture.configureByFile getTestName(false) + ".groovy"
+    myFixture.configureByFile getTestName(false) + ".java"
+    myFixture.launchAction myFixture.findSingleIntention("Add 'int' as 2nd parameter")
+    myFixture.checkResultByFile getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true
+  }
+
+  void testAddMethodParameter() {
+    myFixture.configureByFile getTestName(false) + ".groovy"
+    myFixture.configureByFile getTestName(false) + ".java"
+    myFixture.launchAction myFixture.findSingleIntention("Add 'int' as 2nd parameter")
+    myFixture.checkResultByFile getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true
+  }
 
   private void doTest(@Nullable String newReturnType, List<ParameterInfoImpl> parameterInfos, final boolean generateDelegate) {
     doTest null, null, newReturnType, parameterInfos, [], generateDelegate
