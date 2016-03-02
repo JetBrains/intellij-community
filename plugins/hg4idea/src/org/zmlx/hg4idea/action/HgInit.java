@@ -86,7 +86,7 @@ public class HgInit extends DumbAwareAction {
     }
 
     if (needToCreateRepo) {
-      createRepository(selectedRoot, mapRoot);
+      createRepositoryAsynchronously(selectedRoot, mapRoot);
     }
     else {
       updateDirectoryMappings(mapRoot);
@@ -105,7 +105,7 @@ public class HgInit extends DumbAwareAction {
     }
   }
 
-  private void createRepository(final VirtualFile selectedRoot, final VirtualFile mapRoot) {
+  private void createRepositoryAsynchronously(final VirtualFile selectedRoot, final VirtualFile mapRoot) {
     new HgInitCommand(myProject).execute(selectedRoot, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
