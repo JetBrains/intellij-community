@@ -221,7 +221,7 @@ public class HgBranchPopupActions {
       if (bookmarkDialog.showAndGet()) {
         final String name = bookmarkDialog.getName();
         if (!StringUtil.isEmptyOrSpaces(name)) {
-          HgBookmarkCommand.createBookmark(myRepositories, name, bookmarkDialog.isActive());
+          HgBookmarkCommand.createBookmarkAsynchronously(myRepositories, name, bookmarkDialog.isActive());
         }
       }
     }

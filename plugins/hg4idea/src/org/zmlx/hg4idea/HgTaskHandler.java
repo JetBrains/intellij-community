@@ -58,7 +58,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
 
   @Override
   protected void checkoutAsNewBranch(@NotNull String name, @NotNull List<HgRepository> repositories) {
-    HgBookmarkCommand.createBookmark(repositories, name, true);
+    HgBookmarkCommand.createBookmarkAsynchronously(repositories, name, true);
   }
 
   @Override
