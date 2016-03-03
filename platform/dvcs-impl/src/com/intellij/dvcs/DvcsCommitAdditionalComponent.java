@@ -141,7 +141,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
   }
 
   private void substituteCommitMessage(@NotNull String newMessage) {
-    if (!myPreviousMessage.trim().equals(newMessage.trim())) {
+    if (!StringUtil.equalsIgnoreWhitespaces(myPreviousMessage, newMessage)) {
       VcsConfiguration.getInstance(myCheckinPanel.getProject()).saveCommitMessage(myPreviousMessage);
       myCheckinPanel.setCommitMessage(newMessage);
     }
