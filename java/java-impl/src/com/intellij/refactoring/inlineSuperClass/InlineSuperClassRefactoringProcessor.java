@@ -354,7 +354,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         public void visitTypeElement(final PsiTypeElement typeElement) {
           super.visitTypeElement(typeElement);
           final PsiType superClassType = typeElement.getType();
-          if (PsiUtil.resolveClassInType(superClassType) == mySuperClass) {
+          if (PsiUtil.resolveClassInClassTypeOnly(superClassType) == mySuperClass) {
             PsiSubstitutor subst = getSuperClassSubstitutor(superClassType, targetClassType, resolveHelper, targetClass);
             replacementMap.put(new UsageInfo(typeElement), elementFactory.createTypeElement(elementFactory.createType(targetClass, subst)));
           }
@@ -367,8 +367,11 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           if (PsiUtil.resolveClassInType(superClassType) == mySuperClass) {
             PsiSubstitutor subst = getSuperClassSubstitutor(superClassType, targetClassType, resolveHelper, targetClass);
             try {
-              replacementMap.put(new UsageInfo(expression), elementFactory.createExpressionFromText("new " + elementFactory.createType(
-                targetClass, subst).getCanonicalText() + expression.getArgumentList().getText(), expression));
+              final String typeCanonicalText = elementFactory.createType(targetClass, subst).getCanonicalText();
+              final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+              if (classReference != null) {
+                replacementMap.put(new UsageInfo(classReference), elementFactory.createReferenceFromText(typeCanonicalText, expression));
+              }
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
