@@ -177,7 +177,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
           if (!myUpdateMap.containsKey(parentMessageId)) return;
           final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
           if (payload != null) {
-            //noinspection unchecked
             cell.updatePanel(payload, null);
           }
         }

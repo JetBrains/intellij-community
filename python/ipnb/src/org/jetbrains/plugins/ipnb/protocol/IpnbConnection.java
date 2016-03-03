@@ -462,9 +462,6 @@ public class IpnbConnection {
             myListener.onPayload(payload.text, parentHeader.getMessageId());
           }
         }
-        else {
-          myListener.onPayload(null, parentHeader.getMessageId());
-        }
       }
       else if ("pyerr".equals(messageType) || "error".equals(messageType)) {
         final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
