@@ -160,9 +160,9 @@ class StudyBrowserWindow extends JFrame {
     int fontSize = editorColorsScheme.getEditorFontSize();
     
     template = template.replace("${font_size}", String.valueOf(fontSize- 2));
-    template = template.replace("${highlight_mode}", getClass().getResource("/code-mirror/clike.js").toExternalForm());
     template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
-    template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());
+    template = template.replace("${language_script}", configurator.getLanguageScriptUrl());
+    template = template.replace("${default_mode}", configurator.getDefaultHighlightingMode());
     template = template.replace("${runmode}", getClass().getResource("/code-mirror/runmode.js").toExternalForm());
     template = template.replace("${colorize}", getClass().getResource("/code-mirror/colorize.js").toExternalForm());
     template = template.replace("${javascript}", getClass().getResource("/code-mirror/javascript.js").toExternalForm());
@@ -174,7 +174,6 @@ class StudyBrowserWindow extends JFrame {
       template = template.replace("${css_oldcodemirror}", getClass().getResource("/code-mirror/codemirror-old.css").toExternalForm());
       template = template.replace("${css_codemirror}", getClass().getResource("/code-mirror/codemirror.css").toExternalForm());
     }
-    template = template.replace("${default-mode}", configurator.getDefaultHighlightingMode());
     template = template.replace("${code}", content);
 
     return template;
