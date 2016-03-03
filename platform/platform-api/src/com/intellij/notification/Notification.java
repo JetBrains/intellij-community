@@ -290,6 +290,6 @@ public class Notification {
       return myImportant;
     }
 
-    return getListener() != null;
+    return getListener() != null || !ContainerUtil.isEmpty(myActions);
   }
 }
