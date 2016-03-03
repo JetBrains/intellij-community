@@ -193,9 +193,11 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
             }
             PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
             try {
-              JDOMUtil.writeDocument(new Document(problems),
-                                     outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
-                                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+              if (problems.getContentSize() != 0) {
+                JDOMUtil.writeDocument(new Document(problems),
+                                       outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
+                                       CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+              }
             }
             catch (IOException e) {
               ex[0] = e;
