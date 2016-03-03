@@ -471,11 +471,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void updateAttachmentWarning(final AbstractMessage message) {
     if (message == null) return;
-    final List<Attachment> includedAttachments = ContainerUtil.filter(message.getAttachments(), new Condition<Attachment>() {
-      public boolean value(final Attachment attachment) {
-        return attachment.isIncluded();
-      }
-    });
+    final List<Attachment> includedAttachments = message.getIncludedAttachments();
     if (!includedAttachments.isEmpty()) {
       myAttachmentWarningPanel.setVisible(true);
       if (includedAttachments.size() == 1) {
@@ -651,7 +647,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         boolean hasAttachment = false;
         for (ArrayList<AbstractMessage> merged : myMergedMessages) {
           final AbstractMessage message = merged.get(0);
-          if (!message.getAttachments().isEmpty()) {
+          if (!message.getAllAttachments().isEmpty()) {
             hasAttachment = true;
             break;
           }
@@ -695,7 +691,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       myDetailsTabForm.setAssigneeId(message == null ? null : message.getAssigneeId());
 
-      List<Attachment> attachments = message != null ? message.getAttachments() : Collections.<Attachment>emptyList();
+      List<Attachment> attachments = message != null ? message.getAllAttachments() : Collections.<Attachment>emptyList();
       if (!attachments.isEmpty()) {
         if (myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()) == -1) {
           myTabs.addTab(DiagnosticBundle.message("error.attachments.tab.title"), myAttachmentsTabForm.getContentPane());
