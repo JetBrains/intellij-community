@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.IOExceptionDialog;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -117,7 +116,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
       }
 
       final InstalledPluginsTableModel installedModel = (InstalledPluginsTableModel)myInstalled.getPluginsModel();
-      PluginEnablerImpl pluginEnabler = new PluginEnablerImpl(installedModel);
+      PluginManagerMain.PluginEnabler.UI pluginEnabler = new PluginManagerMain.PluginEnabler.UI(installedModel);
 
       if (PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, list)) {
         myInstalled.setRequireShutdown(true);
@@ -176,25 +175,6 @@ public class InstallPluginAction extends AnAction implements DumbAware {
           }
         });
       }
-    }
-  }
-
-  private static class PluginEnablerImpl implements PluginManagerMain.PluginEnabler {
-    @NotNull
-    private final InstalledPluginsTableModel pluginsModel;
-
-    private PluginEnablerImpl(@NotNull InstalledPluginsTableModel model) {
-      pluginsModel = model;
-    }
-
-    @Override
-    public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
-      pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
-    }
-
-    @Override
-    public boolean isDisabled(PluginId pluginId) {
-      return pluginsModel.isDisabled(pluginId);
     }
   }
 

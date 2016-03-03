@@ -735,6 +735,42 @@ public abstract class PluginManagerMain implements Disposable {
 
     boolean isDisabled(PluginId pluginId);
 
+    class HEADLESS implements PluginEnabler {
+      @Override
+      public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
+        for (IdeaPluginDescriptor descriptor : disabled) {
+          PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
+        }
+      }
+
+      @Override
+      public boolean isDisabled(PluginId pluginId) {
+        return isDisabled(pluginId.getIdString());
+      }
+
+      public boolean isDisabled(String pluginId) {
+        return PluginManagerCore.getDisabledPlugins().contains(pluginId);
+      }
+    }
+
+    class UI implements PluginEnabler {
+      @NotNull
+      private final InstalledPluginsTableModel pluginsModel;
+
+      public UI(@NotNull InstalledPluginsTableModel model) {
+        pluginsModel = model;
+      }
+
+      @Override
+      public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
+        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
+      }
+
+      @Override
+      public boolean isDisabled(PluginId pluginId) {
+        return pluginsModel.isDisabled(pluginId);
+      }
+    }
   }
 
   public static void notifyPluginsUpdated(@Nullable Project project) {
