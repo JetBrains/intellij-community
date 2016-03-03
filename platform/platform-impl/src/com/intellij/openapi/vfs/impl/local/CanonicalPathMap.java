@@ -58,8 +58,6 @@ class CanonicalPathMap {
   }
 
   private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
-    Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
-    long start = System.currentTimeMillis();
     Map<String, String> result = ContainerUtil.newConcurrentMap();
 
     List<String> roots = ContainerUtil.concat(Arrays.asList(recursiveRoots, flatRoots));
@@ -68,9 +66,6 @@ class CanonicalPathMap {
       return true;
     });
 
-    long finish = System.currentTimeMillis();
-    Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
-    System.out.println((recursiveRoots.size()+flatRoots.size()) +" roots resolved. Before: " +before.size()+" threads; after: "+after.size()+" threads. Took "+(finish-start)+"ms");
     return result;
   }
 
