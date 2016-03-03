@@ -125,14 +125,14 @@ public class DiffDividerDrawUtil {
 
     final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
 
-    final Interval leftInterval = getVisibleInterval(editor1);
-    final Interval rightInterval = getVisibleInterval(editor2);
+    final LineRange leftInterval = getVisibleInterval(editor1);
+    final LineRange rightInterval = getVisibleInterval(editor2);
 
     paintable.process(new DividerPaintable.Handler() {
       @Override
       public boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color, boolean resolved) {
-        if (leftInterval.startLine > endLine1 && rightInterval.startLine > endLine2) return true;
-        if (leftInterval.endLine < startLine1 && rightInterval.endLine < startLine2) return false;
+        if (leftInterval.start > endLine1 && rightInterval.start > endLine2) return true;
+        if (leftInterval.end < startLine1 && rightInterval.end < startLine2) return false;
 
         polygons.add(createPolygon(transformations, startLine1, endLine1, startLine2, endLine2, color, resolved));
         return true;
@@ -155,8 +155,8 @@ public class DiffDividerDrawUtil {
 
     final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
 
-    final Interval leftInterval = getVisibleInterval(editor1);
-    final Interval rightInterval = getVisibleInterval(editor2);
+    final LineRange leftInterval = getVisibleInterval(editor1);
+    final LineRange rightInterval = getVisibleInterval(editor2);
 
     final int height1 = editor1.getLineHeight();
     final int height2 = editor2.getLineHeight();
@@ -166,8 +166,8 @@ public class DiffDividerDrawUtil {
     paintable.process(new DividerSeparatorPaintable.Handler() {
       @Override
       public boolean process(int line1, int line2) {
-        if (leftInterval.startLine > line1 + 1 && rightInterval.startLine > line2 + 1) return true;
-        if (leftInterval.endLine < line1 && rightInterval.endLine < line2) return false;
+        if (leftInterval.start > line1 + 1 && rightInterval.start > line2 + 1) return true;
+        if (leftInterval.end < line1 && rightInterval.end < line2) return false;
 
         separators.add(createSeparator(transformations, line1, line2, height1, height2, scheme));
         return true;
@@ -222,11 +222,11 @@ public class DiffDividerDrawUtil {
   }
 
   @NotNull
-  private static Interval getVisibleInterval(Editor editor) {
+  private static LineRange getVisibleInterval(Editor editor) {
     Rectangle area = editor.getScrollingModel().getVisibleArea();
     LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
     LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
-    return new Interval(position1.line, position2.line);
+    return new LineRange(position1.line, position2.line);
   }
 
   public interface DividerPaintable {
@@ -356,16 +356,6 @@ public class DiffDividerDrawUtil {
 
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> ";
-    }
-  }
-
-  public static class Interval {
-    public final int startLine;
-    public final int endLine;
-
-    public Interval(int startLine, int endLine) {
-      this.startLine = startLine;
-      this.endLine = endLine;
     }
   }
 }
