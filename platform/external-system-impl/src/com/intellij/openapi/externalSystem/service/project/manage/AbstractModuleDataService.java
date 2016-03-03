@@ -354,6 +354,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
       setBytecodeTargetLevel(project, module, moduleDataNode.getData());
     }
+
+    for (Module module : modelsProvider.getModules()) {
+      module.putUserData(MODULE_DATA_KEY, null);
+    }
   }
 
   @Override
