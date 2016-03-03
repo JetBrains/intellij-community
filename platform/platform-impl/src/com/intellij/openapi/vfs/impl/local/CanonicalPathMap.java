@@ -15,26 +15,18 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Stream;
+import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -66,18 +58,19 @@ class CanonicalPathMap {
   }
 
   private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
+    Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
+    long start = System.currentTimeMillis();
     Map<String, String> result = ContainerUtil.newConcurrentMap();
 
-    ExecutorService pool = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
-    CompletableFuture<?>[] futures = Stream.concat(recursiveRoots.stream(), flatRoots.stream())
-      .map(root -> CompletableFuture.runAsync(() -> ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result), pool))
-      .toArray(CompletableFuture[]::new);
+    List<String> roots = ContainerUtil.concat(Arrays.asList(recursiveRoots, flatRoots));
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(roots, null, false, false, root -> {
+      ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result);
+      return true;
+    });
 
-    try { CompletableFuture.allOf(futures).get(); }
-    catch (InterruptedException | ExecutionException e) {
-      LOG.error(e);
-    }
-
+    long finish = System.currentTimeMillis();
+    Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
+    System.out.println((recursiveRoots.size()+flatRoots.size()) +" roots resolved. Before: " +before.size()+" threads; after: "+after.size()+" threads. Took "+(finish-start)+"ms");
     return result;
   }
 
