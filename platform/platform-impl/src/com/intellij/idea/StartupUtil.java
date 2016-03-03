@@ -307,6 +307,11 @@ public class StartupUtil {
       Main.showMessage("Too Many Instances", message, true);
     }
 
+    if (status == SocketLock.ActivateStatus.ACTIVATED) {
+      System.out.println("Already running");
+      System.exit(0);
+    }
+
     return false;
   }
 
