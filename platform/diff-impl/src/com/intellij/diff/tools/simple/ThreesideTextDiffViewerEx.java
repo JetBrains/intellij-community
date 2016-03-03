@@ -120,6 +120,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     };
   }
 
+  @CalledInAwt
   protected void clearDiffPresentation() {
     myStatusPanel.setBusy(false);
     myPanel.resetNotifications();
@@ -129,6 +130,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myStatusPanel.update();
   }
 
+  @CalledInAwt
   protected void destroyChangedBlocks() {
     myFoldingModel.destroy();
   }

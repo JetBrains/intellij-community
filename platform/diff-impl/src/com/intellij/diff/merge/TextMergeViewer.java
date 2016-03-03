@@ -439,6 +439,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @Override
+    @CalledInAwt
     protected void destroyChangedBlocks() {
       super.destroyChangedBlocks();
       myInnerDiffWorker.stop();
@@ -496,6 +497,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         }
       }
 
+      @CalledInAwt
       public void stop() {
         if (myProgress != null) myProgress.cancel();
         myProgress = null;
@@ -503,6 +505,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myAlarm.cancelAllRequests();
       }
 
+      @CalledInAwt
       private void putChanges(@NotNull Collection<TextMergeChange> changes) {
         for (TextMergeChange change : changes) {
           if (change.isResolved()) continue;
