@@ -93,6 +93,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         try {
           if (myConsoleView != null) {
             disposeConsole();
+            myCommunication.waitForTerminate();
           }
           PyConsoleTask.super.tearDown();
         }
