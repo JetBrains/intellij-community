@@ -98,8 +98,17 @@ public class GuavaConversionUtil {
       }
       else {
         final GuavaLambda lambda = GuavaLambda.findFor(evaluator.evaluateType(expression));
-        return lambda == null ? expression
-                              : addMethodReference(expression, lambda);
+        if (lambda == null) {
+          return expression;
+        }
+        else {
+          final PsiExpression expressionWithMethodReference = addMethodReference(expression, lambda);
+          if (insertTypeCase) {
+            return adjustLambdaContainingExpression(expressionWithMethodReference, true, targetType, evaluator);
+          } else {
+            return expressionWithMethodReference;
+          }
+        }
       }
     }
     if (expression instanceof PsiMethodReferenceExpression) {
