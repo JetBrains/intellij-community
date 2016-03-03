@@ -85,7 +85,7 @@ public class MqPatchTest extends HgPlatformTest {
     cd(myRepository);
     append(FILENAME, "modify");
     myRepository.refresh(false,true);
-    new HgQNewCommand(myProject, myHgRepository, MESSAGE, false).execute();
+    new HgQNewCommand(myProject, myHgRepository, MESSAGE, false).executeInCurrentThread();
     myRepository.refresh(false,true);
     MqPatchDetails patchDetails = updateAndGetDetails();
     assertEqualsCommitInfo(null, patchDetails);

@@ -144,7 +144,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         command.setFiles(selectedFiles);
       }
       try {
-        command.execute();
+        command.executeInCurrentThread();
       }
       catch (HgCommandException e) {
         exceptions.add(new VcsException(e));
