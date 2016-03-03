@@ -18,7 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.spi.LoggingEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,7 +93,7 @@ public class LogMessage extends AbstractMessage {
 
   public void addAttachment(Attachment attachment) {
     if (myAttachments == null) {
-      myAttachments = new SmartList<Attachment>();
+      myAttachments = ContainerUtil.createLockFreeCopyOnWriteList();
     }
     myAttachments.add(attachment);
   }
