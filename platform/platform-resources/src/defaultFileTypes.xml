@@ -88,24 +88,6 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="pl" extensions="pl;pm" description="Perl files" name="Perl"
-              icon="AllIcons.FileTypes.Custom">
-      <highlighting>
-        <options>
-          <option name="LINE_COMMENT" value="#"/>
-          <option name="HEX_PREFIX" value="0x"/>
-          <option name="HAS_BRACES" value="true"/>
-          <option name="HAS_BRACKETS" value="true"/>
-          <option name="HAS_PARENS" value="true"/>
-          <option name="HAS_STRING_ESCAPES" value="true"/>
-        </options>
-        <keywords
-            keywords="and;bless;caller;continue;die;do;dump;else;elsif;eq;eval;exit;for;foreach;goto;if;import;last;local;my;ne;next;no;or;our;package;qw;redo;ref;require;return;sub;tie;tied;unless;untie;until;use;wantarray;while"
-            ignore_case="false"/>
-        <keywords2 keywords="chmod;chomp;close;exists;grep;join;keys;length;open;print;push;seek;shift;split;truncate;warn"/>
-      </highlighting>
-    </filetype>
-
     <filetype binary="false" default_extension="aj" extensions="aj" description="AspectJ (syntax highlighting only)" name="AspectJ"
               icon="AllIcons.FileTypes.Custom">
       <highlighting>
