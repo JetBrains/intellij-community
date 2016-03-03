@@ -180,7 +180,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myEntriesFileListener = new SvnEntriesFileListener(project);
       upgradeIfNeeded(bus);
 
-      myChangeListListener = new SvnChangelistListener(myProject, this);
+      myChangeListListener = new SvnChangelistListener(this);
 
       myVcsListener = new VcsListener() {
         @Override

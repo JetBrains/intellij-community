@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -24,9 +23,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.change.ChangeListClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -38,17 +39,15 @@ import java.util.List;
 public class SvnChangelistListener implements ChangeListListener {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangelistListener");
 
-  private final Project myProject;
-  private final SvnVcs myVcs;
+  @NotNull private final SvnVcs myVcs;
   @NotNull private final Condition<FilePath> myUnderSvnCondition;
 
-  public SvnChangelistListener(@NotNull final Project project, @NotNull final SvnVcs vcs) {
-    myProject = project;
+  public SvnChangelistListener(@NotNull SvnVcs vcs) {
     myVcs = vcs;
     myUnderSvnCondition = new Condition<FilePath>() {
       @Override
       public boolean value(@NotNull FilePath path) {
-        final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(path);
+        final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsFor(path);
         return vcs != null && SvnVcs.VCS_NAME.equals(vcs.getName());
       }
     };
@@ -121,7 +120,7 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   @Nullable
-  public static String getCurrentMapping(final SvnVcs vcs, final File file) {
+  public static String getCurrentMapping(@NotNull SvnVcs vcs, @NotNull File file) {
     try {
       final Status status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
       return status == null ? null : status.getChangelistName();
@@ -136,31 +135,21 @@ public class SvnChangelistListener implements ChangeListListener {
     return null;
   }
 
-  public static void putUnderList(@NotNull final Project project, @NotNull final String list, @NotNull final File after)
-    throws VcsException {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-
-    try {
-      vcs.getFactory(after).createChangeListClient().add(list, after, null);
-    }
-    catch(SvnBindException e) {
-      LOG.info(e);
-      if (!e.contains(SVNErrorCode.WC_NOT_DIRECTORY) && !e.contains(SVNErrorCode.WC_NOT_FILE)) {
-        throw e;
-      }
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      throw e;
-    }
+  public static void putUnderList(@NotNull SvnVcs vcs, @NotNull String list, @NotNull File after) throws VcsException {
+    doChangeListOperation(vcs, after, client -> client.add(list, after, null));
   }
 
-  public static void removeFromList(@NotNull final Project project, @NotNull final File after) throws VcsException {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
+  public static void removeFromList(@NotNull SvnVcs vcs, @NotNull File after) throws VcsException {
+    doChangeListOperation(vcs, after, client -> client.remove(after));
+  }
+
+  private static void doChangeListOperation(@NotNull SvnVcs vcs,
+                                            @NotNull File file,
+                                            @NotNull ThrowableConsumer<ChangeListClient, VcsException> operation) throws VcsException {
     try {
-      vcs.getFactory(after).createChangeListClient().remove(after);
+      operation.consume(vcs.getFactory(file).createChangeListClient());
     }
-    catch(SvnBindException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
       if (!e.contains(SVNErrorCode.WC_NOT_DIRECTORY) && !e.contains(SVNErrorCode.WC_NOT_FILE)) {
         throw e;

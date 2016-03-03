@@ -54,7 +54,7 @@ public class SvnNativeListsTest extends Svn17TestCase {
 
   private void clearListForRevision(final ContentRevision revision) throws VcsException {
     if (revision == null) return;
-    SvnChangelistListener.removeFromList(myProject, revision.getFile().getIOFile());
+    SvnChangelistListener.removeFromList(SvnVcs.getInstance(myProject), revision.getFile().getIOFile());
   }
 
   @Test

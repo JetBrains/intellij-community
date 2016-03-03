@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.idea.svn.SvnChangelistListener;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -55,7 +56,7 @@ public class SvnNativeListsTest extends Svn16TestCase {
 
   private void clearListForRevision(final ContentRevision revision) throws VcsException {
     if (revision == null) return;
-    SvnChangelistListener.removeFromList(myProject, revision.getFile().getIOFile());
+    SvnChangelistListener.removeFromList(SvnVcs.getInstance(myProject), revision.getFile().getIOFile());
   }
 
   @Test
