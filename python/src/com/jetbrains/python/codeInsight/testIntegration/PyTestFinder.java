@@ -60,7 +60,7 @@ public class PyTestFinder implements TestFinder {
       for (String eachName : names) {
         if (eachName.contains(sourceName)) {
           for (PyClass eachClass : PyClassNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
-            if (PythonUnitTestUtil.isTestCaseClass(eachClass) || PythonDocTestUtil.isDocTestClass(eachClass)) {
+            if (PythonUnitTestUtil.isTestCaseClass(eachClass, null) || PythonDocTestUtil.isDocTestClass(eachClass)) {
               classesWithProximities.add(
                   new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
             }
@@ -102,7 +102,7 @@ public class PyTestFinder implements TestFinder {
     for (Pair<String, Integer> eachNameWithWeight : possibleNames) {
       for (PyClass eachClass : PyClassNameIndex.find(eachNameWithWeight.first, element.getProject(),
                                                      GlobalSearchScope.projectScope(element.getProject()))) {
-        if (!PyTestUtil.isPyTestClass(eachClass))
+        if (!PyTestUtil.isPyTestClass(eachClass, null))
           classesWithWeights.add(new Pair<PsiNamedElement, Integer>(eachClass, eachNameWithWeight.second));
       }
       for (PyFunction function : PyFunctionNameIndex.find(eachNameWithWeight.first, element.getProject(),
@@ -119,7 +119,7 @@ public class PyTestFinder implements TestFinder {
   public boolean isTest(@NotNull PsiElement element) {
     PyClass cl = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     if (cl != null)
-      return PyTestUtil.isPyTestClass(cl);
+      return PyTestUtil.isPyTestClass(cl, null);
     return false;
   }
 }

@@ -19,7 +19,6 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
@@ -31,8 +30,11 @@ import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.Opcodes;
+
+import java.io.IOException;
+
+import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 
 /**
  * @author max
@@ -55,51 +57,58 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
 
-    // skip inner & anonymous
-    if (isInnerClass(file)) return null;
-
-    return new ClsFileImpl(this);
-  }
-
-  public static boolean isInnerClass(@NotNull VirtualFile file) {
-    String name = file.getNameWithoutExtension();
-    int index = name.lastIndexOf('$');
-    if (index > 0 && index < name.length() - 1) {
-      String parentName = name.substring(0, index), childName = name.substring(index + 1);
-      if (file.getParent().findChild(parentName + ".class") != null) {
-        return isInnerClass(file, parentName, childName);
+    // skip inner, anonymous, missing and corrupted classes
+    try {
+      if (!isInnerClass(file, file.contentsToByteArray(false))) {
+        return new ClsFileImpl(this);
       }
     }
-    return false;
+    catch (Exception e) {
+      Logger.getInstance(ClassFileViewProvider.class).debug(file.getPath(), e);
+    }
+
+    return null;
   }
 
-  private static boolean isInnerClass(VirtualFile file, final String parentName, final String childName) {
+  /** @deprecated use {@link #isInnerClass(VirtualFile, byte[])} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public static boolean isInnerClass(@NotNull VirtualFile file) {
+    try {
+      String name = file.getNameWithoutExtension();
+      int p = name.lastIndexOf('$', name.length() - 2);
+      return p > 0 && detectInnerClass(file, file.contentsToByteArray(false));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static boolean isInnerClass(@NotNull VirtualFile file, @NotNull byte[] content) {
+    String name = file.getNameWithoutExtension();
+    int p = name.lastIndexOf('$', name.length() - 2);
+    return p > 0 && detectInnerClass(file, content);
+  }
+
+  private static boolean detectInnerClass(VirtualFile file, byte[] content) {
     Boolean isInner = IS_INNER_CLASS.get(file);
     if (isInner != null) return isInner;
 
+    ClassReader reader = new ClassReader(content);
     final Ref<Boolean> ref = Ref.create(Boolean.FALSE);
-    try {
-      new MyClassReader(file.contentsToByteArray(false)).accept(new ClassVisitor(Opcodes.ASM5) {
-        @Override
-        public void visitOuterClass(String owner, String name, String desc) {
-          ref.set(Boolean.TRUE);
-          throw new ProcessCanceledException();
-        }
+    final String className = reader.getClassName();
+    reader.accept(new ClassVisitor(Opcodes.ASM5) {
+      @Override
+      public void visitOuterClass(String owner, String name, String desc) {
+        ref.set(Boolean.TRUE);
+      }
 
-        @Override
-        public void visitInnerClass(String name, String outer, String inner, int access) {
-          if ((inner == null || childName.equals(inner)) && outer != null && parentName.equals(outer.substring(outer.lastIndexOf('/') + 1)) ||
-              inner == null && outer == null && name.substring(name.lastIndexOf('/') + 1).equals(parentName + '$' + childName)) {
-            ref.set(Boolean.TRUE);
-            throw new ProcessCanceledException();
-          }
+      @Override
+      public void visitInnerClass(String name, String outer, String inner, int access) {
+        if (className.equals(name)) {
+          ref.set(Boolean.TRUE);
         }
-      }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    }
-    catch (ProcessCanceledException ignored) { }
-    catch (Exception e) {
-      Logger.getInstance(ClassFileViewProvider.class).warn(file.getPath(), e);
-    }
+      }
+    }, EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
 
     isInner = ref.get();
     IS_INNER_CLASS.set(file, isInner);
@@ -110,16 +119,5 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   @Override
   public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
-  }
-
-  private static class MyClassReader extends ClassReader {
-    public MyClassReader(byte[] b) {
-      super(b);
-    }
-
-    @Override
-    protected Label readLabel(int offset, Label[] labels) {
-      return null;
-    }
   }
 }

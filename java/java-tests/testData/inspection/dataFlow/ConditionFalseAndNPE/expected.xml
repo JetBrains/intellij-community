@@ -3,16 +3,16 @@
   <problem>
     <file>Test.java</file>
     <line>9</line>
-    <description>Method invocation 'foo().foo()' may produce NullPointerException</description>
+    <description>Method invocation 'foo' may produce NullPointerException</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>10</line>
-    <description>Method invocation 'foo().foo()' may produce NullPointerException</description>
+    <description>Method invocation 'foo' may produce NullPointerException</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>10</line>
-    <description>Method invocation 'foo().foo().foo()' may produce NullPointerException</description>
+    <description>Method invocation 'foo' may produce NullPointerException</description>
   </problem>
 </problems>

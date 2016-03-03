@@ -220,12 +220,14 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       final String paramName = parameterChunk != null ? parameterChunk.parameter.name : replacedParameter.getName();
       final PsiType paramType = parameterChunk != null ? parameterChunk.parameter.type : replacedParameter.getType();
       if (getter == null) {
-        getter = GenerateMembersUtil.suggestGetterName(paramName, paramType, myProject);
+        getter = parameterChunk != null && parameterChunk.field != null ? GenerateMembersUtil.suggestGetterName(parameterChunk.field) 
+                                                                        : GenerateMembersUtil.suggestGetterName(paramName, paramType, myProject);
         paramsNeedingGetters.add(replacedParameter);
       }
       @NonNls String setter = parameterChunk != null ? parameterChunk.setter : null;
       if (setter == null) {
-        setter = GenerateMembersUtil.suggestSetterName(paramName, paramType, myProject);
+        setter = parameterChunk != null && parameterChunk.field != null ? GenerateMembersUtil.suggestSetterName(parameterChunk.field)
+                                                                        : GenerateMembersUtil.suggestSetterName(paramName, paramType, myProject);
       }
       if (RefactoringUtil.isPlusPlusOrMinusMinus(paramUsage.getParent())) {
         usages.add(new ReplaceParameterIncrementDecrement(paramUsage, fixedParamName, setter, getter));

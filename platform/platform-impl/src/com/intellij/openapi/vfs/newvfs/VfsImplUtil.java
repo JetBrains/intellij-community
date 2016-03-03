@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
 public class VfsImplUtil {
@@ -54,11 +54,9 @@ public class VfsImplUtil {
   private VfsImplUtil() { }
 
   @Nullable
-  public static NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
+  public static NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
-    if (data == null) {
-      return null;
-    }
+    if (data == null) return null;
 
     NewVirtualFile file = data.first;
     for (String pathElement : data.second) {
@@ -83,19 +81,24 @@ public class VfsImplUtil {
   }
 
   @Nullable
-  public static NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
+  public static NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    return findCachedFileByPath(vfs, path).first;
+  }
+
+  @NotNull
+  public static Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
-    if (data == null) {
-      return null;
-    }
+    if (data == null) return Pair.empty();
 
     NewVirtualFile file = data.first;
     for (String pathElement : data.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
+
+      NewVirtualFile last = file;
       if ("..".equals(pathElement)) {
         if (file.is(VFileProperty.SYMLINK)) {
-          final String canonicalPath = file.getCanonicalPath();
-          final NewVirtualFile canonicalFile = canonicalPath != null ? findFileByPathIfCached(vfs, canonicalPath) : null;
+          String canonicalPath = file.getCanonicalPath();
+          NewVirtualFile canonicalFile = canonicalPath != null ? findCachedFileByPath(vfs, canonicalPath).first : null;
           file = canonicalFile != null ? canonicalFile.getParent() : null;
         }
         else {
@@ -106,18 +109,16 @@ public class VfsImplUtil {
         file = file.findChildIfCached(pathElement);
       }
 
-      if (file == null) return null;
+      if (file == null) return pair(null, last);
     }
 
-    return file;
+    return pair(file, null);
   }
 
   @Nullable
-  public static NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
+  public static NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
-    if (data == null) {
-      return null;
-    }
+    if (data == null) return null;
 
     NewVirtualFile file = data.first;
     for (String pathElement : data.second) {

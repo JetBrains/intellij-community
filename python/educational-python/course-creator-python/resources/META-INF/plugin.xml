@@ -1,0 +1,53 @@
+<idea-plugin version="2">
+  <id>com.jetbrains.edu.coursecreator.python</id>
+  <name>Course Creator for PyCharm Edu</name>
+  <version>2.0.3</version>
+  <idea-version since-build="143.403"/>
+  <description><![CDATA[
+      Plugin allows you to create new course for PyCharm <Edu></Edu>.
+    ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <change-notes><![CDATA[
+    ]]>
+  </change-notes>
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.python</depends>
+  <depends>com.jetbrains.edu.coursecreator</depends>
+  <depends>com.jetbrains.edu.core</depends>
+  <depends>com.jetbrains.python.edu.core</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Edu">
+    <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
+    <executeFile implementation="com.jetbrains.edu.coursecreator.PyCCRunTests"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <pyReferenceResolveProvider implementation="com.jetbrains.edu.coursecreator.PyCCReferenceResolveProvider"/>
+  </extensions>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
+
+  <actions>
+    <action id="CCRunTests" class="com.jetbrains.edu.coursecreator.actions.PyCCRunTestsAction" text="Run Tests" description="Run tests"/>
+  </actions>
+
+</idea-plugin>

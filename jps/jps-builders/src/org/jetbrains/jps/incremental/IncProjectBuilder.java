@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -807,15 +808,11 @@ public class IncProjectBuilder {
     }
 
     private void queueTasks(List<BuildChunkTask> tasks) {
-      List<BuildTargetChunk> chunksToLog = LOG.isDebugEnabled() ? new ArrayList<BuildTargetChunk>() : null;
-      for (BuildChunkTask task : tasks) {
-        if (chunksToLog != null) {
+      if (LOG.isDebugEnabled() && !tasks.isEmpty()) {
+        final List<BuildTargetChunk> chunksToLog = new ArrayList<BuildTargetChunk>();
+        for (BuildChunkTask task : tasks) {
           chunksToLog.add(task.getChunk());
         }
-        queueTask(task);
-      }
-
-      if (chunksToLog != null && !chunksToLog.isEmpty()) {
         final StringBuilder logBuilder = new StringBuilder("Queuing " + chunksToLog.size() + " chunks in parallel: ");
         Collections.sort(chunksToLog, new Comparator<BuildTargetChunk>() {
           public int compare(final BuildTargetChunk o1, final BuildTargetChunk o2) {
@@ -826,6 +823,9 @@ public class IncProjectBuilder {
           logBuilder.append(chunk.toString()).append("; ");
         }
         LOG.debug(logBuilder.toString());
+      }
+      for (BuildChunkTask task : tasks) {
+        queueTask(task);
       }
     }
 
@@ -889,8 +889,15 @@ public class IncProjectBuilder {
           moduleTargets.add((ModuleBuildTarget)target);
         }
         else {
+          String targetsString = StringUtil.join(targets, new Function<BuildTarget<?>, String>() {
+            @Override
+            public String fun(BuildTarget<?> target) {
+              return StringUtil.decapitalize(target.getPresentableName());
+            }
+          }, ", ");
           context.processMessage(new CompilerMessage(
-            "", BuildMessage.Kind.ERROR, "Cannot build " + target.getPresentableName() + " because it is included into a circular dependency")
+            "", BuildMessage.Kind.ERROR, "Cannot build " + StringUtil.decapitalize(target.getPresentableName()) + " because it is included into a circular dependency (" +
+                                         targetsString + ")")
           );
           return false;
         }

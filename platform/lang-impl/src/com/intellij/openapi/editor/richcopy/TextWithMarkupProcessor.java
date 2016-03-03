@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.DisposableIterator;
+import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -126,11 +126,11 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
         if (endOffset <= startOffsetToUse) {
           continue;
         }
-        MarkupIterator markupIterator = new MarkupIterator(text,
-                                                           new CompositeRangeIterator(schemeToUse,
-                                                                                      new HighlighterRangeIterator(highlighter, startOffsetToUse, endOffset),
-                                                                                      new MarkupModelRangeIterator(markupModel, schemeToUse, startOffsetToUse, endOffset)),
-                                                           schemeToUse);
+        MyMarkupIterator markupIterator = new MyMarkupIterator(text,
+                                                               new CompositeRangeIterator(schemeToUse,
+                                                                                          new HighlighterRangeIterator(highlighter, startOffsetToUse, endOffset),
+                                                                                          new MarkupModelRangeIterator(markupModel, schemeToUse, startOffsetToUse, endOffset)),
+                                                               schemeToUse);
         try {
           context.iterate(markupIterator, endOffset);
         }
@@ -294,7 +294,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       myIndentSymbolsToStripAtCurrentLine = 0;
     }
 
-    public void iterate(MarkupIterator iterator, int endOffset) {
+    public void iterate(MyMarkupIterator iterator, int endOffset) {
       while (!iterator.atEnd()) {
         iterator.advance();
         int startOffset = iterator.getStartOffset();
@@ -418,14 +418,14 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     }
   }
 
-  private static class MarkupIterator {
+  private static class MyMarkupIterator {
     private final SegmentIterator mySegmentIterator;
     private final RangeIterator myRangeIterator;
     private int myCurrentFontStyle;
     private Color myCurrentForegroundColor;
     private Color myCurrentBackgroundColor;
 
-    private MarkupIterator(@NotNull CharSequence charSequence, @NotNull RangeIterator rangeIterator, @NotNull EditorColorsScheme colorsScheme) {
+    private MyMarkupIterator(@NotNull CharSequence charSequence, @NotNull RangeIterator rangeIterator, @NotNull EditorColorsScheme colorsScheme) {
       myRangeIterator = rangeIterator;
       mySegmentIterator = new SegmentIterator(charSequence, colorsScheme.getFontPreferences());
     }
@@ -638,7 +638,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     private final EditorColorsScheme myColorsScheme;
     private final Color myDefaultForeground;
     private final Color myDefaultBackground;
-    private final DisposableIterator<RangeHighlighterEx> myIterator;
+    private final MarkupIterator<RangeHighlighterEx> myIterator;
 
     private int myCurrentStart;
     private int myCurrentEnd;

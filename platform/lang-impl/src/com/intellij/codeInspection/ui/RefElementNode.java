@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Computable;
@@ -47,7 +48,7 @@ public class RefElementNode extends InspectionTreeNode {
     }
   });
 
-  public RefElementNode(@NotNull Object userObject, @NotNull InspectionToolPresentation presentation) {
+  public RefElementNode(@Nullable Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myToolPresentation = presentation;
   }
@@ -71,17 +72,12 @@ public class RefElementNode extends InspectionTreeNode {
     return myIcon.getIcon();
   }
 
-  @Override
-  public int getProblemCount() {
-    return Math.max(1, super.getProblemCount());
-  }
-
   public String toString() {
     final RefEntity element = getElement();
     if (element == null || !element.isValid()) {
       return InspectionsBundle.message("inspection.reference.invalid");
     }
-    return element.getRefManager().getRefinedElement(element).getQualifiedName();
+    return element.getRefManager().getRefinedElement(element).getName();
   }
 
   @Override
@@ -129,4 +125,11 @@ public class RefElementNode extends InspectionTreeNode {
     return mySingleDescriptor;
   }
 
+  @Override
+  public RefEntity getContainingFileLocalEntity() {
+    final RefEntity element = getElement();
+    return element instanceof RefElement && !(element instanceof RefDirectory)
+           ? element
+           : super.getContainingFileLocalEntity();
+  }
 }

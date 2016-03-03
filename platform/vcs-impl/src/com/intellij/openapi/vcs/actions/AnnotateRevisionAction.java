@@ -98,4 +98,8 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   public void consume(Integer integer) {
     currentLine = integer;
   }
+
+  public int getCurrentLine() {
+    return currentLine;
+  }
 }

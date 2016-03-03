@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -440,34 +440,72 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon colorize(@NotNull final Icon source, @NotNull Color color) {
+  public static Icon colorize(@NotNull Icon source, @NotNull Color color) {
     return colorize(source, color, false);
   }
 
   @NotNull
-  public static Icon colorize(@NotNull final Icon source, @NotNull Color color, boolean keepGray) {
-    float[] base = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+  public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
+    return filterIcon(source, new ColorFilter(color, keepGray));
+  }
 
-    final BufferedImage image = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
-    final Graphics2D g = image.createGraphics();
+  @NotNull
+  public static Icon desaturate(@NotNull Icon source) {
+    return filterIcon(source, new DesaturationFilter());
+  }
+
+  @NotNull
+  private static Icon filterIcon(@NotNull Icon source, @NotNull Filter filter) {
+    BufferedImage src = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+    Graphics2D g = src.createGraphics();
     source.paintIcon(null, g, 0, 0);
     g.dispose();
-
-    final BufferedImage img = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+    BufferedImage img = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
     int[] rgba = new int[4];
-    float[] hsb = new float[3];
-    for (int y = 0; y < image.getRaster().getHeight(); y++) {
-      for (int x = 0; x < image.getRaster().getWidth(); x++) {
-        image.getRaster().getPixel(x, y, rgba);
+    for (int y = 0; y < src.getRaster().getHeight(); y++) {
+      for (int x = 0; x < src.getRaster().getWidth(); x++) {
+        src.getRaster().getPixel(x, y, rgba);
         if (rgba[3] != 0) {
-          Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
-          int rgb = Color.HSBtoRGB(base[0], base[1] * (keepGray ? hsb[1] : 1f), base[2] * hsb[2]);
-          img.getRaster().setPixel(x, y, new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]});
+          img.getRaster().setPixel(x, y, filter.convert(rgba));
         }
       }
     }
-
     return createImageIcon(img);
+  }
+  
+  private static abstract class Filter {
+    @NotNull
+    abstract int[] convert(@NotNull int[] rgba);
+  }
+
+  private static class ColorFilter extends Filter {
+    private final float[] myBase;
+    private final boolean myKeepGray;
+
+    private ColorFilter(@NotNull Color color, boolean keepGray) {
+      myKeepGray = keepGray;
+      myBase = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    }
+
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      float[] hsb = new float[3];
+      Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
+      int rgb = Color.HSBtoRGB(myBase[0], myBase[1] * (myKeepGray ? hsb[1] : 1f), myBase[2] * hsb[2]);
+      return new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]};
+    }
+  }
+  
+  private static class DesaturationFilter extends Filter {
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      int min = Math.min(Math.min(rgba[0], rgba[1]), rgba[2]);
+      int max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
+      int grey = (max + min) / 2;
+      return new int[]{grey, grey, grey, rgba[3]};
+    }
   }
 
   @NotNull

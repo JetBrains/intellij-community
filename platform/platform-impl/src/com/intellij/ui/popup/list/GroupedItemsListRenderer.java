@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
-import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,22 +61,16 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
 
   protected void createLabel() {
     myTextLabel = new ErrorLabel();
-    myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+    myTextLabel.setBorder(JBUI.Borders.emptyBottom(1));
     myTextLabel.setOpaque(true);
   }
 
   protected final JComponent layoutComponent(JComponent middleItemComponent) {
-    JPanel result = new OpaquePanel(Registry.is("ide.new.project.settings") ? new BorderLayout(0, 0) : new BorderLayout(4, 4), Color.white);
-
     myNextStepLabel = new JLabel();
     myNextStepLabel.setOpaque(true);
-
-    result.add(middleItemComponent, BorderLayout.CENTER);
-    result.add(myNextStepLabel, BorderLayout.EAST);
-
-    result.setBorder(getDefaultItemComponentBorder());
-
-    return result;
+    return JBUI.Panels.simplePanel(middleItemComponent)
+      .addToRight(myNextStepLabel)
+      .withBorder(getDefaultItemComponentBorder());
   }
 
   protected void customizeComponent(JList list, Object value, boolean isSelected) {

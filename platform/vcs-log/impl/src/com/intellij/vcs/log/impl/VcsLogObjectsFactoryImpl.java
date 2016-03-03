@@ -3,6 +3,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.WeakInterner;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +13,7 @@ import java.util.List;
 public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
 
   @NotNull private final VcsUserRegistry myUserRegistry;
+  @NotNull private final WeakInterner<VcsRefImpl> myRefsInterner = new WeakInterner<VcsRefImpl>();
 
   // created as application service
   @SuppressWarnings("unused")
@@ -62,7 +64,8 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
                                                 @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
     VcsUser author = createUser(authorName, authorEmail);
     VcsUser committer = createUser(committerName, committerEmail);
-    return new VcsChangesLazilyParsedDetails(hash, parents, commitTime, root, subject, author, message, committer, authorTime, changesGetter);
+    return new VcsChangesLazilyParsedDetails(hash, parents, commitTime, root, subject, author, message, committer, authorTime,
+                                             changesGetter);
   }
 
   @NotNull
@@ -74,7 +77,6 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @NotNull
   @Override
   public VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
-    return new VcsRefImpl(commitHash, name, type, root);
+    return myRefsInterner.intern(new VcsRefImpl(commitHash, name, type, root));
   }
-
 }

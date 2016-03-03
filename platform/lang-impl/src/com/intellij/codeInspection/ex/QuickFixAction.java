@@ -40,11 +40,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SequentialModalProgressTask;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.*;
 
 /**
@@ -100,7 +104,7 @@ public class QuickFixAction extends AnAction {
     return false;
   }
 
-  public String getText(RefEntity where) {
+  public String getText() {
     return getTemplatePresentation().getText();
   }
 
@@ -108,15 +112,13 @@ public class QuickFixAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
-    if (isProblemDescriptorsAcceptable()) {
-      final CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
-      if (descriptors.length > 0) {
-        doApplyFix(view.getProject(), descriptors, tree.getContext());
-        return;
-      }
+    final CommonProblemDescriptor[] descriptors;
+    if (isProblemDescriptorsAcceptable() && (descriptors = tree.getSelectedDescriptors()).length > 0) {
+      doApplyFix(view.getProject(), descriptors, tree.getContext());
+    } else {
+      doApplyFix(getSelectedElements(e), view);
     }
-
-    doApplyFix(getSelectedElements(e), view);
+    view.updateRightPanel();
   }
 
 
@@ -138,6 +140,14 @@ public class QuickFixAction extends AnAction {
     }
 
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
+    
+    Arrays.sort(descriptors, (c1, c2) -> {
+      if (c1 instanceof ProblemDescriptor && c2 instanceof ProblemDescriptor) {
+        return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(), 
+                                                     ((ProblemDescriptor)c1).getPsiElement());
+      }
+      return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate()); 
+    });
 
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
 
@@ -163,6 +173,15 @@ public class QuickFixAction extends AnAction {
       }, templatePresentationText, null);
 
       refreshViews(project, ignoredElements, myToolWrapper);
+      final InspectionTree tree = context.getView().getTree();
+      final TreePath[] selected = tree.getSelectionPaths();
+      if (selected != null) {
+        for (TreePath path : selected) {
+          path.getLastPathComponent();
+          ((DefaultTreeModel) tree.getModel()).reload((TreeNode)path.getLastPathComponent());
+        }
+      }
+      tree.restoreExpansionAndSelection();
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();

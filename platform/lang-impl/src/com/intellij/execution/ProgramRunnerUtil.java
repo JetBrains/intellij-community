@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,12 +54,13 @@ public class ProgramRunnerUtil {
     return configuration == null ? null : RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
   }
 
-  public static void executeConfiguration(@NotNull ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {
+  public static void executeConfiguration(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {
     if (ExecutorRegistry.getInstance().isStarting(environment)) {
       return;
     }
 
     RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
+    final Project project = environment.getProject();
     if (runnerAndConfigurationSettings != null) {
       if (!ExecutionTargetManager.canRun(environment)) {
         ExecutionUtil.handleExecutionError(environment, new ExecutionException(
@@ -62,14 +68,15 @@ public class ProgramRunnerUtil {
         return;
       }
 
-      if (!RunManagerImpl.canRunConfiguration(environment) || (showSettings && runnerAndConfigurationSettings.isEditBeforeRun())) {
+      if ((!RunManagerImpl.canRunConfiguration(environment) || (showSettings && runnerAndConfigurationSettings.isEditBeforeRun())) &&
+          !DumbService.isDumb(project)) {
         if (!RunDialog.editConfiguration(environment, "Edit configuration")) {
           return;
         }
 
         while (!RunManagerImpl.canRunConfiguration(environment)) {
           if (Messages.YES == Messages
-            .showYesNoDialog(environment.getProject(), "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
+            .showYesNoDialog(project, "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
                              "Edit", "Continue Anyway", Messages.getErrorIcon())) {
             if (!RunDialog.editConfiguration(environment, "Edit configuration")) {
               return;
@@ -91,6 +98,23 @@ public class ProgramRunnerUtil {
       if (assignNewId) {
         environment.assignNewExecutionId();
       }
+      if (DumbService.isDumb(project) && Registry.is("dumb.aware.run.configurations")) {
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (project.isDisposed()) {
+            return;
+          }
+
+          final String toolWindowId = environment.getExecutor().getToolWindowId();
+          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+          if (toolWindowManager.canShowNotification(toolWindowId)) {
+            //noinspection SSBasedInspection
+            toolWindowManager.notifyByBalloon(toolWindowId, MessageType.INFO,
+                                              "Some actions may not work as expected if you start a Run/debug configuration while indexing is in progress.");
+          }
+        });
+
+      }
+
       environment.getRunner().execute(environment);
     }
     catch (ExecutionException e) {
@@ -104,7 +128,7 @@ public class ProgramRunnerUtil {
       if (name == null) {
         name = "<Unknown>";
       }
-      ExecutionUtil.handleExecutionError(environment.getProject(), environment.getExecutor().getToolWindowId(), name, e);
+      ExecutionUtil.handleExecutionError(project, environment.getExecutor().getToolWindowId(), name, e);
     }
   }
 

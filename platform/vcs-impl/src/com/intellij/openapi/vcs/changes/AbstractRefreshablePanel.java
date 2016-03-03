@@ -138,7 +138,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
     private T myT;
 
     private Loader(@Nullable Project project, @NotNull String title, final Ticket ticketCopy) {
-      super(project, title, false, BackgroundFromStartOption.getInstance());
+      super(project, title, false);
       myTicketCopy = ticketCopy;
     }
 

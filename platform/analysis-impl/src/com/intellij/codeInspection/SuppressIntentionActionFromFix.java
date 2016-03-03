@@ -85,4 +85,8 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
   public String getFamilyName() {
     return myFix.getFamilyName();
   }
+
+  public boolean isSuppressAll() {
+    return myFix.isSuppressAll();
+  }
 }

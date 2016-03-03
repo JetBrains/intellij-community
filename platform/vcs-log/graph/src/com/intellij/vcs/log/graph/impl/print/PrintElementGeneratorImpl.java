@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUMap;
@@ -26,6 +25,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
+import com.intellij.vcs.log.graph.utils.NormalEdge;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -154,16 +154,15 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
       if (element instanceof GraphEdge) {
         GraphEdge edge = (GraphEdge)element;
-        Pair<Integer, Integer> normalEdge = asNormalEdge(edge);
+        NormalEdge normalEdge = asNormalEdge(edge);
         if (normalEdge != null) {
-          int edgeSize = normalEdge.second - normalEdge.first;
-          int upOffset = visibleRowIndex - normalEdge.first;
-          int downOffset = normalEdge.second - visibleRowIndex;
+          int edgeSize = normalEdge.down - normalEdge.up;
+          int upOffset = visibleRowIndex - normalEdge.up;
+          int downOffset = normalEdge.down - visibleRowIndex;
 
           if (edgeSize >= myLongEdgeSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, myVisiblePartSize);
 
           if (edgeSize >= myEdgeWithArrowSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, 1);
-
         }
         else { // special edges
           switch (edge.getType()) {
@@ -200,16 +199,16 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   }
 
   private boolean edgeIsVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
-    Pair<Integer, Integer> normalEdge = asNormalEdge(edge);
+    NormalEdge normalEdge = asNormalEdge(edge);
     if (normalEdge == null) // e.d. edge is special. See addSpecialEdges
     {
       return false;
     }
-    if (normalEdge.second - normalEdge.first < myLongEdgeSize) {
+    if (normalEdge.down - normalEdge.up < myLongEdgeSize) {
       return true;
     }
     else {
-      return visibleRowIndex - normalEdge.first <= myVisiblePartSize || normalEdge.second - visibleRowIndex <= myVisiblePartSize;
+      return visibleRowIndex - normalEdge.up <= myVisiblePartSize || normalEdge.down - visibleRowIndex <= myVisiblePartSize;
     }
   }
 
@@ -248,5 +247,4 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     cache.put(rowIndex, result);
     return result;
   }
-
 }

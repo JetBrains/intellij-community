@@ -157,7 +157,13 @@ public class Registry  {
     Map<String, String> old = new HashMap<String, String>();
     old.putAll(myUserProperties);
     for (String each : old.keySet()) {
-      get(each).resetToDefault();      
+      try {
+        get(each).resetToDefault();
+      }
+      catch (MissingResourceException e) {
+        // outdated property that is not declared in registry.properties anymore
+        myValues.remove(each);
+      }
     }
   }
 

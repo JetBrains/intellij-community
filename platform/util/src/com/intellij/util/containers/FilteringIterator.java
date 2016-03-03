@@ -27,7 +27,7 @@ import java.util.NoSuchElementException;
  *  @author dsl
  *  @author dyoma
  */
-public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
+public class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E> {
   private final Iterator<Dom> myDelegate;
   private final Condition<? super Dom> myCondition;
   private boolean myNextObtained;
@@ -96,6 +96,11 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
   public void remove() {
     if (myNextObtained) throw new IllegalStateException();
     myDelegate.remove();
+  }
+
+  public E peek() {
+    if (!hasNext()) throw new NoSuchElementException();
+    return (E)myCurrent;
   }
 
   public static <T> Iterator<T> skipNulls(Iterator<T> iterator) {

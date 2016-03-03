@@ -494,6 +494,7 @@ public class AllIcons {
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
     public static final Icon ReadHelp = IconLoader.getIcon("/general/readHelp.png"); // 32x32
+    public static final Icon Recursive = IconLoader.getIcon("/general/recursive.png"); // 12x12
     public static final Icon Remove = IconLoader.getIcon("/general/remove.png"); // 16x16
     public static final Icon Reset = IconLoader.getIcon("/general/reset.png"); // 16x16
     public static final Icon Run = IconLoader.getIcon("/general/run.png"); // 7x10
@@ -558,7 +559,7 @@ public class AllIcons {
     public static final Icon Colors = IconLoader.getIcon("/gutter/colors.png"); // 12x12
     public static final Icon ExtAnnotation = IconLoader.getIcon("/gutter/extAnnotation.png"); // 12x12
     public static final Icon ImplementedMethod = IconLoader.getIcon("/gutter/implementedMethod.png"); // 12x12
-    public static final Icon ImplementingFunctional = IconLoader.getIcon("/gutter/implementingFunctional.png"); // 12x12
+    public static final Icon ImplementingFunctionalInterface = IconLoader.getIcon("/gutter/implementingFunctionalInterface.png"); // 12x12
     public static final Icon ImplementingMethod = IconLoader.getIcon("/gutter/implementingMethod.png"); // 12x12
     public static final Icon OverridenMethod = IconLoader.getIcon("/gutter/overridenMethod.png"); // 12x12
     public static final Icon OverridingMethod = IconLoader.getIcon("/gutter/overridingMethod.png"); // 12x12
@@ -634,6 +635,31 @@ public class AllIcons {
 
     }
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13
+    
+    public static class Notification {
+      public static final Icon Close = IconLoader.getIcon("/ide/notification/close.png"); // 16x16
+      public static final Icon CloseHover = IconLoader.getIcon("/ide/notification/closeHover.png"); // 16x16
+      public static final Icon Collapse = IconLoader.getIcon("/ide/notification/collapse.png"); // 16x16
+      public static final Icon CollapseHover = IconLoader.getIcon("/ide/notification/collapseHover.png"); // 16x16
+      public static final Icon DropTriangle = IconLoader.getIcon("/ide/notification/dropTriangle.png"); // 11x8
+      public static final Icon Expand = IconLoader.getIcon("/ide/notification/expand.png"); // 16x16
+      public static final Icon ExpandHover = IconLoader.getIcon("/ide/notification/expandHover.png"); // 16x16
+      public static final Icon Gear = IconLoader.getIcon("/ide/notification/gear.png"); // 16x16
+      public static final Icon GearHover = IconLoader.getIcon("/ide/notification/gearHover.png"); // 16x16
+      
+      public static class Shadow {
+        public static final Icon Bottom_left = IconLoader.getIcon("/ide/notification/shadow/bottom-left.png"); // 14x16
+        public static final Icon Bottom_right = IconLoader.getIcon("/ide/notification/shadow/bottom-right.png"); // 14x16
+        public static final Icon Bottom = IconLoader.getIcon("/ide/notification/shadow/bottom.png"); // 4x8
+        public static final Icon Left = IconLoader.getIcon("/ide/notification/shadow/left.png"); // 6x4
+        public static final Icon Right = IconLoader.getIcon("/ide/notification/shadow/right.png"); // 6x4
+        public static final Icon Top_left = IconLoader.getIcon("/ide/notification/shadow/top-left.png"); // 14x12
+        public static final Icon Top_right = IconLoader.getIcon("/ide/notification/shadow/top-right.png"); // 14x12
+        public static final Icon Top = IconLoader.getIcon("/ide/notification/shadow/top.png"); // 4x4
+
+      }
+
+    }
     public static final Icon Notifications = IconLoader.getIcon("/ide/notifications.png"); // 16x16
     public static final Icon OutgoingChangesOn = IconLoader.getIcon("/ide/outgoingChangesOn.png"); // 16x16
     public static final Icon Pipette = IconLoader.getIcon("/ide/pipette.png"); // 16x16
@@ -837,7 +863,6 @@ public class AllIcons {
     public static final Icon HomeFolder = IconLoader.getIcon("/nodes/homeFolder.png"); // 16x16
     public static final Icon IdeaModule = IconLoader.getIcon("/nodes/ideaModule.png"); // 16x16
     public static final Icon IdeaProject = IconLoader.getIcon("/nodes/ideaProject.png"); // 16x16
-    public static final Icon IdeaWorkspace = IconLoader.getIcon("/nodes/ideaWorkspace.png"); // 16x16
     public static final Icon InspectionResults = IconLoader.getIcon("/nodes/inspectionResults.png"); // 16x16
     public static final Icon Interface = IconLoader.getIcon("/nodes/interface.png"); // 16x16
     public static final Icon J2eeParameter = IconLoader.getIcon("/nodes/j2eeParameter.png"); // 16x16

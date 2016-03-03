@@ -1,0 +1,39 @@
+YAML file
+  YAML document
+    YAML sequence
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace(' ')
+        YAML mapping
+          PsiElement(tag)('!qualified.class.name')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('propertyOne:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('bla bla')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('propertyWithOneSequence:')
+            PsiElement(Eol)('\n')
+            PsiElement(indent)('        ')
+            YAML sequence
+              YAML sequence item
+                PsiElement(-)('-')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('first value')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('nextPropertyWithOneSequence:')
+            PsiElement(Eol)('\n')
+            PsiElement(indent)('        ')
+            YAML sequence
+              YAML sequence item
+                PsiElement(-)('-')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('first value of another sequence')

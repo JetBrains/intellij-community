@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public abstract class XDebuggerUtil {
 
   public abstract void removeBreakpoint(Project project, XBreakpoint<?> breakpoint);
 
-  public abstract <B extends XBreakpoint<?>> XBreakpointType<B, ?> findBreakpointType(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass);
+  public abstract <T extends XBreakpointType> T findBreakpointType(@NotNull Class<T> typeClass);
 
   /**
    * Create {@link XSourcePosition} instance by line number
@@ -80,6 +80,17 @@ public abstract class XDebuggerUtil {
    */
   @Nullable
   public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line);
+
+  /**
+   * Create {@link XSourcePosition} instance by line and column number
+   *
+   * @param file   file
+   * @param line   0-based line number
+   * @param column 0-based column number
+   * @return source position
+   */
+  @Nullable
+  public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line, int column);
 
   /**
    * Create {@link XSourcePosition} instance by line number

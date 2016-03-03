@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.utils;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
@@ -34,7 +33,7 @@ import java.util.Set;
 
 public class LinearGraphUtils {
   public static final LinearGraphController.LinearGraphAnswer DEFAULT_GRAPH_ANSWER =
-    new LinearGraphController.LinearGraphAnswer(null, Cursor.getDefaultCursor(), null, null);
+    new LinearGraphController.LinearGraphAnswer(Cursor.getDefaultCursor(), null);
 
   public static boolean intEqual(@Nullable Integer value, int number) {
     return value != null && value == number;
@@ -57,10 +56,10 @@ public class LinearGraphUtils {
   }
 
   @Nullable
-  public static Pair<Integer, Integer> asNormalEdge(@Nullable GraphEdge edge) {
+  public static NormalEdge asNormalEdge(@Nullable GraphEdge edge) {
     if (isNormalEdge(edge)) {
       assert edge.getUpNodeIndex() != null && edge.getDownNodeIndex() != null;
-      return Pair.create(edge.getUpNodeIndex(), edge.getDownNodeIndex());
+      return NormalEdge.create(edge.getUpNodeIndex(), edge.getDownNodeIndex());
     }
     return null;
   }
@@ -133,14 +132,6 @@ public class LinearGraphUtils {
   }
 
   @NotNull
-  public static LinearGraphController.LinearGraphAnswer createCursorAnswer(boolean handCursor) {
-    Cursor cursor = Cursor.getDefaultCursor();
-    if (handCursor) cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-
-    return new LinearGraphController.LinearGraphAnswer(null, cursor, null, null);
-  }
-
-  @NotNull
   public static Cursor getCursor(boolean hand) {
     if (hand) {
       return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
@@ -152,12 +143,12 @@ public class LinearGraphUtils {
 
   public static LinearGraphController.LinearGraphAnswer createSelectedAnswer(@NotNull LinearGraph linearGraph,
                                                                              @NotNull Collection<Integer> selectedNodeIndexes) {
-    Set<Integer> selectedId = ContainerUtil.newHashSet();
+    Set<Integer> selectedIds = ContainerUtil.newHashSet();
     for (Integer nodeIndex : selectedNodeIndexes) {
       if (nodeIndex == null) continue;
-      selectedId.add(linearGraph.getNodeId(nodeIndex));
+      selectedIds.add(linearGraph.getNodeId(nodeIndex));
     }
-    return new LinearGraphController.LinearGraphAnswer(null, getCursor(true), null, selectedId);
+    return new LinearGraphController.LinearGraphAnswer(getCursor(true), selectedIds);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -268,24 +269,14 @@ public class AbstractPopup implements JBPopup {
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton("Open as Tool Window", 
                          AllIcons.General.AutohideOff, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffInactive),
-          new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-              pinCallback.process(AbstractPopup.this);
-            }
-          }
-        ));
+          e -> pinCallback.process(this)
+        ), JBUI.Borders.empty(4));
       }
       else if (cancelButton != null) {
-        myCaption.setButtonComponent(new InplaceButton(cancelButton, new ActionListener() {
-          @Override
-          public void actionPerformed(final ActionEvent e) {
-            cancel();
-          }
-        }));
+        myCaption.setButtonComponent(new InplaceButton(cancelButton, e -> cancel()), JBUI.Borders.empty(4));
       }
       else if (commandButton != null) {
-        myCaption.setButtonComponent(commandButton);
+        myCaption.setButtonComponent(commandButton, null);
       }
     }
     else {
@@ -555,7 +546,7 @@ public class AbstractPopup implements JBPopup {
     if (preferredBounds.y - adjustedBounds.y <= 0) {
       return preferredLocation;
     }
-    int adjustedY = preferredBounds.y - editor.getLineHeight() * 3 / 2 - preferredSize.height;
+    int adjustedY = preferredBounds.y - editor.getLineHeight() - preferredSize.height;
     if (adjustedY < 0) {
       return preferredLocation;
     }
@@ -1392,19 +1383,25 @@ public class AbstractPopup implements JBPopup {
 
     if (myFinalRunnable != null) {
       final ActionCallback typeAheadDone = new ActionCallback();
-      Runnable runFinal = new Runnable() {
-        @Override
-        public void run() {
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
+
+      ModalityState modalityState = ModalityState.current();
+      Runnable finalRunnable = myFinalRunnable;
+
+      getFocusManager().doWhenFocusSettlesDown(() -> {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(myFinalRunnable);
+          SwingUtilities.invokeLater(() -> {
+            if (ModalityState.current().equals(modalityState)) {
+              finalRunnable.run();
+            }
+            // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
+            // And we don't want finalRunnable to perform potentially destructive actions
+            //   in the context of a suddenly appeared modal dialog.
+          });
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
           myFinalRunnable = null;
-        }
-      };
-
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
-      getFocusManager().doWhenFocusSettlesDown(runFinal);
+      });
     }
 
     if (LOG.isDebugEnabled()) {
@@ -1562,7 +1559,8 @@ public class AbstractPopup implements JBPopup {
   @Override
   public Point getLocationOnScreen() {
     Dimension headerCorrectionSize = myLocateByContent ? myHeaderPanel.getPreferredSize() : null;
-    Point screenPoint = myContent.getLocationOnScreen();
+    Point screenPoint = myContent.getLocation();
+    SwingUtilities.convertPointToScreen(screenPoint, myContent);
     if (headerCorrectionSize != null) {
       screenPoint.y -= headerCorrectionSize.height;
     }

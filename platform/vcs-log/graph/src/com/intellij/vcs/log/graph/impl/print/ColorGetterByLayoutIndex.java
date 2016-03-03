@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -23,15 +22,20 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import com.intellij.vcs.log.graph.utils.NormalEdge;
 import org.jetbrains.annotations.NotNull;
 
 public class ColorGetterByLayoutIndex<CommitId> {
   @NotNull private final LinearGraph myLinearGraph;
   @NotNull private final PermanentGraphInfo<CommitId> myPermanentGraphInfo;
+  @NotNull private final GraphColorManager<CommitId> myColorManager;
 
-  public ColorGetterByLayoutIndex(@NotNull LinearGraph linearGraph, @NotNull PermanentGraphInfo<CommitId> permanentGraphInfo) {
+  public ColorGetterByLayoutIndex(@NotNull LinearGraph linearGraph,
+                                  @NotNull PermanentGraphInfo<CommitId> permanentGraphInfo,
+                                  @NotNull GraphColorManager<CommitId> colorManager) {
     myLinearGraph = linearGraph;
     myPermanentGraphInfo = permanentGraphInfo;
+    myColorManager = colorManager;
   }
 
   public int getColorId(@NotNull GraphElement element) {
@@ -42,10 +46,10 @@ public class ColorGetterByLayoutIndex<CommitId> {
     }
     else {
       GraphEdge edge = (GraphEdge)element;
-      Pair<Integer, Integer> normalEdge = LinearGraphUtils.asNormalEdge(edge);
+      NormalEdge normalEdge = LinearGraphUtils.asNormalEdge(edge);
       if (normalEdge != null) {
-        upNodeIndex = normalEdge.first;
-        downNodeIndex = normalEdge.second;
+        upNodeIndex = normalEdge.up;
+        downNodeIndex = normalEdge.down;
       }
       else {
         upNodeIndex = LinearGraphUtils.getNotNullNodeIndex(edge);
@@ -57,7 +61,6 @@ public class ColorGetterByLayoutIndex<CommitId> {
     int downLayoutIndex = getLayoutIndex(downNodeIndex);
 
     CommitId headCommitId = getOneOfHeads(upNodeIndex);
-    GraphColorManager<CommitId> myColorManager = myPermanentGraphInfo.getGraphColorManager();
     if (upLayoutIndex != downLayoutIndex) {
       return myColorManager.getColorOfFragment(headCommitId, Math.max(upLayoutIndex, downLayoutIndex));
     }
@@ -68,7 +71,6 @@ public class ColorGetterByLayoutIndex<CommitId> {
     else {
       return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex);
     }
-
   }
 
   private int getHeadNodeId(int upNodeIndex) {
@@ -90,5 +92,4 @@ public class ColorGetterByLayoutIndex<CommitId> {
   private int getNodeId(int upNodeIndex) {
     return myLinearGraph.getNodeId(upNodeIndex);
   }
-
 }

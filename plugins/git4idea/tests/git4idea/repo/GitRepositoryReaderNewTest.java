@@ -25,7 +25,6 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -115,9 +114,9 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
 
   @NotNull
   private GitBranchState readState() {
-    File gitDir = new File(myRepo.getRoot().getPath(), ".git");
-    GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir, "config"));
-    GitRepositoryReader reader = new GitRepositoryReader(gitDir);
+    GitRepositoryFiles gitFiles = myRepo.getRepositoryFiles();
+    GitConfig config = GitConfig.read(myPlatformFacade, gitFiles.getConfigFile());
+    GitRepositoryReader reader = new GitRepositoryReader(gitFiles);
     Collection<GitRemote> remotes = config.parseRemotes();
     return reader.readState(remotes);
   }

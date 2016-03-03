@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -247,7 +247,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         final List<LocalVariable> list = getStackFrame().visibleVariables();
-        final List<LocalVariableProxyImpl> locals = new ArrayList<LocalVariableProxyImpl>(list.size());
+        final List<LocalVariableProxyImpl> locals = new ArrayList<>(list.size());
         for (LocalVariable localVariable : list) {
           LOG.assertTrue(localVariable != null);
           locals.add(new LocalVariableProxyImpl(this, localVariable));
@@ -363,7 +363,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     if (myAllValues == null) {
       try {
         StackFrame stackFrame = getStackFrame();
-        myAllValues = new THashMap<LocalVariable, Value>(stackFrame.getValues(stackFrame.visibleVariables()));
+        myAllValues = new THashMap<>(stackFrame.getValues(stackFrame.visibleVariables()));
       }
       catch (InconsistentDebugInfoException ignored) {
         clearCaches();

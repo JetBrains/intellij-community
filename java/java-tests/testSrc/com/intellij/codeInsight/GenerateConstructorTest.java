@@ -46,6 +46,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testAbstractClass() { doTest(); }
+  public void testNewLine() { doTest(); }
   public void testPackageLocalClass() { doTest(); }
   public void testPrivateClass() { doTest(); }
   public void testBoundComments() { doTest(); }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -53,6 +54,8 @@ public class StringConcatenationArgumentToLogCallInspectionBase extends BaseInsp
     logNames.add("info");
     logNames.add("warn");
     logNames.add("error");
+    logNames.add("fatal");
+    logNames.add("log");
   }
 
   @SuppressWarnings("PublicField") public int warnLevel = 0;
@@ -264,14 +267,15 @@ public class StringConcatenationArgumentToLogCallInspectionBase extends BaseInsp
         case 4: if ("debug".equals(referenceName)) return;
         case 3: if ("info".equals(referenceName)) return;
         case 2: if ("warn".equals(referenceName)) return;
-        case 1: if ("error".equals(referenceName)) return;
+        case 1: if ("error".equals(referenceName) || "fatal".equals(referenceName)) return;
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || !"org.slf4j.Logger".equals(containingClass.getQualifiedName())) {
+      if (!InheritanceUtil.isInheritor(containingClass, "org.slf4j.Logger") &&
+          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.Logger")) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();

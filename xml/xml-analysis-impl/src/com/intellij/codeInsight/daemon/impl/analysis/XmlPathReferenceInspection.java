@@ -39,25 +39,28 @@ public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
     return new XmlElementVisitor() {
       @Override
       public void visitXmlAttributeValue(XmlAttributeValue value) {
-        checkRefs(value, holder, isOnTheFly);
+        checkRefs(value, holder);
       }
 
       @Override
       public void visitXmlDoctype(XmlDoctype xmlDoctype) {
-        checkRefs(xmlDoctype, holder, isOnTheFly);
+        checkRefs(xmlDoctype, holder);
       }
 
       @Override
       public void visitXmlTag(XmlTag tag) {
-        checkRefs(tag, holder, isOnTheFly);
+        checkRefs(tag, holder);
       }
     };
   }
   
-  private void checkRefs(PsiElement element, ProblemsHolder holder, boolean isOnTheFly) {
+  private void checkRefs(PsiElement element, ProblemsHolder holder) {
     PsiReference[] references = element.getReferences();
     for (PsiReference reference : references) {
       if (!XmlHighlightVisitor.isUrlReference(reference)) {
+        continue;
+      }
+      if (XmlHighlightVisitor.isInjectedWithoutValidation(element)) {
         continue;
       }
       if (!needToCheckRef(reference)) {

@@ -721,4 +721,18 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'unmodifiableList', 'unmodifiableCollection'
   }
 
+  public void testDispreferDeprecatedMethodWithUnresolvedQualifier() {
+    myFixture.addClass("package foo; public class Assert { public static void assertTrue() {} }")
+    myFixture.addClass("package bar; @Deprecated public class Assert { public static void assertTrue() {}; public static void assertTrue2() {} }")
+    checkPreferredItems 0, 'Assert.assertTrue', 'Assert.assertTrue', 'Assert.assertTrue2'
+
+    def p = LookupElementPresentation.renderElement(myFixture.lookup.items[0])
+    assert p.tailText.contains('foo')
+    assert !p.strikeout
+
+    p = LookupElementPresentation.renderElement(myFixture.lookup.items[1])
+    assert p.tailText.contains('bar')
+    assert p.strikeout
+  }
+
 }

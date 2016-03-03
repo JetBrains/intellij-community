@@ -190,7 +190,7 @@ def import_pyside():
 
     ImportErrors raised within this function are non-recoverable
     """
-    from PySide import QtGui, QtCore, QtSvg
+    from PySide import QtGui, QtCore, QtSvg  # @UnresolvedImport
     return QtCore, QtGui, QtSvg, QT_API_PYSIDE
 
 

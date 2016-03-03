@@ -17,34 +17,28 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.vcs.log.VcsCommitStyleFactory;
-import com.intellij.vcs.log.VcsLogFilterUi;
-import com.intellij.vcs.log.VcsLogHighlighter;
-import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
   public static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._128, Gray._96);
-  @NotNull private final VcsLogUiProperties myUiProperties;
-  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogUi myLogUi;
 
-  public MergeCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
-    myDataHolder = logDataHolder;
-    myUiProperties = uiProperties;
+  public MergeCommitsHighlighter(@NotNull VcsLogUi logUi) {
+    myLogUi = logUi;
   }
 
   @NotNull
   @Override
-  public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (isSelected || !myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
-    if (details != null && !(details instanceof LoadingDetails)) {
-      if (details.getParents().size() >= 2) return VcsCommitStyleFactory.foreground(MERGE_COMMIT_FOREGROUND);
-    }
+  public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails details, boolean isSelected) {
+    if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
+    if (details.getParents().size() >= 2) return VcsCommitStyleFactory.foreground(MERGE_COMMIT_FOREGROUND);
     return VcsCommitStyle.DEFAULT;
+  }
+
+  @Override
+  public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
@@ -52,10 +46,8 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder,
-                                               @NotNull VcsLogUiProperties uiProperties,
-                                               @NotNull VcsLogFilterUi filterUi) {
-      return new MergeCommitsHighlighter(logDataHolder, uiProperties);
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataManager logDataManager, @NotNull VcsLogUi logUi) {
+      return new MergeCommitsHighlighter(logUi);
     }
 
     @NotNull
@@ -68,6 +60,11 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
     @Override
     public String getTitle() {
       return "Merge Commits";
+    }
+
+    @Override
+    public boolean showMenuItem() {
+      return true;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +34,20 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
-import com.intellij.psi.codeStyle.extractor.ui.ExtractedSettingsDialog;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
-import com.intellij.ui.BalloonLayout;
 import com.intellij.psi.codeStyle.extractor.processor.CodeStyleDeriveProcessor;
 import com.intellij.psi.codeStyle.extractor.processor.GenProcessor;
 import com.intellij.psi.codeStyle.extractor.ui.CodeStyleSettingsNameProvider;
+import com.intellij.psi.codeStyle.extractor.ui.ExtractedSettingsDialog;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
+import com.intellij.ui.BalloonLayout;
 import org.jetbrains.annotations.NotNull;
-
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -146,7 +147,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
                       CodeStyleScheme derivedScheme = CodeStyleSchemes.getInstance().createNewScheme("Derived from " + file.getName(), null);
                       derivedScheme.getCodeStyleSettings().copyFrom(cloneSettings);
                       CodeStyleSchemes.getInstance().addScheme(derivedScheme);
-                      ((CodeStyleSchemesImpl) CodeStyleSchemes.getInstance()).getSchemeManager().setCurrent(derivedScheme);
+                      CodeStyleSchemesImpl.getSchemeManager().setCurrent(derivedScheme);
                       CodeStyleSettingsManager.getInstance(project).PREFERRED_PROJECT_CODE_STYLE = derivedScheme.getName();
                     }
                   }

@@ -1,0 +1,98 @@
+<!--suppress XmlUnboundNsPrefix -->
+<idea-plugin version="2">
+  <id>com.jetbrains.edu.interactivelearning</id>
+  <name>Educational plugin core</name>
+  <version>2.0.4</version>
+  <idea-version since-build="143.403"/>
+  <description><![CDATA[
+      Educational plugin core for students. 
+      ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <change-notes><![CDATA[
+
+      ]]>
+  </change-notes>
+
+  <!--depends>com.intellij.modules.python</depends-->
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.jetbrains.edu.core</depends>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.edu.learning.StudyProjectComponent</implementation-class>
+      <interface-class>com.jetbrains.edu.learning.StudyProjectComponent</interface-class>
+    </component>
+  </project-components>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="Edu.studyToolWindowConfigurator" interface="com.jetbrains.edu.learning.StudyToolWindowConfigurator"/>
+  </extensionPoints>
+
+  <actions>
+    <action id="Edu.NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" text="New Scratch File...">
+      <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="before"/>
+    </action>
+
+    <action id="CheckAction" class="com.jetbrains.edu.learning.actions.StudyCheckAction"  text="Check Task"
+            description="Check current task">
+    </action>
+    <action id="PrevWindowAction" class="com.jetbrains.edu.learning.actions.StudyPrevWindowAction" text="Previous Answer Placeholder"
+            description="Navigate to the previous answer placeholder">
+    </action>
+    <action id="NextWindow" class="com.jetbrains.edu.learning.actions.StudyNextWindowAction" text="Next Answer Placeholder"
+            description="Navigate to the next answer holder">
+    </action>
+    <action id="PreviousTaskAction" class="com.jetbrains.edu.learning.actions.StudyPreviousStudyTaskAction" text="Previous Task"
+            description="Navigate to the previous task"/>
+    <action id="NextTaskAction" class="com.jetbrains.edu.learning.actions.StudyNextStudyTaskAction" text="Next Task"
+            description="Navigate to the next task"/>
+    <action id="RefreshTaskAction" class="com.jetbrains.edu.learning.actions.StudyRefreshTaskFileAction" text="Reset Task File"
+            description="Refresh current task"/>
+    <action id="RefreshAnswerPlaceholder" class="com.jetbrains.edu.learning.actions.StudyRefreshAnswerPlaceholder" text="Refresh Answer Placeholder">
+        <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+    <action id="WatchInputAction" class="com.jetbrains.edu.learning.actions.StudyEditInputAction" text="Watch Test Input"
+            description="Watch test input "/>
+    <action id="ShowHintAction" class="com.jetbrains.edu.learning.actions.StudyShowHintAction" text="Show Hint for Answer Placeholder"
+            description="Show hint for answer placeholder"/>
+    <action id="StudyRunAction" class="com.jetbrains.edu.learning.actions.StudyRunAction" text="Run File With Tests"
+            description="Run your code with tests"/>
+    <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyFillPlaceholdersAction"
+            text="Fill Answer Placeholders">
+      <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
+    </action>
+
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
+                      serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
+    <postStartupActivity implementation="com.jetbrains.edu.learning.stepic.StudyCoursesUpdater"/>
+
+    <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.stepic.StudyConfigurable"
+                             id="com.jetbrains.edu.learning.stepic.StudyConfigurable"
+                             displayName="Educational"/>
+    <applicationService serviceInterface="com.jetbrains.edu.stepic.StudySettings"
+                        serviceImplementation="com.jetbrains.edu.stepic.StudySettings"/>
+
+    <toolWindow id="Task Description" anchor="right" factoryClass="com.jetbrains.edu.learning.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
+    <toolWindow id="Course Progress" anchor="left" factoryClass="com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
+    <fileEditorProvider implementation="com.jetbrains.edu.learning.editor.StudyFileEditorProvider"/>
+    <treeStructureProvider implementation="com.jetbrains.edu.learning.projectView.StudyTreeStructureProvider"/>
+    <highlightErrorFilter implementation="com.jetbrains.edu.learning.editor.StudyHighlightErrorFilter"/>
+    <projectService serviceInterface="com.jetbrains.edu.learning.StudyTaskManager"
+                    serviceImplementation="com.jetbrains.edu.learning.StudyTaskManager"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
+    <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+                        serviceImplementation="com.jetbrains.edu.learning.StudyInstructionPainter" overrides="true"/>
+  </extensions>
+</idea-plugin>

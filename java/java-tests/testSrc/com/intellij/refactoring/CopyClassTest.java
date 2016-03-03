@@ -98,6 +98,10 @@ public class CopyClassTest extends CodeInsightTestCase {
     doMultifileTest();
   }
 
+  public void testPackageLocalAndExtends() throws Exception {
+    doMultifileTest();
+  }
+
   //copy all classes from p1 -> p2
   private void doMultifileTest() throws Exception {
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/multifile/" + getTestName(true);

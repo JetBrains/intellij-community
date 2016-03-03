@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @State(
   name = "FileEditorManager",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
@@ -1108,6 +1108,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
+    if (providers.length == 0) return null;
     final FileEditor[] editors = new FileEditor[providers.length];
     for (int i = 0; i < providers.length; i++) {
       final FileEditorProvider provider = providers[i];
@@ -1123,11 +1124,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
     for (int i = 0; i < editors.length; i++) {
       final FileEditor editor = editors[i];
-      if (editor instanceof TextEditor) {
-        // hack!!!
-        // This code prevents "jumping" on next repaint.
-        //((EditorEx)((TextEditor)editor).getEditor()).stopOptimizedScrolling();
-      }
 
       final FileEditorProvider provider = providers[i];
 

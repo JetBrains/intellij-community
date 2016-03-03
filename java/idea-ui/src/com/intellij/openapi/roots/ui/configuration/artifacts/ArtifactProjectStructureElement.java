@@ -131,7 +131,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public String getPresentableName() {
-    return "Artifact '" + getActualArtifactName() + "'";
+    return getActualArtifactName();
   }
 
   @Override

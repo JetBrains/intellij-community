@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class DebuggerKeymapExtension implements KeymapExtension {
     AnAction[] xDebuggerActions = ((DefaultActionGroup)actionManager.getActionOrStub("XDebugger.Actions")).getChildActionsOrStubs();
     AnAction[] javaDebuggerActions = ((DefaultActionGroup)actionManager.getActionOrStub("JavaDebuggerActions")).getChildActionsOrStubs();
 
-    ArrayList<String> ids = new ArrayList<String>();
+    ArrayList<String> ids = new ArrayList<>();
     for (AnAction debuggerAction : ArrayUtil.mergeArrays(xDebuggerActions, javaDebuggerActions)) {
       String actionId = debuggerAction instanceof ActionStub ? ((ActionStub)debuggerAction).getId() : actionManager.getId(debuggerAction);
       if (filtered == null || filtered.value(debuggerAction)) {

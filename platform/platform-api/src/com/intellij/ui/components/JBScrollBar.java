@@ -16,6 +16,8 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
@@ -23,9 +25,15 @@ import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
+import javax.swing.plaf.ScrollBarUI;
 import java.awt.Adjustable;
 
+/**
+ * Our implementation of a scroll bar with the custom UI.
+ * Also it provides a method to create custom UI for our custom L&Fs.
+ *
+ * @see #createUI(JComponent)
+ */
 public class JBScrollBar extends JScrollBar {
   /**
    * This key defines a region painter, which is used by the custom ScrollBarUI
@@ -50,32 +58,24 @@ public class JBScrollBar extends JScrollBar {
 
   @Override
   public void updateUI() {
-    setUI(ButtonlessScrollBarUI.createNormal());
+    ScrollBarUI ui = getUI();
+    if (ui instanceof DefaultScrollBarUI) return;
+    setUI(createUI(this));
   }
 
   /**
-   * Positions of a ScrollBar on a ScrollPane.
+   * Returns a new instance of {@link ScrollBarUI}.
+   * Do not share it between different scroll bars.
+   *
+   * @param c a target component for this UI
+   * @return a new instance of {@link ScrollBarUI}
    */
-  enum Alignment {
-    TOP, LEFT, RIGHT, BOTTOM;
-
-    static Alignment get(JComponent component) {
-      if (component instanceof JScrollBar) {
-        Object property = component.getClientProperty(Alignment.class);
-        if (property instanceof Alignment) return (Alignment)property;
-
-        if (component.getParent() instanceof JScrollPane) {
-          switch (((JScrollBar)component).getOrientation()) {
-            case Adjustable.HORIZONTAL:
-              return BOTTOM;
-            case Adjustable.VERTICAL:
-              return component.getParent().getComponentOrientation().isLeftToRight()
-                     ? RIGHT
-                     : LEFT;
-          }
-        }
-      }
-      return null;
+  @SuppressWarnings("UnusedParameters")
+  public static ScrollBarUI createUI(JComponent c) {
+    if (Registry.is("ide.scroll.new.layout")) {
+      if (!SystemInfo.isMac) return new DefaultScrollBarUI();
+      if (Registry.is("mac.scroll.new.ui")) return new MacScrollBarUI();
     }
+    return ButtonlessScrollBarUI.createNormal();
   }
 }

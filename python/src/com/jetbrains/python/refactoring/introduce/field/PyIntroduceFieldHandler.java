@@ -37,6 +37,7 @@ import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -88,7 +89,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     if (element1 != null) {
       final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-      if (clazz != null && PythonUnitTestUtil.isTestCaseClass(clazz)) return true;
+      if (clazz != null && PythonUnitTestUtil.isTestCaseClass(clazz, null)) return true;
     }
     return false;
   }
@@ -171,7 +172,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   private static boolean inConstructor(@NotNull PsiElement expression) {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
-    PsiElement current = PyUtil.getConcealingParent(expression);
+    final ScopeOwner current = ScopeUtil.getScopeOwner(expression);
     if (clazz != null && current != null && current instanceof PyFunction) {
       PyFunction init = clazz.findMethodByName(PyNames.INIT, false, null);
       if (current == init) {

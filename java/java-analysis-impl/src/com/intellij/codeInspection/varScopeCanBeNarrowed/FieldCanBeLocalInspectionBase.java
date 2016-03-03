@@ -117,7 +117,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
   }
 
   private static void removeFieldsReferencedFromInitializers(final PsiClass aClass, final Set<PsiField> candidates) {
-    aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+    aClass.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
         if (method.isConstructor()) {

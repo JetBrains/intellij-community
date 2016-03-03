@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -58,10 +57,8 @@ public class SidePanel extends JPanel {
 
     myModel = new DefaultListModel();
     myList = new JBList(myModel);
-    if (Registry.is("ide.new.project.settings")) {
-      myList.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-      myList.setBorder(new EmptyBorder(5, 0, 0, 0));
-    }
+    myList.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myList.setBorder(new EmptyBorder(5, 0, 0, 0));
     final ListItemDescriptor descriptor = new ListItemDescriptor() {
       @Override
       public String getTextFor(final Object value) {
@@ -75,7 +72,7 @@ public class SidePanel extends JPanel {
 
       @Override
       public Icon getIconFor(final Object value) {
-        return Registry.is("ide.new.project.settings") ? EmptyIcon.create(16, 20) : null;
+        return EmptyIcon.create(16, 20);
         //return myPlace2Presentation.get(value).getIcon();
       }
 
@@ -101,7 +98,7 @@ public class SidePanel extends JPanel {
 
       @Override
       protected Color getForeground() {
-        return Registry.is("ide.new.project.settings") ? new JBColor(Gray._60, Gray._140) : super.getForeground();
+        return new JBColor(Gray._60, Gray._140);
       }
 
       @Override
@@ -111,14 +108,10 @@ public class SidePanel extends JPanel {
 
       @Override
       protected void layout() {
-        if (Registry.is("ide.new.project.settings")) {
-          myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-          myExtraPanel.add(myComponent, BorderLayout.CENTER);
-          myExtraPanel.add(myCountLabel, BorderLayout.EAST);
-          myRendererComponent.add(myExtraPanel, BorderLayout.CENTER);
-        } else {
-          super.layout();
-        }
+        myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
+        myExtraPanel.add(myComponent, BorderLayout.CENTER);
+        myExtraPanel.add(myCountLabel, BorderLayout.EAST);
+        myRendererComponent.add(myExtraPanel, BorderLayout.CENTER);
       }
 
       @Override
@@ -134,7 +127,7 @@ public class SidePanel extends JPanel {
             myCountLabel.setText(errorsCount > 100 ? "100+" : String.valueOf(errorsCount));
           }
         }
-        if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
+        if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
           Rectangle bounds = list.getCellBounds(index, index);
           bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
           AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
@@ -151,21 +144,19 @@ public class SidePanel extends JPanel {
         myCountLabel = new SidePanelCountLabel();
         final JComponent component = super.createItemComponent();
 
-        if (Registry.is("ide.new.project.settings")) {
-          myTextLabel.setForeground(Gray._240);
-          myTextLabel.setOpaque(true);
-        }
+        myTextLabel.setForeground(Gray._240);
+        myTextLabel.setOpaque(true);
 
         return component;
       }
 
       @Override
       protected Color getBackground() {
-        return Registry.is("ide.new.project.settings") ? UIUtil.SIDE_PANEL_BACKGROUND : super.getBackground();
+        return UIUtil.SIDE_PANEL_BACKGROUND;
       }
     });
 
-    add(ScrollPaneFactory.createScrollPane(myList, Registry.is("ide.new.project.settings")), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myList, true), BorderLayout.CENTER);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myList.addListSelectionListener(new ListSelectionListener() {

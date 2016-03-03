@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.List;
 public class HotSwapProgressImpl extends HotSwapProgress{
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
-  private final TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<List<String>>();
+  private final TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<>();
   private final ProgressWindow myProgressWindow;
   private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
@@ -83,7 +83,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
                                             buildMessage(warnings), NotificationType.WARNING, null).notify(getProject());
     }
     else if (!myMessages.isEmpty()){
-      List<String> messages = new ArrayList<String>();
+      List<String> messages = new ArrayList<>();
       for (int category : myMessages.keys()) {
         messages.addAll(getMessages(category));
       }
@@ -103,7 +103,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   public void addMessage(DebuggerSession session, final int type, final String text) {
     List<String> messages = myMessages.get(type);
     if (messages == null) {
-      messages = new ArrayList<String>();
+      messages = new ArrayList<>();
       myMessages.put(type, messages);
     }
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();

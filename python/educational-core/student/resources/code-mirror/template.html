@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--all elements like "${}" is replaced by real values while loading page in StudyBrowser-->
+
+  <!--suppress HtmlUnknownTarget -->
+  <link rel="stylesheet" href="${css_oldcodemirror}">
+  <!--suppress HtmlUnknownTarget -->
+  <link rel="stylesheet" href="${css_codemirror}">
+  <!--suppress HtmlUnknownTarget -->
+  <script src="${codemirror}"></script>
+  <!--suppress HtmlUnknownTarget -->
+  <script src="${colorize}"></script>
+  <!--suppress HtmlUnknownTarget -->
+  <script src="${runmode}"></script>
+  <!--suppress HtmlUnknownTarget -->
+  <script src="${highlight_mode}"></script>
+  <!--suppress HtmlUnknownTarget -->
+  <script src="${javascript}"></script>
+  <!--suppress HtmlUnknownTarget -->
+  <script src="${python}"></script>
+  <!--suppress CssInvalidPropertyValue -->
+  <style media="screen" type="text/css">
+    body {
+      font-size: ${font_size}pt !important;
+    }
+
+  </style>
+</head>
+<body>
+${code}
+<script>
+  var nodeList = document.body.getElementsByTagName("code");
+  CodeMirror.colorize(nodeList, "text/x-java")
+  CodeMirror.colorize();
+</script>
+</body>
+</html>

@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -37,22 +38,30 @@ import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.ui.AppUIUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.io.IOException
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
+
+internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
+  val w1 = if (o1.deprecated) 1 else 0
+  val w2 = if (o2.deprecated) 1 else 0
+  w1 - w2
+}
 
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, Any>())
@@ -67,9 +76,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   abstract val storageManager: StateStorageManager
 
   override final fun getStateStorageManager() = storageManager
-
-  // return null if not applicable
-  protected open fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation): Array<Storage>? = null
 
   override final fun initComponent(component: Any, service: Boolean) {
     if (component is SettingsSavingComponent) {
@@ -107,7 +113,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       val project = this.project
       val app = ApplicationManager.getApplication()
       if (project != null && !app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
-        StorageUtil.notifyUnknownMacros(this, project, componentNameIfStateExists)
+        notifyUnknownMacros(this, project, componentNameIfStateExists)
       }
     }
   }
@@ -121,7 +127,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       var timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
       for (name in names) {
         val start = if (timeLog == null) 0 else System.currentTimeMillis()
-        commitComponent(externalizationSession, components.get(name)!!, name)
+        commitComponent(externalizationSession, components[name]!!, name)
         timeLog?.let {
           val duration = System.currentTimeMillis() - start
           if (duration > 10) {
@@ -163,13 +169,13 @@ abstract class ComponentStoreImpl : IComponentStore {
       return
     }
 
-    val file: File
+    val absolutePath: String
     val state = StoreUtil.getStateSpec(component.javaClass)
     if (state != null) {
-      file = File(storageManager.expandMacros(findNonDeprecated(state.storages).file))
+      absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(state.storages).path)).toAbsolutePath().toString()
     }
     else if (component is ExportableApplicationComponent && component is NamedJDOMExternalizable) {
-      file = PathManager.getOptionsFile(component)
+      absolutePath = PathManager.getOptionsFile(component).absolutePath
     }
     else {
       throw AssertionError("${component.javaClass} doesn't have @State annotation and doesn't implement ExportableApplicationComponent")
@@ -177,11 +183,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     runWriteAction {
       try {
-        VfsRootAccess.allowRootAccess(file.absolutePath)
+        VfsRootAccess.allowRootAccess(absolutePath)
         CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))
       }
       finally {
-        VfsRootAccess.disallowRootAccess(file.absolutePath)
+        VfsRootAccess.disallowRootAccess(absolutePath)
       }
     }
   }
@@ -327,13 +333,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
       throw AssertionError("No storage specified")
     }
-
-    val defaultStorages = selectDefaultStorages(storages, operation)
-    if (defaultStorages != null) {
-      return defaultStorages
-    }
-
-    return sortStoragesByDeprecated(storages)
+    return storages.sortByDeprecated()
   }
 
   override final fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
@@ -343,7 +343,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   fun getNotReloadableComponents(componentNames: Collection<String>): Collection<String> {
     var notReloadableComponents: MutableSet<String>? = null
     for (componentName in componentNames) {
-      if (isNotReloadable(components.get(componentName))) {
+      if (isNotReloadable(components[componentName])) {
         if (notReloadableComponents == null) {
           notReloadableComponents = LinkedHashSet<String>()
         }
@@ -362,7 +362,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
     @Suppress("UNCHECKED_CAST")
-    val component = components.get(stateSpec.name) as PersistentStateComponent<Any>?
+    val component = components[stateSpec.name] as PersistentStateComponent<Any>?
     if (component != null) {
       initPersistentComponent(stateSpec, component, emptySet(), true)
     }
@@ -370,7 +370,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     @Suppress("UNCHECKED_CAST")
-    val component = components.get(componentName) as PersistentStateComponent<Any>?
+    val component = components[componentName] as PersistentStateComponent<Any>?
     if (component == null) {
       return false
     }
@@ -416,7 +416,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   /**
    * You must call it in batch mode (use runBatchUpdate)
    */
-  public fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage> = emptySet(), notReloadableComponents: Collection<String> = emptySet()) {
+  fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage> = emptySet(), notReloadableComponents: Collection<String> = emptySet()) {
     for (componentName in componentNames) {
       if (!notReloadableComponents.contains(componentName)) {
         reloadState(componentName, changedStorages)
@@ -461,28 +461,55 @@ enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
 
-internal fun sortStoragesByDeprecated(storages: Array<Storage>): Array<out Storage> {
-  if (storages.isEmpty()) {
-    return storages
+internal fun Array<Storage>.sortByDeprecated(): Array<out Storage> {
+  if (isEmpty()) {
+    return this
   }
 
-  if (!storages[0].deprecated) {
+  if (!this[0].deprecated) {
     var othersAreDeprecated = true
-    for (i in 1..storages.size - 1) {
-      if (!storages[i].deprecated) {
+    for (i in 1..size - 1) {
+      if (!this[i].deprecated) {
         othersAreDeprecated = false
         break
       }
     }
 
     if (othersAreDeprecated) {
-      return storages
+      return this
     }
   }
 
-  return storages.sortedArrayWith(comparator { o1, o2 ->
-    val w1 = if (o1.deprecated) 1 else 0
-    val w2 = if (o2.deprecated) 1 else 0
-    w1 - w2
-  })
+  return sortedArrayWith(deprecatedComparator)
+}
+
+private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
+  val substitutor = store.stateStorageManager.macroSubstitutor ?: return
+
+  val immutableMacros = substitutor.getUnknownMacros(componentName)
+  if (immutableMacros.isEmpty()) {
+    return
+  }
+
+  val macros = LinkedHashSet(immutableMacros)
+  AppUIUtil.invokeOnEdt(Runnable {
+    var notified: MutableList<String>? = null
+    val manager = NotificationsManager.getNotificationsManager()
+    for (notification in manager.getNotificationsOfType(UnknownMacroNotification::class.java, project)) {
+      if (notified == null) {
+        notified = SmartList<String>()
+      }
+      notified.addAll(notification.macros)
+    }
+    if (!notified.isNullOrEmpty()) {
+      macros.removeAll(notified!!)
+    }
+
+    if (macros.isEmpty()) {
+      return@Runnable
+    }
+
+    LOG.debug("Reporting unknown path macros $macros in component $componentName")
+    StorageUtil.doNotify(macros, project, Collections.singletonMap(substitutor, store))
+  }, project.disposed)
 }

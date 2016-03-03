@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,22 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -228,76 +232,6 @@ public final class EditorUtil {
         }
       }.execute();
     }
-  }
-
-  /**
-   * Allows to calculate offset of the given column assuming that it belongs to the given text line identified by the
-   * given <code>[start; end)</code> intervals.
-   *
-   * @param editor        editor that is used for representing given text
-   * @param text          target text
-   * @param start         start offset of the logical line that holds target column (inclusive)
-   * @param end           end offset of the logical line that holds target column (exclusive)
-   * @param columnNumber  target column number
-   * @param tabSize       number of desired visual columns to use for tabulation representation
-   * @param debugBuffer   buffer to hold debug info during the processing (if any)
-   * @return              given text offset that identifies the same position that is pointed by the given visual column
-   *
-   * @deprecated This function can give incorrect results when soft wraps are enabled in editor. It is also slow in case of
-   * long document lines - {@link Editor#logicalPositionToOffset(LogicalPosition)}
-   * should be faster when soft wraps are enabled. To be removed in IDEA 16.
-   */
-  public static int calcOffset(@NotNull EditorEx editor,
-                               @NotNull CharSequence text,
-                               int start,
-                               int end,
-                               int columnNumber,
-                               int tabSize,
-                               @Nullable StringBuilder debugBuffer) {
-    assert start >= 0 : "start (" + start + ") must not be negative. end (" + end + ")";
-    assert end >= start : "start (" + start + ") must not be greater than end (" + end + ")";
-    if (debugBuffer != null) {
-      debugBuffer.append(String.format("Starting calcOffset(). Start=%d, end=%d, column number=%d, tab size=%d%n",
-                                       start, end, columnNumber, tabSize));
-    }
-    final int maxScanIndex = Math.min(start + columnNumber + 1, end);
-    SoftWrapModel softWrapModel = editor.getSoftWrapModel();
-    List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForRange(start, maxScanIndex);
-    int startToUse = start;
-    int x = editor.getDocument().getLineNumber(start) == 0 ? editor.getPrefixTextWidthInPixels() : 0;
-    int[] currentColumn = {0};
-    for (SoftWrap softWrap : softWraps) {
-      // There is a possible case that target column points inside soft wrap-introduced virtual space.
-      if (currentColumn[0] >= columnNumber) {
-        return startToUse;
-      }
-      int result
-        = calcSoftWrapUnawareOffset(editor, text, startToUse, softWrap.getEnd(), columnNumber, tabSize, x, currentColumn, debugBuffer);
-      if (result >= 0) {
-        return result;
-      }
-
-      startToUse = softWrap.getStart();
-      x = softWrap.getIndentInPixels();
-    }
-
-    // There is a possible case that target column points inside soft wrap-introduced virtual space.
-    if (currentColumn[0] >= columnNumber) {
-      return startToUse;
-    }
-
-    int result = calcSoftWrapUnawareOffset(editor, text, startToUse, end, columnNumber, tabSize, x, currentColumn, debugBuffer);
-    if (result >= 0) {
-      return result;
-    }
-
-    // We assume that given column points to the virtual space after the line end if control flow reaches this place,
-    // hence, just return end of line offset then.
-    if (debugBuffer != null) {
-      debugBuffer.append(String.format("Returning %d as no match has been found for the target column (%d) at the target range [%d;%d)",
-                                       end, columnNumber, start, end));
-    }
-    return end;
   }
 
   /**
@@ -559,6 +493,16 @@ public final class EditorUtil {
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences());
   }
 
+  public static Icon scaleIconAccordingEditorFont(Icon icon, Editor editor) {
+    if (Registry.is("editor.scale.gutter.icons") && editor instanceof EditorImpl && icon instanceof ScalableIcon) {
+      float scale = ((EditorImpl)editor).getScale();
+      if (Math.abs(1f - scale) > 0.1f) {
+        return ((ScalableIcon)icon).scale(scale);
+      }
+    }
+    return icon;
+  }
+
   public static int charWidth(char c, @JdkConstants.FontStyle int fontType, @NotNull Editor editor) {
     return fontForChar(c, fontType, editor).charWidth(c);
   }
@@ -566,6 +510,10 @@ public final class EditorUtil {
   public static int getSpaceWidth(@JdkConstants.FontStyle int fontType, @NotNull Editor editor) {
     int width = charWidth(' ', fontType, editor);
     return width > 0 ? width : 1;
+  }
+
+  public static int getPlainSpaceWidth(@NotNull Editor editor) {
+    return getSpaceWidth(Font.PLAIN, editor);
   }
 
   public static int getTabSize(@NotNull Editor editor) {
@@ -876,7 +824,7 @@ public final class EditorUtil {
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
-    int line = y / editor.getLineHeight();
+    int line = editor instanceof EditorImpl ? ((EditorImpl)editor).yToVisibleLine(y): y / editor.getLineHeight();
     return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 
@@ -939,6 +887,10 @@ public final class EditorUtil {
     int startOffset = editor.getDocument().getLineStartOffset(position.line);
     int endOffset = editor.logicalPositionToOffset(position);
     return editor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).size();
+  }
+
+  public static boolean attributesImpactFontStyle(@Nullable TextAttributes attributes) {
+    return attributes == TextAttributes.ERASE_MARKER || (attributes != null && attributes.getFontType() != Font.PLAIN);
   }
 }
 

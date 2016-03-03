@@ -23,6 +23,6 @@
     <orderEntry type="module" module-name="common-javaFX-plugin" />
     <orderEntry type="module" module-name="manifest" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="library" name="SceneBuilderKit" level="project" />
   </component>
 </module>
-

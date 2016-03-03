@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.java.ayatana.ApplicationMenu;
@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -103,7 +102,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
-      myActivationWatcher = new Timer(100, new MyActionListener());
+      myActivationWatcher = UIUtil.createNamedTimer("IdeMenuBar",100, new MyActionListener());
       myClockPanel = new ClockPanel();
       myButton = new MyExitFullScreenButton();
       add(myClockPanel);
@@ -123,21 +122,30 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
+  public State getState() {
+    return myState;
+  }
+
   @Override
   public Border getBorder() {
+    State state = getState();
     //avoid moving lines
-    if (myState == State.EXPANDING || myState == State.COLLAPSING) {
-      return new EmptyBorder(0,0,0,0);
+    if (state == State.EXPANDING || state == State.COLLAPSING) {
+      return JBUI.Borders.empty();
     }
 
     //fix for Darcula double border
-    if (myState == State.TEMPORARY_EXPANDED && UIUtil.isUnderDarcula()) {
-      return new CustomLineBorder(Gray._75, 0, 0, 1, 0);
+    if (state == State.TEMPORARY_EXPANDED && UIUtil.isUnderDarcula()) {
+      return JBUI.Borders.customLine(Gray._75, 0, 0, 1, 0);
     }
 
     //save 1px for mouse handler
-    if (myState == State.COLLAPSED) {
-      return new EmptyBorder(0, 0, 1, 0);
+    if (state == State.COLLAPSED) {
+      return JBUI.Borders.emptyBottom(1);
+    }
+
+    if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+      return null;
     }
 
     return UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ? super.getBorder() : null;
@@ -146,7 +154,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   public void paint(Graphics g) {
     //otherwise, there will be 1px line on top
-    if (myState == State.COLLAPSED) {
+    if (getState() == State.COLLAPSED) {
       return;
     }
     super.paint(g);
@@ -156,15 +164,14 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public void doLayout() {
     super.doLayout();
     if (myClockPanel != null && myButton != null) {
-      if (myState != State.EXPANDED) {
+      if (getState() != State.EXPANDED) {
         myClockPanel.setVisible(true);
         myButton.setVisible(true);
         Dimension preferredSize = myButton.getPreferredSize();
         myButton.setBounds(getBounds().width - preferredSize.width, 0, preferredSize.width, preferredSize.height);
         preferredSize = myClockPanel.getPreferredSize();
         myClockPanel.setBounds(getBounds().width - preferredSize.width - myButton.getWidth(), 0, preferredSize.width, preferredSize.height);
-      }
-      else {
+      } else {
         myClockPanel.setVisible(false);
         myButton.setVisible(false);
       }
@@ -173,13 +180,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public void menuSelectionChanged(boolean isIncluded) {
-    if (!isIncluded && myState == State.TEMPORARY_EXPANDED) {
+    if (!isIncluded && getState() == State.TEMPORARY_EXPANDED) {
       myActivated = false;
       setState(State.COLLAPSING);
       restartAnimator();
       return;
     }
-    if (isIncluded && myState == State.COLLAPSED) {
+    if (isIncluded && getState() == State.COLLAPSED) {
       myActivated = true;
       setState(State.TEMPORARY_EXPANDED);
       revalidate();
@@ -242,11 +249,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   public Dimension getPreferredSize() {
     Dimension dimension = super.getPreferredSize();
-    if (myState.isInProgress()) {
-      dimension.height =
-        COLLAPSED_HEIGHT + (int)((myState == State.COLLAPSING ? (1 - myProgress) : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
+    if (getState().isInProgress()) {
+      dimension.height = COLLAPSED_HEIGHT + (int)((getState() == State.COLLAPSING ? (1 - myProgress) : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
     }
-    else if (myState == State.COLLAPSED) {
+    else if (getState() == State.COLLAPSED) {
       dimension.height = COLLAPSED_HEIGHT;
     }
     return dimension;
@@ -295,14 +301,14 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       MouseEvent mouseEvent = (MouseEvent)e;
       Component component = findActualComponent(mouseEvent);
 
-      if (myState != State.EXPANDED /*&& !myState.isInProgress()*/) {
+      if (getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
         boolean mouseInside = myActivated || UIUtil.isDescendingFrom(component, this);
         if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
-        if (mouseInside && myState == State.COLLAPSED) {
+        if (mouseInside && getState() == State.COLLAPSED) {
           setState(State.EXPANDING);
           restartAnimator();
         }
-        else if (!mouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
+        else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
           setState(State.COLLAPSING);
           restartAnimator();
         }
@@ -314,8 +320,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private Component findActualComponent(MouseEvent mouseEvent) {
     Component component = mouseEvent.getComponent();
     Component deepestComponent;
-    if (myState != State.EXPANDED &&
-        !myState.isInProgress() &&
+    if (getState() != State.EXPANDED &&
+        !getState().isInProgress() &&
         contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), this))) {
       deepestComponent = this;
     }
@@ -385,7 +391,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   protected void paintChildren(Graphics g) {
-    if (myState.isInProgress()) {
+    if (getState().isInProgress()) {
       Graphics2D g2 = (Graphics2D)g;
       AffineTransform oldTransform = g2.getTransform();
       AffineTransform newTransform = oldTransform != null ? new AffineTransform(oldTransform) : new AffineTransform();
@@ -394,7 +400,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       super.paintChildren(g2);
       g2.setTransform(oldTransform);
     }
-    else if (myState != State.COLLAPSED) {
+    else if (getState() != State.COLLAPSED) {
       super.paintChildren(g);
     }
   }
@@ -505,7 +511,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     @Override
     protected void paintCycleEnd() {
       myProgress = 1;
-      switch (myState) {
+      switch (getState()) {
         case COLLAPSING:
           setState(State.COLLAPSED);
           break;
@@ -515,7 +521,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         default:
       }
       revalidate();
-      if (myState == State.COLLAPSED) {
+      if (getState() == State.COLLAPSED) {
         //we should repaint parent, to clear 1px on top when menu is collapsed
         getParent().repaint();
       } else {
@@ -527,11 +533,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private class MyActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      if (myState == State.EXPANDED || myState == State.EXPANDING) {
+      if (getState() == State.EXPANDED || getState() == State.EXPANDING) {
         return;
       }
       boolean activated = isActivated();
-      if (myActivated && !activated && myState == State.TEMPORARY_EXPANDED) {
+      if (myActivated && !activated && getState() == State.TEMPORARY_EXPANDED) {
         myActivated = false;
         setState(State.COLLAPSING);
         restartAnimator();

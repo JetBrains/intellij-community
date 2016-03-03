@@ -30,6 +30,7 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.table.TableCellEditor;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
@@ -92,6 +93,14 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       @Override
       protected String getDescription(EnvironmentVariable environmentVariable) {
         return environmentVariable.getDescription();
+      }
+
+      @Nullable
+      @Override
+      public TableCellEditor getEditor(EnvironmentVariable variable) {
+        StringWithNewLinesCellEditor editor = new StringWithNewLinesCellEditor();
+        editor.setClickCountToStart(1);
+        return editor;
       }
     };
 

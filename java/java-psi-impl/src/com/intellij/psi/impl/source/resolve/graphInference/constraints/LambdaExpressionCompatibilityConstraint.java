@@ -28,7 +28,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (!LambdaUtil.isFunctionalType(myT)) {
-      session.registerIncompatibleErrorMessage(myT.getPresentableText() + " is not a functional interface");
+      session.registerIncompatibleErrorMessage(session.getPresentableText(myT) + " is not a functional interface");
       return false;
     }
 
@@ -36,7 +36,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(groundTargetType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod == null) {
-      session.registerIncompatibleErrorMessage("No valid function type can be found for " + myT.getPresentableText());
+      session.registerIncompatibleErrorMessage("No valid function type can be found for " + session.getPresentableText(myT));
       return false;
     }
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
@@ -57,7 +57,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
       for (PsiParameter parameter : parameters) {
         final PsiType type = session.substituteWithInferenceVariables(substitutor.substitute(parameter.getType()));
         if (!session.isProperType(type)) {
-          //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + type.getPresentableText());
+          //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + session.getPresentableText(type));
           return false;
         }
       }
@@ -98,10 +98,10 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
               if (!TypeConversionUtil.areTypesAssignmentCompatible(returnType, returnExpression)) {
                 final PsiType type = returnExpression.getType();
                 if (type != null) {
-                  session.registerIncompatibleErrorMessage("Bad return type in lambda expression: " + type.getPresentableText() + " cannot be converted to " + returnType.getPresentableText());
+                  session.registerIncompatibleErrorMessage("Bad return type in lambda expression: " + session.getPresentableText(type) + " cannot be converted to " + session.getPresentableText(returnType));
                 }
                 else {
-                  session.registerIncompatibleErrorMessage(returnExpression.getText() + " is not compatible with " + returnType.getPresentableText());
+                  session.registerIncompatibleErrorMessage(returnExpression.getText() + " is not compatible with " + session.getPresentableText(returnType));
                 }
                 return false;
               }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,13 +36,7 @@ import java.util.List;
 /**
  * @author peter
  */
-@State(
-  name = "JavaProjectCodeInsightSettings",
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/codeInsightSettings.xml", scheme = StorageScheme.DIRECTORY_BASED)
-  }
-)
+@State(name = "JavaProjectCodeInsightSettings", storages = @Storage("codeInsightSettings.xml"))
 public class JavaProjectCodeInsightSettings implements PersistentStateComponent<JavaProjectCodeInsightSettings> {
   @Tag("excluded-names")
   @AbstractCollection(surroundWithTag = false, elementTag = "name", elementValueAttribute = "")
@@ -65,7 +62,8 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
   }
 
   private static boolean nameMatches(@NotNull String name, String excluded) {
-    return name.equals(excluded) || name.startsWith(excluded + ".");
+    return name.startsWith(excluded) &&
+           (name.length() == excluded.length() || name.charAt(excluded.length()) == '.');
   }
 
   @Nullable

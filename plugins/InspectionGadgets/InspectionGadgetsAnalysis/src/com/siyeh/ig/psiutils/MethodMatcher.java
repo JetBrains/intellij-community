@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,44 @@ public class MethodMatcher {
     myClassNames.add(className);
     myMethodNamePatterns.add(methodNamePattern);
     return this;
+  }
+
+  public void add(@NotNull PsiMethodCallExpression expression) {
+    final PsiMethod method = expression.resolveMethod();
+    if (method != null) {
+      add(method);
+    }
+  }
+
+  public void add(@NotNull PsiMethod method) {
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) {
+      return;
+    }
+    final String fqName = aClass.getQualifiedName();
+    final int index = myClassNames.indexOf(fqName);
+    final String methodName = method.getName();
+    if (index < 0) {
+      myClassNames.add(fqName);
+      myMethodNamePatterns.add(methodName);
+    }
+    else {
+      final String pattern = myMethodNamePatterns.get(index);
+      if (pattern.isEmpty()) {
+        myMethodNamePatterns.set(index, methodName);
+        return;
+      }
+      else if (".*".equals(pattern)) {
+        return;
+      }
+      final String[] names = pattern.split("\\|");
+      for (String name : names) {
+        if (methodName.equals(name)) {
+          return;
+        }
+      }
+      myMethodNamePatterns.set(index, pattern + '|' + methodName);
+    }
   }
 
   @NotNull

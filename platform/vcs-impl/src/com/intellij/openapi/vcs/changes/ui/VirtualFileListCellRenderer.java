@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -53,6 +54,9 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
     final FileStatus fileStatus = myIgnoreFileStatus ? FileStatus.NOT_CHANGED : getStatus(value, path);
     append(getName(path), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor(), null));
     putParentPath(value, path, path);
+    setBackground(selected
+                  ? (hasFocus ? UIUtil.getListSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground())
+                  : UIUtil.getListBackground());
   }
 
   protected String getName(FilePath path) {

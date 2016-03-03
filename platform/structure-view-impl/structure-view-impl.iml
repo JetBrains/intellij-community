@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="core-api" exported="" />
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="module-library">

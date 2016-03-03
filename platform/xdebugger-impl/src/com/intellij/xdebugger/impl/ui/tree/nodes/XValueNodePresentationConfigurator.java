@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,27 +49,8 @@ public final class XValueNodePresentationConfigurator {
     }
 
     @Override
-    public void setPresentation(@Nullable Icon icon,
-                                @NonNls @Nullable String type,
-                                @NonNls @NotNull String value,
-                                @Nullable NotNullFunction<String, String> valuePresenter,
-                                boolean hasChildren) {
-      XValueNodePresentationConfigurator.setPresentation(icon, type, value, valuePresenter, hasChildren, this);
-    }
-
-    @Override
     public void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren) {
       XValueNodePresentationConfigurator.setPresentation(icon, presentation, hasChildren, this);
-    }
-
-    @Override
-    public void setPresentation(@Nullable Icon icon,
-                                @NonNls @Nullable String type,
-                                @NonNls @NotNull String separator,
-                                @NonNls @NotNull String value,
-                                final @Nullable NotNullFunction<String, String> valuePresenter,
-                                boolean hasChildren) {
-      XValueNodePresentationConfigurator.setPresentation(icon, type, separator, valuePresenter, hasChildren, this);
     }
   }
 

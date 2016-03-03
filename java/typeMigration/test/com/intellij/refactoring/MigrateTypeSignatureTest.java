@@ -522,7 +522,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
                                             final PsiType toType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType() throws Exception {
+      public PsiType migrationType(PsiElement context) throws Exception {
         return toType;
       }
 

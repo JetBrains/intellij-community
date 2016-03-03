@@ -140,6 +140,11 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
           public String getFamilyName() {
             return action.getFamilyName();
           }
+
+          @Override
+          public boolean isSuppressAll() {
+            return action.isSuppressAll();
+          }
         };
       }
     }, SuppressQuickFix.EMPTY_ARRAY);
@@ -222,5 +227,10 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     }
 
     protected abstract PsiElement getTarget(PsiElement element);
+
+    @Override
+    public boolean isSuppressAll() {
+      return false;
+    }
   }
 }

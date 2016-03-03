@@ -99,6 +99,8 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
                                              @NotNull PsiField field,
                                              @NotNull Project project,
                                              @Nullable Editor editor) {
+    if (constructors.isEmpty()) return;
+
     final List<PsiExpression> rExpressions = new ArrayList<PsiExpression>(constructors.size());
     final LookupElement[] suggestedInitializers = AddVariableInitializerFix.suggestInitializer(field);
 

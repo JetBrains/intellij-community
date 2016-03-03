@@ -14,16 +14,18 @@ except NameError:
 desired_runfiles_path = os.path.normpath(os.path.dirname(this_file_name) + "/..")
 sys.path.insert(0, desired_runfiles_path)
 
-import pydev_runfiles_unittest
-import pydev_runfiles_xml_rpc
-import pydevd_io
+from _pydev_runfiles import pydev_runfiles_unittest
+from _pydev_runfiles import pydev_runfiles_xml_rpc
+from _pydevd_bundle import pydevd_io
 
 #remove existing pydev_runfiles from modules (if any), so that we can be sure we have the correct version
 if 'pydev_runfiles' in sys.modules:
     del sys.modules['pydev_runfiles']
+if '_pydev_runfiles.pydev_runfiles' in sys.modules:
+    del sys.modules['_pydev_runfiles.pydev_runfiles']
 
 
-import pydev_runfiles
+from _pydev_runfiles import pydev_runfiles
 import unittest
 import tempfile
 import re
@@ -37,7 +39,7 @@ except:
 orig_syspath = sys.path
 a_file = pydev_runfiles.__file__
 pydev_runfiles.PydevTestRunner(pydev_runfiles.Configuration(files_or_dirs=[a_file]))
-file_dir = os.path.dirname(a_file)
+file_dir = os.path.dirname(os.path.dirname(a_file))
 assert file_dir in sys.path
 sys.path = orig_syspath[:]
 
@@ -109,8 +111,8 @@ class RunfilesTest(unittest.TestCase):
         self.assertEquals([sys.argv[-1]], configuration.files_or_dirs)
         self.assertEquals(sys.argv[2].split(','), configuration.include_tests)
 
-        sys.argv = ('C:\\eclipse-SDK-3.2-win32\\eclipse\\plugins\\org.python.pydev.debug_1.2.2\\pysrc\\pydev_runfiles.py ' + 
-                    '--verbosity 1 ' + 
+        sys.argv = ('C:\\eclipse-SDK-3.2-win32\\eclipse\\plugins\\org.python.pydev.debug_1.2.2\\pysrc\\pydev_runfiles.py ' +
+                    '--verbosity 1 ' +
                     'C:\\workspace_eclipse\\fronttpa\\tests\\gui_tests\\calendar_popup_control_test.py ').split()
         configuration = pydev_runfiles.parse_cmdline()
         self.assertEquals([sys.argv[-1]], configuration.files_or_dirs)
@@ -335,7 +337,7 @@ class RunfilesTest(unittest.TestCase):
                 self.notifications.append(('notifyTestRunFinished',))
 
         server = Server(notifications)
-        pydev_runfiles_xml_rpc.SetServer(server)
+        pydev_runfiles_xml_rpc.set_server(server)
         simple_test = os.path.join(self.file_dir[0], 'simple_test.py')
         simple_test2 = os.path.join(self.file_dir[0], 'simple2_test.py')
         simpleClass_test = os.path.join(self.file_dir[0], 'simpleClass_test.py')
@@ -352,7 +354,7 @@ class RunfilesTest(unittest.TestCase):
         self._setup_scenario(None, files_to_tests=files_to_tests)
         self.MyTestRunner.verbosity = 2
 
-        buf = pydevd_io.StartRedirect(keep_original_redirection=False)
+        buf = pydevd_io.start_redirect(keep_original_redirection=False)
         try:
             self.MyTestRunner.run_tests()
             self.assertEqual(8, len(notifications))
@@ -363,7 +365,7 @@ class RunfilesTest(unittest.TestCase):
                     ('notifyTest', 'ok', '', '', simple_test, 'SampleTest.test_xxxxxx2'),
                     ('notifyTest', 'ok', '', '', simple_test2, 'YetAnotherSampleTest.test_abc'),
                 ]
-            
+
             if not IS_JYTHON:
                 if 'samples.simpleClass_test' in str(notifications):
                     expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpClass.',
@@ -387,26 +389,26 @@ class RunfilesTest(unittest.TestCase):
                     if len(notification) == 6:
                         # Some are binary on Py3.
                         new_notifications.append((
-                            notification[0], 
-                            notification[1], 
-                            notification[2].encode('latin1'), 
-                            notification[3].encode('latin1'), 
-                            notification[4], 
-                            notification[5], 
+                            notification[0],
+                            notification[1],
+                            notification[2].encode('latin1'),
+                            notification[3].encode('latin1'),
+                            notification[4],
+                            notification[5],
                         ))
                     else:
                         new_notifications.append(notification)
                 except:
                     raise
             expected = new_notifications
-                    
+
             notifications.sort()
             self.assertEqual(
                 expected,
                 notifications
             )
         finally:
-            pydevd_io.EndRedirect()
+            pydevd_io.end_redirect()
         b = buf.getvalue()
         if not IS_JYTHON:
             self.assert_(b.find('Ran 4 tests in ') != -1, 'Found: ' + b)

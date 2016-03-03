@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @State(
   name = "FindSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/find.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+    @Storage("find.xml"),
+    @Storage(value = "other.xml", deprecated = true)
   }
 )
 public class FindSettingsImpl extends FindSettings implements PersistentStateComponent<FindSettingsImpl> {
@@ -423,7 +424,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   @State(
     name = "FindRecents",
-    storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/find.recents.xml", roamingType = RoamingType.DISABLED)}
+    storages = {@Storage(value = "find.recents.xml", roamingType = RoamingType.DISABLED)}
   )
   static final class FindRecents implements PersistentStateComponent<FindRecents> {
     public static FindRecents getInstance() {
@@ -448,6 +449,20 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     @Override
     public void loadState(FindRecents state) {
       XmlSerializerUtil.copyBean(state, this);
+      //Avoid duplicates
+      LinkedHashSet<String> tmp = new LinkedHashSet<>(findStrings);
+      findStrings.clear();
+      findStrings.addAll(tmp);
+
+      tmp.clear();
+      tmp.addAll(replaceStrings);
+      replaceStrings.clear();
+      replaceStrings.addAll(tmp);
+
+      tmp.clear();
+      tmp.addAll(dirStrings);
+      dirStrings.clear();
+      dirStrings.addAll(tmp);
     }
 
     @Override

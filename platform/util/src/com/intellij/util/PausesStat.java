@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PausesStat {
   private static final int N_MAX = 200000;
+  // stores pairs of (timestamp of the event start), (timestamp of the event end). Timestamps are stored as diffs between System.currentTimeMillis() and epochStart.
   private final TIntArrayList pauses = new TIntArrayList();
   private final long epochStart;
   @NotNull private final String myName;

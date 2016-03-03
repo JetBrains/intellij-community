@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.testFramework.UsefulTestCase
 import java.util.*
 
-public class ZipChangesTest : UsefulTestCase() {
-  public fun testTrivial() {
+class ZipChangesTest : UsefulTestCase() {
+  fun testTrivial() {
     test({
       !"A" - 0 - 1
     }, {
@@ -58,7 +58,7 @@ public class ZipChangesTest : UsefulTestCase() {
     })
   }
 
-  public fun testSimple() {
+  fun testSimple() {
     test({
       !"A" - 0 - 1
       !"A" - 1 - 2
@@ -122,7 +122,7 @@ public class ZipChangesTest : UsefulTestCase() {
     })
   }
 
-  public fun testMovement() {
+  fun testMovement() {
     test({
       !"A" - 0 - 1
       !"A" - "B" - 1 - 2
@@ -173,7 +173,7 @@ public class ZipChangesTest : UsefulTestCase() {
     })
   }
 
-  public fun testTricky() {
+  fun testTricky() {
     /*
      * These might be non-optimal atm. Feel free to change the logic.
      */
@@ -285,18 +285,18 @@ public class ZipChangesTest : UsefulTestCase() {
   private inner class ChangelistBuilder() {
     private val data = ArrayList<MyChange>()
 
-    public fun changes(): List<Change> = data
+    fun changes(): List<Change> = data
 
-    public operator fun String.not(): ModHelper = ModHelper(this, this, null, null)
-    public operator fun String.unaryMinus(): DelHelper = DelHelper(this, null)
-    public operator fun String.unaryPlus(): AddHelper = AddHelper(this, null)
+    operator fun String.not(): ModHelper = ModHelper(this, this, null, null)
+    operator fun String.unaryMinus(): DelHelper = DelHelper(this, null)
+    operator fun String.unaryPlus(): AddHelper = AddHelper(this, null)
 
-    public operator fun ModHelper.minus(path: String): ModHelper {
+    operator fun ModHelper.minus(path: String): ModHelper {
       aPath = path
       return this
     }
 
-    public operator fun ModHelper.minus(rev: Int): ModHelper {
+    operator fun ModHelper.minus(rev: Int): ModHelper {
       if (bRev == null) {
         bRev = rev
       }
@@ -308,26 +308,26 @@ public class ZipChangesTest : UsefulTestCase() {
       return this
     }
 
-    public operator fun DelHelper.minus(rev: Int) {
+    operator fun DelHelper.minus(rev: Int) {
       bRev = rev
       data.add(change())
     }
 
-    public operator fun AddHelper.minus(rev: Int) {
+    operator fun AddHelper.minus(rev: Int) {
       aRev = rev
       data.add(change())
     }
 
-    public inner class ModHelper(var bPath: String, var aPath: String, var bRev: Int?, var aRev: Int?) {
-      public fun change(): MyChange = MyChange(MyContentRevision(bPath, bRev), MyContentRevision(aPath, aRev))
+    inner class ModHelper(var bPath: String, var aPath: String, var bRev: Int?, var aRev: Int?) {
+      fun change(): MyChange = MyChange(MyContentRevision(bPath, bRev), MyContentRevision(aPath, aRev))
     }
 
-    public inner class DelHelper(var bPath: String, var bRev: Int?) {
-      public fun change(): MyChange = MyChange(MyContentRevision(bPath, bRev), null)
+    inner class DelHelper(var bPath: String, var bRev: Int?) {
+      fun change(): MyChange = MyChange(MyContentRevision(bPath, bRev), null)
     }
 
-    public inner class AddHelper(var aPath: String, var aRev: Int?) {
-      public fun change(): MyChange = MyChange(null, MyContentRevision(aPath, aRev))
+    inner class AddHelper(var aPath: String, var aRev: Int?) {
+      fun change(): MyChange = MyChange(null, MyContentRevision(aPath, aRev))
     }
   }
 }

@@ -1,9 +1,11 @@
 {
   "name": "ij-rpc-client",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "IntelliJ Platform RPC client",
+  "license": "Apache-2.0",
+  "main": "./out/rpc-node.js",
   "scripts": {
-    "compile": "rimraf app/out && tsconfig -i 2 && tsc",
+    "compile": "rimraf out && tsconfig -i 2 && tsc",
     "test": "mocha --harmony_default_parameters --harmony_rest_parameters"
   },
   "repository": {
@@ -18,6 +20,7 @@
     "typescript": "^1.8.0-dev.20151231"
   },
   "dependencies": {
-    "bluebird": "^3.1.1"
+    "bluebird": "^3.1.1",
+    "debug": "^2.2.0"
   }
 }

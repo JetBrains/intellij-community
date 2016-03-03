@@ -57,7 +57,7 @@ import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
   public static final Logger LOG = Logger.getInstance(TwosideBinaryDiffViewer.class);
 
-  private final TransferableFileEditorStateSupport myTransferableStateSupport;
+  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
   @NotNull private final StatusPanel myStatusPanel;
 
   public TwosideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {

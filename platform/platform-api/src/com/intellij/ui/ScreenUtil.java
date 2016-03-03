@@ -35,7 +35,7 @@ public class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache =
-    Patches.JDK_BUG_ID_8004103 ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
+    Patches.isJdkBugId8004103() ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }
@@ -251,12 +251,24 @@ public class ScreenUtil {
     }
     Rectangle bounds = rectangles[0];
     int minimum = distance(bounds, x, y);
+    if (bounds.width == 0 || bounds.height == 0) {
+      //Screen is invalid, give maximum score
+      minimum = Integer.MAX_VALUE;
+    }
     for (int i = 1; i < rectangles.length; i++) {
+      if (rectangles[i].width == 0 || rectangles[i].height == 0) {
+        //Screen is invalid
+        continue;
+      }
       int distance = distance(rectangles[i], x, y);
       if (minimum > distance) {
         minimum = distance;
         bounds = rectangles[i];
       }
+    }
+    if (bounds.width == 0 || bounds.height == 0) {
+      //All screens were invalid, return sensible default
+      return new Rectangle(x, y, 0, 0);
     }
     return bounds;
   }

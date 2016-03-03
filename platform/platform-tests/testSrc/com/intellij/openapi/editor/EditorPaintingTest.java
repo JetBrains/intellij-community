@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -70,7 +71,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
   
   public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() throws Exception {
     initText("foo");
-    ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN)));
+    setUniformEditorHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN));
     addRangeHighlighter(0, 3, 0, null, Color.blue);
     checkResult();
   }
@@ -85,6 +86,31 @@ public class EditorPaintingTest extends AbstractEditorTest {
     initText("");
     ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
     checkResult();
+  }
+  
+  public void testBorderAtLastLine() throws Exception {
+    initText("a\nbc");
+    addBorderHighlighter(3, 4, HighlighterLayer.WARNING, Color.red);
+    checkResult();
+  }
+  
+  public void testFoldedRegionShownOnlyWithBorder() throws Exception {
+    initText("abc");
+    addCollapsedFoldRegion(0, 3, "...");
+    myEditor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, 
+                                             new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN));
+    checkResult();
+  }
+
+  public void testEraseMarker() throws Exception {
+    initText("abc");
+    setUniformEditorHighlighter(new TextAttributes(null, null, null, null, Font.BOLD));
+    addRangeHighlighter(1, 2, 0, TextAttributes.ERASE_MARKER);
+    checkResult();
+  }
+  
+  private static void setUniformEditorHighlighter(TextAttributes attributes) {
+    ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
   }
 
   private static void addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
@@ -135,8 +161,9 @@ public class EditorPaintingTest extends AbstractEditorTest {
     editorComponent.setSize(size);
     //noinspection UndesirableClassUsage
     BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
-    BitmapFont bitmapFont = BitmapFont.loadFromFile(getFontFile());
-    MyGraphics graphics = new MyGraphics(image.createGraphics(), bitmapFont);
+    BitmapFont plainFont = BitmapFont.loadFromFile(getFontFile(false));
+    BitmapFont boldFont = BitmapFont.loadFromFile(getFontFile(true));
+    MyGraphics graphics = new MyGraphics(image.createGraphics(), plainFont, boldFont);
     try {
       editorComponent.paint(graphics);
     }
@@ -179,8 +206,8 @@ public class EditorPaintingTest extends AbstractEditorTest {
                                     expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
   }
 
-  private static File getFontFile() {
-    return getTestDataFile("_font.png");
+  private static File getFontFile(boolean bold) {
+    return getTestDataFile(bold ? "_fontBold.png" : "_font.png");
   }
 
   private static File getTestDataFile(String fileName) {
@@ -190,16 +217,20 @@ public class EditorPaintingTest extends AbstractEditorTest {
   // renders font characters to be used for text painting in tests (to make font rendering platform-independent)
   public static void main(String[] args) throws Exception {
     Font font = Font.createFont(Font.TRUETYPE_FONT, EditorPaintingTest.class.getResourceAsStream("/fonts/Inconsolata.ttf"));
-    BitmapFont bitmapFont = BitmapFont.createFromFont(font);
-    bitmapFont.saveToFile(getFontFile());
+    BitmapFont plainFont = BitmapFont.createFromFont(font);
+    plainFont.saveToFile(getFontFile(false));
+    BitmapFont boldBont = BitmapFont.createFromFont(font.deriveFont(Font.BOLD));
+    boldBont.saveToFile(getFontFile(true));
   }
 
   public static class MyGraphics extends Graphics2DDelegate {
-    private final BitmapFont myBitmapFont;
+    private final BitmapFont myPlainFont;
+    private final BitmapFont myBoldFont;
 
-    public MyGraphics(Graphics2D g2d, BitmapFont bitmapFont) {
+    public MyGraphics(Graphics2D g2d, BitmapFont plainFont, BitmapFont boldFont) {
       super(g2d);
-      myBitmapFont = bitmapFont;
+      myPlainFont = plainFont;
+      myBoldFont = boldFont;
     }
 
     @Override
@@ -217,7 +248,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
     @NotNull
     @Override
     public Graphics create() {
-      return new MyGraphics((Graphics2D)myDelegate.create(), myBitmapFont);
+      return new MyGraphics((Graphics2D)myDelegate.create(), myPlainFont, myBoldFont);
     }
 
     @Override
@@ -237,7 +268,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
     }
 
     private void drawChar(char c, int x, int y) {
-      myBitmapFont.draw(myDelegate, c, x, y);
+      (((getFont().getStyle() & Font.BOLD) == 0) ? myPlainFont : myBoldFont).draw(myDelegate, c, x, y);
     }
   }
 

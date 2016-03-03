@@ -23,6 +23,8 @@ import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
 
+import java.util.List;
+
 public class HgRebaseCommand {
 
   @NotNull private final Project project;
@@ -52,9 +54,12 @@ public class HgRebaseCommand {
   private HgCommandResult performRebase(@NotNull String... args) {
     AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
+      final List<String> list = ContainerUtil.newArrayList(args);
+      list.add("--config");
+      list.add("extensions.rebase=");
       HgCommandResult result =
         new HgCommandExecutor(project)
-          .executeInCurrentThread(repo.getRoot(), "rebase", ContainerUtil.list(args));
+          .executeInCurrentThread(repo.getRoot(), "rebase", list);
       repo.update();
       return result;
     }

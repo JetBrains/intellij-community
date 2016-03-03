@@ -21,10 +21,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfacePa
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +46,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (!LambdaUtil.isFunctionalType(myT)) {
-      session.registerIncompatibleErrorMessage(myT.getPresentableText() + " is not a functional interface");
+      session.registerIncompatibleErrorMessage(session.getPresentableText(myT) + " is not a functional interface");
       return false;
     }
 
@@ -57,7 +54,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(groundTargetType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(classResolveResult);
     if (interfaceMethod == null) {
-      session.registerIncompatibleErrorMessage("No valid function type can be found for " + myT.getPresentableText());
+      session.registerIncompatibleErrorMessage("No valid function type can be found for " + session.getPresentableText(myT));
       return false;
     }
 
@@ -79,7 +76,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
       PsiSubstitutor psiSubstitutor = getSubstitutor(signature, qualifierResolveResult, applicableMember, applicableMemberContainingClass);
 
-      PsiType applicableMethodReturnType = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getReturnType() : null;
       int idx = 0;
       for (PsiTypeParameter param : ((PsiTypeParameterListOwner)applicableMember).getTypeParameters()) {
         if (idx < typeParameters.length) {
@@ -110,6 +106,12 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         return false;
       }
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
+        PsiType applicableMethodReturnType = null;
+        if (applicableMember instanceof PsiMethod) {
+          final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(myExpression, (PsiMethod)applicableMember);
+          applicableMethodReturnType = getClassReturnType != null ? getClassReturnType : ((PsiMethod)applicableMember).getReturnType();
+        }
+
         if (PsiType.VOID.equals(applicableMethodReturnType)) {
           session.registerIncompatibleErrorMessage("Incompatible types: expected not void but compile-time declaration for the method reference has void return type");
           return false;
@@ -134,7 +136,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     for (PsiType paramType : signature.getParameterTypes()) {
       if (!session.isProperType(paramType)) {
-        //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + type.getPresentableText());
+        //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + session.getPresentableText(paramType));
         return false;
       }
     }
@@ -171,7 +173,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         referencedMethodReturnType = JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass, PsiSubstitutor.EMPTY);
       }
       else {
-        referencedMethodReturnType = method.getReturnType();
+        final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(myExpression, method);
+        referencedMethodReturnType = getClassReturnType != null ? getClassReturnType : method.getReturnType();
       }
       LOG.assertTrue(referencedMethodReturnType != null, method);
 

@@ -22,12 +22,14 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -98,6 +100,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
           byModuleName.putValue(data.getOwnerModule().getInternalName(), getInternalName(data));
         }
 
+        final ModifiableModuleModel modifiableModuleModel = modelsProvider.getModifiableModuleModel();
         List<I> orphanEntries = ContainerUtil.newSmartList();
         for (Module module : modelsProvider.getModules(projectData)) {
           for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
@@ -107,11 +110,13 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
                 entry.getUrls(OrderRootType.CLASSES).length == 0) {
               continue;
             }
-            //noinspection unchecked
-            if (getOrderEntryType().isInstance(entry) &&
-                !byModuleName.get(entry.getOwnerModule().getName()).contains(getOrderEntryName((I)entry))) {
+            if (getOrderEntryType().isInstance(entry)) {
+              final String moduleName = ObjectUtils.chooseNotNull(modifiableModuleModel.getNewName(entry.getOwnerModule()), entry.getOwnerModule().getName()) ;
               //noinspection unchecked
-              orphanEntries.add((I)entry);
+              if (!byModuleName.get(moduleName).contains(getOrderEntryName(modelsProvider, (I)entry))) {
+                //noinspection unchecked
+                orphanEntries.add((I)entry);
+              }
             }
           }
         }
@@ -124,7 +129,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
   @NotNull
   protected abstract Class<I> getOrderEntryType();
 
-  protected String getOrderEntryName(@NotNull I orderEntry) {
+  protected String getOrderEntryName(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull I orderEntry) {
     return orderEntry.getPresentableName();
   }
 

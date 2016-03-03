@@ -31,6 +31,7 @@ internal class StorageManagerTest {
   companion object {
     val MACRO = "\$MACRO1$"
 
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 

@@ -16,16 +16,19 @@
 
 package org.zmlx.hg4idea.log;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import org.jetbrains.annotations.NotNull;
@@ -161,9 +164,11 @@ public class HgLogProvider implements VcsLogProvider {
     return myRefSorter;
   }
 
+  @NotNull
   @Override
-  public void subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
-    myProject.getMessageBus().connect(myProject).subscribe(HgVcs.STATUS_TOPIC, new HgUpdater() {
+  public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(HgVcs.STATUS_TOPIC, new HgUpdater() {
       @Override
       public void update(Project project, @Nullable VirtualFile root) {
         if (root != null && roots.contains(root)) {
@@ -171,6 +176,7 @@ public class HgLogProvider implements VcsLogProvider {
         }
       }
     });
+    return connection;
   }
 
   @NotNull
@@ -246,7 +252,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getStructureFilter() != null) {
-      for (VirtualFile file : filterCollection.getStructureFilter().getFiles()) {
+      for (FilePath file : filterCollection.getStructureFilter().getFiles()) {
         filterParameters.add(file.getPath());
       }
     }

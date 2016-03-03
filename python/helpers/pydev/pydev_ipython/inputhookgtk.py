@@ -16,7 +16,7 @@ Authors: Brian Granger
 # Imports
 #-----------------------------------------------------------------------------
 
-import gtk, gobject
+import gtk, gobject  # @UnresolvedImport
 
 #-----------------------------------------------------------------------------
 # Code

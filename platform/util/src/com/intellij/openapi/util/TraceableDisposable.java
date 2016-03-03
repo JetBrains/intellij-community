@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Traces creation and disposal by storing corresponding stacktraces.
@@ -49,12 +53,38 @@ public class TraceableDisposable {
     }
   }
 
+  /**
+   * Call when object is not disposed while it should
+   */
+  public void throwObjectNotDisposedError(@NonNls @NotNull final String msg) {
+    throw new ObjectNotDisposedException(msg);
+  }
+
+  private class ObjectNotDisposedException extends AbstractDisposalException {
+
+    ObjectNotDisposedException(@Nullable @NonNls final String msg) {
+      super(msg);
+    }
+
+
+    @SuppressWarnings("HardCodedStringLiteral")
+    @Override
+    public void printStackTrace(PrintWriter s) {
+      final List<StackTraceElement> stack = new ArrayList<StackTraceElement>(Arrays.asList(CREATE_TRACE.getStackTrace()));
+      stack.remove(0); // this line is useless it stack
+     s.write(ObjectNotDisposedException.class.getCanonicalName() + ": See stack trace responsible for creation of unreleased object below \n\tat " + StringUtil.join(stack, "\n\tat "));
+    }
+  }
+
+  /**
+   * in case of "object not disposed" use {@link #throwObjectNotDisposedError(String)} instead
+   */
   public void throwDisposalError(@NonNls String msg) throws RuntimeException {
     throw new DisposalException(msg);
   }
 
-  private class DisposalException extends RuntimeException {
-    private DisposalException(String message) {
+  private abstract class AbstractDisposalException extends RuntimeException {
+    protected AbstractDisposalException(String message) {
       super(message);
     }
 
@@ -64,6 +94,12 @@ public class TraceableDisposable {
       PrintWriter writer = new PrintWriter(s);
       printStackTrace(writer);
       writer.flush();
+    }
+  }
+
+  private class DisposalException extends AbstractDisposalException {
+    private DisposalException(String message) {
+      super(message);
     }
 
     @SuppressWarnings("HardCodedStringLiteral")

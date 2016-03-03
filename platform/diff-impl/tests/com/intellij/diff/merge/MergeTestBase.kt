@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ abstract class MergeTestBase : DiffTestCase() {
 
   override fun setUp() {
     super.setUp()
-    projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture()
+    projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).fixture
     projectFixture!!.setUp()
     project = projectFixture!!.project
   }
@@ -97,7 +97,7 @@ abstract class MergeTestBase : DiffTestCase() {
 
   inner class TestBuilder(val mergeViewer: TextMergeViewer, private val actions: List<AnAction>) {
     val viewer: MyThreesideViewer = mergeViewer.viewer
-    val changes: List<TextMergeChange> = viewer.getAllChanges()
+    val changes: List<TextMergeChange> = viewer.allChanges
     val editor: EditorEx = viewer.editor
     val document: Document = editor.document
 
@@ -109,22 +109,22 @@ abstract class MergeTestBase : DiffTestCase() {
       return changes[num]
     }
 
-    fun activeChanges(): List<TextMergeChange> = viewer.getChanges()
+    fun activeChanges(): List<TextMergeChange> = viewer.changes
 
     //
     // Actions
     //
 
     fun runActionByTitle(name: String): Boolean {
-      val action = actions.filter { name.equals(it.getTemplatePresentation().getText()) }
+      val action = actions.filter { name.equals(it.templatePresentation.text) }
       assertTrue(action.size == 1, action.toString())
       return runAction(action[0])
     }
 
     private fun runAction(action: AnAction): Boolean {
-      val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, editor.getDataContext())
+      val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, editor.dataContext)
       action.update(actionEvent)
-      val success = actionEvent.getPresentation().isEnabledAndVisible()
+      val success = actionEvent.presentation.isEnabledAndVisible
       if (success) action.actionPerformed(actionEvent)
       return success
     }
@@ -376,8 +376,8 @@ abstract class MergeTestBase : DiffTestCase() {
                                                      private val changes: List<ViewerState.ChangeState>) {
     companion object {
       fun recordState(viewer: MyThreesideViewer): ViewerState {
-        val content = viewer.editor.document.getImmutableCharSequence()
-        val changes = viewer.getAllChanges().map { recordChangeState(viewer, it) }
+        val content = viewer.editor.document.immutableCharSequence
+        val changes = viewer.allChanges.map { recordChangeState(viewer, it) }
         return ViewerState(content, changes)
       }
 
@@ -385,7 +385,7 @@ abstract class MergeTestBase : DiffTestCase() {
         val document = viewer.editor.document;
         val content = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
 
-        val resolved = if (change.isResolved()) BOTH else if (change.isResolved(Side.LEFT)) LEFT else if (change.isResolved(Side.RIGHT)) RIGHT else NONE
+        val resolved = if (change.isResolved) BOTH else if (change.isResolved(Side.LEFT)) LEFT else if (change.isResolved(Side.RIGHT)) RIGHT else NONE
 
         val starts = Trio.from { change.getStartLine(it) }
         val ends = Trio.from { change.getStartLine(it) }

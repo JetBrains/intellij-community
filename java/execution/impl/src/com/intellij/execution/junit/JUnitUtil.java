@@ -55,8 +55,8 @@ public class JUnitUtil {
   public static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
   public static final String AFTER_ANNOTATION_NAME = "org.junit.After";
   public static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
-  private static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
-  private static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
+  public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
+  public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
   private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = Collections.unmodifiableList(
     Arrays.asList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME));
   

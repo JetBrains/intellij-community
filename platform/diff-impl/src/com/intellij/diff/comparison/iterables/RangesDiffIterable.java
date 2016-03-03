@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@SuppressWarnings("ConstantConditions")
 class RangesDiffIterable extends ChangeDiffIterableBase {
   @NotNull private final List<? extends Range> myRanges;
 

@@ -352,8 +352,7 @@ public class PsiAdapter {
             return null;
         }
 
-        int i = name.lastIndexOf('.');
-        return name.substring(i + 1, name.length());
+        return StringUtil.getShortName(name);
     }
 
     /**

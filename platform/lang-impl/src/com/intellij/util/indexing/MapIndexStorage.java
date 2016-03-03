@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,8 @@ import com.intellij.psi.search.ProjectScopeImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -60,6 +63,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private final Lock l = new ReentrantLock();
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
+  private static final ConcurrentIntObjectMap<Boolean> ourInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
 
   public MapIndexStorage(@NotNull File storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -238,9 +242,12 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         int id = myKeyHashToVirtualFileMapping.getLargestId();
 
         if (useCachedHashIds && id == myLastScannedId) {
-          try {
-            hashMaskSet = loadHashedIds(fileWithCaches);
-          } catch (IOException ignored) {
+          if (ourInvalidatedSessionIds.remove(id) == null) {
+            try {
+              hashMaskSet = loadHashedIds(fileWithCaches);
+            }
+            catch (IOException ignored) {
+            }
           }
         }
 
@@ -357,11 +364,29 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  private static volatile File mySessionDirectory;
+  private static File getSessionDir() {
+    File sessionDirectory = mySessionDirectory;
+    if (sessionDirectory == null) {
+      synchronized (MapIndexStorage.class) {
+        sessionDirectory = mySessionDirectory;
+        if (sessionDirectory == null) {
+          try {
+            mySessionDirectory = sessionDirectory = FileUtil.createTempDirectory(new File(PathManager.getTempPath()), Long.toString(System.currentTimeMillis()), "", true);
+          } catch (IOException ex) {
+            throw new RuntimeException("Can not create temp directory", ex);
+          }
+        }
+      }
+    }
+    return sessionDirectory;
+  }
+
   @Nullable
   private File getSavedProjectFileValueIds(int id, @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
     if (project == null) return null;
-    return new File(getProjectFile().getPath() + "." + project.hashCode() + "." + id + "." + scope.isSearchInLibraries());
+    return new File(getSessionDir(), getProjectFile().getName() + "." + project.hashCode() + "." + id + "." + scope.isSearchInLibraries());
   }
 
   @NotNull
@@ -399,6 +424,11 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     try {
       if (myKeyHashToVirtualFileMapping != null) {
         myKeyHashToVirtualFileMapping.enumerate(new int[] { myKeyDescriptor.getHashCode(key), inputId });
+        int lastScannedId = myLastScannedId;
+        if (lastScannedId != 0) { // we have write lock
+          ourInvalidatedSessionIds.cacheOrGet(lastScannedId, Boolean.TRUE);
+          myLastScannedId = 0;
+        }
       }
 
       myMap.markDirty();

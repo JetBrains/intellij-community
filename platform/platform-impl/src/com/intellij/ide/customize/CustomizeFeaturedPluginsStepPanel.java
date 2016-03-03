@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,10 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -42,19 +43,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
   private static final int COLS = 3;
-  private static final ScheduledExecutorService ourService = new ScheduledThreadPoolExecutor(4, ConcurrencyUtil.newNamedThreadFactory(
-    "FeaturedPlugins", true, Thread.NORM_PRIORITY));
+  private static final ExecutorService ourService = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 4);
 
   public final AtomicBoolean myCanceled = new AtomicBoolean(false);
-  private PluginGroups myPluginGroups;
-  private JLabel myInProgressLabel;
+  private final PluginGroups myPluginGroups;
+  private final JLabel myInProgressLabel;
 
   public CustomizeFeaturedPluginsStepPanel(PluginGroups pluginGroups) {
     setLayout(new GridLayout(1, 1));
@@ -89,9 +87,9 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
       String title = entry.getKey();
       String s = entry.getValue();
-      int i = s.indexOf(":");
+      int i = s.indexOf(':');
       String topic = s.substring(0, i);
-      int j = s.indexOf(":", i + 1);
+      int j = s.indexOf(':', i + 1);
       final String description = s.substring(i + 1, j);
       final String pluginId = s.substring(j + 1);
       IdeaPluginDescriptor foundDescriptor = null;
@@ -199,7 +197,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
         @Override
         public void actionPerformed(ActionEvent e) {
           wrapperLayout.show(buttonWrapper, "progress");
-          ourService.schedule(new Runnable() {
+          ourService.execute(new Runnable() {
             @Override
             public void run() {
               try {
@@ -227,7 +225,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
                 }
               });
             }
-          }, 0, TimeUnit.SECONDS);
+          });
         }
       });
       cancelLink.setListener(new LinkListener() {

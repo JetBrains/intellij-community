@@ -1,10 +1,10 @@
 import sys
 import weakref
 
-def SetUp():
+def set_up():
     observable = Observable()
     observer = Observer()
-    observable.AddObserver(observer)
+    observable.add_observer(observer)
     return observable
 
 
@@ -12,7 +12,7 @@ class Observable(object):
     def __init__(self):
         self.observers = []
         
-    def AddObserver(self, observer):
+    def add_observer(self, observer):
         sys.stdout.write( 'observer %s\n' % (observer,))
         ref = weakref.ref(observer)
         self.observers.append(ref)
@@ -53,7 +53,7 @@ class Observer(object):
 
     
 def main():
-    observable = SetUp()
+    observable = set_up()
     observable.Notify()
     
     

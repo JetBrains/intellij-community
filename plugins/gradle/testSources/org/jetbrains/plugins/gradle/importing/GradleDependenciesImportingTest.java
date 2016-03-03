@@ -42,10 +42,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "\n" +
       "  sourceCompatibility = 1.5\n" +
       "  version = '1.0'\n" +
-      "\n" +
-      "  repositories {\n" +
-      "    mavenCentral()\n" +
-      "  }\n" +
       "}\n" +
       "\n" +
       "dependencies {\n" +
@@ -79,10 +75,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "\n" +
       "  sourceCompatibility = 1.5\n" +
       "  version = '1.0'\n" +
-      "\n" +
-      "  repositories {\n" +
-      "    mavenCentral()\n" +
-      "  }\n" +
       "}\n" +
       "\n" +
       "project(\"impl\") {\n" +
@@ -243,5 +235,45 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("api_test", "api_main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("impl_test", "impl_main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("impl_test", "api_test", DependencyScope.COMPILE);
+  }
+
+  @Test
+  public void testCompileAndRuntimeConfigurationsTransitiveDependencyMerge() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n" +
+                       "include 'project-tests'");
+
+    importProject(
+      "subprojects {\n" +
+      "  apply plugin: \"java\"\n" +
+      "}\n" +
+      "\n" +
+      "project(\":project1\") {\n" +
+      "  dependencies {\n" +
+      "      compile 'org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0'\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(\":project2\") {\n" +
+      "  dependencies {\n" +
+      "      runtime 'org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1'\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(\":project-tests\") {\n" +
+      "  dependencies {\n" +
+      "      compile project(':project1')\n" +
+      "      runtime project(':project2')\n" +
+      "      compile 'junit:junit:4.11'\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test", "project-tests", "project-tests_main", "project-tests_test");
+
+    assertModuleModuleDepScope("project-tests_main", "project1_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project-tests_main", "project2_main", DependencyScope.RUNTIME);
+    assertModuleLibDepScope("project-tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project-tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1", DependencyScope.RUNTIME);
   }
 }

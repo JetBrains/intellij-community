@@ -33,6 +33,9 @@
       <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
     </component>
     <component>
+      <implementation-class>com.intellij.openapi.vcs.annotate.AnnotationsPreloader</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
       <skipForDefaultProject/>
     </component>

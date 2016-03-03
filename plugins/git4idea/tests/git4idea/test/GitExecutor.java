@@ -29,7 +29,6 @@ import java.util.List;
 import static org.junit.Assert.assertFalse;
 
 /**
- *
  * @author Kirill Likhodedov
  */
 public class GitExecutor extends Executor {
@@ -55,6 +54,11 @@ public class GitExecutor extends Executor {
 
   public static String git(String command, boolean ignoreNonZeroExitCode) {
     printVersionTheFirstTime();
+    return doCallGit(command, ignoreNonZeroExitCode);
+  }
+
+  @NotNull
+  private static String doCallGit(String command, boolean ignoreNonZeroExitCode) {
     List<String> split = splitCommandInParameters(command);
     split.add(0, PathHolder.GIT_EXECUTABLE);
     File workingDir = ourCurrentDir();
@@ -127,6 +131,12 @@ public class GitExecutor extends Executor {
   }
 
   @NotNull
+  public static String modify(@NotNull String file) throws IOException {
+    overwrite(file, "content" + Math.random());
+    return addCommit("modified " + file);
+  }
+
+  @NotNull
   public static String last() {
     return git("log -1 --pretty=%H");
   }
@@ -147,7 +157,7 @@ public class GitExecutor extends Executor {
   private static void printVersionTheFirstTime() {
     if (!myVersionPrinted) {
       myVersionPrinted = true;
-      git("version");
+      doCallGit("version", false);
     }
   }
 

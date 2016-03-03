@@ -26,12 +26,13 @@ import com.intellij.remoteServer.configuration.RemoteServerListener;
 import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
 
-public class ServersToolWindowManager extends AbstractProjectComponent {
+public abstract class ServersToolWindowManager extends AbstractProjectComponent {
 
-  public static final String WINDOW_ID = "Application Servers";
+  private final String myWindowId;
 
-  public ServersToolWindowManager(final Project project) {
+  public ServersToolWindowManager(final Project project, String windowId) {
     super(project);
+    myWindowId = windowId;
   }
 
   public void projectOpened() {
@@ -43,14 +44,12 @@ public class ServersToolWindowManager extends AbstractProjectComponent {
   }
 
   public void setupListeners() {
-    for (RemoteServersViewContributor contributor : RemoteServersViewContributor.EP_NAME.getExtensions()) {
-      contributor.setupAvailabilityListener(myProject, new Runnable() {
-        @Override
-        public void run() {
-          updateWindowAvailable(true);
-        }
-      });
-    }
+    getFactory().getContribution().setupAvailabilityListener(myProject, new Runnable() {
+      @Override
+      public void run() {
+        updateWindowAvailable(true);
+      }
+    });
     myProject.getMessageBus().connect().subscribe(RemoteServerListener.TOPIC, new RemoteServerListener() {
       @Override
       public void serverAdded(@NotNull RemoteServer<?> server) {
@@ -71,9 +70,9 @@ public class ServersToolWindowManager extends AbstractProjectComponent {
 
       @Override
       public void run() {
-        boolean available = ServersToolWindowFactory.isAvailable(myProject);
+        boolean available = getFactory().getContribution().canContribute(myProject);
 
-        final ToolWindow toolWindow = toolWindowManager.getToolWindow(WINDOW_ID);
+        final ToolWindow toolWindow = toolWindowManager.getToolWindow(myWindowId);
 
         if (toolWindow == null) {
           if (available) {
@@ -94,15 +93,13 @@ public class ServersToolWindowManager extends AbstractProjectComponent {
     });
   }
 
-  private static ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(WINDOW_ID, false, ToolWindowAnchor.BOTTOM);
+  private ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(myWindowId, false, ToolWindowAnchor.BOTTOM);
     toolWindow.setIcon(RemoteServersIcons.ServersToolWindow);
-    new ServersToolWindowFactory().createToolWindowContent(project, toolWindow);
+    getFactory().createToolWindowContent(project, toolWindow);
     return toolWindow;
   }
 
   @NotNull
-  public String getComponentName() {
-    return "ServersToolWindowManager";
-  }
+  protected abstract ServersToolWindowFactory getFactory();
 }

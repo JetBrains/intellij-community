@@ -385,4 +385,10 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   protected int getFeatures() {
     return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
   }
+
+  @TestOnly
+  @Override
+  public HttpClient getHttpClient() {
+    return super.getHttpClient();
+  }
 }

@@ -22,6 +22,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
@@ -36,10 +37,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.PlatformColors;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
@@ -56,6 +54,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.Set;
 
 public class ActionsTree {
@@ -75,6 +74,9 @@ public class ActionsTree {
 
   private String myFilter = null;
 
+  private boolean myPaintInternalInfo;
+  private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
+
   public ActionsTree() {
     myRoot = new DefaultMutableTreeNode(ROOT);
 
@@ -83,6 +85,10 @@ public class ActionsTree {
       public void paint(Graphics g) {
         super.paint(g);
         Rectangle visibleRect = getVisibleRect();
+        Insets insets = getInsets();
+        if (insets != null && insets.right > 0) {
+          visibleRect.width -= JBUI.scale(9);
+        }
         Rectangle clip = g.getClipBounds();
         for (int row = 0; row < getRowCount(); row++) {
           Rectangle rowBounds = getRowBounds(row);
@@ -144,6 +150,16 @@ public class ActionsTree {
     });
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    if (ApplicationManager.getApplication().isInternal()) {
+      new HeldDownKeyListener() {
+        @Override
+        protected void heldKeyTriggered(JComponent component, boolean pressed) {
+          myPaintInternalInfo = pressed;
+          // an easy way to repaint the tree
+          ((Tree)component).setCellRenderer(new KeymapsRenderer());
+        }
+      }.installOn(myTree);
+    }
 
     myComponent = ScrollPaneFactory.createScrollPane(myTree,
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
@@ -496,14 +512,17 @@ public class ActionsTree {
       Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;
       Icon icon = null;
       String text;
+      String actionId = null;
       boolean bound = false;
       setToolTipText(null);
 
       if (value instanceof DefaultMutableTreeNode) {
-        Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+        Object userObject = node.getUserObject();
         boolean changed;
         if (userObject instanceof Group) {
           Group group = (Group)userObject;
+          actionId = group.getId();
           text = group.getName();
 
           changed = originalKeymap != null && isGroupChanged(group, originalKeymap, myKeymap);
@@ -513,7 +532,7 @@ public class ActionsTree {
           }
         }
         else if (userObject instanceof String) {
-          String actionId = (String)userObject;
+          actionId = (String)userObject;
           bound = myShowBoundActions && ((KeymapImpl)myKeymap).isActionBound(actionId);
           AnAction action = ActionManager.getInstance().getAction(actionId);
           if (action != null) {
@@ -584,11 +603,20 @@ public class ActionsTree {
           }
         }
         if (!myHaveLink) {
-          SearchUtil.appendFragments(
-            myFilter, text, Font.PLAIN, foreground, selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), this);
+          Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+          SearchUtil.appendFragments(myFilter, text, Font.PLAIN, foreground, background, this);
+          if (actionId != null && myPaintInternalInfo) {
+            String pluginName = myPluginNames.get(actionId);
+            if (pluginName != null) {
+              Group parentGroup = (Group)((DefaultMutableTreeNode)node.getParent()).getUserObject();
+              if (pluginName.equals(parentGroup.getName())) pluginName = null;
+            }
+            append("   ");
+            append(pluginName != null ? actionId +" (" + pluginName + ")" : actionId, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+          }
         }
       }
-      putClientProperty(AbstractExpandableItemsHandler.DISABLE_EXPANDABLE_HANDLER, myHaveLink ? true : null);
+      putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
     }
 
     private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {

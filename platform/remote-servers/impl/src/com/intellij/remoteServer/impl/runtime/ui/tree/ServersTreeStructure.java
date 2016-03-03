@@ -20,11 +20,9 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
 import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurable;
@@ -32,7 +30,7 @@ import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRun
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerBase;
-import com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContributor;
+import com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContribution;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
@@ -42,6 +40,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author michael.golubev
@@ -60,13 +62,16 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
   private final ServersTreeRootNode myRootElement;
   private final Project myProject;
+  private final RemoteServersViewContribution myContribution;
+  private final ServersTreeNodeSelector myNodeSelector;
 
-  private final Map<RemoteServer, Map<String, DeploymentGroup>> myServer2DeploymentGroups
-    = new HashMap<RemoteServer, Map<String, DeploymentGroup>>();
-
-  public ServersTreeStructure(@NotNull Project project) {
+  public ServersTreeStructure(@NotNull Project project,
+                              @NotNull RemoteServersViewContribution contribution,
+                              @NotNull ServersTreeNodeSelector nodeSelector) {
     super(project);
     myProject = project;
+    myContribution = contribution;
+    myNodeSelector = nodeSelector;
     myRootElement = new ServersTreeRootNode();
   }
 
@@ -87,13 +92,17 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
   }
 
   @NotNull
-  Project doGetProject() {
+  protected Project doGetProject() {
     return myProject;
   }
 
   @Override
   public Object getRootElement() {
     return myRootElement;
+  }
+
+  protected ServersTreeNodeSelector getNodeSelector() {
+    return myNodeSelector;
   }
 
   @Override
@@ -103,6 +112,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
   @Override
   public boolean hasSomethingToCommit() {
     return false;
+  }
+
+  protected AbstractTreeNode createDeploymentNode(ServerConnection<?> connection, RemoteServerNode serverNode, Deployment deployment) {
+    return new DeploymentNodeImpl(connection, serverNode, deployment);
   }
 
   public interface LogProvidingNode {
@@ -122,12 +135,13 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode<?>> result = new ArrayList<AbstractTreeNode<?>>();
-      for (RemoteServersViewContributor contributor : RemoteServersViewContributor.EP_NAME.getExtensions()) {
-        result.addAll(contributor.createServerNodes(doGetProject()));
-      }
-      for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
-        result.add(new RemoteServerNode(server));
-      }
+      result.addAll(myContribution.createServerNodes(doGetProject()));
+      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), new Function<RemoteServer<?>, AbstractTreeNode<?>>() {
+        @Override
+        public AbstractTreeNode<?> fun(RemoteServer<?> server) {
+          return new RemoteServerNode(server);
+        }
+      }));
       return result;
     }
 
@@ -154,38 +168,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
         return Collections.emptyList();
       }
 
-      Map<DeploymentGroup, GroupNode> group2node = new HashMap<DeploymentGroup, GroupNode>();
       final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
       for (Deployment deployment : connection.getDeployments()) {
-        final String groupName = deployment.getGroup();
-        if (groupName == null) {
-          children.add(new DeploymentNodeImpl(connection, this, deployment));
-        }
-        else {
-          Map<String, DeploymentGroup> groups
-            = ContainerUtil.getOrCreate(myServer2DeploymentGroups, getServer(), new Factory<Map<String, DeploymentGroup>>() {
-            @Override
-            public Map<String, DeploymentGroup> create() {
-              return new HashMap<String, DeploymentGroup>();
-            }
-          });
-
-          final DeploymentGroup group
-            = ContainerUtil.getOrCreate(groups, groupName, new Factory<DeploymentGroup>() {
-            @Override
-            public DeploymentGroup create() {
-              return new DeploymentGroup(groupName);
-            }
-          });
-
-          ContainerUtil.getOrCreate(group2node, group, new Factory<GroupNode>() {
-            @Override
-            public GroupNode create() {
-              GroupNode result = new GroupNode(connection, RemoteServerNode.this, group);
-              children.add(result);
-              return result;
-            }
-          });
+        if (deployment.getParentRuntime() == null) {
+          children.add(createDeploymentNode(connection, this, deployment));
         }
       }
       return children;
@@ -290,7 +276,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     private final ServerConnection<?> myConnection;
     private final RemoteServerNode myServerNode;
 
-    private DeploymentNodeImpl(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull Deployment value) {
+    protected DeploymentNodeImpl(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull Deployment value) {
       super(doGetProject(), value);
       myConnection = connection;
       myServerNode = serverNode;
@@ -396,7 +382,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Nullable
-    private DeploymentLogManagerImpl getLogManager() {
+    protected DeploymentLogManagerImpl getLogManager() {
       return (DeploymentLogManagerImpl)myConnection.getLogManager(getDeployment());
     }
 
@@ -413,15 +399,36 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      DeploymentLogManagerImpl logManager = (DeploymentLogManagerImpl)getConnection().getLogManager(getDeployment());
-      if (logManager != null) {
-        List<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
-        for (LoggingHandlerBase loggingComponent : logManager.getAdditionalLoggingHandlers()) {
-          nodes.add(new DeploymentLogNode(loggingComponent, this));
-        }
-        return nodes;
+      List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      collectDeploymentChildren(result);
+      collectLogChildren(result);
+      return result;
+    }
+
+    protected void collectDeploymentChildren(List<AbstractTreeNode> children) {
+      ServerConnection<?> connection = getConnection();
+      if (connection == null) {
+        return;
       }
-      return Collections.emptyList();
+      for (Deployment deployment : connection.getDeployments()) {
+        DeploymentRuntime parent = deployment.getParentRuntime();
+        if (parent != null && parent == getDeployment().getRuntime()) {
+          children.add(createDeploymentNode(connection, myServerNode, deployment));
+        }
+      }
+    }
+
+    protected void collectLogChildren(List<AbstractTreeNode> children) {
+      ServerConnection<?> connection = getConnection();
+      if (connection == null) {
+        return;
+      }
+      DeploymentLogManagerImpl logManager = (DeploymentLogManagerImpl)connection.getLogManager(getDeployment());
+      if (logManager != null) {
+        for (LoggingHandlerBase loggingComponent : logManager.getAdditionalLoggingHandlers()) {
+          children.add(new DeploymentLogNode(loggingComponent, this));
+        }
+      }
     }
 
     @Override
@@ -467,54 +474,6 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     public String getLogId() {
       return myDeploymentNode.getId() + ";log:" + getLogName();
-    }
-  }
-
-  private static class DeploymentGroup {
-
-    private final String myName;
-
-    private DeploymentGroup(String name) {
-      myName = name;
-    }
-
-    public String getName() {
-      return myName;
-    }
-  }
-
-  public class GroupNode extends AbstractTreeNode<DeploymentGroup> implements ServersTreeNode {
-
-    @NotNull private final ServerConnection<?> myConnection;
-    @NotNull private final RemoteServerNode myServerNode;
-
-    public GroupNode(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull DeploymentGroup group) {
-      super(doGetProject(), group);
-      myConnection = connection;
-      myServerNode = serverNode;
-    }
-
-    @NotNull
-    public DeploymentGroup getGroup() {
-      return getValue();
-    }
-
-    @NotNull
-    @Override
-    public Collection<? extends AbstractTreeNode> getChildren() {
-      List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-      for (Deployment deployment : myConnection.getDeployments()) {
-        if (StringUtil.equals(getGroup().getName(), deployment.getGroup())) {
-          children.add(new DeploymentNodeImpl(myConnection, myServerNode, deployment));
-        }
-      }
-      return children;
-    }
-
-    @Override
-    protected void update(PresentationData presentation) {
-      presentation.setIcon(myServerNode.getServer().getType().getIcon());
-      presentation.setPresentableText(getGroup().getName());
     }
   }
 }

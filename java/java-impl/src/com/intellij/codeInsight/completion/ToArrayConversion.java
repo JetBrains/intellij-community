@@ -36,10 +36,9 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
  * @author peter
  */
 public class ToArrayConversion {
-  static void addConversions(final PsiElement element, final Object object, final String prefix, final PsiType itemType,
+  static void addConversions(final PsiElement element, final String prefix, final PsiType itemType,
                              final Consumer<LookupElement> result, @Nullable final PsiElement qualifier,
                              final PsiType expectedType) {
-    final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
     final PsiType componentType = PsiUtil.extractIterableTypeParameter(itemType, true);
     if (componentType == null || !(expectedType instanceof PsiArrayType)) return;
 
@@ -50,40 +49,36 @@ public class ToArrayConversion {
     }
 
     final String bracketSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_BRACKETS);
-    if (object instanceof PsiVariable && !JavaCompletionUtil.mayHaveSideEffects(qualifier)) {
-      final PsiVariable variable = (PsiVariable)object;
-      addToArrayConversion(element, prefix,
-                           "new " + componentType.getCanonicalText() +
-                           "[" + bracketSpace + getQualifierText(qualifier) + variable.getName() + ".size(" + callSpace + ")" + bracketSpace + "]",
-                           "new " + getQualifierText(qualifier) + componentType.getPresentableText() + "[" + variable.getName() + ".size()]", result, qualifier);
-    } else {
-      boolean hasEmptyArrayField = false;
-      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-      if (psiClass != null) {
-        for (final PsiField field : psiClass.getAllFields()) {
-          if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) &&
-              JavaPsiFacade.getInstance(field.getProject()).getResolveHelper().isAccessible(field, element, null) &&
-              type.isAssignableFrom(field.getType()) && isEmptyArrayInitializer(field.getInitializer())) {
-            boolean needQualify;
-            try {
-              needQualify = !field.isEquivalentTo(((PsiReferenceExpression)createExpression(field.getName(), element)).resolve());
-            }
-            catch (IncorrectOperationException e) {
-              continue;
-            }
-
-            addToArrayConversion(element, prefix,
-                                 (needQualify ? field.getContainingClass().getQualifiedName() + "." : "") + field.getName(),
-                                 (needQualify ? field.getContainingClass().getName() + "." : "") + field.getName(), result, qualifier);
-            hasEmptyArrayField = true;
+    boolean hasEmptyArrayField = false;
+    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    if (psiClass != null) {
+      for (final PsiField field : psiClass.getAllFields()) {
+        if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) &&
+            JavaPsiFacade.getInstance(field.getProject()).getResolveHelper().isAccessible(field, element, null) &&
+            type.isAssignableFrom(field.getType()) && isEmptyArrayInitializer(field.getInitializer())) {
+          boolean needQualify;
+          try {
+            needQualify = !field.isEquivalentTo(((PsiReferenceExpression)createExpression(field.getName(), element)).resolve());
           }
+          catch (IncorrectOperationException e) {
+            continue;
+          }
+
+          PsiClass containingClass = field.getContainingClass();
+          if (containingClass == null) continue;
+
+          addToArrayConversion(element, prefix,
+                               (needQualify ? containingClass.getQualifiedName() + "." : "") + field.getName(),
+                               (needQualify ? containingClass.getName() + "." : "") + field.getName(), result, qualifier);
+          hasEmptyArrayField = true;
         }
       }
-      if (!hasEmptyArrayField) {
-        addToArrayConversion(element, prefix,
-                             "new " + componentType.getCanonicalText() + "[" + bracketSpace + "0" + bracketSpace + "]",
-                             "new " + componentType.getPresentableText() + "[0]", result, qualifier);
-      }
+    }
+
+    if (!hasEmptyArrayField) {
+      addToArrayConversion(element, prefix,
+                           "new " + componentType.getCanonicalText() + "[" + bracketSpace + "0" + bracketSpace + "]",
+                           "new " + componentType.getPresentableText() + "[0]", result, qualifier);
     }
   }
 

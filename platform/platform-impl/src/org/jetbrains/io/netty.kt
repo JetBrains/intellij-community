@@ -58,8 +58,8 @@ fun oioClientBootstrap(): Bootstrap {
   return bootstrap
 }
 
-inline fun ChannelFuture.addListener(crossinline listener: (future: ChannelFuture) -> Unit) {
-  addListener(GenericFutureListener<io.netty.channel.ChannelFuture> { listener(it) })
+inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
+  addListener(GenericFutureListener<ChannelFuture> { listener(it) })
 }
 
 // if NIO, so, it is shared and we must not shutdown it

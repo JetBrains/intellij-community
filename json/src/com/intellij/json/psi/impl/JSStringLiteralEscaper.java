@@ -17,7 +17,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
     String subText = rangeInsideHost.substring(myHost.getText());
 
     Ref<int[]> sourceOffsetsRef = new Ref<int[]>();
-    boolean result = parseStringCharacters(subText, outChars, sourceOffsetsRef, isRegExpLiteral());
+    boolean result = parseStringCharacters(subText, outChars, sourceOffsetsRef, isRegExpLiteral(), !isOneLine());
     outSourceOffsets = sourceOffsetsRef.get();
     return result;
   }
@@ -34,7 +34,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
     return true;
   }
 
-  public static boolean parseStringCharacters(String chars, StringBuilder outChars, Ref<int[]> sourceOffsetsRef, boolean regExp) {
+  public static boolean parseStringCharacters(String chars, StringBuilder outChars, Ref<int[]> sourceOffsetsRef, boolean regExp, boolean escapeBacktick) {
     int[] sourceOffsets = new int[chars.length() + 1];
     sourceOffsetsRef.set(sourceOffsets);
 
@@ -60,7 +60,9 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
       }
       if (index == chars.length()) return false;
       c = chars.charAt(index++);
-      if (regExp) {
+      if (escapeBacktick && c == '`') {
+        outChars.append(c);
+      } else if (regExp) {
         if (c != '/') {
           outChars.append('\\');
         }

@@ -50,7 +50,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -684,7 +683,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (lock.isLocked()) return;
     lock.lock();
 
-    Task.Backgroundable task = new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {
+    Task.Backgroundable task = new Task.Backgroundable(project, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -781,7 +780,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     private AsynchronousListsLoader(@Nullable Project project, final CommittedChangesProvider provider,
                                     final RepositoryLocation location, final ChangeBrowserSettings settings, final ChangesBrowserDialog dlg) {
-      super(project, VcsBundle.message("browse.changes.progress.title"), true, BackgroundFromStartOption.getInstance());
+      super(project, VcsBundle.message("browse.changes.progress.title"), true);
       myProvider = provider;
       myLocation = location;
       mySettings = settings;

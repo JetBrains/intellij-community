@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -149,6 +150,8 @@ abstract class LineLayout {
   private static boolean distinctTokens(@Nullable IElementType token1, @Nullable IElementType token2) {
     if (token1 == token2) return false;
     if (token1 == null || token2 == null) return true;
+    if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(token1) ||
+        StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(token2)) return false;
     if (!token1.getLanguage().is(token2.getLanguage())) return true;
     BidiRegionsSeparator separator = LanguageBidiRegionsSeparator.INSTANCE.forLanguage(token1.getLanguage());
     return separator.createBorderBetweenTokens(token1, token2);
@@ -214,7 +217,7 @@ abstract class LineLayout {
           }
         }
         FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, fontPreferences);
-        if (currentFontInfo == null || !fontInfo.getFont().equals(currentFontInfo.getFont())) {
+        if (!fontInfo.equals(currentFontInfo)) {
           addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, fontRenderContext, run.isRtl());
           currentFontInfo = fontInfo;
           currentIndex = i;
@@ -523,7 +526,7 @@ abstract class LineLayout {
       int lineStartOffset = view.getEditor().getDocument().getLineStartOffset(line);
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
-      IterationState it = new IterationState(view.getEditor(), start, end, false, false, false, false);
+      IterationState it = new IterationState(view.getEditor(), start, end, false, false, true, false, false);
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       while (!it.atEnd()) {

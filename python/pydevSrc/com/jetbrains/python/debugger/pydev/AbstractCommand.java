@@ -30,6 +30,7 @@ public abstract class AbstractCommand<T> {
   public static final int LOAD_SOURCE = 124;
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
+  
   public static final int CALL_SIGNATURE_TRACE = 130;
 
   public static final int CMD_SET_PY_EXCEPTION = 131;
@@ -45,6 +46,9 @@ public abstract class AbstractCommand<T> {
   public static final int CMD_ENABLE_DONT_TRACE = 141;
 
   public static final int SHOW_CONSOLE = 142;
+  public static final int GET_ARRAY = 143;
+  public static final int STEP_INTO_MY_CODE = 144;
+  public static final int LOG_CONCURRENCY_EVENT = 145;
 
   public static final int ERROR = 901;
 
@@ -52,9 +56,7 @@ public abstract class AbstractCommand<T> {
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
-  public static final int GET_ARRAY = 143;
-  public static final int STEP_INTO_MY_CODE = 144;
-  public static final int LOG_CONCURRENCY_EVENT = 145;
+  
 
   @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;

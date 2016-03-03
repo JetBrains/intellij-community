@@ -311,7 +311,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     c.addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
-        myLastPoint[0] = MouseInfo.getPointerInfo().getLocation();
+        PointerInfo info = MouseInfo.getPointerInfo();
+        myLastPoint[0] = info != null ? info.getLocation() : e.getLocationOnScreen();
         if (!e.isPopupTrigger()) {
           if (!UIUtil.isCloseClick(e)) {
             ui.myWindow.fireActivated();

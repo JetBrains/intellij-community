@@ -77,7 +77,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       public void run() {
         try {
           myRefreshIndicator.start();
-          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session.toString());
+          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session);
           try {
             doScan(session);
           }
@@ -96,7 +96,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
         }
       }
     });
-    myEventCounter.eventHappened();
+    myEventCounter.eventHappened(session);
   }
 
   private void doScan(RefreshSessionImpl session) {

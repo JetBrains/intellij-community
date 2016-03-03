@@ -196,6 +196,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
       return new XsltExecutionStack("Source Frames", mySourceFrame, myDebuggerSession);
     }
 
+    @NotNull
     @Override
     public XExecutionStack[] getExecutionStacks() {
       return new XExecutionStack[]{

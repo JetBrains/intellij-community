@@ -92,7 +92,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-  AnalysisScope getCurrentScope() {
+  public AnalysisScope getCurrentScope() {
     return myCurrentScope;
   }
 

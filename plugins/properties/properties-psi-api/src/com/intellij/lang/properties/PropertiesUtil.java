@@ -36,6 +36,8 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.ui.plaf.beg.BegResources.j;
+
 /**
  * @author cdr
  */
@@ -67,22 +69,6 @@ public class PropertiesUtil {
     }
   };
 
-
-  /**
-   * @deprecated use PropertiesUtil.isPropertyComplete(ResourceBundle resourceBundle, String propertyName)
-   */
-  @Deprecated
-  public static boolean isPropertyComplete(final Project project, final ResourceBundle resourceBundle, final String propertyName) {
-    return isPropertyComplete(resourceBundle, propertyName);
-  }
-
-  public static boolean isPropertyComplete(final ResourceBundle resourceBundle, final String propertyName) {
-    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
-    for (PropertiesFile propertiesFile : propertiesFiles) {
-      if (propertiesFile.findPropertyByKey(propertyName) == null) return false;
-    }
-    return true;
-  }
 
   public static boolean containsProperty(final ResourceBundle resourceBundle, final String propertyName) {
     for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {

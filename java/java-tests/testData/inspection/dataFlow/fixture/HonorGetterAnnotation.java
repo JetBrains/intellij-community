@@ -5,7 +5,7 @@ class Goo {
 
   {
     Object category = permission.getCategory();
-    System.out.println(<warning descr="Method invocation 'category.hashCode()' may produce 'java.lang.NullPointerException'">category.hashCode()</warning>);
+    System.out.println(category.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
 }
 

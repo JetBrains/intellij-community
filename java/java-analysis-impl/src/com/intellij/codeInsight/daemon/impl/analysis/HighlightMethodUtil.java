@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Comparing;
@@ -40,6 +39,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -100,9 +100,9 @@ public class HighlightMethodUtil {
     int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
     if (accessLevel < superAccessLevel) {
       String description = JavaErrorMessages.message("weaker.privileges",
-                                            createClashMethodMessage(method, superMethod, true),
-                                            accessModifier,
-                                            PsiUtil.getAccessModifier(superAccessLevel));
+                                                     createClashMethodMessage(method, superMethod, true),
+                                                     VisibilityUtil.toPresentableText(accessModifier),
+                                                     PsiUtil.getAccessModifier(superAccessLevel));
       TextRange textRange;
       if (includeRealPositionInfo) {
         if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
@@ -168,10 +168,12 @@ public class HighlightMethodUtil {
                                                          @NotNull TextRange range,
                                                          @NotNull LanguageLevel languageLevel) {
     if (superReturnType == null) return null;
-    if ("clone".equals(method.getName())) {
+    final PsiClass superContainingClass = superMethod.getContainingClass();
+    if (superContainingClass != null && 
+        CommonClassNames.JAVA_LANG_OBJECT.equals(superContainingClass.getQualifiedName()) &&
+        !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
       final PsiClass containingClass = method.getContainingClass();
-      final PsiClass superContainingClass = superMethod.getContainingClass();
-      if (containingClass != null && superContainingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
+      if (containingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
         return null;
       }
     }
@@ -395,7 +397,7 @@ public class HighlightMethodUtil {
           String description = JavaErrorMessages.message("wrong.method.arguments", methodName, containerName, argTypes);
           final Ref<PsiElement> elementToHighlight = new Ref<PsiElement>(list);
           String toolTip;
-          if (parent instanceof PsiClass && !ApplicationManager.getApplication().isUnitTestMode()) {
+          if (parent instanceof PsiClass) {
             toolTip = buildOneLineMismatchDescription(list, candidateInfo, elementToHighlight);
             if (toolTip == null) {
               toolTip = createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
@@ -805,7 +807,7 @@ public class HighlightMethodUtil {
 
     @Language("HTML")
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
-    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
+    String errorMessage = info != null ? info.getParentInferenceErrorMessage(list) : null;
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
       Integer.valueOf(cols - parameters.length + 1), parensizedName,
@@ -917,7 +919,7 @@ public class HighlightMethodUtil {
     }
 
     s+= "</table>";
-    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
+    final String errorMessage = info != null ? info.getParentInferenceErrorMessage(list) : null;
     if (errorMessage != null) {
       s+= "reason: "; 
       s += XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>");

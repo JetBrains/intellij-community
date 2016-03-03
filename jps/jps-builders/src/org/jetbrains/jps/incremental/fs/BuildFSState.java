@@ -138,11 +138,26 @@ public class BuildFSState {
       return false;
     }
     final CompileScope scope = context.getScope();
+    final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     try {
       delta.lockData();
       for (Set<File> files : delta.getSourcesToRecompile().values()) {
+        files_loop:
         for (File file : files) {
           if ((getEventRegistrationStamp(file) > targetBuildStart || FileSystemUtil.lastModified(file) > targetBuildStart) && scope.isAffected(target, file)) {
+            for (BuildRootDescriptor rd : rootIndex.findAllParentDescriptors(file, context)) {
+              if (rd.isGenerated()) { // do not send notification for generated sources
+                continue files_loop;
+              }
+            }
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Unprocessed changes detected for target " + target +
+                        "; file: " + file.getPath() +
+                        "; targetBuildStart=" + targetBuildStart +
+                        "; eventRegistrationStamp=" + getEventRegistrationStamp(file) +
+                        "; lastModified=" + FileSystemUtil.lastModified(file)
+              );
+            }
             return true;
           }
         }

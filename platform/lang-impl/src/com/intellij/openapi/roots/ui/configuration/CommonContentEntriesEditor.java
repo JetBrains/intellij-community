@@ -33,7 +33,6 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -151,9 +150,6 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myContentEntryEditorListener = new MyContentEntryEditorListener();
 
     final JPanel mainPanel = new JPanel(new BorderLayout());
-    if (!Registry.is("ide.new.project.settings")) {
-      mainPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-    }
 
     addAdditionalSettingsToPanel(mainPanel);
 
@@ -166,29 +162,22 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
     myEditorsPanel.setBackground(BACKGROUND_COLOR);
-    JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel, Registry.is("ide.new.project.settings"));
+    JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel, true);
     final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group);
-    if (Registry.is("ide.new.project.settings")) {
-      toolbarPanel.setBorder(new CustomLineBorder(1,0,0,0));
-    }
+    toolbarPanel.setBorder(new CustomLineBorder(1, 0, 0, 0));
     entriesPanel.add(toolbarPanel, BorderLayout.CENTER);
 
-    final JBSplitter splitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false) : new JBSplitter(false);
+    final JBSplitter splitter = new OnePixelSplitter(false);
     splitter.setProportion(0.6f);
     splitter.setHonorComponentsMinimumSize(true);
 
     myRootTreeEditor = createContentEntryTreeEditor(project);
     final JComponent component = myRootTreeEditor.createComponent();
-    if (Registry.is("ide.new.project.settings")) {
-      component.setBorder(new CustomLineBorder(1,0,0,0));
-    }
+    component.setBorder(new CustomLineBorder(1, 0, 0, 0));
 
     splitter.setFirstComponent(component);
     splitter.setSecondComponent(entriesPanel);
     JPanel contentPanel = new JPanel(new GridBagLayout());
-    if (!Registry.is("ide.new.project.settings")) {
-      contentPanel.setBorder(BorderFactory.createEtchedBorder());
-    }
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myRootTreeEditor.getEditingActionsGroup(), true);
     contentPanel.add(new JLabel("Mark as:"),
                      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, new Insets(0, 10, 0, 10), 0, 0));
@@ -254,11 +243,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     if (componentBorder != null) {
       border = BorderFactory.createCompoundBorder(border, componentBorder);
     }
-    if (Registry.is("ide.new.project.settings")) {
-      component.setBorder(new EmptyBorder(0,0,0,0));
-    } else {
-      component.setBorder(border);
-    }
+    component.setBorder(new EmptyBorder(0, 0, 0, 0));
     myEditorsPanel.add(component);
   }
 

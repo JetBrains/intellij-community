@@ -48,6 +48,7 @@ public interface RefEntity extends UserDataHolder {
    *
    * @return the list of children.
    */
+  @Nullable
   List<RefEntity> getChildren();
 
   /**

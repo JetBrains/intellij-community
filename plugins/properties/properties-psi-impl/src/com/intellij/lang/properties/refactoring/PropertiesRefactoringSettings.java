@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,20 @@
  */
 package com.intellij.lang.properties.refactoring;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
   name = "PropertiesRefactoringSettings",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage("baseRefactoring.xml"),
+    @Storage(value = "other.xml", deprecated = true)
+  }
 )
 public class PropertiesRefactoringSettings implements PersistentStateComponent<PropertiesRefactoringSettings> {
-
-
   public boolean RENAME_SEARCH_IN_COMMENTS = false;
 
   public static PropertiesRefactoringSettings getInstance() {

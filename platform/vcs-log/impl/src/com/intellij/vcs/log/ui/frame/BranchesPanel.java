@@ -1,19 +1,15 @@
 package com.intellij.vcs.log.ui.frame;
 
-import com.google.common.collect.Ordering;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.RefsModel;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogRefs;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
@@ -23,15 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Panel with branch labels, above the graph.
@@ -39,100 +32,40 @@ import java.util.Map;
 public class BranchesPanel extends JPanel {
   private static final int SMALL_ROOTS_GAP = 3;
   private static final int BIG_ROOTS_GAP = 7;
-  private static final int VERTICAL_SPACE = 3;
-  private final VcsLogDataHolder myDataHolder;
-  private final VcsLogUiImpl myUI;
+  private static final int TOP = 2;
+  private static final int BOTTOM = 3;
+  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogUiImpl myUi;
+  @NotNull private final VcsRefPainter myReferencePainter;
 
-  private LinkedHashMap<VirtualFile, List<RefGroup>> myRefGroups;
-  private final VcsRefPainter myReferencePainter;
+  @NotNull private LinkedHashMap<VirtualFile, List<RefGroup>> myRefGroups;
   @Nullable private Collection<VirtualFile> myRoots = null;
 
-  private Map<Integer, RefGroup> myRefPositions = ContainerUtil.newHashMap();
+  public BranchesPanel(@NotNull VcsLogDataManager dataManager, @NotNull VcsLogUiImpl ui, @NotNull VcsLogRefs initialRefsModel) {
+    super(new FlowLayout(FlowLayout.LEADING, BIG_ROOTS_GAP - 2 * SMALL_ROOTS_GAP, 0));
+    setBorder(new EmptyBorder(TOP, SMALL_ROOTS_GAP, BOTTOM, SMALL_ROOTS_GAP));
 
-  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl UI, @NotNull RefsModel initialRefsModel) {
-    myDataHolder = dataHolder;
-    myUI = UI;
+    myDataManager = dataManager;
+    myUi = ui;
     myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
-    myReferencePainter = new VcsRefPainter(myUI.getColorManager(), true);
+    myReferencePainter = new VcsRefPainter(myUi.getColorManager(), true);
 
-    setPreferredSize(new Dimension(-1, myReferencePainter.getHeight(this) + UIUtil.DEFAULT_VGAP + VERTICAL_SPACE));
-
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (!myUI.getMainFrame().areGraphActionsEnabled()) {
-          return;
-        }
-
-        final RefGroup group = findRef(e);
-        if (group == null) {
-          return;
-        }
-        if (group.getRefs().size() == 1) {
-          VcsRef ref = group.getRefs().iterator().next();
-          myUI.jumpToCommit(ref.getCommitHash(), ref.getRoot());
-        }
-        else {
-          final ReferencePopupComponent view = new ReferencePopupComponent(group, myUI, myReferencePainter);
-          JBPopup popup = view.getPopup();
-          popup.show(new RelativePoint(BranchesPanel.this, new Point(e.getX(), BranchesPanel.this.getHeight())));
-        }
-      }
-    });
-
-    myUI.addLogListener(new VcsLogListener() {
-      @Override
-      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refresh) {
-        if (refresh) {
-          rebuild(dataPack.getRefs());
-        }
-      }
-    });
+    recreateComponents();
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    return new Dimension(-1, myReferencePainter.getHeight(this) + 10);
-  }
-
-  @Nullable
-  private RefGroup findRef(MouseEvent e) {
-    List<Integer> sortedPositions = Ordering.natural().sortedCopy(myRefPositions.keySet());
-    int index = Ordering.natural().binarySearch(sortedPositions, e.getX());
-    if (index < 0) {
-      index = -index - 2;
-    }
-    if (index < 0) {
-      return null;
-    }
-    return myRefPositions.get(sortedPositions.get(index));
-  }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    myRefPositions = ContainerUtil.newHashMap();
-    int paddingX = BIG_ROOTS_GAP;
+  private void recreateComponents() {
     for (Map.Entry<VirtualFile, List<RefGroup>> entry : myRefGroups.entrySet()) {
-      VirtualFile root = entry.getKey();
-      for (RefGroup group : entry.getValue()) {
-        // it is assumed here that all refs in a single group belong to a single root
-        if (myRoots == null || myRoots.contains(root)) {
-          Color rootIndicatorColor = VcsLogColorManagerImpl.getIndicatorColor(myUI.getColorManager().getRootColor(root));
-          Rectangle rectangle = myReferencePainter
-            .paint(group.getName(), g, paddingX, (getHeight() - myReferencePainter.getHeight(this)) / 2 - VERTICAL_SPACE,
-                   group.getBgColor(),
-                   rootIndicatorColor);
-          paddingX += rectangle.width + SMALL_ROOTS_GAP;
-          myRefPositions.put(rectangle.x, group);
-        }
+      if (myRoots == null || myRoots.contains(entry.getKey())) {
+        add(new RootGroupComponent(entry.getValue(), entry.getKey()));
       }
-      paddingX += BIG_ROOTS_GAP - SMALL_ROOTS_GAP;
     }
   }
 
   public void rebuild(@NotNull VcsLogRefs refsModel) {
     myRefGroups = getRefsToDisplayOnPanel(refsModel);
-    getParent().repaint();
+    removeAll();
+    recreateComponents();
+    getParent().validate();
   }
 
   @NotNull
@@ -140,20 +73,18 @@ public class BranchesPanel extends JPanel {
     Collection<VcsRef> allRefs = refsModel.getBranches();
 
     LinkedHashMap<VirtualFile, List<RefGroup>> groups = ContainerUtil.newLinkedHashMap();
-    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
-      VirtualFile root = entry.getKey();
-      List<RefGroup> list = ContainerUtil.newArrayList();
-      list.addAll(expandExpandableGroups(myDataHolder.getLogProvider(root).getReferenceManager().group(entry.getValue())));
-      groups.put(root, list);
+    for (Map.Entry<VirtualFile, Set<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
+      groups.put(entry.getKey(),
+                 expandExpandableGroups(myDataManager.getLogProvider(entry.getKey()).getReferenceManager().group(entry.getValue())));
     }
 
     return groups;
   }
 
-  private static Collection<RefGroup> expandExpandableGroups(List<RefGroup> refGroups) {
-    Collection<RefGroup> groups = ContainerUtil.newArrayList();
+  private static List<RefGroup> expandExpandableGroups(List<RefGroup> refGroups) {
+    List<RefGroup> groups = ContainerUtil.newArrayList();
     for (RefGroup group : refGroups) {
-      if (group.isExpanded()) {
+      if (group.isExpanded() || group.getRefs().size() == 1) {
         groups.addAll(ContainerUtil.map(group.getRefs(), new Function<VcsRef, RefGroup>() {
           @Override
           public RefGroup fun(VcsRef ref) {
@@ -169,139 +100,90 @@ public class BranchesPanel extends JPanel {
   }
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    myRoots = VcsLogUtil.getAllVisibleRoots(myDataHolder.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
-    getParent().repaint();
+    myRoots = VcsLogUtil.getAllVisibleRoots(myDataManager.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
+    removeAll();
+    recreateComponents();
+    getParent().validate();
   }
 
-  private static class ReferencePopupComponent extends JPanel {
-    @NotNull private final JBPopup myPopup;
-    @NotNull private final JBList myList;
-    @NotNull private final VcsLogUiImpl myUi;
-    @NotNull private final SingleReferenceComponent myRendererComponent;
-    @NotNull private final ListCellRenderer myCellRenderer;
-
-    ReferencePopupComponent(@NotNull RefGroup group, @NotNull VcsLogUiImpl ui, @NotNull VcsRefPainter referencePainter) {
-      super(new BorderLayout());
-      myUi = ui;
-
-      myRendererComponent = new SingleReferenceComponent(referencePainter);
-      myCellRenderer = new ListCellRenderer() {
-        @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          myRendererComponent.setReference((VcsRef)value);
-          myRendererComponent.setSelected(isSelected);
-          return myRendererComponent;
-        }
-      };
-
-      myList = createList(group);
-      myPopup = createPopup();
-      add(new JBScrollPane(myList));
+  public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
+    if (permGraphChanged) {
+      rebuild(dataPack.getRefs());
     }
+  }
 
-    private JBList createList(RefGroup group) {
-      JBList list = new JBList(createListModel(group));
-      list.setCellRenderer(myCellRenderer);
-      ListUtil.installAutoSelectOnMouseMove(list);
-      list.setSelectedIndex(0);
-      list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+  public JComponent createScrollPane() {
+    JBScrollPane scrollPane =
+      new JBScrollPane(this, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+    scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 0));
+    scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder());
+    return scrollPane;
+  }
 
-      jumpOnMouseClick(list);
-      jumpOnEnter(list);
+  private class RootGroupComponent extends JPanel {
+    @NotNull private final List<RefGroup> myGroups;
 
-      return list;
-    }
+    private RootGroupComponent(@NotNull List<RefGroup> groups, @NotNull VirtualFile root) {
+      super(new FlowLayout(FlowLayout.LEADING, SMALL_ROOTS_GAP, 0));
+      myGroups = groups;
 
-    private void jumpOnMouseClick(JBList list) {
-      list.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          jumpToSelectedRef();
-        }
-      });
-    }
-
-    private void jumpOnEnter(JBList list) {
-      list.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyTyped(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            jumpToSelectedRef();
-          }
-        }
-      });
-    }
-
-    private JBPopup createPopup() {
-      return JBPopupFactory.getInstance().
-        createComponentPopupBuilder(this, myList).
-        setCancelOnClickOutside(true).
-        setCancelOnWindowDeactivation(true).
-        setFocusable(true).
-        setRequestFocus(true).
-        setResizable(true).
-        setDimensionServiceKey(myUi.getProject(), "Vcs.Log.Branch.Panel.RefGroup.Popup", false).
-        createPopup();
-    }
-
-    private static DefaultListModel createListModel(RefGroup group) {
-      DefaultListModel model = new DefaultListModel();
-      for (final VcsRef vcsRef : group.getRefs()) {
-        model.addElement(vcsRef);
-      }
-      return model;
-    }
-
-    @NotNull
-    JBPopup getPopup() {
-      return myPopup;
-    }
-
-    private void jumpToSelectedRef() {
-      myPopup.cancel(); // close the popup immediately not to stay at the front if jumping to a commits takes long time.
-      VcsRef selectedRef = (VcsRef)myList.getSelectedValue();
-      if (selectedRef != null) {
-        myUi.jumpToCommit(selectedRef.getCommitHash(), selectedRef.getRoot());
+      for (RefGroup group : myGroups) {
+        add(new ReferenceGroupComponent(group, myReferencePainter, myUi, root));
       }
     }
   }
 
-  private static class SingleReferenceComponent extends JPanel {
-    private static final int PADDING_Y = 2;
-    private static final int PADDING_X = 5;
+  private static class ReferenceGroupComponent extends JPanel {
+    @NotNull private final RefGroup myGroup;
     @NotNull private final VcsRefPainter myReferencePainter;
+    @NotNull private final VcsLogUiImpl myUI;
+    @NotNull private final VirtualFile myRoot;
 
-    @Nullable private VcsRef myReference;
-    public boolean mySelected;
-
-    public SingleReferenceComponent(@NotNull VcsRefPainter referencePainter) {
+    private ReferenceGroupComponent(@NotNull RefGroup group,
+                                    @NotNull VcsRefPainter referencePainter,
+                                    @NotNull VcsLogUiImpl ui,
+                                    @NotNull VirtualFile root) {
+      myGroup = group;
       myReferencePainter = referencePainter;
+      myUI = ui;
+      myRoot = root;
+      addMouseListener(new MyMouseAdapter());
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(mySelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
-      g.fillRect(0, 0, getWidth(), getHeight());
-
-      if (myReference != null) {
-        myReferencePainter.paint(myReference, g, PADDING_X, PADDING_Y);
-      }
+      Color rootIndicatorColor = VcsLogColorManagerImpl.getIndicatorColor(myUI.getColorManager().getRootColor(myRoot));
+      myReferencePainter
+        .paint(myGroup.getName(), g, 0, (getHeight() - myReferencePainter.getHeight(this)) / 2, myGroup.getBgColor(), rootIndicatorColor);
     }
 
     @Override
     public Dimension getPreferredSize() {
-      if (myReference == null) return super.getPreferredSize();
-      Dimension size = myReferencePainter.getSize(myReference, this);
-      return new Dimension(size.width + 2 * PADDING_X, size.height + 2 * PADDING_Y);
+      return myReferencePainter.getSize(myGroup.getName(), this);
     }
 
-    public void setReference(@NotNull VcsRef reference) {
-      myReference = reference;
+    @Override
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
     }
 
-    public void setSelected(boolean selected) {
-      mySelected = selected;
+    private class MyMouseAdapter extends MouseAdapter {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (!myUI.areGraphActionsEnabled()) {
+          return;
+        }
+
+        if (myGroup.getRefs().size() == 1) {
+          VcsRef ref = myGroup.getRefs().iterator().next();
+          myUI.jumpToCommit(ref.getCommitHash(), ref.getRoot());
+        }
+        else {
+          ReferencePopupBuilder popupBuilder = new ReferencePopupBuilder(myGroup, myUI);
+          popupBuilder.getPopup().showUnderneathOf(ReferenceGroupComponent.this);
+        }
+      }
     }
   }
-
 }

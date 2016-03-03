@@ -40,8 +40,11 @@ public enum AntialiasingType {
 
   public static Object getKeyForCurrentScope(boolean inEditor) {
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings == null) return RenderingHints.VALUE_TEXT_ANTIALIAS_ON;
-    return inEditor ? uiSettings.EDITOR_AA_TYPE.myHint : uiSettings.IDE_AA_TYPE.myHint;
+    if (uiSettings != null) {
+      AntialiasingType type = inEditor ? uiSettings.EDITOR_AA_TYPE : uiSettings.IDE_AA_TYPE;
+      if (type != null) return type.myHint;
+    }
+    return RenderingHints.VALUE_TEXT_ANTIALIAS_ON;
   }
 
   private final String myName;

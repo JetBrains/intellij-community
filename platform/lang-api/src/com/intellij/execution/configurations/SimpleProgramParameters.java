@@ -67,12 +67,16 @@ public class SimpleProgramParameters {
     myPassParentEnvs = passDefaultEnvs;
   }
 
+  /**
+  * @deprecated Use {@link #setEnv(Map)} and {@link #setPassParentEnvs(boolean)} instead with already preprocessed variables.
+  */
+  @Deprecated 
   public void setupEnvs(Map<String, String> envs, boolean passDefault) {
     if (!envs.isEmpty()) {
-      final HashMap<String, String> map = new HashMap<String, String>(envs);
-      EnvironmentUtil.inlineParentOccurrences(map);
-      setEnv(map);
-      setPassParentEnvs(passDefault);
+      envs = new HashMap<String, String>(envs);
+      EnvironmentUtil.inlineParentOccurrences(envs);
     }
+    setEnv(envs);
+    setPassParentEnvs(passDefault);
   }
 }

@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -88,7 +87,7 @@ public class GitFetcher {
       return fetchCurrentRemote(repository);
     }
 
-    VfsUtil.markDirtyAndRefresh(false, true, false, repository.getGitDir());
+    repository.getRepositoryFiles().refresh(false);
     return fetchResult;
   }
 

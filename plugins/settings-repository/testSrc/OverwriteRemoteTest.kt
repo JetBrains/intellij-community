@@ -1,11 +1,10 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.file
-import com.intellij.testFramework.isDirectory
-import com.intellij.testFramework.readBytes
+import com.intellij.util.directoryStreamIfExists
+import com.intellij.util.readBytes
 import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
-import java.nio.file.Files
 
 // empty means "no files, no HEAD, no commits"
 internal class OverwriteRemote : GitTestCase() {
@@ -37,8 +36,8 @@ internal class OverwriteRemote : GitTestCase() {
     configureLocalRepository()
 
     val root = fs.getPath("/")
-    if (root.isDirectory()) {
-      for (path in Files.newDirectoryStream(root)) {
+    root.directoryStreamIfExists {
+      for (path in it) {
         provider.write(path.toString().substring(1), path.readBytes())
       }
       repositoryManager.commit()

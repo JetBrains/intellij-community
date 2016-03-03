@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module exceptions
 # from (built-in)
-# by generator 1.124
+# by generator 1.138
 """
 Python's standard exception class hierarchy.
 
@@ -68,7 +68,11 @@ class BaseException(object):
         return u""
 
     args = property(lambda self: tuple())
+    """:type: tuple"""
+
     message = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """:type: string"""
+
 
     __dict__ = None # (!) real value is ''
 
@@ -196,8 +200,23 @@ class EnvironmentError(StandardError):
         pass
 
     errno = property(lambda self: 0, lambda self, v: None, lambda self: None)
+    """exception errno
+
+    :type: int
+    """
+
     filename = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """exception filename
+
+    :type: string
+    """
+
     strerror = property(lambda self: 0, lambda self, v: None, lambda self: None)
+    """exception strerror
+
+    :type: int
+    """
+
 
 
 class EOFError(StandardError):
@@ -284,11 +303,41 @@ class SyntaxError(StandardError):
         pass
 
     filename = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """exception filename
+
+    :type: string
+    """
+
     lineno = property(lambda self: 0, lambda self, v: None, lambda self: None)
+    """exception lineno
+
+    :type: int
+    """
+
     msg = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """exception msg
+
+    :type: string
+    """
+
     offset = property(lambda self: 0, lambda self, v: None, lambda self: None)
+    """exception offset
+
+    :type: int
+    """
+
     print_file_and_line = property(lambda self: True, lambda self, v: None, lambda self: None)
+    """exception print_file_and_line
+
+    :type: bool
+    """
+
     text = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """exception text
+
+    :type: string
+    """
+
 
 
 class IndentationError(SyntaxError):
@@ -583,11 +632,21 @@ class UnicodeDecodeError(UnicodeError):
         """ x.__str__() <==> str(x) """
         pass
 
-    encoding = property(lambda self: object()) # default
-    end = property(lambda self: object()) # default
-    object = property(lambda self: object()) # default
-    reason = property(lambda self: object()) # default
-    start = property(lambda self: object()) # default
+    encoding = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception encoding"""
+
+    end = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception end"""
+
+    object = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception object"""
+
+    reason = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception reason"""
+
+    start = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception start"""
+
 
 
 class UnicodeEncodeError(UnicodeError):
@@ -605,10 +664,30 @@ class UnicodeEncodeError(UnicodeError):
         pass
 
     encoding = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """exception encoding
+
+    :type: string
+    """
+
     end = property(lambda self: 0, lambda self, v: None, lambda self: None)
+    """exception end
+
+    :type: int
+    """
+
     object = property(lambda self: object(), lambda self, v: None, lambda self: None)
     reason = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """exception reason
+
+    :type: string
+    """
+
     start = property(lambda self: 0, lambda self, v: None, lambda self: None)
+    """exception start
+
+    :type: int
+    """
+
 
 
 class UnicodeTranslateError(UnicodeError):
@@ -626,10 +705,30 @@ class UnicodeTranslateError(UnicodeError):
         pass
 
     encoding = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """exception encoding
+
+    :type: string
+    """
+
     end = property(lambda self: 0, lambda self, v: None, lambda self: None)
+    """exception end
+
+    :type: int
+    """
+
     object = property(lambda self: object(), lambda self, v: None, lambda self: None)
     reason = property(lambda self: '', lambda self, v: None, lambda self: None)
+    """exception reason
+
+    :type: string
+    """
+
     start = property(lambda self: 0, lambda self, v: None, lambda self: None)
+    """exception start
+
+    :type: int
+    """
+
 
 
 class UnicodeWarning(Warning):

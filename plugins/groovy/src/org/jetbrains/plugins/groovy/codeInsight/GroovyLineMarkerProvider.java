@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInsight;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.icons.AllIcons;
@@ -67,13 +66,10 @@ import java.util.*;
  * @author ilyas
  * Same logic as for Java LMP
  */
-public class GroovyLineMarkerProvider implements LineMarkerProvider {
-  private final DaemonCodeAnalyzerSettings myDaemonSettings;
-  private final EditorColorsManager myColorsManager;
+public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
   public GroovyLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
-    myDaemonSettings = daemonSettings;
-    myColorsManager = colorsManager;
+    super(daemonSettings, colorsManager);
   }
 
   @Override
@@ -207,7 +203,7 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider {
         }
       }
       else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-        JavaLineMarkerProvider.collectInheritingClasses((PsiClass)element, result, subClassCache);
+        collectInheritingClasses((PsiClass)element, result, subClassCache);
       }
     }
     collectOverridingMethods(methods, result);

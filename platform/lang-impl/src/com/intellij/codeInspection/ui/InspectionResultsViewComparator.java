@@ -80,7 +80,11 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node2 instanceof InspectionModuleNode) return 1;
 
     if (node1 instanceof InspectionPackageNode && node2 instanceof InspectionPackageNode) {
-      return ((InspectionPackageNode)node1).getPackageName().compareToIgnoreCase(((InspectionPackageNode)node2).getPackageName());
+      final int nonQualified = ((InspectionPackageNode)node1).getPackageName().compareToIgnoreCase(((InspectionPackageNode)node2).getPackageName());
+      if (nonQualified != 0) {
+        return nonQualified;
+      }
+      return nonQualified;
     }
     if (node1 instanceof InspectionPackageNode) return -1;
     if (node2 instanceof InspectionPackageNode) return 1;
@@ -159,10 +163,17 @@ public class InspectionResultsViewComparator implements Comparator {
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
-      return PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+      final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+      if (positionComparing != 0) {
+        return positionComparing;
+      }
     }
     if (entity1 != null && entity2 != null) {
-      return entity1.getName().compareToIgnoreCase(entity2.getName());
+      final int nameComparing = entity1.getName().compareToIgnoreCase(entity2.getName());
+      if (nameComparing != 0) {
+        return nameComparing;
+      }
+      return entity1.getQualifiedName().compareToIgnoreCase(entity2.getQualifiedName());
     }
     if (entity1 != null) return -1;
     return entity2 != null ? 1 : 0;

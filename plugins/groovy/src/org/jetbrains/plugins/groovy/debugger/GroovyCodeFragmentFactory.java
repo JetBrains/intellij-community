@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,6 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     boolean isStatic = isStaticContext(context);
     StringBuilder javaText = new StringBuilder();
 
-    javaText.append("groovy.lang.MetaClass |mc;\n");
     javaText.append("java.lang.Class |clazz;\n");
 
     if (!isStatic) {
@@ -135,12 +134,10 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
     if (!isStatic) {
       javaText.append("|clazz = |thiz0.getClass();\n");
-      javaText.append("|mc = |thiz0.getMetaClass();\n");
     }
     else {
       assert contextClass != null;
       javaText.append("|clazz = java.lang.Class.forName(\"").append(ClassUtil.getJVMClassName(contextClass)).append("\");\n");
-      javaText.append("|mc = groovy.lang.GroovySystem.getMetaClassRegistry().getMetaClass(|clazz);\n");
     }
 
     javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
@@ -247,6 +244,12 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
             value = name;
           }
           parameters.put(name, value);
+          return;
+        }
+
+        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+          String name = referenceExpression.getReferenceName();
+          parameters.put(name, name);
         }
       }
 
@@ -331,9 +334,19 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
   @Override
   public boolean isContextAccepted(PsiElement context) {
-    return context != null && context.getLanguage().equals(GroovyLanguage.INSTANCE);
+    if (context != null) {
+      if (context.getLanguage().equals(GroovyLanguage.INSTANCE)) {
+        return true;
+      }
+      if (JavaPsiFacade.getInstance(context.getProject())
+            .findClass("org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
+  @NotNull
   @Override
   public LanguageFileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;

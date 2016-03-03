@@ -280,6 +280,42 @@ class Foo {
     assert 'Bar' in myFixture.lookupElementStrings
   }
 
+  public void "test variableOfType suggests inner static classes"() {
+    myFixture.addClass('public interface MyCallback {}')
+    myFixture.addClass('''
+class MyUtils {
+  public static void doSomethingWithCallback(MyCallback cb) { }
+}
+''')
+    myFixture.configureByText 'a.java', '''
+class Outer {
+  static class Inner implements MyCallback {
+    void aMethod() {
+      <caret>
+    }
+  }
+}
+'''
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("myCbDo", "user", 'MyUtils.doSomethingWithCallback($CB$)')
+
+    MacroCallNode call = new MacroCallNode(new VariableOfTypeMacro())
+    call.addParameter(new ConstantNode("MyCallback"))
+    template.addVariable('CB', call, new EmptyNode(), false)
+    startTemplate(template)
+
+    checkResultByText '''
+class Outer {
+  static class Inner implements MyCallback {
+    void aMethod() {
+      MyUtils.doSomethingWithCallback(this)
+    }
+  }
+}
+'''
+  }
+
   private void checkResult() {
     checkResultByFile(getTestName(false) + "-out.java");
   }
@@ -788,7 +824,7 @@ class Foo {
     final Template template = manager.createTemplate("result", "user", '$A$ $B$ c');
     template.addVariable('A', new EmptyNode(), true)
 
-    def macroCallNode = new MacroCallNode(new SnakeCaseMacro())
+    def macroCallNode = new MacroCallNode(new SplitWordsMacro.SnakeCaseMacro())
     macroCallNode.addParameter(new VariableNode('A', null))
     template.addVariable('B', macroCallNode, false)
 
@@ -1097,5 +1133,17 @@ class Foo {
   }
 }
 """)
+  }
+
+  public void "test sout template in expression lambda"() {
+    myFixture.configureByText 'a.java', '''class Foo {{
+  strings.stream().forEach(o -> sout<caret>);
+}}
+'''
+    myFixture.type('\t')
+    myFixture.checkResult '''class Foo {{
+  strings.stream().forEach(o -> System.out.println(<caret>));
+}}
+'''
   }
 }

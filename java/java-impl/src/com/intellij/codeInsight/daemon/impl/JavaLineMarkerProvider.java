@@ -53,9 +53,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
-  private final DaemonCodeAnalyzerSettings myDaemonSettings;
-  private final EditorColorsManager myColorsManager;
-  private final Option myLambdaOption = new Option("java.lambda", "Lambda", AllIcons.Gutter.ImplementingFunctional);
+  protected final DaemonCodeAnalyzerSettings myDaemonSettings;
+  protected final EditorColorsManager myColorsManager;
+  private final Option myLambdaOption = new Option("java.lambda", "Lambda", AllIcons.Gutter.ImplementingFunctionalInterface);
+  private final Option myOverriddenOption = new Option("java.overridden", "Overridden method", AllIcons.Gutter.OverridenMethod);
+  private final Option myImplementedOption = new Option("java.implemented", "Implemented method", AllIcons.Gutter.ImplementedMethod);
+  private final Option myOverridingOption = new Option("java.overriding", "Overriding method", AllIcons.Gutter.OverridingMethod);
+  private final Option myImplementingOption = new Option("java.implementing", "Implementing method", AllIcons.Gutter.ImplementingMethod);
 
   public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
     myDaemonSettings = daemonSettings;
@@ -67,21 +71,30 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     PsiElement parent;
     if (element instanceof PsiIdentifier && (parent = element.getParent()) instanceof PsiMethod) {
+      if (!myOverridingOption.isEnabled() && !myImplementingOption.isEnabled()) return null;
       PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superSignature != null) {
         boolean overrides =
           method.hasModifierProperty(PsiModifier.ABSTRACT) == superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
 
-        final Icon icon = overrides ? AllIcons.Gutter.OverridingMethod : AllIcons.Gutter.ImplementingMethod;
+        final Icon icon;
+        if (overrides) {
+          if (!myOverridingOption.isEnabled()) return null;
+          icon = AllIcons.Gutter.OverridingMethod;
+        }
+        else {
+          if (!myImplementingOption.isEnabled()) return null;
+          icon = AllIcons.Gutter.ImplementingMethod;
+        }
         return createSuperMethodLineMarkerInfo(element, icon, Pass.UPDATE_ALL);
       }
     }
 
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
     final PsiElement firstChild = element.getFirstChild();
-    if (interfaceMethod != null && firstChild != null && LineMarkerSettings.getSettings().isEnabled(myLambdaOption)) {
-      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctional, Pass.UPDATE_ALL);
+    if (interfaceMethod != null && firstChild != null && myLambdaOption.isEnabled()) {
+      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctionalInterface, Pass.UPDATE_ALL);
     }
 
     if (myDaemonSettings.SHOW_METHOD_SEPARATORS && firstChild == null) {
@@ -216,7 +229,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     return range;
   }
 
-  public static void collectInheritingClasses(@NotNull PsiClass aClass,
+  protected void collectInheritingClasses(@NotNull PsiClass aClass,
                                               @NotNull Collection<LineMarkerInfo> result,
                                               @NotNull Map<PsiClass, PsiClass> subClassCache) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -226,7 +239,15 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     PsiClass subClass = subClassCache.get(aClass);
     if (subClass != null || FunctionalExpressionSearch.search(aClass).findFirst() != null) {
-      final Icon icon = aClass.isInterface() ? AllIcons.Gutter.ImplementedMethod : AllIcons.Gutter.OverridenMethod;
+      final Icon icon;
+      if (aClass.isInterface()) {
+        if (!myImplementedOption.isEnabled()) return;
+        icon = AllIcons.Gutter.ImplementedMethod;
+      }
+      else {
+        if (!myOverriddenOption.isEnabled()) return;
+        icon = AllIcons.Gutter.OverridenMethod;
+      }
       PsiElement range = aClass.getNameIdentifier();
       if (range == null) {
         range = aClass;
@@ -241,7 +262,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
   }
 
-  private static void collectOverridingMethods(@NotNull final Collection<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
+  private void collectOverridingMethods(@NotNull final Collection<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
+    if (!myOverriddenOption.isEnabled() && !myImplementedOption.isEnabled()) return;
     final Set<PsiMethod> overridden = new HashSet<PsiMethod>();
     Set<PsiClass> classes = new THashSet<PsiClass>();
     for (PsiMethod method : methods) {
@@ -281,7 +303,12 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     for (PsiMethod method : overridden) {
       ProgressManager.checkCanceled();
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
-
+      if (overrides) {
+        if (!myOverriddenOption.isEnabled()) return;
+      }
+      else {
+        if (!myImplementedOption.isEnabled()) return;
+      }
       PsiElement range = getMethodRange(method);
       final MarkerType type = MarkerType.OVERRIDDEN_METHOD;
       final Icon icon = overrides ? AllIcons.Gutter.OverridenMethod : AllIcons.Gutter.ImplementedMethod;
@@ -301,7 +328,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public Option[] getOptions() {
-    return new Option[] {myLambdaOption};
+    return new Option[] {myLambdaOption, myOverriddenOption, myImplementedOption, myOverridingOption, myImplementingOption};
   }
 
   private static class ArrowUpLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {

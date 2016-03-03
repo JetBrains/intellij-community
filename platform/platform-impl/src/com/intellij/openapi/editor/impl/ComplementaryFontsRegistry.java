@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -37,11 +38,13 @@ import java.util.List;
  * @author max
  */
 public class ComplementaryFontsRegistry {
+  private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
+  
   private static final Object lock = new String("common lock");
   private static final List<String> ourFontNames;
   private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<String, Pair<String, Integer>[]>();
   private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
-  private static FontKey ourSharedKeyInstance = new FontKey("", 0, 0);
+  private static FontKey ourSharedKeyInstance = new FontKey("", 0, 0, false);
   private static FontInfo ourSharedDefaultFont;
   private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
   private static boolean ourOldUseAntialiasing;
@@ -60,6 +63,8 @@ public class ComplementaryFontsRegistry {
     FONT_NAME_TO_STYLE.put("AnkaCoder-bi",          Font.BOLD | Font.ITALIC);
     FONT_NAME_TO_STYLE.put("SourceCodePro-It",      Font.ITALIC);
     FONT_NAME_TO_STYLE.put("SourceCodePro-BoldIt",  Font.BOLD | Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("Hasklig-It",            Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("Hasklig-BoldIt",        Font.BOLD | Font.ITALIC);
   }
 
   static {
@@ -86,14 +91,16 @@ public class ComplementaryFontsRegistry {
   }
 
   private static class FontKey {
-    public String myFamilyName;
-    public int mySize;
-    public int myStyle;
+    private String myFamilyName;
+    private int mySize;
+    private int myStyle;
+    private boolean myUseLigatures;
 
-    public FontKey(@NotNull String familyName, final int size, @JdkConstants.FontStyle int style) {
+    public FontKey(@NotNull String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures) {
       myFamilyName = familyName;
       mySize = size;
       myStyle = style;
+      myUseLigatures = useLigatures;
     }
 
     public boolean equals(final Object o) {
@@ -102,6 +109,7 @@ public class ComplementaryFontsRegistry {
 
       if (mySize != fontKey.mySize) return false;
       if (myStyle != fontKey.myStyle) return false;
+      if (myUseLigatures != fontKey.myUseLigatures) return false;
       return myFamilyName.equals(fontKey.myFamilyName);
     }
 
@@ -109,6 +117,9 @@ public class ComplementaryFontsRegistry {
       int result = myFamilyName.hashCode();
       result = 29 * result + mySize;
       result = 29 * result + myStyle;
+      if (myUseLigatures) {
+        result = 29 * result + 1;
+      }
       return result;
     }
   }
@@ -182,11 +193,12 @@ public class ComplementaryFontsRegistry {
   public static FontInfo getFontAbleToDisplay(int codePoint, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences) {
     boolean tryDefaultFont = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
+    boolean useLigatures = preferences.useLigatures();
     FontInfo result;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, len = fontFamilies.size(); i < len; ++i) { // avoid foreach, it instantiates ArrayList$Itr, this traversal happens very often
       final String fontFamily = fontFamilies.get(i);
-      result = doGetFontAbleToDisplay(codePoint, preferences.getSize(fontFamily), style, fontFamily);
+      result = doGetFontAbleToDisplay(codePoint, preferences.getSize(fontFamily), style, fontFamily, useLigatures);
       if (result != null) {
         return result;
       }
@@ -197,25 +209,30 @@ public class ComplementaryFontsRegistry {
       size = preferences.getSize(fontFamilies.get(0));
     }
     if (tryDefaultFont) {
-      result = doGetFontAbleToDisplay(codePoint, size, style, FontPreferences.DEFAULT_FONT_NAME);
+      result = doGetFontAbleToDisplay(codePoint, size, style, FontPreferences.DEFAULT_FONT_NAME, useLigatures);
       if (result != null) {
         return result;
       }
     }
-    return doGetFontAbleToDisplay(codePoint, size, style);
+    result = doGetFontAbleToDisplay(codePoint, size, style, useLigatures);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Fallback font: " + result.getFont().getFontName());
+    }
+    return result;
   }
   
   @NotNull
   public static FontInfo getFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
-    FontInfo result = doGetFontAbleToDisplay(codePoint, size, style, defaultFontFamily);
+    FontInfo result = doGetFontAbleToDisplay(codePoint, size, style, defaultFontFamily, false);
     if (result != null) {
       return result;
     }
-    return doGetFontAbleToDisplay(codePoint, size, style);
+    return doGetFontAbleToDisplay(codePoint, size, style, false);
   }
 
   @Nullable
-  private static FontInfo doGetFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int originalStyle, @NotNull String defaultFontFamily) {
+  private static FontInfo doGetFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int originalStyle, 
+                                                 @NotNull String defaultFontFamily, boolean useLigatures) {
     synchronized (lock) {
       @JdkConstants.FontStyle int style = originalStyle;
       if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND && style > 0 && style < 4) {
@@ -229,6 +246,7 @@ public class ComplementaryFontsRegistry {
           ourSharedKeyInstance.myStyle == style &&
           ourSharedKeyInstance.myFamilyName != null &&
           ourSharedKeyInstance.myFamilyName.equals(defaultFontFamily) &&
+          ourSharedKeyInstance.myUseLigatures == useLigatures &&
           ourSharedDefaultFont != null &&
           ( codePoint < 128 ||
             ourSharedDefaultFont.canDisplay(codePoint)
@@ -240,12 +258,13 @@ public class ComplementaryFontsRegistry {
       ourSharedKeyInstance.myFamilyName = defaultFontFamily;
       ourSharedKeyInstance.mySize = size;
       ourSharedKeyInstance.myStyle = style;
+      ourSharedKeyInstance.myUseLigatures = useLigatures;
 
       FontInfo defaultFont = ourUsedFonts.get(ourSharedKeyInstance);
       if (defaultFont == null) {
-        defaultFont = new FontInfo(defaultFontFamily, size, style, originalStyle);
+        defaultFont = new FontInfo(defaultFontFamily, size, style, originalStyle, useLigatures);
         ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
-        ourSharedKeyInstance = new FontKey("", 0, 0);
+        ourSharedKeyInstance = new FontKey("", 0, 0, false);
       }
 
       ourSharedDefaultFont = defaultFont;
@@ -259,22 +278,25 @@ public class ComplementaryFontsRegistry {
   }
   
   @NotNull
-  private static FontInfo doGetFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style) {
+  private static FontInfo doGetFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, boolean useLigatures) {
     synchronized (lock) {
       if (ourUndisplayableChars.contains(codePoint)) return ourSharedDefaultFont;
 
       final Collection<FontInfo> descriptors = ourUsedFonts.values();
       for (FontInfo font : descriptors) {
-        if (font.getSize() == size && font.getStyle() == style && font.canDisplay(codePoint)) {
+        if (font.getSize() == size && 
+            font.getStyle() == style && 
+            font.areLigaturesEnabled() == useLigatures && 
+            font.canDisplay(codePoint)) {
           return font;
         }
       }
 
       for (int i = 0; i < ourFontNames.size(); i++) {
         String name = ourFontNames.get(i);
-        FontInfo font = new FontInfo(name, size, style);
+        FontInfo font = new FontInfo(name, size, style, style, useLigatures);
         if (font.canDisplay(codePoint)) {
-          ourUsedFonts.put(new FontKey(name, size, style), font);
+          ourUsedFonts.put(new FontKey(name, size, style, useLigatures), font);
           ourFontNames.remove(i);
           return font;
         }

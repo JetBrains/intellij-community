@@ -14,9 +14,9 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
@@ -53,7 +53,7 @@ public class HgAnnotateCommand {
     myProject = project;
   }
 
-  public List<HgAnnotationLine> execute(@NotNull HgFile hgFile, VcsFileRevision revision) {
+  public List<HgAnnotationLine> execute(@NotNull HgFile hgFile, @Nullable HgRevisionNumber revision) {
     final List<String> arguments = new ArrayList<String>();
     arguments.add("-cvnudl");
     HgVcs vcs = HgVcs.getInstance(myProject);
@@ -64,8 +64,7 @@ public class HgAnnotateCommand {
     }
     if (revision != null) {
       arguments.add("-r");
-      HgRevisionNumber revisionNumber = (HgRevisionNumber)revision.getRevisionNumber();
-      arguments.add(revisionNumber.getChangeset());
+      arguments.add(revision.getChangeset());
     }
     arguments.add(hgFile.getRelativePath());
     final HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(hgFile.getRepo(), "annotate", arguments);

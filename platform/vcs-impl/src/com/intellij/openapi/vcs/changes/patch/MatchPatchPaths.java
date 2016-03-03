@@ -159,7 +159,7 @@ public class MatchPatchPaths {
         newOrWithoutMatches.add(patch);
         continue;
       }
-      final Collection<VirtualFile> files = findFilesFromIndex(directoryDetector, fileName);
+      final Collection<VirtualFile> files = new ArrayList<VirtualFile>(findFilesFromIndex(directoryDetector, fileName));
       // for directories outside the project scope but under version control
       if (patch.getBeforeName() != null && patch.getBeforeName().startsWith("..")) {
         final VirtualFile relativeFile = VfsUtil.findRelativeFile(myBaseDir, patch.getBeforeName().replace('\\', '/').split("/"));

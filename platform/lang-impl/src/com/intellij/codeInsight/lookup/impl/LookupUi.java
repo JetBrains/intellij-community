@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,20 +41,17 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -69,6 +66,7 @@ import java.util.Collection;
  */
 class LookupUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupUi");
+  @NotNull
   private final LookupImpl myLookup;
   private final Advertiser myAdvertiser;
   private final JBList myList;
@@ -77,7 +75,6 @@ class LookupUi {
   private final Alarm myHintAlarm = new Alarm();
   private final JLabel mySortingLabel = new JLabel();
   private final JScrollPane myScrollPane;
-  private final JButton myScrollBarIncreaseButton;
   private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
   private final JPanel myIconPanel = new JPanel(new BorderLayout());
   private final LookupLayeredPane myLayeredPane = new LookupLayeredPane();
@@ -86,7 +83,7 @@ class LookupUi {
   private int myMaximumHeight = Integer.MAX_VALUE;
   private Boolean myPositionedAbove = null;
 
-  LookupUi(LookupImpl lookup, Advertiser advertiser, JBList list, Project project) {
+  LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list, Project project) {
     myLookup = lookup;
     myAdvertiser = advertiser;
     myList = list;
@@ -100,27 +97,14 @@ class LookupUi {
     adComponent.setBorder(new EmptyBorder(0, 1, 1, 2 + AllIcons.Ide.LookupRelevance.getIconWidth()));
     myLayeredPane.mainPanel.add(adComponent, BorderLayout.SOUTH);
 
-    myScrollBarIncreaseButton = new JButton();
-    myScrollBarIncreaseButton.setFocusable(false);
-    myScrollBarIncreaseButton.setRequestFocusEnabled(false);
-
-    myScrollPane = new JBScrollPane(lookup.getList());
-    myScrollPane.setViewportBorder(JBUI.Borders.empty());
+    myScrollPane = ScrollPaneFactory.createScrollPane(lookup.getList(), true);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    myScrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(13, -1));
-    myScrollPane.getVerticalScrollBar().setUI(new ButtonlessScrollBarUI() {
-      @Override
-      protected JButton createIncreaseButton(int orientation) {
-        return myScrollBarIncreaseButton;
-      }
-    });
     lookup.getComponent().add(myLayeredPane, BorderLayout.CENTER);
 
     //IDEA-82111
     fixMouseCheaters();
 
     myLayeredPane.mainPanel.add(myScrollPane, BorderLayout.CENTER);
-    myScrollPane.setBorder(null);
 
     mySortingLabel.setBorder(new LineBorder(new JBColor(Color.LIGHT_GRAY, JBColor.background())));
     mySortingLabel.setOpaque(true);
@@ -385,15 +369,10 @@ class LookupUi {
 
     private void layoutStatusIcons() {
       int adHeight = myAdvertiser.getAdComponent().getPreferredSize().height;
-      Dimension buttonSize = adHeight > 0 || !mySortingLabel.isVisible() ? new Dimension(0, 0) : new Dimension(
-        AllIcons.Ide.LookupRelevance.getIconWidth(), AllIcons.Ide.LookupRelevance.getIconHeight());
-      myScrollBarIncreaseButton.setPreferredSize(buttonSize);
-      myScrollBarIncreaseButton.setMinimumSize(buttonSize);
-      myScrollBarIncreaseButton.setMaximumSize(buttonSize);
+      int bottomOffset = adHeight > 0 || !mySortingLabel.isVisible() ? 0 : AllIcons.Ide.LookupRelevance.getIconHeight();
       JScrollBar vScrollBar = myScrollPane.getVerticalScrollBar();
-      vScrollBar.revalidate();
-      vScrollBar.repaint();
-      
+      ScrollBottomBorder.update(vScrollBar, bottomOffset);
+
       final Dimension iconSize = myProcessIcon.getPreferredSize();
       myIconPanel.setBounds(getWidth() - iconSize.width - (vScrollBar.isVisible() ? vScrollBar.getWidth() : 0), 0, iconSize.width,
                             iconSize.height);
@@ -474,6 +453,35 @@ class LookupUi {
           updateSorting();
         }
       };
+    }
+  }
+
+  private static class ScrollBottomBorder extends AbstractBorder {
+    private final int myBottomOffset;
+
+    ScrollBottomBorder(int bottomOffset) {
+      myBottomOffset = bottomOffset;
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c, Insets insets) {
+      insets.set(0, 0, myBottomOffset, 0);
+      return insets;
+    }
+
+    static void update(JScrollBar bar, int bottomOffset) {
+      if (bar != null) {
+        Border border = bar.getBorder();
+        if (border instanceof ScrollBottomBorder) {
+          ScrollBottomBorder sbb = (ScrollBottomBorder)border;
+          if (bottomOffset != sbb.myBottomOffset) {
+            bar.setBorder(new ScrollBottomBorder(bottomOffset));
+          }
+        }
+        else if (bottomOffset != 0) {
+          bar.setBorder(new ScrollBottomBorder(bottomOffset));
+        }
+      }
     }
   }
 }

@@ -16,17 +16,16 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.PathUtil;
-import org.gradle.util.GradleVersion;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -44,6 +43,35 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
   }
 
+  @Test
+  public void testTestModuleProperties() throws Exception {
+    importProject(
+      "apply plugin: 'java'"
+    );
+
+    assertModules("project", "project_main", "project_test");
+
+    final Module testModule = getModule("project_test");
+    TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(testModule);
+    assertEquals("project_main", testModuleProperties.getProductionModuleName());
+
+    final Module productionModule = getModule("project_main");
+    assertSame(productionModule, testModuleProperties.getProductionModule());
+  }
+
+  @Test
+  public void testTestModulePropertiesForModuleWithHyphenInName() throws Exception {
+    createSettingsFile("rootProject.name='my-project'");
+    importProject(
+      "apply plugin: 'java'"
+    );
+
+    assertModules("my-project", "my-project_main", "my-project_test");
+
+    final Module testModule = getModule("my-project_test");
+    TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(testModule);
+    assertEquals("my-project_main", testModuleProperties.getProductionModuleName());
+  }
 
   @Test
   public void testInheritProjectJdkForModules() throws Exception {

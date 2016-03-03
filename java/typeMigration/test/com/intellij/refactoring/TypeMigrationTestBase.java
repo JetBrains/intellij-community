@@ -57,7 +57,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
                                                     final PsiType toType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType() throws Exception {
+      public PsiType migrationType(PsiElement context) throws Exception {
         return toType;
       }
 
@@ -84,7 +84,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   protected void doTestFieldType(@NonNls final String fieldName, String className, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType() throws Exception {
+      public PsiType migrationType(PsiElement context) throws Exception {
         return migrationType;
       }
 
@@ -108,7 +108,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
                                   final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType() throws Exception {
+      public PsiType migrationType(PsiElement context) throws Exception {
         return migrationType;
       }
 
@@ -128,7 +128,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   protected void doTestFirstParamType(@NonNls final String methodName, String className, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType() throws Exception {
+      public PsiType migrationType(PsiElement context) throws Exception {
         return migrationType;
       }
 
@@ -159,10 +159,11 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
     assertNotNull("Class " + className + " not found", aClass);
 
-    final PsiType migrationType = provider.migrationType();
+    final PsiElement migrationElement = provider.victims(aClass);
+    final PsiType migrationType = provider.migrationType(migrationElement);
     final TypeMigrationRules rules = new TypeMigrationRules();
     rules.setBoundScope(new LocalSearchScope(aClass.getContainingFile()));
-    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), provider.victims(aClass), migrationType, rules);
+    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), migrationElement, migrationType, rules);
 
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();
@@ -210,7 +211,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   }
 
   interface RulesProvider {
-    PsiType migrationType() throws Exception;
+    PsiType migrationType(PsiElement context) throws Exception;
 
     PsiElement victims(PsiClass aClass);
   }

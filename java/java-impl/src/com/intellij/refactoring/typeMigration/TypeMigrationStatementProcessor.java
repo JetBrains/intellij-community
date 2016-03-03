@@ -449,8 +449,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         final PsiType qualifierType = qualifier.getType();
         if (qualifierType instanceof PsiClassType) {
           final PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)qualifierType).resolveGenerics();
-          final PsiType migrationType =
-              classResolveResult.getSubstitutor().substitute(evalSubstitutor.substitute(JavaPsiFacade.getElementFactory(myStatement.getProject()).createType(classResolveResult.getElement(), PsiSubstitutor.EMPTY)));
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myStatement.getProject());
+          final PsiType migrationType = elementFactory.createType(classResolveResult.getElement(), composeIfNotAssignable(classResolveResult.getSubstitutor(), evalSubstitutor));
           myLabeler.migrateExpressionType(qualifier, migrationType, myStatement, migrationType.equals(qualifierType), true);
         }
       }
@@ -649,5 +649,24 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       }
     }
     return false;
+  }
+
+  private static PsiSubstitutor composeIfNotAssignable(PsiSubstitutor actual, PsiSubstitutor required) {
+    if (actual == PsiSubstitutor.EMPTY) {
+      return required;
+    }
+    if (required == PsiSubstitutor.EMPTY) {
+      return actual;
+    }
+    PsiSubstitutor result = PsiSubstitutorImpl.createSubstitutor(actual.getSubstitutionMap());
+    for (Map.Entry<PsiTypeParameter, PsiType> e : required.getSubstitutionMap().entrySet()) {
+      final PsiTypeParameter typeParameter = e.getKey();
+      final PsiType requiredType = e.getValue();
+      final PsiType actualType = result.getSubstitutionMap().get(typeParameter);
+      if (requiredType != null && (actualType == null || !TypeConversionUtil.isAssignable(actualType, requiredType))) {
+        result = result.put(typeParameter, requiredType);
+      }
+    }
+    return result;
   }
 }

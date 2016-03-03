@@ -213,17 +213,13 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final PushDownConflicts pushDownConflicts = new PushDownConflicts(mySuperClass, myMemberInfos);
+    final PushDownConflicts pushDownConflicts = new PushDownConflicts(mySuperClass, myMemberInfos, conflicts);
     for (PsiClass targetClass : myTargetClasses) {
       for (MemberInfo info : myMemberInfos) {
         final PsiMember member = info.getMember();
         pushDownConflicts.checkMemberPlacementInTargetClassConflict(targetClass, member);
       }
         //todo check accessibility conflicts
-    }
-    final MultiMap<PsiElement, String> conflictsMap = pushDownConflicts.getConflicts();
-    for (PsiElement element : conflictsMap.keySet()) {
-      conflicts.put(element, conflictsMap.get(element));
     }
     if (myCurrentInheritor != null) {
       ReferencesSearch.search(myCurrentInheritor).forEach(new Processor<PsiReference>() {
@@ -276,7 +272,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   protected void performRefactoring(@NotNull final UsageInfo[] usages) {
-    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(myPolicy)) {
+    final DocCommentPolicy docPolicy = new DocCommentPolicy(myPolicy);
+    new PushDownProcessor(mySuperClass, myMemberInfos, docPolicy) {
       //push down conflicts are already collected
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
@@ -286,8 +283,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       @Override
       protected void performRefactoring(@NotNull UsageInfo[] pushDownUsages) {
         if (myCurrentInheritor != null) {
-           encodeRefs();
-           pushDownToClass(myCurrentInheritor);
+          pushDownToDedicatedClass(myCurrentInheritor);
         } else {
           super.performRefactoring(pushDownUsages);
         }

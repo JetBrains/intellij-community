@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,8 +44,7 @@ public class AssignmentToNullInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "assignment.to.null.problem.descriptor");
+    return InspectionGadgetsBundle.message("assignment.to.null.problem.descriptor");
   }
 
   @Override
@@ -53,19 +53,26 @@ public class AssignmentToNullInspection extends BaseInspection {
     if (!(info instanceof PsiReferenceExpression)) {
       return null;
     }
-    final PsiElement target = ((PsiReferenceExpression)info).resolve();
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)info;
+    if (TypeUtils.isOptional(referenceExpression.getType())) {
+      return null;
+    }
+    final PsiElement target = referenceExpression.resolve();
     if (!(target instanceof PsiVariable)) {
       return null;
     }
+    final PsiVariable variable = (PsiVariable)target;
+    if (NullableNotNullManager.isNotNull(variable)) {
+      return null;
+    }
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(target.getProject());
-    return new DelegatingFix(new AddAnnotationPsiFix(manager.getDefaultNullable(), (PsiVariable)target,PsiNameValuePair.EMPTY_ARRAY));
+    return new DelegatingFix(new AddAnnotationPsiFix(manager.getDefaultNullable(), variable, PsiNameValuePair.EMPTY_ARRAY));
   }
 
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "assignment.to.null.option"), this,
-                                          "ignoreAssignmentsToFields");
+      "assignment.to.null.option"), this, "ignoreAssignmentsToFields");
   }
 
   @Override

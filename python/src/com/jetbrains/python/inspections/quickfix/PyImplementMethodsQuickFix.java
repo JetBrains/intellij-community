@@ -17,11 +17,8 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
@@ -31,7 +28,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -62,7 +58,7 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    final Editor editor = getEditor(project, file);
+    final Editor editor = PyQuickFixUtil.getEditor(file);
 
     if (editor != null && startElement instanceof PyClass) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -80,19 +76,5 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
                                                "Select Methods to Implement", true);
       }
     }
-  }
-
-  @Nullable
-  private static Editor getEditor(Project project, PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document != null) {
-      final EditorFactory instance = EditorFactory.getInstance();
-      if (instance == null) return null;
-      Editor[] editors = instance.getEditors(document);
-      if (editors.length > 0) {
-        return editors[0];
-      }
-    }
-    return null;
   }
 }

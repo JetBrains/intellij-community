@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -104,7 +105,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setForeground(panelForeground);
 
     if (column == 0) {
-      appendGroupText((GroupNode)usageNode.getParent(), panel, fileBgColor);
+      appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
       return panel;
     }
     else if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR && usage != ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
@@ -130,6 +131,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         assert false : column;
       }
     }
+    SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
     panel.add(textChunks);
     return panel;
   }
@@ -219,17 +221,18 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return fileBgColor;
   }
 
-  private void appendGroupText(final GroupNode node, JPanel panel, Color fileBgColor) {
+  private void appendGroupText(JTable table, final GroupNode node, JPanel panel, Color fileBgColor, boolean isSelected) {
     UsageGroup group = node == null ? null : node.getGroup();
     if (group == null) return;
     GroupNode parentGroup = (GroupNode)node.getParent();
-    appendGroupText(parentGroup, panel, fileBgColor);
+    appendGroupText(table, parentGroup, panel, fileBgColor, isSelected);
     if (node.canNavigateToSource()) {
       SimpleColoredComponent renderer = new SimpleColoredComponent();
       renderer.setIcon(group.getIcon(false));
       SimpleTextAttributes attributes = deriveAttributesWithColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
       renderer.append(group.getText(myUsageView), attributes);
       renderer.setBorder(null);
+      SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
       panel.add(renderer);
     }
   }

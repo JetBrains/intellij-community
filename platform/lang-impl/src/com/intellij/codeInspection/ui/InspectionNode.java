@@ -23,14 +23,13 @@ import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Enumeration;
 
 /**
  * @author max
  */
 public class InspectionNode extends InspectionTreeNode {
   public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
-  private boolean myTooBigForOnlineRefresh = false;
+  private volatile boolean myUpdatingNow;
 
   public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
     super(toolWrapper);
@@ -50,20 +49,4 @@ public class InspectionNode extends InspectionTreeNode {
     return TOOL;
   }
 
-  public boolean isTooBigForOnlineRefresh() {
-    if(!myTooBigForOnlineRefresh) myTooBigForOnlineRefresh = getProblemCount()>1000;
-    return myTooBigForOnlineRefresh;
-  }
-
-  @Override
-  public int getProblemCount() {
-    int sum = 0;
-    Enumeration children = children();
-    while (children.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-      if (child instanceof InspectionNode) continue;
-      sum += child.getProblemCount();
-    }
-    return sum;
-  }
 }

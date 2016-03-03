@@ -312,7 +312,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
-    int baseModifiers = 0;
+    int baseModifiers = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
     for (Shortcut each : baseShortcut) {
       if (each instanceof KeyboardShortcut) {
         KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
@@ -1049,14 +1049,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             focusToolWinowByDefault(id);
           }
         }
-      }
-    }
-    //todo[kb] it's just a temporary solution due a number of focus issues in JDK 7
-    if (SystemInfo.isJavaVersionAtLeast("1.7") && moveFocus) {
-      if (hasOpenEditorFiles()) {
-        activateEditorComponentImpl(commandList, false);
-      } else {
-        focusToolWinowByDefault(id);
       }
     }
 

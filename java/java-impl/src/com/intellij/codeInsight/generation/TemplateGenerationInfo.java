@@ -34,7 +34,7 @@ public abstract class TemplateGenerationInfo extends GenerationInfoBase implemen
     myElement = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
   }
 
-  protected abstract PsiTypeElement getTemplateElement(PsiMethod method);
+  protected abstract PsiElement getTemplateElement(PsiMethod method);
 
   @Override
   public PsiMethod getPsiMember() {

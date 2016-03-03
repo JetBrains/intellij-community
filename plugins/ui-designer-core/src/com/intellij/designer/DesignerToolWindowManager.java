@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public final class DesignerToolWindowManager extends AbstractToolWindowManager {
-  private final DesignerToolWindow myToolWindowContent;
+  private DesignerToolWindow myToolWindowContent;
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -43,7 +43,6 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
 
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
-    myToolWindowContent = new DesignerToolWindow(project, true);
   }
 
   public static DesignerToolWindow getInstance(DesignerEditorPanel designer) {
@@ -67,6 +66,10 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
 
   @Override
   protected void initToolWindow() {
+    if (myToolWindowContent == null) {
+      myToolWindowContent = new DesignerToolWindow(myProject, true);
+    }
+
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
                                                                                false, getAnchor(), myProject, true);
     myToolWindow.setIcon(UIDesignerNewIcons.ToolWindow);
@@ -110,7 +113,9 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
 
   @Override
   public void disposeComponent() {
-    myToolWindowContent.dispose();
+    if (myToolWindowContent != null) {
+      myToolWindowContent.dispose();
+    }
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.FileAccessorCache;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -217,8 +216,7 @@ public class ZipHandler extends ArchiveHandler {
       if (entry != null) {
         InputStream stream = zip.getInputStream(entry);
         if (stream != null) {
-          // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks
-          // no sense to create BufferedInputStream
+          // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks - no sense to create BufferedInputStream
           try {
             return FileUtil.loadBytes(stream, (int)entry.getSize());
           }
@@ -232,7 +230,7 @@ public class ZipHandler extends ArchiveHandler {
       zipRef.release();
     }
 
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    throw new FileNotFoundException(getFile() + "!/" + relativePath);
   }
 
   // also used in Kotlin

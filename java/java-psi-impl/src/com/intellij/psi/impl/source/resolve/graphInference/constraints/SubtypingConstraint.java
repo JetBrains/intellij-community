@@ -64,7 +64,7 @@ public class SubtypingConstraint implements ConstraintFormula {
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     final boolean reduceResult = doReduce(constraints);
     if (!reduceResult) {
-      session.registerIncompatibleErrorMessage(session.getInferenceVariables(), myS.getPresentableText() + " can be converted to " + myT.getPresentableText());
+      session.registerIncompatibleErrorMessage(session.getInferenceVariables(), session.getPresentableText(myS) + " can be converted to " + session.getPresentableText(myT));
     }
     return reduceResult;
   }

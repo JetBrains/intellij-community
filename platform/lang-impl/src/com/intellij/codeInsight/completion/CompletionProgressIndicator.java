@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -33,6 +34,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -107,10 +109,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     @Override
     public void itemSelected(LookupEvent event) {
-      finishCompletionProcess(false);
-
       LookupElement item = event.getItem();
-      if (item == null) return;
+      boolean dispose = item == null;
+      finishCompletionProcess(dispose);
+      if (dispose) return;
 
       setMergeCommand();
 
@@ -482,12 +484,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   void disposeIndicator() {
     // our offset map should be disposed under write action, so that duringCompletion (read action) won't access it after disposing
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(CompletionProgressIndicator.this);
-      }
-    });
+    TransactionGuard.getInstance().submitMergeableTransaction(TransactionGuard.TEXT_EDITING, () ->
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(this)));
   }
 
   @TestOnly
@@ -697,21 +695,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     phase.ignoreCurrentDocumentChange();
 
     final Project project = getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        CompletionAutoPopupHandler.runLaterWithCommitted(project, myEditor.getDocument(), new Runnable() {
-          @Override
-          public void run() {
-            if (phase.checkExpired()) return;
+    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+      if (phase.checkExpired()) return;
 
-            CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
-                                                        isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(),
-                                                        true);
-          }
-        });
-      }
-    }, project.getDisposed());
+      CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
+                                                  isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(),
+                                                  true);
+    });
   }
 
   @Override

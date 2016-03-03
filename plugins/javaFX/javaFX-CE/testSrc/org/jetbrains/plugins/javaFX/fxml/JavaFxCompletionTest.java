@@ -19,9 +19,14 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * User: anna
@@ -211,6 +216,56 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAllowPropertyTypeClass() throws Exception {
     doTest("ColumnConstraints");
+  }
+
+  public void testFxIdExactOptionsLabel() throws Exception {
+    doOptionsTest(Arrays.asList("parentPrivateLabel", "parentPublicLabel", "privateLabel", "publicLabel", "parentControl", "control", "grandLabel"),
+                  "FxIdExactOptionsController", "FxIdExactOptionsModel");
+  }
+
+  public void testFxIdExactOptionsDefine() throws Exception {
+    doOptionsTest(Arrays.asList("parentModel", "model"), "FxIdExactOptionsController", "FxIdExactOptionsModel");
+  }
+
+  public void testFxIdGuessedOptionsRoot() throws Exception {
+    doOptionsTest(Arrays.asList("pane", "box", "model"), "FxIdGuessedOptionsController");
+  }
+
+  public void testFxIdGuessedOptionsNode() throws Exception {
+    doOptionsTest(Arrays.asList("pane", "node", "box", "model"), "FxIdGuessedOptionsController");
+  }
+
+  public void testFxIdGuessedOptionsDefine() throws Exception {
+    doOptionsTest(Arrays.asList("pane", "node", "box", "model", "text", "target"), "FxIdGuessedOptionsController");
+  }
+
+  public void testFxIdGuessedOptionsNested() throws Exception {
+    doOptionsTest(Arrays.asList("pane", "node", "box", "model", "text", "target"), "FxIdGuessedOptionsController");
+  }
+
+  public void testVariableCompletionBooleanFirst() throws Exception {
+    doOrderTest("zAssignable", "dConvertible", "tConvertible", "controller", "mUnknown");
+  }
+
+  public void testVariableCompletionTooltipFirst() throws Exception {
+    doOrderTest("tAssignable", "controller", "mUnknown", "dIncompatible");
+  }
+
+  private void doOrderTest(String... expected) {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), expected);
+  }
+
+  private void doOptionsTest(final List<String> expectedOptions, final String... javaClasses) {
+    final List<String> files = new ArrayList<>();
+    files.add(getTestName(true) + ".fxml");
+    Arrays.stream(javaClasses).map(name -> name + ".java").forEach(files::add);
+    myFixture.configureByFiles(ArrayUtil.toStringArray(files));
+    complete();
+
+    final Set<String> actualOptions = Arrays.stream(myItems).map(LookupElement::getLookupString).collect(Collectors.toSet());
+    assertSameElements(expectedOptions, actualOptions);
   }
 
   public void testOnlyCssAsStylesheets() throws Exception {

@@ -134,7 +134,7 @@ from _pydev_imps import _pydev_select as select
 import sys
 import os
 try:
-    import _pydev_threading as threading
+    from _pydev_imps import _pydev_threading as threading
 except ImportError:
     import dummy_threading as threading
 
@@ -197,7 +197,7 @@ class BaseServer:
         """Constructor.  May be extended, do not override."""
         self.server_address = server_address
         self.RequestHandlerClass = RequestHandlerClass
-        self.__is_shut_down = threading.Event()
+        self.__is_shut_down = threading.Event()  # @UndefinedVariable
         self.__shutdown_request = False
 
     def server_activate(self):
@@ -522,7 +522,7 @@ class ForkingMixIn:
         # that couldn't collide.
         for child in self.active_children:
             try:
-                pid, status = os.waitpid(child, os.WNOHANG)
+                pid, status = os.waitpid(child, os.WNOHANG)  # @UndefinedVariable
             except os.error:
                 pid = None
             if not pid: continue
@@ -542,7 +542,7 @@ class ForkingMixIn:
     def process_request(self, request, client_address):
         """Fork a new subprocess to process the request."""
         self.collect_children()
-        pid = os.fork()
+        pid = os.fork()  # @UndefinedVariable
         if pid:
             # Parent process
             if self.active_children is None:
@@ -587,7 +587,7 @@ class ThreadingMixIn:
 
     def process_request(self, request, client_address):
         """Start a new thread to process the request."""
-        t = threading.Thread(target = self.process_request_thread,
+        t = threading.Thread(target = self.process_request_thread,  # @UndefinedVariable
                              args = (request, client_address))
         t.daemon = self.daemon_threads
         t.start()
@@ -602,10 +602,10 @@ class ThreadingTCPServer(ThreadingMixIn, TCPServer): pass
 if hasattr(socket, 'AF_UNIX'):
 
     class UnixStreamServer(TCPServer):
-        address_family = socket.AF_UNIX
+        address_family = socket.AF_UNIX  # @UndefinedVariable
 
     class UnixDatagramServer(UDPServer):
-        address_family = socket.AF_UNIX
+        address_family = socket.AF_UNIX  # @UndefinedVariable
 
     class ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer): pass
 

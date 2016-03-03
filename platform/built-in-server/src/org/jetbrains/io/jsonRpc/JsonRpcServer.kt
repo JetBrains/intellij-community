@@ -7,7 +7,9 @@ import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
@@ -53,7 +55,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
   private val messageIdCounter = AtomicInteger()
   private val domains = THashMap<String, NotNullLazyValue<*>>()
 
-  fun registerDomain(name: String, commands: NotNullLazyValue<*>, overridable: Boolean = false) {
+  fun registerDomain(name: String, commands: NotNullLazyValue<*>, overridable: Boolean = false, disposable: Disposable? = null) {
     if (domains.containsKey(name)) {
       if (overridable) {
         return
@@ -64,6 +66,9 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
     }
 
     domains.put(name, commands)
+    if (disposable != null) {
+      Disposer.register(disposable, Disposable { domains.remove(name) })
+    }
   }
 
   override fun messageReceived(client: Client, message: CharSequence) {
@@ -133,7 +138,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
             }
           }
           else {
-            client.send(encodeMessage(client.byteBufAllocator, messageId, params = arrayOf(result)))
+            client.send(encodeMessage(client.byteBufAllocator, messageId, params = if (result == null) ArrayUtil.EMPTY_OBJECT_ARRAY else arrayOf(result)))
           }
         }
         return
@@ -176,14 +181,12 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
     return client.send(messageId, message)!!
   }
 
-  fun <T> sendToClients(domain: String, command: String, results: MutableList<Promise<Pair<Client, T>>>?, vararg params: Any?) {
+  fun send(domain: String, command: String, vararg params: Any?) {
     if (clientManager.hasClients()) {
-      sendToClients(if (results == null) -1 else messageIdCounter.andIncrement, domain, command, results, params)
+      val messageId = -1
+      val message = encodeMessage(ByteBufAllocator.DEFAULT, messageId, domain, command, params = params)
+      clientManager.send<Any?>(messageId, message)
     }
-  }
-
-  private fun <T> sendToClients(messageId: Int, domain: String?, command: String?, results: MutableList<Promise<Pair<Client, T>>>?, params: Array<*>) {
-    clientManager.send(messageId, encodeMessage(ByteBufAllocator.DEFAULT, messageId, domain, command, params = params), results)
   }
 
   private fun encodeMessage(byteBufAllocator: ByteBufAllocator,

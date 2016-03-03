@@ -15,13 +15,18 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,25 +46,52 @@ public class VcsFileUtil {
   public static final int FILE_PATH_LIMIT = 7600;
 
   /**
-   * Chunk paths on the command line
+   * Execute function for each chunk of arguments. Check for being cancelled in process.
    *
-   * @param files the paths to chunk
-   * @return the a list of list of relative paths
+   * @param arguments the arguments to chunk
+   * @param processor function to execute on each chunk
+   * @param <T>       type of result value
+   * @return list of result values
+   * @throws VcsException
    */
-  public static List<List<String>> chunkRelativePaths(List<String> files) {
+  @NotNull
+  public static <T> List<T> foreachChunk(@NotNull List<String> arguments,
+                                         @NotNull ThrowableNotNullFunction<List<String>, List<? extends T>, VcsException> processor)
+    throws VcsException {
+    List<T> result = ContainerUtil.newArrayList();
+    List<List<String>> chunks = chunkArguments(arguments);
+
+    for (List<String> chunk : chunks) {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) indicator.checkCanceled();
+
+      result.addAll(processor.fun(chunk));
+    }
+
+    return result;
+  }
+
+  /**
+   * Chunk arguments on the command line
+   *
+   * @param arguments the arguments to chunk
+   * @return a list of lists of arguments
+   */
+  @NotNull
+  public static List<List<String>> chunkArguments(@NotNull List<String> arguments) {
     ArrayList<List<String>> rc = new ArrayList<List<String>>();
     int start = 0;
     int size = 0;
     int i = 0;
-    for (; i < files.size(); i++) {
-      String p = files.get(i);
+    for (; i < arguments.size(); i++) {
+      String p = arguments.get(i);
       if (size + p.length() > FILE_PATH_LIMIT) {
         if (start == i) {
-          rc.add(files.subList(i, i + 1));
+          rc.add(arguments.subList(i, i + 1));
           start = i + 1;
         }
         else {
-          rc.add(files.subList(start, i));
+          rc.add(arguments.subList(start, i));
           start = i;
         }
         size = 0;
@@ -68,8 +100,8 @@ public class VcsFileUtil {
         size += p.length();
       }
     }
-    if (start != files.size()) {
-      rc.add(files.subList(start, i));
+    if (start != arguments.size()) {
+      rc.add(arguments.subList(start, i));
     }
     return rc;
   }
@@ -82,7 +114,7 @@ public class VcsFileUtil {
    * @return chunked relative paths
    */
   public static List<List<String>> chunkPaths(VirtualFile root, Collection<FilePath> files) {
-    return chunkRelativePaths(toRelativePaths(root, files));
+    return chunkArguments(toRelativePaths(root, files));
   }
 
   /**
@@ -93,7 +125,7 @@ public class VcsFileUtil {
    * @return chunked relative paths
    */
   public static List<List<String>> chunkFiles(@NotNull VirtualFile root, @NotNull Collection<VirtualFile> files) {
-    return chunkRelativePaths(toRelativeFiles(root, files));
+    return chunkArguments(toRelativeFiles(root, files));
   }
 
   public static String getRelativeFilePath(VirtualFile file, @NotNull final VirtualFile baseDir) {

@@ -52,20 +52,19 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     }
   }
 
-  fun <T> send(messageId: Int, message: ByteBuf, results: MutableList<Promise<Pair<Client, T>>>?) {
+  fun <T> send(messageId: Int, message: ByteBuf, results: MutableList<Promise<Pair<Client, T>>>? = null) {
     forEachClient(object : TObjectProcedure<Client> {
       private var first: Boolean = false
 
       override fun execute(client: Client): Boolean {
         try {
-          val result = client.send<Pair<Client, T>>(messageId, if (first) message else message.duplicate())!!
+          val result = client.send<Pair<Client, T>>(messageId, if (first) message else message.duplicate())
           first = false
-          results?.add(result)
+          results?.add(result!!)
         }
         catch (e: Throwable) {
           exceptionHandler.exceptionCaught(e)
         }
-
         return true
       }
     })

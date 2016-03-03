@@ -103,3 +103,22 @@ class LambdaInsideConstructorOrInitializer {
     System.out.println(myBar);
   }
 }
+class EditorView {
+
+  private String a = "";
+
+  public void one() {
+    a = "beard";
+  }
+
+  private void two() {
+    // private method always called while synchronized
+  }
+
+  String three() {
+    synchronized (this) {
+      two();
+    }
+    return a;
+  }
+}

@@ -22,6 +22,7 @@ import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CloseAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -232,6 +233,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final NonOpaquePanel wrappper = new NonOpaquePanel(new BorderLayout(0, 0));
     wrappper.add(myToolbar, BorderLayout.WEST);
     wrappper.add(myTabs.getComponent(), BorderLayout.CENTER);
+    wrappper.setBorder(new EmptyBorder(-1, 0, 0, 0));
 
     myComponent.setContent(wrappper);
 
@@ -869,7 +871,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
       final AnAction[] actions = groupToBuild.getChildren(null);
       if (!Arrays.equals(actions, myContextActions.get(entry.getKey()))) {
-        ActionToolbar tb = myActionManager.createActionToolbar(myActionsPlace, groupToBuild, true);
+        String adjustedPlace = myActionsPlace == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : myActionsPlace;
+        ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, groupToBuild, true);
         tb.getComponent().setBorder(null);
         tb.setTargetComponent(contextComponent);
         eachPlaceholder.setContent(tb.getComponent());
@@ -1398,6 +1401,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     public Object getData(@NonNls final String dataId) {
       if (KEY.is(dataId)) {
         return RunnerContentUi.this;
+      }
+      else if (CloseAction.CloseTarget.KEY.is(dataId)) {
+        Content content = getContentManager().getSelectedContent();
+        if (content != null && content.getManager().canCloseContents() && content.isCloseable()) {
+          return new CloseAction.CloseTarget() {
+            @Override
+            public void close() {
+              content.getManager().removeContent(content, true, true, true);
+            }
+          };
+        }
       }
 
       ContentManager originalContentManager = myOriginal == null ? null : myOriginal.getContentManager();

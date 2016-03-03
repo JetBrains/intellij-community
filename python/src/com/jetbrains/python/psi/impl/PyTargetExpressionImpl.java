@@ -312,7 +312,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   @Nullable
-  private static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
+  public static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
                                          @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)iterableType;
@@ -388,7 +388,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   @Nullable
-  private static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
+  public static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
                                                 @Nullable PyExpression source) {
     return function.getCallType(source, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
   }

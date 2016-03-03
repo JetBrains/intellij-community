@@ -99,6 +99,14 @@ public class XSourcePositionImpl implements XSourcePosition {
    */
   @Nullable
   public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
+    return create(file, line, 0);
+  }
+
+  /**
+   * do not call this method from plugins, use {@link XDebuggerUtil#createPosition(VirtualFile, int, int)} instead
+   */
+  @Nullable
+  public static XSourcePositionImpl create(@Nullable VirtualFile file, int line, int column) {
     if (file == null) {
       return null;
     }
@@ -118,8 +126,15 @@ public class XSourcePositionImpl implements XSourcePosition {
         if (line < 0) {
           line = 0;
         }
+        if (column < 0) {
+          column = 0;
+        }
 
-        offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+        offset = line < document.getLineCount() ? document.getLineStartOffset(line) + column : -1;
+
+        if (offset >= document.getTextLength()) {
+          offset = document.getTextLength() - 1;
+        }
       }
       return new XSourcePositionImpl(file, line, offset);
     }

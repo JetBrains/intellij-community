@@ -34,8 +34,7 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsShortCommitDetails>
   @NotNull
   @Override
   protected List<? extends VcsShortCommitDetails> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
-                                                  @NotNull List<String> hashes) throws VcsException {
+                                                              @NotNull List<String> hashes) throws VcsException {
     return logProvider.readShortDetails(root, hashes);
   }
-
 }

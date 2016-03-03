@@ -31,5 +31,4 @@ public interface VcsLogListener {
    * @param refreshHappened true if a refresh initiated this log change, i.e. PermanentGraph changed.
    */
   void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened);
-
 }

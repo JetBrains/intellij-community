@@ -27,7 +27,10 @@ public class MavenServerSettings implements Serializable, Cloneable {
     ALWAYS_UPDATE, DO_NOT_UPDATE
   }
 
-  private int myLoggingLevel;
+  /**
+   * do not use debug level {@link MavenServerConsole#LEVEL_DEBUG} by default, it can pollute logs
+   */
+  private int myLoggingLevel = MavenServerConsole.LEVEL_INFO;
   @Nullable private File myMavenHome;
   @Nullable private File myUserSettingsFile;
   @Nullable private File myGlobalSettingsFile;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     return false;
   }
 
+  @Override
   public void nodeLoaded(@NotNull final RestorableStateNode node, final String name) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     if (parentInfo != null) {
@@ -134,6 +135,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     }
   }
 
+  @Override
   public void childrenLoaded(@NotNull final XDebuggerTreeNode node, @NotNull final List<XValueContainerNode<?>> children, final boolean last) {
     XDebuggerTreeState.NodeInfo nodeInfo = myNode2State.get(node);
     if (nodeInfo != null) {
@@ -154,6 +156,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     myTree.removeTreeSelectionListener(this);
   }
 
+  @Override
   public void valueChanged(TreeSelectionEvent e) {
     if (!myInsideRestoring) {
       myStopRestoringSelection = true;

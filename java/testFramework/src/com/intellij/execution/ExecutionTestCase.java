@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Arrays;
@@ -75,6 +76,10 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
       }
     });
     if (!myModuleOutputDir.exists()) {
+      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ourOutputRoot);
+      assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
+      vDir.getChildren();//we need this to load children to VFS to fire VFileCreatedEvent for the output directory
+
       myCompilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
       List<CompilerMessage> messages = myCompilerTester.rebuild();
       for (CompilerMessage message : messages) {
@@ -175,7 +180,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     return myModuleOutputDir.getAbsolutePath();
   }
 
-  public void waitProcess(final ProcessHandler processHandler) {
+  public void waitProcess(@NotNull final ProcessHandler processHandler) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
 
     final boolean[] isRunning = {true};

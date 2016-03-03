@@ -32,6 +32,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -66,6 +67,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<SimpleDiffChange>();
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
+  private boolean myIsContentsEqual;
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -204,13 +206,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       List<LineFragment> lineFragments = null;
       if (getHighlightPolicy().isShouldCompare()) {
-        lineFragments = DiffUtil.compare(texts[0], texts[1], getDiffConfig(), indicator);
+        lineFragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
       }
 
-      boolean isEqualContents = (lineFragments == null || lineFragments.isEmpty()) &&
+      boolean isContentsEqual = (lineFragments == null || lineFragments.isEmpty()) &&
                                 StringUtil.equals(texts[0], texts[1]);
 
-      return apply(new CompareData(lineFragments, isEqualContents));
+      return apply(new CompareData(lineFragments, isContentsEqual));
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -232,7 +234,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
-        if (data.isEqualContent()) myPanel.addNotification(DiffNotifications.createEqualContents());
+        myIsContentsEqual = data.isContentsEqual();
+        if (data.isContentsEqual()) myPanel.addNotification(DiffNotifications.createEqualContents());
 
         if (data.getFragments() != null) {
           for (LineFragment fragment : data.getFragments()) {
@@ -282,6 +285,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   private void destroyChangedBlocks() {
+    myIsContentsEqual = false;
+
     for (SimpleDiffChange change : myDiffChanges) {
       change.destroyHighlighter();
     }
@@ -862,19 +867,25 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class MyStatusPanel extends StatusPanel {
+    @Nullable
     @Override
-    protected int getChangesCount() {
-      return myDiffChanges.size() + myInvalidDiffChanges.size();
+    protected String getMessage() {
+      if (getHighlightPolicy() == HighlightPolicy.DO_NOT_HIGHLIGHT) return DiffBundle.message("diff.highlighting.disabled.text");
+      int changesCount = myDiffChanges.size() + myInvalidDiffChanges.size();
+      if (changesCount == 0 && !myIsContentsEqual) {
+        return DiffBundle.message("diff.all.differences.ignored.text");
+      }
+      return DiffBundle.message("diff.count.differences.status.text", changesCount);
     }
   }
 
   private static class CompareData {
     @Nullable private final List<LineFragment> myFragments;
-    private final boolean myEqualContent;
+    private final boolean myIsContentsEqual;
 
-    public CompareData(@Nullable List<LineFragment> fragments, boolean equalContent) {
+    public CompareData(@Nullable List<LineFragment> fragments, boolean isContentsEqual) {
       myFragments = fragments;
-      myEqualContent = equalContent;
+      myIsContentsEqual = isContentsEqual;
     }
 
     @Nullable
@@ -882,8 +893,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return myFragments;
     }
 
-    public boolean isEqualContent() {
-      return myEqualContent;
+    public boolean isContentsEqual() {
+      return myIsContentsEqual;
     }
   }
 

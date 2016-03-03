@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -123,7 +124,11 @@ public final class PsiUtil extends PsiUtilCore {
     if (type instanceof PsiCapturedWildcardType) {
       final PsiType upperBound = ((PsiCapturedWildcardType)type).getUpperBound();
       if (upperBound instanceof PsiClassType) {
-        String classText = "class I<T extends " + upperBound.getCanonicalText() + "> {}";
+        final PsiClass resolved = ((PsiClassType)upperBound).resolve();
+        final PsiFile containingFile = resolved != null ? resolved.getContainingFile() : null;
+        final String packageName = containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : null;
+        String classText = StringUtil.isEmptyOrSpaces(packageName) ? "" : "package " +packageName + ";\n ";
+        classText += "class I<T extends " + upperBound.getCanonicalText() + "> {}";
         final PsiJavaFile file =
           (PsiJavaFile)PsiFileFactory.getInstance(expression.getProject()).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
         final PsiTypeParameter freshParameter = file.getClasses()[0].getTypeParameters()[0];
@@ -348,10 +353,11 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @PsiModifier.ModifierConstant
-  @Nullable
+  @NotNull
   public static String getAccessModifier(@AccessLevel int accessLevel) {
+    assert accessLevel > 0 && accessLevel <= accessModifiers.length : accessLevel;
     @SuppressWarnings("UnnecessaryLocalVariable") @PsiModifier.ModifierConstant
-    final String modifier = accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
+    final String modifier =  accessModifiers[accessLevel - 1];
     return modifier;
   }
 
@@ -770,25 +776,27 @@ public final class PsiUtil extends PsiUtilCore {
           }
         }
 
-        Map<PsiTypeParameter, PsiType> substitutionMap = null;
-        for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
-          final PsiType substituted = substitutor.substitute(typeParameter);
-          if (substituted instanceof PsiWildcardType) {
-            if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
-            final PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
-            LOG.assertTrue(capturedWildcard != null);
-            final PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
-            if (upperBound != null) {
-              capturedWildcard.setUpperBound(upperBound);
+        if (captureSubstitutor != substitutor) {
+          Map<PsiTypeParameter, PsiType> substitutionMap = null;
+          for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
+            final PsiType substituted = substitutor.substitute(typeParameter);
+            if (substituted instanceof PsiWildcardType) {
+              if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+              final PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
+              LOG.assertTrue(capturedWildcard != null);
+              final PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
+              if (upperBound != null) {
+                capturedWildcard.setUpperBound(upperBound);
+              }
+              substitutionMap.put(typeParameter, capturedWildcard);
             }
-            substitutionMap.put(typeParameter, capturedWildcard);
           }
-        }
 
-        if (substitutionMap != null) {
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-          final PsiSubstitutor newSubstitutor = factory.createSubstitutor(substitutionMap);
-          return factory.createType(aClass, newSubstitutor);
+          if (substitutionMap != null) {
+            final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+            final PsiSubstitutor newSubstitutor = factory.createSubstitutor(substitutionMap);
+            return factory.createType(aClass, newSubstitutor);
+          }
         }
       }
     }
@@ -968,7 +976,8 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    return getLanguageLevel(element.getProject());
+    PsiResolveHelper instance = PsiResolveHelper.SERVICE.getInstance(element.getProject());
+    return instance != null ? instance.getEffectiveLanguageLevel(getVirtualFile(file)) : LanguageLevel.HIGHEST;
   }
 
   @NotNull

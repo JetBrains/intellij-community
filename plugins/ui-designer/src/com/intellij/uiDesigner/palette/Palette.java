@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -62,14 +65,7 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-@State(
-  name = "Palette2",
-  defaultStateAsResource = true,
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
-  }
-)
+@State(name = "Palette2", defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
 public final class Palette implements Disposable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.Palette");
 
@@ -209,8 +205,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   private void upgradeGroup(final GroupItem group, final Element groupElement) {
-    for (Object o : groupElement.getChildren(ELEMENT_ITEM)) {
-      Element itemElement = (Element)o;
+    for (Element itemElement : groupElement.getChildren(ELEMENT_ITEM)) {
       if (itemElement.getAttributeValue(ATTRIBUTE_SINCE_VERSION, "").equals("2")) {
         processItemElement(itemElement, group, true);
       }
@@ -577,14 +572,14 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   /**
-   * @return arrys of all properties that can be introspected from the
+   * @return arrays of all properties that can be introspected from the
    * specified class. Only properties with getter and setter methods are
    * returned.
    */
   @NotNull
   public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
     // Try the cache first
-    // TODO[vova, anton] update cache after class reloading (its properties caould be hanged).
+    // TODO[vova, anton] update cache after class reloading (its properties could be hanged).
     if (myClass2Properties.containsKey(aClass)) {
       return myClass2Properties.get(aClass);
     }

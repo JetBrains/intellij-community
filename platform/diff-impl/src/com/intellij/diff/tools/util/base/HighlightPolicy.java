@@ -18,10 +18,10 @@ package com.intellij.diff.tools.util.base;
 import org.jetbrains.annotations.NotNull;
 
 public enum HighlightPolicy {
-  DO_NOT_HIGHLIGHT("Do not highlight"),
   BY_LINE("Highlight lines"),
   BY_WORD("Highlight words"),
-  BY_WORD_SPLIT("Highlight split changes");
+  BY_WORD_SPLIT("Highlight split changes"),
+  DO_NOT_HIGHLIGHT("Do not highlight");
 
   @NotNull private final String myText;
 

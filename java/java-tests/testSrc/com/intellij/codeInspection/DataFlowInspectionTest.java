@@ -91,6 +91,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
   public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }
 
+  public void testAnnotationMethodNotNull() { doTest(); }
+
   public void testChainedFinalFieldsDfa() throws Throwable { doTest(); }
   public void testFinalFieldsDifferentInstances() throws Throwable { doTest(); }
   public void testThisFieldGetters() throws Throwable { doTest(); }
@@ -236,6 +238,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testLongCircuitOperations() { doTest(); }
   public void testUnconditionalForLoop() { doTest(); }
   public void testIncrementParenthesized() { doTest(); }
+  public void testDecrementAnotherObjectField() { doTest(); }
   public void testAnonymousMethodIndependence() { doTest(); }
   public void testAnonymousFieldIndependence() { doTest(); }
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
@@ -431,6 +434,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testConstantConditionsWithAssignmentsInside() { doTest(); }
   public void testIfConditionsWithAssignmentInside() { doTest(); }
+  public void testBitwiseNegatedBoxed() { doTest(); }
+  public void testDontShadowFinalReassignment() { doTest(); }
 
   public void testLiteralIfCondition() {
     doTest();

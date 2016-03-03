@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package com.intellij.remote;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.TaskExecutor;
-import com.intellij.execution.process.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,14 +183,9 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
     return myCharset;
   }
 
-  protected static Future<?> executeOnPooledThread(Runnable task) {
-    final Application application = ApplicationManager.getApplication();
-
-    if (application != null) {
-      return application.executeOnPooledThread(task);
-    }
-
-    return BaseOSProcessHandler.submit(task);
+  @NotNull
+  private static Future<?> executeOnPooledThread(@NotNull Runnable task) {
+    return AppExecutorUtil.getAppExecutorService().submit(task);
   }
 
   @NotNull

@@ -131,6 +131,17 @@ public class TestStateStorage implements Disposable {
     }
   }
 
+  public synchronized void removeState(String url) {
+    if (myMap != null) {
+      try {
+        myMap.remove(url);
+      }
+      catch (IOException e) {
+        thingsWentWrongLetsReinitialize(e, "Can't remove state for " + url);
+      }
+    }
+  }
+
   @Nullable
   public synchronized Map<String, Record> getRecentTests(int limit, Date since) {
     if (myMap == null) return null;

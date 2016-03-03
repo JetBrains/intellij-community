@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ import java.util.*;
  * @author max
  */
 public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
-  private final Map<IElementType, LayerDescriptor> myTokensToLayer = new HashMap<IElementType, LayerDescriptor>();
-  private final Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<LayerDescriptor, Mapper>();
+  private final Map<IElementType, LayerDescriptor> myTokensToLayer = new HashMap<>();
+  private final Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<>();
   private CharSequence myText;
 
   public LayeredLexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
@@ -80,7 +80,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     final Mapper mapper;
     final StringBuilder text = new StringBuilder();
     final IntArrayList lengths = new IntArrayList();
-    final List<IElementType> tokenTypes = new ArrayList<IElementType>();
+    final List<IElementType> tokenTypes = new ArrayList<>();
     final TIntIntHashMap index2Global = new TIntIntHashMap();
     private final String mySeparator;
     final int insertOffset;
@@ -186,7 +186,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   private class MappingSegments extends SegmentArrayWithData {
-    MappedRange[] myRanges = new MappedRange[INITIAL_SIZE];
+    private MappedRange[] myRanges = new MappedRange[INITIAL_SIZE];
 
     @Override
     public void removeAll() {
@@ -329,7 +329,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private final DocumentImpl doc;
     private final EditorHighlighter highlighter;
     private final String mySeparator;
-    private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<IElementType, TextAttributes>();
+    private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
     private final SyntaxHighlighter mySyntaxHighlighter;
     private final TextAttributesKey myBackground;
 
@@ -483,7 +483,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   private class LayeredHighlighterIteratorImpl implements LayeredHighlighterIterator {
     private final HighlighterIterator myBaseIterator;
     private HighlighterIterator myLayerIterator;
-    private int myLayerStartOffset = 0;
+    private int myLayerStartOffset;
     private Mapper myCurrentMapper;
 
     private LayeredHighlighterIteratorImpl(int offset) {
@@ -522,12 +522,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return myBaseIterator.getTextAttributes();
     }
 
+    @Override
     public SyntaxHighlighter getActiveSyntaxHighlighter() {
       if (myCurrentMapper != null) {
         return myCurrentMapper.mySyntaxHighlighter;
       }
 
-      return LayeredLexerEditorHighlighter.this.getSyntaxHighlighter();
+      return getSyntaxHighlighter();
     }
 
     @Override
@@ -583,9 +584,9 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   @NotNull
-  protected static <T> T[] reallocateArray(@NotNull T[] array, int index) {
+  private static <T> T[] reallocateArray(@NotNull T[] array, int index) {
     if (index < array.length) return array;
 
     T[] newArray = (T[])Array.newInstance(array.getClass().getComponentType(), SegmentArray.calcCapacity(array.length, index));
@@ -594,4 +595,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     return newArray;
   }
 
+  @Override
+  public String toString() {
+    return myText.toString();
+  }
 }

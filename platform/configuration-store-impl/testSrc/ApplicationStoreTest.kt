@@ -23,8 +23,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.*
-import com.intellij.util.SmartList
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import gnu.trove.THashMap
@@ -38,7 +41,6 @@ import org.junit.Test
 import org.picocontainer.MutablePicoContainer
 import org.picocontainer.defaults.InstanceComponentAdapter
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -46,6 +48,7 @@ import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
@@ -59,7 +62,7 @@ internal class ApplicationStoreTest {
   private var componentStore: MyComponentStore by Delegates.notNull()
 
   @Before fun setUp() {
-    testAppConfig = tempDirManager.newPath(refreshVfs = false)
+    testAppConfig = tempDirManager.newPath()
     componentStore = MyComponentStore(testAppConfig.systemIndependentPath)
   }
 
@@ -73,7 +76,7 @@ internal class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save(SmartList())
 
-    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml")).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
+    assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"]).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
   @Test fun `load from stream provider`() {
@@ -119,20 +122,20 @@ internal class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val storageManager = ApplicationManager.getApplication().stateStore.stateStorageManager
-    val optionsPath = storageManager.expandMacros(StoragePathMacros.APP_CONFIG)
+    val optionsPath = storageManager.expandMacros(APP_CONFIG)
     val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
     val map = getExportableComponentsMap(false, true, storageManager)
-    assertThat(map).isNotEmpty()
+    assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
       val file = item.files.first()
-      assertThat(map.get(file)).containsExactly(item)
+      assertThat(map[file]).containsExactly(item)
       assertThat(file).doesNotExist()
     }
 
-    test(ExportableItem(listOf(File(optionsPath, "filetypes.xml"), File(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(File(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(File(optionsPath, "templates.xml"), File(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(optionsPath, "filetypes.xml"), Paths.get(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(optionsPath, "templates.xml"), Paths.get(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
   }
 
   @Test fun `import settings`() {
@@ -152,12 +155,12 @@ internal class ApplicationStoreTest {
 
     val componentPath = configDir.resolve("a.xml")
     assertThat(componentPath).isRegularFile()
-    val componentFile = componentPath.toFile()
+    val componentFile = componentPath
 
     // additional export path
     val additionalPath = configDir.resolve("foo")
     additionalPath.writeChild("bar.icls", "")
-    val additionalFile = additionalPath.toFile()
+    val additionalFile = additionalPath
     val exportedData = BufferExposingByteArrayOutputStream()
     exportSettings(setOf(componentFile, additionalFile), exportedData, configPath)
 
@@ -165,7 +168,7 @@ internal class ApplicationStoreTest {
     assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
     val list = listOf(ExportableItem(listOf(componentFile, additionalFile), ""))
 
-    fun <B> File.to(that: B) = MapEntry.entry(this, that)
+    fun <B> Path.to(that: B) = MapEntry.entry(this, that)
 
     val picoContainer = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
     val componentKey = A::class.java.name
@@ -201,7 +204,7 @@ internal class ApplicationStoreTest {
 </application>""")
   }
 
-  @State(name = "A", storages = arrayOf(Storage(file = "a.xml")), additionalExportFile = "foo")
+  @State(name = "A", storages = arrayOf(Storage("a.xml")), additionalExportFile = "foo")
   private open class A : PersistentStateComponent<A.State> {
     data class State(@Attribute var foo: String = "", @Attribute var bar: String = "")
 
@@ -217,7 +220,7 @@ internal class ApplicationStoreTest {
   @Test fun `don't save if only format is changed`() {
     val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
     val file = writeConfig("a.xml", oldContent)
-    val oldModificationTime = file.getLastModifiedTime()
+    val oldModificationTime = file.lastModified()
     testAppConfig.refreshVfs()
 
     val component = A()
@@ -227,7 +230,7 @@ internal class ApplicationStoreTest {
     saveStore()
 
     assertThat(file).hasContent(oldContent)
-    assertThat(oldModificationTime).isEqualTo(file.getLastModifiedTime())
+    assertThat(oldModificationTime).isEqualTo(file.lastModified())
 
     component.options.bar = "2"
     component.options.foo = "1"
@@ -237,7 +240,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test fun `do not check if only format changed for non-roamable storage`() {
-    @State(name = "A", storages = arrayOf(Storage(file = "b.xml", roamingType = RoamingType.DISABLED)))
+    @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()
 
     val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
@@ -263,14 +266,14 @@ internal class ApplicationStoreTest {
     override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {
     }
 
-    public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
+    val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       getMap(roamingType).put(fileSpec, String(content, 0, size, CharsetToolkit.UTF8_CHARSET))
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> {
-      var map = data.get(roamingType)
+      var map = data[roamingType]
       if (map == null) {
         map = THashMap<String, String>()
         data.put(roamingType, map)
@@ -279,12 +282,12 @@ internal class ApplicationStoreTest {
     }
 
     override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      val data = getMap(roamingType).get(fileSpec) ?: return null
+      val data = getMap(roamingType)[fileSpec] ?: return null
       return ByteArrayInputStream(data.toByteArray())
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
-      data.get(roamingType)?.remove(fileSpec)
+      data[roamingType]?.remove(fileSpec)
     }
   }
 
@@ -296,7 +299,7 @@ internal class ApplicationStoreTest {
     }
 
     override fun setPath(path: String) {
-      storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
+      storageManager.addMacro(APP_CONFIG, path)
       // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
       storageManager.addMacro(ROOT_CONFIG, path)
     }
@@ -307,7 +310,7 @@ internal class ApplicationStoreTest {
     var foo = "defaultValue"
   }
 
-  @State(name = "A", storages = arrayOf(Storage(file = "new.xml"), Storage(file = StoragePathMacros.APP_CONFIG + "/old.xml", deprecated = true)))
+  @State(name = "A", storages = arrayOf(Storage("new.xml"), Storage(value = "old.xml", deprecated = true)))
   class SeveralStoragesConfigured : Foo(), PersistentStateComponent<SeveralStoragesConfigured> {
     override fun getState(): SeveralStoragesConfigured? {
       return this
@@ -318,7 +321,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  @State(name = "A", storages = arrayOf(Storage(file = "old.xml", deprecated = true), Storage(file = "${StoragePathMacros.APP_CONFIG}/new.xml")))
+  @State(name = "A", storages = arrayOf(Storage(value = "old.xml", deprecated = true), Storage("new.xml")))
   class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
     override fun getState() = this
 

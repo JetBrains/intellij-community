@@ -22,19 +22,22 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
 
-class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl("project", macroSubstitutor, project) {
+// extended in upsource
+open class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
+                                      private val project: ProjectImpl,
+                                      useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl("project", macroSubstitutor, if (useVirtualFileTracker) project else null) {
   companion object {
     val VERSION_OPTION = "version"
   }
 
-  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), StoragePathMacros.PROJECT_CONFIG_DIR)
+  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
 
   override fun expandMacros(path: String): String {
     if (path[0] == '$') {
       return super.expandMacros(path)
     }
     else {
-      return "${expandMacro(StoragePathMacros.PROJECT_CONFIG_DIR)}/$path"
+      return "${expandMacro(PROJECT_CONFIG_DIR)}/$path"
     }
   }
 
@@ -47,6 +50,6 @@ class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
     if (workspace && (operation != StateStorageOperation.READ || getOrCreateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).hasState(componentName, false))) {
       return StoragePathMacros.WORKSPACE_FILE
     }
-    return StoragePathMacros.PROJECT_FILE
+    return PROJECT_FILE
   }
 }

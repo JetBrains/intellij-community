@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -131,8 +132,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       @Nullable
       @Override
       public Result<PsiMember> compute() {
-        return Result.createSingleDependency(getPotentiallyApplicableMemberInternal(),
-                                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return Result.create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, PsiMethodReferenceExpressionImpl.this);
       }
     });
   }
@@ -359,7 +359,18 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    return this;
+    CheckUtil.checkWritable(this);
+
+    if (isReferenceTo(element) || !isPhysical()) return this;
+    if (element instanceof PsiMethod) {
+      return handleElementRename(((PsiMethod)element).getName());
+    }
+    else if (element instanceof PsiClass) {
+      return this;
+    }
+    else {
+      throw new IncorrectOperationException(element.toString());
+    }
   }
 
   @Override
@@ -459,65 +470,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       return false;
     }
 
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-    if (interfaceMethod != null) {
-      final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
-
-      if (PsiType.VOID.equals(interfaceReturnType) || interfaceReturnType == null) {
-        return true;
-      }
-
-      PsiSubstitutor subst = result.getSubstitutor();
-
-      PsiType methodReturnType = null;
-      PsiClass containingClass = null;
-      if (resolve instanceof PsiMethod) {
-        containingClass = ((PsiMethod)resolve).getContainingClass();
-
-        PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(this, this, (PsiMethod)resolve, null, PsiUtil.getLanguageLevel(this));
-
-        if (returnType == null) {
-          returnType = ((PsiMethod)resolve).getReturnType();
-        }
-
-        if (PsiType.VOID.equals(returnType)) {
-          return false;
-        }
-
-        PsiClass qContainingClass = PsiMethodReferenceUtil.getQualifierResolveResult(this).getContainingClass();
-        if (qContainingClass != null && containingClass != null &&
-            PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(left, this), qContainingClass, subst)) {
-          subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
-          LOG.assertTrue(subst != null);
-        }
-
-        methodReturnType = subst.substitute(returnType);
-      }
-      else if (resolve instanceof PsiClass) {
-        if (resolve == JavaPsiFacade.getElementFactory(resolve.getProject()).getArrayClass(PsiUtil.getLanguageLevel(resolve))) {
-          final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
-          if (typeParameters.length == 1) {
-            final PsiType arrayComponentType = subst.substitute(typeParameters[0]);
-            if (arrayComponentType == null) {
-              return false;
-            }
-            methodReturnType = arrayComponentType.createArrayType();
-          }
-        }
-        containingClass = (PsiClass)resolve;
-      }
-
-      if (methodReturnType == null) {
-        if (containingClass == null) {
-          return false;
-        }
-        methodReturnType = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass, subst);
-      }
-
-      return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType);
-    }
-    return false;
+    return PsiMethodReferenceUtil.isReturnTypeCompatible(this, result, left);
   }
 
   @Nullable

@@ -128,7 +128,7 @@ public class JUnit4TestListener extends RunListener {
       }
     }
 
-    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + 
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + 
                           getTestMethodLocation(methodName, classFQN) + "]");
     myCurrentTestStart = currentTime();
   }

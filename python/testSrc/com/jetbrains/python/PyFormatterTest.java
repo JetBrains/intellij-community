@@ -659,4 +659,16 @@ public class PyFormatterTest extends PyTestCase {
   public void testBlanksBetweenImportsPreservedWithoutOptimizeImports() {
     doTest();
   }
+
+  // PY-17979, PY-13304
+  public void testContinuationIndentBeforeFunctionArguments() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS = true;
+    doTest();
+  }
+
+  // PY-18265
+  public void testNoSpaceAroundPowerOperator() {
+    getPythonCodeStyleSettings().SPACE_AROUND_POWER_OPERATOR = false;
+    doTest();
+  }
 }

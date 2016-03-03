@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -12,13 +15,14 @@ import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
@@ -148,6 +152,41 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             }
           }
         }
+        else if (value.startsWith("$")) {
+          final String referencesId = value.substring(1);
+          final XmlTag currentTag = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlTag.class);
+          final Map<String, XmlAttributeValue> fileIds = JavaFxPsiUtil.collectFileIds(currentTag);
+          final PsiClass targetPropertyClass = JavaFxPsiUtil.getPropertyClass(xmlAttributeValue);
+          if (targetPropertyClass == null || JavaFxPsiUtil.hasConversionFromAnyType(targetPropertyClass)) return null;
+          final PsiClass valueClass;
+          if (JavaFxPsiUtil.isExpressionBinding(value)) {
+            final String expressionText = referencesId.substring(1, referencesId.length() - 1);
+            final String newId = StringUtil.getPackageName(expressionText);
+            final PsiClass tagClass = JavaFxPsiUtil.getTagClassById(newId, xmlAttributeValue, fileIds.get(newId));
+            if (tagClass == null) return null;
+
+            final String fieldRef = StringUtil.getShortName(expressionText);
+            final String fieldName = JavaCodeStyleManager.getInstance(tagClass.getProject()).propertyNameToVariableName(fieldRef, VariableKind.FIELD);
+            PsiField psiField = tagClass.findFieldByName(fieldName, true);
+
+            final PsiMember propertyDeclaration;
+            if (psiField != null && psiField.hasModifierProperty(PsiModifier.PUBLIC)) {
+              propertyDeclaration = psiField;
+            }
+            else {
+              propertyDeclaration = JavaFxPsiUtil.findPropertyGetter(fieldRef, tagClass);
+            }
+            if (propertyDeclaration == null) return null;
+            valueClass = JavaFxPsiUtil.getPropertyClass(JavaFxPsiUtil.getReadablePropertyType(propertyDeclaration), xmlAttributeValue);
+          }
+          else {
+            valueClass = JavaFxPsiUtil.getTagClassById(referencesId, xmlAttributeValue, fileIds.get(referencesId));
+          }
+          if (valueClass == null || InheritanceUtil.isInheritorOrSelf(valueClass, targetPropertyClass, true)) {
+            return null;
+          }
+          return "Invalid value: unable to coerce to " + targetPropertyClass.getQualifiedName();
+        }
         else {
           final XmlAttributeDescriptor attributeDescriptor = ((XmlAttribute)parent).getDescriptor();
           if (attributeDescriptor != null) {
@@ -158,7 +197,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             }
             else {
               final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
-              if (tagClass != null && !InheritanceUtil.isInheritor(tagClass, false, JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
+              if (tagClass != null && !InheritanceUtil.isInheritor(tagClass, false, JavaFxCommonNames.JAVAFX_SCENE_NODE)) {
                 boxedQName = tagClass.getQualifiedName();
               }
               else {
@@ -168,7 +207,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             if (boxedQName != null) {
               try {
                 final Class<?> aClass = Class.forName(boxedQName);
-                final Method method = aClass.getMethod(JavaFxCommonClassNames.VALUE_OF, String.class);
+                final Method method = aClass.getMethod(JavaFxCommonNames.VALUE_OF, String.class);
                 method.invoke(aClass, ((XmlAttributeValue)context).getValue());
               }
               catch (InvocationTargetException e) {
@@ -199,16 +238,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
 
   @Nullable
   private static String getBoxedPropertyType(PsiElement declaration) {
-    PsiType attrType = null;
-    if (declaration instanceof PsiField) {
-      attrType = JavaFxPsiUtil.getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonClassNames.ourWritableMap);
-    } else if (declaration instanceof PsiMethod) {
-      final PsiParameter[] parameters = ((PsiMethod)declaration).getParameterList().getParameters();
-      final boolean isStatic = ((PsiMethod)declaration).hasModifierProperty(PsiModifier.STATIC);
-      if (isStatic && parameters.length == 2 || !isStatic && parameters.length == 1) {
-        attrType = parameters[parameters.length - 1].getType();
-      }
-    }
+    PsiType attrType = JavaFxPsiUtil.getWritablePropertyType(declaration);
 
     String boxedQName = null;
     if (attrType instanceof PsiPrimitiveType) {

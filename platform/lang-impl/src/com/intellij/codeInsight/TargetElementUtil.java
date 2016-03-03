@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,24 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class TargetElementUtil extends TargetElementUtilBase {
+  /**
+   * A flag used in {@link #findTargetElement(Editor, int, int)} indicating that if a reference is found at the specified offset,
+   * it should be resolved and the result returned.
+   */
   public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
+
+  /**
+   * A flag used in {@link #findTargetElement(Editor, int, int)} indicating that if a element declaration name (e.g. class name identifier)
+   * is found at the specified offset, the declared element should be returned.
+   */
   public static final int ELEMENT_NAME_ACCEPTED = 0x02;
+
+  /**
+   * A flag used in {@link #findTargetElement(Editor, int, int)} indicating that if a lookup (e.g. completion) is shown in the editor,
+   * the PSI element corresponding to the selected lookup item should be returned.
+   */
   public static final int LOOKUP_ITEM_ACCEPTED = 0x08;
 
   public static TargetElementUtil getInstance() {
@@ -114,19 +129,28 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (project == null) return null;
 
     Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = getFile(project, document);
     if (file == null) return null;
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
 
     offset = adjustOffset(file, document, offset);
 
-    if (file instanceof PsiCompiledFile) {
-      return ((PsiCompiledFile) file).getDecompiledPsiFile().findReferenceAt(offset);
+    return file.findReferenceAt(offset);
+  }
+
+  private static PsiFile getFile(Project project, Document document) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+
+    if (file != null) {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      }
+
+      if (file instanceof PsiCompiledFile) {
+        file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+      }
     }
 
-    return file.findReferenceAt(offset);
+    return file;
   }
 
   /**
@@ -163,6 +187,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
            && EditorUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
   }
 
+  /**
+   * Note: this method can perform slow PSI activity (e.g. {@link PsiReference#resolve()}, so please avoid calling it from Swing thread.
+   * @param editor editor
+   * @param flags a combination of {@link #REFERENCED_ELEMENT_ACCEPTED}, {@link #ELEMENT_NAME_ACCEPTED}, {@link #LOOKUP_ITEM_ACCEPTED}
+   * @return a PSI element declared or referenced at the editor caret position, or selected in the {@link Lookup} if shown in the editor,
+   * depending on the flags passed.
+   * @see #findTargetElement(Editor, int, int)
+   */
   @Nullable
   public static PsiElement findTargetElement(Editor editor, int flags) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -178,6 +210,15 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return null;
   }
 
+  /**
+   * Note: this method can perform slow PSI activity (e.g. {@link PsiReference#resolve()}, so please avoid calling it from Swing thread.
+   * @param editor editor
+   * @param flags a combination of {@link #REFERENCED_ELEMENT_ACCEPTED}, {@link #ELEMENT_NAME_ACCEPTED}, {@link #LOOKUP_ITEM_ACCEPTED}
+   * @param offset offset in the editor's document           f? yt jlby dfh
+   * @return a PSI element declared or referenced at the specified offset in the editor, or selected in the {@link Lookup} if shown in the editor,
+   * depending on the flags passed.
+   * @see #findTargetElement(Editor, int)
+   */
   @Override
   @Nullable
   public PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
@@ -202,10 +243,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
 
     Document document = editor.getDocument();
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = getFile(project, document);
     if (file == null) return null;
 
     offset = adjustOffset(file, document, offset);
