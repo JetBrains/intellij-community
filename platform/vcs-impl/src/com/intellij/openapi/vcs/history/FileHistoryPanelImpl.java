@@ -88,7 +88,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -1016,11 +1015,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     private String createGetActionTitle(final VcsFileRevision revision) {
-      return VcsBundle.message("action.name.for.file.get.version", getIOFile().getAbsolutePath(), revision.getRevisionNumber());
-    }
-
-    private File getIOFile() {
-      return myFilePath.getIOFile();
+      return VcsBundle.message("action.name.for.file.get.version", myFilePath.getPath(), revision.getRevisionNumber());
     }
 
     private void write(byte[] revision) throws IOException {
@@ -1043,7 +1038,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     private void writeContentToIOFile(byte[] revisionContent) throws IOException {
-      FileUtil.writeToFile(getIOFile(), revisionContent);
+      FileUtil.writeToFile(myFilePath.getIOFile(), revisionContent);
     }
 
     private void writeContentToDocument(final Document document, byte[] revisionContent) throws IOException {

@@ -564,9 +564,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     private Couple<String> keyForChange(final Change change) {
       final FilePath beforePath = ChangesUtil.getBeforePath(change);
-      final String beforeKey = beforePath == null ? null : beforePath.getIOFile().getAbsolutePath();
+      final String beforeKey = beforePath == null ? null : beforePath.getPath();
       final FilePath afterPath = ChangesUtil.getAfterPath(change);
-      final String afterKey = afterPath == null ? null : afterPath.getIOFile().getAbsolutePath();
+      final String afterKey = afterPath == null ? null : afterPath.getPath();
       return Couple.of(beforeKey, afterKey);
     }
 

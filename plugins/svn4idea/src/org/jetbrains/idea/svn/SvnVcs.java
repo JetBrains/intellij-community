@@ -713,7 +713,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     VirtualFile file = filePath.getVirtualFile();
     WorkingCopy wcRoot = file != null ? myRootsToWorkingCopies.getWcRoot(file) : null;
     if (wcRoot != null) {
-      isWcRoot = wcRoot.getFile().getAbsolutePath().equals(filePath.getIOFile().getAbsolutePath());
+      isWcRoot = wcRoot.getFile().getAbsolutePath().equals(filePath.getPath());
     }
     return isWcRoot;
   }
