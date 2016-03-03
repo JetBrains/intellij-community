@@ -64,18 +64,25 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
   // tree construction events
 
-  public void onRootPresentationAdded(String rootName, String comment, String rootLocation) {}
-  
-  public void onSuiteTreeNodeAdded(String testName, String locationHint) { }
+  public void onRootPresentationAdded(String rootName, String comment, String rootLocation) {
+  }
 
-  public void onSuiteTreeStarted(String suiteName, String locationHint) { }
+  public void onSuiteTreeNodeAdded(String testName, String locationHint) {
+  }
 
-  public void onSuiteTreeEnded(String suiteName) { }
-  public void onBuildTreeEnded() { }
+  public void onSuiteTreeStarted(String suiteName, String locationHint) {
+  }
+
+  public void onSuiteTreeEnded(String suiteName) {
+  }
+
+  public void onBuildTreeEnded() {
+  }
 
   // progress events
 
   public abstract void onStartTesting();
+
   protected void fireOnTestingStarted(SMTestProxy.SMRootTestProxy node) {
     myEventPublisher.onTestingStarted(node);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -84,6 +91,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestsCountInSuite(final int count);
+
   protected void fireOnTestsCountInSuite(int count) {
     myEventPublisher.onTestsCountInSuite(count);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -92,6 +100,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestStarted(@NotNull TestStartedEvent testStartedEvent);
+
   protected void fireOnTestStarted(SMTestProxy testProxy) {
     myEventPublisher.onTestStarted(testProxy);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -100,6 +109,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent);
+
   protected void fireOnTestFinished(SMTestProxy testProxy) {
     myEventPublisher.onTestFinished(testProxy);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -108,6 +118,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestFailure(@NotNull TestFailedEvent testFailedEvent);
+
   protected void fireOnTestFailed(SMTestProxy testProxy) {
     myEventPublisher.onTestFailed(testProxy);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -116,6 +127,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent);
+
   protected void fireOnTestIgnored(SMTestProxy testProxy) {
     myEventPublisher.onTestIgnored(testProxy);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -126,14 +138,16 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   public abstract void onTestOutput(@NotNull TestOutputEvent testOutputEvent);
 
   public abstract void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent);
+
   protected void fireOnSuiteStarted(SMTestProxy newSuite) {
     myEventPublisher.onSuiteStarted(newSuite);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onSuiteStarted(newSuite);
     }
   }
-  
+
   public abstract void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
+
   protected void fireOnSuiteFinished(SMTestProxy mySuite) {
     myEventPublisher.onSuiteFinished(mySuite);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -150,6 +164,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onFinishTesting();
+
   protected void fireOnTestingFinished(SMTestProxy.SMRootTestProxy root) {
     myEventPublisher.onTestingFinished(root);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -164,8 +179,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
    *                     If name is null statistics will be switched to normal mode
    * @param testCount    0 will be considered as unknown tests number
    */
-  public void onCustomProgressTestsCategory(@Nullable final String categoryName,
-                                            final int testCount) {
+  public void onCustomProgressTestsCategory(@Nullable final String categoryName, final int testCount) {
     addToInvokeLater(new Runnable() {
       public void run() {
         myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
@@ -246,7 +260,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     if (application.isUnitTestMode()) {
       UIUtil.invokeLaterIfNeeded(runnable);
     }
-    else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
+    else if ((!application.isOnAir() && application.isHeadlessEnvironment()) || SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
     else {
@@ -280,7 +294,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected void logProblem(final String msg) {
     logProblem(LOG, msg, myTestFrameworkName);
   }
-  
+
   protected void logProblem(String msg, boolean throwError) {
     logProblem(LOG, msg, throwError, myTestFrameworkName);
   }
