@@ -77,7 +77,7 @@ public class IpnbPyFragment extends PyFileImpl {
 
   @NotNull
   @Override
-  public PsiFile getOriginalFile() {
+  public PsiFile getContext() {
     final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myFilePanel.getDocument());
     return psiFile != null ? psiFile : super.getOriginalFile();
   }
