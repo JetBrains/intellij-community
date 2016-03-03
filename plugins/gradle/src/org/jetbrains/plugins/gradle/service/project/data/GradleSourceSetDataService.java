@@ -26,7 +26,6 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
@@ -66,16 +65,7 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
 
           final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
           if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
-            final String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
-
-            final DataNode<GradleSourceSetData> found = ContainerUtil.find(toImport, new Condition<DataNode<GradleSourceSetData>>() {
-              @Override
-              public boolean value(DataNode<GradleSourceSetData> node) {
-                return node.getData().getId().equals(projectId);
-              }
-            });
-
-            if (found == null) {
+            if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
               orphanIdeModules.add(module);
             }
           }
