@@ -9,9 +9,8 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsUserImpl;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -36,21 +35,11 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
         myAllUsersByNames.putValue(name.toLowerCase(), user);
       }
       String email = user.getEmail();
-      String emailNamePart = getEmailNamePart(email);
-      if (emailNamePart != null) {
-        myAllUsersByEmails.putValue(emailNamePart.toLowerCase(), user);
+      String nameFromEmail = VcsUserUtil.getNameFromEmail(email);
+      if (nameFromEmail != null) {
+        myAllUsersByEmails.putValue(nameFromEmail.toLowerCase(), user);
       }
     }
-  }
-
-  @Nullable
-  private static String getEmailNamePart(@NotNull String email) {
-    int at = email.indexOf('@');
-    String emailNamePart = null;
-    if (at > 0) {
-      emailNamePart = email.substring(0, at);
-    }
-    return emailNamePart;
   }
 
   @NotNull
@@ -63,7 +52,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
         result.addAll(ContainerUtil.map(users, new Function<VcsUser, String>() {
           @Override
           public String fun(VcsUser user) {
-            return userToString(user);
+            return VcsUserUtil.toExactString(user);
           }
         }));
       }
@@ -81,7 +70,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
       VcsUser vcsUser = myData.get(root);
       if (vcsUser != null) {
         users.addAll(getUsers(vcsUser.getName())); // do not just add vcsUser, also add synonyms
-        String emailNamePart = getEmailNamePart(vcsUser.getEmail());
+        String emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.getEmail());
         if (emailNamePart != null) {
           users.addAll(getUsers(emailNamePart));
         }
@@ -131,32 +120,12 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
   @NotNull
   private static List<String> getSynonyms(@NotNull String name) {
-    Pair<String, String> firstAndLastName = VcsUserImpl.getFirstAndLastName(name);
+    Pair<String, String> firstAndLastName = VcsUserUtil.getFirstAndLastName(name);
     if (firstAndLastName != null) {
       return Arrays.asList(firstAndLastName.first + " " + firstAndLastName.second,
                            firstAndLastName.first + "." + firstAndLastName.second,
                            firstAndLastName.first + firstAndLastName.second);
     }
     return Collections.singletonList(name);
-  }
-
-  @NotNull
-  private static String userToString(@NotNull VcsUser user) {
-    String name = user.getName();
-    String email = user.getEmail();
-
-    String result = name;
-    if (!email.isEmpty()) {
-      if (!name.isEmpty()) {
-        result += " <";
-      }
-      result += email;
-
-      if (!name.isEmpty()) {
-        result += ">";
-      }
-    }
-
-    return result;
   }
 }

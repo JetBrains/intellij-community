@@ -15,13 +15,9 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import java.util.Objects;
 
@@ -29,8 +25,6 @@ import java.util.Objects;
  * Note: users are considered equal if they have the same name and email. Emails are converted to lower case in constructor.
  */
 public class VcsUserImpl implements VcsUser {
-  @NotNull private static final Pattern NAME_WITH_DOT = Pattern.compile("(\\w*)\\.(\\w*)");
-  @NotNull private static final Pattern NAME_WITH_SPACE = Pattern.compile("(\\w*) (\\w*)");
 
   @NotNull private final String myName;
   @NotNull private final String myEmail;
@@ -72,32 +66,6 @@ public class VcsUserImpl implements VcsUser {
 
   @Override
   public String toString() {
-    return myName + "<" + myEmail + ">";
-  }
-
-  public static boolean isSamePerson(@NotNull VcsUser user1, @NotNull VcsUser user2) {
-    return getNameInStandardForm(user1.getName()).equals(getNameInStandardForm(user2.getName()));
-  }
-
-  @NotNull
-  public static String getNameInStandardForm(@NotNull String name) {
-    Pair<String, String> firstAndLastName = getFirstAndLastName(name);
-    if (firstAndLastName != null) {
-      return firstAndLastName.first.toLowerCase() + " " + firstAndLastName.second.toLowerCase();
-    }
-    return name.toLowerCase();
-  }
-
-  @Nullable
-  public static Pair<String, String> getFirstAndLastName(@NotNull String name) {
-    Matcher nameWithDotMatcher = NAME_WITH_DOT.matcher(name);
-    if (nameWithDotMatcher.matches()) {
-      return Pair.create(nameWithDotMatcher.group(1), nameWithDotMatcher.group(2));
-    }
-    Matcher nameWithSpaceMatcher = NAME_WITH_SPACE.matcher(name);
-    if (nameWithSpaceMatcher.matches()) {
-      return Pair.create(nameWithSpaceMatcher.group(1), nameWithSpaceMatcher.group(2));
-    }
-    return null;
+    return VcsUserUtil.toExactString(this);
   }
 }
