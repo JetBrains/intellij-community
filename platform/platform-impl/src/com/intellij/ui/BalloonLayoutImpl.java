@@ -19,6 +19,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeRootPane;
@@ -102,6 +103,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   @Override
   public void add(@NotNull final Balloon balloon, @Nullable Object layoutData) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myBalloons.add(balloon);
     if (layoutData instanceof BalloonLayoutData) {
       BalloonLayoutData balloonLayoutData = (BalloonLayoutData)layoutData;
