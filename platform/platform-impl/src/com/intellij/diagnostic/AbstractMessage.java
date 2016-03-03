@@ -18,6 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,7 +113,12 @@ public abstract class AbstractMessage {
    * @return list of attachments which are marked by user to be included into the error report
    */
   public List<Attachment> getIncludedAttachments() {
-    return ContainerUtil.filter(getAllAttachments(), Attachment::isIncluded);
+    return ContainerUtil.filter(getAllAttachments(), new Condition<Attachment>() {
+      @Override
+      public boolean value(Attachment attachment) {
+        return attachment.isIncluded();
+      }
+    });
   }
 
   /**
