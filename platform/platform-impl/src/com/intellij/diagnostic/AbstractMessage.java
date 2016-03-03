@@ -18,6 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Calendar;
@@ -102,9 +103,23 @@ public abstract class AbstractMessage {
   public void setAssigneeId(Integer assigneeId) {
     myAssigneeId = assigneeId;
   }
-  
+
+  public List<Attachment> getAllAttachments() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return list of attachments which are marked by user to be included into the error report
+   */
+  public List<Attachment> getIncludedAttachments() {
+    return ContainerUtil.filter(getAllAttachments(), Attachment::isIncluded);
+  }
+
+  /**
+   * @deprecated use {@link #getIncludedAttachments()} instead
+   */
   @NotNull 
   public List<Attachment> getAttachments() {
-    return Collections.emptyList();
+    return getIncludedAttachments();
   }
 }
