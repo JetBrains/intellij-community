@@ -23,5 +23,4 @@ public interface TimestampGetter {
   int size();
 
   long getTimestamp(int index);
-
 }

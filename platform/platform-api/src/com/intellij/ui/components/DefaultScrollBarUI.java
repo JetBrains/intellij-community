@@ -16,13 +16,11 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
@@ -666,14 +664,5 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public Color produce() {
       return isDark(myComponent) ? myDarkColor : myBrightColor;
     }
-  }
-
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedParameters"})
-  public static ScrollBarUI createUI(JComponent c) {
-    if (Registry.is("ide.scroll.new.layout")) {
-      if (!SystemInfo.isMac) return new DefaultScrollBarUI();
-      if (Registry.is("mac.scroll.new.ui")) return new MacScrollBarUI();
-    }
-    return ButtonlessScrollBarUI.createNormal();
   }
 }

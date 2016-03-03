@@ -95,8 +95,7 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
     else if (element instanceof PsiMethodReferenceExpression) {
       usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
         public void deleteElement() throws IncorrectOperationException {
-          final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
-          final PsiExpression callExpression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+          final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)element);
           if (callExpression instanceof PsiCallExpression) {
             final PsiExpressionList expressionList = ((PsiCallExpression)callExpression).getArgumentList();
             if (expressionList != null) {

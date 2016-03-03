@@ -47,7 +47,7 @@ import java.util.Collection;
 
 class MultilinePopupBuilder {
 
-  private static final char[] SEPARATORS = { ',', '|', '\n' };
+  private static final char[] SEPARATORS = {',', '|', '\n'};
 
   @NotNull private final EditorTextField myTextField;
 

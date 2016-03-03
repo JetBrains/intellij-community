@@ -16,11 +16,13 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
 import java.util.Enumeration;
 
 /**
@@ -28,6 +30,7 @@ import java.util.Enumeration;
  */
 public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   private boolean myResolved;
+  protected volatile InspectionTreeUpdater myUpdater;
   protected InspectionTreeNode(Object userObject) {
     super(userObject);
   }
@@ -77,5 +80,47 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.amnesty();
     }
+  }
+
+  @Override
+  public void add(MutableTreeNode newChild) {
+    super.add(newChild);
+    if (myUpdater != null) {
+      ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
+      myUpdater.update();
+    }
+  }
+
+  @Override
+  public void insert(MutableTreeNode newChild, int childIndex) {
+    super.insert(newChild, childIndex);
+    if (myUpdater != null) {
+      ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
+      myUpdater.update();
+    }
+  }
+
+  private void propagateUpdater(InspectionTreeUpdater updater) {
+    if (myUpdater != null) return;
+    myUpdater = updater;
+    Enumeration enumeration = children();
+    while (enumeration.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+      child.propagateUpdater(updater);
+    }
+  }
+
+  public RefEntity getContainingFileLocalEntity() {
+    final Enumeration children = children();
+    RefEntity current = null;
+    while (children.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
+      final RefEntity entity = child.getContainingFileLocalEntity();
+      if (entity == null || current != null) {
+        return null;
+      }
+      current = entity;
+    }
+    return current;
   }
 }

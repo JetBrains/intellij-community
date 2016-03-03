@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
@@ -63,8 +64,8 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
   @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = new WeakHashMap<Document, Boolean>();
 
-  private final Map<Editor, PsiElement /** PSI element which is located under the current mouse position */> myActiveElements
-    = new WeakHashMap<Editor, PsiElement>();
+  private final Map<Editor, Reference<PsiElement> /** PSI element which is located under the current mouse position */> myActiveElements
+    = new WeakHashMap<>();
 
   /** Holds a reference (if any) to the documentation manager used last time to show an 'auto quick doc' popup. */
   @Nullable private WeakReference<DocumentationManager> myDocumentationManager;
@@ -228,9 +229,8 @@ public class QuickDocOnMouseOverManager {
       closeQuickDocIfPossible();
       return;
     }
-    
-    PsiElement activeElement = myActiveElements.get(editor);
-    if (elementUnderMouse.equals(activeElement)
+
+    if (elementUnderMouse.equals(SoftReference.dereference(myActiveElements.get(editor)))
         && (!myAlarm.isEmpty() // Request to show documentation for the target component has been already queued.
             || hint != null)) // Documentation for the target component is being shown.
     { 
@@ -238,7 +238,7 @@ public class QuickDocOnMouseOverManager {
     }
     allowUpdateFromContext(project, false);
     closeQuickDocIfPossible();
-    myActiveElements.put(editor, elementUnderMouse);
+    myActiveElements.put(editor, new WeakReference<>(elementUnderMouse));
 
     myAlarm.cancelAllRequests();
     if (myCurrentRequest != null) myCurrentRequest.cancel();
@@ -328,7 +328,7 @@ public class QuickDocOnMouseOverManager {
           
           myAlarm.cancelAllRequests();
 
-          if (!originalElement.equals(myActiveElements.get(editor))) {
+          if (!originalElement.equals(SoftReference.dereference(myActiveElements.get(editor)))) {
             return;
           }
 

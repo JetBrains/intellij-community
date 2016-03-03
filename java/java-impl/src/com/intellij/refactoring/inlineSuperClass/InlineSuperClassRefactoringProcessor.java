@@ -167,43 +167,45 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         }
       }
 
-      final PsiMethod[] superConstructors = mySuperClass.getConstructors();
-      for (PsiMethod constructor : targetClass.getConstructors()) {
-        final PsiCodeBlock constrBody = constructor.getBody();
-        LOG.assertTrue(constrBody != null);
-        final PsiStatement[] statements = constrBody.getStatements();
-        if (statements.length > 0) {
-          final PsiStatement firstConstrStatement = statements[0];
-          if (firstConstrStatement instanceof PsiExpressionStatement) {
-            final PsiExpression expression = ((PsiExpressionStatement)firstConstrStatement).getExpression();
-            if (expression instanceof PsiMethodCallExpression) {
-              final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-              if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
-                final PsiMethod superConstructor = ((PsiMethodCallExpression)expression).resolveMethod();
-                if (superConstructor != null && superConstructor.getBody() != null) {
-                  usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression));
-                  continue;
+      if (!mySuperClass.isInterface()) {
+        final PsiMethod[] superConstructors = mySuperClass.getConstructors();
+        for (PsiMethod constructor : targetClass.getConstructors()) {
+          final PsiCodeBlock constrBody = constructor.getBody();
+          LOG.assertTrue(constrBody != null);
+          final PsiStatement[] statements = constrBody.getStatements();
+          if (statements.length > 0) {
+            final PsiStatement firstConstrStatement = statements[0];
+            if (firstConstrStatement instanceof PsiExpressionStatement) {
+              final PsiExpression expression = ((PsiExpressionStatement)firstConstrStatement).getExpression();
+              if (expression instanceof PsiMethodCallExpression) {
+                final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+                if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
+                  final PsiMethod superConstructor = ((PsiMethodCallExpression)expression).resolveMethod();
+                  if (superConstructor != null && superConstructor.getBody() != null) {
+                    usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression));
+                    continue;
+                  }
                 }
               }
             }
           }
-        }
-
-        //insert implicit call to super
-        for (PsiMethod superConstructor : superConstructors) {
-          if (superConstructor.getParameterList().getParametersCount() == 0) {
-            final PsiExpression expression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("super()", constructor);
-            usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression, constrBody));
+  
+          //insert implicit call to super
+          for (PsiMethod superConstructor : superConstructors) {
+            if (superConstructor.getParameterList().getParametersCount() == 0) {
+              final PsiExpression expression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("super()", constructor);
+              usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression, constrBody));
+            }
           }
         }
-      }
 
-      if (targetClass.getConstructors().length == 0) {
-        //copy default constructor
-        for (PsiMethod superConstructor : superConstructors) {
-          if (superConstructor.getParameterList().getParametersCount() == 0) {
-            usages.add(new CopyDefaultConstructorUsageInfo(targetClass, superConstructor));
-            break;
+        if (targetClass.getConstructors().length == 0) {
+          //copy default constructor
+          for (PsiMethod superConstructor : superConstructors) {
+            if (superConstructor.getParameterList().getParametersCount() == 0) {
+              usages.add(new CopyDefaultConstructorUsageInfo(targetClass, superConstructor));
+              break;
+            }
           }
         }
       }

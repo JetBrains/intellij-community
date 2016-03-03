@@ -37,10 +37,12 @@ public class RemoteFilePath implements FilePath {
   private static final TObjectHashingStrategy<String> CASE_SENSITIVE_STRATEGY = FilePathHashingStrategy.create(true);
 
   @NotNull private final String myPath;
+  @NotNull private final File myIOFile;
   private final boolean myIsDirectory;
 
   public RemoteFilePath(@NotNull String path, boolean isDirectory) {
     myPath = path;
+    myIOFile = new File(myPath);
     myIsDirectory = isDirectory;
   }
 
@@ -59,7 +61,7 @@ public class RemoteFilePath implements FilePath {
   @NotNull
   @Override
   public File getIOFile() {
-    return new File(myPath);
+    return myIOFile;
   }
 
   @NotNull

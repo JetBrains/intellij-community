@@ -80,8 +80,8 @@ import java.util.jar.JarFile;
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
-  private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
+  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -385,8 +385,15 @@ public class PlatformTestUtil {
     return print(tree, false);
   }
 
-  public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
-    Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString());
+  public static void updateRecursively(@NotNull AbstractTreeNode<?> node) {
+    node.update();
+    for (AbstractTreeNode child : node.getChildren()) {
+      updateRecursively(child);
+    }
+  }
+
+  public static void assertTreeStructureEquals(@NotNull AbstractTreeStructure treeStructure, @NotNull String expected) {
+    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString().trim());
   }
 
   public static void invokeNamedAction(final String actionId) {
@@ -861,18 +868,9 @@ public class PlatformTestUtil {
     GCUtil.tryGcSoftlyReachableObjects();
   }
 
-  public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {
-    withEncoding(encoding, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        r.run();
-      }
-    });
-  }
-
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
-    Charset oldCharset = Charset.defaultCharset();
     try {
+      Charset oldCharset = Charset.defaultCharset();
       try {
         patchSystemFileEncoding(encoding);
         r.run();

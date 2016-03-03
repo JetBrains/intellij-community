@@ -61,20 +61,19 @@ class GitRepositoryReader {
   @NonNls private static final String REFS_HEADS_PREFIX = "refs/heads/";
   @NonNls private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
 
-  @NotNull private final File          myGitDir;         // .git/
   @NotNull private final File          myHeadFile;       // .git/HEAD
   @NotNull private final File          myRefsHeadsDir;   // .git/refs/heads/
   @NotNull private final File          myRefsRemotesDir; // .git/refs/remotes/
   @NotNull private final File          myPackedRefsFile; // .git/packed-refs
+  @NotNull private final GitRepositoryFiles myGitFiles;
 
   GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
-    myGitDir = new File(FileUtil.toSystemDependentName(gitFiles.getGitDirPath()));
-    DvcsUtil.assertFileExists(myGitDir, ".git directory not found in " + myGitDir);
-    myHeadFile = new File(FileUtil.toSystemDependentName(gitFiles.getHeadPath()));
-    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found in " + myGitDir);
-    myRefsHeadsDir = new File(FileUtil.toSystemDependentName(gitFiles.getRefsHeadsPath()));
-    myRefsRemotesDir = new File(FileUtil.toSystemDependentName(gitFiles.getRefsRemotesPath()));
-    myPackedRefsFile = new File(FileUtil.toSystemDependentName(gitFiles.getPackedRefsPath()));
+    myGitFiles = gitFiles;
+    myHeadFile = gitFiles.getHeadFile();
+    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found at " + myHeadFile);
+    myRefsHeadsDir = gitFiles.getRefsHeadsFile();
+    myRefsRemotesDir = gitFiles.getRefsRemotesFile();
+    myPackedRefsFile = gitFiles.getPackedRefsPath();
   }
 
   @NotNull
@@ -158,17 +157,16 @@ class GitRepositoryReader {
       currentBranch = headInfo.content;
     }
     else if (state == Repository.State.REBASING) {
-      currentBranch = readRebaseDirBranchFile("rebase-apply");
+      currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseApplyDir());
       if (currentBranch == null) {
-        currentBranch = readRebaseDirBranchFile("rebase-merge");
+        currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseMergeDir());
       }
     }
     return addRefsHeadsPrefixIfNeeded(currentBranch);
   }
 
   @Nullable
-  private String readRebaseDirBranchFile(@NonNls String rebaseDirName) {
-    File rebaseDir = new File(myGitDir, rebaseDirName);
+  private static String readRebaseDirBranchFile(@NonNls File rebaseDir) {
     if (rebaseDir.exists()) {
       File headName = new File(rebaseDir, "head-name");
       if (headName.exists()) {
@@ -187,17 +185,11 @@ class GitRepositoryReader {
   }
 
   private boolean isMergeInProgress() {
-    File mergeHead = new File(myGitDir, "MERGE_HEAD");
-    return mergeHead.exists();
+    return myGitFiles.getMergeHeadFile().exists();
   }
 
   private boolean isRebaseInProgress() {
-    File f = new File(myGitDir, "rebase-apply");
-    if (f.exists()) {
-      return true;
-    }
-    f = new File(myGitDir, "rebase-merge");
-    return f.exists();
+    return myGitFiles.getRebaseApplyDir().exists() || myGitFiles.getRebaseMergeDir().exists();
   }
 
   @NotNull

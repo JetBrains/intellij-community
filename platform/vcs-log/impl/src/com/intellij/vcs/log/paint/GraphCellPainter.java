@@ -31,6 +31,5 @@ public interface GraphCellPainter {
 
   @Nullable
   PrintElement getElementUnderCursor(@NotNull Collection<? extends PrintElement> printElements, int x, int y);
-
 }
 

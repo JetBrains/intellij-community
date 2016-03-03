@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
@@ -146,9 +145,8 @@ public class EduUtils {
     }
 
     if (taskFile.getAnswerPlaceholders().isEmpty()) {
-      String extension = FileUtilRt.getExtension(taskFileName);
-      String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(taskFileName);
-      VirtualFile answerFile = answerFileDir.findChild(nameWithoutExtension + ".answer." + extension);
+      //do not need to replace anything, just copy
+      VirtualFile answerFile = answerFileDir.findChild(taskFileName);
       if (answerFile != null) {
         try {
           answerFile.copy(answerFileDir, userFileDir, taskFileName);
@@ -167,9 +165,11 @@ public class EduUtils {
     }
 
     file = userFileDir.findChild(taskFileName);
-    assert file != null;
-    String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
-    VirtualFile answerFile = answerFileDir.findChild(answerFileName);
+    if (file == null) {
+      LOG.info("Failed to find task file " + taskFileName);
+      return;
+    }
+    VirtualFile answerFile = answerFileDir.findChild(taskFileName);
     if (answerFile == null) {
       return;
     }

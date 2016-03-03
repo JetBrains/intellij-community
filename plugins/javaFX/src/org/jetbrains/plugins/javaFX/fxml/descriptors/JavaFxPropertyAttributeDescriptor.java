@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -88,7 +87,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       return ArrayUtil.toStringArray(enumConstants);
     }
 
-    final String propertyQName = getBoxedPropertyType(getDeclaration());
+    final String propertyQName = JavaFxPsiUtil.getBoxedPropertyType(getDeclaration());
     if (CommonClassNames.JAVA_LANG_FLOAT.equals(propertyQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(propertyQName)) {
       return new String[] {"Infinity", "-Infinity", "NaN",  "-NaN"};
     } else if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyQName)) {
@@ -158,11 +157,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
           final XmlTag currentTag = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlTag.class);
           final Map<String, XmlAttributeValue> fileIds = JavaFxPsiUtil.collectFileIds(currentTag);
           final PsiClass targetPropertyClass = JavaFxPsiUtil.getPropertyClass(xmlAttributeValue);
-          if (targetPropertyClass == null ||
-              Comparing.strEqual(targetPropertyClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING) ||
-              JavaFxPsiUtil.findValueOfMethod(targetPropertyClass) != null) {
-            return null;
-          }
+          if (targetPropertyClass == null || JavaFxPsiUtil.hasConversionFromAnyType(targetPropertyClass)) return null;
           final PsiClass valueClass;
           if (JavaFxPsiUtil.isExpressionBinding(value)) {
             final String expressionText = referencesId.substring(1, referencesId.length() - 1);
@@ -198,7 +193,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             final PsiElement declaration = attributeDescriptor.getDeclaration();
             final String boxedQName;
             if (declaration != null) {
-              boxedQName = getBoxedPropertyType(declaration);
+              boxedQName = JavaFxPsiUtil.getBoxedPropertyType(declaration);
             }
             else {
               final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
@@ -239,20 +234,6 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       }
     }
     return null;
-  }
-
-  @Nullable
-  private static String getBoxedPropertyType(PsiElement declaration) {
-    PsiType attrType = JavaFxPsiUtil.getWritablePropertyType(declaration);
-
-    String boxedQName = null;
-    if (attrType instanceof PsiPrimitiveType) {
-      boxedQName = ((PsiPrimitiveType)attrType).getBoxedTypeName();
-    } else if (PsiPrimitiveType.getUnboxedType(attrType) != null) {
-      final PsiClass attrClass = PsiUtil.resolveClassInType(attrType);
-      boxedQName = attrClass != null ? attrClass.getQualifiedName() : null;
-    }
-    return boxedQName;
   }
 
   @Override

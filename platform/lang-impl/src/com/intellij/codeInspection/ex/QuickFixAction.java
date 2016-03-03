@@ -46,6 +46,9 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.*;
 
 /**
@@ -170,6 +173,15 @@ public class QuickFixAction extends AnAction {
       }, templatePresentationText, null);
 
       refreshViews(project, ignoredElements, myToolWrapper);
+      final InspectionTree tree = context.getView().getTree();
+      final TreePath[] selected = tree.getSelectionPaths();
+      if (selected != null) {
+        for (TreePath path : selected) {
+          path.getLastPathComponent();
+          ((DefaultTreeModel) tree.getModel()).reload((TreeNode)path.getLastPathComponent());
+        }
+      }
+      tree.restoreExpansionAndSelection();
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();

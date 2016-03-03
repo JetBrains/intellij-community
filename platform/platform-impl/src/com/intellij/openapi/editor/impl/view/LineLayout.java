@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -149,6 +150,8 @@ abstract class LineLayout {
   private static boolean distinctTokens(@Nullable IElementType token1, @Nullable IElementType token2) {
     if (token1 == token2) return false;
     if (token1 == null || token2 == null) return true;
+    if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(token1) ||
+        StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(token2)) return false;
     if (!token1.getLanguage().is(token2.getLanguage())) return true;
     BidiRegionsSeparator separator = LanguageBidiRegionsSeparator.INSTANCE.forLanguage(token1.getLanguage());
     return separator.createBorderBetweenTokens(token1, token2);

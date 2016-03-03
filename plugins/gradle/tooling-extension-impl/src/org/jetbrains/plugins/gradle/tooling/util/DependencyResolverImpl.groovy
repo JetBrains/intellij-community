@@ -532,9 +532,12 @@ class DependencyResolverImpl implements DependencyResolver {
     dependencies.each {
       try {
         if (it instanceof SelfResolvingDependency && !(it instanceof ProjectDependency)) {
-          final dependency = new DefaultFileCollectionDependency(it.resolve())
-          dependency.scope = scope
-          result.add(dependency)
+          def files = it.resolve()
+          if (files && !files.isEmpty()) {
+            final dependency = new DefaultFileCollectionDependency(files)
+            dependency.scope = scope
+            result.add(dependency)
+          }
         }
       }
       catch (ignore) {

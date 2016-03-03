@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
 import com.intellij.util.ui.UIUtil;
-import com.petebevin.markdown.MarkdownProcessor;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -63,7 +62,6 @@ public class IpnbUtils {
                                           " </script></head><body><div id=\"mydiv\">";
 
   private static final String ourPostfix = "</div></body></html>";
-  private static final MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
   private static URL ourStyleUrl;
 
   public static JComponent createLatexPane(@NotNull final String source, int width) {
@@ -133,7 +131,6 @@ public class IpnbUtils {
     final StringBuilder result = new StringBuilder();
 
     source = replaceLinks(source);
-    source = ourMarkdownProcessor.markdown(source);
 
     boolean escaped = false;
     int start = 0;

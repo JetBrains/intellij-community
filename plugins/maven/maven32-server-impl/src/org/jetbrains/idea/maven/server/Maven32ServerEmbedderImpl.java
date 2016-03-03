@@ -78,6 +78,8 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.spi.log.LoggerFactory;
+import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
+import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -642,11 +644,15 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
             RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
             if (repositorySession instanceof DefaultRepositorySystemSession) {
-              ((DefaultRepositorySystemSession)repositorySession).setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+              DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
+              session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
 
               if (myWorkspaceMap != null) {
-                ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
+                session.setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
               }
+
+              session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+              session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
             }
 
             List<Exception> exceptions = new ArrayList<Exception>();

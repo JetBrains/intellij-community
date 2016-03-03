@@ -132,8 +132,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       @Nullable
       @Override
       public Result<PsiMember> compute() {
-        return Result.createSingleDependency(getPotentiallyApplicableMemberInternal(),
-                                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return Result.create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, PsiMethodReferenceExpressionImpl.this);
       }
     });
   }
@@ -365,6 +364,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     if (isReferenceTo(element) || !isPhysical()) return this;
     if (element instanceof PsiMethod) {
       return handleElementRename(((PsiMethod)element).getName());
+    }
+    else if (element instanceof PsiClass) {
+      return this;
     }
     else {
       throw new IncorrectOperationException(element.toString());

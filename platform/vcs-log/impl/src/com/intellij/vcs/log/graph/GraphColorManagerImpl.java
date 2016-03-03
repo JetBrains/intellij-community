@@ -17,14 +17,13 @@ package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.RefsModel;
-import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -42,7 +41,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
 
   public GraphColorManagerImpl(@NotNull RefsModel refsModel,
-                               @NotNull NotNullFunction<Integer, Hash> hashGetter,
+                               @NotNull Function<Integer, Hash> hashGetter,
                                @NotNull Map<VirtualFile, VcsLogRefManager> refManagers) {
     myRefsModel = refsModel;
     myRefManagers = refManagers;
@@ -79,7 +78,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   public static class HeadsComparator implements Comparator<Integer> {
     @NotNull private final RefsModel myRefsModel;
     @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
-    @NotNull private final NotNullFunction<Integer, Hash> myHashGetter;
+    @NotNull private final Function<Integer, Hash> myHashGetter;
 
     @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<Integer, Integer>(10) {
       @Override
@@ -90,7 +89,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
 
     public HeadsComparator(@NotNull RefsModel refsModel,
                            @NotNull Map<VirtualFile, VcsLogRefManager> refManagers,
-                           @NotNull NotNullFunction<Integer, Hash> hashGetter) {
+                           @NotNull Function<Integer, Hash> hashGetter) {
       myRefsModel = refsModel;
       myRefManagers = refManagers;
       myHashGetter = hashGetter;
@@ -132,7 +131,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
       VcsLogRefManager refManager1 = myRefManagers.get(root1);
       VcsLogRefManager refManager2 = myRefManagers.get(root2);
       if (!refManager1.equals(refManager2)) {
-        return VcsLogUtil.compareRoots(root1, root2);
+        return refManager1.toString().compareTo(refManager2.toString());
       }
 
       VcsRef bestRef = ContainerUtil.sorted(ContainerUtil.concat(refs1, refs2), refManager1.getBranchLayoutComparator()).get(0);

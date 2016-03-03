@@ -20,7 +20,8 @@ import com.intellij.util.Function;
 public class UserNameRegex implements Function<String, String> {
   public static final UserNameRegex INSTANCE = new UserNameRegex();
 
-  private UserNameRegex(){}
+  private UserNameRegex() {
+  }
 
   @Override
   public String fun(String s) {

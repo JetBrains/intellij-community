@@ -22,5 +22,4 @@ public class InvalidRequestException extends RuntimeException {
   public InvalidRequestException(@NotNull String message) {
     super(message);
   }
-
 }

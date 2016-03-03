@@ -26,7 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
+import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -215,7 +215,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
       VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(srcFile);
       if (jarRoot == null) return;
 
-      VirtualFile[] roots = PathUIUtils.scanAndSelectDetectedJavaSourceRoots(null, new VirtualFile[]{jarRoot});
+      VirtualFile[] roots = LibrarySourceRootDetectorUtil.scanAndSelectDetectedJavaSourceRoots(null, new VirtualFile[]{jarRoot});
       if (roots.length == 0) {
         roots = new VirtualFile[]{jarRoot};
       }

@@ -706,7 +706,7 @@ binding.setVariable("patchPropertiesFile", { String target, Map args = [:] ->
   }
 
   String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
-  String settings_dir = args.system_selector.replaceFirst("\\d+", "")
+  String settings_dir = args.system_selector.replaceFirst("\\d+(\\.\\d+)?", "")
   ant.replace(file: file) {
     replacefilter(token: "@@product_uc@@", value: product_uc)
     replacefilter(token: "@@settings_dir@@", value: settings_dir)

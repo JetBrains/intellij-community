@@ -31,7 +31,9 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +41,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
-import java.util.List;
+import java.awt.image.BufferedImage;
 import java.util.function.Supplier;
 
 /**
@@ -58,25 +59,14 @@ public class QuickFixToolbar extends JPanel {
     int problemCount = descriptors.length;
     final boolean multipleDescriptors = problemCount > 1;
 
-    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-    List<JPanel> panels = new ArrayList<>();
-    for (int i = 0; i < (multipleDescriptors ? 2 : 1); i++) {
-      final JPanel line = new JPanel();
-      line.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      panels.add((JPanel)add(line));
-    }
-    if (multipleDescriptors || !hasFixes) {
-      panels.get(0).setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
-    }
+    setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(7 + (hasFixes ? 0 : 5), hasFixes ? 12 : 9, hasFixes ? 0 : 6, 0));
 
-    //fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
-    fill(getDescriptionLabelPlacement(multipleDescriptors),
-         () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), panels);
-    fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(fixes), panels);
-    fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(tree.getSelectedToolWrapper()
-      , tree.getSelectionPath(), project), panels);
-    fill(multipleDescriptors && editor != null ? 1 : -1, () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
-      editor, descriptors), true).getComponent(), panels);
+    fill(multipleDescriptors, () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), this);
+    fill(hasFixes, () -> createFixPanel(fixes, multipleDescriptors), this);
+    fill(true, () -> createSuppressionCombo(tree.getSelectedToolWrapper(), tree.getSelectionPaths(), project, multipleDescriptors), this);
+    fill(multipleDescriptors && editor != null, () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
+      editor, descriptors), true).getComponent(), this);
   }
 
   @NotNull
@@ -84,40 +74,33 @@ public class QuickFixToolbar extends JPanel {
     final String targetName = targetNode instanceof RefElementNode ? ((RefElementNode)targetNode).getElement().getName() : null;
     SimpleColoredComponent label = new SimpleColoredComponent();
     boolean hasFixesNonIntersectedFixes = fixes != null && fixes.length == 0;
-    boolean hasFixes = fixes != null && fixes.length != 0;
-    label.append((hasFixes ? " Fix " : " ") + problemsCount + " problems" + (targetName == null ? "" : (" in " + targetName)) + (
-      hasFixesNonIntersectedFixes
-      ? ":" : ""), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    label.append(problemsCount + " problems" +
+                 (targetName == null ? "" : (" in " + targetName)) +
+                 (problemsCount > 1 && (fixes != null && fixes.length == MAX_FIX_COUNT) ? "    Fix all:" : "") +
+                 (hasFixesNonIntersectedFixes ? ":" : "" ));
     if (hasFixesNonIntersectedFixes) {
       label.append(" select a single problem to see its quick fixes");
     }
-
-    if (!hasFixes) {
-      label.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 6, 0));
-    }
-    return label;
-  }
-
-  @NotNull
-  private static JLabel createBulbIcon() {
-    final JLabel label = new JLabel(AllIcons.Actions.IntentionBulb);
-    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
     return label;
   }
 
   private static JComponent createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
-                                                   @NotNull final TreePath path,
-                                                   @NotNull final Project project) {
+                                                   @NotNull final TreePath[] paths,
+                                                   @NotNull final Project project,
+                                                   boolean multipleDescriptors) {
+    final AnAction[] suppressors = new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null);
     final ComboBoxAction action = new ComboBoxAction() {
       {
-        getTemplatePresentation().setText("Suppress");
+        getTemplatePresentation().setText(multipleDescriptors ? "Suppress All" : "Suppress");
+        getTemplatePresentation().setEnabledAndVisible(suppressors.length != 0);
       }
 
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
         DefaultActionGroup group = new DefaultActionGroup();
-        group.addAll(new SuppressActionWrapper(project, toolWrapper, path).getChildren(null));
+        group.addAll(suppressors);
         return group;
       }
     };
@@ -126,12 +109,12 @@ public class QuickFixToolbar extends JPanel {
   }
 
   @NotNull
-  private static JPanel createFixPanel(QuickFixAction[] fixes) {
+  private static JPanel createFixPanel(QuickFixAction[] fixes, boolean multipleDescriptors) {
     JPanel fixPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, JBUI.scale(3), JBUI.scale(5)));
     if (fixes.length > MAX_FIX_COUNT) {
       final ComboBoxAction fixComboBox = new ComboBoxAction() {
         {
-          getTemplatePresentation().setText("Apply quick fixes");
+          getTemplatePresentation().setText("Apply quick fixes" + (multipleDescriptors ? " to all the problems" : ""));
           getTemplatePresentation().setIcon(AllIcons.Actions.CreateFromUsage);
           setSmallVariant(false);
         }
@@ -149,41 +132,27 @@ public class QuickFixToolbar extends JPanel {
       fixPanel.add(fixComboBox.createCustomComponent(fixComboBox.getTemplatePresentation()));
     }
     else {
+      final boolean multipleFixes = fixes.length > 1;
       for (QuickFixAction fix : fixes) {
-        fixPanel.add(createQuickFixButton(fix));
+        fixPanel.add(createQuickFixButton(fix, multipleDescriptors && !multipleFixes));
       }
     }
     return fixPanel;
   }
 
-  private static void fill(int row,
+  private static void fill(boolean add,
                            @NotNull Supplier<JComponent> componentSupplier,
-                           @NotNull List<JPanel> parent) {
-    if (row == -1) {
-      return;
+                           @NotNull JPanel parent) {
+    if (add) {
+      parent.add(componentSupplier.get());
     }
-    final JPanel rowPanel = parent.get(row);
-    rowPanel.add(componentSupplier.get());
   }
 
-  private static int getSuppressPlacement(boolean multipleDescriptors) {
-    return multipleDescriptors ? 1 : 0;
-  }
-
-  private static int getFixesPlacement(boolean hasQuickFixes, boolean multipleDescriptors) {
-    return hasQuickFixes ? multipleDescriptors ? 1 : 0 : -1;
-  }
-
-  private static int getDescriptionLabelPlacement(boolean multipleDescriptors) {
-    return multipleDescriptors ? 0 : -1;
-  }
-
-  private static int getBulbPlacement(boolean hasQuickFixes) {
-    return hasQuickFixes ? 0 : -1;
-  }
-
-  private static JComponent createQuickFixButton(@NotNull QuickFixAction fix) {
+  private static JComponent createQuickFixButton(@NotNull QuickFixAction fix, boolean multipleFixes) {
     final MyCustomComponentLocalQuickFixWrapper action = new MyCustomComponentLocalQuickFixWrapper(fix);
+    if (multipleFixes) {
+      action.getTemplatePresentation().setText("Fix all '" + fix.getText() + "'");
+    }
     return action.createCustomComponent(action.getTemplatePresentation());
   }
 

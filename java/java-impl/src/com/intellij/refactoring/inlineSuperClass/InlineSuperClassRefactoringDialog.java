@@ -74,6 +74,7 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     return "Inline_Super_Class";
   }
 
+  @NotNull
   protected JComponent createCenterPanel() {
     final JLabel label = new JLabel("<html>Super class \'" +
                                      mySuperClass.getQualifiedName() +
@@ -85,6 +86,7 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
                                        }
                                      }, "\',<br>&nbsp;&nbsp;&nbsp;\'") +
                                      "\'</html>");
+    label.setVerticalAlignment(SwingConstants.TOP);
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
@@ -93,10 +95,11 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(label);
     pane.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
     pane.setMinimumSize(JBDimension.create(new Dimension(-1, 100)));
-    pane.setMaximumSize(JBDimension.create(new Dimension(-1, 400)));
-    panel.add(pane, gc);
     gc.weighty = 1;
     gc.fill = GridBagConstraints.BOTH;
+    panel.add(pane, gc);
+    gc.weighty = 0;
+    gc.fill = GridBagConstraints.HORIZONTAL;
     panel.add(super.createCenterPanel(), gc);
     return panel;
   }

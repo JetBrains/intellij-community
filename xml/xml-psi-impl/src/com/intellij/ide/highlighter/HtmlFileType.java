@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -70,7 +72,12 @@ public class HtmlFileType extends XmlLikeFileType {
 
   @Override
   public String getCharset(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    String charset = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
+    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = LoadTextUtil.guessFromContent(file, content, content.length);
+    String charset =
+      guessed != null && guessed.first != null
+      ? guessed.first.name()
+      : XmlCharsetDetector.extractXmlEncodingFromProlog(content);
+
     if (charset != null) return charset;
     @NonNls String strContent;
     try {

@@ -104,12 +104,7 @@ public class MacroUtil {
       PsiElement scope = place;
       boolean innermostClass = true;
       while (scope != null) {
-        if (scope instanceof PsiMethod && ((PsiMethod)scope).hasModifierProperty(PsiModifier.STATIC)) {
-          // Method is static, we don't want to add its enclosing class to the list of returned expressions.
-          // Since this loop only can potentially add enclosing classes, just break out of it.
-          break;
-        }
-        else if (scope instanceof PsiClass) {
+        if (scope instanceof PsiClass) {
           PsiClass aClass = (PsiClass)scope;
           String name = aClass.getName();
           if (innermostClass) {

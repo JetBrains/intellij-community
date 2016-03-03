@@ -294,7 +294,9 @@ public class MethodCandidateInfo extends CandidateInfo{
          if (!stackStamp.mayCacheNow() ||
              isOverloadCheck() ||
              !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
-             getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent())) {
+             getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent()) ||
+             LambdaUtil.isLambdaParameterCheck()
+           ) {
           return inferredSubstitutor;
         }
 

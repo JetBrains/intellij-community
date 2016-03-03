@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -53,7 +54,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
     return myResult;
   }
 
-  private void extractArguments(GrArgumentList argumentList) {
+  private void extractArguments(@NotNull GrArgumentList argumentList) {
     GrExpression[] expr = argumentList.getExpressionArguments();
 
     if (expr.length == 1 && expr[0] instanceof GrLiteral) {

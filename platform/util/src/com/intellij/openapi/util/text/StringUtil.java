@@ -852,7 +852,8 @@ public class StringUtil extends StringUtilRt {
       return suggestion.substring(0, len - 2) + "en";
     }
 
-    if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") || endsWithIgnoreCase(suggestion, "ch")) {
+    if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") ||
+        endsWithIgnoreCase(suggestion, "ch") || endsWithIgnoreCase(suggestion, "sh")) {
       return suggestion + "es";
     }
 

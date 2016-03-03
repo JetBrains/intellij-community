@@ -79,6 +79,9 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
       "  public static<T> Optional<T> empty() {" +
       "    return new Optional<>();" +
       "  }" +
+      "  public static <T> Optional<T> of(T value) {" +
+      "    return new Optional<>(value);" +
+      "  }" +
       "}",
 
       "package java.util;" +
@@ -89,6 +92,16 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
       "  public double getAsDouble() {" +
       "    return 0.0;" +
       "  }" +
+      "}",
+
+      "package org.junit;" +
+      "public class Assert {" +
+      "  public static void assertTrue(boolean b) {}" +
+      "}",
+
+      "package org.testng;" +
+      "public class Assert {" +
+      "  public static void assertTrue(boolean b) {}" +
       "}"
     };
   }

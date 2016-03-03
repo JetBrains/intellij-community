@@ -17,9 +17,12 @@ package com.intellij.ui;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBInsets;
@@ -100,6 +103,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   @Override
   public void add(@NotNull final Balloon balloon, @Nullable Object layoutData) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myBalloons.add(balloon);
     if (layoutData instanceof BalloonLayoutData) {
       BalloonLayoutData balloonLayoutData = (BalloonLayoutData)layoutData;
@@ -162,7 +166,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   private void calculateSize() {
     myWidth = null;
-    if (myLayoutData.isEmpty()) {
+    if (myLayoutData.isEmpty() && !NotificationsManagerImpl.newEnabled()) {
       return;
     }
 
@@ -198,6 +202,11 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
     JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
+
+    if (NotificationsManagerImpl.newEnabled()) {
+      newLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());
+      return;
+    }
 
     if (myLayoutData.isEmpty()) {
       for (int i = 0; i < columns.size(); i++) {
@@ -279,6 +288,24 @@ public class BalloonLayoutImpl implements BalloonLayout {
           }
         }
       }
+    }
+  }
+
+  private void newLayout(List<Balloon> balloons, int startX, int bottomY) {
+    int y = bottomY;
+    ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
+    if (pane != null) {
+      y -= pane.getBottomHeight();
+    }
+    if (myParent instanceof IdeRootPane) {
+      y -= ((IdeRootPane)myParent).getStatusBarHeight();
+    }
+
+    for (Balloon balloon : balloons) {
+      Rectangle bounds = new Rectangle(getSize(balloon));
+      y -= bounds.height;
+      bounds.setLocation(startX - bounds.width, y);
+      balloon.setBounds(bounds);
     }
   }
 

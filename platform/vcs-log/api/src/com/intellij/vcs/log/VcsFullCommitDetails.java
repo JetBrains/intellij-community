@@ -38,5 +38,4 @@ public interface VcsFullCommitDetails extends VcsCommitMetadata {
 
   @NotNull
   Collection<Change> getChanges();
-
 }

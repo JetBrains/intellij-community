@@ -131,7 +131,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
 
       for (PsiMethod usedMethod : usedMethods) {
-        if (usedMethod.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (usedMethod.hasModifierProperty(PsiModifier.PRIVATE) &&
+            (!usedMethod.hasModifierProperty(PsiModifier.STATIC) || myExtractProcessor.isStatic())) {
           PsiMethod toMove = usedMethod;
           for (PsiReference reference : ReferencesSearch.search(usedMethod)) {
             if (!PsiTreeUtil.isAncestor(getMethod(), reference.getElement(), false)) {
@@ -333,12 +334,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
             for (PsiVariable variable : outputVariables) {
               PsiVariable var = (PsiVariable)declaredElement;
               if (Comparing.strEqual(var.getName(), variable.getName())) {
-                final PsiExpression initializer = var.getInitializer();
+                PsiExpression initializer = var.getInitializer();
                 if (initializer == null) {
-                  replacementMap.put(statement, null);
+                  replacementMap.put(var, null);
                 }
                 else {
-                  replacementMap.put(var, var);
+                  PsiStatement assignmentStatement = myElementFactory
+                    .createStatementFromText(var2FieldNames.get(variable.getName()) + " = " + initializer.getText() + ";", statement);
+                  replacementMap.put(var, assignmentStatement);
                 }
               }
             }
@@ -373,14 +376,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiElement replacement = replacementMap.get(statement);
       if (replacement != null) {
         if (statement instanceof PsiLocalVariable) {
-          final PsiLocalVariable variable = (PsiLocalVariable)statement;
+          PsiLocalVariable variable = (PsiLocalVariable)statement;
           variable.normalizeDeclaration();
-          final PsiExpression initializer = variable.getInitializer();
-          LOG.assertTrue(initializer != null);
-          final PsiStatement assignmentStatement = myElementFactory.createStatementFromText(var2FieldNames.get(variable.getName()) + " = " + initializer.getText() + ";", statement);
-          final PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(statement, PsiDeclarationStatement.class);
+          PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(statement, PsiDeclarationStatement.class);
           LOG.assertTrue(declaration != null);
-          declaration.replace(assignmentStatement);
+          declaration.replace(replacement);
         } else {
           if (statement instanceof PsiReturnStatement) {
             final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -47,7 +48,6 @@ public class CaptionPanel extends JPanel {
 
   public CaptionPanel() {
     setLayout(new BorderLayout());
-    setBorder(new EmptyBorder(0, 4, 0, 4));
   }
 
   @Override
@@ -107,11 +107,12 @@ public class CaptionPanel extends JPanel {
     repaint();
   }
 
-  public void setButtonComponent(@NotNull ActiveComponent component) {
+  public void setButtonComponent(@NotNull ActiveComponent component, @Nullable Border border) {
     if (myButtonComponent != null) {
       remove(myButtonComponent.getComponent());
     }
     JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(border);
     panel.add(new JLabel(" "), BorderLayout.WEST);
     panel.add(component.getComponent(), BorderLayout.CENTER);
     panel.setOpaque(false);

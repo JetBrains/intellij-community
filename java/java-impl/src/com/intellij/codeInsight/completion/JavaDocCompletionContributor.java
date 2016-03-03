@@ -230,10 +230,13 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       document.insertString(startOffset - sharpLength, link);
       document.insertString(context.getTailOffset(), "}");
       context.setTailOffset(context.getTailOffset() - 1);
-      context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, startOffset + link.length() + sharpLength);
+      context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, startOffset + link.length());
 
       context.commitDocument();
       delegate.handleInsert(context, item);
+      if (item.getObject() instanceof PsiField) {
+        context.getEditor().getCaretModel().moveToOffset(context.getTailOffset() + 1);
+      }
     };
   }
 

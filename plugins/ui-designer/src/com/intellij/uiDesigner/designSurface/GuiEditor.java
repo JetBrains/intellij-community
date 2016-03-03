@@ -21,6 +21,7 @@ import com.intellij.designer.LightFillLayout;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -376,6 +377,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     ActionManager.getInstance().getAction("GuiDesigner.DecreaseIndent").registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_MASK)), myGlassLayer);
 
+    UsageTrigger.trigger("swing-designer.open");
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -496,6 +499,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       propertyInspector.synchWithTree(forceSync);
     }
 
+    UsageTrigger.trigger("swing-designer.edit");
     refresh();
     saveToFile();
     // TODO[yole]: install appropriate listeners so that the captions repaint themselves at correct time

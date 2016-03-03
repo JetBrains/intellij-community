@@ -23,6 +23,12 @@ public class PyStudyToolWindowConfigurator extends StudyBaseToolWindowConfigurat
     return "python";
   }
 
+  @NotNull
+  @Override
+  public String getLanguageScriptUrl() {
+    return getClass().getResource("/python.js").toExternalForm();
+  }
+
   @Override
   public boolean accept(@NotNull Project project) {
     StudyTaskManager taskManager = StudyTaskManager.getInstance(project);

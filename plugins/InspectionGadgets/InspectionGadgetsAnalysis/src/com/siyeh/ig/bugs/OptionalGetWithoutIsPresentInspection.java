@@ -88,17 +88,22 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
         final PsiIfStatement ifStatement = (PsiIfStatement)sibling;
         final PsiExpression condition = ifStatement.getCondition();
         if (condition != null) {
-          if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch())) {
+          final PsiElement target = optionalReference.resolve();
+          if (!(target instanceof PsiVariable)) {
+            return true;
+          }
+          final PsiVariable variable = (PsiVariable)target;
+          final PsiStatement thenBranch = ifStatement.getThenBranch();
+          if (!ControlFlowUtils.statementMayCompleteNormally(thenBranch) || VariableAccessUtils.variableIsAssigned(variable, thenBranch)) {
             checker.negate = true;
-            checker.checkExpression(condition);
-            if (checker.hasIsPresentCall()) {
+            if (checker.checkExpression(condition)) {
               return true;
             }
           }
-          else if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getElseBranch())) {
+          final PsiStatement elseBranch = ifStatement.getElseBranch();
+          if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch) || VariableAccessUtils.variableIsAssigned(variable, elseBranch)) {
             checker.negate = false;
-            checker.checkExpression(condition);
-            if (checker.hasIsPresentCall()) {
+            if (checker.checkExpression(condition)) {
               return true;
             }
           }
@@ -108,9 +113,28 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
         final PsiAssertStatement assertStatement = (PsiAssertStatement)sibling;
         final PsiExpression condition = assertStatement.getAssertCondition();
         checker.negate = false;
-        checker.checkExpression(condition);
-        if (checker.hasIsPresentCall()) {
+        if (checker.checkExpression(condition)) {
           return true;
+        }
+      }
+      else if (sibling instanceof PsiExpressionStatement) {
+        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)sibling;
+        final PsiExpression expression = expressionStatement.getExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+          if (MethodCallUtils.isCallToMethod(methodCallExpression, "org.junit.Assert", PsiType.VOID, "assertTrue", null) ||
+              MethodCallUtils.isCallToMethod(methodCallExpression, "junit.framework.Assert", PsiType.VOID, "assertTrue", null) ||
+              MethodCallUtils.isCallToMethod(methodCallExpression, "org.testng.Assert", PsiType.VOID, "assertTrue", null) ||
+              MethodCallUtils.isCallToMethod(methodCallExpression, "org.testng.AssertJUnit", PsiType.VOID, "assertTrue", null)) {
+            checker.negate = false;
+            final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            for (PsiExpression argument : arguments) {
+              if (checker.checkExpression(argument)) {
+                return true;
+              }
+            }
+          }
         }
       }
       sibling = PsiTreeUtil.getPrevSiblingOfType(sibling, PsiStatement.class);
@@ -185,16 +209,16 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
       checkExpression(expression.getCondition());
     }
 
-    private void checkExpression(PsiExpression expression) {
+    private boolean checkExpression(PsiExpression expression) {
       expression = PsiUtil.deparenthesizeExpression(expression);
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
         final IElementType tokenType = prefixExpression.getOperationTokenType();
         if (tokenType != JavaTokenType.EXCL) {
-          return;
+          return false;
         }
         negate = !negate;
-        checkExpression(prefixExpression.getOperand());
+        return checkExpression(prefixExpression.getOperand());
       }
       else if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
@@ -205,11 +229,11 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final String name = methodExpression.getReferenceName();
         if (!"isPresent".equals(name)) {
-          return;
+          return false;
         }
         final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
         if (!(qualifier instanceof PsiReferenceExpression)) {
-          return;
+          return false;
         }
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
         hasIsPresentCall = !negate && EquivalenceChecker.expressionsAreEquivalent(referenceExpression, this.referenceExpression);
@@ -219,10 +243,11 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
         final PsiExpression definition = VariableSearchUtils.findDefinition(referenceExpression, null);
         final PsiExpression optionalDefinition = VariableSearchUtils.findDefinition(this.referenceExpression, null);
         if (definition == null || optionalDefinition == null || optionalDefinition.getTextOffset() > definition.getTextOffset()) {
-          return;
+          return false;
         }
-        checkExpression(definition);
+        return checkExpression(definition);
       }
+      return hasIsPresentCall;
     }
 
     public boolean hasIsPresentCall() {

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Consumer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.vcs.log.CommitId;
@@ -72,10 +73,13 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
   @NotNull private static final String LOG_KIND = "hashes";
   private static final int VERSION = 2;
+  private static final int NO_INDEX = -1;
 
   @NotNull private final PersistentEnumerator<CommitId> myPersistentEnumerator;
+  @NotNull private final Consumer<Exception> myExceptionReporter;
 
-  public VcsLogHashMapImpl(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
+  public VcsLogHashMapImpl(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull Consumer<Exception> exceptionReporter) throws IOException {
+    myExceptionReporter = exceptionReporter;
     myPersistentEnumerator =
       PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(project), LOG_KIND,
                                                 PersistentUtil.calcLogId(project, logProviders), VERSION);
@@ -97,23 +101,25 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
       return getOrPut(hash, root);
     }
     catch (IOException e) {
-      throw new RuntimeException(e); // TODO the map is corrupted => need to rebuild
+      myExceptionReporter.consume(e);
     }
+    return NO_INDEX;
   }
 
   @Override
-  @NotNull
+  @Nullable
   public CommitId getCommitId(int commitIndex) {
     try {
       CommitId commitId = doGetCommitId(commitIndex);
       if (commitId == null) {
-        throw new RuntimeException("Unknown commit index: " + commitIndex); // TODO this shouldn't happen => need to recreate the map
+        myExceptionReporter.consume(new RuntimeException("Unknown commit index: " + commitIndex));
       }
       return commitId;
     }
     catch (IOException e) {
-      throw new RuntimeException(e); // TODO map is corrupted => need to recreate it
+      myExceptionReporter.consume(e);
     }
+    return null;
   }
 
   @Override
@@ -134,7 +140,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
       return hashRef.get();
     }
     catch (IOException e) {
-      LOG.error(e);
+      myExceptionReporter.consume(e);
       return null;
     }
   }

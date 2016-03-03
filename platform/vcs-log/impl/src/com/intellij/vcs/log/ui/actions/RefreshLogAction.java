@@ -20,11 +20,13 @@ import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.impl.VcsLogManager;
 
 public class RefreshLogAction extends RefreshAction {
   public RefreshLogAction() {
-    super("Refresh", "Refresh", AllIcons.Actions.Refresh);
+    super("Refresh", "Re-read Commits From Disk for All VCS Roots and Rebuild Log", AllIcons.Actions.Refresh);
   }
 
   @Override
@@ -35,6 +37,13 @@ public class RefreshLogAction extends RefreshAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+    Project project = e.getProject();
+    if (project == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+    else {
+      VcsLogDataManager dataManager = VcsLogManager.getInstance(project).getDataManager();
+      e.getPresentation().setEnabledAndVisible(dataManager != null && e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
+    }
   }
 }

@@ -41,6 +41,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -219,15 +220,16 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @Override
+  @CalledInAwt
   protected void destroyChangedBlocks() {
     super.destroyChangedBlocks();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
-      change.destroyHighlighter();
+      change.destroy();
     }
     myDiffChanges.clear();
 
     for (SimpleThreesideDiffChange change : myInvalidDiffChanges) {
-      change.destroyHighlighter();
+      change.destroy();
     }
     myInvalidDiffChanges.clear();
   }
@@ -242,10 +244,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     super.onBeforeDocumentChange(e);
     if (myDiffChanges.isEmpty()) return;
 
-    ThreeSide side = null;
-    if (e.getDocument() == getEditor(ThreeSide.LEFT).getDocument()) side = ThreeSide.LEFT;
-    if (e.getDocument() == getEditor(ThreeSide.RIGHT).getDocument()) side = ThreeSide.RIGHT;
-    if (e.getDocument() == getEditor(ThreeSide.BASE).getDocument()) side = ThreeSide.BASE;
+    List<Document> documents = ContainerUtil.map(getEditors(), Editor::getDocument);
+    ThreeSide side = ThreeSide.fromValue(documents, e.getDocument());
     if (side == null) {
       LOG.warn("Unknown document changed");
       return;

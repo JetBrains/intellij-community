@@ -23,7 +23,6 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -102,27 +101,13 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
   }
 
-  public static void runLaterWithCommitted(@NotNull final Project project,
-                                           @NotNull final Document document,
-                                           @NotNull final Runnable runnable) {
-    final long beforeStamp = document.getModificationStamp();
-    PsiDocumentManager.getInstance(project).performWhenAllCommitted(new Runnable() {
-      @Override
-      public void run() {
-        // later because we may end up in write action here if there was a synchronous commit
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (beforeStamp != document.getModificationStamp()) {
-              // no luck, will try later
-              runLaterWithCommitted(project, document, runnable);
-            }
-            else {
-              runnable.run();
-            }
-          }
-        }, project.getDisposed());
-      }
-    });
+  /**
+   * @deprecated
+   * @see AutoPopupController#runLaterWithEverythingCommitted(Project, Runnable)
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static void runLaterWithCommitted(@NotNull final Project project, final Document document, @NotNull final Runnable runnable) {
+    AutoPopupController.runLaterWithEverythingCommitted(project, runnable);
   }
 }

@@ -137,6 +137,7 @@ public class Course {
     this.authors = authors;
   }
 
+  @NotNull
   public String getCourseType() {
     return courseType;
   }

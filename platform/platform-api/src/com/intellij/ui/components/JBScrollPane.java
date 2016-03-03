@@ -328,7 +328,7 @@ public class JBScrollPane extends JScrollPane {
     public void updateUI() {
       ScrollBarUI ui = getUI();
       if (ui instanceof DefaultScrollBarUI) return;
-      setUI(DefaultScrollBarUI.createUI(this));
+      setUI(JBScrollBar.createUI(this));
     }
 
     @Override

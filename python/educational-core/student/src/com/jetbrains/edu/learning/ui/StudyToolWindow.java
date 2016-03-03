@@ -63,7 +63,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     JPanel toolbarPanel = createToolbarPanel(project);
     setToolbar(toolbarPanel);
 
-    myContentPanel.add(TASK_INFO_ID, createTaskInfoPanel(taskText));
+    myContentPanel.add(TASK_INFO_ID, createTaskInfoPanel(taskText, project));
     mySplitPane.setFirstComponent(myContentPanel);
     addAdditionalPanels(project);
     myCardLayout.show(myContentPanel, TASK_INFO_ID);
@@ -138,7 +138,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     return null;
   }
   
-  public abstract JComponent createTaskInfoPanel(String taskText);
+  public abstract JComponent createTaskInfoPanel(String taskText, Project project);
 
   private static JPanel createToolbarPanel(@NotNull final Project project) {
     final DefaultActionGroup group = getActionGroup(project);

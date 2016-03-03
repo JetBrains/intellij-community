@@ -97,7 +97,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
         assert paramTypes != null;
         final PyParameter[] funcParams = func.getParameterList().getParameters();
-        final int startOffset = func.getContainingClass() != null ? 1 : 0;
+        final int startOffset = omitFirstParamInTypeComment(func) ? 1 : 0;
         for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
           if (funcParams[paramIndex] == param) {
             final int typeIndex = paramIndex - startOffset;
@@ -110,6 +110,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
+  }
+
+  private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func) {
+    return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD;
   }
 
   @Nullable

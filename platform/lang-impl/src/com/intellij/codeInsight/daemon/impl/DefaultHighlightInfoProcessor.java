@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -53,7 +54,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
 
     final Editor editor = session.getEditor();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    TransactionGuard.submitTransaction(new Runnable() {
       @Override
       public void run() {
         if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;

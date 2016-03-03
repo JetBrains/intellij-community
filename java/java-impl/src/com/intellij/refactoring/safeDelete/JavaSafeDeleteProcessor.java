@@ -256,6 +256,27 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return null;
   }
 
+  @Override
+  public Collection<String> findConflicts(PsiElement element, PsiElement[] elements, UsageInfo[] usages) {
+    String methodRefFound = null;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && (element instanceof PsiMethod || element instanceof PsiParameter)) {
+      for (UsageInfo usage : usages) {
+        final PsiElement refElement = usage.getElement();
+        if (refElement instanceof PsiMethodReferenceExpression) {
+          methodRefFound = RefactoringBundle.message("expand.method.reference.warning");
+          break;
+        }
+      }
+    }
+    if (methodRefFound != null) {
+      Collection<String> result = new ArrayList<>();
+      result.add(methodRefFound);
+      result.addAll(super.findConflicts(element, elements, usages));
+      return result;
+    }
+    return super.findConflicts(element, elements, usages);
+  }
+
   public Collection<String> findConflicts(@NotNull final PsiElement element, @NotNull final PsiElement[] allElementsToDelete) {
     if (element instanceof PsiMethod) {
       final PsiClass containingClass = ((PsiMethod)element).getContainingClass();

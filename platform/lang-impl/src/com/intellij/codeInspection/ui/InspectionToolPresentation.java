@@ -63,7 +63,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull
   HTMLComposerImpl getComposer();
-  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity);
+  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Set<CommonProblemDescriptor> excludedDescriptions);
   @NotNull
   Set<RefModule> getModuleProblems();
   @Nullable
@@ -89,5 +89,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
                                       @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
                                       @Nullable CommonProblemDescriptor[] allowedDescriptors);
-  void exportResults(@NotNull final Element parentNode);
+  void exportResults(@NotNull final Element parentNode,
+                     @NotNull final Set<RefEntity> excludedEntities,
+                     @NotNull final Set<CommonProblemDescriptor> excludedDescriptors);
 }

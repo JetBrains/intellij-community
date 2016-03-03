@@ -56,14 +56,11 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
     protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
       if (newElement instanceof PsiFile && myElementName != null) {
         PsiFile psiFile = (PsiFile)newElement;
-        if (myElementName.contains(".answer")) {
-          //this is task file
-          renameTaskFile(psiFile, myElementName);
-        }
+        tryToRenameTaskFile(psiFile, myElementName);
       }
     }
 
-    private static void renameTaskFile(PsiFile file, String oldName) {
+    private static void tryToRenameTaskFile(PsiFile file, String oldName) {
       final PsiDirectory taskDir = file.getContainingDirectory();
       final CCProjectService service = CCProjectService.getInstance(file.getProject());
       Course course = service.getCourse();
@@ -92,10 +89,9 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
         }
       });
       Map<String, TaskFile> taskFiles = task.getTaskFiles();
-      String realOldName = CCProjectService.getRealTaskFileName(oldName);
-      TaskFile taskFile = task.getTaskFile(realOldName);
-      taskFiles.remove(realOldName);
-      taskFiles.put(CCProjectService.getRealTaskFileName(file.getName()), taskFile);
+      TaskFile taskFile = task.getTaskFile(oldName);
+      taskFiles.remove(oldName);
+      taskFiles.put(file.getName(), taskFile);
     }
 
     @Override

@@ -175,7 +175,7 @@ public class GitRebaser {
   public @NotNull Collection<VirtualFile> getRebasingRoots() {
     final Collection<VirtualFile> rebasingRoots = new HashSet<VirtualFile>();
     for (VirtualFile root : ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs)) {
-      if (GitRebaseUtils.isRebaseInTheProgress(root)) {
+      if (GitRebaseUtils.isRebaseInTheProgress(myProject, root)) {
         rebasingRoots.add(root);
       }
     }
@@ -273,7 +273,7 @@ public class GitRebaser {
           return continueRebase(root);
         }
         else {
-          GitRebaseUtils.CommitInfo commit = GitRebaseUtils.getCurrentRebaseCommit(root);
+          GitRebaseUtils.CommitInfo commit = GitRebaseUtils.getCurrentRebaseCommit(myProject, root);
           LOG.info("no changes confirmed. Skipping commit " + commit);
           mySkippedCommits.add(commit);
           return continueRebase(root, "--skip");

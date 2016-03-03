@@ -16,13 +16,13 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ui.AppUIUtil;
-import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.XDebugSessionListener;
 import org.jetbrains.annotations.NotNull;
 
 /**
 * @author nik
 */
-public class XDebugViewSessionListener extends XDebugSessionAdapter {
+public class XDebugViewSessionListener implements XDebugSessionListener {
   private final XDebugView myDebugView;
 
   public XDebugViewSessionListener(@NotNull XDebugView debugView) {

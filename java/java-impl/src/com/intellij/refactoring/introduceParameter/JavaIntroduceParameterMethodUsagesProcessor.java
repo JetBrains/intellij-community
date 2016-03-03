@@ -65,8 +65,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   public boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
     PsiElement ref = usage.getElement();
     if (ref instanceof PsiMethodReferenceExpression) {
-      final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)ref, false, true);
-      final PsiExpression callExpression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+      final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)ref);
       if (callExpression == null) {
         return true;
       }
@@ -126,7 +125,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
     final PsiExpressionList argumentList = callExpression.getArgumentList();
     LOG.assertTrue(argumentList != null, callExpression.getText());
-    removeParametersFromCall(argumentList, data.getParametersToRemove());
+    removeParametersFromCall(argumentList, data.getParametersToRemove(), methodToSearchFor);
     return false;
   }
 
@@ -143,12 +142,19 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
                                                      JavaPsiFacade.getElementFactory(project));
   }
 
-  private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, TIntArrayList parametersToRemove) {
+  private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, TIntArrayList parametersToRemove, PsiMethod method) {
+    final int parametersCount = method.getParameterList().getParametersCount();
     final PsiExpression[] exprs = argList.getExpressions();
     parametersToRemove.forEachDescending(new TIntProcedure() {
-      public boolean execute(final int paramNum) {
+      public boolean execute(int paramNum) {
         try {
-          if (paramNum < exprs.length) {
+          //parameter was introduced before varargs
+          if (method.isVarArgs() && paramNum == parametersCount - 1) {
+            for (int i = paramNum + 1; i < exprs.length; i++) {
+              exprs[i].delete();
+            }
+          }
+          else if (paramNum < exprs.length) {
             exprs[paramNum].delete();
           }
         }

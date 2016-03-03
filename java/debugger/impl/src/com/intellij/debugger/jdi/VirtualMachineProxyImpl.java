@@ -135,7 +135,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
           candidates.removeAll(nested2);
         }
         
-        nestedTypes = candidates.isEmpty()? Collections.<ReferenceType>emptyList() : new ArrayList<>(candidates);
+        nestedTypes = candidates.isEmpty() ? Collections.emptyList() : new ArrayList<>(candidates);
       }
       else {
         nestedTypes = Collections.emptyList();
@@ -193,10 +193,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public void threadStarted(ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final Map<ThreadReference, ThreadReferenceProxyImpl> allThreads = myAllThreads;
-    if (!allThreads.containsKey(thread)) {
-      allThreads.put(thread, new ThreadReferenceProxyImpl(this, thread));
-    }
+    getThreadReferenceProxy(thread); // add a proxy
   }
 
   public void threadStopped(ThreadReference thread) {
@@ -576,13 +573,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       return null;
     }
 
-    ThreadReferenceProxyImpl proxy = myAllThreads.get(thread);
-    if (proxy == null) {
-      proxy = new ThreadReferenceProxyImpl(this, thread);
-      myAllThreads.put(thread, proxy);
-    }
-
-    return proxy;
+    return myAllThreads.computeIfAbsent(thread, t -> new ThreadReferenceProxyImpl(this, t));
   }
 
   public ThreadGroupReferenceProxyImpl getThreadGroupReferenceProxy(ThreadGroupReference group) {

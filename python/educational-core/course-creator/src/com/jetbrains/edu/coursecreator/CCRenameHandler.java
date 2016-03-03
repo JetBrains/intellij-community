@@ -12,14 +12,11 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
-import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.StudyItem;
-import com.jetbrains.edu.courseFormat.Task;
 import org.jetbrains.annotations.NotNull;
 
-public class CCRenameHandler implements RenameHandler {
+public abstract class CCRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -32,9 +29,10 @@ public class CCRenameHandler implements RenameHandler {
       return false;
     }
     VirtualFile directory = ((PsiDirectory)element).getVirtualFile();
-    String name = directory.getName();
-    return name.contains(EduNames.LESSON) || name.contains(EduNames.TASK);
+    return isAvailable(directory.getName());
   }
+
+  protected abstract boolean isAvailable(String name);
 
   @Override
   public boolean isRenaming(DataContext dataContext) {
@@ -46,48 +44,21 @@ public class CCRenameHandler implements RenameHandler {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     assert element != null;
     PsiDirectory directory = (PsiDirectory)element;
-    String name = directory.getName();
     CCProjectService instance = CCProjectService.getInstance(project);
     Course course = instance.getCourse();
-    if (name.contains(EduNames.LESSON)) {
-      renameLesson(project, course, name);
-    }
-    if (name.contains(EduNames.TASK)) {
-      renameTask(project, course, directory);
-    }
+    rename(project, course, directory);
     ProjectView.getInstance(project).refresh();
   }
 
+  protected abstract void rename(@NotNull Project project, @NotNull Course course, @NotNull PsiDirectory directory);
 
-  private static void processRename(@NotNull final StudyItem item, String namePrefix, @NotNull final Project project) {
+
+  protected static void processRename(@NotNull final StudyItem item, String namePrefix, @NotNull final Project project) {
     String name = item.getName();
     String text = "Rename " + StringUtil.toTitleCase(namePrefix);
     String newName = Messages.showInputDialog(project, text + " '" + name + "' to", text, null, name, null);
     if (newName != null) {
       item.setName(newName);
-    }
-  }
-
-  private static void renameTask(@NotNull final Project project, Course course, @NotNull final PsiDirectory directory) {
-    PsiDirectory lessonDir = directory.getParent();
-    if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
-      return;
-    }
-    Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson == null) {
-      return;
-    }
-    String directoryName = directory.getName();
-    Task task = lesson.getTask(directoryName);
-    if (task != null) {
-      processRename(task, EduNames.TASK, project);
-    }
-  }
-
-  private static void renameLesson(@NotNull final Project project, Course course, String name) {
-    Lesson lesson = course.getLesson(name);
-    if (lesson != null) {
-      processRename(lesson, EduNames.LESSON, project);
     }
   }
 

@@ -357,6 +357,15 @@ class FileWatcherTest : BareTestFixtureTestCase() {
         mapOf(file1 to 'U', file2 to 'U'))
   }
 
+  @Test fun testWatchNonExistingRoot() {
+    val top = File(tempDir.root, "top")
+    val root = File(tempDir.root, "top/d1/d2/d3/root")
+    refresh(tempDir.root)
+
+    watch(root)
+    assertEvents({ root.mkdirs() }, mapOf(top to 'C'))
+  }
+
   @Test fun testWatchRootRenameRemove() {
     val top = tempDir.newFolder("top")
     val root = tempDir.newFolder("top/d1/d2/d3/root")
@@ -369,8 +378,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ root.deleteRecursively() }, mapOf(root to 'D'))
     assertEvents({ root.mkdirs() }, mapOf(root to 'C'))
     assertEvents({ top.deleteRecursively() }, mapOf(top to 'D'))
-    // todo[r.sh] current VFS implementation loses watch root once it's removed; this probably should be fixed
-    assertEvents({ root.mkdirs() }, mapOf())
+    assertEvents({ root.mkdirs() }, mapOf(top to 'C'))
   }
 
   @Test fun testSwitchingToFsRoot() {

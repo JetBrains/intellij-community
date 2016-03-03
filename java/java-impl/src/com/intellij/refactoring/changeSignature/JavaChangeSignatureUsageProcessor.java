@@ -113,8 +113,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       else if (usage instanceof MethodReferenceUsageInfo && MethodReferenceUsageInfo.needToExpand((JavaChangeInfo)changeInfo)) {
         final PsiElement element = usage.getElement();
         if (element instanceof PsiMethodReferenceExpression ) {
-          final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
-          final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+          final PsiExpression expression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)element);
           if (expression instanceof PsiCallExpression) {
             ((MethodReferenceUsageInfo)usage).setCallExpression((PsiCallExpression)expression);
             return true;
@@ -132,8 +131,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         else if (element instanceof PsiMethodReferenceExpression) {
           final PsiLambdaExpression lambdaExpression =
             LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
-          processMethodParams(((JavaChangeInfo)changeInfo), interfaceMethod, elementFactory, PsiSubstitutor.EMPTY, 
-                              lambdaExpression.getParameterList(), lambdaExpression.getBody());
+          if (lambdaExpression != null) {
+            processMethodParams(((JavaChangeInfo)changeInfo), interfaceMethod, elementFactory, PsiSubstitutor.EMPTY, 
+                                lambdaExpression.getParameterList(), lambdaExpression.getBody());
+          }
         }
         return true;
       }

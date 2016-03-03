@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogSorter;
 import com.intellij.vcs.log.graph.GraphColorManager;
@@ -405,9 +407,11 @@ public class GitLogProvider implements VcsLogProvider {
     return myRefSorter;
   }
 
+  @NotNull
   @Override
-  public void subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
-    myProject.getMessageBus().connect(myProject).subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
+  public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
       @Override
       public void repositoryChanged(@NotNull GitRepository repository) {
         VirtualFile root = repository.getRoot();
@@ -416,6 +420,7 @@ public class GitLogProvider implements VcsLogProvider {
         }
       }
     });
+    return connection;
   }
 
   @NotNull

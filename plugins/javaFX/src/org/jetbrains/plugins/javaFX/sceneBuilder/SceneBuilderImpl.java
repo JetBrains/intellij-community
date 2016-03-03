@@ -1,5 +1,8 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
+import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.util.containers.FixedHashMap;
+import com.intellij.util.containers.IntArrayList;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
 import com.oracle.javafx.scenebuilder.kit.editor.panel.content.ContentPanelController;
 import com.oracle.javafx.scenebuilder.kit.editor.panel.hierarchy.treeview.HierarchyTreeViewController;
@@ -56,9 +59,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     InspectorPanelController propertyTable = new InspectorPanelController(myEditorController);
     LibraryPanelController palette = new LibraryPanelController(myEditorController);
 
-    loadFile();
-    startChangeListener();
-
     SplitPane leftPane = new SplitPane();
     leftPane.setOrientation(Orientation.VERTICAL);
     leftPane.getItems().addAll(palette.getPanelRoot(), componentTree.getPanelRoot());
@@ -73,6 +73,11 @@ public class SceneBuilderImpl implements SceneBuilder {
     mainPane.setDividerPositions(0.11036789297658862, 0.8963210702341137);
 
     myPanel.setScene(new Scene(mainPane, -1, -1, true, SceneAntialiasing.BALANCED));
+
+    loadFile();
+    startChangeListener();
+
+    UsageTrigger.trigger("scene-builder.open");
   }
 
   @Override
@@ -98,6 +103,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
         if (!mySkipChanges) {
           myEditorCallback.saveChanges(myEditorController.getFxmlText());
+          UsageTrigger.trigger("scene-builder.edit");
         }
       }
     };
@@ -207,74 +213,6 @@ public class SceneBuilderImpl implements SceneBuilder {
       if (0 <= componentIndex && componentIndex < children.size()) {
         pathToComponent(components, children.get(componentIndex), path, index + 1);
       }
-    }
-  }
-
-  private static class FixedHashMap<K, V> extends HashMap<K, V> {
-    private final int mySize;
-    private final List<K> myKeys = new LinkedList<K>();
-
-    public FixedHashMap(int size) {
-      mySize = size;
-    }
-
-    @Override
-    public V put(K key, V value) {
-      if (!myKeys.contains(key)) {
-        if (myKeys.size() >= mySize) {
-          remove(myKeys.remove(0));
-        }
-        myKeys.add(key);
-      }
-      return super.put(key, value);
-    }
-
-    @Override
-    public V get(Object key) {
-      if (myKeys.contains(key)) {
-        int index = myKeys.indexOf(key);
-        int last = myKeys.size() - 1;
-        myKeys.set(index, myKeys.get(last));
-        myKeys.set(last, (K)key);
-      }
-      return super.get(key);
-    }
-  }
-
-  private static final int[] EMPTY_INTS = new int[0];
-
-  private static class IntArrayList {
-    private int[] myData = EMPTY_INTS;
-    private int mySize;
-
-    public void add(int index, int element) {
-      if (index > mySize || index < 0) {
-        throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
-      }
-
-      ensureCapacity(mySize + 1);
-      System.arraycopy(myData, index, myData, index + 1, mySize - index);
-      myData[index] = element;
-      mySize++;
-    }
-
-    public void ensureCapacity(int minCapacity) {
-      int oldCapacity = myData.length;
-      if (minCapacity > oldCapacity) {
-        int[] oldData = myData;
-        int newCapacity = oldCapacity * 3 / 2 + 1;
-        if (newCapacity < minCapacity) {
-          newCapacity = minCapacity;
-        }
-        myData = new int[newCapacity];
-        System.arraycopy(oldData, 0, myData, 0, mySize);
-      }
-    }
-
-    public int[] toArray() {
-      int[] result = new int[mySize];
-      System.arraycopy(myData, 0, result, 0, mySize);
-      return result;
     }
   }
 }

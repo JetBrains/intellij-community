@@ -721,14 +721,16 @@ public class EduStepicConnector {
           public void run() {
             final VirtualFile taskDir = task.getTaskDir(project);
             assert taskDir != null;
-            EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry.getKey(), taskFile);
+            VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
+            assert ideaDir != null;
+            EduUtils.createStudentFileFromAnswer(project, ideaDir, taskDir, entry.getKey(), taskFile);
           }
         });
         taskFile.name = entry.getKey();
 
-        final VirtualFile taskDirectory = task.getTaskDir(project);
-        if (taskDirectory == null) return null;
-        final VirtualFile file = taskDirectory.findChild(taskFile.name);
+        VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
+        if (ideaDir == null) return null;
+        final VirtualFile file = ideaDir.findChild(taskFile.name);
         try {
           if (file != null) {
             if (EduUtils.isImage(taskFile.name)) {

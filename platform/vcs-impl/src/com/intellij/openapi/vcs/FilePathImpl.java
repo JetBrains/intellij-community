@@ -42,10 +42,12 @@ import java.nio.charset.Charset;
 @Deprecated
 public class FilePathImpl implements FilePath {
   @NotNull private final String myPath;
+  @NotNull private final File myIOFile;
   private final boolean myIsDirectory;
 
   public FilePathImpl(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
+    myIOFile = new File(myPath);
     myIsDirectory = isDirectory;
   }
   public FilePathImpl(@NotNull VirtualFile file) {
@@ -120,7 +122,7 @@ public class FilePathImpl implements FilePath {
   @Override
   @NotNull
   public File getIOFile() {
-    return new File(myPath);
+    return myIOFile;
   }
 
   @NotNull

@@ -143,7 +143,14 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   @Override
   public boolean keepWhiteSpacesInsideTag(final XmlTag tag) {
-    return checkName(tag, mySettings.HTML_KEEP_WHITESPACES_INSIDE) || "jsp:attribute".equals(tag.getName());
+    XmlTag current = tag;
+    while (current != null) {
+      if (checkName(current, mySettings.HTML_KEEP_WHITESPACES_INSIDE) || "jsp:attribute".equals(current.getName())) {
+        return true;
+      }
+      current = current.getParentTag();
+    }
+    return false;
   }
 
   @Override

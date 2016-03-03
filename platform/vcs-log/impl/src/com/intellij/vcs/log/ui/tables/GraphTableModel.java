@@ -1,22 +1,16 @@
 package com.intellij.vcs.log.ui.tables;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
-import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
@@ -78,7 +72,7 @@ public class GraphTableModel extends AbstractTableModel {
     return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
   }
 
-  @NotNull
+  @Nullable
   public CommitId getCommitIdAtRow(int row) {
     return myLogDataManager.getCommitId(getIdAtRow(row));
   }

@@ -170,8 +170,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     }
 
     if (expression instanceof PsiMethodReferenceExpression) {
-      final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)expression, false, true);
-      final PsiExpression callExpression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+      final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)expression);
       if (callExpression instanceof PsiCallExpression) {
         callExpression.replace(CodeInsightServicesUtil.invertCondition(callExpression));
       }
@@ -183,7 +182,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public void invertElementInitializer(final PsiElement element) {
-    if (element instanceof PsiField && ((PsiField)element).getInitializer() == null) {
+    if (element instanceof PsiField && ((PsiField)element).getInitializer() == null && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
       ((PsiField)element).setInitializer(JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("true", element));
     } else if (element instanceof PsiVariable) {
       final PsiExpression initializer = ((PsiVariable)element).getInitializer();
