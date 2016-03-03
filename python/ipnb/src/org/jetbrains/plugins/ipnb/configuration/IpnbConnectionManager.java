@@ -366,6 +366,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                 startIpythonServer(url, fileEditor);
               }
             })
+            .withHelpId("reference.manage.py")
             .run();
         }
       });
