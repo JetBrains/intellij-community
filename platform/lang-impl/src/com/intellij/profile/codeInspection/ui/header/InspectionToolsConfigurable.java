@@ -75,6 +75,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class InspectionToolsConfigurable extends BaseConfigurable
   implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
@@ -130,7 +131,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return inspectionProfile;
   }
 
-  private void addProfile(InspectionProfileImpl model, InspectionProfileImpl profile) {
+  protected void addProfile(InspectionProfileImpl model, InspectionProfileImpl profile) {
     final String modelName = model.getName();
     final SingleInspectionProfilePanel panel = createPanel(model, profile, modelName);
     myPanel.add(getCardName(model), panel);
