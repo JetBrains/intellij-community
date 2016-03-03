@@ -59,20 +59,6 @@ public class DiffDividerDrawUtil {
     config.restore();
   }
 
-  public static void paintSeparatorsOnScrollbar(@NotNull Graphics2D gg,
-                                                int width,
-                                                @NotNull Editor editor1,
-                                                @NotNull Editor editor2,
-                                                @NotNull DividerSeparatorPaintable paintable) {
-    List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
-
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
-    for (DividerSeparator polygon : polygons) {
-      polygon.paintOnScrollbar(gg, width);
-    }
-    config.restore();
-  }
-
   public static void paintPolygons(@NotNull Graphics2D gg,
                                    int width,
                                    @NotNull Editor editor1,
@@ -103,18 +89,6 @@ public class DiffDividerDrawUtil {
       polygon.paint(gg, width, paintBorder, curved);
     }
     config.restore();
-  }
-
-  public static void paintPolygonsOnScrollbar(@NotNull Graphics2D g,
-                                              int width,
-                                              @NotNull Editor editor1,
-                                              @NotNull Editor editor2,
-                                              @NotNull DividerPaintable paintable) {
-    List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
-
-    for (DividerPolygon polygon : polygons) {
-      polygon.paintOnScrollbar(g, width);
-    }
   }
 
   @NotNull
@@ -299,28 +273,6 @@ public class DiffDividerDrawUtil {
       g.setStroke(oldStroke);
     }
 
-    public void paintOnScrollbar(Graphics2D g, int width) {
-      int startY = myStart1 - 1;
-      int endY = myEnd1 - 1;
-      int height = endY - startY;
-
-      int startX = 0;
-      int endX = startX + width - 1;
-
-      g.setColor(myColor);
-      if (height > 2) {
-        if (!myResolved) {
-          g.fillRect(startX, startY, width, height);
-        }
-
-        DiffDrawUtil.drawChunkBorderLine(g, startX, endX, startY, myColor, false, myResolved);
-        DiffDrawUtil.drawChunkBorderLine(g, startX, endX, endY, myColor, false, myResolved);
-      }
-      else {
-        DiffDrawUtil.drawChunkBorderLine(g, startX, endX, startY, myColor, true, myResolved);
-      }
-    }
-
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
     }
@@ -348,10 +300,6 @@ public class DiffDividerDrawUtil {
 
     public void paint(Graphics2D g, int width) {
       DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myScheme);
-    }
-
-    public void paintOnScrollbar(Graphics2D g, int width) {
-      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart1, myEnd1, myScheme);
     }
 
     public String toString() {
