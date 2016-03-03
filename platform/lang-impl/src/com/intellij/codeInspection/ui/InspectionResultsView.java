@@ -275,7 +275,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement();
           }
         }
-        updateView(false);
+        myTree.revalidate();
+        myTree.repaint();
       }
 
       @Override
