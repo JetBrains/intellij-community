@@ -16,13 +16,13 @@
 package org.jetbrains.debugger
 
 import com.intellij.xdebugger.frame.XValueNode
-import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.values.ObjectValue
 import org.jetbrains.debugger.values.Value
 import javax.swing.Icon
 
 open class BasicDebuggerViewSupport : MemberFilter, DebuggerViewSupport {
-  protected val defaultMemberFilterPromise = Promise.resolve<MemberFilter>(this)
+  protected val defaultMemberFilterPromise = resolvedPromise<MemberFilter>(this)
 
   override fun propertyNamesToString(list: List<String>, quotedAware: Boolean) = ValueModifierUtil.propertyNamesToString(list, quotedAware)
 

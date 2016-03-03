@@ -108,5 +108,4 @@ public abstract class SingleTaskController<Request, Result> {
       }
     }
   }
-
 }

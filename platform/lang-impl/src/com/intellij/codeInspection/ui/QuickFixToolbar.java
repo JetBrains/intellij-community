@@ -31,7 +31,9 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.function.Supplier;
 
 /**
@@ -57,7 +60,7 @@ public class QuickFixToolbar extends JPanel {
     final boolean multipleDescriptors = problemCount > 1;
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    setBorder(IdeBorderFactory.createEmptyBorder(hasFixes ? 0 : 5, 5, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(7 + (hasFixes ? 0 : 5), hasFixes ? 12 : 9, hasFixes ? 0 : 6, 0));
 
     fill(multipleDescriptors, () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), this);
     fill(hasFixes, () -> createFixPanel(fixes, multipleDescriptors), this);
@@ -74,11 +77,11 @@ public class QuickFixToolbar extends JPanel {
     label.append(problemsCount + " problems" +
                  (targetName == null ? "" : (" in " + targetName)) +
                  (problemsCount > 1 && (fixes != null && fixes.length == MAX_FIX_COUNT) ? "    Fix all:" : "") +
-                 (hasFixesNonIntersectedFixes ? ":" : "" ),
-                 SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+                 (hasFixesNonIntersectedFixes ? ":" : "" ));
     if (hasFixesNonIntersectedFixes) {
       label.append(" select a single problem to see its quick fixes");
     }
+    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
     return label;
   }
 
@@ -86,16 +89,18 @@ public class QuickFixToolbar extends JPanel {
                                                    @NotNull final TreePath[] paths,
                                                    @NotNull final Project project,
                                                    boolean multipleDescriptors) {
+    final AnAction[] suppressors = new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null);
     final ComboBoxAction action = new ComboBoxAction() {
       {
         getTemplatePresentation().setText(multipleDescriptors ? "Suppress All" : "Suppress");
+        getTemplatePresentation().setEnabledAndVisible(suppressors.length != 0);
       }
 
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
         DefaultActionGroup group = new DefaultActionGroup();
-        group.addAll(new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null));
+        group.addAll(suppressors);
         return group;
       }
     };

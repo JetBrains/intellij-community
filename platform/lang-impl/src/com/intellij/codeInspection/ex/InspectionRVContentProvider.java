@@ -329,7 +329,8 @@ public abstract class InspectionRVContentProvider {
           }
         }
         else if (current instanceof RefElementNode) {
-          if (((RefElementNode)current).getElement().getName().compareTo(((RefElementNode)child).getElement().getName()) == 0) {
+          if (((RefElementNode)current).getElement().getName().compareTo(((RefElementNode)child).getElement().getName()) == 0 &&
+              ((RefElementNode)current).getElement().getQualifiedName().compareTo(((RefElementNode)child).getElement().getQualifiedName()) == 0) {
             processDepth(model, child, current);
             return;
           }

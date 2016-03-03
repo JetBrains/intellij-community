@@ -32,10 +32,12 @@ import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -80,6 +82,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
       };
     MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
     Map<GutterIconDescriptor, PluginDescriptor> pluginDescriptorMap = ContainerUtil.newHashMap();
+    Set<String> ids = new HashSet<>();
     myDescriptors = new ArrayList<GutterIconDescriptor>();
     for (final PluginDescriptor descriptor : map.keySet()) {
       Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
@@ -87,16 +90,21 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
         GutterIconDescriptor instance = (GutterIconDescriptor)extensionPoint.getInstance();
         if (instance.getOptions().length > 0) {
           for (GutterIconDescriptor option : instance.getOptions()) {
-            myDescriptors.add(option);
+            if (ids.add(option.getId())) {
+              myDescriptors.add(option);
+            }
             pluginDescriptorMap.put(option, descriptor);
           }
         }
         else {
-          myDescriptors.add(instance);
+          if (ids.add(instance.getId())) {
+            myDescriptors.add(instance);
+          }
           pluginDescriptorMap.put(instance, descriptor);
         }
       }
     }
+    /*
     List<GutterIconDescriptor> options = new ArrayList<GutterIconDescriptor>();
     for (Iterator<GutterIconDescriptor> iterator = myDescriptors.iterator(); iterator.hasNext(); ) {
       GutterIconDescriptor descriptor = iterator.next();
@@ -106,6 +114,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
       }
     }
     myDescriptors.addAll(options);
+    */
     myDescriptors.sort(new Comparator<GutterIconDescriptor>() {
       @Override
       public int compare(GutterIconDescriptor o1, GutterIconDescriptor o2) {
@@ -203,4 +212,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
     };
     myList.setBorder(BorderFactory.createEmptyBorder());
   }
+  
+  @TestOnly
+  public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
 }

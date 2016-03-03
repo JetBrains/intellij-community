@@ -77,7 +77,7 @@ public class RefElementNode extends InspectionTreeNode {
     if (element == null || !element.isValid()) {
       return InspectionsBundle.message("inspection.reference.invalid");
     }
-    return element.getRefManager().getRefinedElement(element).getQualifiedName();
+    return element.getRefManager().getRefinedElement(element).getName();
   }
 
   @Override

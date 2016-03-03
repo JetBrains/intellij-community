@@ -32,7 +32,6 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
 public class FakeVisiblePackBuilder {
@@ -55,7 +54,9 @@ public class FakeVisiblePackBuilder {
   }
 
   @NotNull
-  private VisiblePack build(@NotNull DataPackBase oldPack, @NotNull VisibleGraphImpl<Integer> oldGraph, @NotNull VcsLogFilterCollection filters) {
+  private VisiblePack build(@NotNull DataPackBase oldPack,
+                            @NotNull VisibleGraphImpl<Integer> oldGraph,
+                            @NotNull VcsLogFilterCollection filters) {
     final PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo();
     Set<Integer> heads = ContainerUtil.map2Set(info.getPermanentGraphLayout().getHeadNodeIndex(), new Function<Integer, Integer>() {
       @Override

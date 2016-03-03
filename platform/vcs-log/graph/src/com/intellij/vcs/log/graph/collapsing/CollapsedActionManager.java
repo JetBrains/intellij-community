@@ -157,7 +157,6 @@ class CollapsedActionManager {
 
       return new GraphEdge(upNodeIndex, downNodeIndex, compiledEdge.getTargetId(), compiledEdge.getType());
     }
-
   }
 
   private static class FragmentGenerators {

@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author traff
@@ -53,6 +54,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   private final static boolean SHOULD_OVERWRITE_TYPES = false;
 
   public static final FileAttribute CALL_SIGNATURES_ATTRIBUTE = new FileAttribute("call.signatures.attribute", 1, true);
+  private static final String RETURN_TYPE = "<RETURN_TYPE>";
 
   private final Project myProject;
 
@@ -142,7 +144,8 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   private static String signatureToString(PySignature signature) {
     return signature.getFunctionName() + "\t" + StringUtil.join(arguments(signature), "\t") +
            (signature.getReturnType() != null
-            ? "\t" + StringUtil.join(signature.getReturnType().getTypesList(), "\t") : "");
+            ? "\t" + StringUtil.join(
+             signature.getReturnType().getTypesList().stream().map(s -> RETURN_TYPE + ":" + s).collect(Collectors.toList()), "\t") : "");
   }
 
   private static List<String> arguments(PySignature signature) {
@@ -248,13 +251,16 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       for (int i = 1; i < parts.length; i++) {
         String[] var = parts[i].split(":");
         if (var.length == 2) {
-          signature = signature.addArgument(var[0], var[1]);
-        }
-        else if (var.length == 1) {
-          signature = signature.addReturnType(var[0]);
+          if (RETURN_TYPE.equals(var[0])) {
+            signature = signature.addReturnType(var[1]);
+          }
+          else {
+            signature = signature.addArgument(var[0], var[1]);
+          }
         }
         else {
-          throw new IllegalStateException("Should be <name>:<type> format for arg or <type> for return type; '" + parts[i] + "' instead.");
+          throw new IllegalStateException(
+            "Should be <name>:<type> format for arg or " + RETURN_TYPE + ":<type> for return type; '" + parts[i] + "' instead.");
         }
       }
       return signature;

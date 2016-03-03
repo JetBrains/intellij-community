@@ -38,6 +38,8 @@ public interface StudyToolWindowConfigurator {
    */
   @NotNull String getDefaultHighlightingMode();
   
+  @NotNull String getLanguageScriptUrl();
+  
   boolean accept(@NotNull final Project project);
   
 }

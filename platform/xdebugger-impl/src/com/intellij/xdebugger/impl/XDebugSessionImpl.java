@@ -476,24 +476,21 @@ public class XDebugSessionImpl implements XDebugSession {
     if (ignoreBreakpoints) {
       disableBreakpoints();
     }
-    doResume();
-    myDebugProcess.startStepOver();
+    myDebugProcess.startStepOver(doResume());
   }
 
   @Override
   public void stepInto() {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    doResume();
-    myDebugProcess.startStepInto();
+    myDebugProcess.startStepInto(doResume());
   }
 
   @Override
   public void stepOut() {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    doResume();
-    myDebugProcess.startStepOut();
+    myDebugProcess.startStepOut(doResume());
   }
 
   @Override
@@ -508,8 +505,7 @@ public class XDebugSessionImpl implements XDebugSession {
   public void forceStepInto() {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    doResume();
-    myDebugProcess.startForceStepInto();
+    myDebugProcess.startForceStepInto(doResume());
   }
 
   @Override
@@ -519,8 +515,7 @@ public class XDebugSessionImpl implements XDebugSession {
     if (ignoreBreakpoints) {
       disableBreakpoints();
     }
-    doResume();
-    myDebugProcess.runToPosition(position);
+    myDebugProcess.runToPosition(position, doResume());
   }
 
   @Override
@@ -545,14 +540,17 @@ public class XDebugSessionImpl implements XDebugSession {
   public void resume() {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    doResume();
-    myDebugProcess.resume();
+    myDebugProcess.resume(doResume());
   }
 
-  public void doResume() {
-    if (!myPaused.getAndSet(false)) return;
+  @Nullable
+  private XSuspendContext doResume() {
+    if (!myPaused.getAndSet(false)) {
+      return null;
+    }
 
     myDispatcher.getMulticaster().beforeSessionResume();
+    XSuspendContext context = mySuspendContext;
     mySuspendContext = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
@@ -565,6 +563,7 @@ public class XDebugSessionImpl implements XDebugSession {
       }
     });
     myDispatcher.getMulticaster().sessionResumed();
+    return context;
   }
 
   @Override

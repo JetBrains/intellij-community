@@ -18,7 +18,7 @@
   <!--suppress HtmlUnknownTarget -->
   <script src="${javascript}"></script>
   <!--suppress HtmlUnknownTarget -->
-  <script src="${python}"></script>
+  <script src="${language_script}"></script>
   <!--suppress CssInvalidPropertyValue -->
   <style media="screen" type="text/css">
     body {
@@ -31,7 +31,7 @@
 ${code}
 <script>
   var nodeList = document.body.getElementsByTagName("code");
-  CodeMirror.colorize(nodeList, "text/x-java")
+  CodeMirror.colorize(nodeList, "${default_mode}")
   CodeMirror.colorize();
 </script>
 </body>

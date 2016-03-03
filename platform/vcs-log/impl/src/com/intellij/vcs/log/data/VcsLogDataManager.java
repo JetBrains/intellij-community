@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -69,11 +70,14 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public VcsLogDataManager(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+  @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
+
+  public VcsLogDataManager(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull Consumer<Exception> fatalErrorsConsumer) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
+    myFatalErrorsConsumer = fatalErrorsConsumer;
 
     myHashMap = createLogHashMap();
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
@@ -101,7 +105,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   private VcsLogHashMap createLogHashMap() {
     VcsLogHashMap hashMap;
     try {
-      hashMap = new VcsLogHashMapImpl(myProject, myLogProviders);
+      hashMap = new VcsLogHashMapImpl(myProject, myLogProviders, myFatalErrorsConsumer);
     }
     catch (IOException e) {
       hashMap = new InMemoryHashMap();
@@ -140,7 +144,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public CommitId getCommitId(int commitIndex) {
     return myHashMap.getCommitId(commitIndex);
   }

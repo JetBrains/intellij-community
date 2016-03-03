@@ -133,7 +133,6 @@ class LinearBekGraphBuilder {
           else {
             return null;
           }
-
         }
         else {
           if ((li > leftLi && li < rightLi) || (li == leftLi)) {
@@ -162,7 +161,6 @@ class LinearBekGraphBuilder {
             }
           }
         }
-
       }
 
       if (blockSize >= MAX_BLOCK_SIZE) {

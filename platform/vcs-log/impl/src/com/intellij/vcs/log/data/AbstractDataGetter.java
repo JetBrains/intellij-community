@@ -16,10 +16,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsLogHashMap;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
@@ -252,7 +249,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       @Override
       public boolean execute(int commit) {
         CommitId commitId = myHashMap.getCommitId(commit);
-        rootsAndHashes.putValue(commitId.getRoot(), commitId.getHash().asString());
+        if (commitId != null) {
+          rootsAndHashes.putValue(commitId.getRoot(), commitId.getHash().asString());
+        }
         return true;
       }
     });
@@ -263,7 +262,8 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
         List<? extends T> details = readDetails(logProvider, entry.getKey(), ContainerUtil.newArrayList(entry.getValue()));
         result.addAll(details);
         saveInCache(details);
-      } else {
+      }
+      else {
         LOG.error("No log provider for root " + entry.getKey().getPath() + ". All known log providers " + myLogProviders);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import java.io.PrintWriter;
@@ -106,6 +107,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     currentSession.stepInto();
   }
 
+  @TestOnly
   protected void stepIntoMyCode() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
@@ -113,7 +115,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     PyDebugProcess debugProcess = (PyDebugProcess)currentSession.getDebugProcess();
-    debugProcess.startStepIntoMyCode();
+    debugProcess.startStepIntoMyCode(currentSession.getSuspendContext());
   }
 
   protected void smartStepInto(String funcName) {
@@ -317,7 +319,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
     finally {
       doFinally();
-      
+
       clearAllBreakpoints();
 
       setProcessCanTerminate(true);

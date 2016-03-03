@@ -21,6 +21,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -47,6 +48,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.ConfirmationDialog;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,38 +116,30 @@ public class CommitHelper {
   }
 
   private boolean doCommit(final GeneralCommitProcessor processor) {
+    Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        vcsManager.startBackgroundVcsOperation();
+        try {
+          delegateCommitToVcsThread(processor);
+        }
+        finally {
+          vcsManager.stopBackgroundVcsOperation();
+        }
+      }
 
-    final Runnable action = new Runnable() {
-      public void run() {
-        delegateCommitToVcsThread(processor);
+      @Override
+      public boolean shouldStartInBackground() {
+        return !myForceSyncCommit && super.shouldStartInBackground();
+      }
+
+      @Override
+      public boolean isConditionalModal() {
+        return myForceSyncCommit;
       }
     };
-
-    if (myForceSyncCommit) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
-      boolean success = doesntContainErrors(processor.getVcsExceptions());
-      if (success) {
-        reportResult(processor);
-      }
-      return success;
-    }
-    else {
-      Task.Backgroundable task =
-        new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
-          public void run(@NotNull final ProgressIndicator indicator) {
-            final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-            vcsManager.startBackgroundVcsOperation();
-            try {
-              action.run();
-            }
-            finally {
-              vcsManager.stopBackgroundVcsOperation();
-            }
-          }
-        };
-      ProgressManager.getInstance().run(task);
-      return false;
-    }
+    ProgressManager.getInstance().run(task);
+    return doesntContainErrors(processor.getVcsExceptions());
   }
 
   private void delegateCommitToVcsThread(final GeneralCommitProcessor processor) {
@@ -202,6 +196,9 @@ public class CommitHelper {
   @NotNull
   private String getCommitSummary(@NotNull GeneralCommitProcessor processor) {
     StringBuilder content = new StringBuilder(getFileSummaryReport(processor.getChangesFailedToCommit()));
+    if (!StringUtil.isEmpty(myCommitMessage)) {
+      content.append(": ").append(escape(myCommitMessage));
+    }
     if (!myFeedback.isEmpty()) {
       content.append("<br/>");
       content.append(StringUtil.join(myFeedback, "<br/>"));
@@ -269,8 +266,6 @@ public class CommitHelper {
       }
 
       processor.doBeforeRefresh();
-
-      AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     }
     catch (ProcessCanceledException pce) {
       throw pce;
@@ -443,8 +438,13 @@ public class CommitHelper {
     }
 
     public void afterFailedCheckIn() {
-      moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
-                       VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
+                           VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
+        }
+      }, ModalityState.defaultModalityState(), o -> myProject.isDisposed());
     }
 
     public void doBeforeRefresh() {
@@ -626,6 +626,7 @@ public class CommitHelper {
     }
   }
 
+  @CalledInAwt
   public static void moveToFailedList(final ChangeList changeList,
                                       final String commitMessage,
                                       final List<Change> failedChanges,

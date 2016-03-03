@@ -22,12 +22,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 
@@ -226,32 +230,66 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
         final PsiElement parent = req.rightElem.getParent();
         if ((req.leftElem.getParent() == parent && parent instanceof PyStringLiteralExpression) ||
             (req.leftExpr instanceof PyStringLiteralExpression && req.rightExpr instanceof PyStringLiteralExpression)) {
-          // two quoted strings close by
-          final CharSequence text = req.document.getCharsSequence();
           final StringNodeInfo leftNodeInfo = new StringNodeInfo(req.leftElem);
           final StringNodeInfo rightNodeInfo = new StringNodeInfo(req.rightElem);
+
           if (leftNodeInfo.isTerminated() && rightNodeInfo.isTerminated()) {
-            final int rightNodeContentOffset = rightNodeInfo.getContentRange().getStartOffset();
+            int quotesMaxLength = Math.max(leftNodeInfo.getQuote().length(), rightNodeInfo.getQuote().length());
+            int stringToJoinMaxLength = getStringToJoinMaxLength(req, quotesMaxLength);
+            final String replacement = findReplacement(rightNodeInfo.getContent(), stringToJoinMaxLength);
+
             if (leftNodeInfo.equals(rightNodeInfo)) {
-              return new Result("", 0, leftNodeInfo.getQuote().length(), rightNodeContentOffset);
+              return getResultAndSplitStringIfTooLong(req, leftNodeInfo, rightNodeInfo, replacement, leftNodeInfo.getQuote());
             }
-            if (haveSamePrefixes(leftNodeInfo, rightNodeInfo) && !leftNodeInfo.isTripleQuoted() && !rightNodeInfo.isTripleQuoted()) {
-              // maybe fit one literal's quotes to match other's
-              if (!rightNodeInfo.getContent().contains(leftNodeInfo.getQuote())) {
-                final int quotePos = rightNodeInfo.getAbsoluteContentRange().getEndOffset();
-                req.document.replaceString(quotePos, quotePos + 1, leftNodeInfo.getQuote());
-                return new Result("", 0, 1, rightNodeContentOffset);
-              }
-              else if (!leftNodeInfo.getContent().contains(rightNodeInfo.getQuote())) {
-                final int quotePos = leftNodeInfo.getAbsoluteContentRange().getStartOffset() - 1;
-                req.document.replaceString(quotePos, quotePos + 1, rightNodeInfo.getQuote());
-                return new Result("", 0, 1, rightNodeContentOffset);
-              }
-            }
+
+            return processStringsWithDifferentQuotes(req, leftNodeInfo, rightNodeInfo, replacement);
           }
         }
       }
       return null;
+    }
+
+    @Nullable
+    private static Result processStringsWithDifferentQuotes(@NotNull final Request req,
+                                                            @NotNull final StringNodeInfo leftNodeInfo,
+                                                            @NotNull final StringNodeInfo rightNodeInfo,
+                                                            @NotNull final String replacement) {
+      if (haveSamePrefixes(leftNodeInfo, rightNodeInfo) && !leftNodeInfo.isTripleQuoted() && !rightNodeInfo.isTripleQuoted()) {
+
+        if (!rightNodeInfo.getContent().contains(leftNodeInfo.getQuote())) {
+          final int quotePos = rightNodeInfo.getAbsoluteContentRange().getEndOffset();
+          final String quote = leftNodeInfo.getQuote();
+          req.document.replaceString(quotePos, quotePos + 1, quote);
+          return getResultAndSplitStringIfTooLong(req, leftNodeInfo, rightNodeInfo, replacement, quote);
+        }
+        else if (!leftNodeInfo.getContent().contains(rightNodeInfo.getQuote())) {
+          final int quotePos = leftNodeInfo.getAbsoluteContentRange().getStartOffset() - 1;
+          final String quote = rightNodeInfo.getQuote();
+          req.document.replaceString(quotePos, quotePos + 1, quote);
+          return getResultAndSplitStringIfTooLong(req, leftNodeInfo, rightNodeInfo, replacement, quote);
+        }
+      }
+      return null;
+    }
+
+    @NotNull
+    private static Result getResultAndSplitStringIfTooLong(@NotNull final Request req,
+                                                           @NotNull final StringNodeInfo leftNodeInfo,
+                                                           @NotNull final StringNodeInfo rightNodeInfo,
+                                                           @NotNull final String replacement,
+                                                           @NotNull final String quote) {
+      int cutIntoRight = rightNodeInfo.getContentRange().getStartOffset();
+      String lineEnd = "";
+      if (!replacement.isEmpty()) {
+        cutIntoRight = replacement.length() + rightNodeInfo.getQuote().length();
+        int contentWithQuoteStartColumn = leftNodeInfo.getAbsoluteContentRange().getStartOffset() - getLeftLineStartOffset(req)
+                                          - leftNodeInfo.getQuote().length();
+        int quotePos = rightNodeInfo.getAbsoluteContentRange().getStartOffset() + replacement.length();
+        req.document.insertString(quotePos, rightNodeInfo.getQuote());
+        req.document.insertString(quotePos, StringUtil.repeat(" ", contentWithQuoteStartColumn));
+        lineEnd = quote + "\\\n";
+      }
+      return new Result(replacement + lineEnd, 0, leftNodeInfo.getQuote().length(), cutIntoRight);
     }
 
     private static boolean haveSamePrefixes(@NotNull StringNodeInfo leftNodeInfo, @NotNull StringNodeInfo rightNodeInfo) {
@@ -259,10 +297,33 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
              leftNodeInfo.isRaw() == rightNodeInfo.isRaw() &&
              leftNodeInfo.isBytes() == rightNodeInfo.isBytes();
     }
+  }
 
-    protected static boolean containsChar(@NotNull CharSequence text, @NotNull TextRange range, char c) {
-      return StringUtil.contains(text, range.getStartOffset(), range.getEndOffset(), c);
+  private static String findReplacement(String text, int maxLength) {
+    if (text.length() < maxLength) return "";
+    List<String> words = StringUtil.split(text, " ");
+    StringBuilder builder = new StringBuilder();
+    final int delimiterLength = 1;
+    int wordsLength = 0;
+    for (String word: words) {
+      wordsLength += word.length() + delimiterLength;
+      if (wordsLength >= maxLength) break;
+      builder.append(word);
+      builder.append(" ");
     }
+    return builder.toString();
+  }
+
+  private static int getStringToJoinMaxLength(Request request, int symbolsToSkip) {
+    int leftLineStartOffset = getLeftLineStartOffset(request);
+    final int margin = CodeStyleSettingsManager.getInstance().getCurrentSettings().getRightMargin(PythonLanguage.getInstance());
+    int leftLineLength = request.document.getLineEndOffset(request.document.getLineNumber(leftLineStartOffset)) - leftLineStartOffset;
+    return margin - leftLineLength - symbolsToSkip;
+  }
+
+  private static int getLeftLineStartOffset(@NotNull Request req) {
+    int lineNumber = req.document.getLineNumber(req.firstLineEndOffset);
+    return req.document.getLineStartOffset(lineNumber);
   }
 
   private static class CommentJoiner implements Joiner {
@@ -275,11 +336,22 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
         int pos = initialPos; // cut '#'
         final int last = rightRange.getEndOffset();
         while (pos < last && " \t".indexOf(text.charAt(pos)) >= 0) pos += 1;
-        final int right = pos - initialPos + 1; // account for the '#'
-        return new Result(" ", 0, 0, right);
+        int right = pos - initialPos + 1; // account for the '#'
+        String substring = req.rightElem.getText().substring(right);
+
+        String replacement = " " + findReplacement(substring, getStringToJoinMaxLength(req, 0));
+        right += replacement.length() - 1; // account for the '#'
+        if (!replacement.trim().isEmpty()) {
+          replacement += "\n";
+          req.document.insertString(req.secondLineStartOffset + right, "# ");
+        }
+
+        return new Result(replacement, 0, 0, right);
       }
       return null;
     }
+
+
   }
 
   private static class StripBackslashJoiner implements Joiner {

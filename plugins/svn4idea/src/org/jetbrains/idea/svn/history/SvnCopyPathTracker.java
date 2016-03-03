@@ -24,6 +24,7 @@ import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -68,7 +69,7 @@ public class SvnCopyPathTracker {
     if (! myHadChanged) return null;
     final SvnFileUrlMapping svnFileUrlMapping = vcs.getSvnFileUrlMapping();
     final String absolutePath = SVNPathUtil.append(myRepositoryRoot, myCurrentPath);
-    final String localPath = svnFileUrlMapping.getLocalPath(absolutePath);
+    final File localPath = svnFileUrlMapping.getLocalPath(absolutePath);
     if (localPath == null) {
       LOG.info("Cannot find local path for url: " + absolutePath);
       return null;

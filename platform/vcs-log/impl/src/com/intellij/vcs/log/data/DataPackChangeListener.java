@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public interface DataPackChangeListener {
   /**
    * Is called after a new data pack is calculated.
+   *
    * @param newDataPack new data pack
    */
   @CalledInAwt

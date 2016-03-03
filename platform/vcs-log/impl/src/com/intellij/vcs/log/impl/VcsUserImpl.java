@@ -16,12 +16,10 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

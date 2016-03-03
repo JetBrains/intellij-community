@@ -90,7 +90,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private static final Logger LOG = Logger.getInstance(InspectionResultsView.class);
 
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
-  private static final Key<Boolean> PREVIEW_EDITOR_IS_REUSED_KEY = Key.create("inspection.tool.window.preview.editor.is.reused.");
+  private static final Key<Boolean> PREVIEW_EDITOR_IS_REUSED_KEY = Key.create("inspection.tool.window.preview.editor.is.reused");
 
   private final Project myProject;
   private final InspectionTree myTree;
@@ -627,7 +627,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
         if (severityGroupNode == newNode) {
           InspectionTreeNode root = myTree.getRoot();
-          insertByIndex(root, severityGroupNode);
+          insertByIndex(severityGroupNode, root);
         }
       }
       return severityGroupNode;

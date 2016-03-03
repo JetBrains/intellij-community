@@ -20,8 +20,8 @@ import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.ActionController;
-import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

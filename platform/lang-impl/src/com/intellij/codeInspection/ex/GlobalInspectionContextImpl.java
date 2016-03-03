@@ -93,7 +93,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private final NotNullLazyValue<ContentManager> myContentManager;
   private InspectionResultsView myView;
   private Content myContent;
-  private volatile boolean myUseView;
+  private volatile boolean myViewClosed = true;
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
@@ -319,7 +319,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myUIOptions = AnalysisUIOptions.getInstance(getProject()).copy();
     }
-    myUseView = true;
+    myViewClosed = false;
     super.launchInspections(scope);
   }
 
@@ -589,7 +589,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     if (virtualFile == null) return null;
     if (isBinary(file)) return null; //do not inspect binary files
 
-    if (!myUseView && !headlessEnvironment) {
+    if (myViewClosed && !headlessEnvironment) {
       throw new ProcessCanceledException();
     }
 
@@ -785,7 +785,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       final ContentManager contentManager = getContentManager();
       contentManager.removeContent(myContent, true);
     }
-    myUseView = false;
+    myViewClosed = true;
     myView = null;
     super.close(noSuspisiousCodeFound);
   }
@@ -977,7 +977,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return file instanceof PsiBinaryFile || file.getFileType().isBinary();
   }
 
-  public boolean useView() {
-    return myUseView;
+  public boolean isViewClosed() {
+    return myViewClosed;
   }
 }

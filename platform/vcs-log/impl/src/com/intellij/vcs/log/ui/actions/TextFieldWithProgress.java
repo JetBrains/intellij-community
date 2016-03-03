@@ -41,32 +41,32 @@ public abstract class TextFieldWithProgress<T> extends JPanel {
 
     myProgressIcon = new AsyncProcessIcon("Loading commits");
     myTextField = new TextFieldWithAutoCompletion<T>(project, completionProvider, false, null) {
-        @Override
-        public void setBackground(Color bg) {
-          super.setBackground(bg);
-          myProgressIcon.setBackground(bg);
-        }
+      @Override
+      public void setBackground(Color bg) {
+        super.setBackground(bg);
+        myProgressIcon.setBackground(bg);
+      }
 
-        @Override
-        protected EditorEx createEditor() {
-          EditorEx editor = super.createEditor();
-          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, true);
-          EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-          if (customization != null) {
-            customization.customize(editor);
-          }
-          return editor;
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx editor = super.createEditor();
+        editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, true);
+        EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+        if (customization != null) {
+          customization.customize(editor);
         }
+        return editor;
+      }
 
-        @Override
-        protected boolean processKeyBinding(KeyStroke ks, final KeyEvent e, int condition, boolean pressed) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            onOk();
-            return true;
-          }
-          return false;
+      @Override
+      protected boolean processKeyBinding(KeyStroke ks, final KeyEvent e, int condition, boolean pressed) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          onOk();
+          return true;
         }
-      };
+        return false;
+      }
+    };
     myTextField.setBorder(IdeBorderFactory.createEmptyBorder());
 
     myProgressIcon.setOpaque(true);

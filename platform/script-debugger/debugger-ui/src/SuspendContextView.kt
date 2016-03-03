@@ -30,9 +30,48 @@ import org.jetbrains.debugger.frame.CallFrameView
 import org.jetbrains.debugger.values.StringValue
 import java.util.*
 
-abstract class SuspendContextView(protected val activeStack: ExecutionStackView) : XSuspendContext() {
+const val MAIN_LOOP_NAME = "main loop"
+
+abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProcess, protected val activeStack: ExecutionStackView) : XSuspendContext() {
   protected open val stacks by lazy {
-    arrayOf(activeStack)
+    val childConnections = debugProcess.childConnections
+    if (childConnections.isNotEmpty()) {
+      val list = ArrayList<XExecutionStack>(1 + childConnections.size)
+
+      val mainVm = debugProcess.mainVm
+      if (activeStack.suspendContext.vm == mainVm) {
+        list.add(activeStack)
+      }
+      else {
+        list.add(createStackView(mainVm?.suspendContextManager?.context, MAIN_LOOP_NAME))
+      }
+
+      childConnections.mapNotNullTo(list) {
+        it.vm?.let {
+          val context = it.suspendContextManager.context
+          if (context == activeStack.suspendContext) {
+            activeStack
+          }
+          else {
+            val displayName = it.name ?: throw IllegalStateException("Name must be not null for child VM")
+            createStackView(context, displayName)
+          }
+        }
+      }
+      list.toTypedArray()
+    }
+    else {
+      arrayOf(activeStack)
+    }
+  }
+
+  private fun createStackView(context: SuspendContext<*>?, displayName: String): XExecutionStack {
+    return if (context == null) {
+      RunningThreadExecutionStackView(displayName)
+    }
+    else {
+      ExecutionStackView(context, activeStack.viewSupport, null, null, displayName)
+    }
   }
 
   override fun getActiveExecutionStack() = activeStack
@@ -56,14 +95,21 @@ abstract class SuspendContextView(protected val activeStack: ExecutionStackView)
       }
 }
 
-const val MAIN_LOOP_NAME = "main loop"
+class RunningThreadExecutionStackView(displayName: String) : XExecutionStack(displayName, AllIcons.Debugger.ThreadRunning) {
+  override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer?) {
+    // add dependency to DebuggerBundle?
+    container?.errorOccurred("Frames not available for unsuspended thread")
+  }
+
+  override fun getTopFrame(): XStackFrame? = null
+}
 
 // icon ThreadCurrent would be preferred for active thread, but it won't be updated on stack change
-open class ExecutionStackView(val suspendContext: SuspendContext<*>,
-                              private val viewSupport: DebuggerViewSupport,
-                              private val topFrameScript: Script?,
-                              private val topFrameSourceInfo: SourceInfo? = null,
-                              displayName: String = "") : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
+class ExecutionStackView(val suspendContext: SuspendContext<*>,
+                         internal val viewSupport: DebuggerViewSupport,
+                         private val topFrameScript: Script?,
+                         private val topFrameSourceInfo: SourceInfo? = null,
+                         displayName: String = "") : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
   private var topCallFrameView: CallFrameView? = null
 
   override fun getTopFrame(): CallFrameView? {

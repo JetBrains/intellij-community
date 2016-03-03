@@ -16,7 +16,6 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,9 +27,9 @@ public interface VcsLogStructureFilter extends VcsLogDetailsFilter {
 
   /**
    * <p>Returns files which are affected by matching commits, and folders containing such files.</p>
-   *
+   * <p>
    * <p>That is: the commit A (made in the given VCS root) modifying file f.txt matches this filter,
-   *    if this method returns a set which includes a folder containing f.txt, or the file f.txt itself.</p>
+   * if this method returns a set which includes a folder containing f.txt, or the file f.txt itself.</p>
    */
   @NotNull
   Collection<FilePath> getFiles();

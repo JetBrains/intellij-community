@@ -222,7 +222,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
 
     final GlobalInspectionContextImpl context = getContext();
-    if (!context.useView() || !(refElement instanceof RefElement)) {
+    if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }
     if (myToolWrapper instanceof LocalInspectionToolWrapper) {
@@ -393,24 +393,34 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         if (descriptors != null) {
           ArrayList<CommonProblemDescriptor> newDescriptors = new ArrayList<CommonProblemDescriptor>(Arrays.asList(descriptors));
           newDescriptors.remove(problem);
+          CommonProblemDescriptor[] newDescriptorsAsArray = newDescriptors.toArray(new CommonProblemDescriptor[newDescriptors.size()]);
           getQuickFixActions().put(refEntity, null);
           if (!newDescriptors.isEmpty()) {
-            problemElements.put(refEntity, newDescriptors.toArray(new CommonProblemDescriptor[newDescriptors.size()]));
+            problemElements.put(refEntity, newDescriptorsAsArray);
             for (CommonProblemDescriptor descriptor : newDescriptors) {
               collectQuickFixes(descriptor.getFixes(), refEntity);
             }
           }
-          else {
-            ignoreProblemElement(refEntity);
-          }
+          ignoreProblemElement(refEntity, newDescriptorsAsArray, problem);
         }
       }
     }
   }
 
-  private void ignoreProblemElement(RefEntity refEntity){
-    final CommonProblemDescriptor[] problemDescriptors = getProblemElements().remove(refEntity);
-    getIgnoredElements().put(refEntity, problemDescriptors);
+  private void ignoreProblemElement(RefEntity refEntity, CommonProblemDescriptor[] newDescriptors, CommonProblemDescriptor toIgnore){
+    if (newDescriptors != null && newDescriptors.length == 0) {
+      newDescriptors = null;
+    }
+    if (newDescriptors == null) {
+      getProblemElements().remove(refEntity);
+    } else {
+      getProblemElements().put(refEntity, newDescriptors);
+    }
+    CommonProblemDescriptor[] oldIgnored = getIgnoredElements().getOrDefault(refEntity, CommonProblemDescriptor.EMPTY_ARRAY);
+    CommonProblemDescriptor[] update = new CommonProblemDescriptor[oldIgnored.length + 1];
+    System.arraycopy(oldIgnored, 0, update, 0, oldIgnored.length);
+    update[update.length - 1] = toIgnore;
+    getIgnoredElements().put(refEntity, update);
   }
 
   @Override
@@ -594,7 +604,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         myModulesProblems.add((RefModule)element);
       }
       else {
-        String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : null;
+        String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
         Set<RefEntity> content = myContents.get(groupName);
         if (content == null) {
           content = new HashSet<RefEntity>();
@@ -733,6 +743,11 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public boolean isElementIgnored(final RefEntity element) {
     for (RefEntity entity : getIgnoredElements().keySet()) {
       if (Comparing.equal(entity, element)) {
+        for (RefEntity entity1 : getProblemElements().keySet()) {
+          if (Comparing.equal(entity1, element)) {
+            return false;
+          }
+        }
         return true;
       }
     }

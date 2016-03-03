@@ -61,6 +61,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     else {
       mySettingButton = myBalloon.new ActionButton(
         AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
+        "Configure Notification",
         new Consumer<MouseEvent>() {
           @Override
           public void consume(MouseEvent event) {
@@ -101,6 +102,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
 
     myCloseButton = myBalloon.new ActionButton(
       AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
+      "Close Notification (Alt-Click close all notifications)",
       new Consumer<MouseEvent>() {
         @Override
         public void consume(MouseEvent event) {

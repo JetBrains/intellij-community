@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     checkIBus();
-    checkJAyatana();
     startDiskSpaceMonitoring();
   }
 
@@ -96,16 +95,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             }
           }
         }
-      }
-    }
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  private void checkJAyatana() {
-    if (SystemInfo.isXWindow) {
-      String originalOpts = System.getenv("_ORIGINAL_JAVA_TOOL_OPTIONS");
-      if (originalOpts != null && originalOpts.contains("jayatanaag.jar")) {
-        showNotification("ayatana.menu.warn.message");
       }
     }
   }

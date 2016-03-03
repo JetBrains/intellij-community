@@ -269,5 +269,4 @@ public class LinearBekController extends CascadeController {
       return bekIndexes;
     }
   }
-
 }

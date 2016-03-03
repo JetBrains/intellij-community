@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -29,13 +30,13 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.psi.impl.SyntheticFileSystemItem.LOG;
 
 /**
  * Stores paths to Git service files (from .git/ directory) that are used by IDEA, and provides test-methods to check if a file
  * matches once of them.
  */
 public class GitRepositoryFiles {
+  private static final Logger LOG = Logger.getInstance("#git4idea.repo.GitRepositoryFiles");
 
   private static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   private static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";

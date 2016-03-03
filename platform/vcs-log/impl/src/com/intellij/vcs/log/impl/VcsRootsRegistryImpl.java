@@ -61,32 +61,20 @@ public class VcsRootsRegistryImpl implements VcsRootsRegistry, Disposable {
   }
 
   @Override
-  public int getId(@NotNull VirtualFile root) {
-    try {
-      return myEnumerator.enumerate(root.getPath());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      throw new RuntimeException(e); // to be dealt with in rr/julia/persistenthashmap branch
-    }
+  public int getId(@NotNull VirtualFile root) throws IOException {
+    return myEnumerator.enumerate(root.getPath());
   }
 
   @Override
   @Nullable
-  public VirtualFile getRootById(int id) {
-    try {
-      String path = myEnumerator.valueOf(id);
-      if (path == null) throw new RuntimeException("Can not find path by id " + id);
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-      if (file == null) {
-        LOG.info("Can not find file by path " + path);
-        return null;
-      }
-      return file;
+  public VirtualFile getRootById(int id) throws IOException {
+    String path = myEnumerator.valueOf(id);
+    if (path == null) throw new RuntimeException("Can not find path by id " + id);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    if (file == null) {
+      LOG.info("Can not find file by path " + path);
+      return null;
     }
-    catch (IOException e) {
-      LOG.error(e);
-      throw new RuntimeException(e); // to be dealt with in rr/julia/persistenthashmap branch
-    }
+    return file;
   }
 }
