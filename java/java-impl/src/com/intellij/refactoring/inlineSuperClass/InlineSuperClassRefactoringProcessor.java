@@ -171,25 +171,26 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         final PsiMethod[] superConstructors = mySuperClass.getConstructors();
         for (PsiMethod constructor : targetClass.getConstructors()) {
           final PsiCodeBlock constrBody = constructor.getBody();
-          LOG.assertTrue(constrBody != null);
-          final PsiStatement[] statements = constrBody.getStatements();
-          if (statements.length > 0) {
-            final PsiStatement firstConstrStatement = statements[0];
-            if (firstConstrStatement instanceof PsiExpressionStatement) {
-              final PsiExpression expression = ((PsiExpressionStatement)firstConstrStatement).getExpression();
-              if (expression instanceof PsiMethodCallExpression) {
-                final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-                if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
-                  final PsiMethod superConstructor = ((PsiMethodCallExpression)expression).resolveMethod();
-                  if (superConstructor != null && superConstructor.getBody() != null) {
-                    usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression));
-                    continue;
+          if (constrBody != null) {
+            final PsiStatement[] statements = constrBody.getStatements();
+            if (statements.length > 0) {
+              final PsiStatement firstConstrStatement = statements[0];
+              if (firstConstrStatement instanceof PsiExpressionStatement) {
+                final PsiExpression expression = ((PsiExpressionStatement)firstConstrStatement).getExpression();
+                if (expression instanceof PsiMethodCallExpression) {
+                  final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+                  if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
+                    final PsiMethod superConstructor = ((PsiMethodCallExpression)expression).resolveMethod();
+                    if (superConstructor != null && superConstructor.getBody() != null) {
+                      usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression));
+                      continue;
+                    }
                   }
                 }
               }
             }
           }
-  
+
           //insert implicit call to super
           for (PsiMethod superConstructor : superConstructors) {
             if (superConstructor.getParameterList().getParametersCount() == 0) {
