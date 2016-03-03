@@ -441,7 +441,6 @@ public class GenericsHighlightUtil {
   }
 
   static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass,
-                                                    @NotNull Collection<HierarchicalMethodSignature> signaturesWithSupers,
                                                     @NotNull PsiIdentifier classIdentifier) {
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
       new THashMap<MethodSignature, Set<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
@@ -454,9 +453,10 @@ public class GenericsHighlightUtil {
         subType |= supers[j].isInheritor(supers[i], true);
       }
       if (subType) continue;
+      final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       for (HierarchicalMethodSignature hms : superClass.getVisibleSignatures()) {
         final PsiMethod method = hms.getMethod();
-        if (aClass.findMethodsBySignature(method, false).length > 0) continue;
+        if (MethodSignatureUtil.findMethodBySignature(aClass, method.getSignature(superClassSubstitutor), false) != null) continue;
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) continue;
         final PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY);

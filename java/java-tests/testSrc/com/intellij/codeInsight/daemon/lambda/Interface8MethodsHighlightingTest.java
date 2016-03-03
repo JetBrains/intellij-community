@@ -58,6 +58,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest();
   }
 
+  public void testUnrelatedDefaultsOverriddenWithConcreteMethodNonEmptySubstitutor() throws Exception {
+    doTest(false, false);
+  }
+
   public void testStaticMethodAccessibleBothThroughStaticImportAndInheritance() throws Exception {
     myFixture.addClass("package p; public interface Foo {" +
                        "    static void foo() {}" +
