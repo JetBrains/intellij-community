@@ -25,12 +25,6 @@ public class UserNameRegex implements Function<String, String> {
 
   @Override
   public String fun(String s) {
-    return "^" +
-           s +
-           "( <.*>)?$|^<" +
-           s +
-           "@.*>$|^" +
-           s +
-           "@.*$"; // either exact user name with any email or no name with exact email (on any domain)
+    return "^" + s + "$";
   }
 }
