@@ -220,7 +220,8 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           return false;
         }
         PsiClass aClass = method.getContainingClass();
-        return aClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName());
+        return aClass != null && (GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()) ||
+                                  GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()));
       }
 
       private PsiMethodCallExpression findGuavaMethodChain(PsiMethodCallExpression expression) {
