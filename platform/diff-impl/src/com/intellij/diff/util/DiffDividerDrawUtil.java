@@ -198,6 +198,7 @@ public class DiffDividerDrawUtil {
   @NotNull
   private static LineRange getVisibleInterval(Editor editor) {
     Rectangle area = editor.getScrollingModel().getVisibleArea();
+    if (area.height < 0) return new LineRange(0, 0);
     LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
     LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
     return new LineRange(position1.line, position2.line);
