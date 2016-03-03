@@ -79,7 +79,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
-import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -92,6 +91,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -1163,7 +1163,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     ++myFilesModCount;
   }
 
-  private final Lock myCalcIndexableFilesLock = new SequenceLock();
+  private final Lock myCalcIndexableFilesLock = new ReentrantLock();
 
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
