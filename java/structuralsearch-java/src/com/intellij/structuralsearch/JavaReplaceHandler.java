@@ -110,13 +110,11 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       replacement = ((PsiExpressionStatement)replacement).getExpression();
     }
     else if (replacement instanceof PsiDeclarationStatement &&
-             ((PsiDeclarationStatement)replacement).getDeclaredElements().length == 1
-      ) {
+             ((PsiDeclarationStatement)replacement).getDeclaredElements().length == 1 &&
+             (elementToReplace instanceof PsiVariable || elementToReplace instanceof PsiClass)) {
       return ((PsiDeclarationStatement)replacement).getDeclaredElements()[0];
     }
-    else if (replacement instanceof PsiBlockStatement &&
-             elementToReplace instanceof PsiCodeBlock
-      ) {
+    else if (replacement instanceof PsiBlockStatement && elementToReplace instanceof PsiCodeBlock) {
       return ((PsiBlockStatement)replacement).getCodeBlock();
     }
 
