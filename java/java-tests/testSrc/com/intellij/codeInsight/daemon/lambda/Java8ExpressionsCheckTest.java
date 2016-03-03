@@ -63,6 +63,14 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestCachedUnresolved();
   }
 
+  public void testCacheUnresolvedMethods4() throws Exception {
+    doTestCachedUnresolved();
+  }
+
+  public void testCacheUnresolvedMethods5() throws Exception {
+    doTestCachedUnresolved();
+  }
+
   public void testMethodOverloadsInsideLambdaHierarchy() throws Exception {
     doTestAllMethodCallExpressions();
   }
