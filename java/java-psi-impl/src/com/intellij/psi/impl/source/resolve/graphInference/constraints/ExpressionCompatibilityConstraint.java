@@ -134,9 +134,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
       if (method != null && !method.isConstructor()) {
         returnType = method.getReturnType();
-        if (returnType != null) {
-          typeParams = method.getTypeParameters();
-        }
+        typeParams = method.getTypeParameters();
       }
       else if (resolveResult != null) {
         final PsiClass psiClass = method != null ? method.getContainingClass() : (PsiClass)resolveResult.getElement();
@@ -162,7 +160,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             return callSession;
           }
 
-          callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
+          if (returnType != null) {
+            callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
+          }
           if (callSession.repeatInferencePhases()) {
             return callSession;
           }
@@ -175,8 +175,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             session.registerIncompatibleErrorMessage(message);
           }
         }
-        return null;
       }
+      return null;
     }
     return session;
   }

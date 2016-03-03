@@ -81,7 +81,7 @@ public class InferenceSessionContainer {
         if (topLevelCall != null) {
 
           final InferenceSession session;
-          if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty()) {
+          if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() || LambdaUtil.isLambdaParameterCheck()) {
             session = startTopLevelInference(topLevelCall);
           }
           else {
