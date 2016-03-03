@@ -42,8 +42,10 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -275,50 +277,44 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   protected void performRefactoring(@NotNull final UsageInfo[] usages) {
-    final DocCommentPolicy docPolicy = new DocCommentPolicy(myPolicy);
-    new PushDownProcessor(mySuperClass, myMemberInfos, docPolicy) {
-      //push down conflicts are already collected
-      @Override
-      protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
-        return true;
-      }
+    try {
+      final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, new Function<PsiClass, UsageInfo>() {
+        @Override
+        public UsageInfo fun(PsiClass psiClass) {
+          return new UsageInfo(psiClass);
+        }
+      });
+      new PushDownProcessor(mySuperClass, myMemberInfos, new DocCommentPolicy(myPolicy)).pushDownToClasses(infos);
 
-      @Override
-      protected void performRefactoring(@NotNull UsageInfo[] pushDownUsages) {
-        if (myCurrentInheritor != null) {
-          pushDownToDedicatedClass(myCurrentInheritor);
-        } else {
-          super.performRefactoring(pushDownUsages);
-        }
-        CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
-        for (UsageInfo usageInfo : usages) {
-          if (!(usageInfo instanceof ReplaceExtendsListUsageInfo || usageInfo instanceof RemoveImportUsageInfo)) {
-            try {
-              ((FixableUsageInfo)usageInfo).fixUsage();
-            }
-            catch (IncorrectOperationException e) {
-              LOG.info(e);
-            }
-          }
-        }
-        replaceInnerTypeUsages();
-
-        //postpone broken hierarchy
-        for (UsageInfo usage : usages) {
-          if (usage instanceof ReplaceExtendsListUsageInfo || usage instanceof RemoveImportUsageInfo) {
-            ((FixableUsageInfo)usage).fixUsage();
-          }
-        }
-        if (myCurrentInheritor == null) {
+      CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+      for (UsageInfo usageInfo : usages) {
+        if (!(usageInfo instanceof ReplaceExtendsListUsageInfo || usageInfo instanceof RemoveImportUsageInfo)) {
           try {
-            mySuperClass.delete();
+            ((FixableUsageInfo)usageInfo).fixUsage();
           }
           catch (IncorrectOperationException e) {
-            LOG.error(e);
+            LOG.info(e);
           }
         }
       }
-    }.run();
+
+      replaceInnerTypeUsages();
+
+      //postpone broken hierarchy
+      for (UsageInfo usage : usages) {
+        if (usage instanceof ReplaceExtendsListUsageInfo || usage instanceof RemoveImportUsageInfo) {
+          ((FixableUsageInfo)usage).fixUsage();
+        }
+      }
+
+      //delete the class if all refs replaced
+      if (myCurrentInheritor == null) {
+        mySuperClass.delete();
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable
