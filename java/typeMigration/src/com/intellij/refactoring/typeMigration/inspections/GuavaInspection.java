@@ -25,6 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -352,7 +354,6 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
     private static boolean performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
       PsiFile containingFile = null;
-      SearchScope typeMigrationScope = GlobalSearchScope.EMPTY_SCOPE;
       for (PsiElement element : elements) {
         final PsiFile currentContainingFile = element.getContainingFile();
         if (containingFile == null) {
@@ -361,13 +362,13 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         else {
           LOG.assertTrue(containingFile.isEquivalentTo(currentContainingFile));
         }
-        typeMigrationScope = typeMigrationScope.union(element.getUseScope());
       }
       LOG.assertTrue(containingFile != null);
       if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return false;
       try {
         final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setBoundScope(typeMigrationScope);
+        rules.setBoundScope(GlobalSearchScopesCore.projectProductionScope(containingFile.getProject())
+                              .union(GlobalSearchScopesCore.projectTestScope(containingFile.getProject())));
         TypeMigrationProcessor.runHighlightingTypeMigration(containingFile.getProject(),
                                                             null,
                                                             rules,
