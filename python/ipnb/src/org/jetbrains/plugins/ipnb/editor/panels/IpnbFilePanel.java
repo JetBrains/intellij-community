@@ -2,7 +2,6 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -580,11 +579,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   @Override
   public Object getData(String dataId) {
     final IpnbEditablePanel cell = getSelectedCell();
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      if (cell instanceof IpnbCodePanel) {
-        return ((IpnbCodePanel)cell).getEditor();
-      }
-    }
     if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       if (cell instanceof IpnbCodePanel) {
         return ((IpnbCodePanel)cell).getEditor();
