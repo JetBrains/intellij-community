@@ -75,7 +75,7 @@ public class MqPatchTest extends HgPlatformTest {
   public void testMqPatchInfoAfterQImport() throws Exception {
     cd(myRepository);
     HgQImportCommand importCommand = new HgQImportCommand(myHgRepository);
-    importCommand.execute("tip");
+    importCommand.executeInCurrentThread("tip");
     MqPatchDetails patchDetails = updateAndGetDetails();
     TimedVcsCommit tipCommitDetailsFromLog = getLastRevisionDetails();
     assertEqualsCommitInfo(tipCommitDetailsFromLog, patchDetails);
