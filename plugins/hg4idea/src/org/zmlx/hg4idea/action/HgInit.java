@@ -106,7 +106,7 @@ public class HgInit extends DumbAwareAction {
   }
 
   private void createRepositoryAsynchronously(final VirtualFile selectedRoot, final VirtualFile mapRoot) {
-    new HgInitCommand(myProject).execute(selectedRoot, new HgCommandResultHandler() {
+    new HgInitCommand(myProject).executeAsynchronously(selectedRoot, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
         if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
