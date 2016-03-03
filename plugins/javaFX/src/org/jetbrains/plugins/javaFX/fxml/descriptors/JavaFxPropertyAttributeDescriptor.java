@@ -87,7 +87,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       return ArrayUtil.toStringArray(enumConstants);
     }
 
-    final String propertyQName = getBoxedPropertyType(getDeclaration());
+    final String propertyQName = JavaFxPsiUtil.getBoxedPropertyType(getDeclaration());
     if (CommonClassNames.JAVA_LANG_FLOAT.equals(propertyQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(propertyQName)) {
       return new String[] {"Infinity", "-Infinity", "NaN",  "-NaN"};
     } else if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyQName)) {
@@ -193,7 +193,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             final PsiElement declaration = attributeDescriptor.getDeclaration();
             final String boxedQName;
             if (declaration != null) {
-              boxedQName = getBoxedPropertyType(declaration);
+              boxedQName = JavaFxPsiUtil.getBoxedPropertyType(declaration);
             }
             else {
               final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
@@ -234,20 +234,6 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       }
     }
     return null;
-  }
-
-  @Nullable
-  private static String getBoxedPropertyType(PsiElement declaration) {
-    PsiType attrType = JavaFxPsiUtil.getWritablePropertyType(declaration);
-
-    String boxedQName = null;
-    if (attrType instanceof PsiPrimitiveType) {
-      boxedQName = ((PsiPrimitiveType)attrType).getBoxedTypeName();
-    } else if (PsiPrimitiveType.getUnboxedType(attrType) != null) {
-      final PsiClass attrClass = PsiUtil.resolveClassInType(attrType);
-      boxedQName = attrClass != null ? attrClass.getQualifiedName() : null;
-    }
-    return boxedQName;
   }
 
   @Override
