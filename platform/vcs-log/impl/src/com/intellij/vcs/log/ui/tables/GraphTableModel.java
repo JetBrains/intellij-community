@@ -14,6 +14,7 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,9 +117,8 @@ public class GraphTableModel extends AbstractTableModel {
       case COMMIT_COLUMN:
         return new GraphCommitCell(data.getSubject(), myDataPack.getRefs().refsToCommit(data.getId(), data.getRoot()));
       case AUTHOR_COLUMN:
-        String authorString = data.getAuthor().getName();
-        if (authorString.isEmpty()) authorString = data.getAuthor().getEmail();
-        return authorString + (data.getAuthor().equals(data.getCommitter()) ? "" : "*");
+        String authorString = VcsUserUtil.getShortPresentation(data.getAuthor());
+        return authorString + (VcsUserUtil.isSamePerson(data.getAuthor(), data.getCommitter()) ? "" : "*");
       case DATE_COLUMN:
         if (data.getAuthorTime() < 0) {
           return "";

@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import junit.framework.TestCase;
@@ -118,7 +119,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
                                   @NotNull Collection<? extends String> expectedHashes,
                                   @NotNull StringBuilder errorMessageBuilder) throws VcsException {
     VcsLogUserFilter userFilter =
-      new VcsLogUserFilterImpl(singleton(user.getName()), Collections.emptyMap(), allUsers);
+      new VcsLogUserFilterImpl(singleton(VcsUserUtil.getShortPresentation(user)), Collections.emptyMap(), allUsers);
     List<String> actualHashes = getFilteredHashes(userFilter);
 
     List<String> expected = ContainerUtil.reverse(ContainerUtil.newArrayList(expectedHashes));

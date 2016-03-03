@@ -23,6 +23,7 @@ import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +95,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     return ContainerUtil.map(myDataManager.getAllUsers(), new Function<VcsUser, String>() {
       @Override
       public String fun(VcsUser user) {
-        return user.getName();
+        return VcsUserUtil.getShortPresentation(user);
       }
     });
   }

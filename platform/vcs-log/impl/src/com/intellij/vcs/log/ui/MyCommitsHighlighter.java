@@ -61,7 +61,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
       @NotNull
       @Override
       public String fun(VcsUser user) {
-        return VcsUserUtil.getNameInStandardForm(user.getName());
+        return VcsUserUtil.getNameInStandardForm(VcsUserUtil.getShortPresentation(user));
       }
     };
     Set<String> allUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myDataManager.getAllUsers(), nameToString));

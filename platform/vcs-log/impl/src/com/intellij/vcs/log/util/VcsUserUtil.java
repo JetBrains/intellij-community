@@ -44,7 +44,12 @@ public class VcsUserUtil {
   }
 
   @NotNull
-  public static String getName(@NotNull VcsUser user) {
+  public static String getShortPresentation(@NotNull VcsUser user) {
+    return getName(user);
+  }
+
+  @NotNull
+  private static String getName(@NotNull VcsUser user) {
     if (!user.getName().isEmpty()) return user.getName();
     String emailNamePart = getNameFromEmail(user.getEmail());
     if (emailNamePart != null) return emailNamePart;

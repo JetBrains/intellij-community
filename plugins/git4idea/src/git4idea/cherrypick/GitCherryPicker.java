@@ -39,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
@@ -153,7 +154,7 @@ public class GitCherryPicker extends VcsCherryPicker {
       }
       else if (conflictDetector.hasHappened()) {
         boolean mergeCompleted = new CherryPickConflictResolver(myProject, myGit, myPlatformFacade, repository.getRoot(),
-                                                                commit.getId().asString(), commit.getAuthor().getName(),
+                                                                commit.getId().asString(), VcsUserUtil.getShortPresentation(commit.getAuthor()),
                                                                 commit.getSubject()).merge();
 
         if (mergeCompleted) {
@@ -227,7 +228,7 @@ public class GitCherryPicker extends VcsCherryPicker {
                                      @NotNull List<GitCommitWrapper> successfulCommits) {
     NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
                                                                        commit.getCommit().getId().toShortString(),
-                                                                       commit.getCommit().getAuthor().getName(),
+                                                                       VcsUserUtil.getShortPresentation(commit.getCommit().getAuthor()),
                                                                        commit.getSubject());
     String description = commitDetails(commit)
                          + "<br/>Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>";
