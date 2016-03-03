@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
-import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnChangelistListener;
 import org.junit.Test;
 
@@ -43,7 +42,7 @@ public class SvnNativeListsTest extends Svn16TestCase {
   public void tearDown() throws Exception {
     final List<LocalChangeList> changeListList = myChangeListManager.getChangeLists();
     for (LocalChangeList list : changeListList) {
-      if (SvnChangeProvider.ourDefaultListName.equals(list.getName())) continue;
+      if (LocalChangeList.DEFAULT_NAME.equals(list.getName())) continue;
       final Collection<Change> changes = list.getChanges();
       for (Change change : changes) {
         clearListForRevision(change.getBeforeRevision());

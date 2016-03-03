@@ -279,7 +279,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       public void processLoadedLists(final List<LocalChangeList> lists) {
         if (lists.isEmpty()) return;
         try {
-          ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
+          ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.DEFAULT_NAME, true);
 
           if (!myConfiguration.changeListsSynchronized()) {
             processChangeLists(lists);
