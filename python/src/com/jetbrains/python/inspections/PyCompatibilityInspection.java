@@ -64,11 +64,14 @@ public class PyCompatibilityInspection extends PyInspection {
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
-  public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
+  public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
   public PyCompatibilityInspection () {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourVersions.addAll(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
+    }
+    else {
+      ourVersions.addAll(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
     }
   }
   
