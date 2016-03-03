@@ -182,7 +182,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public void invertElementInitializer(final PsiElement element) {
-    if (element instanceof PsiField && ((PsiField)element).getInitializer() == null) {
+    if (element instanceof PsiField && ((PsiField)element).getInitializer() == null && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
       ((PsiField)element).setInitializer(JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("true", element));
     } else if (element instanceof PsiVariable) {
       final PsiExpression initializer = ((PsiVariable)element).getInitializer();
