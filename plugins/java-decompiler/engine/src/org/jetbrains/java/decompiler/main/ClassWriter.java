@@ -980,19 +980,21 @@ public class ClassWriter {
     }
   }
 
-  private static final Map<Integer, String> MODIFIERS = new LinkedHashMap<Integer, String>() {{
-    put(CodeConstants.ACC_PUBLIC, "public");
-    put(CodeConstants.ACC_PROTECTED, "protected");
-    put(CodeConstants.ACC_PRIVATE, "private");
-    put(CodeConstants.ACC_ABSTRACT, "abstract");
-    put(CodeConstants.ACC_STATIC, "static");
-    put(CodeConstants.ACC_FINAL, "final");
-    put(CodeConstants.ACC_STRICT, "strictfp");
-    put(CodeConstants.ACC_TRANSIENT, "transient");
-    put(CodeConstants.ACC_VOLATILE, "volatile");
-    put(CodeConstants.ACC_SYNCHRONIZED, "synchronized");
-    put(CodeConstants.ACC_NATIVE, "native");
-  }};
+  private static final Map<Integer, String> MODIFIERS;
+  static {
+    MODIFIERS = new LinkedHashMap<>();
+    MODIFIERS.put(CodeConstants.ACC_PUBLIC, "public");
+    MODIFIERS.put(CodeConstants.ACC_PROTECTED, "protected");
+    MODIFIERS.put(CodeConstants.ACC_PRIVATE, "private");
+    MODIFIERS.put(CodeConstants.ACC_ABSTRACT, "abstract");
+    MODIFIERS.put(CodeConstants.ACC_STATIC, "static");
+    MODIFIERS.put(CodeConstants.ACC_FINAL, "final");
+    MODIFIERS.put(CodeConstants.ACC_STRICT, "strictfp");
+    MODIFIERS.put(CodeConstants.ACC_TRANSIENT, "transient");
+    MODIFIERS.put(CodeConstants.ACC_VOLATILE, "volatile");
+    MODIFIERS.put(CodeConstants.ACC_SYNCHRONIZED, "synchronized");
+    MODIFIERS.put(CodeConstants.ACC_NATIVE, "native");
+  }
 
   private static final int CLASS_ALLOWED =
     CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE | CodeConstants.ACC_ABSTRACT |
