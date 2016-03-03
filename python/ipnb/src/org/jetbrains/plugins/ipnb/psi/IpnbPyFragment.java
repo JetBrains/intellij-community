@@ -7,6 +7,9 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.indexing.IndexingDataKeys;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,5 +90,18 @@ public class IpnbPyFragment extends PyFileImpl {
   @Override
   public PsiElement getPrevSibling() {
     return null;
+  }
+
+  @Override
+  public LanguageLevel getLanguageLevel() {
+    VirtualFile virtualFile = getVirtualFile();
+
+    if (virtualFile == null) {
+      virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
+    }
+    if (virtualFile == null) {
+      virtualFile = getViewProvider().getVirtualFile();
+    }
+    return PyUtil.getLanguageLevelForVirtualFile(getProject(), virtualFile);
   }
 }
