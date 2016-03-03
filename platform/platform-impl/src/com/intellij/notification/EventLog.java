@@ -134,7 +134,7 @@ public class EventLog {
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
-          Notification.fire(notification.getActions().get(Integer.parseInt(event.getDescription())));
+          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())));
         }
       });
       if (title.length() > 0 || content.length() > 0) {
