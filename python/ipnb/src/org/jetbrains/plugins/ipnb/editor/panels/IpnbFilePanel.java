@@ -415,7 +415,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   @Override
   protected void processKeyEvent(KeyEvent e) {
-    if (mySelectedCell != null && e.getID() == KeyEvent.KEY_RELEASED) {
+    if (mySelectedCell != null && e.getID() == KeyEvent.KEY_PRESSED) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         mySelectedCell.switchToEditing();
         repaint();
