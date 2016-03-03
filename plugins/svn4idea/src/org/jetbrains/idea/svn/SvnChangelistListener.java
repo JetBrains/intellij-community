@@ -23,10 +23,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListListener;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,14 +59,14 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
-    if (SvnChangeProvider.ourDefaultListName.equals(fromList.getName())) {
+    if (LocalChangeList.DEFAULT_NAME.equals(fromList.getName())) {
       return;
     }
     removeFromChangeList(changes);
   }
 
   public void changesAdded(Collection<Change> changes, ChangeList toList) {
-    if (toList == null || SvnChangeProvider.ourDefaultListName.equals(toList.getName())) {
+    if (toList == null || LocalChangeList.DEFAULT_NAME.equals(toList.getName())) {
       return;
     }
     addToChangeList(toList.getName(), changes);
@@ -91,7 +88,7 @@ public class SvnChangelistListener implements ChangeListListener {
     if (Comparing.equal(list.getName(), oldName)) {
       return;
     }
-    if (SvnChangeProvider.ourDefaultListName.equals(list.getName())) {
+    if (LocalChangeList.DEFAULT_NAME.equals(list.getName())) {
       changeListRemoved(list);
       return;
     }
@@ -105,12 +102,12 @@ public class SvnChangelistListener implements ChangeListListener {
     if (fromList.getName().equals(toList.getName())) {
       return;
     }
-    if (SvnChangeProvider.ourDefaultListName.equals(toList.getName())) {
+    if (LocalChangeList.DEFAULT_NAME.equals(toList.getName())) {
       changeListRemoved(toList);
       return;
     }
 
-    final String[] fromLists = SvnChangeProvider.ourDefaultListName.equals(fromList.getName()) ? null : new String[] {fromList.getName()};
+    final String[] fromLists = LocalChangeList.DEFAULT_NAME.equals(fromList.getName()) ? null : new String[] {fromList.getName()};
     addToChangeList(toList.getName(), changes, fromLists);
   }
 
