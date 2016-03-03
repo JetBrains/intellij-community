@@ -159,7 +159,10 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
   private void dupm2XML(final String outputDirectoryName) {
     try {
-      new File(outputDirectoryName).mkdirs();
+      final File outputDir = new File(outputDirectoryName);
+      if (!outputDir.exists() && !outputDir.mkdirs()) {
+        throw new IOException("Cannot create \'" + outputDir + "\'");
+      }
       final InspectionTreeNode root = myView.getTree().getRoot();
       final IOException[] ex = new IOException[1];
       TreeUtil.traverse(root, new TreeUtil.Traverse() {
