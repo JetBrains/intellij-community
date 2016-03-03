@@ -602,6 +602,7 @@ public class InferenceSession {
   }
   
   PsiSubstitutor prepareSubstitution() {
+    boolean foundErrorMessage = false;
     Iterator<List<InferenceVariable>> iterator = InferenceVariablesOrder.resolveOrderIterator(myInferenceVariables, this);
     while (iterator.hasNext()) {
       final List<InferenceVariable> variables = iterator.next();
@@ -610,7 +611,9 @@ public class InferenceSession {
         PsiType instantiation = inferenceVariable.getInstantiation();
         //failed inference
         if (instantiation == PsiType.NULL) {
-          checkBoundsConsistency(mySiteSubstitutor, inferenceVariable);
+          if (!foundErrorMessage) {
+            foundErrorMessage = checkBoundsConsistency(mySiteSubstitutor, inferenceVariable) == PsiType.NULL;
+          }
           mySiteSubstitutor = mySiteSubstitutor
             .put(typeParameter, JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter));
         }
