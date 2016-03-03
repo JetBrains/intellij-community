@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.util;
+package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +28,8 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.NullableConsumer;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,6 +172,25 @@ public class BackgroundTaskUtil {
   @NotNull
   public static ProgressIndicator executeOnPooledThread(@NotNull final Consumer<ProgressIndicator> task, @NotNull Disposable parent) {
     final ModalityState modalityState = ModalityState.current();
+    return executeOnPooledThread(task, parent, modalityState);
+  }
+
+  @NotNull
+  @CalledInAny
+  public static ProgressIndicator executeOnPooledThread(@NotNull final Runnable runnable,
+                                                        @NotNull Disposable parent) {
+    return executeOnPooledThread(new NullableConsumer<ProgressIndicator>() {
+      @Override
+      public void consume(@Nullable ProgressIndicator indicator) {
+        runnable.run();
+      }
+    }, parent, ModalityState.NON_MODAL);
+  }
+
+  @NotNull
+  @CalledInAny
+  public static ProgressIndicator executeOnPooledThread(@NotNull final Consumer<ProgressIndicator> task,
+                                                        @NotNull Disposable parent, final ModalityState modalityState) {
     final ProgressIndicator indicator = new EmptyProgressIndicator() {
       @NotNull
       @Override
@@ -177,7 +198,6 @@ public class BackgroundTaskUtil {
         return modalityState;
       }
     };
-    indicator.start();
 
     final Disposable disposable = new Disposable() {
       @Override
@@ -186,6 +206,7 @@ public class BackgroundTaskUtil {
       }
     };
     Disposer.register(parent, disposable);
+    indicator.start();
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override

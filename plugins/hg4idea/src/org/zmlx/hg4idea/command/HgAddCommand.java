@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -57,12 +56,12 @@ public class HgAddCommand {
       }.queue();
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      HgUtil.executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
           executeInCurrentThread(files);
         }
-      });
+      }, myProject);
     }
   }
 
@@ -70,9 +69,7 @@ public class HgAddCommand {
     final Map<VirtualFile, Collection<VirtualFile>> sorted = HgUtil.sortByHgRoots(myProject, files);
     for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sorted.entrySet()) {
       if (indicator != null) {
-        if (indicator.isCanceled()) {
-          return;
-        }
+        if (indicator.isCanceled()) return;
         indicator.setFraction(0);
         indicator.setText2("Adding files to " + entry.getKey().getPresentableUrl());
       }
@@ -85,9 +82,7 @@ public class HgAddCommand {
     int currentChunk = 0;
     for (List<String> paths : chunks) {
       if (indicator != null) {
-        if (indicator.isCanceled()) {
-          return;
-        }
+        if (indicator.isCanceled()) return;
         indicator.setFraction((double)currentChunk / chunks.size());
         currentChunk++;
       }

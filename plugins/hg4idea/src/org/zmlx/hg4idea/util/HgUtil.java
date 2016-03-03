@@ -13,9 +13,12 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
@@ -55,11 +58,9 @@ import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
-import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -423,12 +424,9 @@ public abstract class HgUtil {
     return sorted;
   }
 
-  public static void executeOnPooledThreadIfNeeded(Runnable runnable) {
-    if (EventQueue.isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    } else {
-      runnable.run();
-    }
+  @NotNull
+  public static ProgressIndicator executeOnPooledThread(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
+    return BackgroundTaskUtil.executeOnPooledThread(runnable, parentDisposable);
   }
 
   /**

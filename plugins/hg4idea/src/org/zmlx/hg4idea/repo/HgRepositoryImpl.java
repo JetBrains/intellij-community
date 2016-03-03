@@ -18,7 +18,6 @@ package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -228,13 +227,11 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
         myOpenedBranches = HgBranchesCommand.collectNames(branchCommandResult);
       }
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      HgUtil.executeOnPooledThread(new Runnable() {
         public void run() {
-          if (!project.isDisposed()) {
-            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
-          }
+          project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
         }
-      });
+      }, project);
     }
   }
 
