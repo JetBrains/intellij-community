@@ -649,7 +649,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myChangesToUpdate.add(change);
       }
       else {
-        change.markInnerFragmentsDamaged();
         change.doReinstallHighlighter();
         myInnerDiffWorker.scheduleRediff(change);
       }
@@ -667,7 +666,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       if (myBulkChangeUpdateDepth == 0) {
         for (TextMergeChange change : myChangesToUpdate) {
-          change.markInnerFragmentsDamaged();
           change.doReinstallHighlighter();
         }
         myInnerDiffWorker.scheduleRediff(myChangesToUpdate);

@@ -59,8 +59,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private final boolean[] myResolved = new boolean[2];
   private boolean myOnesideAppliedConflict;
 
-  @Nullable private List<MergeWordFragment> myInnerFragments;
-  private boolean myInnerFragmentsDamaged;
+  @Nullable private List<MergeWordFragment> myInnerFragments; // warning: might be out of date
 
   @CalledInAwt
   public TextMergeChange(@NotNull MergeLineFragment fragment, int index, @NotNull TextMergeViewer viewer) {
@@ -128,11 +127,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     destroyHighlighter();
     installHighlighter();
 
-    if (!myInnerFragmentsDamaged) {
-      destroyInnerHighlighter();
-      installInnerHighlighter();
-    }
-
     myViewer.repaintDividers();
   }
 
@@ -175,7 +169,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   void setResolved(@NotNull Side side, boolean value) {
     myResolved[side.getIndex()] = value;
 
-    markInnerFragmentsDamaged();
     if (isResolved()) {
       destroyInnerHighlighter();
     }
@@ -247,16 +240,15 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myEndLine = value;
   }
 
-  public void markInnerFragmentsDamaged() {
-    myInnerFragmentsDamaged = true;
-  }
-
   @CalledInAwt
   public void setInnerFragments(@Nullable List<MergeWordFragment> innerFragments) {
-    myInnerFragmentsDamaged = false;
     if (myInnerFragments == null && innerFragments == null) return;
     myInnerFragments = innerFragments;
+
     doReinstallHighlighter();
+
+    destroyInnerHighlighter();
+    installInnerHighlighter();
   }
 
   //
