@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MessageType;
@@ -311,7 +312,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath());
+    final String baseDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath();
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(baseDir);
     if (env != null) {
       commandLine.withEnvironment(env);
     }
