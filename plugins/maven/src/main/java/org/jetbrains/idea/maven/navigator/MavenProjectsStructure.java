@@ -1278,14 +1278,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       int validChildCount = 0;
 
       for (MavenArtifactNode each : children) {
-        if (each.getState() != MavenArtifactState.ADDED) continue;
+        if (each.getState() != MavenArtifactState.ADDED && each.getState() != MavenArtifactState.CONFLICT) continue;
 
         if (newNodes == null) {
           if (validChildCount < myChildren.size()) {
             DependencyNode currentValidNode = myChildren.get(validChildCount);
 
             if (currentValidNode.myArtifact.equals(each.getArtifact())) {
-              currentValidNode.updateChildren(each.getDependencies(), mavenProject);
+              if (each.getState() == MavenArtifactState.ADDED) {
+                currentValidNode.updateChildren(each.getDependencies(), mavenProject);
+              }
               currentValidNode.updateDependency();
 
               validChildCount++;
@@ -1299,7 +1301,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
         DependencyNode newNode = findOrCreateNodeFor(each, mavenProject, validChildCount);
         newNodes.add(newNode);
-        newNode.updateChildren(each.getDependencies(), mavenProject);
+        if (each.getState() == MavenArtifactState.ADDED) {
+          newNode.updateChildren(each.getDependencies(), mavenProject);
+        }
         newNode.updateDependency();
       }
 
@@ -1369,10 +1373,25 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return myArtifact.getDisplayStringForLibraryName();
     }
 
+    private String getToolTip() {
+      final StringBuilder myToolTip = new StringBuilder("");
+      String scope = myArtifact.getScope();
+
+      if (StringUtil.isNotEmpty(scope) && !MavenConstants.SCOPE_COMPILE.equals(scope)) {
+        myToolTip.append(scope).append(" ");
+      }
+      if (myArtifactNode.getState() == MavenArtifactState.CONFLICT) {
+        myToolTip.append("omitted for conflict");
+        if (myArtifactNode.getRelatedArtifact() != null) {
+          myToolTip.append(" with ").append(myArtifactNode.getRelatedArtifact().getVersion());
+        }
+      }
+      return myToolTip.toString();
+    }
+
     @Override
     protected void doUpdate() {
-      String scope = myArtifact.getScope();
-      setNameAndTooltip(getName(), null, MavenConstants.SCOPE_COMPILE.equals(scope) ? null : scope);
+      setNameAndTooltip(getName(), null, getToolTip());
     }
 
     private void updateDependency() {
