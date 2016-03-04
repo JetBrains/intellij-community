@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -423,7 +424,7 @@ public class StartupUtil {
    * @param alternativeHTML Updated version of Privacy Policy text if any.
    *                        If it's <code>null</code> the standard text from bundled resources would be used.
    */
-  public static void showPrivacyPolicyAgreement(@Nullable String alternativeHTML) {
+  public static void showPrivacyPolicyAgreement(@Nullable String alternativeHTML, boolean exitOnCancel) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Nullable
       @Override
@@ -439,10 +440,16 @@ public class StartupUtil {
           }
         }
         JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        viewer.setFocusable(true);
         viewer.addHyperlinkListener(new HyperlinkAdapter() {
           @Override
           protected void hyperlinkActivated(HyperlinkEvent e) {
-            BrowserUtil.browse(e.getURL());
+            URL url = e.getURL();
+            if (url != null) {
+              BrowserUtil.browse(url);
+            } else {
+              SwingHelper.scrollToReference(viewer, e.getDescription());
+            }
           }
         });
         viewer.setText(html);
@@ -460,18 +467,23 @@ public class StartupUtil {
         super.createDefaultActions();
         init();
         setOKButtonText("Accept");
-        setCancelButtonText("Reject and Exit");
+        if (exitOnCancel) {
+          setCancelButtonText("Reject and Exit");
+        }
         setAutoAdjustable(false);
       }
 
       @Override
       public void doCancelAction() {
         super.doCancelAction();
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-        if (application == null) {
-          System.exit(Main.PRIVACY_POLICY_REJECTION);
-        } else {
-          ((ApplicationImpl)application).exit(true, true, false, false);
+        if (exitOnCancel) {
+          ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+          if (application == null) {
+            System.exit(Main.PRIVACY_POLICY_REJECTION);
+          }
+          else {
+            ((ApplicationImpl)application).exit(true, true, false, false);
+          }
         }
       }
     };
