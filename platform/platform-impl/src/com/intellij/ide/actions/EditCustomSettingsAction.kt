@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PlatformUtils
 import java.io.File
 
 abstract class EditCustomSettingsAction : DumbAwareAction() {
@@ -81,7 +82,11 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   }
 
   override fun file(): File? = EditCustomVmOptionsAction.file.value
-  override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
+  override fun template(): String =
+      if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))
+        "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options, see http://tools.android.com/tech-docs/configuration\n"
+      else
+        "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, EditCustomVmOptionsAction.file.value?.path)
