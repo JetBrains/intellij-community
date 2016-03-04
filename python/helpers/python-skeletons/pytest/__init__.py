@@ -64,6 +64,12 @@ class collect:
 # _pytest.mark
 class mark:
 
+    def __getattr__(self, item):
+        """
+        This class may have any attribute, so this method should exist
+        """
+        pass
+
     @staticmethod
     def skipif(condition, reason=None):
         """skip the given test function if eval(condition) results in a True

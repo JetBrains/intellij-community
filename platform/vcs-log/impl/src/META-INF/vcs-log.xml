@@ -57,6 +57,7 @@
     <group id="Vcs.Log.Toolbar">
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.GoToRef"/>
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>

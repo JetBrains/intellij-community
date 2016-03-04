@@ -24,18 +24,18 @@ import org.jetbrains.plugins.ipnb.IpnbFileType;
 
 public class IpnbCreateFileAction extends CreateFileFromTemplateAction implements DumbAware {
   public IpnbCreateFileAction() {
-    super("IPython Notebook", "Creates an IPython Notebook file from the specified template", IpnbFileType.INSTANCE.getIcon());
+    super("Jupyter Notebook", "Creates an Jupyter Notebook file from the specified template", IpnbFileType.INSTANCE.getIcon());
   }
 
   @Override
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
-      .setTitle("New IPython Notebook")
-      .addKind("IPython Notebook", IpnbFileType.INSTANCE.getIcon(), "IPython Notebook");
+      .setTitle("New Jupyter Notebook")
+      .addKind("Jupyter Notebook", IpnbFileType.INSTANCE.getIcon(), "Jupyter Notebook");
   }
 
   @Override
   protected String getActionName(PsiDirectory directory, String newName, String templateName) {
-    return "Create IPython Notebook " + newName;
+    return "Create Jupyter Notebook " + newName;
   }
 }

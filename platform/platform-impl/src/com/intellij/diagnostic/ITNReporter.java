@@ -110,7 +110,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     Object data = event.getData();
     if (data instanceof AbstractMessage) {
       errorBean.setAssigneeId(((AbstractMessage)data).getAssigneeId());
-      errorBean.setAttachments(((AbstractMessage)data).getAttachments());
+      errorBean.setAttachments(((AbstractMessage)data).getIncludedAttachments());
     }
 
     String login = settings.ITN_LOGIN;

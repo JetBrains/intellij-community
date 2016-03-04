@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger.attach;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -53,12 +55,19 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
       List<XLocalAttachDebugger> result = contextHolder.getUserData(DEBUGGERS_KEY);
       if (result != null) return result;
 
-      result = ContainerUtil.map(PythonSdkType.getAllSdks(), new Function<Sdk, XLocalAttachDebugger>() {
-        @Override
-        public XLocalAttachDebugger fun(Sdk sdk) {
-          return new PyLocalAttachDebugger(sdk);
-        }
-      });
+      if (processInfo.getExecutableCannonicalPath().isPresent() &&
+          new File(processInfo.getExecutableCannonicalPath().get()).exists()) {
+        result =
+          Lists.newArrayList(new PyLocalAttachDebugger(processInfo.getExecutableCannonicalPath().get()));
+      }
+      else {
+        result = ContainerUtil.map(PythonSdkType.getAllLocalCPythons(), new Function<Sdk, XLocalAttachDebugger>() {
+          @Override
+          public XLocalAttachDebugger fun(Sdk sdk) {
+            return new PyLocalAttachDebugger(sdk);
+          }
+        });
+      }
 
       // most recent python version goes first
       Collections.sort(result, new Comparator<XLocalAttachDebugger>() {
@@ -73,14 +82,19 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
     }
     return Collections.emptyList();
   }
-
+  
   private static class PyLocalAttachDebugger implements XLocalAttachDebugger {
-    @NotNull private final Sdk mySdk;
+    private final String mySdkHome;
     @NotNull private final String myName;
 
     public PyLocalAttachDebugger(@NotNull Sdk sdk) {
-      mySdk = sdk;
-      myName = PythonSdkType.getInstance().getVersionString(mySdk) + " Debugger";
+      mySdkHome = sdk.getHomePath();
+      myName = PythonSdkType.getInstance().getVersionString(sdk) + " Debugger";
+    }
+
+    public PyLocalAttachDebugger(@NotNull String sdkHome) {
+      mySdkHome = sdkHome;
+      myName = "Python Debugger";
     }
 
     @NotNull
@@ -92,7 +106,7 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
     @NotNull
     @Override
     public XDebugSession attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
-      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), mySdk.getHomePath());
+      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), mySdkHome);
       return runner.launch();
     }
   }

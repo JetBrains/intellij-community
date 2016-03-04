@@ -461,6 +461,17 @@ public class PyTypingTest extends PyTestCase {
            "expr = f");
   }
 
+  // PY-18595
+  public void testFunctionTypeCommentForStaticMethod() {
+    doTest("int",
+           "class C:\n" +
+           "    @staticmethod\n" +
+           "    def m(some_int, some_bool, some_str):\n" +
+           "        # type: (int, bool, str) -> bool\n" +
+           "        expr = some_int");
+
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

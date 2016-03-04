@@ -78,7 +78,7 @@ public class LogMessageEx extends LogMessage {
 
   @NotNull
   @Override
-  public List<Attachment> getAttachments() {
+  public List<Attachment> getAllAttachments() {
     return myAttachments != null ? myAttachments : Collections.<Attachment>emptyList();
   }
 
