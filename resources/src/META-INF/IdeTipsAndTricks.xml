@@ -87,7 +87,7 @@
     <tipAndTrick file="SearchInSettings.html"/>
     <tipAndTrick file="CompleteMethod.html"/>
     <tipAndTrick file="HighlightImplements.html"/>
-    <tipAndTrick file="RecentSearch.html"/>
+    <!--<tipAndTrick file="RecentSearch.html"/>-->
     <tipAndTrick file="CodeCompletionInSearch.html"/>
     <tipAndTrick file="HighlightMethodExitPoint.html"/>
     <tipAndTrick file="HighlightThrows.html"/>
@@ -125,7 +125,7 @@
     <tipAndTrick file="EditRegExp.html"/>
 
     <tipAndTrick file="Emmet.html"/>
-    <tipAndTrick file="EscapeCharactersInResourceBundle.html"/>
+    <!--<tipAndTrick file="EscapeCharactersInResourceBundle.html"/>-->
     <tipAndTrick file="LineEndings.html"/>
     <tipAndTrick file="LineEndingsFolder.html"/>
     <tipAndTrick file="RefactorThis.html"/>
@@ -158,17 +158,22 @@
     <tipAndTrick file="Multicursor.html"/>
     <tipAndTrick file="Multicursor1.html"/>
     <tipAndTrick file="QuickDocInSuggestionList.html"/>
+    <tipAndTrick file="QuickDocOnMouseMove.html"/>F
     <tipAndTrick file="TerminalOpen.html"/>
     <tipAndTrick file="PrintKeywords.html"/>
-    <!--<tipAndTrick file="ClosingTags.html"/>-->
+    <tipAndTrick file="ClosingTags.html"/>
     <tipAndTrick file="ConstructorDocs.html"/>
     <tipAndTrick file="DiffChevron.html"/>
     <tipAndTrick file="LensMode.html"/>
-    <tipAndTrick file="Multiselection1.html"/>
+    <tipAndTrick file="MultiselectioFn1.html"/>
     <tipAndTrick file="Multiselection2.html"/>
     <tipAndTrick file="MultiselectionWords.html"/>
     <tipAndTrick file="QuickDocOnMouseMove.html"/>
     <tipAndTrick file="ScratchesView.html"/>
     <tipAndTrick file="RichTextCopy.html"/>
+    <tipAndTrick file="RemoveToolWindowButton.html"/>
+    <tipAndTrick file="GoToFile.html"/>
+    <tipAndTrick file="DiagramShowDiff.html"/>
+    <tipAndTrick file="HippieCompletion.html"/>
   </extensions>
 </idea-plugin>
