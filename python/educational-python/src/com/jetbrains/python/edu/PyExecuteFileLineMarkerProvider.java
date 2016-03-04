@@ -61,7 +61,7 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
 
     Icon icon = PlatformUtils.isPyCharmEducational() ? AllIcons.Actions.Execute : actions.get(0).getTemplatePresentation().getIcon();
     final LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(
-      file, file.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS,
+      file, file.getTextRange(), icon, Pass.UPDATE_OVERRIDDEN_MARKERS,
       new Function<PsiElement, String>() {
         @Override
         public String fun(PsiElement e) {
