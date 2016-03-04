@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -51,6 +52,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -60,15 +62,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   private final PsiClass myCurrentInheritor;
   private final PsiClass mySuperClass;
   private final int myPolicy;
-  private final PsiClass[] myTargetClasses;
+  private PsiClass[] myTargetClasses;
   private final MemberInfo[] myMemberInfos;
 
-  public InlineSuperClassRefactoringProcessor(Project project, PsiClass currentInheritor, PsiClass superClass, int policy, final PsiClass... targetClasses) {
+  public InlineSuperClassRefactoringProcessor(Project project, PsiClass currentInheritor, PsiClass superClass, int policy) {
     super(project);
     myCurrentInheritor = currentInheritor;
     mySuperClass = superClass;
     myPolicy = policy;
-    myTargetClasses = currentInheritor != null ? new PsiClass[] {currentInheritor} : targetClasses;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySuperClass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         return !(element instanceof PsiClass) || PsiTreeUtil.isAncestor(mySuperClass, element, true);
@@ -91,6 +92,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     final PsiElementFactory elementFactory = facade.getElementFactory();
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
+
+    if (myCurrentInheritor != null) {
+      myTargetClasses = new PsiClass[] {myCurrentInheritor};
+    }
+    else {
+      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(mySuperClass).findAll();
+      myTargetClasses = inheritors.toArray(new PsiClass[inheritors.size()]);
+    }
 
     ReferencesSearch.search(mySuperClass).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
@@ -157,6 +166,10 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       }
     });
     for (PsiClass targetClass : myTargetClasses) {
+      if (skipTargetClass(targetClass)) {
+        continue;
+      }
+
       for (MemberInfo memberInfo : myMemberInfos) {
         final PsiMember member = memberInfo.getMember();
         for (PsiReference reference : ReferencesSearch.search(member, member.getUseScope(), true)) {
@@ -220,11 +233,19 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(mySuperClass, myMemberInfos, conflicts);
     for (PsiClass targetClass : myTargetClasses) {
-      for (MemberInfo info : myMemberInfos) {
-        final PsiMember member = info.getMember();
-        pushDownConflicts.checkMemberPlacementInTargetClassConflict(targetClass, member);
+      if (targetClass instanceof PsiAnonymousClass) {
+        conflicts.putValue(targetClass, "Cannot inline into anonymous class.");
       }
+      else if (PsiTreeUtil.isAncestor(mySuperClass, targetClass, false)) {
+        conflicts.putValue(targetClass, "Cannot inline into the inner class. Move \'" + targetClass.getName() + "\' to upper level");
+      }
+      else {
+        for (MemberInfo info : myMemberInfos) {
+          final PsiMember member = info.getMember();
+          pushDownConflicts.checkMemberPlacementInTargetClassConflict(targetClass, member);
+        }
         //todo check accessibility conflicts
+      }
     }
     if (myCurrentInheritor != null) {
       ReferencesSearch.search(myCurrentInheritor).forEach(new Processor<PsiReference>() {
@@ -247,6 +268,11 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     }
     checkConflicts(refUsages, conflicts);
     return showConflicts(conflicts, refUsages.get());
+  }
+
+  private boolean skipTargetClass(PsiClass targetClass) {
+    return targetClass instanceof PsiAnonymousClass || 
+           PsiTreeUtil.isAncestor(mySuperClass, targetClass, false);
   }
 
   @Nullable
@@ -346,6 +372,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
     final Map<UsageInfo, PsiElement> replacementMap = new HashMap<UsageInfo, PsiElement>();
     for (final PsiClass targetClass : myTargetClasses) {
+      if (skipTargetClass(targetClass)) continue;
       final PsiSubstitutor superClassSubstitutor =
         TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, targetClass, PsiSubstitutor.EMPTY);
       final PsiClassType targetClassType = elementFactory.createType(targetClass, superClassSubstitutor);
