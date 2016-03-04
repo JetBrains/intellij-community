@@ -45,6 +45,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="Edu.CCLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.CCLanguageManager"/>
     </extensionPoint>
   </extensionPoints>
 
