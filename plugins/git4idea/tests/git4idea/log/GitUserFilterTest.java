@@ -21,10 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
-import com.intellij.vcs.log.VcsLogUserFilter;
-import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import git4idea.test.GitSingleRepoTest;
@@ -73,7 +70,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
   public void testWeirdCharacters() throws Exception {
     List<String> names = ContainerUtil.newArrayList();
 
-    for (Character c : new char[]{'.', '^', '$', '*', '+', '-', '?', '(', ')', '[', ']', '{', '}', '|'}) {
+    for (Character c : UserNameRegex.EXTENDED_REGEX_CHARS) {
       String name = "user" + Character.toString(c) + "userovich";
       names.add(name);
       names.add(name + "@company.com");
