@@ -34,7 +34,11 @@ public class InspectionTreeUpdater {
   }
 
   public void update() {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    update(false);
+  }
+
+  public void update(boolean force) {
+    if (ApplicationManager.getApplication().isDispatchThread() && !force) {
       return;
     }
     myUpdateQueue.queue(new Update("TreeRepaint") {

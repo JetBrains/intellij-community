@@ -268,6 +268,10 @@ public class InspectionTree extends Tree {
     ((DefaultTreeModel)getModel()).nodeStructureChanged(node);
   }
 
+  public void queueUpdate() {
+    ((InspectionRootNode) getRoot()).getUpdater().update(true);
+  }
+
   private class ExpandListener implements TreeWillExpandListener {
     @Override
     public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {

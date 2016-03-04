@@ -181,7 +181,7 @@ public class QuickFixAction extends AnAction {
           ((DefaultTreeModel) tree.getModel()).reload((TreeNode)path.getLastPathComponent());
         }
       }
-      tree.restoreExpansionAndSelection();
+      tree.queueUpdate();
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();
@@ -214,6 +214,7 @@ public class QuickFixAction extends AnAction {
       }
       if (refreshNeeded[0]) {
         refreshViews(view.getProject(), refElements, myToolWrapper);
+        view.getTree().queueUpdate();
       }
     }
     finally {  //to make offline view lazy

@@ -275,8 +275,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement();
           }
         }
-        myTree.revalidate();
-        myTree.repaint();
+        myTree.queueUpdate();
       }
 
       @Override
@@ -386,10 +385,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final Editor oldEditor = myPreviewEditor;
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
       if (myTree.getSelectedToolWrapper() == null) {
-        final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
-        multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
-        multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
-        mySplitter.setSecondComponent(multipleSelectionLabel);
+        mySplitter.setSecondComponent(getNothingToShowTextLabel());
       }
       else {
         showInRightPanel(myTree.getCommonSelectedElement());
@@ -409,7 +405,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           showInRightPanel(node.getContainingFileLocalEntity());
         }
         else if (node instanceof InspectionNode) {
-          showInRightPanel(null);
+          final String shortName = ((InspectionNode)node).getToolWrapper().getShortName();
+          if (shortName.isEmpty()) {
+            mySplitter.setSecondComponent(getNothingToShowTextLabel());
+          } else {
+            showInRightPanel(null);
+          }
         }
         else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
           mySplitter.setSecondComponent(new InspectionViewNavigationPanel(node, myTree));
@@ -427,6 +428,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         releaseEditor(oldEditor);
       }
     }
+  }
+
+  @NotNull
+  private static JLabel getNothingToShowTextLabel() {
+    final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
+    multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
+    multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 14, 0, 0));
+    return multipleSelectionLabel;
   }
 
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
