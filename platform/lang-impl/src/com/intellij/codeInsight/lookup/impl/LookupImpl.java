@@ -55,6 +55,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -287,13 +288,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public List<LookupElement> getItems() {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+    }
     synchronized (myList) {
-      return ContainerUtil.findAll(getListModel().toList(), new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement element) {
-          return !(element instanceof EmptyLookupItem);
-        }
-      });
+      return ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem));
     }
   }
 
