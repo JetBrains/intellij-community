@@ -123,8 +123,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     Pair<String, String> firstAndLastName = VcsUserUtil.getFirstAndLastName(name);
     if (firstAndLastName != null) {
       return Arrays.asList(firstAndLastName.first + " " + firstAndLastName.second,
-                           firstAndLastName.first + "." + firstAndLastName.second,
-                           firstAndLastName.first + firstAndLastName.second);
+                           firstAndLastName.first + "." + firstAndLastName.second);
     }
     return Collections.singletonList(name);
   }
