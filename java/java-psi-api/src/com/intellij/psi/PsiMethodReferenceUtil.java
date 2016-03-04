@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.*;
@@ -122,7 +123,7 @@ public class PsiMethodReferenceUtil {
         }
       }
       else if (resolve instanceof PsiClass) {
-        if (resolve == JavaPsiFacade.getElementFactory(expression.getProject()).getArrayClass(PsiUtil.getLanguageLevel(resolve))) {
+        if (PsiEquivalenceUtil.areElementsEquivalent(resolve, JavaPsiFacade.getElementFactory(expression.getProject()).getArrayClass(PsiUtil.getLanguageLevel(expression)))) {
           final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
           if (typeParameters.length == 1) {
             final PsiType arrayComponentType = subst.substitute(typeParameters[0]);
