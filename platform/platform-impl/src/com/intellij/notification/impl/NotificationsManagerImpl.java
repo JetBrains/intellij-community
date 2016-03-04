@@ -729,7 +729,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     return balloon;
   }
 
-  private static void createActionPanel(@NotNull Notification notification, @NotNull JPanel centerPanel, int gap) {
+  private static void createActionPanel(@NotNull final Notification notification, @NotNull JPanel centerPanel, int gap) {
     JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER));
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
@@ -763,7 +763,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         new LinkLabel<AnAction>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
           public void linkSelected(LinkLabel aSource, AnAction action) {
-            Notification.fire(action);
+            Notification.fire(notification, action);
           }
         }, action));
     }

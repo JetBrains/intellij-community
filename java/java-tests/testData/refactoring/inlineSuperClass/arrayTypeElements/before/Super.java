@@ -1,0 +1,10 @@
+class Super {
+  public static Super[] getArray() {
+    return new Super[0];
+  }
+  
+  public static Super[] getArrayWithInitializer() {
+    return new Super[]{};
+  }
+  
+}

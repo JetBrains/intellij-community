@@ -15,10 +15,7 @@
  */
 package com.intellij.notification;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +25,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +39,7 @@ import java.util.List;
  */
 public class Notification {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.Notification");
+  private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   private final String myGroupId;
   private Icon myIcon;
@@ -195,8 +194,20 @@ public class Notification {
     return ContainerUtil.notNullize(myActions);
   }
 
-  public static void fire(@NotNull AnAction action) {
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT);
+  @NotNull
+  public static Notification get(@NotNull AnActionEvent e) {
+    //noinspection ConstantConditions
+    return e.getData(KEY);
+  }
+
+  public static void fire(@NotNull final Notification notification, @NotNull AnAction action) {
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, new DataContext() {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        return KEY.getName().equals(dataId) ? notification : null;
+      }
+    });
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAware(action, event);
     }

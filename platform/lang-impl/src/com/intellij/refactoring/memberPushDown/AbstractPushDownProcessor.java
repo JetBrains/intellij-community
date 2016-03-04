@@ -159,25 +159,7 @@ public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
-      myDelegate.prepareToPush(myPushDownData);
-      final PsiElement sourceClass = myPushDownData.getSourceClass();
-      if (mySubClassData != null) {
-        final PsiElement subClass = myDelegate.createSubClass(sourceClass, mySubClassData);
-        if (subClass != null) {
-          myDelegate.pushDownToClass(subClass, myPushDownData);
-        }
-      }
-      else {
-        for (UsageInfo usage : usages) {
-          final PsiElement element = usage.getElement();
-          if (element != null) {
-            final PushDownDelegate targetDelegate = PushDownDelegate.findDelegateForTarget(sourceClass, element);
-            if (targetDelegate != null) {
-              targetDelegate.pushDownToClass(element, myPushDownData);
-            }
-          }
-        }
-      }
+      pushDownToClasses(usages);
       myDelegate.removeFromSourceClass(myPushDownData);
     }
     catch (IncorrectOperationException e) {
@@ -185,8 +167,25 @@ public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor
     }
   }
 
-  protected void pushDownToDedicatedClass(PsiElement currentInheritor) {
+  public void pushDownToClasses(@NotNull UsageInfo[] usages) {
     myDelegate.prepareToPush(myPushDownData);
-    myDelegate.pushDownToClass(currentInheritor, myPushDownData);
+    final PsiElement sourceClass = myPushDownData.getSourceClass();
+    if (mySubClassData != null) {
+      final PsiElement subClass = myDelegate.createSubClass(sourceClass, mySubClassData);
+      if (subClass != null) {
+        myDelegate.pushDownToClass(subClass, myPushDownData);
+      }
+    }
+    else {
+      for (UsageInfo usage : usages) {
+        final PsiElement element = usage.getElement();
+        if (element != null) {
+          final PushDownDelegate targetDelegate = PushDownDelegate.findDelegateForTarget(sourceClass, element);
+          if (targetDelegate != null) {
+            targetDelegate.pushDownToClass(element, myPushDownData);
+          }
+        }
+      }
+    }
   }
 }

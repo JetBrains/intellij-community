@@ -39,7 +39,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   @NotNull
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (kind != NO_MERGE && myMergeableKinds.contains(kind)) {
+    if (kind != TransactionKind.NO_MERGE && myMergeableKinds.contains(kind)) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
     if (myInsideTransaction) {
@@ -68,7 +68,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
         Runnable next = myQueue.poll();
         if (next != null) {
-          runSyncTransaction(NO_MERGE, next);
+          runSyncTransaction(TransactionKind.NO_MERGE, next);
         }
       }
     }, app.getDisposed());
@@ -95,7 +95,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (!myInsideTransaction || kind != NO_MERGE && myMergeableKinds.contains(kind)) {
+        if (!myInsideTransaction || kind != TransactionKind.NO_MERGE && myMergeableKinds.contains(kind)) {
           runSyncTransaction(kind, transaction);
         }
         else {

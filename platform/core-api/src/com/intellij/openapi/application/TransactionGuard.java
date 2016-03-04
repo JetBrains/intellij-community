@@ -16,7 +16,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * and process UI events in other ways: it's guaranteed that no one will be able to sneak in with an unexpected model change using
  * {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or analogs.<p/>
  *
- * Transactions are run on UI thread. They have read access by default.<p/>
+ * Transactions are run on UI thread. They have read access by default. All write actions should be performed inside a transaction.<p/>
  *
  * The recommended way to perform a transaction is to invoke {@link #submitTransaction(Runnable)}. It either runs the transaction immediately
  * (if on UI thread and there's no other transaction running) or queues it to invoke at some later moment, when it becomes possible.<p/>
@@ -40,31 +39,43 @@ import org.jetbrains.annotations.NotNull;
  * the main transaction and executed immediately. Use {@link #acceptNestedTransactions(TransactionKind...)} for that. Inner transactions
  * should be given some kind in such circumstances: {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
  *
+ * <p><h1>FAQ</h1></p>
+ *
+ * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
+ * A: Add a transaction somewhere into the call stack, to the outermost callee where having read/write model consistency is needed.
+ * If it's a user action, transaction should be synchronous (see {@link #startSynchronousTransaction(TransactionKind)}. For AnAction
+ * inheritors, {@link WrapInTransaction} annotation might be handy. Note that not all actions need to be wrapped into transactions, only
+ * those that require the model to be consistent. For example, actions that display settings dialogs or VCS actions are most likely exempt.
+ * <p/>
+ *
+ * If the exception occurs not inside a user action, it's probably from some kind of "invokeLater".
+ * Then, replace "invokeLater" with {@link #submitTransaction(Runnable)} or
+ * {@link #submitMergeableTransaction(TransactionKind, Runnable)} call.<p/>
+ *
+ * Q: I've got <b>"Nested transactions are not allowed"</b> exception, what do I do?<br/>
+ * A: First, find the place in the stack where the outer transaction is started. Then, see if there is any Swing event pumping
+ * in between two transactions (e.g. a dialog is shown). If not, one of two transactions is superfluous, remove it. If there
+ * is event pumping, check if the client code (e.g. the one showing the dialog) is prepared to the nested model modifications
+ * of the specified kinds. For example, refactoring dialogs might be prepared to {@link TransactionKind#TEXT_EDITING} kind
+ * (for text field editing inside the dialogs) but not
+ * other model changes, e.g. root changes. The outer transaction code might then specify which kinds it's prepared to (by using
+ * {@link #acceptNestedTransactions(TransactionKind...)}), and the inner transaction code should have the very same transaction kind
+ * (by using {@link #submitMergeableTransaction(TransactionKind, Runnable)} or {@link #startSynchronousTransaction(TransactionKind)}).
+ * If the nested transaction is not expected by the outer code, it must be made asynchronous by using either {@link #submitTransaction(Runnable)}
+ * or {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+ * <p/>
+ *
+ * Q: What's the difference between transactions and read/write actions and commands ({@link com.intellij.openapi.command.CommandProcessor})?<br/>
+ * A: Transactions are more abstract and can contain several write actions and even commands inside. Read/write actions guarantee that no
+ * one else will modify the model, while transactions allow for some modification, but in a way controlled by transaction kinds. Commands
+ * are used for tracking document changes for undo/redo functionality, so they're orthogonal to transactions.
+ *
  * @see Application#runReadAction(Runnable)
  * @see Application#runWriteAction(Runnable)
  * @since 146.*
  * @author peter
  */
 public abstract class TransactionGuard {
-  /**
-   * This kind represents document modifications via editor actions, code completion and document->PSI commit.
-   * @see com.intellij.psi.PsiDocumentManager#commitDocument(Document)
-   */
-  public static final TransactionKind TEXT_EDITING = new TransactionKind("TEXT_EDITING");
-  /**
-   * This kind represents any model modifications:
-   * <li>PSI or document changes
-   * <li>Virtual file system changes, e.g. files created/deleted/renamed/content-changed,
-   * caused by refresh process or explicit operations.
-   * <li>Project root set change
-   * <li>Dumb mode (reindexing) start/finish, (see {@link com.intellij.openapi.project.DumbService}).
-   */
-  public static final TransactionKind ANY_CHANGE = new TransactionKind("ANY_CHANGE");
-
-  /**
-   * Transactions of this kind won't be merged into other transactions
-   */
-  public static final TransactionKind NO_MERGE = new TransactionKind("NO_MERGE");
 
   public static TransactionGuard getInstance() {
     return ServiceManager.getService(TransactionGuard.class);
@@ -75,12 +86,12 @@ public abstract class TransactionGuard {
    * The code will be run on Swing thread immediately or after all other queued transactions (if any) have been completed.<p/>
    *
    * For more advanced version, see {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
-   * Transactions submitted via this method use {@link #NO_MERGE} kind.
+   * Transactions submitted via this method use {@link TransactionKind#NO_MERGE} kind.
    *
    * @param transaction code to execute inside a transaction.
    */
   public static void submitTransaction(@NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(NO_MERGE, transaction);
+    getInstance().submitMergeableTransaction(TransactionKind.NO_MERGE, transaction);
   }
 
   /**
@@ -110,7 +121,7 @@ public abstract class TransactionGuard {
    * and executes the provided code immediately. Otherwise
    * adds the runnable to a queue. When all transactions scheduled before this one are finished, executes the given
    * runnable under a transaction.
-   * @param kind a kind object to enable transaction merging or {@link #NO_MERGE}, if no merging is required.
+   * @param kind a kind object to enable transaction merging or {@link TransactionKind#NO_MERGE}, if no merging is required.
    * @param transaction code to execute inside a transaction.
    */
   public abstract void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction);
@@ -126,20 +137,4 @@ public abstract class TransactionGuard {
    */
   @NotNull
   public abstract AccessToken acceptNestedTransactions(TransactionKind... kinds);
-
-  /**
-   * A kind of transaction used in {@link #acceptNestedTransactions(TransactionKind...)}
-   */
-  public static final class TransactionKind {
-    private final String myName;
-
-    public TransactionKind(@NotNull String name) {
-      myName = name;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
-  }
 }
