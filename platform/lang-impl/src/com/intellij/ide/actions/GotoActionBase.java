@@ -69,7 +69,7 @@ public abstract class GotoActionBase extends AnAction {
       gotoActionPerformed(e);
     }
     catch (ProcessCanceledException e1) {
-      myInAction = null;
+      ourInAction = null;
     }
     catch (Throwable t) {
       LOG.error(t);

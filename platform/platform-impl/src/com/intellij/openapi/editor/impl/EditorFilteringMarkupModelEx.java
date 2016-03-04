@@ -143,6 +143,11 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
+  public void fireFlush(boolean bulk) {
+    myDelegate.fireFlush(bulk);
+  }
+
+  @Override
   @Nullable
   public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
     return myDelegate.addPersistentLineHighlighter(lineNumber, layer, textAttributes);
@@ -196,6 +201,11 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
                                       @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
     myDelegate.changeAttributesInBatch(highlighter, changeAttributesAction);
+  }
+
+  @Override
+  public void inBulkUpdate(@NotNull Runnable runnable) {
+    myDelegate.inBulkUpdate(runnable);
   }
 
   @Override
