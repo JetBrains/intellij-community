@@ -125,10 +125,11 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     return getSymbolReplacementTarget(el) != null;
   }
 
-  @SuppressWarnings("ConstantConditions")
+  /**
+   * Copy all comments, doc comments, modifier lists and method bodies
+   * that are present in matched nodes but not present in searched & replaced nodes
+   */
   private void copyUnmatchedElements(final PsiElement original, final PsiElement replacement) {
-    // We want to copy all comments, including doc comments, modifier lists and method bodies
-    // that are present in matched nodes but not present in search/replace
 
     Map<String, String> newNameToSearchPatternNameMap = myContext.getNewName2PatternNameMap();
 
@@ -222,7 +223,9 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         if (searchedMethod.getBody() == null && replacementMethod.getBody() == null) {
           final PsiMethod originalMethod = (PsiMethod)originalNamedElement;
           final PsiCodeBlock originalBody = originalMethod.getBody();
-          replacementMethod.add(originalBody);
+          if (originalBody != null) {
+            replacementMethod.add(originalBody);
+          }
         }
       }
     }

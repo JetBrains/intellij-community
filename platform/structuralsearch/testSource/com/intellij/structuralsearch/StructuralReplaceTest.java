@@ -2446,4 +2446,15 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}\n",
                  replacer.testReplace(in, what2, by2, options));
   }
+
+  public void testReplaceMethodWithoutBody() {
+    final String in = "abstract class A {\n" +
+                      "  abstract void a();\n" +
+                      "}";
+    final String what = "void '_a();";
+    final String by = "void $a$(int i);";
+    assertEquals("abstract class A {\n" +
+                 "  abstract void a(int i);\n" +
+                 "}", replacer.testReplace(in, what, by, options));
+  }
 }
