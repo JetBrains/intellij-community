@@ -37,6 +37,7 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -100,7 +101,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       final VirtualFile jarFile = getJarFile(aClass);
       for (List<PsiClass> sameNamedClasses : classes.values()) {
         ProgressManager.checkCanceled();
-        if (!processSameNamedClasses(consumer, sameNamedClasses, jarFile)) return false;
+        if (!processSameNamedClasses(sameNamedClasses, jarFile, consumer)) return false;
       }
     }
 
@@ -135,11 +136,16 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return true;
   }
 
-  private static boolean checkInheritance(final DirectClassInheritorsSearch.SearchParameters p, final PsiClass aClass, final PsiClass candidate, Project project) {
+  private static boolean checkInheritance(@NotNull DirectClassInheritorsSearch.SearchParameters p,
+                                          @NotNull PsiClass aClass,
+                                          @NotNull PsiClass candidate,
+                                          @NotNull Project project) {
     return MethodUsagesSearcher.resolveInReadAction(project, () -> !p.isCheckInheritance() || candidate.isInheritor(aClass, false));
   }
 
-  private static boolean processSameNamedClasses(Processor<PsiClass> consumer, List<PsiClass> sameNamedClasses, final VirtualFile jarFile) {
+  private static boolean processSameNamedClasses(@NotNull List<PsiClass> sameNamedClasses,
+                                                 @Nullable VirtualFile jarFile,
+                                                 @NotNull Processor<PsiClass> consumer) {
     // if there is a class from the same jar, prefer it
     boolean sameJarClassFound = false;
 
@@ -157,7 +163,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return sameJarClassFound || ContainerUtil.process(sameNamedClasses, consumer);
   }
 
-  private static VirtualFile getJarFile(final PsiClass aClass) {
+  private static VirtualFile getJarFile(@NotNull PsiClass aClass) {
     return ApplicationManager.getApplication().runReadAction((Computable<VirtualFile>)() -> PsiUtil.getJarFile(aClass));
   }
 }
