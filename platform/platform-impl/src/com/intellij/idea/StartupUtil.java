@@ -424,7 +424,7 @@ public class StartupUtil {
    * @param alternativeHTML Updated version of Privacy Policy text if any.
    *                        If it's <code>null</code> the standard text from bundled resources would be used.
    */
-  public static void showPrivacyPolicyAgreement(@Nullable String alternativeHTML, boolean exitOnCancel) {
+  public static void showPrivacyPolicyAgreement(@Nullable String alternativeHTML) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Nullable
       @Override
@@ -467,23 +467,19 @@ public class StartupUtil {
         super.createDefaultActions();
         init();
         setOKButtonText("Accept");
-        if (exitOnCancel) {
-          setCancelButtonText("Reject and Exit");
-        }
+        setCancelButtonText("Reject and Exit");
         setAutoAdjustable(false);
       }
 
       @Override
       public void doCancelAction() {
         super.doCancelAction();
-        if (exitOnCancel) {
-          ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-          if (application == null) {
-            System.exit(Main.PRIVACY_POLICY_REJECTION);
-          }
-          else {
-            ((ApplicationImpl)application).exit(true, true, false, false);
-          }
+        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+        if (application == null) {
+          System.exit(Main.PRIVACY_POLICY_REJECTION);
+        }
+        else {
+          ((ApplicationImpl)application).exit(true, true, false, false);
         }
       }
     };
