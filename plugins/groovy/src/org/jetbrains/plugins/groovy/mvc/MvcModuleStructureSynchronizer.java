@@ -45,6 +45,7 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -265,22 +266,19 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     }
 
     final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
+    ReadTask task = new ReadTask() {
 
       @Nullable
       @Override
       public Continuation performInReadAction(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
         final Set<Trinity<Module, SyncAction, MvcFramework>> actions = isUpToDate() ? computeRawActions(orderSnapshot)
-                                                                                    : Collections.<Trinity<Module,SyncAction,MvcFramework>>emptySet();
-        return new Continuation(new Runnable() {
-          @Override
-          public void run() {
-            if (isUpToDate()) {
-              runActions(actions);
-            }
-            else if (!indicator.isCanceled()) {
-              scheduleRunActions();
-            }
+                                                                                    : Collections.<Trinity<Module, SyncAction, MvcFramework>>emptySet();
+        return new Continuation(() -> {
+          if (isUpToDate()) {
+            runActions(actions);
+          }
+          else if (!indicator.isCanceled()) {
+            scheduleRunActions();
           }
         }, ModalityState.NON_MODAL);
       }
@@ -293,7 +291,8 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       private boolean isUpToDate() {
         return !myProject.isDisposed() && orderSnapshot.equals(takeOrderSnapshot());
       }
-    });
+    };
+    GuiUtils.invokeLaterIfNeeded(() -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(task), ModalityState.NON_MODAL);
   }
 
   private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {
