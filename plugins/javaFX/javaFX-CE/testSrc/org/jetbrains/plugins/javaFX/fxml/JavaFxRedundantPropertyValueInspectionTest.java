@@ -7,7 +7,7 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxRedundant
 /**
  * @author Pavel.Dolgov
  */
-public class JavaFxRedundantValueTest extends AbstractJavaFXQuickFixTest {
+public class JavaFxRedundantPropertyValueInspectionTest extends AbstractJavaFXQuickFixTest {
   @Override
   protected void enableInspections() {
     myFixture.enableInspections(new JavaFxRedundantPropertyValueInspection());

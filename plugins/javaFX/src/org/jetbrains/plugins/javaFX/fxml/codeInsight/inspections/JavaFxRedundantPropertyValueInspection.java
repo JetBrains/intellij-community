@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -19,7 +18,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
@@ -29,8 +27,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ref.Reference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
@@ -69,10 +65,10 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
           return;
         }
 
-        final Object defaultValue = getDefaultValue(descriptor, attributeName, attribute.getParent());
+        final String defaultValue = getDefaultValue(attributeName, attribute.getParent());
         if (defaultValue == null) return;
 
-        if (isEqualValue(attributeValue, defaultValue)) {
+        if (isEqualValue(attributeValue, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(attribute, "Attribute is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveAttributeIntentionFix(attributeName, attribute));
@@ -94,10 +90,10 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
           return;
         }
 
-        final Object defaultValue = getDefaultValue(descriptor, tag.getName(), tag.getParentTag());
+        final String defaultValue = getDefaultValue(tag.getName(), tag.getParentTag());
         if (defaultValue == null) return;
 
-        if (isEqualValue(tagText, defaultValue)) {
+        if (isEqualValue(tagText, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(tag, "Tag is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveTagFix(tag.getName()));
@@ -107,7 +103,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
   }
 
   @Nullable
-  private static Object getDefaultValue(PsiMetaData propertyDescriptor, @NotNull String propertyName, @Nullable XmlTag enclosingTag) {
+  private static String getDefaultValue(@NotNull String propertyName, @Nullable XmlTag enclosingTag) {
     if (enclosingTag != null) {
       final XmlElementDescriptor descriptor = enclosingTag.getDescriptor();
       if (descriptor != null) {
@@ -118,7 +114,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
             if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) break;
             final String defaultValue = getDefaultPropertyValue(qualifiedName, propertyName);
             if (defaultValue != null) {
-              return getBoxedValue(propertyDescriptor.getDeclaration(), defaultValue);
+              return defaultValue;
             }
           }
         }
@@ -127,39 +123,34 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
     return null;
   }
 
-  private static Object getBoxedValue(PsiElement declaration, String value) {
-    String boxedQName = JavaFxPsiUtil.getBoxedPropertyType(declaration);
-    if (boxedQName == null) return value;
+  private static boolean isEqualValue(@NotNull String attributeValue, @NotNull String defaultValue, @Nullable PsiElement declaration) {
+    final String boxedQName = JavaFxPsiUtil.getBoxedPropertyType(declaration);
+    if (boxedQName == null) {
+      return defaultValue.equals(attributeValue);
+    }
     try {
-      final Class<?> boxedClass = Class.forName(boxedQName);
-      final Method method = boxedClass.getMethod(JavaFxCommonNames.VALUE_OF, String.class);
-      return method.invoke(boxedClass, value);
-    }
-    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException ignored) {
-      return value;
-    }
-  }
-
-  private static boolean isEqualValue(@NotNull String attributeValue, @NotNull Object defaultValue) {
-    if (defaultValue instanceof String && defaultValue.equals(attributeValue)) return true;
-    if (defaultValue instanceof Boolean) return defaultValue == Boolean.valueOf(attributeValue);
-    if (defaultValue instanceof Double) {
-      try {
-        return Double.compare((Double)defaultValue, Double.parseDouble(attributeValue)) == 0;
-      }
-      catch (NumberFormatException ignored) {
-        return false;
-      }
-    }
-    if (defaultValue instanceof Integer) {
-      try {
-        return Integer.compare((Integer)defaultValue, Integer.parseInt(attributeValue)) == 0;
-      }
-      catch (NumberFormatException ignored) {
-        return false;
+      switch (boxedQName) {
+        case CommonClassNames.JAVA_LANG_BOOLEAN:
+          return Boolean.parseBoolean(defaultValue) == Boolean.parseBoolean(attributeValue);
+        case CommonClassNames.JAVA_LANG_DOUBLE:
+          return Double.compare(Double.parseDouble(defaultValue), Double.parseDouble(attributeValue)) == 0;
+        case CommonClassNames.JAVA_LANG_FLOAT:
+          return Float.compare(Float.parseFloat(defaultValue), Float.parseFloat(attributeValue)) == 0;
+        case CommonClassNames.JAVA_LANG_INTEGER:
+          return Integer.parseInt(defaultValue) == Integer.parseInt(attributeValue);
+        case CommonClassNames.JAVA_LANG_LONG:
+          return Long.parseLong(defaultValue) == Long.parseLong(attributeValue);
+        case CommonClassNames.JAVA_LANG_SHORT:
+          return Short.parseShort(defaultValue) == Short.parseShort(attributeValue);
+        case CommonClassNames.JAVA_LANG_BYTE:
+          return Byte.parseByte(defaultValue) == Byte.parseByte(attributeValue);
+        default:
+          return defaultValue.equals(attributeValue);
       }
     }
-    return false;
+    catch (NumberFormatException ignored) {
+      return false;
+    }
   }
 
   @Nullable

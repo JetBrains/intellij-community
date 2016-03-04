@@ -681,7 +681,7 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static String getBoxedPropertyType(PsiElement declaration) {
+  public static String getBoxedPropertyType(@Nullable PsiElement declaration) {
     PsiType psiType = getWritablePropertyType(declaration);
     if (psiType instanceof PsiPrimitiveType) {
       return ((PsiPrimitiveType)psiType).getBoxedTypeName();
