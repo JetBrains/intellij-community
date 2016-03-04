@@ -61,6 +61,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
     super(configuration, env);
     myConfiguration = configuration;
+    setRunWithPty(false);
   }
 
   @Override

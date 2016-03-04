@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -352,7 +353,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
-    if (!VirtualFile.isValidName(dir)) {
+    if (!isValidName(dir)) {
       throw new IOException(VfsBundle.message("directory.invalid.name.error", dir));
     }
 
@@ -388,7 +389,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
-    if (!VirtualFile.isValidName(file)) {
+    if (!isValidName(file)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", file));
     }
 
@@ -445,6 +446,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public boolean isCaseSensitive() {
     return SystemInfo.isFileSystemCaseSensitive;
+  }
+
+  @Override
+  public boolean isValidName(@NotNull String name) {
+    return PathUtilRt.isValidFileName(name, false);
   }
 
   @Override
@@ -557,7 +563,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void renameFile(Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException {
-    if (!VirtualFile.isValidName(newName)) {
+    if (!isValidName(newName)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
     }
 
@@ -603,7 +609,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                               @NotNull final VirtualFile file,
                               @NotNull final VirtualFile newParent,
                               @NotNull final String copyName) throws IOException {
-    if (!VirtualFile.isValidName(copyName)) {
+    if (!isValidName(copyName)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", copyName));
     }
 

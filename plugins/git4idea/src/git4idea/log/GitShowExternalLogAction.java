@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -45,8 +44,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogSettings;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import git4idea.GitPlatformFacade;
@@ -131,15 +129,19 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     for (VirtualFile root : roots) {
       repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
     }
-    VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, VcsLogSettings.class),
-                                              ServiceManager.getService(project, VcsLogUiProperties.class));
-    Collection<VcsRoot> vcsRoots = ContainerUtil.map(roots, new Function<VirtualFile, VcsRoot>() {
+    VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, VcsLogTabsProperties.class)) {
+      @NotNull
       @Override
-      public VcsRoot fun(VirtualFile root) {
-        return new VcsRoot(vcs, root);
+      protected Collection<VcsRoot> getVcsRoots() {
+        return ContainerUtil.map(roots, new Function<VirtualFile, VcsRoot>() {
+          @Override
+          public VcsRoot fun(VirtualFile root) {
+            return new VcsRoot(vcs, root);
+          }
+        });
       }
-    });
-    return new MyContentComponent(manager.initContent(vcsRoots, tabName), roots, new Disposable() {
+    };
+    return new MyContentComponent(manager.initMainLog(tabName), roots, new Disposable() {
       @Override
       public void dispose() {
         for (VirtualFile root : roots) {
@@ -241,7 +243,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     private GitVersion myVersion;
 
     private ShowLogInDialogTask(@NotNull Project project, @NotNull List<VirtualFile> roots, @NotNull GitVcs vcs) {
-      super(project, "Loading Git Log...", true, BackgroundFromStartOption.getInstance());
+      super(project, "Loading Git Log...", true);
       myProject = project;
       myRoots = roots;
       myVcs = vcs;

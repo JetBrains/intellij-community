@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.module.JpsTestModuleProperties;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
@@ -108,6 +109,11 @@ public abstract class JpsJavaExtensionService {
 
   @NotNull
   public abstract JpsJavaCompilerConfiguration getOrCreateCompilerConfiguration(@NotNull JpsProject project);
+
+  @Nullable
+  public abstract JpsTestModuleProperties getTestModuleProperties(@NotNull JpsModule module);
+
+  public abstract void setTestModuleProperties(@NotNull JpsModule module, @NotNull JpsModuleReference productionModuleReference);
 
   @NotNull
   public abstract JpsSdkReference<JpsDummyElement> createWrappedJavaSdkReference(@NotNull JpsJavaSdkTypeWrapper sdkType,

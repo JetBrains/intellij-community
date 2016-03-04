@@ -15,7 +15,10 @@
  */
 package org.intellij.images.options.impl;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.images.options.Options;
@@ -29,7 +32,7 @@ import org.jdom.Element;
  */
 @State(
   name = "Images.OptionsManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/images.support.xml", roamingType = RoamingType.DISABLED)}
+  storages = @Storage(value = "images.support.xml", roamingType = RoamingType.DISABLED)
 )
 final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element> {
   private final OptionsImpl options = new OptionsImpl();

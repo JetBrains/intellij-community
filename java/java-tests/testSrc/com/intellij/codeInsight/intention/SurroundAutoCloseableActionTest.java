@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,13 @@ public class SurroundAutoCloseableActionTest extends LightCodeInsightFixtureTest
   }
 
   public void testSimple() { doTest(); }
+  public void testSimplePast() { doTest(); }
   public void testUsage() { doTest(); }
   public void testMixedUsages() { doTest(); }
   public void testLastDeclaration() { doTest(); }
   public void testSplitVar() { doTest(); }
+  public void testExpression() { doTest(); }
+  public void testExpressionIncomplete() { doTest(); }
 
   private void doTest() {
     String name = getTestName(false);

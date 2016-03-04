@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -44,50 +45,56 @@ import java.io.File;
  * @author max
  */
 public class MacOSApplicationProvider implements ApplicationComponent {
-
   private static final Callback IMPL = new Callback() {
+    @SuppressWarnings("unused")
     public void callback(ID self, String selector) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
           ActionManagerEx am = ActionManagerEx.getInstanceEx();
-          MouseEvent me =
-            new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
+          MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
           am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
         }
       });
     }
   };
 
-  @NotNull
-  public String getComponentName() {
-    return "MACOSApplicationProvider";
-  }
-
   public MacOSApplicationProvider() {
     if (SystemInfo.isMac) {
       try {
         Worker.initMacApplication();
       }
-      catch (NoClassDefFoundError e) {
+      catch (Throwable t) {
+        Logger.getInstance(MacOSApplicationProvider.class).warn(t);
       }
     }
   }
 
-  public void initComponent() { }
-
-  public void disposeComponent() {
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "MACOSApplicationProvider";
   }
 
+  @Override
+  public void initComponent() { }
+
+  @Override
+  public void disposeComponent() { }
+
   private static class Worker {
+    @SuppressWarnings("deprecation")
     public static void initMacApplication() {
       Application application = new Application();
       application.addApplicationListener(new ApplicationAdapter() {
+        @Override
         public void handleAbout(ApplicationEvent applicationEvent) {
           AboutAction.showAbout();
           applicationEvent.setHandled(true);
         }
 
+        @Override
         public void handlePreferences(ApplicationEvent applicationEvent) {
           Project project = getProject();
 
@@ -101,10 +108,12 @@ public class MacOSApplicationProvider implements ApplicationComponent {
           applicationEvent.setHandled(true);
         }
 
+        @Override
         public void handleQuit(ApplicationEvent applicationEvent) {
           ApplicationManagerEx.getApplicationEx().exit();
         }
 
+        @Override
         public void handleOpenFile(ApplicationEvent applicationEvent) {
           Project project = getProject();
           String filename = applicationEvent.getFilename();
@@ -127,7 +136,6 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       application.setEnabledAboutMenu(true);
       application.setEnabledPreferencesMenu(true);
 
-
       installAutoUpdateMenu();
     }
 
@@ -139,8 +147,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       ID item = Foundation.invoke(menu, Foundation.createSelector("itemAtIndex:"), 0);
       ID appMenu = Foundation.invoke(item, Foundation.createSelector("submenu"));
 
-
-      final ID checkForUpdatesClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSMenuItem"), "NSCheckForUpdates");
+      ID checkForUpdatesClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSMenuItem"), "NSCheckForUpdates");
       Foundation.addMethod(checkForUpdatesClass, Foundation.createSelector("checkForUpdates"), IMPL, "v");
 
       Foundation.registerObjcClassPair(checkForUpdatesClass);
@@ -157,6 +164,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       Foundation.invoke(pool, Foundation.createSelector("release"));
     }
 
+    @SuppressWarnings("deprecation")
     private static Project getProject() {
       return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }

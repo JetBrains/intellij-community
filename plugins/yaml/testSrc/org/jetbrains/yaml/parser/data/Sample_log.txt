@@ -1,0 +1,62 @@
+YAML file
+  YAML document
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('Stack:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML sequence
+          YAML sequence item
+            PsiElement(-)('-')
+            PsiWhiteSpace(' ')
+            YAML mapping
+              YAML key value
+                PsiElement(scalar key)('file:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('TopClass.py')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              YAML key value
+                PsiElement(scalar key)('line:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('23')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              YAML key value
+                PsiElement(scalar key)('code:')
+                PsiWhiteSpace(' ')
+                YAML scalar list
+                  PsiElement(scalar list)('|')
+                  PsiElement(Eol)('\n')
+                  PsiElement(indent)('      ')
+                  PsiElement(scalar list)('x = MoreObject("345\n")')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML sequence item
+            PsiElement(-)('-')
+            PsiWhiteSpace(' ')
+            YAML mapping
+              YAML key value
+                PsiElement(scalar key)('file:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('MoreClass.py')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              YAML key value
+                PsiElement(scalar key)('line:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('58')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              YAML key value
+                PsiElement(scalar key)('code:')
+                PsiWhiteSpace(' ')
+                YAML scalar list
+                  PsiElement(scalar list)('|-')
+                  PsiElement(Eol)('\n')
+                  PsiElement(indent)('      ')
+                  PsiElement(scalar list)('foo = bar')

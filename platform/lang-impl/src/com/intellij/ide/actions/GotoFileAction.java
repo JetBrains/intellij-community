@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -66,23 +65,19 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       @Override
       public void elementChosen(final ChooseByNameViewModel popup, final Object element) {
         if (element == null) return;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Navigatable n = (Navigatable)element;
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        Navigatable n = (Navigatable)element;
+        //this is for better cursor position
+        if (element instanceof PsiFile) {
+          VirtualFile file = ((PsiFile)element).getVirtualFile();
+          if (file == null) return;
+          OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
+          n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
+        }
 
-            //this is for better cursor position
-            if (element instanceof PsiFile) {
-              VirtualFile file = ((PsiFile)element).getVirtualFile();
-              if (file == null) return;
-              OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
-              n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
-            }
-
-            if (!n.canNavigate()) return;
-            n.navigate(true);
-          }
-        }, ModalityState.NON_MODAL);
+        if (n.canNavigate()) {
+          n.navigate(true);
+        }
       }
     };
     GotoFileItemProvider provider = new GotoFileItemProvider(project, getPsiContext(e), gotoFileModel);

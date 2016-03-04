@@ -122,7 +122,7 @@ public class TemplateResource implements Serializable {
    */
   @Nullable
   public String getJavaDoc() {
-    int i = template.indexOf("*/");
+    int i = template.trim().startsWith("/*") ? template.indexOf("*/") : -1;
     if (i == -1) {
       return null;
     }
@@ -163,7 +163,8 @@ public class TemplateResource implements Serializable {
   }
 
   private static String getMethodSignature(String template) {
-    String s = after(template, "*/").trim();
+    final String trimmed = template.trim();
+    String s = trimmed.startsWith("/*") ? after(trimmed, "*/") : trimmed;
 
     StringBuffer signature = new StringBuffer();
 

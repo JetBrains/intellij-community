@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
@@ -34,14 +35,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -176,7 +179,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private static void addAssociatedFrameworkComponent(JPanel component, JPanel panel) {
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
   }
 
   protected void onFrameworkStateChanged() {}
@@ -297,24 +300,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return optionsComponent != null ? optionsComponent.getLibraryCompositionSettings() : null;
   }
 
-  public boolean downloadLibraries() {
-    final Ref<Boolean> result = Ref.create(true);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        applyLibraryOptionsForSelected();
-        List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
-        for (LibraryCompositionSettings compositionSettings : list) {
-          if (!compositionSettings.downloadFiles(myMainPanel)) {
-            result.set(false);
-            return;
-          }
-        }
-      }
-    });
-    return result.get();
-  }
-
   private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,
                                                            Set<String> associated,
                                                            final Set<String> preselected) {
@@ -418,6 +403,54 @@ public class AddSupportForFrameworksPanel implements Disposable {
         addChildFrameworks(node.getChildren(), result);
       }
     }
+  }
+
+  public boolean downloadLibraries(@NotNull final JComponent parentComponent) {
+    final Ref<Boolean> result = Ref.create(true);
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        applyLibraryOptionsForSelected();
+        List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
+        for (LibraryCompositionSettings compositionSettings : list) {
+          if (!compositionSettings.downloadFiles(parentComponent)) {
+            result.set(false);
+            return;
+          }
+        }
+      }
+    });
+
+    if (!result.get()) {
+      int answer = Messages.showYesNoDialog(parentComponent,
+                                            ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+      if (answer != Messages.YES) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public boolean validate() {
+    applyLibraryOptionsForSelected();
+    List<String> frameworksWithoutRequiredLibraries = new ArrayList<String>();
+    for (FrameworkSupportNode node : getSelectedNodes()) {
+      if (node.getConfigurable().isOnlyLibraryAdded()) {
+        LibraryCompositionSettings librarySettings = getLibraryCompositionSettings(node);
+        if (librarySettings != null && !librarySettings.isLibraryConfigured()) {
+          frameworksWithoutRequiredLibraries.add(node.getTitle());
+        }
+      }
+    }
+
+    if (!frameworksWithoutRequiredLibraries.isEmpty()) {
+      String frameworksText = StringUtil.join(frameworksWithoutRequiredLibraries, ", ");
+      Messages.showErrorDialog(myMainPanel, ProjectBundle.message("error.message.required.library.is.not.configured", frameworksText, frameworksWithoutRequiredLibraries.size()),
+                               ProjectBundle.message("error.title.required.library.is.not.configured"));
+      return false;
+    }
+    return true;
   }
 
   public void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {

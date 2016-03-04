@@ -879,8 +879,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         try {
           Disposer.clearOwnFields(rootPane);
           rootPane = null;
-
-          ReflectionUtil.resetField(this, "windowListener");
         }
         catch (Exception ignored) {
         }
@@ -1090,6 +1088,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
 
         super.setGlassPane(glass);
+      }
+
+      @Override
+      public void setContentPane(Container contentPane) {
+        super.setContentPane(contentPane);
+        if (contentPane != null) {
+          contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motino events for a11y
+        }
       }
 
       @Override

@@ -15,23 +15,26 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.ImmutableList;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -47,8 +50,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -59,14 +60,26 @@ import java.util.List;
  * Inspection to detect code incompatibility with python versions
  */
 public class PyCompatibilityInspection extends PyInspection {
+  public static final int LATEST_INSPECTION_VERSION = 1;
+  public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
+  // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
   public PyCompatibilityInspection () {
-    super();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourVersions.addAll(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
     }
+    else {
+      ourVersions.addAll(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
+    }
+  }
+  
+  @Nullable
+  public static PyCompatibilityInspection getInstance(@NotNull PsiElement element) {
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+    final String toolName = PyCompatibilityInspection.class.getSimpleName();
+    return (PyCompatibilityInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
 
   @Override
@@ -93,42 +106,21 @@ public class PyCompatibilityInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel versionPanel = new JPanel(new BorderLayout());
-    final JBList list = new JBList(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
-
-    JLabel label = new JLabel("Check for compatibility with python versions:");
-    label.setLabelFor(list);
-    versionPanel.add(label, BorderLayout.PAGE_START);
-    list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    JBScrollPane scrollPane = new JBScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-    versionPanel.add(scrollPane);
-
-    int[] indices = new int[ourVersions.size()];
-    for (int i = 0; i != ourVersions.size(); ++i) {
-      String s = ourVersions.get(i);
-      indices[i] = UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS.indexOf(s);
-    }
-
-    list.setSelectedIndices(indices);
-    list.setCellRenderer(new DefaultListCellRenderer() {
+    final ElementsChooser<String> chooser = new ElementsChooser<String>(true);
+    chooser.setElements(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS, false);
+    chooser.markElements(ourVersions);
+    chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
       @Override
-      public Component getListCellRendererComponent(JList list, Object o, int i, boolean b, boolean b2) {
-        return super
-          .getListCellRendererComponent(list, "Python " + o, i, b, b2);
-      }
-    });
-    list.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent event) {
+      public void elementMarkChanged(String element, boolean isMarked) {
         ourVersions.clear();
-        for (Object value : list.getSelectedValues()) {
-          ourVersions.add((String)value);
-        }
+        ourVersions.addAll(chooser.getMarkedElements());
       }
     });
-
+    final JPanel versionPanel = new JPanel(new BorderLayout());
+    JLabel label = new JLabel("Check for compatibility with python versions:");
+    label.setLabelFor(chooser);
+    versionPanel.add(label, BorderLayout.PAGE_START);
+    versionPanel.add(chooser);
     return versionPanel;
   }
 

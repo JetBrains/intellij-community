@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author yole
@@ -98,16 +100,9 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   protected void appendActions(@NotNull DefaultActionGroup actionGroup, @Nullable String helpID) {
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
-    final ActionManager actionManager = ActionManager.getInstance();
+    ActionManager actionManager = ActionManager.getInstance();
     actionGroup.add(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL));
-    actionGroup.add(new PinToolwindowTabAction(){
-      @Override
-      public void update(AnActionEvent event) {
-        super.update(event);
-        // sometimes there is no content to close, e.g. in usage view preview
-        event.getPresentation().setVisible(myContent != null);
-      }
-    });
+    actionGroup.add(actionManager.getAction(PinToolwindowTabAction.ACTION_NAME));
     actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new ExporterToTextFileHierarchy(this)));
     actionGroup.add(new CloseAction());
     if (helpID != null) {
@@ -171,7 +166,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     }
     final PsiElement element = getElementFromDescriptor(descriptor);
     if (element != null) {
-      out.add(element);
+      out.add(element.getNavigationElement());
     }
     final Object[] children = descriptor.getCachedChildren();
     if (children == null) {

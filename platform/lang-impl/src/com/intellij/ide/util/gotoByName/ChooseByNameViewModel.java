@@ -65,11 +65,11 @@ import java.util.regex.Pattern;
 public abstract class ChooseByNameViewModel {
   public static final String EXTRA_ELEM = "...";
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
-  protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(" +
-                                                                                "(?:\\w:)?" + // absolute path start on Windows
-                                                                                "[^:]+" +
-                                                                                ")" + // main part before line/column
-                                                                                "(?::|@|,|)\\[?(\\d+)?(?:(?:\\D)(\\d+)?)?\\]?");
+  protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
+                                                                                "(?::|@|,| on line | at line |)?" + // separator
+                                                                                "[(\\[]?" + // possible opening paren/brace
+                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "[)\\]]?"); // possible closing paren/brace
   public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   protected static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
   protected static final String ACTION_NAME = "Show All in View";

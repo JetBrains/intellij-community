@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,14 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -106,47 +107,78 @@ public class CommonRefactoringUtil {
     return file != null && !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(file).hasReadonlyFiles();
   }
 
-  @NotNull
-  public static Collection<PsiElement> mapFilesToParents(@NotNull Collection<PsiElement> elements) {
-    return JBIterable.from(elements).transform(new Function<PsiElement, PsiElement>() {
-      @Override
-      public PsiElement fun(PsiElement e) {
-        return e instanceof PsiFileSystemItem && e.getParent() != null ? e.getParent() : e;
-      }
-    }).toSet();
-  }
-
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement element) {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"));
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement... elements) {
-    return checkReadOnlyStatus(Arrays.asList(elements), project, RefactoringBundle.message("refactoring.cannot.be.performed"), false, true);
+    return checkReadOnlyStatus(project, Collections.<PsiElement>emptySet(), Arrays.asList(elements), RefactoringBundle.message("refactoring.cannot.be.performed"), true);
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements, boolean notifyOnFail) {
-    return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), false, notifyOnFail);
+    return checkReadOnlyStatus(project, Collections.<PsiElement>emptySet(), elements, RefactoringBundle.message("refactoring.cannot.be.performed"), notifyOnFail);
   }
 
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element, @NotNull Project project, String messagePrefix) {
-    return element.isWritable() || checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false, true);
+    return element.isWritable() || checkReadOnlyStatus(project, Collections.<PsiElement>emptySet(), Collections.singleton(element), messagePrefix, true);
   }
 
   public static boolean checkReadOnlyStatusRecursively(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements) {
-    return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, false);
+    return checkReadOnlyStatus(project, elements, Collections.<PsiElement>emptySet(), RefactoringBundle.message("refactoring.cannot.be.performed"), false);
   }
 
   public static boolean checkReadOnlyStatusRecursively(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements, boolean notifyOnFail) {
-    return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, notifyOnFail);
+    return checkReadOnlyStatus(project, elements, Collections.<PsiElement>emptySet(), RefactoringBundle.message("refactoring.cannot.be.performed"), notifyOnFail);
   }
 
-  private static boolean checkReadOnlyStatus(@NotNull Collection<? extends PsiElement> elements,
-                                             @NotNull Project project,
+  public static boolean checkReadOnlyStatus(@NotNull Project project,
+                                            @NotNull Collection<? extends PsiElement> recursive,
+                                            @NotNull Collection<? extends PsiElement> flat,
+                                            boolean notifyOnFail) {
+    return checkReadOnlyStatus(project, recursive, flat, RefactoringBundle.message("refactoring.cannot.be.performed"), notifyOnFail);
+  }
+
+  private static boolean checkReadOnlyStatus(@NotNull Project project,
+                                             @NotNull Collection<? extends PsiElement> recursive,
+                                             @NotNull Collection<? extends PsiElement> flat,
                                              @NotNull String messagePrefix,
-                                             boolean recursively,
                                              boolean notifyOnFail) {
-    final Collection<VirtualFile> readonly = new THashSet<VirtualFile>();  // not writable, but could be checked out
-    final Collection<VirtualFile> failed = new THashSet<VirtualFile>();  // those located in read-only filesystem
+    Collection<VirtualFile> readonly = new THashSet<VirtualFile>();  // not writable, but could be checked out
+    Collection<VirtualFile> failed = new THashSet<VirtualFile>();  // those located in read-only filesystem
+
+    boolean seenNonWritablePsiFilesWithoutVirtualFile =
+      checkReadOnlyStatus(flat, false, readonly, failed) || checkReadOnlyStatus(recursive, true, readonly, failed);
+
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readonly);
+    ContainerUtil.addAll(failed, status.getReadonlyFiles());
+
+    if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
+      StringBuilder message = new StringBuilder(messagePrefix).append('\n');
+      int i = 0;
+      for (VirtualFile virtualFile : failed) {
+        String subj = RefactoringBundle.message(virtualFile.isDirectory() ? "directory.description" : "file.description", virtualFile.getPresentableUrl());
+        if (virtualFile.getFileSystem().isReadOnly()) {
+          message.append(RefactoringBundle.message("0.is.located.in.a.jar.file", subj)).append('\n');
+        }
+        else {
+          message.append(RefactoringBundle.message("0.is.read.only", subj)).append('\n');
+        }
+        if (i++ > 20) {
+          message.append("...\n");
+          break;
+        }
+      }
+      showErrorMessage(RefactoringBundle.message("error.title"), message.toString(), null, project);
+      return false;
+    }
+
+    return failed.isEmpty();
+  }
+
+  private static boolean checkReadOnlyStatus(Collection<? extends PsiElement> elements,
+                                             boolean recursively,
+                                             Collection<VirtualFile> readonly,
+                                             Collection<VirtualFile> failed) {
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
@@ -202,30 +234,7 @@ public class CommonRefactoringUtil {
       }
     }
 
-    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readonly);
-    ContainerUtil.addAll(failed, status.getReadonlyFiles());
-
-    if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
-      StringBuilder message = new StringBuilder(messagePrefix).append('\n');
-      int i = 0;
-      for (VirtualFile virtualFile : failed) {
-        String subj = RefactoringBundle.message(virtualFile.isDirectory() ? "directory.description" : "file.description", virtualFile.getPresentableUrl());
-        if (virtualFile.getFileSystem().isReadOnly()) {
-          message.append(RefactoringBundle.message("0.is.located.in.a.jar.file", subj)).append('\n');
-        }
-        else {
-          message.append(RefactoringBundle.message("0.is.read.only", subj)).append('\n');
-        }
-        if (i++ > 20) {
-          message.append("...\n");
-          break;
-        }
-      }
-      showErrorMessage(RefactoringBundle.message("error.title"), message.toString(), null, project);
-      return false;
-    }
-
-    return failed.isEmpty();
+    return seenNonWritablePsiFilesWithoutVirtualFile;
   }
 
   public static void collectReadOnlyFiles(@NotNull VirtualFile vFile, @NotNull final Collection<VirtualFile> list) {

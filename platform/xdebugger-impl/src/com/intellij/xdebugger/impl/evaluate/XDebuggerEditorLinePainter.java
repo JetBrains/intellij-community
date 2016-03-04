@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -39,6 +37,7 @@ import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,13 +51,13 @@ import java.util.List;
  */
 public class XDebuggerEditorLinePainter extends EditorLinePainter {
   public static final Key<Map<Variable, VariableValue>> CACHE = Key.create("debug.inline.variables.cache");
-  // we want to limit number of line extentions to avoid very slow painting
+  // we want to limit number of line extensions to avoid very slow painting
   // the constant is rather random (feel free to adjust it upon getting a new information)
-  private static final int LINE_EXTENTIONS_MAX_COUNT = 200;
+  private static final int LINE_EXTENSIONS_MAX_COUNT = 200;
 
   @Override
   public Collection<LineExtensionInfo> getLineExtensions(@NotNull Project project, @NotNull VirtualFile file, int lineNumber) {
-    if (!Registry.is("ide.debugger.inline")) {
+    if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline()) {
       return null;
     }
 
@@ -145,7 +144,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       for (VariableText text : result) {
         infos.addAll(text.infos);
       }
-      return infos.size() > LINE_EXTENTIONS_MAX_COUNT ? infos.subList(0, LINE_EXTENTIONS_MAX_COUNT) : infos;
+      return infos.size() > LINE_EXTENSIONS_MAX_COUNT ? infos.subList(0, LINE_EXTENSIONS_MAX_COUNT) : infos;
     }
     return null;
   }
@@ -170,14 +169,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   public static TextAttributes getNormalAttributes() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES);
     if (attributes == null || attributes.getForegroundColor() == null) {
-     return new TextAttributes(new JBColor(new NotNullProducer<Color>() {
-        @SuppressWarnings("UseJBColor")
-        @NotNull
-        @Override
-        public Color produce() {
-          return isDarkEditor() ? new Color(0x3d8065) : Gray._135;
-        }
-      }), null, null, null, Font.ITALIC);
+     return new TextAttributes(new JBColor(() -> isDarkEditor() ? new Color(0x3d8065) : Gray._135), null, null, null, Font.ITALIC);
     }
     return attributes;
   }
@@ -185,14 +177,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   public static TextAttributes getChangedAttributes() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES_MODIFIED);
     if (attributes == null || attributes.getForegroundColor() == null) {
-      return new TextAttributes(new JBColor(new NotNullProducer<Color>() {
-        @SuppressWarnings("UseJBColor")
-        @NotNull
-        @Override
-        public Color produce() {
-          return isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021);
-        }
-      }), null, null, null, Font.ITALIC);
+      return new TextAttributes(new JBColor(() -> isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021)), null, null, null, Font.ITALIC);
     }
     return attributes;
   }

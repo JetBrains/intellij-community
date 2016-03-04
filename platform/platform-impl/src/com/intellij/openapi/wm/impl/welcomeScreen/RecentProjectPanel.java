@@ -46,6 +46,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,7 @@ import java.awt.event.*;
 import java.io.File;
 
 public class RecentProjectPanel extends JPanel {
+  public static final String RECENT_PROJECTS_LABEL = "Recent Projects";
   protected final JBList myList;
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
   protected AnAction removeRecentProjectAction;
@@ -306,7 +308,7 @@ public class RecentProjectPanel extends JPanel {
     };
     title.setBorder(new BottomLineBorder());
 
-    JLabel titleLabel = new JLabel("Recent Projects");
+    JLabel titleLabel = new JLabel(RECENT_PROJECTS_LABEL);
     title.add(titleLabel);
     titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
     titleLabel.setForeground(WelcomeScreenColors.CAPTION_FOREGROUND);
@@ -323,6 +325,7 @@ public class RecentProjectPanel extends JPanel {
       mySize = size;
       setEmptyText("  No Project Open Yet  ");
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+      getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL);
       final MouseHandler handler = new MouseHandler();
       addMouseListener(handler);
       addMouseMotionListener(handler);
@@ -440,6 +443,8 @@ public class RecentProjectPanel extends JPanel {
         myName.setText(group.getGroup().getName());
         myPath.setText("");
       }
+      AccessibleContextUtil.setCombinedName(this, myName, " - ", myPath);
+      AccessibleContextUtil.setCombinedDescription(this, myName, " - ", myPath);
       return this;
     }
 

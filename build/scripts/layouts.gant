@@ -295,9 +295,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           jar("common-javaFX-plugin.jar") {
             module("common-javaFX-plugin")
           }
+          fileset(dir: "${home}/plugins/javaFX/lib", includes: "SceneBuilderKit-8.1.1.jar");
         }
-
-        fileset(dir: "${home}/plugins/javaFX/FxBuilderEmbedder/lib", includes: "embedder.jar");
       }
     }
 
@@ -454,6 +453,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
       }
       jar("remote-servers-git.jar") {
         moduleOptional("remote-servers-git")
+        moduleOptional("remote-servers-git-java")
       }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")
@@ -658,6 +658,17 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     layoutPlugin("settings-repository") {
       fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**,**/dev/**")
     }
+
+    pluginDir("yaml") {
+      dir("lib") {
+        jar("yaml.jar") {
+          noResources("yaml")
+          module("yaml")
+        }
+        resources("yaml")
+      }
+    }
+
   }
 }
 

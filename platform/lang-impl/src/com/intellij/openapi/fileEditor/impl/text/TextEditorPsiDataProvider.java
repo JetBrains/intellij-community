@@ -47,7 +47,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   @Override
   @Nullable
   public Object getData(@NotNull final String dataId, @NotNull final Editor e, @NotNull final Caret caret) {
-    if (!(e instanceof EditorEx)) {
+    if (e.isDisposed() || !(e instanceof EditorEx)) {
       return null;
     }
     VirtualFile file = ((EditorEx)e).getVirtualFile();

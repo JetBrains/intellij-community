@@ -435,7 +435,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       public PsiType[] getArgumentTypes() {
         if (myExpressionTypes == null) {
           final PsiType[] expressionTypes = argumentList.getExpressionTypes();
-          if (MethodCandidateInfo.isOverloadCheck()) {
+          if (MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck()) {
             return expressionTypes;
           }
           myExpressionTypes = expressionTypes;
@@ -543,7 +543,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         }
         
         for (PsiType psiType : resolveResult.getSubstitutor().getSubstitutionMap().values()) {
-          final Boolean accepted = psiType.accept(this);
+          final Boolean accepted = psiType != null ? psiType.accept(this) : null;
           if (accepted != null && !accepted.booleanValue()) {
             return false;
           }

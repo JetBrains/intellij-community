@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ import git4idea.test.GitExecutor.*
 import java.io.File
 import java.util.*
 
-public fun build(repo: GitRepository, f: RepoBuilder.() -> Unit) {
+fun build(repo: GitRepository, f: RepoBuilder.() -> Unit) {
   val builder = RepoBuilder(repo)
   builder.f()
   builder.build()
 }
 
-public class RepoBuilder(val repo: GitRepository) {
+class RepoBuilder(val repo: GitRepository) {
   init {
     cd(repo)
   }
 
-  public val master: String = "master"
-  public val feature: String = "feature"
+  val master: String = "master"
+  val feature: String = "feature"
 
   private val myCommitIndices = HashMap<Int, String>()
   private var myCurrentBranch : String = master
@@ -69,7 +69,7 @@ public class RepoBuilder(val repo: GitRepository) {
 
   operator fun Int.invoke(file: String = this.toString() + ".txt",
                           content: String = "More content in $myCurrentBranch: ${randomHash()}",
-                          commitMessage: String = if (File(repo.getRoot().getPath(), file).exists()) "Created $file" else "Modified $file") {
+                          commitMessage: String = if (File(repo.root.path, file).exists()) "Created $file" else "Modified $file") {
     modifyAndCommit(this, file, content, commitMessage)
   }
 
@@ -79,7 +79,7 @@ public class RepoBuilder(val repo: GitRepository) {
 
   private fun modifyAndCommit(id: Int, file: String, content: String, commitMessage: String) {
     val hash: String
-    if (File(repo.getRoot().getPath(), file).exists()) {
+    if (File(repo.root.path, file).exists()) {
       append(file, content)
     }
     else {

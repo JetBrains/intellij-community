@@ -15,14 +15,16 @@
  */
 package hg4idea.test.history;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.provider.HgHistoryProvider;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -31,9 +33,6 @@ import java.util.List;
 import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgHistoryTest extends HgPlatformTest {
   static final String[] names = {"f1.txt", "f2.txt", "f3.txt"};
   static final String subDirName = "sub";
@@ -42,8 +41,7 @@ public class HgHistoryTest extends HgPlatformTest {
   protected void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    File hgrc = new File(new File(myRepository.getPath(), ".hg"), "hgrc");
-    FileUtil.appendToFile(hgrc, "[extensions]\n" +
+    appendToHgrc(myRepository, "[extensions]\n" +
                                 "largefiles=!\n");
     mkdir(subDirName);
     cd(subDirName);
@@ -119,5 +117,22 @@ public class HgHistoryTest extends HgPlatformTest {
       assertEquals(hgFile.getRelativePath(),
                    targetFileName.getRelativePath());
     }
+  }
+
+  public void testUncommittedRenamedFileHistory() throws HgCommandException {
+    cd(myRepository);
+    VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
+    assert subDir != null;
+    cd(subDir);
+    int namesSize = names.length;
+    String beforeName = names[namesSize - 1];
+    VirtualFile before = subDir.findFileByRelativePath(beforeName);
+    assert before != null;
+    FilePath filePath = VcsUtil.getFilePath(VfsUtilCore.virtualToIoFile(before));
+    final String renamed = "renamed";
+    hg("mv " + beforeName + " " + renamed);
+    myRepository.refresh(false, true);
+    List<HgFileRevision> revisions = HgHistoryProvider.getHistory((filePath), myRepository, myProject);
+    assertEquals(3, revisions.size());
   }
 }

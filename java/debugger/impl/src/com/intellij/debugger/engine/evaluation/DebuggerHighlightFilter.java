@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.debugger.engine.evaluation;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +25,6 @@ public class DebuggerHighlightFilter implements HighlightInfoFilter {
   public boolean accept(@NotNull HighlightInfo highlightInfo, PsiFile file) {
     return highlightInfo.type != HighlightInfoType.UNHANDLED_EXCEPTION ||
            file == null ||
-           file.getUserData(DebuggerExpressionComboBox.KEY) == null;
+           !DefaultCodeFragmentFactory.isDebuggerFile(file);
   }
 }

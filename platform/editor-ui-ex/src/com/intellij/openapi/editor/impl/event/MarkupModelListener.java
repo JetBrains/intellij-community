@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public interface MarkupModelListener extends EventListener {
 
   void beforeRemoved(@NotNull RangeHighlighterEx highlighter);
 
-  void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged);
+  void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged);
 
   abstract class Adapter implements MarkupModelListener {
     @Override
@@ -39,7 +39,7 @@ public interface MarkupModelListener extends EventListener {
     }
 
     @Override
-    public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
+    public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
     }
   }
 }

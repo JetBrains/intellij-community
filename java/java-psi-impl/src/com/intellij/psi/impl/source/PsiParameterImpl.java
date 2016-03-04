@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -33,7 +34,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
@@ -68,18 +68,24 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       if (parameterIndex > -1) {
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
-
-          PsiType type = FunctionalInterfaceParameterizationUtil.getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true), lambdaExpression);
+          final PsiType functionalInterfaceType = LambdaUtil.ourParameterGuard.doPreventingRecursion(param, false,
+                                                                                                     new Computable<PsiType>() {
+                                                                                                         @Override
+                                                                                                         public PsiType compute() {
+                                                                                                           return LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true);
+                                                                                                         }
+                                                                                                       });
+          PsiType type = FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType, lambdaExpression);
           if (type instanceof PsiIntersectionType) {
             final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
             for (PsiType conjunct : conjuncts) {
-              final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, conjunct);
+              final PsiType lambdaParameterFromType = LambdaUtil.getLambdaParameterFromType(conjunct, parameterIndex);
               if (lambdaParameterFromType != null) {
                 return lambdaParameterFromType;
               }
             }
           } else {
-            final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, type);
+            final PsiType lambdaParameterFromType = LambdaUtil.getLambdaParameterFromType(type, parameterIndex);
             if (lambdaParameterFromType != null) {
               return lambdaParameterFromType;
             }
@@ -88,20 +94,6 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       }
     }
     return new PsiLambdaParameterType(param);
-  }
-
-  private static PsiType getLambdaParameterFromType(int parameterIndex, PsiType conjunct) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(conjunct);
-    if (resolveResult != null) {
-      final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(conjunct);
-      if (method != null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameterIndex < parameters.length) {
-          return LambdaUtil.getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
-        }
-      }
-    }
-    return null;
   }
 
   @Override

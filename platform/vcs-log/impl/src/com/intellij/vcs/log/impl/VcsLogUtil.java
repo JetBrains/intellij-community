@@ -16,13 +16,14 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogUtil {
+  public static final int MAX_SELECTED_COMMITS = 1000;
 
   @NotNull
-  public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
+  public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
     return groupByRoot(refs, new Function<VcsRef, VirtualFile>() {
       @NotNull
       @Override
@@ -44,7 +46,7 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static <T extends VcsShortCommitDetails> MultiMap<VirtualFile, T> groupByRoot(@NotNull Collection<T> commits) {
+  public static <T extends VcsShortCommitDetails> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> commits) {
     return groupByRoot(commits, new Function<T, VirtualFile>() {
       @NotNull
       @Override
@@ -55,21 +57,22 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  private static <T> MultiMap<VirtualFile, T> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
-    MultiMap<VirtualFile, T> map = new MultiMap<VirtualFile, T>() {
-      @NotNull
-      @Override
-      protected Map<VirtualFile, Collection<T>> createMap() {
-        return new TreeMap<VirtualFile, Collection<T>>(new Comparator<VirtualFile>() { // TODO some common VCS root sorting method
-          @Override
-          public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
-            return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-          }
-        });
-      }
-    };
+  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
+    Map<VirtualFile, Set<T>> map =
+      new TreeMap<VirtualFile, Set<T>>(new Comparator<VirtualFile>() { // TODO some common VCS root sorting method
+        @Override
+        public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
+          return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+        }
+      });
     for (T item : items) {
-      map.putValue(rootGetter.fun(item), item);
+      VirtualFile root = rootGetter.fun(item);
+      Set<T> set = map.get(root);
+      if (set == null) {
+        set = ContainerUtil.newHashSet();
+        map.put(root, set);
+      }
+      set.add(item);
     }
     return map;
   }
@@ -94,34 +97,46 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  private static Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> collectRoots(@NotNull Collection<VirtualFile> files,
-                                                                                         @NotNull Set<VirtualFile> roots) {
+  private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
-    MultiMap<VirtualFile, VirtualFile> selectedFiles = new MultiMap<VirtualFile, VirtualFile>();
 
-    for (VirtualFile file : files) {
-      if (roots.contains(file)) {
-        selectedRoots.add(file);
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile root1, VirtualFile root2) {
+        return root1.getPath().compareTo(root2.getPath());
       }
-      VirtualFile candidateAncestorRoot = null;
-      for (VirtualFile root : roots) {
-        if (root.equals(file)) continue;
-        if (VfsUtilCore.isAncestor(root, file, false)) {
-          if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
+    });
+
+    for (FilePath filePath : files) {
+      VirtualFile virtualFile = filePath.getVirtualFile();
+
+      if (virtualFile != null && roots.contains(virtualFile)) {
+        // if a root itself is selected, add this root
+        selectedRoots.add(virtualFile);
+      }
+      else {
+        VirtualFile candidateAncestorRoot = null;
+        for (VirtualFile root : sortedRoots) {
+          if (FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false)) {
             candidateAncestorRoot = root;
           }
         }
-        else if (VfsUtilCore.isAncestor(file, root, false)) {
-          selectedRoots.add(root);
+        if (candidateAncestorRoot != null) {
+          selectedRoots.add(candidateAncestorRoot);
         }
       }
 
-      if (candidateAncestorRoot != null) {
-        selectedFiles.putValue(candidateAncestorRoot, file);
+      // add all roots under selected path
+      if (virtualFile != null) {
+        for (VirtualFile root : roots) {
+          if (VfsUtilCore.isAncestor(virtualFile, root, false)) {
+            selectedRoots.add(root);
+          }
+        }
       }
     }
 
-    return Pair.create(selectedRoots, selectedFiles);
+    return selectedRoots;
   }
 
 
@@ -143,9 +158,7 @@ public class VcsLogUtil {
 
     Collection<VirtualFile> fromStructureFilter;
     if (structureFilter != null) {
-      Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles =
-        collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
-      fromStructureFilter = ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet());
+      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
     }
     else {
       fromStructureFilter = roots;
@@ -159,27 +172,57 @@ public class VcsLogUtil {
   // same if root is invisible as a whole
   // so check that before calling this method
   @NotNull
-  public static Set<VirtualFile> getFilteredFilesForRoot(@NotNull VirtualFile root, VcsLogFilterCollection filterCollection) {
+  public static Set<FilePath> getFilteredFilesForRoot(@NotNull final VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
     if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
+    Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
 
-    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles =
-      collectRoots(filterCollection.getStructureFilter().getFiles(), Collections.singleton(root));
+    return new HashSet<FilePath>(ContainerUtil.filter(files, new Condition<FilePath>() {
+      @Override
+      public boolean value(FilePath filePath) {
+        VirtualFile virtualFile = filePath.getVirtualFile();
+        return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
+      }
+    }));
+  }
 
-    return new HashSet<VirtualFile>(rootsAndFiles.second.get(root));
+  // If this method stumbles on LoadingDetails instance it returns empty list
+  @NotNull
+  public static List<VcsFullCommitDetails> collectFirstPackOfLoadedSelectedDetails(@NotNull VcsLog log) {
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+
+    for (VcsFullCommitDetails next : log.getSelectedDetails()) {
+      if (next instanceof LoadingDetails) {
+        return Collections.emptyList();
+      }
+      else {
+        result.add(next);
+        if (result.size() >= MAX_SELECTED_COMMITS) break;
+      }
+    }
+
+    return result;
   }
 
   @NotNull
-  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, VcsLogUiImpl logUi) {
-    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
-    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
-    final Set<VirtualFile> visibleRoots = getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
+  public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
+    return list.subList(0, Math.min(list.size(), max));
+  }
 
+  @NotNull
+  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, @NotNull final Set<VirtualFile> visibleRoots) {
     return ContainerUtil.filter(log.getAllReferences(), new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
         return visibleRoots.contains(ref.getRoot());
       }
     });
+  }
+
+  @NotNull
+  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUiImpl logUi) {
+    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
+    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
+    return getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
   }
 
   @Nullable

@@ -104,7 +104,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
 
   private inner class MyProcessAdapter : ProcessAdapter(), Consumer<String> {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-      print(event.getText(), ConsoleViewContentType.getConsoleViewType(outputType))
+      print(event.text, ConsoleViewContentType.getConsoleViewType(outputType))
     }
 
     private fun print(text: String, contentType: ConsoleViewContentType) {

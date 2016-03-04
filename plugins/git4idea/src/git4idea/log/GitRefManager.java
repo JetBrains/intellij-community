@@ -82,7 +82,7 @@ public class GitRefManager implements VcsLogRefManager {
     MultiMap<VirtualFile, VcsRef> refsByRoot = groupRefsByRoot(refs);
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : refsByRoot.entrySet()) {
       VirtualFile root = entry.getKey();
-      Collection<VcsRef> refsInRoot = entry.getValue();
+      List<VcsRef> refsInRoot = ContainerUtil.sorted(entry.getValue(), myLabelsComparator);
 
       GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
       if (repository == null) {
@@ -105,9 +105,11 @@ public class GitRefManager implements VcsLogRefManager {
           localBranches.add(ref);
         }
         else if (allRemote.containsKey(refName)) {
-          remoteRefGroups.putValue(allRemote.get(refName), ref);
           if (tracked.contains(refName)) {
             trackedBranches.add(ref);
+          }
+          else {
+            remoteRefGroups.putValue(allRemote.get(refName), ref);
           }
         }
         else {
@@ -118,8 +120,8 @@ public class GitRefManager implements VcsLogRefManager {
 
     List<RefGroup> result = ContainerUtil.newArrayList();
     result.addAll(simpleGroups);
-    result.add(new LogicalRefGroup("Local", localBranches));
-    result.add(new LogicalRefGroup("Tracked", trackedBranches));
+    if (!localBranches.isEmpty()) result.add(new LogicalRefGroup("Local", localBranches));
+    if (!trackedBranches.isEmpty()) result.add(new LogicalRefGroup("Tracked", trackedBranches));
     for (Map.Entry<GitRemote, Collection<VcsRef>> entry : remoteRefGroups.entrySet()) {
       final GitRemote remote = entry.getKey();
       final Collection<VcsRef> branches = entry.getValue();

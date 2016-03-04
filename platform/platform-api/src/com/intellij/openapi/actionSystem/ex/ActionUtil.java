@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -91,9 +94,9 @@ public class ActionUtil {
    * @param action action
    * @param e action event
    * @param beforeActionPerformed whether to call
-   * {@link com.intellij.openapi.actionSystem.AnAction#beforeActionPerformedUpdate(com.intellij.openapi.actionSystem.AnActionEvent)}
+   * {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}
    * or
-   * {@link com.intellij.openapi.actionSystem.AnAction#update(com.intellij.openapi.actionSystem.AnActionEvent)}
+   * {@link AnAction#update(AnActionEvent)}
    * @return true if update tried to access indices in dumb mode
    */
   public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
@@ -187,11 +190,17 @@ public class ActionUtil {
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
+    WrapInTransaction annotation = action.getClass().getAnnotation(WrapInTransaction.class);
+    AccessToken token = annotation == null ? AccessToken.EMPTY_ACCESS_TOKEN
+                                           : TransactionGuard.getInstance().startSynchronousTransaction(annotation.value());
     try {
       action.actionPerformed(e);
     }
     catch (IndexNotReadyException e1) {
       showDumbModeWarning(e);
+    }
+    finally {
+      token.finish();
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBScrollBar.Alignment;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,13 +35,44 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.image.*;
 
 public class JBScrollPane extends JScrollPane {
+  /**
+   * This key is used to specify which colors should use the scroll bars on the pane.
+   * If a client property is set to {@code true} the bar's brightness
+   * will be modified according to the view's background.
+   *
+   * @see UIUtil#putClientProperty
+   * @see UIUtil#isUnderDarcula
+   */
+  public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
+
+  @Deprecated
+  public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
+
+  @Deprecated
+  public static final RegionPainter<Float> TRACK_DARK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
+
+  @Deprecated
+  public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x80, Gray.x91),
+                                                                                new ThumbPainter(.7f, .2f, Gray.x99, Gray.x8C));
+  @Deprecated
+  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
+
+  @Deprecated
+  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new RoundThumbPainter(2, .5f, .4f, Gray.x99);
+
+  @Deprecated
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .15f, .25f, Gray.x80);
+
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
+  private volatile boolean myBackgroundRequested; // avoid cyclic references
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -63,6 +97,35 @@ public class JBScrollPane extends JScrollPane {
   public JBScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
     super(view, vsbPolicy, hsbPolicy);
     init();
+  }
+
+  @Override
+  public Color getBackground() {
+    Color color = super.getBackground();
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
+      if (!isBackgroundSet() || color instanceof UIResource) {
+        Component child = getViewport();
+        if (child != null) {
+          try {
+            myBackgroundRequested = true;
+            return child.getBackground();
+          }
+          finally {
+            myBackgroundRequested = false;
+          }
+        }
+      }
+    }
+    return color;
+  }
+
+  static Color getViewBackground(JScrollPane pane) {
+    if (pane == null) return null;
+    JViewport viewport = pane.getViewport();
+    if (viewport == null) return null;
+    Component view = viewport.getView();
+    if (view == null) return null;
+    return view.getBackground();
   }
 
   public static JScrollPane findScrollPane(Component c) {
@@ -123,7 +186,9 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void updateViewportBorder() {
-    setViewportBorder(new ViewportBorder(myViewportBorderWidth >= 0 ? myViewportBorderWidth : 1));
+    if (getViewportBorder() instanceof ViewportBorder) {
+      setViewportBorder(new ViewportBorder(myViewportBorderWidth >= 0 ? myViewportBorderWidth : 1));
+    }
   }
 
   public static ViewportBorder createIndentBorder() {
@@ -261,9 +326,9 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     public void updateUI() {
-      setUI(!SystemInfo.isMac && Registry.is("ide.scroll.new.layout")
-            ? new DefaultScrollBarUI()
-            : ButtonlessScrollBarUI.createNormal());
+      ScrollBarUI ui = getUI();
+      if (ui instanceof DefaultScrollBarUI) return;
+      setUI(JBScrollBar.createUI(this));
     }
 
     @Override
@@ -338,14 +403,7 @@ public class JBScrollPane extends JScrollPane {
 
     private void updateColor(Component c) {
       if (!(c instanceof JScrollPane)) return;
-
-      JViewport vp = ((JScrollPane)c).getViewport();
-      if (vp == null) return;
-
-      Component view = vp.getView();
-      if (view == null) return;
-
-      lineColor = view.getBackground();
+      lineColor = getViewBackground((JScrollPane)c);
     }
   }
 
@@ -357,6 +415,40 @@ public class JBScrollPane extends JScrollPane {
    */
   public enum Flip {
     NONE, VERTICAL, HORIZONTAL, BOTH
+  }
+
+  /**
+   * These client properties show a component position on a scroll pane.
+   * It is set by internal layout manager of the scroll pane.
+   */
+  public enum Alignment {
+    TOP, LEFT, RIGHT, BOTTOM;
+
+    public static Alignment get(JComponent component) {
+      if (component != null) {
+        Object property = component.getClientProperty(Alignment.class);
+        if (property instanceof Alignment) return (Alignment)property;
+
+        Container parent = component.getParent();
+        if (parent instanceof JScrollPane) {
+          JScrollPane pane = (JScrollPane)parent;
+          if (component == pane.getColumnHeader()) {
+            return TOP;
+          }
+          if (component == pane.getHorizontalScrollBar()) {
+            return BOTTOM;
+          }
+          boolean ltr = pane.getComponentOrientation().isLeftToRight();
+          if (component == pane.getVerticalScrollBar()) {
+            return ltr ? RIGHT : LEFT;
+          }
+          if (component == pane.getRowHeader()) {
+            return ltr ? LEFT : RIGHT;
+          }
+        }
+      }
+      return null;
+    }
   }
 
   /**
@@ -444,6 +536,7 @@ public class JBScrollPane extends JScrollPane {
       }
       Rectangle vsbBounds = new Rectangle(0, bounds.y - insets.top, 0, 0);
       if (vsb != null) {
+        if (!SystemInfo.isMac && view instanceof JTable) vsb.setOpaque(true);
         vsbOpaque = vsb.isOpaque();
         if (vsbNeeded) {
           adjustForVSB(bounds, insets, vsbBounds, vsbOpaque, vsbOnLeft);
@@ -463,6 +556,7 @@ public class JBScrollPane extends JScrollPane {
       }
       Rectangle hsbBounds = new Rectangle(bounds.x - insets.left, 0, 0, 0);
       if (hsb != null) {
+        if (!SystemInfo.isMac && view instanceof JTable) hsb.setOpaque(true);
         hsbOpaque = hsb.isOpaque();
         if (hsbNeeded) {
           adjustForHSB(bounds, insets, hsbBounds, hsbOpaque, hsbOnTop);
@@ -482,7 +576,6 @@ public class JBScrollPane extends JScrollPane {
       // so that if we don't ask after resetting the bounds we may have gotten the wrong answer.
       if (viewport != null) {
         viewport.setBounds(bounds);
-        pane.setComponentZOrder(viewport, pane.getComponentCount() - 1);
         if (scrollable != null && hsbOpaque && vsbOpaque) {
           viewTracksViewportWidth = scrollable.getScrollableTracksViewportWidth();
           viewTracksViewportHeight = scrollable.getScrollableTracksViewportHeight();
@@ -541,6 +634,13 @@ public class JBScrollPane extends JScrollPane {
         colHead.setBounds(colHeadBounds);
         colHead.putClientProperty(Alignment.class, hsbOnTop ? Alignment.BOTTOM : Alignment.TOP);
       }
+      // Calculate overlaps for translucent scroll bars
+      int overlapWidth = 0;
+      int overlapHeight = 0;
+      if (vsbNeeded && !vsbOpaque && hsbNeeded && !hsbOpaque) {
+        overlapWidth = vsbBounds.width; // shrink horizontally
+        //overlapHeight = hsbBounds.height; // shrink vertically
+      }
       // Set the bounds of the vertical scroll bar.
       vsbBounds.y = bounds.y - insets.top;
       vsbBounds.height = bounds.height + insets.top + insets.bottom;
@@ -557,9 +657,9 @@ public class JBScrollPane extends JScrollPane {
               vsbBounds.height += colHeadBounds.height;
             }
           }
-          vsb.setBounds(vsbBounds);
+          int overlapY = !hsbOnTop ? 0 : overlapHeight;
+          vsb.setBounds(vsbBounds.x, vsbBounds.y + overlapY, vsbBounds.width, vsbBounds.height - overlapHeight);
           vsb.putClientProperty(Alignment.class, vsbOnLeft ? Alignment.LEFT : Alignment.RIGHT);
-          pane.setComponentZOrder(vsb, 0);
         }
         // Modify the bounds of the translucent scroll bar.
         if (!vsbOpaque) {
@@ -583,7 +683,8 @@ public class JBScrollPane extends JScrollPane {
               hsbBounds.width += rowHeadBounds.width;
             }
           }
-          hsb.setBounds(hsbBounds);
+          int overlapX = !vsbOnLeft ? 0 : overlapWidth;
+          hsb.setBounds(hsbBounds.x + overlapX, hsbBounds.y, hsbBounds.width - overlapWidth, hsbBounds.height);
           hsb.putClientProperty(Alignment.class, hsbOnTop ? Alignment.TOP : Alignment.BOTTOM);
         }
         // Modify the bounds of the translucent scroll bar.
@@ -617,6 +718,20 @@ public class JBScrollPane extends JScrollPane {
                              vsbOnLeft ? rowHeadBounds.width : vsbBounds.width,
                              hsbOnTop ? hsbBounds.height : colHeadBounds.height);
       }
+      if (!vsbOpaque && vsbNeeded || !hsbOpaque && hsbNeeded) {
+        fixComponentZOrder(vsb, 0);
+        fixComponentZOrder(viewport, -1);
+      }
+    }
+
+    private static void fixComponentZOrder(Component component, int index) {
+      if (component != null) {
+        Container parent = component.getParent();
+        synchronized (parent.getTreeLock()) {
+          if (index < 0) index += parent.getComponentCount();
+          parent.setComponentZOrder(component, index);
+        }
+      }
     }
 
     private void adjustForVSB(Rectangle bounds, Insets insets, Rectangle vsbBounds, boolean vsbOpaque, boolean vsbOnLeft) {
@@ -645,6 +760,173 @@ public class JBScrollPane extends JScrollPane {
 
     private static int min(int one, int two) {
       return Math.max(0, Math.min(one, two));
+    }
+  }
+
+  private static class ProtectedPainter implements RegionPainter<Float> {
+    private RegionPainter<Float> myPainter;
+    private RegionPainter<Float> myFallback;
+
+    public ProtectedPainter(RegionPainter<Float> painter, RegionPainter<Float> fallback) {
+      myPainter = painter;
+      myFallback = fallback;
+    }
+
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+      RegionPainter<Float> painter = myFallback;
+      if (myPainter != null) {
+        try {
+          myPainter.paint(g, x, y, width, height, value);
+          return;
+        }
+        catch (Throwable exception) {
+          // do not try to use myPainter again on other systems
+          if (!SystemInfo.isWindows) myPainter = null;
+        }
+      }
+      if (painter != null) {
+        painter.paint(g, x, y, width, height, value);
+      }
+    }
+  }
+
+  private static class AlphaPainter extends RegionPainter.Alpha {
+    private final float myBase;
+    private final float myDelta;
+    final Color myFillColor;
+
+    private AlphaPainter(float base, float delta, Color fill) {
+      myBase = base;
+      myDelta = delta;
+      myFillColor = fill;
+    }
+
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
+      g.setColor(myFillColor);
+      g.fillRect(x, y, width, height);
+    }
+
+    @Override
+    protected float getAlpha(Float value) {
+      return value != null ? myBase + myDelta * value : 0;
+    }
+  }
+
+  private static class RoundThumbPainter extends AlphaPainter {
+    private final int myBorder;
+
+    private RoundThumbPainter(int border, float base, float delta, Color fill) {
+      super(base, delta, fill);
+      myBorder = border;
+    }
+
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
+      Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+      width -= myBorder + myBorder;
+      height -= myBorder + myBorder;
+
+      int arc = Math.min(width, height);
+      g.setColor(myFillColor);
+      g.fillRoundRect(x + myBorder, y + myBorder, width, height, arc, arc);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+    }
+  }
+
+  private static class ThumbPainter extends AlphaPainter {
+    private final Color myDrawColor;
+
+    private ThumbPainter(float base, float delta, Color fill, Color draw) {
+      super(base, delta, fill);
+      myDrawColor = draw;
+    }
+
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
+      super.paint(g, x + 1, y + 1, width - 2, height - 2);
+      g.setColor(myDrawColor);
+      if (Registry.is("ide.scroll.thumb.border.rounded")) {
+        g.drawLine(x + 1, y, x + width - 2, y);
+        g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
+        g.drawLine(x, y + 1, x, y + height - 2);
+        g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
+      }
+      else {
+        g.drawRect(x, y, width - 1, height - 1);
+      }
+    }
+  }
+
+  private static class SubtractThumbPainter extends ThumbPainter {
+    public SubtractThumbPainter(float base, float delta, Color fill, Color draw) {
+      super(base, delta, fill, draw);
+    }
+
+    @Override
+    protected Composite getComposite(float alpha) {
+      return alpha < 1
+             ? new SubtractComposite(alpha)
+             : AlphaComposite.SrcOver;
+    }
+  }
+
+  private static class SubtractComposite implements Composite, CompositeContext {
+    private final float myAlpha;
+
+    private SubtractComposite(float alpha) {
+      myAlpha = alpha;
+    }
+
+    private int subtract(int newValue, int oldValue) {
+      float value = (oldValue & 0xFF) - (newValue & 0xFF) * myAlpha;
+      return value <= 0 ? 0 : (int)value;
+    }
+
+    @Override
+    public CompositeContext createContext(ColorModel src, ColorModel dst, RenderingHints hints) {
+      return isValid(src) && isValid(dst) ? this : AlphaComposite.SrcOver.derive(myAlpha).createContext(src, dst, hints);
+    }
+
+    private static boolean isValid(ColorModel model) {
+      if (model instanceof DirectColorModel && DataBuffer.TYPE_INT == model.getTransferType()) {
+        DirectColorModel dcm = (DirectColorModel)model;
+        if (0x00FF0000 == dcm.getRedMask() && 0x0000FF00 == dcm.getGreenMask() && 0x000000FF == dcm.getBlueMask()) {
+          return 4 != dcm.getNumComponents() || 0xFF000000 == dcm.getAlphaMask();
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public void compose(Raster srcIn, Raster dstIn, WritableRaster dstOut) {
+      int width = Math.min(srcIn.getWidth(), dstIn.getWidth());
+      int height = Math.min(srcIn.getHeight(), dstIn.getHeight());
+
+      int[] srcPixels = new int[width];
+      int[] dstPixels = new int[width];
+
+      for (int y = 0; y < height; y++) {
+        srcIn.getDataElements(0, y, width, 1, srcPixels);
+        dstIn.getDataElements(0, y, width, 1, dstPixels);
+        for (int x = 0; x < width; x++) {
+          int src = srcPixels[x];
+          int dst = dstPixels[x];
+          int a = subtract(src >> 24, dst >> 24) << 24;
+          int r = subtract(src >> 16, dst >> 16) << 16;
+          int g = subtract(src >> 8, dst >> 8) << 8;
+          int b = subtract(src, dst);
+          dstPixels[x] = a | r | g | b;
+        }
+        dstOut.setDataElements(0, y, width, 1, dstPixels);
+      }
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 }

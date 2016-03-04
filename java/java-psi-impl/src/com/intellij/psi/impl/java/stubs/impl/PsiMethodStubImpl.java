@@ -17,7 +17,6 @@ package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.java.stubs.PsiParameterListStub;
@@ -25,7 +24,6 @@ import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.BitUtil;
-import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,39 +43,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private static final int ANNOTATION = 0x04;
   private static final int DEPRECATED = 0x08;
   private static final int DEPRECATED_ANNOTATION = 0x10;
-  private static final int PARSED_VIA_GENERIC_SIGNATURE = 0x20;
-  private static final int HAS_DOC_COMMENT = 0x40;
-
-  public PsiMethodStubImpl(StubElement parent,
-                           String name,
-                           byte flags,
-                           String signature,
-                           @NotNull List<String> args,
-                           @Nullable List<String> throwables,
-                           String desc,
-                           int modifiersMask) {
-    super(parent, isAnnotationMethod(flags) ? JavaStubElementTypes.ANNOTATION_METHOD : JavaStubElementTypes.METHOD);
-    myName = name;
-    myDefaultValueText = null;
-
-    new PsiModifierListStubImpl(this, modifiersMask);
-
-    String returnType = null;
-    boolean parsedViaGenericSignature = false;
-    if (signature != null) {
-      try {
-        returnType = StubBuildingVisitor.parseMethodViaGenericSignature(signature, this, args, throwables);
-        parsedViaGenericSignature = true;
-      }
-      catch (ClsFormatException ignored) { }
-    }
-    if (returnType == null) {
-      returnType = StubBuildingVisitor.parseMethodViaDescription(desc, this, args);
-    }
-
-    myReturnType = TypeInfo.fromString(returnType);
-    myFlags = (byte)(flags | (parsedViaGenericSignature ? PARSED_VIA_GENERIC_SIGNATURE : 0));
-  }
+  private static final int HAS_DOC_COMMENT = 0x20;
 
   public PsiMethodStubImpl(StubElement parent, String name, @NotNull TypeInfo returnType, byte flags, @Nullable String defaultValueText) {
     super(parent, isAnnotationMethod(flags) ? JavaStubElementTypes.ANNOTATION_METHOD : JavaStubElementTypes.METHOD);
@@ -95,10 +61,6 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   public boolean isVarArgs() {
     return BitUtil.isSet(myFlags, VARARGS);
-  }
-
-  public boolean isParsedViaGenericSignature() {
-    return BitUtil.isSet(myFlags, PARSED_VIA_GENERIC_SIGNATURE);
   }
 
   @Override

@@ -260,9 +260,6 @@ void PrintWatchRootReparsePoints() {
 // -- Watcher thread ----------------------------------------------------------
 
 void PrintChangeInfo(char *rootPath, FILE_NOTIFY_INFORMATION *info) {
-    char FileNameBuffer[_MAX_PATH];
-    int converted = WideCharToMultiByte(CP_ACP, 0, info->FileName, info->FileNameLength / sizeof(WCHAR), FileNameBuffer, _MAX_PATH - 1, NULL, NULL);
-    FileNameBuffer[converted] = '\0';
     char *command;
     if (info->Action == FILE_ACTION_ADDED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
         command = "CREATE";
@@ -276,6 +273,10 @@ void PrintChangeInfo(char *rootPath, FILE_NOTIFY_INFORMATION *info) {
     else {
         return;  // unknown command
     }
+
+    char FileNameBuffer[2*_MAX_PATH + 1];
+    int converted = WideCharToMultiByte(CP_UTF8, 0, info->FileName, info->FileNameLength / sizeof(WCHAR), FileNameBuffer, 2*_MAX_PATH, NULL, NULL);
+    FileNameBuffer[converted] = '\0';
 
     EnterCriticalSection(&csOutput);
     puts(command);

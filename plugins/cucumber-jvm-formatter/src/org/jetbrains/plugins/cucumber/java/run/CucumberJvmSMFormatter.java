@@ -101,9 +101,9 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   @Override
   public void scenario(Scenario scenario) {
     closeScenario();
+    outCommand(String.format(TEMPLATE_SCENARIO_STARTED, getCurrentTime()));
     if (isRealScenario(scenario)) {
       scenarioCount++;
-      outCommand(String.format(TEMPLATE_SCENARIO_STARTED, getCurrentTime()));
       closeScenarioOutline();
       currentSteps.clear();
     }
@@ -120,7 +120,6 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   @Override
   public void scenarioOutline(ScenarioOutline outline) {
     scenarioCount++;
-    outCommand(String.format(TEMPLATE_SCENARIO_STARTED, getCurrentTime()));
     queue.clear();
     currentSteps.clear();
 

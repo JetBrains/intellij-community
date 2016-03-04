@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -69,12 +68,7 @@ public class XDebuggerWatchesManager implements PersistentStateComponent<XDebugg
     if (state != null) {
       for (ConfigurationState expressionState : state.expressions) {
         XExpression[] expressions = ContainerUtil.mapNotNull(expressionState.myExpressionStates,
-          new Function<WatchState, XExpression>() {
-            @Override
-            public XExpression fun(WatchState state) {
-              return state.toXExpression();
-            }
-          }, new XExpression[0]);
+                                                             XExpressionState::toXExpression, new XExpression[0]);
         watches.put(expressionState.myName, expressions);
       }
     }
@@ -100,7 +94,7 @@ public class XDebuggerWatchesManager implements PersistentStateComponent<XDebugg
     }
 
     public ConfigurationState(String name, XExpression[] expressions) {
-      this.myName = name;
+      myName = name;
       myExpressionStates = new WatchState[expressions.length];
       for (int i = 0; i < expressions.length; i++) {
         myExpressionStates[i] = new WatchState(expressions[i]);

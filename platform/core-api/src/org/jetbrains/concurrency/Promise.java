@@ -23,6 +23,7 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +98,40 @@ public abstract class Promise<T> {
 
     for (Promise<?> promise : promises) {
       //noinspection unchecked
+      promise.done(done);
+      promise.rejected(rejected);
+    }
+    return totalPromise;
+  }
+
+  public static <T> Promise<T> any(@NotNull final Collection<Promise<T>> promises, @NotNull final String totalError) {
+    if (promises.isEmpty()) {
+      //noinspection unchecked
+      return (Promise<T>)DONE;
+    }
+    else if (promises.size() == 1) {
+      return ContainerUtil.getFirstItem(promises);
+    }
+
+    final AsyncPromise<T> totalPromise = new AsyncPromise<T>();
+    Consumer<T> done = new Consumer<T>() {
+      @Override
+      public void consume(T result) {
+        totalPromise.setResult(result);
+      }
+    };
+    Consumer<Throwable> rejected = new Consumer<Throwable>() {
+      private volatile int toConsume = promises.size();
+
+      @Override
+      public void consume(Throwable throwable) {
+        if (--toConsume <= 0) {
+          totalPromise.setError(totalError);
+        }
+      }
+    };
+
+    for (Promise<? extends T> promise : promises) {
       promise.done(done);
       promise.rejected(rejected);
     }

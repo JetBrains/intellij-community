@@ -26,7 +26,7 @@ class Impl1 extends SomeSuper {
         @Override
         public void run() {
           if (Impl1.this.o2 != null) {
-            System.out.println(<warning descr="Method invocation 'Impl2.this.o2.hashCode()' may produce 'java.lang.NullPointerException'">Impl2.this.o2.hashCode()</warning>);
+            System.out.println(Impl2.this.o2.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
           }
         }
       };

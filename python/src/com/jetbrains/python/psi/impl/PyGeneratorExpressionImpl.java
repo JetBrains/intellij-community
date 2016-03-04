@@ -15,15 +15,18 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
+import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -54,7 +57,7 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
   }
 
   @NotNull
-  public Iterable<PyElement> iterateNames() {
+  public List<PsiNamedElement> getNamedElements() {
     // extract whatever names are defined in "for" components
     List<ComprhForComponent> fors = getForComponents();
     PyExpression[] for_targets = new PyExpression[fors.size()];
@@ -63,15 +66,18 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
       for_targets[i] = for_comp.getIteratorVariable();
       i += 1;
     }
-    return new ArrayList<PyElement>(PyUtil.flattenedParensAndStars(for_targets));
+    final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(for_targets);
+    final List<PsiNamedElement> results = Lists.newArrayList();
+    for (PyExpression expression : expressions) {
+      if (expression instanceof PsiNamedElement) {
+        results.add((PsiNamedElement)expression);
+      }
+    }
+    return results;
   }
 
-  public PsiElement getElementNamed(final String the_name) {
-    return IterHelper.findName(iterateNames(), the_name);
+  @Nullable
+  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
+    return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }
-
-  public boolean mustResolveOutside() {
-    return false;
-  }
-
 }

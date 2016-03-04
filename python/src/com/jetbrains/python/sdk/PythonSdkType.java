@@ -54,6 +54,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.*;
+import com.intellij.remote.ext.CredentialsCase;
+import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -68,6 +70,7 @@ import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
@@ -86,11 +89,15 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
+ * Class should be final and singleton since some code checks its instance by ref.
+ *
  * @author yole
  */
-public class PythonSdkType extends SdkType {
+public final class PythonSdkType extends SdkType {
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
@@ -102,18 +109,21 @@ public class PythonSdkType extends SdkType {
   private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
+  public static final Predicate<Sdk> REMOTE_SDK_PREDICATE = new Predicate<Sdk>() {
+    @Override
+    public boolean test(Sdk sdk) {
+      return isRemote(sdk);
+    }
+  };
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
   }
 
-  public PythonSdkType() {
+  private PythonSdkType() {
     super("Python SDK");
   }
 
-  protected PythonSdkType(@NonNls String name) {
-    super(name);
-  }
 
   public Icon getIcon() {
     return PythonIcons.Python.Python;
@@ -243,11 +253,6 @@ public class PythonSdkType extends SdkType {
       return data.connectionCredentials().getRemoteConnectionType() == CredentialsType.VAGRANT;
     }
     return false;
-  }
-
-  public static boolean isDocker(@Nullable final Sdk sdk) {
-    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData &&
-           ((RemoteSdkAdditionalData)sdk.getSdkAdditionalData()).connectionCredentials().getRemoteConnectionType() == CredentialsType.DOCKER;
   }
 
   public static boolean isRemote(@Nullable String sdkPath) {
@@ -538,24 +543,20 @@ public class PythonSdkType extends SdkType {
         };
       notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
     }
-    else if (ExceptionUtil.causedBy(e, DockerMachineNotStartedException.class)) {
+    else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
       //noinspection ThrowableResultOfMethodCallIgnored
-      DockerMachineNotStartedException cause = ExceptionUtil.findCause(e, DockerMachineNotStartedException.class);
-      final String machineName = cause.getMachineName();
+      final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
       notificationListener =
         new NotificationListener() {
           @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            final DockerSupport dockerSupport = DockerSupport.getInstance();
-            if (dockerSupport != null) {
-              dockerSupport.startMachineWithProgressIndicator(null, machineName);
-            }
+            fix.apply();
             if (restartAction != null) {
               restartAction.run();
             }
           }
         };
-      notificationMessage = e.getMessage() + "\n<a href=\"#\">Start Docker Machine '" + machineName + "' and refresh skeletons</a>";
+      notificationMessage = fix.getNotificationMessage(e.getMessage());
     }
     else {
       notificationListener = null;
@@ -802,6 +803,10 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  public static List<Sdk> getAllLocalCPythons() {
+    return getAllSdks().stream().filter(REMOTE_SDK_PREDICATE.negate()).collect(Collectors.toList());
+  }
+
   @Nullable
   public static String getPythonExecutable(@NotNull String rootPath) {
     final File rootFile = new File(rootPath);
@@ -883,24 +888,22 @@ public class PythonSdkType extends SdkType {
     if (PySdkUtil.isRemote(sdk)) {
       final Ref<Boolean> result = Ref.create(false);
       //noinspection ConstantConditions
-      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(new RemoteSdkConnectionAcceptor() {
-        @Override
-        public void ssh(@NotNull RemoteCredentialsHolder cred) {
-        }
+      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(
+        new LanguageCaseCollector<PyCredentialsContribution>() {
 
-        @Override
-        public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
-          result.set(StringUtil.isEmpty(cred.getVagrantFolder()));
-        }
-
-        @Override
-        public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
-        }
-
-        @Override
-        public void docker(@NotNull DockerCredentialsHolder credentials) {
-        }
-      });
+          @Override
+          protected void processLanguageContribution(PyCredentialsContribution languageContribution, Object credentials) {
+            result.set(!languageContribution.isValid(credentials));
+          }
+        }.collectCases(
+          PyCredentialsContribution.class,
+          new CredentialsCase.Vagrant() {
+            @Override
+            public void process(VagrantBasedCredentialsHolder cred) {
+              result.set(StringUtil.isEmpty(cred.getVagrantFolder()));
+            }
+          }
+        ));
       return result.get();
     }
     return false;

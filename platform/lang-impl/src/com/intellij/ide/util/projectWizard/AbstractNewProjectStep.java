@@ -41,10 +41,12 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
 import com.intellij.util.Function;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 
 
 public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAware {
@@ -54,23 +56,27 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     super("Select Project Type", true);
 
     NullableConsumer<ProjectSettingsStepBase> callback = customization.createCallback();
-
-    final DirectoryProjectGenerator emptyProjectGenerator = customization.createEmptyProjectGenerator();
-    ProjectSpecificAction projectSpecificAction =
-      new ProjectSpecificAction(emptyProjectGenerator, customization.createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
-    addAll(projectSpecificAction.getChildren(null));
+    ProjectSpecificAction projectSpecificAction = customization.createProjectSpecificAction(callback);
+    addProjectSpecificAction(projectSpecificAction);
 
     DirectoryProjectGenerator[] generators = customization.getProjectGenerators();
     customization.setUpBasicAction(projectSpecificAction, generators);
 
-    for (DirectoryProjectGenerator generator : generators) {
-      addAll(customization.getActions(generator, callback));
-    }
-
+    addAll(customization.getActions(generators, callback));
     addAll(customization.getExtraActions(callback));
   }
 
+  protected void addProjectSpecificAction(@NotNull final ProjectSpecificAction projectSpecificAction) {
+    addAll(projectSpecificAction.getChildren(null));
+  }
+
   protected static abstract class Customization {
+    @NotNull
+    protected ProjectSpecificAction createProjectSpecificAction(@NotNull final NullableConsumer<ProjectSettingsStepBase> callback) {
+      DirectoryProjectGenerator emptyProjectGenerator = createEmptyProjectGenerator();
+      return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
+    }
+
     @NotNull
     protected abstract NullableConsumer<ProjectSettingsStepBase> createCallback();
 
@@ -85,6 +91,14 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     @NotNull
     protected DirectoryProjectGenerator[] getProjectGenerators() {
       return Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    }
+
+    public AnAction[] getActions(@NotNull DirectoryProjectGenerator[] generators, @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
+      final List<AnAction> actions = ContainerUtil.newArrayList();
+      for (DirectoryProjectGenerator projectGenerator : generators) {
+        actions.addAll(ContainerUtil.list(getActions(projectGenerator, callback)));
+      }
+      return actions.toArray(new AnAction[actions.size()]);
     }
 
     @NotNull

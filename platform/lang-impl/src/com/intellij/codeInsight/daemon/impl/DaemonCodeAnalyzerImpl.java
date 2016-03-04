@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ import java.util.concurrent.TimeoutException;
  */
 @State(
   name = "DaemonCodeAnalyzer",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
@@ -845,7 +845,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
         if (HeavyProcessLatch.INSTANCE.isRunning()) {
           final Disposable removeListenerDisposable = Disposer.newDisposable();
-          Disposer.register(DaemonCodeAnalyzerImpl.this, removeListenerDisposable);
           // wait for heavy processing to stop, re-schedule daemon but not too soon
           HeavyProcessLatch.HeavyProcessListener heavyProcessListener = new HeavyProcessLatch.HeavyProcessListener() {
             @Override
@@ -859,6 +858,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
             }
           };
           HeavyProcessLatch.INSTANCE.addListener(removeListenerDisposable, heavyProcessListener);
+          Disposer.register(DaemonCodeAnalyzerImpl.this, removeListenerDisposable);
+
           if (!HeavyProcessLatch.INSTANCE.isRunning()) {
             // in case heavy operation finished right before listener added
             heavyProcessListener.processFinished();
@@ -919,6 +920,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   private Collection<FileEditor> getSelectedEditors() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     // Editors in modal context
     List<Editor> editors = getActiveEditors();
 
@@ -937,6 +940,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     Collection<VirtualFile> files = new THashSet<VirtualFile>(activeTextEditors.size());
     final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
     for (FileEditor tabEditor : tabEditors) {
+      if (!tabEditor.isValid()) continue;
       VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
       if (file != null) {
         files.add(file);

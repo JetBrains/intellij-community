@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -270,6 +270,7 @@ public final class IdeMouseEventDispatcher {
   public static boolean patchClickCount(final MouseEvent e) {
     if (e.getClickCount() != 1 && e.getButton() > 3) {
       ReflectionUtil.setField(MouseEvent.class, e, int.class, "clickCount", 1);
+      return true;
     }
     return false;
   }
@@ -314,7 +315,8 @@ public final class IdeMouseEventDispatcher {
   private static JScrollBar findHorizontalScrollBar(Component c) {
     if (c == null) return null;
     if (c instanceof JScrollPane) {
-      return ((JScrollPane)c).getHorizontalScrollBar();
+      JScrollBar scrollBar = ((JScrollPane)c).getHorizontalScrollBar();
+      return scrollBar != null && scrollBar.isVisible() ? scrollBar : null;
     }
 
     if (isDiagramViewComponent(c)) {
@@ -323,7 +325,7 @@ public final class IdeMouseEventDispatcher {
          if (view.getComponent(i) instanceof JScrollBar) {
            final JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
            if (scrollBar.getOrientation() == Adjustable.HORIZONTAL) {
-            return scrollBar;
+             return scrollBar.isVisible() ? scrollBar : null;
            }
          }
       }

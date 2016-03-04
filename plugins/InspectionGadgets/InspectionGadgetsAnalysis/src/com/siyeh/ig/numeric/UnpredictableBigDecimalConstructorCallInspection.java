@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2014 Bas Leijdekkers
+ * Copyright 2007-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,11 @@ public class UnpredictableBigDecimalConstructorCallInspection
     }
     final PsiExpression firstArgument = arguments[0];
     if (firstArgument instanceof PsiLiteralExpression) {
-      return new ReplaceDoubleArgumentWithStringFix("new BigDecimal(\"" + firstArgument.getText() + "\")");
+      final String text = firstArgument.getText();
+      final char c = text.charAt(text.length() - 1);
+      if (c != 'd' && c != 'D' && c != 'f' && c != 'F') {
+        return new ReplaceDoubleArgumentWithStringFix("new BigDecimal(\"" + firstArgument.getText() + "\")");
+      }
     }
     if (arguments.length == 1) {
       return new ReplaceDoubleArgumentWithStringFix("BigDecimal.valueOf(" + firstArgument.getText() + ')');
@@ -116,9 +120,14 @@ public class UnpredictableBigDecimalConstructorCallInspection
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression firstArgument = arguments[0];
       if (firstArgument instanceof PsiLiteralExpression) {
-        PsiReplacementUtil.replaceExpression(firstArgument, '"' + firstArgument.getText() + '"');
+        final String text = firstArgument.getText();
+        final char c = text.charAt(text.length() - 1);
+        if (c != 'd' && c != 'D' && c != 'f' && c != 'F') {
+          PsiReplacementUtil.replaceExpression(firstArgument, '"' + firstArgument.getText() + '"');
+          return;
+        }
       }
-      else if (arguments.length == 1) {
+      if (arguments.length == 1) {
         PsiReplacementUtil.replaceExpression(newExpression, "java.math.BigDecimal.valueOf(" + firstArgument.getText() + ')');
       }
     }
@@ -135,8 +144,7 @@ public class UnpredictableBigDecimalConstructorCallInspection
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      final PsiJavaCodeReferenceElement classReference =
-        expression.getClassReference();
+      final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
       if (classReference == null) {
         return;
       }

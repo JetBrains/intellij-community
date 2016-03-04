@@ -1,0 +1,24 @@
+<component>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
+  <version major="2" minor="0.4" eap="false"/>
+  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
+  <logo url="/pycharm_edu_logo.png" textcolor="313131" progressColor="20d688" progressY="281" progressTailIcon="/community_progress_tail.png"/>
+  <about url="/pycharm_edu_about.png" logoX="300" logoY="265" logoW="75" logoH="30" foreground="313131"
+         copyrightForeground="313131" linkColor="1f29b2"/>
+  <icon size32="/PyCharmEdu32.png" size16="/PyCharmEdu16.png" ico="PyCharmEdu.ico"/>
+  <package code="__PACKAGE_CODE__"/>
+  <names product="PyCharm" fullname="PyCharm Edu" script="charm"/>
+  <install-over minbuild="0" maxbuild="0" version="2.x"/>
+
+  <welcome-screen logo-url="/PyCharmEduWelcomeScreen.png"/>
+
+  <plugins url="http://plugins.jetbrains.com/"/>
+  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
+               patches="http://download.jetbrains.com/python/"/>
+
+  <feedback eap-url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
+            release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <help file="pycharm-eduhelp.jar" root="pycharm-edu"/>
+  <third-party url="https://confluence.jetbrains.com/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
+  <jetbrains-tv url="http://www.youtube.com/user/JetBrainsTV/search?query=PyCharm"/>
+</component>

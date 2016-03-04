@@ -47,10 +47,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.HELPER_SUFFIX;
 import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.INDEX_ID;
 
 /**
- * Created by Max Medvedev on 03/03/14
+ * @author Max Medvedev
+ * @since 03.03.2014
  */
 public class GrTypeDefinitionMembersCache {
   private static final Logger LOG = Logger.getInstance(GrTypeDefinitionMembersCache.class);
@@ -63,7 +65,6 @@ public class GrTypeDefinitionMembersCache {
   };
 
   private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
-
   private final GrTypeDefinition myDefinition;
 
   public GrTypeDefinitionMembersCache(GrTypeDefinition definition) {
@@ -248,6 +249,7 @@ public class GrTypeDefinitionMembersCache {
         LOG.assertTrue(trait != null);
 
         List<CandidateInfo> concreteTraitMethods = new TraitProcessor<PsiMethod>(trait, resolveResult.getSubstitutor()) {
+          @Override
           protected void processTrait(@NotNull PsiClass trait, @NotNull PsiSubstitutor substitutor) {
             if (trait instanceof GrTypeDefinition) {
               for (GrMethod method : ((GrTypeDefinition)trait).getCodeMethods()) {
@@ -308,6 +310,7 @@ public class GrTypeDefinitionMembersCache {
         LOG.assertTrue(trait != null);
 
         List<CandidateInfo> traitFields = new TraitProcessor<PsiField>(trait, resolveResult.getSubstitutor()) {
+          @Override
           protected void processTrait(@NotNull final PsiClass trait, @NotNull final PsiSubstitutor substitutor) {
             if (trait instanceof GrTypeDefinition) {
               for (GrField field : ((GrTypeDefinition)trait).getCodeFields()) {
@@ -315,27 +318,15 @@ public class GrTypeDefinitionMembersCache {
               }
             }
             else if (trait instanceof ClsClassImpl) {
-              final PsiClass traitFieldHelper = JavaPsiFacade.getInstance(trait.getProject()).findClass(
-                trait.getQualifiedName() + "$Trait$FieldHelper", trait.getResolveScope()
+              VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
+              if (traitFile == null) return;
+              VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
+              if (helperFile == null) return;
+              int key = FileBasedIndex.getFileId(helperFile);
+              final List<Collection<TraitFieldDescriptor>> values = FileBasedIndex.getInstance().getValues(
+                INDEX_ID, key, trait.getResolveScope()
               );
-              if (traitFieldHelper == null) return;
-
-              final VirtualFile virtualFile = traitFieldHelper.getContainingFile().getVirtualFile();
-              final List<Collection<TraitFieldDescriptor>> descriptors = FileBasedIndex.getInstance().getValues(
-                INDEX_ID,
-                FileBasedIndex.getFileId(virtualFile),
-                trait.getResolveScope()
-              );
-              for (Collection<TraitFieldDescriptor> traitFieldDescriptors : descriptors) {
-                for (TraitFieldDescriptor descriptor : traitFieldDescriptors) {
-                  final GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
-                  if (descriptor.isStatic) {
-                    field.getModifierList().addModifier(STATIC_MASK);
-                  }
-                  field.getModifierList().addModifier(descriptor.isPublic ? PUBLIC_MASK : PRIVATE_MASK);
-                  addCandidate(field, substitutor);
-                }
-              }
+              values.forEach(c -> c.forEach(descriptor -> addCandidate(createTraitField(descriptor, trait), substitutor)));
             }
           }
         }.getResult();
@@ -345,6 +336,15 @@ public class GrTypeDefinitionMembersCache {
       }
 
       return result;
+    }
+
+    private GrLightField createTraitField(TraitFieldDescriptor descriptor, PsiClass trait) {
+      GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
+      if ((descriptor.flags & TraitFieldDescriptor.STATIC) != 0) {
+        field.getModifierList().addModifier(STATIC_MASK);
+      }
+      field.getModifierList().addModifier((descriptor.flags & TraitFieldDescriptor.PUBLIC) != 0 ? PUBLIC_MASK : PRIVATE_MASK);
+      return field;
     }
 
     @NotNull

@@ -19,6 +19,7 @@ package com.intellij.notification;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
+import com.intellij.util.Function;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -100,7 +103,7 @@ public class EventLog {
     return getLogModel(project).getStatusMessage();
   }
 
-  public static LogEntry formatForLog(@NotNull final Notification notification, String indent) {
+  public static LogEntry formatForLog(@NotNull final Notification notification, final String indent) {
     DocumentImpl logDoc = new DocumentImpl("",true);
     AtomicBoolean showMore = new AtomicBoolean(false);
     Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
@@ -118,6 +121,27 @@ public class EventLog {
       }
     }
     hasHtml |= parseHtmlContent(content, notification, logDoc, showMore, links, lineSeparators);
+
+    List<AnAction> actions = notification.getActions();
+    if (NotificationsManagerImpl.newEnabled() && !actions.isEmpty()) {
+      String text = "<p>" + StringUtil.join(actions, new Function<AnAction, String>() {
+        private int index;
+        @Override
+        public String fun(AnAction action) {
+          return "<a href=\"" + index++ + "\">" + action.getTemplatePresentation().getText()+"</a>";
+        }
+      }, isLongLine(actions) ? "<br>" : "&nbsp;") + "</p>";
+      Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
+          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())));
+        }
+      });
+      if (title.length() > 0 || content.length() > 0) {
+        lineSeparators.add(logDoc.createRangeMarker(TextRange.from(logDoc.getTextLength(), 0)));
+      }
+      hasHtml |= parseHtmlContent(text, n, logDoc, showMore, links, lineSeparators);
+    }
 
     String status = getStatusText(logDoc, showMore, lineSeparators, hasHtml);
 
@@ -143,6 +167,21 @@ public class EventLog {
     }
 
     return new LogEntry(logDoc.getText(), status, list);
+  }
+
+  private static boolean isLongLine(@NotNull List<AnAction> actions) {
+    int size = actions.size();
+    if (size > 3) {
+      return true;
+    }
+    if (size > 1) {
+      int length = 0;
+      for (AnAction action : actions) {
+        length += StringUtil.length(action.getTemplatePresentation().getText());
+      }
+      return length > 30;
+    }
+    return false;
   }
 
   @NotNull
@@ -213,7 +252,7 @@ public class EventLog {
         appendText(document, content);
         break;
       }
-      
+
       String tagStart = tagMatcher.group();
       appendText(document, content.substring(0, tagMatcher.start()));
       Matcher aMatcher = A_PATTERN.matcher(tagStart);
@@ -257,7 +296,7 @@ public class EventLog {
         showMore.set(true);
         continue;
       }
-      
+
       int offset = marker.getStartOffset();
       if (offset == 0 || offset == document.getTextLength()) {
         continue;
@@ -496,7 +535,7 @@ public class EventLog {
       if (target != null) {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
         assert frame != null;
-        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true);
+        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, null);
         Disposer.register(project, balloon);
         balloon.show(target, Balloon.Position.above);
       }

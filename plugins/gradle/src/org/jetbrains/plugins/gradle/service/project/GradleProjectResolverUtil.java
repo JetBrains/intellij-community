@@ -338,7 +338,12 @@ public class GradleProjectResolverUtil {
 
     Map<ExternalDependencyId, ExternalDependency> dependencyMap = ContainerUtil.newLinkedHashMap();
     for (ExternalDependency dependency : dependencies) {
-      dependencyMap.put(dependency.getId(), dependency);
+      final ExternalDependency dep = dependencyMap.get(dependency.getId());
+      if(dep instanceof AbstractExternalDependency) {
+        dep.getDependencies().addAll(ContainerUtil.subtract(dependency.getDependencies(), dep.getDependencies()));
+      } else {
+        dependencyMap.put(dependency.getId(), dependency);
+      }
     }
 
     for (ExternalDependency dependency : dependencyMap.values()) {
@@ -519,7 +524,8 @@ public class GradleProjectResolverUtil {
     return ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, new BooleanFunction<DataNode<TaskData>>() {
       @Override
       public boolean fun(DataNode<TaskData> node) {
-        return node.getData().getName().equals(taskName);
+        String name = node.getData().getName();
+        return name.equals(taskName) || name.equals(taskPath);
       }
     });
   }

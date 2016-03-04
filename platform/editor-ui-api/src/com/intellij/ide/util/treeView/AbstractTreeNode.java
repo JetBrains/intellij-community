@@ -75,10 +75,6 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     }
 
     setForcedForeground(presentation);
-
-    if (hasProblemFileBeneath() ) {
-      presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
-    }
   }
 
   protected void setForcedForeground(@NotNull PresentationData presentation) {

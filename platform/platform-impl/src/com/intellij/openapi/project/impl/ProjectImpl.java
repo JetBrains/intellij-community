@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +32,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.TimedReference;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -73,7 +73,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private MyProjectManagerListener myProjectManagerListener;
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   private String myName;
-  private String myOldName;
   private final boolean myLight;
 
   /**
@@ -98,10 +97,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     myProjectManager = projectManager;
 
     myName = projectName == null ? getStateStore().getProjectName() : projectName;
-    if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
-      myOldName = "";  // new project
-    }
-    
     // light project may be changed later during test, so we need to remember its initial state 
     myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
   }
@@ -130,7 +125,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
-      myOldName = myName;
       myName = projectName;
       StartupManager.getInstance(this).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
@@ -298,28 +292,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     long time = System.currentTimeMillis() - start;
     LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
 
-    getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
       myProjectManagerListener = new MyProjectManagerListener();
       myProjectManager.addProjectManagerListener(this, myProjectManagerListener);
     }
-  }
-
-  private boolean isToSaveProjectName() {
-    if (!isDefault()) {
-      IProjectStore stateStore = getStateStore();
-      if (stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
-        String basePath = stateStore.getProjectBasePath();
-        File baseDir = basePath == null ? null : new File(basePath);
-        if (baseDir != null && baseDir.exists()) {
-          return myOldName != null && !myOldName.equals(getName());
-        }
-      }
-    }
-
-    return false;
   }
 
   @Override
@@ -333,26 +312,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       return;
     }
 
+    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+
     try {
-      if (isToSaveProjectName()) {
-        try {
-          String basePath = getStateStore().getProjectBasePath();
-          File baseDir = basePath == null ? null : new File(basePath);
-          if (baseDir != null && baseDir.exists()) {
-            File ideaDir = new File(baseDir, DIRECTORY_STORE_FOLDER);
-            if (ideaDir.exists() && ideaDir.isDirectory()) {
-              FileUtil.writeToFile(new File(ideaDir, NAME_FILE), getName());
-              myOldName = null;
-
-              RecentProjectsManager.getInstance().clearNameCache();
-            }
-          }
-        }
-        catch (Throwable e) {
-          LOG.error("Unable to store project name", e);
-        }
-      }
-
       StoreUtil.save(ServiceKt.getStateStore(this), this);
     }
     finally {

@@ -27,5 +27,4 @@ public class VcsLogCreatePatchAction extends CreatePatchFromChangesAction {
     Change[] changes;
     e.getPresentation().setEnabled((changes = e.getData(VcsDataKeys.CHANGES)) != null && changes.length > 0);
   }
-
 }

@@ -61,7 +61,8 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
         ) {
         return true;
       }
-    }if (mayBeSingleQuote ) {
+    }
+    if (mayBeSingleQuote ) {
       // handle string literal context
       if (super.isOpeningQuote(iterator, offset)) {
         return true;

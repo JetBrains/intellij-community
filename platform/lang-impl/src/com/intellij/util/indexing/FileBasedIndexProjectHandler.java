@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,16 @@ import java.util.Collection;
 
 public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
+
   private final FileBasedIndex myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
 
-  public FileBasedIndexProjectHandler(final FileBasedIndex index, final Project project, final ProjectRootManagerComponent rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
+  public FileBasedIndexProjectHandler(FileBasedIndex index,
+                                      Project project,
+                                      ProjectRootManagerComponent rootManager,
+                                      FileTypeManager ftManager,
+                                      ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
@@ -58,10 +63,8 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
     if (ApplicationManager.getApplication().isInternal()) {
       project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
         @Override
-        public void enteredDumbMode() {
-        }
+        public void enteredDumbMode() { }
 
         @Override
         public void exitDumbMode() {
@@ -130,7 +133,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
   @Override
   public void disposeComponent() {
-    // done mostly for tests. In real life this is noop, because the set was removed on project closing
+    // done mostly for tests. In real life this is no-op, because the set was removed on project closing
     myIndex.removeIndexableSet(this);
   }
 
@@ -140,8 +143,8 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     if (!(i instanceof FileBasedIndexImpl)) {
       return null;
     }
-    final FileBasedIndexImpl index = (FileBasedIndexImpl)i;
 
+    final FileBasedIndexImpl index = (FileBasedIndexImpl)i;
     if (index.getChangedFileCount() < 20) {
       return null;
     }

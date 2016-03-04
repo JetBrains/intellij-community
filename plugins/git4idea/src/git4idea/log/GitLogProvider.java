@@ -15,16 +15,20 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogSorter;
 import com.intellij.vcs.log.graph.GraphColorManager;
@@ -33,6 +37,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -332,19 +337,35 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
+  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
+    return VcsFileUtil
+      .foreachChunk(hashes, new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
+        @NotNull
+        @Override
+        public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
+          return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
+        }
+      });
   }
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-    List<String> params = new ArrayList<String>();
-    params.add(noWalk);
-    params.addAll(hashes);
-    return GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params));
+  public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
+    throws VcsException {
+    return VcsFileUtil
+      .foreachChunk(hashes, new ThrowableNotNullFunction<List<String>, List<? extends VcsFullCommitDetails>, VcsException>() {
+        @NotNull
+        @Override
+        public List<? extends VcsFullCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
+          String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+          List<String> params = new ArrayList<String>();
+          params.add(noWalk);
+          params.addAll(hashes);
+
+          return GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params));
+        }
+      });
   }
 
   @NotNull
@@ -386,9 +407,11 @@ public class GitLogProvider implements VcsLogProvider {
     return myRefSorter;
   }
 
+  @NotNull
   @Override
-  public void subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
-    myProject.getMessageBus().connect(myProject).subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
+  public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
       @Override
       public void repositoryChanged(@NotNull GitRepository repository) {
         VirtualFile root = repository.getRoot();
@@ -397,6 +420,7 @@ public class GitLogProvider implements VcsLogProvider {
         }
       }
     });
+    return connection;
   }
 
   @NotNull
@@ -466,12 +490,12 @@ public class GitLogProvider implements VcsLogProvider {
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
     if (filterCollection.getStructureFilter() != null) {
-      Collection<VirtualFile> files = filterCollection.getStructureFilter().getFiles();
+      Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
       if (!files.isEmpty()) {
         filterParameters.add("--full-history");
         filterParameters.add("--simplify-merges");
         filterParameters.add("--");
-        for (VirtualFile file : files) {
+        for (FilePath file : files) {
           filterParameters.add(file.getPath());
         }
       }

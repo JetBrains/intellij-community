@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.util.DocumentUtil;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -38,7 +41,8 @@ public class EditorStressTest extends AbstractEditorTest {
                                                                          new RemoveFoldRegion(),
                                                                          new CollapseFoldRegion(),
                                                                          new ExpandFoldRegion(),
-                                                                         new ChangeBulkModeState());
+                                                                         new ChangeBulkModeState(),
+                                                                         new ChangeEditorVisibility());
 
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
@@ -64,7 +68,7 @@ public class EditorStressTest extends AbstractEditorTest {
   }
 
   private void doRandomAction() {
-    ourActions.get(myRandom.nextInt(ourActions.size())).perform(myEditor, myRandom);
+    ourActions.get(myRandom.nextInt(ourActions.size())).perform((EditorEx)myEditor, myRandom);
   }
 
   protected void checkConsistency(Editor editor) {
@@ -91,7 +95,7 @@ public class EditorStressTest extends AbstractEditorTest {
   }
 
   interface Action {
-    void perform(Editor editor, Random random);
+    void perform(EditorEx editor, Random random);
   }
 
   private static class AddText implements Action {
@@ -102,42 +106,57 @@ public class EditorStressTest extends AbstractEditorTest {
     }
 
     @Override
-    public void perform(Editor editor, Random random) {
+    public void perform(EditorEx editor, Random random) {
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
-      document.insertString(offset, myText);
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          document.insertString(offset, myText);
+        }
+      }.execute().throwException();
     }
   }
 
   private static class RemoveCharacter implements Action {
     @Override
-    public void perform(Editor editor, Random random) {
+    public void perform(EditorEx editor, Random random) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
       int offset = random.nextInt(textLength);
-      document.deleteString(offset, offset + 1);
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          document.deleteString(offset, offset + 1);
+        }
+      }.execute().throwException();
     }
   }
 
   private static class MoveCharacter implements Action {
     @Override
-    public void perform(Editor editor, Random random) {
+    public void perform(EditorEx editor, Random random) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
       int offset = random.nextInt(textLength);
       int targetOffset = random.nextInt(textLength + 1);
       if (targetOffset < offset || targetOffset > offset + 1) {
-        ((DocumentEx)document).moveText(offset, offset + 1, targetOffset);
+        new WriteCommandAction.Simple(getProject()) {
+          @Override
+          protected void run() throws Throwable {
+            ((DocumentEx)document).moveText(offset, offset + 1, targetOffset);
+          }
+        }.execute().throwException();
       }
     }
   }
 
   private static class AddFoldRegion implements Action {
     @Override
-    public void perform(final Editor editor, Random random) {
-      DocumentEx document = ((EditorEx)editor).getDocument();
+    public void perform(final EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
       if (document.isInBulkUpdate()) return;
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
@@ -153,8 +172,8 @@ public class EditorStressTest extends AbstractEditorTest {
 
   private static class RemoveFoldRegion implements Action {
     @Override
-    public void perform(final Editor editor, Random random) {
-      DocumentEx document = ((EditorEx)editor).getDocument();
+    public void perform(final EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
       if (document.isInBulkUpdate()) return;
       final FoldingModel foldingModel = editor.getFoldingModel();
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
@@ -166,8 +185,8 @@ public class EditorStressTest extends AbstractEditorTest {
 
   private static class CollapseFoldRegion implements Action {
     @Override
-    public void perform(final Editor editor, Random random) {
-      DocumentEx document = ((EditorEx)editor).getDocument();
+    public void perform(final EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
       if (document.isInBulkUpdate()) return;
       final FoldingModel foldingModel = editor.getFoldingModel();
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
@@ -179,8 +198,8 @@ public class EditorStressTest extends AbstractEditorTest {
 
   private static class ExpandFoldRegion implements Action {
     @Override
-    public void perform(final Editor editor, Random random) {
-      DocumentEx document = ((EditorEx)editor).getDocument();
+    public void perform(final EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
       if (document.isInBulkUpdate()) return;
       final FoldingModel foldingModel = editor.getFoldingModel();
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
@@ -192,9 +211,19 @@ public class EditorStressTest extends AbstractEditorTest {
   
   private static class ChangeBulkModeState implements Action {
     @Override
-    public void perform(Editor editor, Random random) {
-      DocumentEx document = ((EditorEx)editor).getDocument();
+    public void perform(EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
       document.setInBulkUpdate(!document.isInBulkUpdate());
+    }
+  }
+  
+  private static class ChangeEditorVisibility implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
+      if (document.isInBulkUpdate()) return;
+      JViewport viewport = editor.getScrollPane().getViewport();
+      viewport.setExtentSize(viewport.getExtentSize().getWidth() == 0 ? new Dimension(1000, 1000) : new Dimension(0, 0));
     }
   }
 }

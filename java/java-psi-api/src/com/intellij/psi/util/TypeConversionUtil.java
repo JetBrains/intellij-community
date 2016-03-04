@@ -402,24 +402,22 @@ public class TypeConversionUtil {
       PsiType typeArg2 = substitutor2.substitute(typeParameter);
       if (typeArg1 == null || typeArg2 == null) return true;
       if (TypesDistinctProver.provablyDistinct(typeArg1, typeArg2, level)) return false;
-
-      final PsiClass class1 = PsiUtil.resolveClassInType(typeArg1);
-      if (class1 instanceof PsiTypeParameter) {
-        for (PsiType type : class1.getExtendsListTypes()) {
-          type = substitutor1.substitute(type);
-          if (TypesDistinctProver.provablyDistinct(type, typeArg2) && !isAssignable(type, typeArg2)) return false;
-        }
-      }
     }
 
     return true;
   }
 
   public static boolean isPrimitiveAndNotNull(PsiType type) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return isPrimitiveAndNotNull(((PsiCapturedWildcardType)type).getUpperBound());
+    }
     return type instanceof PsiPrimitiveType && !isNullType(type);
   }
 
   public static boolean isEnumType(PsiType type) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return isEnumType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
       return psiClass != null && psiClass.isEnum();
@@ -435,14 +433,23 @@ public class TypeConversionUtil {
     return isFloatType(type) || isDoubleType(type);
   }
   public static boolean isDoubleType(PsiType type) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return isDoubleType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
     return PsiType.DOUBLE.equals(type) || PsiType.DOUBLE.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
   public static boolean isFloatType(PsiType type) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return isFloatType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
     return PsiType.FLOAT.equals(type) || PsiType.FLOAT.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
   public static boolean isLongType(PsiType type) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return isLongType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
     return PsiType.LONG.equals(type) || PsiType.LONG.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
@@ -451,6 +458,9 @@ public class TypeConversionUtil {
   }
 
   public static boolean isBooleanType(@Nullable PsiType type) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return isBooleanType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
     return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
@@ -468,6 +478,9 @@ public class TypeConversionUtil {
    *         Integer.MAX_VALUE for others
    */
   public static int getTypeRank(@NotNull PsiType type) {
+    if (type instanceof PsiCapturedWildcardType) {
+      type = ((PsiCapturedWildcardType)type).getUpperBound();
+    }
     PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
     if (unboxedType != null) {
       type = unboxedType;
@@ -594,6 +607,9 @@ public class TypeConversionUtil {
   }
 
   public static boolean isPrimitiveAndNotNullOrWrapper(PsiType type) {
+    if (type instanceof PsiCapturedWildcardType) {
+      return isPrimitiveAndNotNullOrWrapper(((PsiCapturedWildcardType)type).getUpperBound());
+    }
     if (type instanceof PsiClassType) {
       return PsiPrimitiveType.getUnboxedType(type) != null;
     }

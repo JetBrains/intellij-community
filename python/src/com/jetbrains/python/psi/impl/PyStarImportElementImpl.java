@@ -17,14 +17,17 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +40,14 @@ import java.util.List;
 /**
  * @author dcheryasov
  */
-public class PyStarImportElementImpl extends PyElementImpl implements PyStarImportElement {
+public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportElementStub> implements PyStarImportElement {
 
   public PyStarImportElementImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  public PyStarImportElementImpl(final PyStarImportElementStub stub) {
+    super(stub, PyElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @NotNull
@@ -72,13 +79,14 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
     });
   }
 
-  @Nullable
-  public PsiElement getElementNamed(final String name) {
+  @NotNull
+  public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
     if (PyUtil.isClassPrivateName(name)) {
-      return null;
+      return Collections.emptyList();
     }
-    if (getParent() instanceof PyFromImportStatement) {
-      PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
+    final PsiElement parent = getParentByStub();
+    if (parent instanceof PyFromImportStatement) {
+      PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
@@ -87,18 +95,17 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
           final PyModuleType moduleType = new PyModuleType(sourceFile);
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
                                                                                       PyResolveContext.defaultContext());
-          final PsiElement result = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
-          if (result != null && PyUtil.isStarImportableFrom(name, sourceFile) ) {
-            return result;
+          if (results != null && !results.isEmpty() && PyUtil.isStarImportableFrom(name, sourceFile)) {
+            final List<RatedResolveResult> res = Lists.newArrayList();
+            for (RatedResolveResult result : results) {
+              res.add(result);
+            }
+            return res;
           }
         }
       }
     }
-    return null;
-  }
-
-  public boolean mustResolveOutside() {
-    return true; // we don't have children, but... 
+    return Collections.emptyList();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,12 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 
 public class TypeEvaluator implements Evaluator {
   private final JVMName myTypeName;
 
-  public TypeEvaluator(JVMName typeName) {
+  public TypeEvaluator(@NotNull JVMName typeName) {
     myTypeName = typeName;
   }
 

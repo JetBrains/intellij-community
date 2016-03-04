@@ -237,7 +237,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
   private static void type(Editor editor, char charTyped) {
     CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
-    EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
+    EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped), true, true);
   }
 
   private static void autoPopupParameterInfo(@NotNull Editor editor, char charTyped, @NotNull Project project, @NotNull PsiFile file) {

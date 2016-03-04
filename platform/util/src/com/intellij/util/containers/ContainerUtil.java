@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
+import com.intellij.util.Function;
 import gnu.trove.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1212,6 +1213,36 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
+  @NotNull
+  @Contract(pure=true)
+  public static <T, E> Iterable<Pair<T, E>> zip(@NotNull final Iterable<T> iterable1, @NotNull final Iterable<E> iterable2) {
+    return new Iterable<Pair<T, E>>() {
+      @Override
+      public Iterator<Pair<T, E>> iterator() {
+        return new Iterator<Pair<T, E>>() {
+          private final Iterator<T> i1 = iterable1.iterator();
+          private final Iterator<E> i2 = iterable2.iterator();
+
+          @Override
+          public boolean hasNext() {
+            return i1.hasNext() && i2.hasNext();
+          }
+
+          @Override
+          public Pair<T, E> next() {
+            return Pair.create(i1.next(), i2.next());
+          }
+
+          @Override
+          public void remove() {
+            i1.remove();
+            i2.remove();
+          }
+        };
+      }
+    };
+  }
+
   public static <E> void swapElements(@NotNull List<E> list, int index1, int index2) {
     E e1 = list.get(index1);
     E e2 = list.get(index2);
@@ -2334,6 +2365,16 @@ public class ContainerUtil extends ContainerUtilRt {
     });
     //noinspection unchecked
     return i < 0 ? null : (U)list.get(i);
+  }
+
+  @Contract(pure = true)
+  public static <T, U extends T> int lastIndexOfInstance(@NotNull List<T> list, @NotNull final Class<U> clazz) {
+    return lastIndexOf(list, new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return clazz.isInstance(t);
+      }
+    });
   }
 
   @Contract(pure=true)

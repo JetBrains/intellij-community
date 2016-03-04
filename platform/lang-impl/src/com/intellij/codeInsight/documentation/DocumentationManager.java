@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.preview.PreviewManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -962,22 +961,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           (new DocumentationCollector() {
             @Override
             public String getDocumentation() throws Exception {
-              //noinspection deprecation
-              if (url.startsWith(DocumentationManagerProtocol.DOC_ELEMENT_PROTOCOL)) {
-                final List<String> urls = ApplicationManager.getApplication().runReadAction(
-                  new NullableComputable<List<String>>() {
-                    @Override
-                    public List<String> compute() {
-                      final DocumentationProvider provider = getProviderFromElement(psiElement);
-                      return provider.getUrlFor(psiElement, getOriginalElement(psiElement));
-                    }
-                  }
-                );
-                String url1 = urls != null && !urls.isEmpty() ? urls.get(0) : url;
-                BrowserUtil.browse(url1);
-                return "";
-              }
-              else if (BrowserUtil.isAbsoluteURL(url)) {
+              if (BrowserUtil.isAbsoluteURL(url)) {
                 BrowserUtil.browse(url);
                 return "";
               }
@@ -1172,18 +1156,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
 
       final Ref<String> result = new Ref<String>();
-      long deadline = System.currentTimeMillis() + DOC_GENERATION_TIMEOUT_MILLISECONDS;
-      while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(new Runnable() {
+      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(new Runnable() {
           @Override
           public void run() {
             final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
             String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
             result.set(doc);
           }
-        }) && System.currentTimeMillis() < deadline) {
-        //noinspection BusyWait
-        Thread.sleep(DOC_GENERATION_PAUSE_MILLISECONDS);
-      }
+        }, DOC_GENERATION_TIMEOUT_MILLISECONDS, DOC_GENERATION_PAUSE_MILLISECONDS, null);
       return result.get();
     }
 

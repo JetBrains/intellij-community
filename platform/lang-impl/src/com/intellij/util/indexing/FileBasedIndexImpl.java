@@ -79,9 +79,9 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
-import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
@@ -91,6 +91,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -702,12 +703,22 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void removeDataFromIndicesForFile(final int fileId) {
-    final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
+    // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+    final List<ID<?, ?>> currentFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
+    Collection<ID<?, ?>> states = currentFileIndexedStates;
+    for(ID<?,?> currentFileIndexedState: currentFileIndexedStates) {
+      if (!myIndices.containsKey(currentFileIndexedState)) {
+        states = ContainerUtil.intersection(currentFileIndexedStates, myIndices.keySet());
+        break;
+      }
+    }
+
     if (!states.isEmpty()) {
+      final Collection<ID<?, ?>> finalStates = states;
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
         @Override
         public void run() {
-          removeFileDataFromIndices(states, fileId);
+          removeFileDataFromIndices(finalStates, fileId);
         }
       });
     }
@@ -1089,6 +1100,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myContentlessIndicesUpdateQueue.signalUpdateEnd();
   }
 
+  @TestOnly
+  public void cleanupForNextTest() {
+    myTransactionMap = SmartFMap.emptyMap();
+  }
+
   public static final class ProjectIndexableFilesFilter extends IdFilter {
     private static final int SHIFT = 6;
     private static final int MASK = (1 << SHIFT) - 1;
@@ -1147,7 +1163,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     ++myFilesModCount;
   }
 
-  private final Lock myCalcIndexableFilesLock = new SequenceLock();
+  private final Lock myCalcIndexableFilesLock = new ReentrantLock();
 
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {

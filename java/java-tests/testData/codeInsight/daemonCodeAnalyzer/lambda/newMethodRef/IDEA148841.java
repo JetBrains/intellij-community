@@ -36,3 +36,12 @@ final class Collectors {
                         downstream.characteristics().toArray(new Collector.Characteristics[downstream.characteristics().size()]));
   }
 }
+
+class SimplifiedTest {
+
+  public static void a(Stream<Integer> classifier) {
+    flatMapping(classifier.map(k -> new AbstractMap.SimpleEntry<Integer, String>(k,k.toString())), Map.Entry::getKey);
+  }
+
+  public static <U, R> void flatMapping(Stream<U> stream, Function<U, R> downstream) {}
+}

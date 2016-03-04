@@ -2,7 +2,7 @@ import inspect
 import sys
 import unittest
 
-from pydevd_save_locals import save_locals
+from _pydevd_bundle.pydevd_save_locals import save_locals
 
 
 def use_save_locals(name, value):

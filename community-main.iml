@@ -94,6 +94,7 @@
     <orderEntry type="module" module-name="javaFX-jps-plugin" />
     <orderEntry type="module" module-name="IntelliLang-tests" />
     <orderEntry type="module" module-name="manifest" />
+    <orderEntry type="module" module-name="yaml" />
     <orderEntry type="module" module-name="xml-tests" scope="TEST" />
     <orderEntry type="module" module-name="devkit-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="jps-model-tests" scope="TEST" />
@@ -118,9 +119,11 @@
     <orderEntry type="module" module-name="diff-tests" scope="TEST" />
     <orderEntry type="module" module-name="built-in-server-tests" scope="TEST" />
     <orderEntry type="module" module-name="updater" scope="TEST" />
-    <orderEntry type="module" module-name="coverage" scope="TEST" />
+    <orderEntry type="module" module-name="coverage" />
     <orderEntry type="module" module-name="android-gradle-jps" scope="TEST" />
     <orderEntry type="module" module-name="android-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="script-debugger-ui" scope="TEST" />
+    <orderEntry type="module" module-name="remote-servers-git-java" />
+    <orderEntry type="module" module-name="terminal" />
   </component>
 </module>

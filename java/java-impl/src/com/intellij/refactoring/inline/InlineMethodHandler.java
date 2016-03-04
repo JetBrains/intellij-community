@@ -83,11 +83,6 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       return;
     }
 
-    if (reference instanceof PsiMethodReferenceExpression) {
-      CommonRefactoringUtil.showErrorHint(project, editor, REFACTORING_NAME + " cannot be applied to method references", REFACTORING_NAME, HelpID.INLINE_METHOD);
-      return;
-    }
-
     if (reference != null) {
       final String errorMessage = InlineMethodProcessor.checkCalledInSuperOrThisExpr(methodBody, reference.getElement());
       if (errorMessage != null) {

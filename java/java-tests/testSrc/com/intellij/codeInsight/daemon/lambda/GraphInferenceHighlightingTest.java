@@ -16,10 +16,17 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/graphInference";
@@ -357,6 +364,73 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
 
   public void testIDEA149774() throws Exception {
     doTest();
+  }
+
+  public void testDisjunctionTypes() throws Exception {
+    doTest();
+  }
+
+  public void testPushErasedStateToArguments() throws Exception {
+    doTest();
+  }
+
+  public void testStopAtStandaloneConditional() throws Exception {
+    doTest();
+  }
+
+  public void testTransitiveInferenceVariableDependencies() throws Exception {
+    doTest();
+  }
+
+  public void testInferenceVariablesErasure() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedWarningConvertingToInferenceVariable() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedWarningDuringStrictSubtyping() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA150688() throws Exception {
+    doTest();
+  }
+
+  public void testGlbValidityWithCapturedWildcards() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedVariablesAcceptance() throws Exception {
+    doTest();
+  }
+
+  public void testVariableNamesOfNestedCalls() throws Exception {
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
+    String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    Collection<HighlightInfo> infos = doHighlighting();
+
+    List<String> tooltips = new ArrayList<>();
+
+    for (HighlightInfo info : infos) {
+      if (info.getSeverity() == HighlightSeverity.ERROR) {
+        tooltips.add(info.getToolTip());
+      }
+    }
+
+    boolean found = false;
+    for (String tooltip : tooltips) {
+      if (tooltip.contains("reason: no instance(s) of type variable(s) K, U exist so that Map&lt;K, U&gt; conforms to Function&lt;U, V&gt;")) {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      fail(StringUtil.join(tooltips, ", "));
+    }
   }
 
   private void doTest() throws Exception {

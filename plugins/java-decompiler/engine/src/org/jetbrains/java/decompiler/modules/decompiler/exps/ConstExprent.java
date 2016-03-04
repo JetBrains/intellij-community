@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
-import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
@@ -33,16 +32,18 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class ConstExprent extends Exprent {
-  private static final Map<Integer, String> ESCAPES = new HashMap<Integer, String>() {{
-    put(new Integer(0x8), "\\b");   /* \u0008: backspace BS */
-    put(new Integer(0x9), "\\t");   /* \u0009: horizontal tab HT */
-    put(new Integer(0xA), "\\n");   /* \u000a: linefeed LF */
-    put(new Integer(0xC), "\\f");   /* \u000c: form feed FF */
-    put(new Integer(0xD), "\\r");   /* \u000d: carriage return CR */
-    put(new Integer(0x22), "\\\""); /* \u0022: double quote " */
-    put(new Integer(0x27), "\\\'"); /* \u0027: single quote ' */
-    put(new Integer(0x5C), "\\\\"); /* \u005c: backslash \ */
-  }};
+  private static final Map<Integer, String> ESCAPES;
+  static {
+    ESCAPES = new HashMap<>();
+    ESCAPES.put(new Integer(0x8), "\\b");   /* \u0008: backspace BS */
+    ESCAPES.put(new Integer(0x9), "\\t");   /* \u0009: horizontal tab HT */
+    ESCAPES.put(new Integer(0xA), "\\n");   /* \u000a: linefeed LF */
+    ESCAPES.put(new Integer(0xC), "\\f");   /* \u000c: form feed FF */
+    ESCAPES.put(new Integer(0xD), "\\r");   /* \u000d: carriage return CR */
+    ESCAPES.put(new Integer(0x22), "\\\""); /* \u0022: double quote " */
+    ESCAPES.put(new Integer(0x27), "\\\'"); /* \u0027: single quote ' */
+    ESCAPES.put(new Integer(0x5C), "\\\\"); /* \u005c: backslash \ */
+  }
 
   private VarType constType;
   private final Object value;
@@ -432,5 +433,4 @@ public class ConstExprent extends Exprent {
     
     return true;
   }
-  
 }

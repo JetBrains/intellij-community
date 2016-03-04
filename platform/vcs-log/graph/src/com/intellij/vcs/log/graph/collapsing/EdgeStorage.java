@@ -99,5 +99,4 @@ public class EdgeStorage {
   public void removeAll() {
     myEdges.clear();
   }
-
 }

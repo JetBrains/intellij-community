@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,7 +44,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
     }
 
     CodeStyleScheme currentScheme = CodeStyleSchemes.getInstance().getCurrentScheme();
-    for (CodeStyleScheme scheme : CodeStyleSchemes.getInstance().getSchemes()) {
+    for (CodeStyleScheme scheme : CodeStyleSchemesImpl.getSchemeManager().getAllSchemes()) {
       addScheme(group, manager, currentScheme, scheme, false);
     }
   }
@@ -70,7 +71,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
 
   @Override
   protected boolean isEnabled() {
-    return CodeStyleSchemes.getInstance().getSchemes().length > 1;
+    return !CodeStyleSchemesImpl.getSchemeManager().getAllSchemes().isEmpty();
   }
 
   @Override

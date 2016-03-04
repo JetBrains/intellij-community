@@ -55,9 +55,11 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       }
       if (bounds != null) {
         for (PsiType lowerBound : bounds) {
-          final PsiSubstitutor substitutor = processLowerBound(lowerBound, derivedClass, scope, derivedSubstitutor);
-          if (substitutor != null) {
-            return substitutor;
+          if (lowerBound != null) {
+            final PsiSubstitutor substitutor = processLowerBound(lowerBound, derivedClass, scope, derivedSubstitutor);
+            if (substitutor != null) {
+              return substitutor;
+            }
           }
         }
       }
@@ -76,6 +78,9 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       final PsiClassType.ClassResolveResult result = ((PsiClassType)lowerBound).resolveGenerics();
       final PsiClass boundClass = result.getElement();
       if (boundClass != null) {
+        if (boundClass.equals(derivedClass)) {
+          return derivedSubstitutor;
+        }
         final PsiSubstitutor substitutor = getSuperSubstitutorWithCaching(boundClass,
                                                                           derivedClass, scope, result.getSubstitutor());
         if (substitutor != null) {

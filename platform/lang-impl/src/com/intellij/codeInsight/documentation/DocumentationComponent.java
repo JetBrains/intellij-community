@@ -58,6 +58,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -313,6 +315,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       public Dimension getPreferredSize() {
         Dimension editorPaneSize = myEditorPane.getPreferredScrollableViewportSize();
         Dimension controlPanelSize = myControlPanel.getPreferredSize();
+        return getSize(editorPaneSize, controlPanelSize);
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension editorPaneSize = new JBDimension(20, 20);
+        Dimension controlPanelSize = myControlPanel.getMinimumSize();
+        return getSize(editorPaneSize, controlPanelSize);
+      }
+
+      private Dimension getSize(Dimension editorPaneSize, Dimension controlPanelSize) {
         return new Dimension(Math.max(editorPaneSize.width, controlPanelSize.width), editorPaneSize.height + controlPanelSize.height);
       }
     };
@@ -614,7 +627,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-    StyleConstants.setFontSize(myFontSizeStyle, scheme.getQuickDocFontSize().getSize());
+    StyleConstants.setFontSize(myFontSizeStyle, JBUI.scale(scheme.getQuickDocFontSize().getSize()));
     if (Registry.is("documentation.component.editor.font")) {
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }

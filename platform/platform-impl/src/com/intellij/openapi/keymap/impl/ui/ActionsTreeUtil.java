@@ -65,6 +65,26 @@ public class ActionsTreeUtil {
   private ActionsTreeUtil() {
   }
 
+  public static Map<String, String> createPluginActionsMap() {
+    Set<PluginId> visited = ContainerUtil.newHashSet();
+    Map<String, String> result = ContainerUtil.newHashMap();
+    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+      PluginId id = descriptor.getPluginId();
+      visited.add(id);
+      if (PluginManagerCore.CORE_PLUGIN_ID.equals(id.getIdString())) continue;
+      for (String actionId : ActionManagerEx.getInstanceEx().getPluginActions(id)) {
+        result.put(actionId, descriptor.getName());
+      }
+    }
+    for (PluginId id : PluginId.getRegisteredIds().values()) {
+      if (visited.contains(id)) continue;
+      for (String actionId : ActionManagerEx.getInstanceEx().getPluginActions(id)) {
+        result.put(actionId, id.getIdString());
+      }
+    }
+    return result;
+  }
+
   private static Group createPluginsActionsGroup(Condition<AnAction> filtered) {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();

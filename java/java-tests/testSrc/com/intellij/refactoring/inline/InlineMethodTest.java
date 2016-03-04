@@ -292,6 +292,18 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testInlineIntoMethodRef() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  public void testInlineIntoConstructorRef() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  public void testSideEffectsInMethodRefQualifier() throws Exception {
+    doTestConflict("Inlined method is used in method reference with side effects in qualifier");
+  }
+
   private void doTestInlineThisOnly() {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);

@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -107,6 +108,12 @@ public class PathEditor {
   public JComponent createComponent() {
     myList = new JBList(getListModel());
     myList.setCellRenderer(createListCellRenderer(myList));
+    TreeUIHelper.getInstance().installListSpeedSearch(myList, new Convertor<Object, String>() {
+      @Override
+      public String convert(Object file) {
+        return ((VirtualFile)file).getPresentableUrl();
+      }
+    });
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList)
       .disableUpDownActions()

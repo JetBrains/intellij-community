@@ -45,5 +45,23 @@ class Test {
       J.super.toString();
     }
   }
+
+  class E implements I {
+    public void a() {}
+  }
+  
+  class F extends E implements I {
+    void bar() {
+      <error descr="Bad type qualifier in default super call: method a is overridden in Test.E">I</error>.super.a();
+      Runnable r = <error descr="Bad type qualifier in default super call: method a is overridden in Test.E">I</error>.super::a;
+    }
+  }
+  
+  class G extends A implements I {
+    void bar() {
+      I.super.a();
+      Runnable r = I.super::a;
+    }
+  }
 }
 

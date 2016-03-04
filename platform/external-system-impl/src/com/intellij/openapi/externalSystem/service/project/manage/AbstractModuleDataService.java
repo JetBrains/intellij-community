@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -56,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -89,6 +91,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
+        String productionModuleId = node.getData().getProductionModuleId();
+        if (productionModuleId != null) {
+          modelsProvider.setTestModuleProperties(module, productionModuleId);
+        }
         setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
@@ -96,20 +102,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
 
-    final boolean isOneToOneMapping = projectData != null && ExternalSystemApiUtil.isOneToOneMapping(project, projectData);
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
         final String[] groupPath;
-        if (isOneToOneMapping || projectData == null) {
-          groupPath = node.getData().getIdeModuleGroup();
-        }
-        else {
-          final String externalProjectGroup = projectData.getInternalName() + " modules";
-          groupPath = node.getData().getIdeModuleGroup() == null
-                      ? new String[]{externalProjectGroup}
-                      : ArrayUtil.prepend(externalProjectGroup, node.getData().getIdeModuleGroup());
-        }
+        groupPath = node.getData().getIdeModuleGroup();
         final ModifiableModuleModel modifiableModel = modelsProvider.getModifiableModuleModel();
         modifiableModel.setModuleGroupPath(module, groupPath);
       }
@@ -356,6 +353,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(module));
       }
       setBytecodeTargetLevel(project, module, moduleDataNode.getData());
+    }
+
+    for (Module module : modelsProvider.getModules()) {
+      module.putUserData(MODULE_DATA_KEY, null);
     }
   }
 

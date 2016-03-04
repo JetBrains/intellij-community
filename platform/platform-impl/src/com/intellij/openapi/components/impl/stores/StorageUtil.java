@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -35,8 +34,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -46,55 +43,19 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class StorageUtil {
-  private static final Logger LOG = Logger.getInstance(StorageUtil.class);
-
   @TestOnly
   public static String DEBUG_LOG = null;
 
   private StorageUtil() { }
 
-  public static void notifyUnknownMacros(@NotNull final IComponentStore store, @NotNull final Project project, @NotNull final String componentName) {
-    final TrackingPathMacroSubstitutor substitutor = store.getStateStorageManager().getMacroSubstitutor();
-    if (substitutor == null) {
-      return;
-    }
-
-    Set<String> immutableMacros = substitutor.getUnknownMacros(componentName);
-    if (immutableMacros.isEmpty()) {
-      return;
-    }
-
-    final Set<String> macros = new LinkedHashSet<String>(immutableMacros);
-    AppUIUtil.invokeOnEdt(new Runnable() {
-      @Override
-      public void run() {
-        List<String> notified = null;
-        NotificationsManager manager = NotificationsManager.getNotificationsManager();
-        for (UnknownMacroNotification notification : manager.getNotificationsOfType(UnknownMacroNotification.class, project)) {
-          if (notified == null) {
-            notified = new SmartList<String>();
-          }
-          notified.addAll(notification.getMacros());
-        }
-        if (!ContainerUtil.isEmpty(notified)) {
-          macros.removeAll(notified);
-        }
-
-        if (macros.isEmpty()) {
-          return;
-        }
-
-        LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
-        doNotify(macros, project, Collections.singletonMap(substitutor, store));
-      }
-    }, project.getDisposed());
-  }
-
-  private static void doNotify(@NotNull final Set<String> macros, @NotNull final Project project,
-                               @NotNull final Map<TrackingPathMacroSubstitutor, IComponentStore> substitutorToStore) {
+  public static void doNotify(@NotNull final Set<String> macros, @NotNull final Project project,
+                              @NotNull final Map<TrackingPathMacroSubstitutor, IComponentStore> substitutorToStore) {
     String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a></p>";
     String productName = ApplicationNamesInfo.getInstance().getProductName();
     String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are") +

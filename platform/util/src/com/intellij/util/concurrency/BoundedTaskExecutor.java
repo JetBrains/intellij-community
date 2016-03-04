@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,17 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.Patches;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,10 +72,10 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   // for diagnostics
   static Object info(Object task) {
     if (task instanceof FutureTask) {
-      task = ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable");
+      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task.getClass());
     }
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
-      task = ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task");
+      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task.getClass());
     }
     return task;
   }
@@ -110,7 +111,10 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public void execute(@NotNull Runnable task) {
-    long status = myStatus.addAndGet(1 + (1L << 32)); // increment inProgress and queue stamp atomically
+    if (isShutdown()) {
+      throw new RejectedExecutionException("Already shutdown");
+    }
+    long status = incrementCounterAndTimestamp(); // increment inProgress and queue stamp atomically
 
     if (tryToExecute(status, task)) {
       return;
@@ -121,13 +125,27 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     pollAndExecute(status);
   }
 
+  static {
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
+  }
+  // todo replace with myStatus.getAndUpdate()
+  private long incrementCounterAndTimestamp() {
+    long status;
+    long newStatus;
+    do {
+      status = myStatus.get();
+      newStatus = status + 1 + (1L << 32) & 0x7fffffffffffffffL;
+    } while (!myStatus.compareAndSet(status, newStatus));
+    return newStatus;
+  }
+
   private void pollAndExecute(long status) {
     while (true) {
       int inProgress = (int)status;
       assert inProgress > 0 : inProgress;
 
       Runnable next;
-      if (inProgress <= myMaxTasks && !isShutdown() && (next = myTaskQueue.poll()) != null) {
+      if (inProgress <= myMaxTasks && (next = myTaskQueue.poll()) != null) {
         tryToExecute(status, next);
         break;
       }
@@ -143,7 +161,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     int inProgress = (int)status;
 
     assert inProgress > 0 : inProgress;
-    if (inProgress <= myMaxTasks && !isShutdown()) {
+    if (inProgress <= myMaxTasks) {
       try {
         myBackendExecutor.execute(wrap(task));
       }
@@ -182,7 +200,6 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @TestOnly
   public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread(); // to make sure we are not waiting inside the pooled thread, blocking it forever
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
     // start myMaxTasks runnables which will spread to all available executor threads
@@ -237,8 +254,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   public String toString() {
     return "BoundedExecutor(" + myMaxTasks + ") " + (isShutdown() ? "SHUTDOWN " : "") +
            "inProgress: " + (int)myStatus.get() +
-           "; " + myTaskQueue.size() +
-           " tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
+           "; " + myTaskQueue.size() + " tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
       @Override
       public Object fun(Runnable runnable) {
         return info(runnable);

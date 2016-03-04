@@ -574,5 +574,7 @@
     </action>
     <action id="EmmetNextEditPoint">
     </action>
+
+    <action id="Vcs.Push" />
   </keymap>
 </component>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class SegmentArray {
   protected int[] myStarts;
   protected int[] myEnds;
 
-  protected int mySegmentCount = 0;
+  protected int mySegmentCount;
   protected static final int INITIAL_SIZE = 64;
 
   protected SegmentArray() {
@@ -76,7 +76,7 @@ public class SegmentArray {
   }
 
   @NotNull
-  protected static int[] reallocateArray(@NotNull int[] array, int index) {
+  private static int[] reallocateArray(@NotNull int[] array, int index) {
     if (index < array.length) return array;
 
     int[] newArray = new int[calcCapacity(array.length, index)];

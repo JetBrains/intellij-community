@@ -144,6 +144,7 @@ public class PyStructuredDocstringFormatter {
     
     final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), env, 5000, data, false);
     if (!output.checkSuccess(LOG)) {
+      LOG.info("Malformed docstring:\n" + docstring);
       return null;
     }
     return output.getStdout();

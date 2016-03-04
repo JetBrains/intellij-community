@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,19 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiModifier;
-
-import static com.intellij.util.VisibilityUtil.toPresentableText;
+import com.intellij.util.VisibilityUtil;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaComboBoxVisibilityPanel extends ComboBoxVisibilityPanel<String> implements PsiModifier {
-  private static final String[] MODIFIERS = {PRIVATE, PACKAGE_LOCAL, PROTECTED, PUBLIC};
+public class JavaComboBoxVisibilityPanel extends ComboBoxVisibilityPanel<String> {
+  private static final String[] MODIFIERS = {PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
 
   private static final String[] PRESENTABLE_NAMES = {
-    toPresentableText(PRIVATE),
-    toPresentableText(PACKAGE_LOCAL),
-    toPresentableText(PROTECTED),
-    toPresentableText(PUBLIC)
+    VisibilityUtil.toPresentableText(PsiModifier.PRIVATE),
+    VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL),
+    VisibilityUtil.toPresentableText(PsiModifier.PROTECTED),
+    VisibilityUtil.toPresentableText(PsiModifier.PUBLIC)
   };
 
   public JavaComboBoxVisibilityPanel() {

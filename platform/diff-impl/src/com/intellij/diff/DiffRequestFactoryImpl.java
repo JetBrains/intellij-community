@@ -129,7 +129,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
   @NotNull
   public static String getTitle(@NotNull FilePath path1, @NotNull FilePath path2, @NotNull String separator) {
-    if ((path1.isDirectory() || path2.isDirectory()) && path1.getPresentableUrl().equals(path2.getPresentableUrl())) {
+    if ((path1.isDirectory() || path2.isDirectory()) && path1.getPath().equals(path2.getPath())) {
       return path1.getPresentableUrl();
     }
 

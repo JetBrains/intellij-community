@@ -48,7 +48,6 @@ public class CheckBoxList<T> extends JBList {
     myCellRenderer = new CellRenderer();
     setCellRenderer(myCellRenderer);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    setBorder(BorderFactory.createEtchedBorder());
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {

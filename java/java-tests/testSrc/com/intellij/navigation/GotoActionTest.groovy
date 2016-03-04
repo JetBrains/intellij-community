@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,20 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     def items = [matchedValue(byName, pattern),
                  matchedValue(byDesc, pattern, GotoActionModel.MatchMode.DESCRIPTION)].sort()
     assert [byName, byDesc] == items.collect { it.valueText }
+  }
+
+  public void "test sort by degree"() {
+    def pattern = 'c'
+    def copy = 'Copy'
+    def aardvark = 'Aardvarck'
+    def boom = 'Boom'
+    def deaf = 'deaf'
+    def eclaire = 'eclaire'
+    def cut = 'Cut'
+    def c = 'c'
+    def items = [matchedValue(boom, pattern), matchedValue(aardvark, pattern), matchedValue(copy, pattern),
+                 matchedValue(eclaire, pattern), matchedValue(deaf, pattern), matchedValue(cut, pattern), matchedValue(c, pattern)].sort()
+    assert [c, copy, cut, aardvark, eclaire, boom, deaf] == items.collect { it.valueText }
   }
   
   static def matchedValue(String fork, String pattern) {

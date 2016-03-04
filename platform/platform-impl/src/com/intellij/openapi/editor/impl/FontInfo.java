@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,27 +47,33 @@ public class FontInfo {
   
   private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = SystemInfo.isAppleJvm && Registry.is("ide.mac.fix.font.fallback");
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
-  private static final boolean ENABLE_OPTIONAL_LIGATURES = Registry.is("editor.enable.optional.ligatures");
 
   private final TIntHashSet mySymbolsToBreakDrawingIteration = new TIntHashSet();
 
   private final Font myFont;
   private final int mySize;
   @JdkConstants.FontStyle private final int myStyle;
+  private final boolean myUseLigatures;
   private final TIntHashSet mySafeCharacters = new TIntHashSet();
   private FontMetrics myFontMetrics = null;
   private boolean myHasGlyphsToBreakDrawingIteration;
   private boolean myCheckedForProblemGlyphs;
 
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
-    this(familyName, size, style, style);    
+    this(familyName, size, style, false);    
   }
   
-  FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, @JdkConstants.FontStyle int realStyle) {
+  public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures) {
+    this(familyName, size, style, style, useLigatures);    
+  }
+  
+  FontInfo(final String familyName, final int size, 
+           @JdkConstants.FontStyle int style, @JdkConstants.FontStyle int realStyle, boolean useLigatures) {
     mySize = size;
     myStyle = style;
+    myUseLigatures = useLigatures;
     Font font = new Font(familyName, style, size);
-    myFont = ENABLE_OPTIONAL_LIGATURES ? getFontWithLigaturesEnabled(font, realStyle) : font;
+    myFont = useLigatures ? getFontWithLigaturesEnabled(font, realStyle) : font;
   }
 
   @NotNull
@@ -116,7 +122,7 @@ public class FontInfo {
         String normalizedName = name.toLowerCase(Locale.getDefault());
         return normalizedName.startsWith(normalizedFamilyName) &&
                (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
-               (style == -1 || style == ComplementaryFontsRegistry.getFontStyle(name));
+               (style == -1 || style == getFontStyle(normalizedName));
       }
     };
     List<File> files = new ArrayList<File>();
@@ -141,6 +147,13 @@ public class FontInfo {
     }
     
     return Collections.min(files, BY_NAME);
+  }
+
+  private static int getFontStyle(@NotNull String fontFileNameLowercase) {
+    String baseName = fontFileNameLowercase.substring(0, fontFileNameLowercase.length() - 4);
+    if (baseName.endsWith("-it")) return Font.ITALIC;
+    else if (baseName.endsWith("-boldit")) return Font.BOLD | Font.ITALIC;
+    else return ComplementaryFontsRegistry.getFontStyle(fontFileNameLowercase);
   }
 
   private void parseProblemGlyphs() {
@@ -261,5 +274,26 @@ public class FontInfo {
   @JdkConstants.FontStyle
   public int getStyle() {
     return myStyle;
+  }
+
+  public boolean areLigaturesEnabled() {
+    return myUseLigatures;
+  }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    FontInfo fontInfo = (FontInfo)o;
+
+    if (!myFont.equals(fontInfo.myFont)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myFont.hashCode();
   }
 }

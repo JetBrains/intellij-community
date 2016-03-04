@@ -22,7 +22,10 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.compiler.*;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.compiler.ModuleSourceSet;
+import com.intellij.compiler.ProblemsView;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.progress.CompilerTaskBase;
 import com.intellij.compiler.progress.CompilerTaskFactory;
@@ -494,25 +497,8 @@ public class CompileDriver {
         if (!outputs.isEmpty()) {
           final ProgressIndicator indicator = compileContext.getProgressIndicator();
           indicator.setText("Synchronizing output directories...");
-          CompilerUtil.refreshOutputDirectories(outputs, _status == ExitStatus.CANCELLED);
+          CompilerUtil.refreshOutputDirectories(outputs, false);
           indicator.setText("");
-        }
-      }
-
-      if (compileContext.isAnnotationProcessorsEnabled() && !myProject.isDisposed()) {
-        final Set<File> genSourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-        final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
-        for (Module module : affectedModules) {
-          if (!module.isDisposed() && config.getAnnotationProcessingConfiguration(module).isEnabled()) {
-            final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-            if (path != null) {
-              genSourceRoots.add(new File(path));
-            }
-          }
-        }
-        if (!genSourceRoots.isEmpty()) {
-          // refresh generates source roots asynchronously; needed for error highlighting update
-          LocalFileSystem.getInstance().refreshIoFiles(genSourceRoots, true, true, null);
         }
       }
     }

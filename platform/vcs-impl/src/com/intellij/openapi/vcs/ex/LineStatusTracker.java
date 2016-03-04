@@ -16,9 +16,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -152,9 +150,13 @@ public class LineStatusTracker {
 
       destroyRanges();
       try {
-        myRanges = new RangesBuilder(myDocument, myVcsDocument, myMode).getRanges();
+        myRanges = RangesBuilder.createRanges(myDocument, myVcsDocument, myMode == Mode.SMART);
         for (final Range range : myRanges) {
           createHighlighter(range);
+        }
+
+        if (myRanges.isEmpty()) {
+          markFileUnchanged();
         }
       }
       catch (FilesTooBigForDiffException e) {
@@ -383,9 +385,8 @@ public class LineStatusTracker {
   }
 
   private void markFileUnchanged() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
+    // later to avoid saving inside document change event processing.
+    ApplicationManager.getApplication().invokeLater(() -> TransactionGuard.submitTransaction(() -> {
         FileDocumentManager.getInstance().saveDocument(myDocument);
         boolean stillEmpty;
         synchronized (myLock) {
@@ -395,8 +396,7 @@ public class LineStatusTracker {
           // file was modified, and now it's not -> dirty local change
           myVcsDirtyScopeManager.fileDirty(myVirtualFile);
         }
-      }
-    });
+    }));
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
@@ -405,8 +405,14 @@ public class LineStatusTracker {
       synchronized (myLock) {
         if (!myInitialized || myReleased || myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
         if (myDirtyRange != null) {
-          doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
-          myDirtyRange = null;
+          try {
+            doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+            myDirtyRange = null;
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            reinstallRanges();
+          }
         }
       }
     }
@@ -622,10 +628,10 @@ public class LineStatusTracker {
       return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2));
     }
 
-    List<String> lines = new DocumentWrapper(myDocument).getLines(changedLine1, changedLine2 - 1);
-    List<String> vcsLines = new DocumentWrapper(myVcsDocument).getLines(vcsLine1, vcsLine2 - 1);
+    List<String> lines = DiffUtil.getLines(myDocument, changedLine1, changedLine2);
+    List<String> vcsLines = DiffUtil.getLines(myVcsDocument, vcsLine1, vcsLine2);
 
-    return new RangesBuilder(lines, vcsLines, changedLine1, vcsLine1, myMode).getRanges();
+    return RangesBuilder.createRanges(lines, vcsLines, changedLine1, vcsLine1, myMode == Mode.SMART);
   }
 
   private static void shiftRanges(@NotNull List<Range> rangesAfterChange, int shift) {

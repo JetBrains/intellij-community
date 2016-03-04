@@ -26,3 +26,28 @@ class Main {
         });
     }
 }
+
+class Class1 {
+
+    public static void main(String[] args) {
+        System.out.println(Class2.getSomeTextUpper());
+        Class2.main(args);
+    }
+
+}
+
+class Class2 {
+    private static String SOME_TEXT = "abcdef";
+
+    public static String getSomeText() {
+        return SOME_TEXT;
+    }
+
+    public static String getSomeTextUpper() {
+        return SOME_TEXT.toUpperCase();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getSomeText());
+    }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,49 +22,68 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import jsr166e.extra.SequenceLock;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.VM;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author max
  */
 public class PagedFileStorage implements Forceable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
 
   public static final int MB = 1024 * 1024;
+  public static final int BUFFER_SIZE;
 
   private static final int LOWER_LIMIT;
   private static final int UPPER_LIMIT;
-  public static final int BUFFER_SIZE;
-  private static final int UNKNOWN_PAGE = -1;
 
   static {
     final int lower = 100;
-    final int upper = SystemInfo.is64Bit? 500 : 200;
+    final int upper = SystemInfo.is64Bit ? 500 : 200;
 
     BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * MB;
-    final long max = VM.maxDirectMemory() - 2 * BUFFER_SIZE;
+    final long max = maxDirectMemory() - 2 * BUFFER_SIZE;
     LOWER_LIMIT = (int)Math.min(lower * MB, max);
     UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * MB), max);
 
-    LOG.info("lower=" + (LOWER_LIMIT / MB) +
-             "; upper=" + (UPPER_LIMIT / MB) +
-             "; buffer=" + (BUFFER_SIZE / MB) +
-             "; max=" + max
-            );
+    LOG.info("lower=" + (LOWER_LIMIT / MB) + "; upper=" + (UPPER_LIMIT / MB) + "; buffer=" + (BUFFER_SIZE / MB) + "; max=" + (max / MB));
   }
+
+  private static long maxDirectMemory() {
+    try {
+      Class<?> aClass = Class.forName("sun.misc.VM");
+      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
+      return (Long)maxDirectMemory.invoke(null);
+    }
+    catch (Throwable ignore) { }
+
+    try {
+      Class<?> aClass = Class.forName("java.nio.Bits");
+      Field maxMemory = aClass.getDeclaredField("maxMemory");
+      maxMemory.setAccessible(true);
+      return (Long)maxMemory.get(null);
+    }
+    catch (Throwable ignore) { }
+
+    return Runtime.getRuntime().maxMemory();
+  }
+
+  private static final int UNKNOWN_PAGE = -1;
+  private static final int MAX_PAGES_COUNT = 0xFFFF;
+  private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
+  private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
+  private static final String RW = "rw";
 
   // It is important to have ourLock after previous static constants as it depends on them
   private static final StorageLock ourLock = new StorageLock();
@@ -83,29 +102,16 @@ public class PagedFileStorage implements Forceable {
   private int myStorageIndex;
   private final Object myLastAccessedBufferCacheLock = new Object();
 
-  private static final int MAX_PAGES_COUNT = 0xFFFF;
-  private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
-  private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
-
-  public void lock() {
-    myStorageLockContext.lock();
-  }
-
-  public void unlock() {
-    myStorageLockContext.unlock();
-  }
-
-  public StorageLockContext getStorageLockContext() {
-    return myStorageLockContext;
-  }
-
   private final byte[] myTypedIOBuffer;
   private volatile boolean isDirty = false;
   private final File myFile;
   protected volatile long mySize = -1;
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
-  @NonNls private static final String RW = "rw";
+
+  public PagedFileStorage(File file, StorageLock lock) throws IOException {
+    this(file, lock, BUFFER_SIZE, false);
+  }
 
   public PagedFileStorage(File file, StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
     this(file, lock.myDefaultStorageLockContext, pageSize, valuesAreBufferAligned);
@@ -121,15 +127,24 @@ public class PagedFileStorage implements Forceable {
                           boolean valuesAreBufferAligned,
                           boolean nativeBytesOrder) throws IOException {
     myFile = file;
-    myStorageLockContext = storageLockContext != null ? storageLockContext:ourLock.myDefaultStorageLockContext;
+    myStorageLockContext = storageLockContext != null ? storageLockContext : ourLock.myDefaultStorageLockContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
     myTypedIOBuffer = valuesAreBufferAligned ? null:new byte[8];
     myNativeBytesOrder = nativeBytesOrder;
   }
-  public PagedFileStorage(File file, StorageLock lock) throws IOException {
-    this(file, lock, BUFFER_SIZE, false);
+
+  public void lock() {
+    myStorageLockContext.lock();
+  }
+
+  public void unlock() {
+    myStorageLockContext.unlock();
+  }
+
+  public StorageLockContext getStorageLockContext() {
+    return myStorageLockContext;
   }
 
   public File getFile() {
@@ -317,7 +332,7 @@ public class PagedFileStorage implements Forceable {
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
     myStorageLockContext.myStorageLock.invalidateBuffer(myStorageIndex | (int)(oldSize / myPageSize)); // TODO long page
-    //unmapAll(); // we do not need it since all page alighned buffers can be reused
+    //unmapAll(); // we do not need it since all page aligned buffers can be reused
     final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
 
     resizeFile(newSize);
@@ -336,8 +351,8 @@ public class PagedFileStorage implements Forceable {
   }
 
   private void resizeFile(long newSize) throws IOException {
-    RandomAccessFile raf = new RandomAccessFile(myFile, RW);
     mySize = -1;
+    RandomAccessFile raf = new RandomAccessFile(myFile, RW);
     try {
       raf.setLength(newSize);
     }
@@ -471,10 +486,10 @@ public class PagedFileStorage implements Forceable {
     private final ConcurrentIntObjectMap<PagedFileStorage> myIndex2Storage = ContainerUtil.createConcurrentIntObjectMap();
 
     private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
-    private final SequenceLock mySegmentsAccessLock = new SequenceLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
+    private final ReentrantLock mySegmentsAccessLock = new ReentrantLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
     // todo avoid locking for access
 
-    private final SequenceLock mySegmentsAllocationLock = new SequenceLock();
+    private final ReentrantLock mySegmentsAllocationLock = new ReentrantLock();
     private final ConcurrentLinkedQueue<ByteBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<ByteBufferWrapper>();
     private volatile long mySize;
     private volatile long mySizeLimit;
@@ -639,7 +654,8 @@ public class PagedFileStorage implements Forceable {
         }
         catch (IOException e) {
           throw new MappingFailedException("Cannot map buffer", e);
-        } catch (OutOfMemoryError e) {
+        }
+        catch (OutOfMemoryError e) {
           oome = e;
           if (mySizeLimit > LOWER_LIMIT) {
             mySizeLimit -= owner.myPageSize;
@@ -655,13 +671,15 @@ public class PagedFileStorage implements Forceable {
               reservedMemory.setAccessible(true);
               Field maxMemory = aClass.getDeclaredField("maxMemory");
               maxMemory.setAccessible(true);
+              Object max, reserved;
+              //noinspection SynchronizationOnLocalVariableOrMethodParameter
               synchronized (aClass) {
-                LOG.info("Max memory:"+maxMemory.get(null) + ", reserved memory:" + reservedMemory.get(null));
+                max = maxMemory.get(null);
+                reserved = reservedMemory.get(null);
               }
+              LOG.info("Max memory:" + max + ", reserved memory:" + reserved);
             }
-            catch (Throwable t) {
-
-            }
+            catch (Throwable ignored) { }
             throw new MappingFailedException(
               "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
               "new size limit: " + mySizeLimit / MB + "MB " +
@@ -762,7 +780,7 @@ public class PagedFileStorage implements Forceable {
 
   public static class StorageLockContext {
     private final boolean myCheckThreadAccess;
-    private final SequenceLock myLock;
+    private final ReentrantLock myLock;
     private final StorageLock myStorageLock;
 
     @Deprecated
@@ -771,7 +789,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     private StorageLockContext(StorageLock lock, boolean checkAccess) {
-      myLock = new SequenceLock();
+      myLock = new ReentrantLock();
       myStorageLock = lock;
       myCheckThreadAccess = checkAccess;
     }

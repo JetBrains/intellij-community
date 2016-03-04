@@ -46,6 +46,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
+import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST;
 import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER;
 import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER;
 
@@ -63,7 +64,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == null ||
+    return GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == CHOOSE_PER_TEST ||
            GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == GRADLE_TEST_RUNNER;
   }
 
@@ -130,7 +131,14 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   }
 
   @NotNull
-  static List<String> getTasksToRun(Module module) {
+  public static List<String> getTasksToRun(@NotNull Module module) {
+    for (GradleTestTasksProvider provider : GradleTestTasksProvider.EP_NAME.getExtensions()) {
+      final List<String> tasks = provider.getTasks(module);
+      if(!ContainerUtil.isEmpty(tasks)) {
+        return tasks;
+      }
+    }
+
     final List<String> result;
     final String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
     if (externalProjectId == null) return ContainerUtil.emptyList();

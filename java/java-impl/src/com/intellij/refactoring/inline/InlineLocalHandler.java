@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,7 +78,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final String localName = local.getName();
 
-    final Query<PsiReference> query = ReferencesSearch.search(local, GlobalSearchScope.allScope(project), false);
+    final Query<PsiReference> query = ReferencesSearch.search(local, local.getUseScope());
     if (query.findFirst() == null){
       LOG.assertTrue(refExpr == null);
       String message = RefactoringBundle.message("variable.is.never.used", localName);
@@ -100,11 +99,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
             if (innerClass instanceof PsiLambdaExpression) {
               if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
                 innerClassesWithUsages.add(element);
-              } else {
-                innerClassesWithUsages.add(innerClass);
-              }
-              innerClass = parentPsiClass;
-              continue;
+                innerClass = parentPsiClass;
+                continue;
+              } 
             }
             innerClassesWithUsages.add(innerClass);
             innerClassUsages.add(element);

@@ -115,7 +115,7 @@ class SlowerTypeConversions implements Runnable {
 
       FromArrayConversion.addConversions(element, prefix, itemType, result, qualifier, expectedType);
 
-      ToArrayConversion.addConversions(element, object, prefix, itemType, result, qualifier, expectedType);
+      ToArrayConversion.addConversions(element, prefix, itemType, result, qualifier, expectedType);
 
       ArrayMemberAccess.addMemberAccessors(element, prefix, itemType, qualifier, result, (PsiModifierListOwner)object, expectedType);
     }

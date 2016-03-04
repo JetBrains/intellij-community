@@ -71,6 +71,7 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.internal.impl.DefaultArtifactResolver;
 import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.repository.LocalRepositoryManager;
@@ -78,7 +79,10 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.spi.log.LoggerFactory;
+import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
+import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
+import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
@@ -642,11 +646,15 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
             RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
             if (repositorySession instanceof DefaultRepositorySystemSession) {
-              ((DefaultRepositorySystemSession)repositorySession).setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+              DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
+              session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
 
               if (myWorkspaceMap != null) {
-                ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
+                session.setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
               }
+
+              session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+              session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
             }
 
             List<Exception> exceptions = new ArrayList<Exception>();
@@ -681,13 +689,47 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
               final List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
 
+              final Map<Dependency, Artifact> winnerDependencyMap = new HashMap<Dependency, Artifact>();
               Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
+              dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
+                @Override
+                public boolean visitEnter(org.eclipse.aether.graph.DependencyNode node) {
+                  Artifact winnerArtifact = null;
+                  final Map<?, ?> data = node.getData();
+                  final Object winner = data.get(ConflictResolver.NODE_DATA_WINNER);
+                  if(winner instanceof org.eclipse.aether.graph.DependencyNode) {
+                    org.eclipse.aether.graph.DependencyNode winnerNode = (org.eclipse.aether.graph.DependencyNode)winner;
+                    if(!StringUtil.equals(node.getVersion().toString(), winnerNode.getVersion().toString())) {
+                      Dependency winnerNodeDependency = winnerNode.getDependency();
+                      winnerArtifact = RepositoryUtils.toArtifact(winnerNodeDependency.getArtifact());
+                      winnerArtifact.setScope(winnerNodeDependency.getScope());
+                      winnerArtifact.setOptional(winnerNodeDependency.isOptional());
+                    }
+                  }
+
+                  final Dependency dependency = node.getDependency();
+                  if(dependency != null) {
+                    if(winnerArtifact == null) {
+                      winnerArtifact = RepositoryUtils.toArtifact(node.getArtifact());
+                      winnerArtifact.setScope(dependency.getScope());
+                      winnerArtifact.setOptional(dependency.isOptional());
+                    }
+                    winnerDependencyMap.put(dependency, winnerArtifact);
+                  }
+                  return true;
+                }
+
+                @Override
+                public boolean visitLeave(org.eclipse.aether.graph.DependencyNode node) {
+                  return true;
+                }
+              }));
               for (Dependency dependency : dependencies) {
-                final Artifact artifact = RepositoryUtils.toArtifact(dependency.getArtifact());
-                artifact.setScope(dependency.getScope());
-                artifact.setOptional(dependency.isOptional());
-                artifacts.add(artifact);
-                resolveAsModule(artifact);
+                final Artifact artifact = winnerDependencyMap.get(dependency);
+                if(artifact != null) {
+                  artifacts.add(artifact);
+                  resolveAsModule(artifact);
+                }
               }
 
               project.setArtifacts(artifacts);

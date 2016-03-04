@@ -180,7 +180,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
         if (treeNode instanceof FileTreeNode) {
           pointer = ((FileTreeNode)treeNode).getFilePointer();
         }
-        if (pointer != null && pointer.isValid()) {
+        if (pointer != null) {
           mySelectedUrl = pointer.getUrl();
           mySelectedFile = pointer.getFile();
         }

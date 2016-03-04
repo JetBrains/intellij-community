@@ -28,6 +28,7 @@ import com.intellij.util.containers.EmptyIterable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * The "import foo" or "import foo as bar" parts.
@@ -193,41 +195,57 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return Collections.singleton(ret);
   }
 
-  public PsiElement getElementNamed(final String name) {
-    return getElementNamed(name, true);
+  @NotNull
+  public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
+    return getElementsNamed(name, true);
   }
 
+  @Nullable
   @Override
   public PsiElement getElementNamed(String name, boolean resolveImportElement) {
+    final List<RatedResolveResult> results = getElementsNamed(name, resolveImportElement);
+    return results.isEmpty() ? null : RatedResolveResult.sorted(results).get(0).getElement();
+  }
+
+  @NotNull
+  private List<RatedResolveResult> getElementsNamed(@NotNull String name, boolean resolveImportElement) {
     String asName = getAsName();
     if (asName != null) {
-      if (!Comparing.equal(name, asName)) return null;
-      return resolveImportElement ? resolve() : this;
+      if (!Comparing.equal(name, asName)) {
+        return Collections.emptyList();
+      }
+      if (resolveImportElement) {
+        return multiResolve();
+      }
+      return ResolveResultList.to(this);
     }
     else {
       final QualifiedName qName = getImportedQName();
       if (qName == null || qName.getComponentCount() == 0 || !qName.getComponents().get(0).equals(name)) {
-        return null;
+        return Collections.emptyList();
       }
       if (qName.getComponentCount() == 1) {
         if (resolveImportElement) {
-          return ResolveImportUtil.resolveImportElement(this, QualifiedName.fromComponents(name));
+          return multiResolve();
         }
-        return this;
+        return ResolveResultList.to(this);
       }
-      return createImportedModule(name);
+      return ResolveResultList.to(createImportedModule(name));
     }
   }
 
   @Nullable
   @Override
   public PsiElement resolve() {
-    QualifiedName qName = getImportedQName();
-    return qName == null ? null : ResolveImportUtil.resolveImportElement(this, qName);
+    final List<RatedResolveResult> results = multiResolve();
+    return results.isEmpty() ? null : RatedResolveResult.sorted(results).get(0).getElement();
   }
 
-  public boolean mustResolveOutside() {
-    return true; // formally
+  @NotNull
+  @Override
+  public List<RatedResolveResult> multiResolve() {
+    final QualifiedName qName = getImportedQName();
+    return qName == null ? Collections.<RatedResolveResult>emptyList() : ResolveImportUtil.multiResolveImportElement(this, qName);
   }
 
   @Override

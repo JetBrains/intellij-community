@@ -31,12 +31,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,6 +48,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AutoPopupController implements Disposable {
+  /**
+   * Settings this user data key to the editor with a completion provider
+   * makes the autopopup scheduling ignore the state of the corresponding setting.
+   * <p/>
+   * This doesn't affect other conditions when autopopup is not possible (e.g. power save mode).
+   */
+  public static final Key<Boolean> ALWAYS_AUTO_POPUP = Key.create("Always Show Completion Auto-Popup");
+
   private final Project myProject;
   private final Alarm myAlarm = new Alarm();
 
@@ -93,7 +103,8 @@ public class AutoPopupController implements Disposable {
       return;
     }
 
-    if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) {
+    boolean alwaysAutoPopup = editor != null && Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
+    if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
       return;
     }
     if (PowerSaveMode.isEnabled()) {
@@ -113,19 +124,16 @@ public class AutoPopupController implements Disposable {
     CompletionServiceImpl.setCompletionPhase(phase);
     phase.ignoreCurrentDocumentChange();
 
-    CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
-      @Override
-      public void run() {
-        if (phase.checkExpired()) return;
+    runLaterWithEverythingCommitted(myProject, () -> {
+      if (phase.checkExpired()) return;
 
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-        if (file != null && condition != null && !condition.value(file)) {
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-          return;
-        }
-
-        CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      if (file != null && condition != null && !condition.value(file)) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        return;
       }
+
+      CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
     });
   }
 
@@ -190,5 +198,24 @@ public class AutoPopupController implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public static void runLaterWithEverythingCommitted(@NotNull final Project project,
+                                                     @NotNull final Runnable runnable) {
+    ModalityState modalityState = ModalityState.current();
+    final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
+    pdm.performWhenAllCommitted(() -> {
+      // later because we may end up in write action here if there was a synchronous commit
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (pdm.hasUncommitedDocuments()) {
+          // no luck, will try later
+          runLaterWithEverythingCommitted(project, runnable);
+        }
+        else {
+          runnable.run();
+        }
+      }, modalityState, project.getDisposed());
+
+    });
   }
 }

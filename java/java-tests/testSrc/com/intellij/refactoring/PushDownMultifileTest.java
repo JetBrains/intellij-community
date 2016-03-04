@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -68,7 +67,7 @@ public class PushDownMultifileTest extends MultiFileTestCase {
         memberInfo.setChecked(true);
         membersToMove[0] = memberInfo;
 
-        new PushDownProcessor(getProject(), membersToMove, srcClass, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+        new PushDownProcessor(srcClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
 
 
         //LocalFileSystem.getInstance().refresh(false);
@@ -121,7 +120,7 @@ public class PushDownMultifileTest extends MultiFileTestCase {
         memberInfo.setChecked(true);
         membersToMove[0] = memberInfo;
 
-        new PushDownProcessor(getProject(), membersToMove, srcClass, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+        new PushDownProcessor(srcClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
 
 
         //LocalFileSystem.getInstance().refresh(false);
@@ -129,7 +128,7 @@ public class PushDownMultifileTest extends MultiFileTestCase {
       });
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals(e.getMessage(), "Class <b><code>b.B</code></b> is package local and will not be accessible from file <b><code>A.form</code></b>.");
+      assertEquals(e.getMessage(), "Class <b><code>b.B</code></b> is package-private and will not be accessible from file <b><code>A.form</code></b>.");
       return;
     }
     fail("Conflict was not detected");

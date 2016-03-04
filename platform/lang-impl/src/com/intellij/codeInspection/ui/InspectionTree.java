@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,16 +38,15 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.TreeWillExpandListener;
+import javax.swing.event.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
@@ -58,10 +57,10 @@ public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
   @NotNull private final GlobalInspectionContextImpl myContext;
   private SelectionPath mySelectionPath;
-  private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
+  private boolean myQueueUpdate;
 
   public InspectionTree(@NotNull Project project, @NotNull GlobalInspectionContextImpl context) {
-    super(new InspectionRootNode(project));
+    setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(this))));
     myContext = context;
 
     setCellRenderer(new CellRenderer());
@@ -91,6 +90,14 @@ public class InspectionTree extends Tree {
     });
   }
 
+  public void setQueueUpdate(boolean queueUpdate) {
+    myQueueUpdate = queueUpdate;
+  }
+
+  public boolean isUnderQueueUpdate() {
+    return myQueueUpdate;
+  }
+
   public void removeAllNodes() {
     getRoot().removeAllChildren();
     nodeStructureChanged(getRoot());
@@ -109,6 +116,9 @@ public class InspectionTree extends Tree {
       Object[] nodes = path.getPath();
       for (int j = nodes.length - 1; j >= 0; j--) {
         Object node = nodes[j];
+        if (node instanceof InspectionGroupNode) {
+          return null;
+        }
         if (node instanceof InspectionNode) {
           InspectionToolWrapper wrapper = ((InspectionNode)node).getToolWrapper();
           if (toolWrapper == null) {
@@ -123,6 +133,36 @@ public class InspectionTree extends Tree {
     }
 
     return toolWrapper;
+  }
+
+  @Nullable
+  public RefEntity getCommonSelectedElement() {
+    final Object node = getCommonSelectedNode();
+    return node instanceof RefElementNode ? ((RefElementNode)node).getElement() : null;
+  }
+
+  @Nullable
+  private Object getCommonSelectedNode() {
+    final TreePath[] paths = getSelectionPaths();
+    if (paths == null) return null;
+    final Object[][] resolvedPaths = new Object[paths.length][];
+    for (int i = 0; i < paths.length; i++) {
+      TreePath path = paths[i];
+      resolvedPaths[i] = path.getPath();
+    }
+
+    Object currentCommonNode = null;
+    for (int i = 0; i < resolvedPaths[0].length; i++) {
+      final Object currentNode = resolvedPaths[0][i];
+      for (int j = 1; j < resolvedPaths.length; j++) {
+        final Object o = resolvedPaths[j][i];
+        if (!o.equals(currentNode)) {
+          return currentCommonNode;
+        }
+      }
+      currentCommonNode = currentNode;
+    }
+    return currentCommonNode;
   }
 
   @NotNull
@@ -164,8 +204,7 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    final InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
-    if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
+    if (getSelectionCount() == 0) return CommonProblemDescriptor.EMPTY_ARRAY;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
@@ -175,9 +214,50 @@ public class InspectionTree extends Tree {
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
   }
 
+  public int getSelectedProblemCount() {
+    if (getSelectionCount() == 0) return 0;
+    final TreePath[] paths = getSelectionPaths();
+
+    Set<InspectionTreeNode> result = new HashSet<>();
+    MultiMap<InspectionTreeNode, InspectionTreeNode> rootDependencies = new MultiMap<>();
+    for (TreePath path : paths) {
+
+      final InspectionTreeNode node = (InspectionTreeNode)path.getLastPathComponent();
+      final Collection<InspectionTreeNode> visitedChildren = rootDependencies.get(node);
+      for (InspectionTreeNode child : visitedChildren) {
+        result.remove(child);
+      }
+
+      boolean needToAdd = true;
+      for (int i = 0; i < path.getPathCount() - 1; i++) {
+        final InspectionTreeNode parent = (InspectionTreeNode) path.getPathComponent(i);
+        rootDependencies.putValue(parent, node);
+        if (result.contains(parent)) {
+          needToAdd = false;
+          break;
+        }
+      }
+
+      if (needToAdd) {
+        result.add(node);
+      }
+    }
+
+    int count = 0;
+    for (InspectionTreeNode node : result) {
+      count += node.getProblemCount();
+    }
+    return count;
+  }
+
   private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
     if (node instanceof ProblemDescriptionNode) {
-      descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
+      if (node.isValid() && !node.isResolved()) {
+        final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+        if (descriptor != null) {
+          descriptors.add(descriptor);
+        }
+      }
     }
     for(int i = node.getChildCount() - 1; i >= 0; i--){
       traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors);
@@ -186,6 +266,10 @@ public class InspectionTree extends Tree {
 
   private void nodeStructureChanged(InspectionTreeNode node) {
     ((DefaultTreeModel)getModel()).nodeStructureChanged(node);
+  }
+
+  public void queueUpdate() {
+    ((InspectionRootNode) getRoot()).getUpdater().update(true);
   }
 
   private class ExpandListener implements TreeWillExpandListener {
@@ -224,9 +308,9 @@ public class InspectionTree extends Tree {
     }
   }
 
-  private void restoreExpansionStatus(InspectionTreeNode node) {
+  public void restoreExpansionStatus(InspectionTreeNode node) {
     if (myExpandedUserObjects.contains(node.getUserObject())) {
-      sortChildren(node);
+      //sortChildren(node);
       TreeNode[] pathToNode = node.getPath();
       expandPath(new TreePath(pathToNode));
       Enumeration children = node.children();

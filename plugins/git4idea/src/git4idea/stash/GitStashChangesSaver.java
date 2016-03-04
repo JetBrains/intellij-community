@@ -161,6 +161,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
     }
   }
 
+  @Override
+  public String toString() {
+    return "StashChangesSaver. Roots: " + myStashedRoots;
+  }
+
   private static class UnstashConflictResolver extends GitConflictResolver {
 
     private final Set<VirtualFile> myStashedRoots;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
@@ -27,17 +30,14 @@ import java.util.Map;
 /**
  * User: catherine
  */
-@State(name = "PyPackageService",
-       storages = {
-           @Storage(file = StoragePathMacros.APP_CONFIG + "/packages.xml")
-       }
-)
+@State(name = "PyPackageService", storages = @Storage("packages.xml"))
 public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {
   public Map<String, Boolean> sdkToUsersite = new HashMap<String, Boolean>();
   public List<String> additionalRepositories = new ArrayList<String>();
   public Map<String, String> PY_PACKAGES = ContainerUtil.newConcurrentMap();
   public String virtualEnvBasePath;
+  public Boolean PYPI_REMOVED = false;
   
   public long LAST_TIME_CHECKED = 0;
 
@@ -56,12 +56,22 @@ public class PyPackageService implements
   }
 
   public void addRepository(String repository) {
-    additionalRepositories.add(repository);
+    if (repository == null) return;
+    if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
+      PYPI_REMOVED = false;
+    }
+    else {
+      if (!repository.endsWith("/")) repository += "/";
+      additionalRepositories.add(repository);
+    }
   }
 
-  public void removeRepository(String repository) {
+  public void removeRepository(final String repository) {
     if (additionalRepositories.contains(repository))
       additionalRepositories.remove(repository);
+    else if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
+      PYPI_REMOVED = true;
+    }
   }
 
   public boolean useUserSite(String sdk) {

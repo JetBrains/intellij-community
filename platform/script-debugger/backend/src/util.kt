@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ package org.jetbrains.debugger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.CharsetToolkit
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.io.CharSequenceBackedByChars
-import org.jetbrains.io.addListener
+import org.jetbrains.io.addChannelListener
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.CharBuffer
@@ -50,7 +49,7 @@ class MessagingLogger internal constructor(private val queue: ConcurrentLinkedQu
   }
 
   fun closeOnChannelClose(channel: Channel) {
-    channel.closeFuture().addListener {
+    channel.closeFuture().addChannelListener {
       try {
         add("\"Closed\"", "Channel")
       }
@@ -61,10 +60,14 @@ class MessagingLogger internal constructor(private val queue: ConcurrentLinkedQu
   }
 }
 
-fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) key: String): MessagingLogger? {
-  val debugFile = Registry.stringValue(key)
+fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) key: String, suffix: String = ""): MessagingLogger? {
+  var debugFile = Registry.stringValue(key)
   if (debugFile.isNullOrEmpty()) {
     return null
+  }
+
+  if (!suffix.isNullOrEmpty()) {
+    debugFile = debugFile.replace(".json", suffix + ".json")
   }
 
   val queue = ConcurrentLinkedQueue<LogEntry>()
@@ -98,7 +101,7 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
             fileChannel.write(message.byteBuffer)
           }
           else {
-            fileChannel.write(CharsetToolkit.UTF8_CHARSET.encode(CharBuffer.wrap(message)))
+            fileChannel.write(Charsets.UTF_8.encode(CharBuffer.wrap(message)))
           }
 
           writer.write("},\n")

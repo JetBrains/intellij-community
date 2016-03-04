@@ -80,9 +80,6 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       final GrExpression qualifier = methodExpression.getQualifierExpression();
       final String methodName = methodExpression.getReferenceName();
       final GrArgumentList argumentList = call.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
       replaceExpression(expression, qualifier.getText() + "?." + methodName + argumentList.getText());
     }
   }

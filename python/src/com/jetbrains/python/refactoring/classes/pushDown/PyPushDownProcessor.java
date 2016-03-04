@@ -33,7 +33,7 @@ import java.util.Collection;
  */
 public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
 
-  private static final String HEADER = RefactoringBundle.message("push.down.members.elements.header");
+  private static final String HEADER = RefactoringBundle.message("push.down.members.elements.header", "");
 
   public PyPushDownProcessor(
     @NotNull final Project project,

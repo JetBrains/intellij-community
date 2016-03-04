@@ -177,6 +177,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", ApplicationBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
     }
+    else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
+      consumer.showStandardOptions("LINE_COMMENT_ADD_SPACE");
+    }
     else {
       consumer.showAllStandardOptions();
     }

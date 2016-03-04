@@ -17,6 +17,8 @@ package com.jetbrains.python.codeInsight;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
@@ -31,11 +33,11 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -87,7 +89,31 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
+    final String comment = func.getTypeCommentAnnotation();
+    if (comment != null) {
+      final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(param, comment);
+      final PyCallableType functionType = as(result.getType(), PyCallableType.class);
+      if (functionType != null) {
+        final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
+        assert paramTypes != null;
+        final PyParameter[] funcParams = func.getParameterList().getParameters();
+        final int startOffset = omitFirstParamInTypeComment(func) ? 1 : 0;
+        for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
+          if (funcParams[paramIndex] == param) {
+            final int typeIndex = paramIndex - startOffset;
+            if (typeIndex >= 0 && typeIndex < paramTypes.size()) {
+              return Ref.create(paramTypes.get(typeIndex).getType(context));
+            }
+            break;
+          }
+        }
+      }
+    }
     return null;
+  }
+
+  private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func) {
+    return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD;
   }
 
   @Nullable
@@ -107,6 +133,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyType constructorType = getGenericConstructorType(function, context);
       if (constructorType != null) {
         return Ref.create(constructorType);
+      }
+      final String comment = function.getTypeCommentAnnotation();
+      if (comment != null) {
+        final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(callable, comment);
+        final PyCallableType funcType = as(result.getType(), PyCallableType.class);
+        if (funcType != null) {
+          return Ref.create(funcType.getReturnType(context));
+        }
       }
     }
     return null;
@@ -153,11 +187,22 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
       if (comment != null) {
         final String text = comment.getText();
-        final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
-        if (m.matches()) {
-          return m.group(1);
-        }
+        return getTypeCommentValue(text);
       }
+    }
+    return null;
+  }
+
+  /**
+   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to 
+   * contain type annotation in PEP 484 compatible format, that can be parsed with either {@link PyTypeParser#parse(PsiElement, String)}
+   * or {@link PyTypeParser#parsePep484FunctionTypeComment(PsiElement, String)}.
+   */
+  @Nullable
+  public static String getTypeCommentValue(@NotNull String text) {
+    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+    if (m.matches()) {
+      return m.group(1);
     }
     return null;
   }
@@ -228,10 +273,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         if (expr instanceof PySubscriptionExpression) {
           final PyExpression indexExpr = ((PySubscriptionExpression)expr).getIndexExpression();
           if (indexExpr != null) {
-            final PsiElement resolved = tryResolving(indexExpr, context);
-            final PyGenericType genericType = getGenericType(resolved, context);
-            if (genericType != null) {
-              results.add(genericType);
+            for (PsiElement resolved : tryResolving(indexExpr, context)) {
+              final PyGenericType genericType = getGenericType(resolved, context);
+              if (genericType != null) {
+                results.add(genericType);
+              }
             }
           }
         }
@@ -243,8 +289,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final PsiElement resolved = tryResolving(expression, context);
-    return getTypeForResolvedElement(resolved, context);
+    final List<PyType> members = Lists.newArrayList();
+    for (PsiElement resolved : tryResolving(expression, context)) {
+      members.add(getTypeForResolvedElement(resolved, context));
+    }
+    return PyUnionType.union(members);
   }
 
   @Nullable
@@ -340,8 +389,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (element instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)element;
       final PyExpression operand = subscriptionExpr.getOperand();
-      final String operandName = resolveToQualifiedName(operand, context);
-      if ("typing.Optional".equals(operandName)) {
+      final Collection<String> operandNames = resolveToQualifiedNames(operand, context);
+      if (operandNames.contains("typing.Optional")) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr != null) {
           final PyType type = getType(indexExpr, context);
@@ -391,8 +440,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (resolved instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
       final PyExpression operand = subscriptionExpr.getOperand();
-      final String operandName = resolveToQualifiedName(operand, context);
-      if ("typing.Callable".equals(operandName)) {
+      final Collection<String> operandNames = resolveToQualifiedNames(operand, context);
+      if (operandNames.contains("typing.Callable")) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr instanceof PyTupleExpression) {
           final PyTupleExpression tupleExpr = (PyTupleExpression)indexExpr;
@@ -421,8 +470,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (element instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)element;
       final PyExpression operand = subscriptionExpr.getOperand();
-      final String operandName = resolveToQualifiedName(operand, context);
-      if ("typing.Union".equals(operandName)) {
+      final Collection<String> operandNames = resolveToQualifiedNames(operand, context);
+      if (operandNames.contains("typing.Union")) {
         return PyUnionType.union(getIndexTypes(subscriptionExpr, context));
       }
     }
@@ -435,8 +484,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyCallExpression assignedCall = (PyCallExpression)element;
       final PyExpression callee = assignedCall.getCallee();
       if (callee != null) {
-        final String calleeQName = resolveToQualifiedName(callee, context);
-        if ("typing.TypeVar".equals(calleeQName)) {
+        final Collection<String> calleeQNames = resolveToQualifiedNames(callee, context);
+        if (calleeQNames.contains("typing.TypeVar")) {
           final PyExpression[] arguments = assignedCall.getArguments();
           if (arguments.length > 0) {
             final PyExpression firstArgument = arguments[0];
@@ -507,39 +556,51 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static PsiElement tryResolving(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  private static List<PsiElement> tryResolving(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final List<PsiElement> elements = Lists.newArrayList();
     if (expression instanceof PyReferenceExpression) {
       final PyReferenceExpression referenceExpr = (PyReferenceExpression)expression;
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
       final PsiPolyVariantReference reference = referenceExpr.getReference(resolveContext);
-      final PsiElement element = reference.resolve();
-      if (element instanceof PyFunction) {
-        final PyFunction function = (PyFunction)element;
-        if (PyUtil.isInit(function)) {
-          final PyClass cls = function.getContainingClass();
-          if (cls != null) {
-            return cls;
+      final List<PsiElement> resolved = PyUtil.multiResolveTopPriority(reference);
+      for (PsiElement element : resolved) {
+        if (element instanceof PyFunction) {
+          final PyFunction function = (PyFunction)element;
+          if (PyUtil.isInit(function)) {
+            final PyClass cls = function.getContainingClass();
+            if (cls != null) {
+              elements.add(cls);
+              continue;
+            }
           }
         }
-      }
-      else if (element instanceof PyTargetExpression) {
-        final PyTargetExpression targetExpr = (PyTargetExpression)element;
-        // XXX: Requires switching from stub to AST
-        final PyExpression assignedValue = targetExpr.findAssignedValue();
-        if (assignedValue != null) {
-          return assignedValue;
+        else if (element instanceof PyTargetExpression) {
+          final PyTargetExpression targetExpr = (PyTargetExpression)element;
+          // XXX: Requires switching from stub to AST
+          final PyExpression assignedValue = targetExpr.findAssignedValue();
+          if (assignedValue != null) {
+            elements.add(assignedValue);
+            continue;
+          }
+        }
+        if (element != null) {
+          elements.add(element);
         }
       }
-      if (element != null) {
-        return element;
-      }
     }
-    return expression;
+    return !elements.isEmpty() ? elements : Collections.<PsiElement>singletonList(expression);
   }
 
-  @Nullable
-  private static String resolveToQualifiedName(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    return getQualifiedName(tryResolving(expression, context));
+  @NotNull
+  private static Collection<String> resolveToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final Set<String> names = Sets.newLinkedHashSet();
+    for (PsiElement resolved : tryResolving(expression, context)) {
+      final String name = getQualifiedName(resolved);
+      if (name != null) {
+        names.add(name);
+      }
+    }
+    return names;
   }
 
   @Nullable

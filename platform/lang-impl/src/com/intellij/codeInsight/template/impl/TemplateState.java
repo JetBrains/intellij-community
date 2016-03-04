@@ -100,7 +100,7 @@ public class TemplateState implements Disposable {
   private boolean mySelectionCalculated = false;
   private boolean myStarted;
 
-  public TemplateState(@NotNull Project project, final Editor editor) {
+  TemplateState(@NotNull Project project, @NotNull final Editor editor) {
     myProject = project;
     myEditor = editor;
     myDocument = myEditor.getDocument();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,82 +19,27 @@
  */
 package com.intellij.concurrency;
 
-import com.intellij.Patches;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
-
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public abstract class JobScheduler {
-  private static final ScheduledThreadPoolExecutor ourScheduledExecutorService;
-  private static final int TASK_LIMIT = 50;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobScheduler");
-  private static final ThreadLocal<Long> START = new ThreadLocal<Long>();
-  private static final boolean DO_TIMING = true;
-
-  static {
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, ConcurrencyUtil.newNamedThreadFactory("Periodic tasks thread", true, Thread.NORM_PRIORITY)) {
-      @Override
-      protected void beforeExecute(Thread t, Runnable r) {
-        if (DO_TIMING) {
-          START.set(System.currentTimeMillis());
-        }
-      }
-
-      @Override
-      protected void afterExecute(Runnable r, Throwable t) {
-        if (DO_TIMING) {
-          long elapsed = System.currentTimeMillis() - START.get();
-          Object unwrapped;
-          if (elapsed > TASK_LIMIT && (unwrapped = info(r)) != null) {
-            @NonNls String msg = TASK_LIMIT + " ms execution limit failed for: " + unwrapped + "; elapsed time was " + elapsed +"ms";
-            LOG.info(msg);
-          }
-        }
-      }
-    };
-    executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
-    executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
-    enableRemoveOnCancelPolicy(executor);
-    ourScheduledExecutorService = executor;
-  }
-
-  private static Object info(Runnable r) {
-    if (!(r instanceof FutureTask)) return r;
-    Object sync = ReflectionUtil.getField(FutureTask.class, r, null, "sync"); // FutureTask.sync in <=JDK7
-    Object o = sync == null ? r : sync;
-    Object callable = ReflectionUtil.getField(o.getClass(), o, Callable.class, "callable"); // FutureTask.callable or Sync.callable
-    if (callable == null) return null;
-    Object task = ReflectionUtil.getField(callable.getClass(), callable, null, "task"); // java.util.concurrent.Executors.RunnableAdapter.task
-    return task == null ? callable : task;
-  }
-
-  private static void enableRemoveOnCancelPolicy(ScheduledThreadPoolExecutor executor) {
-    if (Patches.USE_REFLECTION_TO_ACCESS_JDK7) {
-      try {
-        Method setRemoveOnCancelPolicy = ReflectionUtil.getDeclaredMethod(ScheduledThreadPoolExecutor.class, "setRemoveOnCancelPolicy", boolean.class);
-        setRemoveOnCancelPolicy.invoke(executor, true);
-      }
-      catch (Exception ignored) {
-      }
-    }
-  }
-
-  public static JobScheduler getInstance() {
-    return ServiceManager.getService(JobScheduler.class);
-  }
-
+  /**
+   * Returns application-wide instance of {@link ScheduledExecutorService} which is:
+   * <ul>
+   * <li>Unbounded. I.e. multiple {@link ScheduledExecutorService#schedule}(command, 0, TimeUnit.SECONDS) will lead to multiple executions of the {@code command} in parallel.</li>
+   * <li>Backed by the application thread pool. I.e. every scheduled task will be executed in IDEA own thread pool. See {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)}</li>
+   * <li>Non-shutdownable singleton. Any attempts to call {@link ExecutorService#shutdown()}, {@link ExecutorService#shutdownNow()} will be severely punished.</li>
+   * <li>{@link ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit)} is disallowed because it's bad for hibernation.
+   *     Use {@link ScheduledExecutorService#scheduleWithFixedDelay(Runnable, long, long, TimeUnit)} instead.</li>
+   * </ul>
+   * If you need to execute only one task (when it's ready) at a time, you can use {@link AppExecutorUtil#createBoundedScheduledExecutorService(int)}.
+   */
   @NotNull
   public static ScheduledExecutorService getScheduler() {
-    return ourScheduledExecutorService;
+    return AppExecutorUtil.getAppScheduledExecutorService();
   }
 }

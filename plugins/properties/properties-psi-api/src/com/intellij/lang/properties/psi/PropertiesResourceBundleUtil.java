@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public class PropertiesResourceBundleUtil {
-  private static final TIntHashSet SYMBOLS_TO_ESCAPE = new TIntHashSet(new int[]{'#', '!', '=', ':'});
+  private static final TIntHashSet SYMBOLS_TO_ESCAPE = new TIntHashSet(new int[]{'=', ':'});
   private static final char        ESCAPE_SYMBOL     = '\\';
 
 
@@ -58,17 +58,18 @@ public class PropertiesResourceBundleUtil {
    * Perform reverse operation to {@link #fromPropertyValueToValueEditor(String)}.
    *
    * @param text  'user-friendly' text shown to the user at the resource bundle editor
+   * @param delimiter
    * @return      'raw' value to store at the *.properties file
    */
   @NotNull
-  public static String fromValueEditorToPropertyValue(@NotNull String text) {
+  public static String fromValueEditorToPropertyValue(@NotNull String text, char delimiter) {
     StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
 
       if ((i == 0 && (c == ' ' || c == '\t')) // Leading white space
           || c == '\n'  // Multi-line value
-          || SYMBOLS_TO_ESCAPE.contains(c))   // Special symbol
+          || (delimiter == ' ' && SYMBOLS_TO_ESCAPE.contains(c)))   // Special symbol
       {
         buffer.append(ESCAPE_SYMBOL);
       }

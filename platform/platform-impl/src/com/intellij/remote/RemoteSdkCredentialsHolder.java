@@ -1,5 +1,6 @@
 package com.intellij.remote;
 
+import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -156,13 +157,13 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
 
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
-      return path.startsWith(SSH_PREFIX) || path.startsWith(RemoteConnectionCredentialsWrapper.VAGRANT_PREFIX) ||
-             path.startsWith(RemoteConnectionCredentialsWrapper.SFTP_DEPLOYMENT_PREFIX) ||
-             path.startsWith(RemoteConnectionCredentialsWrapper.DOCKER_PREFIX);
+      for (CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
+        if (type.hasPrefix(path)) {
+          return true;
+        }
+      }
     }
-    else {
-      return false;
-    }
+    return false;
   }
 
 
@@ -189,7 +190,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     RemoteSdkCredentialsHolder holder = (RemoteSdkCredentialsHolder)o;
 
     if (isAnonymous() != holder.isAnonymous()) return false;
-    if (getPort() != holder.getPort()) return false;
+    if (getLiteralPort() != null ? !getLiteralPort().equals(holder.getLiteralPort()) : holder.getLiteralPort() != null) return false;
     if (isStorePassphrase() != holder.isStorePassphrase()) return false;
     if (isStorePassword() != holder.isStorePassword()) return false;
     if (isUseKeyPair() != holder.isUseKeyPair()) return false;
@@ -214,7 +215,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   @Override
   public int hashCode() {
     int result = getHost() != null ? getHost().hashCode() : 0;
-    result = 31 * result + getPort();
+    result = 31 * result + (getLiteralPort() != null ? getLiteralPort().hashCode() : 0);
     result = 31 * result + (isAnonymous() ? 1 : 0);
     result = 31 * result + (getUserName() != null ? getUserName().hashCode() : 0);
     result = 31 * result + (getPassword() != null ? getPassword().hashCode() : 0);
@@ -234,8 +235,8 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
            "{getHost()='" +
            getHost() +
            '\'' +
-           ", getPort()=" +
-           getPort() +
+           ", getLiteralPort()=" +
+           getLiteralPort() +
            ", isAnonymous()=" +
            isAnonymous() +
            ", getUserName()='" +

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ import java.util.Collections;
 @State(
   name = "DslActivationStatus",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivation.xml", roamingType = RoamingType.DISABLED, deprecated = true),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivationStatus.xml", roamingType = RoamingType.DISABLED)
+    @Storage(value = "dslActivation.xml", roamingType = RoamingType.DISABLED, deprecated = true),
+    @Storage(value = "dslActivationStatus.xml", roamingType = RoamingType.DISABLED)
   }
 )
 public class DslActivationStatus implements PersistentStateComponent<DslActivationStatus.State> {

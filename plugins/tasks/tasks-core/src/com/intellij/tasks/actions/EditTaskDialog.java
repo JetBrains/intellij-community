@@ -59,7 +59,7 @@ public class EditTaskDialog extends DialogWrapper {
   protected EditTaskDialog(Project project, LocalTaskImpl task) {
     super(project);
     myTask = task;
-    setTitle("Edit Task " + (task.isIssue() ? task.getId() : ""));
+    setTitle("Edit Task " + (task.isIssue() ? task.getPresentableId() : ""));
 
 //    mySummary.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, "");
     mySummary.setText(task.getSummary());

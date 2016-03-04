@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control EQUALS",           "ExpandAll", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
     { "control D",                "EditorDuplicate", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
+    { "control L",                "FindNext", "Vcs.Log.FocusTextFilter"},
     { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
     { "control N",                "FileChooser.NewFolder", "GotoClass", "GotoChangedFile"},
     { "control P",                "FileChooser.TogglePathShowing", "ParameterInfo"},
@@ -143,6 +144,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control UP",               "EditorLookupUp", "MethodUp"},
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
+    { "meta L",                   "Vcs.Log.FocusTextFilter", "GotoLine"},
     { "meta R",                   "Refresh", "Rerun", "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control O",                "ExportToTextFile", "OverrideMethods", },
     { "control ENTER",            "Generate", "NewElement"},
@@ -188,6 +190,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control D",                "$Delete", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control K",                "EditorCutLineEnd", "CheckinProject"},
+    { "control L",                "EditorScrollToCenter", "Vcs.Log.FocusTextFilter"},
     { "control M",                "EditorEnter", "EditorChooseLookupItem", "NextTemplateVariable", "Console.Execute"},
     { "control N",                "EditorDown", "FileChooser.NewFolder"},
     { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
@@ -259,6 +262,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control F10",              "ShowPopupMenu", "javaee.UpdateRunningApplication", "liveedit.UpdateRunningApplication"},
     { "control F11",              "Rerun", "ToggleBookmarkWithMnemonic"},
     { "control D",                "EditorDeleteLine", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
+    { "control L",                "Vcs.Log.FocusTextFilter", "GotoLine"},
     { "control N",                "ShowPopupMenu", "FileChooser.NewFolder"},
     { "control P",                "FileChooser.TogglePathShowing", "Print"},
     { "control R",                "RunToCursor", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
@@ -281,8 +285,6 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft", },
     { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight", },
     { "shift control UP",         "ResizeToolWindowUp", "MethodUp"},
-    { "shift control alt LEFT",   "NextEditorTab", "HtmlTableCellNavigateLeft"},
-    { "shift control alt RIGHT",  "PreviousEditorTab", "HtmlTableCellNavigateRight"},
     { "shift control K",          "Vcs.Push", "FindPrevious"},
     { "shift control X",          "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},

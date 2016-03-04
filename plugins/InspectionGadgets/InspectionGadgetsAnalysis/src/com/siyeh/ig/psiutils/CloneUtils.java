@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,9 @@ public class CloneUtils {
     }
     else {
       // for 1.5 and after, clone may be covariant
+      if (method.getReturnType() instanceof PsiPrimitiveType) {
+        return false;
+      }
       javaLangObject = null;
     }
     return MethodUtils.methodMatches(method, null, javaLangObject,

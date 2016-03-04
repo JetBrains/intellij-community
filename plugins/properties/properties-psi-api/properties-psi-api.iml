@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="projectModel-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="boot" />
   </component>
 </module>

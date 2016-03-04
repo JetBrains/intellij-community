@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.SmartList
+import com.intellij.util.*
 import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -55,12 +54,7 @@ class TemporaryDirectory : ExternalResource() {
     paths.clear()
   }
 
-  /**
-   * Directory is not created.
-   */
-  fun newDirectory(directoryName: String? = null): File = generatePath(directoryName).toFile()
-
-  fun newPath(directoryName: String? = null, refreshVfs: Boolean = true): Path {
+  fun newPath(directoryName: String? = null, refreshVfs: Boolean = false): Path {
     val path = generatePath(directoryName)
     if (refreshVfs) {
       path.refreshVfs()
@@ -102,3 +96,5 @@ fun generateTemporaryPath(fileName: String?): Path {
   }
   return path
 }
+
+fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)

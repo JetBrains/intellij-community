@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.components.*;
 
 @State(
   name = "AppInspectionProfilesVisibleTreeState",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED)
 )
 public class AppInspectionProfilesVisibleTreeState implements PersistentStateComponent<VisibleTreeStateComponent> {
   private final VisibleTreeStateComponent myComponent = new VisibleTreeStateComponent();

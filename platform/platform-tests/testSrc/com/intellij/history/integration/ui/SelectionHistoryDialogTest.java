@@ -43,8 +43,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
 
     f = createChildData(myRoot, "f.txt");
     setBinaryContent(f,"a\nb\nc\n".getBytes(), -1, 123,this);
-    setBinaryContent(f,"a\nbc\nd\n".getBytes(), -1, 456,this);
-    setBinaryContent(f,"a\nbcd\ne\n".getBytes(), -1, 789,this);
+    setBinaryContent(f,"a\nbc\nc\nd\n".getBytes(), -1, 456,this);
+    setBinaryContent(f,"a\nbcd\nc\ne\n".getBytes(), -1, 789,this);
   }
 
   public void testDialogWorks() throws IOException {
@@ -123,7 +123,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     Reverter r = m.createReverter();
     r.revert();
 
-    assertEquals("a\nbc\ne\n", new String(f.contentsToByteArray()));
+    assertEquals("a\nbc\nc\ne\n", new String(f.contentsToByteArray()));
   }
 
   private void initModelOnSecondLineAndSelectRevisions(int first, int second) {

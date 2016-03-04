@@ -49,6 +49,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -110,6 +111,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
   protected JBPopup myDropdownPopup;
 
   private ShortcutSet myCheckBoxShortcut;
+  private Point myFocusPoint;
 
   /**
    * @param initialText initial text which will be in the lookup text field
@@ -280,7 +282,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
   }
 
   /**
-   * @param modalityState          - if not null rebuilds list in given {@link ModalityState}
+   * @param modalityState - if not null rebuilds list in given {@link ModalityState}
    */
   protected void initUI(final ChooseByNamePopupComponent.Callback callback,
                         final ModalityState modalityState,
@@ -309,11 +311,13 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
 
     final String checkBoxName = myModel.getCheckBoxName();
-    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName +
-                                                      (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
-                                                       ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")"
-                                                       : "")
-                                                    : "");
+    myCheckBox = new JCheckBox(
+      checkBoxName != null ? checkBoxName + (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0 ? " (" +
+                                                                                                                          KeymapUtil
+                                                                                                                            .getShortcutsText(
+                                                                                                                              myCheckBoxShortcut
+                                                                                                                                .getShortcuts()) +
+                                                                                                                          ")" : "") : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
 
     if (!SystemInfo.isMac) {
@@ -419,6 +423,20 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
       myTextField.addFocusListener(new FocusAdapter() {
         @Override
         public void focusLost(@NotNull final FocusEvent e) {
+          if (Registry.is("focus.follows.mouse.workarounds")) {
+            if (myFocusPoint != null) {
+              PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+              if (pointerInfo != null && myFocusPoint.equals(pointerInfo.getLocation())) {
+                // Ignore the loss of focus if the mouse hasn't moved between the last dropdown resize
+                // and the loss of focus event. This happens in focus follows mouse mode if the mouse is
+                // over the dropdown and it resizes to leave the mouse outside the dropdown.
+                IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
+                myFocusPoint = null;
+                return;
+              }
+            }
+            myFocusPoint = null;
+          }
           cancelListUpdater(); // cancel thread as early as possible
           myHideAlarm.addRequest(new Runnable() {
             @Override
@@ -553,8 +571,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     });
 
     myList.setFocusable(false);
-    myList.setSelectionMode(allowMultipleSelection ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION :
-                            ListSelectionModel.SINGLE_SELECTION);
+    myList.setSelectionMode(allowMultipleSelection ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -566,7 +583,8 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
           int selectedIndex = myList.getSelectedIndex();
           Rectangle selectedCellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
 
-          if (selectedCellBounds != null && selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
+          if (selectedCellBounds != null &&
+              selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += myListSizeIncreasing;
               rebuildList(selectedIndex, myRebuildDelay, ModalityState.current(), null);
@@ -679,8 +697,8 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     final int paneHeight = layeredPane.getHeight();
     final int y = paneHeight / 3 - preferredTextFieldPanelSize.height / 2;
 
-    VISIBLE_LIST_SIZE_LIMIT = Math.max
-      (10, (paneHeight - (y + preferredTextFieldPanelSize.height)) / (preferredTextFieldPanelSize.height / 2) - 1);
+    VISIBLE_LIST_SIZE_LIMIT =
+      Math.max(10, (paneHeight - (y + preferredTextFieldPanelSize.height)) / (preferredTextFieldPanelSize.height / 2) - 1);
 
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myTextFieldPanel, myTextField);
     builder.setLocateWithinScreenBounds(false);
@@ -775,6 +793,17 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
   }
 
   @Override
+  protected void setElementsToList(int pos, @NotNull Collection<?> elements) {
+    super.setElementsToList(pos, elements);
+     if (isCloseByFocusLost() && Registry.is("focus.follows.mouse.workarounds")) {
+      PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+      if (pointerInfo != null) {
+        myFocusPoint = pointerInfo.getLocation();
+      }
+    }
+  }
+
+  @Override
   protected void repositionHint() {
     myTextFieldPanel.repositionHint();
   }
@@ -816,7 +845,8 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
             setUI(MacIntelliJTextFieldUI.createUI(this));
           }
           setBorder(new MacIntelliJTextBorder());
-        } else {
+        }
+        else {
           if (!(getUI() instanceof DarculaTextFieldUI)) {
             setUI(DarculaTextFieldUI.createUI(this));
           }
@@ -1070,6 +1100,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
         hideHint();
         ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true) {
           private ChooseByNameBase.CalcElementsThread myCalcUsagesThread;
+
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             ensureNamesLoaded(everywhere);
@@ -1079,9 +1110,11 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
               @Override
               protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
-                if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit &&
+                    tooManyUsagesStatus.switchTooManyUsagesStatus()) {
                   int usageCount = elementsArray.size() + myMaximumListSizeLimit;
-                  UsageViewManagerImpl.showTooManyUsagesWarning(getProject(), tooManyUsagesStatus, indicator, presentation, usageCount, null);
+                  UsageViewManagerImpl
+                    .showTooManyUsagesWarning(getProject(), tooManyUsagesStatus, indicator, presentation, usageCount, null);
                 }
                 return false;
               }
@@ -1149,8 +1182,8 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     private void showUsageView(@NotNull List<PsiElement> targets,
                                @NotNull List<Usage> usages,
                                @NotNull UsageViewPresentation presentation) {
-      UsageTarget[] usageTargets = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY :
-                                   PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
+      UsageTarget[] usageTargets =
+        targets.isEmpty() ? UsageTarget.EMPTY_ARRAY : PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
       UsageViewManager.getInstance(myProject).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), presentation);
     }
 

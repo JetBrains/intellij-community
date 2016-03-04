@@ -204,6 +204,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testLocalVarUsedInLambdaBody() throws Exception {
+    doTest(true);
+  }
+
   public void testCastAroundLambda() throws Exception {
     doTest(true);
   }

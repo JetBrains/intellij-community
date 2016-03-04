@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,22 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     myElementTypes = elementTypes;
   }
 
+
+  @Nullable
+  @Override
+  public PyType getReturnType(@NotNull final TypeEvalContext context) {
+    if (isDefinition()) {
+      return new PyCollectionTypeImpl(getPyClass(), false, myElementTypes);
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@NotNull final TypeEvalContext context, @Nullable final PyCallSiteExpression callSite) {
+    return getReturnType(context);
+  }
+
   @NotNull
   @Override
   public List<PyType> getElementTypes(@NotNull TypeEvalContext context) {
@@ -50,6 +67,11 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
       return null;
     }
     return new PyCollectionTypeImpl(pyClass, isDefinition, elementTypes);
+  }
+
+  @Override
+  public PyClassType toInstance() {
+    return myIsDefinition ? new PyCollectionTypeImpl(myClass, false, myElementTypes) : this;
   }
 
   @Override

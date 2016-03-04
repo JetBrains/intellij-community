@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -66,28 +67,29 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @Override
-  public void reparseRange(PsiFile file, int startOffset, int endOffset, CharSequence newTextS) throws IncorrectOperationException {
+  public void reparseRange(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull CharSequence newText) throws IncorrectOperationException {
     LOG.assertTrue(file.isValid());
     final PsiFileImpl psiFile = (PsiFileImpl)file;
     final Document document = psiFile.getViewProvider().getDocument();
     assert document != null;
-    document.replaceString(startOffset, endOffset, newTextS);
+    document.replaceString(startOffset, endOffset, newText);
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
   }
 
   @Override
   @NotNull
   public DiffLog reparseRange(@NotNull final PsiFile file,
+                              @NotNull FileASTNode oldFileNode,
                               @NotNull TextRange changedPsiRange,
                               @NotNull final CharSequence newFileText,
                               @NotNull final ProgressIndicator indicator,
                               @NotNull CharSequence lastCommittedText) {
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     
-    final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, changedPsiRange, newFileText);
+    final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, oldFileNode, changedPsiRange, newFileText);
     return reparseableRoots != null
            ? mergeTrees(fileImpl, reparseableRoots.first, reparseableRoots.second, indicator, lastCommittedText)
-           : makeFullParse(fileImpl, newFileText, indicator, lastCommittedText);
+           : makeFullParse(fileImpl, oldFileNode, newFileText, indicator, lastCommittedText);
   }
 
   /**
@@ -96,10 +98,11 @@ public class BlockSupportImpl extends BlockSupport {
    */
   @Nullable
   public Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
+                                              @NotNull FileASTNode oldFileNode,
                                               @NotNull TextRange changedPsiRange,
                                               @NotNull CharSequence newFileText) {
     Project project = file.getProject();
-    final FileElement fileElement = file.getTreeElement();
+    final FileElement fileElement = (FileElement)oldFileNode;
     final CharTable charTable = fileElement.getCharTable();
     int lengthShift = newFileText.length() - fileElement.getTextLength();
 
@@ -173,6 +176,7 @@ public class BlockSupportImpl extends BlockSupport {
 
   @NotNull
   private static DiffLog makeFullParse(@NotNull PsiFileImpl fileImpl,
+                                       @NotNull FileASTNode oldFileNode,
                                        @NotNull CharSequence newFileText,
                                        @NotNull ProgressIndicator indicator,
                                        @NotNull CharSequence lastCommittedText) {
@@ -205,7 +209,7 @@ public class BlockSupportImpl extends BlockSupport {
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();
-      final FileElement oldFileElement = (FileElement)fileImpl.getNode();
+      final FileElement oldFileElement = (FileElement)oldFileNode;
       if (!lastCommittedText.toString().equals(oldFileElement.getText())) {
         throw new IncorrectOperationException(viewProvider.toString());
       }

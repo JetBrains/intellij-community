@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Bombed {
-  int year() default 2015;
+  int year() default 2016;
   @JdkConstants.CalendarMonth int month();
   int day();
   int time() default 0;
-  String user() default "unknown, or, rather, Max";
+  String user();
   String description() default "";
 }

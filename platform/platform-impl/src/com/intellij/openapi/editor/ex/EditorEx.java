@@ -21,14 +21,15 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,6 +58,21 @@ public interface EditorEx extends Editor {
   @NotNull
   MarkupModelEx getMarkupModel();
 
+  /**
+   * Returns the markup model for the underlying Document.
+   * <p>
+   * This model differs from the one from DocumentMarkupModel#forDocument,
+   * as it does not contain highlighters that should not be visible in this Editor.
+   * (for example, debugger breakpoints in a diff viewer editors)
+   *
+   * @return the markup model instance.
+   * @see com.intellij.openapi.editor.markup.MarkupEditorFilter
+   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingFilter(Condition<RangeHighlighter>)
+   * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, Project, boolean)
+   */
+  @NotNull
+  MarkupModelEx getFilteredDocumentMarkupModel();
+
   @NotNull
   EditorGutterComponentEx getGutterComponentEx();
 
@@ -79,16 +95,6 @@ public interface EditorEx extends Editor {
   void setInsertMode(boolean val);
 
   void setColumnMode(boolean val);
-
-  /**
-   * @deprecated To be removed in IDEA 16.
-   */
-  void setLastColumnNumber(int val);
-
-  /**
-   * @deprecated To be removed in IDEA 16.
-   */
-  int getLastColumnNumber();
 
   int VERTICAL_SCROLLBAR_LEFT = 0;
   int VERTICAL_SCROLLBAR_RIGHT = 1;
@@ -175,32 +181,6 @@ public interface EditorEx extends Editor {
   @NotNull
   @Override
   ScrollingModelEx getScrollingModel();
-
-  /**
-   * @deprecated This is an internal method, {@link Editor#visualToLogicalPosition(VisualPosition)} should be used instead.
-   * To be removed in IDEA 16.
-   */
-  @NotNull
-  LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware);
-
-  /**
-   * @deprecated This is an internal method, {@link Editor#offsetToLogicalPosition(int)} should be used instead.
-   * To be removed in IDEA 16.
-   */
-  @NotNull LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware);
-
-  /**
-   * @deprecated This is an internal method, {@link Editor#logicalToVisualPosition(LogicalPosition)} should be used instead.
-   * To be removed in IDEA 16.
-   */
-  @NotNull
-  VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
-
-  /**
-   * @deprecated This is an internal method, {@link Editor#logicalPositionToOffset(LogicalPosition)} should be used instead.
-   * To be removed in IDEA 16.
-   */
-  int logicalPositionToOffset(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
 
   /**
    * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.

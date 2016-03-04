@@ -526,7 +526,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   public boolean isCopyJavadoc() {
-    return myCopyJavadocCheckbox.isSelected();
+    return myCopyJavadocCheckbox != null && myCopyJavadocCheckbox.isSelected();
   }
 
   public boolean isInsertOverrideAnnotation() {

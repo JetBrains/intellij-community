@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -163,7 +164,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
-    if (_fontSize != settings.FONT_SIZE || !settings.FONT_FACE.equals(_fontFace)) {
+    if (_fontSize != settings.FONT_SIZE || !Comparing.equal(settings.FONT_FACE, _fontFace)) {
       settings.FONT_SIZE = _fontSize;
       settings.FONT_FACE = _fontFace;
       shouldUpdateUI = true;
@@ -174,7 +175,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
 
-    if (!myComponent.myAntialiasingInIDE.getSelectedItem().equals(settings.IDE_AA_TYPE)) {
+    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE) {
       settings.IDE_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem();
       for (Window w : Window.getWindows()) {
         for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
@@ -184,7 +185,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
 
-    if (!myComponent.myAntialiasingInEditor.getSelectedItem().equals(settings.EDITOR_AA_TYPE)) {
+    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE) {
       settings.EDITOR_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem();
       shouldUpdateUI = true;
     }
@@ -401,8 +402,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE);
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
 
-    isModified |= !myComponent.myAntialiasingInIDE.getSelectedItem().equals(settings.IDE_AA_TYPE);
-    isModified |= !myComponent.myAntialiasingInEditor.getSelectedItem().equals(settings.EDITOR_AA_TYPE);
+    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE;
+    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE;
 
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.ANIMATE_WINDOWS;
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_TOOL_WINDOW_NUMBERS;
@@ -533,6 +534,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, UIUtil.getLcdContrastValue());
     private static final SwingUtilities2.AATextInfo GREYSCALE_HINT = new SwingUtilities2.AATextInfo(
       RenderingHints.VALUE_TEXT_ANTIALIAS_ON, UIUtil.getLcdContrastValue());
+
     private final boolean useEditorAASettings;
 
     public AAListCellRenderer(boolean useEditorAASettings) {
@@ -553,11 +555,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       }
 
       if (useEditorAASettings) {
-        setFont(new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(),
-                         Font.PLAIN, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize()));
+        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+        setFont(new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize()));
       }
 
-      setText(value.toString());
+      setText(String.valueOf(value));
     }
   }
 }

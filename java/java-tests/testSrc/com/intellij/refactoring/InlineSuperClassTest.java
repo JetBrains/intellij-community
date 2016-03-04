@@ -70,6 +70,8 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testInlineSuperclassExtendsList() { doTest(); }
   public void testInterfaceHierarchyWithSubstitution() { doTest(); }
   public void testTypeParameterBound() { doTest();}
+  public void testInlineInterfaceDoNotChangeConstructor() { doTest(); }
+  public void testArrayTypeElements() { doTest(); }
 
   private void doTest() {
     doTest(false, false);

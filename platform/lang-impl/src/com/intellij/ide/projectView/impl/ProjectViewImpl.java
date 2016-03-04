@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,13 +105,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-@State(
-  name="ProjectView",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private static final Key<String> ID_KEY = Key.create("pane-id");
@@ -444,10 +438,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       AbstractProjectViewPane pane = myId2Pane.get(id);
 
       int comp = PANE_WEIGHT_COMPARATOR.compare(pane, newPane);
-      if (comp == 0) {
-        System.out.println("here");
-      }
-      LOG.assertTrue(comp != 0);
+      LOG.assertTrue(comp != 0, "Project view pane " + newPane + " has the same weight as " + pane +
+                                ". Please make sure that you overload getWeight() and return a distinct weight value.");
       if (comp > 0) {
         break;
       }

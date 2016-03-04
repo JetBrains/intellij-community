@@ -22,7 +22,6 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.ProblemsView;
 import com.intellij.compiler.progress.CompilerTaskBase;
@@ -37,25 +36,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.UUID;
 
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileContextImpl");
   private final Project myProject;
   private final CompilerTaskBase myBuildSession;
-  private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<CompilerMessageCategory, Collection<CompilerMessage>>(CompilerMessageCategory.class);
+  private final MessagesContainer myMessages;
   private final boolean myShouldUpdateProblemsView;
   private CompileScope myCompileScope;
   private final boolean myMake;
@@ -63,9 +58,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final boolean myIsAnnotationProcessorsEnabled;
   private boolean myRebuildRequested;
   private String myRebuildReason;
-  private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
-  private final Map<Module, Set<VirtualFile>> myModuleToRootsMap = new HashMap<Module, Set<VirtualFile>>();
-  private final Set<VirtualFile> myGeneratedTestRoots = new HashSet<VirtualFile>();
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
@@ -76,6 +68,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
                             @NotNull CompileScope compileScope,
                             boolean isMake, boolean isRebuild) {
     myProject = project;
+    myMessages = new MessagesContainer(project);
     myBuildSession = compilerSession;
     myCompileScope = compileScope;
     myMake = isMake;
@@ -116,37 +109,20 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   public CompilerMessage[] getMessages(CompilerMessageCategory category) {
-    Collection<CompilerMessage> collection = myMessages.get(category);
-    if (collection == null) {
-      return CompilerMessage.EMPTY_ARRAY;
-    }
-    return collection.toArray(new CompilerMessage[collection.size()]);
+    return myMessages.getMessages(category).toArray(CompilerMessage.EMPTY_ARRAY);
   }
 
   @Override
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-    final CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, null);
-    addMessage(msg);
+    addMessage(category, message, url, lineNum, columnNum, null);
   }
 
   @Override
-  public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum,
-                         Navigatable navigatable) {
-    final CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable);
-    addMessage(msg);
-  }
-
-  @Nullable 
-  private static VirtualFile findFileByUrl(@Nullable String url) {
-    if (url == null) {
-      return null;
+  public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
+    final CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
+    if (msg != null) {
+      addToProblemsView(msg);
     }
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-    if (file == null) {
-      // groovy stubs may be placed in completely random directories which aren't refreshed automatically 
-      return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
-    }
-    return file;
   }
 
   @Override
@@ -154,15 +130,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("addMessage: " + msg + " this=" + this);
     }
+    if (myMessages.addMessage(msg)) {
+      addToProblemsView(msg);
+    }
+  }
 
-    Collection<CompilerMessage> messages = myMessages.get(msg.getCategory());
-    if (messages == null) {
-      messages = new LinkedHashSet<CompilerMessage>();
-      myMessages.put(msg.getCategory(), messages);
-    }
-    if (messages.add(msg)) {
-      myBuildSession.addMessage(msg);
-    }
+  private void addToProblemsView(CompilerMessage msg) {
+    myBuildSession.addMessage(msg);
     if (myShouldUpdateProblemsView && msg.getCategory() == CompilerMessageCategory.ERROR) {
       ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, mySessionId);
     }
@@ -170,17 +144,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   public int getMessageCount(CompilerMessageCategory category) {
-    if (category != null) {
-      Collection<CompilerMessage> collection = myMessages.get(category);
-      return collection != null ? collection.size() : 0;
-    }
-    int count = 0;
-    for (Collection<CompilerMessage> collection : myMessages.values()) {
-      if (collection != null) {
-        count += collection.size();
-      }
-    }
-    return count;
+    return myMessages.getMessageCount(category);
   }
 
   @Override
@@ -225,57 +189,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       LOG.assertTrue(!module.isDisposed());
       return module;
     }
-    for (final VirtualFile root : myRootToModuleMap.keySet()) {
-      if (VfsUtilCore.isAncestor(root, file, false)) {
-        final Module mod = myRootToModuleMap.get(root);
-        if (mod != null) {
-          LOG.assertTrue(!mod.isDisposed());
-        }
-        return mod;
-      }
-    }
     return null;
-  }
-
-
-  private final Map<Module, VirtualFile[]> myModuleToRootsCache = new HashMap<Module, VirtualFile[]>();
-
-  @Override
-  public VirtualFile[] getSourceRoots(Module module) {
-    VirtualFile[] cachedRoots = myModuleToRootsCache.get(module);
-    if (cachedRoots != null) {
-      if (areFilesValid(cachedRoots)) {
-        return cachedRoots;
-      }
-      else {
-        myModuleToRootsCache.remove(module); // clear cache for this module and rebuild list of roots
-      }
-    }
-
-    Set<VirtualFile> additionalRoots = myModuleToRootsMap.get(module);
-    VirtualFile[] moduleRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-    if (additionalRoots == null || additionalRoots.isEmpty()) {
-      myModuleToRootsCache.put(module, moduleRoots);
-      return moduleRoots;
-    }
-
-    final VirtualFile[] allRoots = new VirtualFile[additionalRoots.size() + moduleRoots.length];
-    System.arraycopy(moduleRoots, 0, allRoots, 0, moduleRoots.length);
-    int index = moduleRoots.length;
-    for (final VirtualFile additionalRoot : additionalRoots) {
-      allRoots[index++] = additionalRoot;
-    }
-    myModuleToRootsCache.put(module, allRoots);
-    return allRoots;
-  }
-
-  private static boolean areFilesValid(VirtualFile[] files) {
-    for (VirtualFile file : files) {
-      if (!file.isValid()) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
@@ -294,6 +208,11 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
+  public boolean isAutomake() {
+    return false;
+  }
+
+  @Override
   public boolean isRebuild() {
     return myIsRebuild;
   }
@@ -306,22 +225,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   public void addScope(final CompileScope additionalScope) {
     myCompileScope = new CompositeScope(myCompileScope, additionalScope);
-  }
-
-  @Override
-  public boolean isInTestSourceContent(@NotNull final VirtualFile fileOrDir) {
-    if (myProjectFileIndex.isInTestSourceContent(fileOrDir)) {
-      return true;
-    }
-    return VfsUtilCore.isUnder(fileOrDir, myGeneratedTestRoots);
-  }
-
-  @Override
-  public boolean isInSourceContent(@NotNull final VirtualFile fileOrDir) {
-    if (myProjectFileIndex.isInSourceContent(fileOrDir)) {
-      return true;
-    }
-    return VfsUtilCore.isUnder(fileOrDir, myRootToModuleMap.keySet());
   }
 
   public UUID getSessionId() {

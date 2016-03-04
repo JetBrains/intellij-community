@@ -160,7 +160,8 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(element.getIcon(0))));
   }
 
-  protected void addImportedElement(String referencedName, NameDefiner definer, PyElement expr) {
+  @Override
+  protected void addImportedElement(String referencedName, PyElement expr) {
     Icon icon = expr.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
     if (icon == null) icon = PlatformIcons.VARIABLE_ICON;

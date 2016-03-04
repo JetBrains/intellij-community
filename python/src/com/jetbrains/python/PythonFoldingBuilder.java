@@ -150,7 +150,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   private static boolean ifFoldBlocks(ASTNode statementList, IElementType parentType) {
-    if (!PyElementTypes.PARTS.contains(parentType)) {
+    if (!PyElementTypes.PARTS.contains(parentType) && parentType != PyElementTypes.WITH_STATEMENT) {
       return false;
     }
     PsiElement element = statementList.getPsi();

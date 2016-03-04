@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
@@ -334,5 +335,10 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     public ArrayList<LogFileOptions> getLogFiles() {
       return myConfiguration.getLogFiles();
     }
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return Registry.is("dumb.aware.run.configurations");
   }
 }

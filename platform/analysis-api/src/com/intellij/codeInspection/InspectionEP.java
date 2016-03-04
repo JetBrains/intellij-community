@@ -180,7 +180,12 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Attribute("presentation")
   public String presentation;
 
-  @NonNls
+  /**
+   * Do not show internal inspections if internal mode is off
+   */
+  @Attribute("isInternal") 
+  public boolean isInternal = false;
+
   @Override
   public String toString() {
     return "InspectionEP{" +
@@ -194,9 +199,11 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
            ", groupPath='" + groupPath + '\'' +
            ", enabledByDefault=" + enabledByDefault +
            ", applyToDialects=" + applyToDialects +
+           ", cleanupTool=" + cleanupTool +
            ", level='" + level + '\'' +
            ", hasStaticDescription=" + hasStaticDescription +
            ", presentation='" + presentation + '\'' +
+           ", isInternal=" + isInternal +
            '}';
   }
 }

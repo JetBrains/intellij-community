@@ -1,0 +1,19 @@
+YAML file
+  YAML document
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('logging:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('config:')
+  PsiElement(Eol)('\n')
+  PsiElement(indent)('  ')
+  PsiElement(Eol)('\n')
+  PsiElement(indent)('  ')
+  PsiElement(Eol)('\n')
+  PsiElement(indent)('  ')
+  PsiElement(Eol)('\n')
+  PsiElement(indent)('  ')
+  PsiElement(Eol)('\n')

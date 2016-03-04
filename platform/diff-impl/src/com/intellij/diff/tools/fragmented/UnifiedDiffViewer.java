@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -266,7 +267,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         }
       });
 
-      final List<LineFragment> fragments = DiffUtil.compare(texts[0], texts[1], getDiffConfig(), indicator);
+      final List<LineFragment> fragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
 
       final DocumentContent content1 = getContent1();
       final DocumentContent content2 = getContent2();
@@ -297,12 +298,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       LineNumberConvertor convertor = builder.getConvertor();
       List<LineRange> changedLines = builder.getChangedLines();
-      boolean isEqual = builder.isEqual();
+      boolean isContentsEqual = builder.isEqual();
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
                                                              convertor.createConvertor1(), convertor.createConvertor2());
 
-      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual);
+      return apply(editorData, builder.getBlocks(), convertor, changedLines, isContentsEqual);
     }
     catch (DiffTooBigException e) {
       return new Runnable() {
@@ -377,14 +378,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
                          @NotNull final List<LineRange> changedLines,
-                         final boolean isEqual) {
+                         final boolean isContentsEqual) {
     return new Runnable() {
       @Override
       public void run() {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
         clearDiffPresentation();
-        if (isEqual) myPanel.addNotification(DiffNotifications.createEqualContents());
+        if (isContentsEqual) myPanel.addNotification(DiffNotifications.createEqualContents());
 
         TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
         myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
@@ -426,7 +427,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
           guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
         }
 
-        myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor);
+        myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor, isContentsEqual);
 
         myFoldingModel.install(changedLines, myRequest, getFoldingModelSettings());
 
@@ -1198,9 +1199,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private class MyStatusPanel extends StatusPanel {
+    @Nullable
     @Override
-    protected int getChangesCount() {
-      return myChangedBlockData == null ? 0 : myChangedBlockData.getDiffChanges().size();
+    protected String getMessage() {
+      if (myChangedBlockData == null) return null;
+      int changesCount = myChangedBlockData.getDiffChanges().size();
+      if (changesCount == 0 && !myChangedBlockData.isContentsEqual()) {
+        return DiffBundle.message("diff.all.differences.ignored.text");
+      }
+      return DiffBundle.message("diff.count.differences.status.text", changesCount);
     }
   }
 
@@ -1237,13 +1244,16 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull private final List<UnifiedDiffChange> myDiffChanges;
     @NotNull private final List<RangeMarker> myGuardedRangeBlocks;
     @NotNull private final LineNumberConvertor myLineNumberConvertor;
+    private final boolean myIsContentsEqual;
 
     public ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
                             @NotNull List<RangeMarker> guarderRangeBlocks,
-                            @NotNull LineNumberConvertor lineNumberConvertor) {
+                            @NotNull LineNumberConvertor lineNumberConvertor,
+                            boolean isContentsEqual) {
       myDiffChanges = diffChanges;
       myGuardedRangeBlocks = guarderRangeBlocks;
       myLineNumberConvertor = lineNumberConvertor;
+      myIsContentsEqual = isContentsEqual;
     }
 
     @NotNull
@@ -1259,6 +1269,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull
     public LineNumberConvertor getLineNumberConvertor() {
       return myLineNumberConvertor;
+    }
+
+    public boolean isContentsEqual() {
+      return myIsContentsEqual;
     }
   }
 

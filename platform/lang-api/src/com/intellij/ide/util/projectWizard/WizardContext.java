@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.StorageScheme;
@@ -53,6 +54,7 @@ public class WizardContext extends UserDataHolderBase {
   private boolean myNewWizard;
   private ModulesProvider myModulesProvider;
   private boolean myProjectFileDirectorySetExplicitly;
+  private AbstractWizard myWizard;
 
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
@@ -76,6 +78,14 @@ public class WizardContext extends UserDataHolderBase {
 
   public Disposable getDisposable() {
     return myDisposable;
+  }
+
+  public AbstractWizard getWizard() {
+    return myWizard;
+  }
+
+  public void setWizard(AbstractWizard wizard) {
+    myWizard = wizard;
   }
 
   public interface Listener {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.editor.JavaAutoImportOptions">
-  <grid id="27dc6" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="20" y="20" width="445" height="411"/>
@@ -27,6 +27,14 @@
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.add.unambiguous.imports.on.the.fly"/>
+        </properties>
+      </component>
+      <component id="90edc" class="javax.swing.JCheckBox" binding="myCbAddMethodImports">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Show import suggestions for static methods and fields"/>
         </properties>
       </component>
       <grid id="2ef17" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -61,7 +69,7 @@
       </grid>
       <grid id="e67c2" binding="myExcludeFromImportAndCompletionPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <preferred-size width="400" height="150"/>
           </grid>
         </constraints>
@@ -71,7 +79,7 @@
       </grid>
       <component id="64f08" class="com.intellij.ui.TitledSeparator">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="exclude.from.completion.group"/>

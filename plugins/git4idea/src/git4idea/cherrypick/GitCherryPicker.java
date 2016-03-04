@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import git4idea.GitLocalBranch;
@@ -71,12 +72,6 @@ import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLIC
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
 public class GitCherryPicker extends VcsCherryPicker {
-
-  /**
-   * Name of the {@code .git/CHERRY_PICK_HEAD} file which is stored under {@code .git} when cherry-pick is in progress,
-   * and contains the hash of the commit being cherry-picked.
-   */
-  private static final String CHERRY_PICK_HEAD_FILE = "CHERRY_PICK_HEAD";
 
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
@@ -360,7 +355,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   private void removeCherryPickHead(@NotNull GitRepository repository) {
-    File cherryPickHeadFile = new File(repository.getGitDir().getPath(), CHERRY_PICK_HEAD_FILE);
+    File cherryPickHeadFile = repository.getRepositoryFiles().getCherryPickHead();
     final VirtualFile cherryPickHead = myPlatformFacade.getLocalFileSystem().refreshAndFindFileByIoFile(cherryPickHeadFile);
 
     if (cherryPickHead != null && cherryPickHead.exists()) {
@@ -546,20 +541,23 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public boolean isEnabled(@NotNull VcsLog log, @NotNull List<VcsFullCommitDetails> details) {
-    if (details.isEmpty()) {
+  public boolean isEnabled(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
+    if (commits.isEmpty()) {
       return false;
     }
-    for (VcsFullCommitDetails commit : details) {
-      GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(commit.getRoot());
+
+    for (VirtualFile root : commits.keySet()) {
+      GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(root);
       if (repository == null) {
         return false;
       }
-      GitLocalBranch currentBranch = repository.getCurrentBranch();
-      Collection<String> containingBranches = log.getContainingBranches(commit.getId());
-      if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
-        // already is contained in the current branch
-        return false;
+      for (Hash commit : commits.get(root)) {
+        GitLocalBranch currentBranch = repository.getCurrentBranch();
+        Collection<String> containingBranches = log.getContainingBranches(commit, root);
+        if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
+          // already is contained in the current branch
+          return false;
+        }
       }
     }
     return true;

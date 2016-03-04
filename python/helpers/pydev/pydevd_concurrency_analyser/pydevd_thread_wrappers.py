@@ -1,9 +1,5 @@
+from _pydev_imps import _pydev_threading as threading
 
-import _pydev_threading as threading
-try:
-    import functools
-except:
-    pass
 
 def wrapper(fun):
     def pydev_after_run_call():
@@ -25,6 +21,7 @@ class ObjectWrapper(object):
     def __init__(self, obj):
         self.wrapped_object = obj
         try:
+            import functools
             functools.update_wrapper(self, obj)
         except:
             pass
@@ -77,8 +74,9 @@ def wrap_threads():
 
     # queue patching
     try:
-        import queue
+        import queue  # @UnresolvedImport
         queue.Queue = factory_wrapper(queue.Queue)
     except:
         import Queue
         Queue.Queue = factory_wrapper(Queue.Queue)
+

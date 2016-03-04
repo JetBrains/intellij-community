@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import io.netty.channel.Channel
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.io.addListener
+import org.jetbrains.io.addChannelListener
 import org.jetbrains.io.shutdownIfOio
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.CONNECTION_CLOSED_MESSAGE
@@ -29,16 +29,6 @@ import org.jetbrains.concurrency.Promise as OJCPromise
 
 open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
   private @Volatile var channel: Channel? = channel
-
-  init {
-    channel.closeFuture().addListener {
-      // don't report in case of explicit detach()
-      if (this.channel != null) {
-        messageProcessor.closed()
-        vm.debugListener.disconnected()
-      }
-    }
-  }
 
   fun getChannelIfActive(): Channel? {
     val currentChannel = channel
@@ -90,7 +80,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
 }
 
 fun doCloseChannel(channel: Channel, promise: AsyncPromise<Any?>) {
-  channel.close().addListener {
+  channel.close().addChannelListener {
     try {
       it.channel().eventLoop().shutdownIfOio()
     }

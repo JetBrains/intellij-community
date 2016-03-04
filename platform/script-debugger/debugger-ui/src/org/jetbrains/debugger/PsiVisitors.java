@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,10 @@ import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 
 public final class PsiVisitors {
+  public static <RESULT> RESULT visit(@NotNull XSourcePosition position, @NotNull Project project, @NotNull Visitor<RESULT> visitor) {
+    return visit(position, project, visitor, null);
+  }
+
   /**
    * Read action will be taken automatically
    */
@@ -50,15 +54,15 @@ public final class PsiVisitors {
       }
 
       PsiElement element = file.findElementAt(positionOffset);
-      return element == null ? defaultResult : visitor.visit(element, positionOffset, document);
+      return element == null ? defaultResult : visitor.visit(position, element, positionOffset, document);
     }
     finally {
       token.finish();
     }
   }
 
-  public static abstract class Visitor<RESULT> {
-    public abstract RESULT visit(@NotNull PsiElement element, int positionOffset, @NotNull Document document);
+  public interface Visitor<RESULT> {
+    RESULT visit(@NotNull XSourcePosition position, @NotNull PsiElement element, int positionOffset, @NotNull Document document);
   }
 
   public static abstract class FilteringPsiRecursiveElementWalkingVisitor extends PsiRecursiveElementWalkingVisitor {

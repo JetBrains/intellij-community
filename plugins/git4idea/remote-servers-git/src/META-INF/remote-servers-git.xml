@@ -5,14 +5,4 @@
                     interface="com.intellij.remoteServer.util.CloudGitDeploymentDetector"/>
   </extensionPoints>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <projectStructureDetector implementation="com.intellij.remoteServer.util.importProject.CloudGitProjectStructureDetector"/>
-  </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.remoteServer.util.importProject.CloudGitRemoteDetector</implementation-class>
-    </component>
-  </project-components>
-
 </idea-plugin>

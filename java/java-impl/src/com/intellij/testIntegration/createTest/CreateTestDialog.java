@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -38,12 +37,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -58,6 +60,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -509,21 +512,27 @@ public class CreateTestDialog extends DialogWrapper {
 
     final VirtualFile selectedRoot = new ReadAction<VirtualFile>() {
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
-        CreateTestAction.checkForTestRoots(myTargetModule, testFolders);
+        final List<VirtualFile> testFolders = CreateTestAction.computeTestRoots(myTargetModule);
         List<VirtualFile> roots;
         if (testFolders.isEmpty()) {
-          roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+          roots = new ArrayList<>();
+          List<String> urls = CreateTestAction.computeSuitableTestRootUrls(myTargetModule);
+          for (String url : urls) {
+            ContainerUtil.addIfNotNull(roots, VfsUtil.createDirectories(VfsUtilCore.urlToPath(url)));
+          }
+          if (roots.isEmpty()) {
+            JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(myTargetModule, roots);
+          }
           if (roots.isEmpty()) return;
         } else {
-          roots = new ArrayList<VirtualFile>(testFolders);
+          roots = new ArrayList<>(testFolders);
         }
 
         if (roots.size() == 1) {
           result.setResult(roots.get(0));
         }
         else {
-          PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
+          PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
           result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
         }
       }
@@ -539,7 +548,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   @Nullable
-  private PsiDirectory chooseDefaultDirectory(String packageName) {
+  private PsiDirectory chooseDefaultDirectory(PsiDirectory[] directories, List<VirtualFile> roots) {
     List<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
     for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
       final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
@@ -555,7 +564,18 @@ public class CreateTestDialog extends DialogWrapper {
       }
       return dirs.get(0);
     }
-    return PackageUtil.findPossiblePackageDirectoryInModule(myTargetModule, packageName);
+    for (PsiDirectory dir : directories) {
+      final VirtualFile file = dir.getVirtualFile();
+      for (VirtualFile root : roots) {
+        if (VfsUtilCore.isAncestor(root, file, false)) {
+          final PsiDirectory rootDir = PsiManager.getInstance(myProject).findDirectory(root);
+          if (rootDir != null) {
+            return rootDir;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private String getPackageName() {

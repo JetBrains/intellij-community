@@ -17,12 +17,16 @@ package com.intellij.dvcs.cherrypick;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 public abstract class VcsCherryPicker {
 
@@ -52,8 +56,8 @@ public abstract class VcsCherryPicker {
    * Return true if all selected commits can be cherry-picked by this cherry-picker
    *
    * @param log     additional log information
-   * @param details commits to cherry-pick
+   * @param commits commits to cherry-pick, grouped by version control root
    * @return
    */
-  public abstract boolean isEnabled(@NotNull VcsLog log, @NotNull List<VcsFullCommitDetails> details);
+  public abstract boolean isEnabled(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits);
 }

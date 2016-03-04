@@ -280,6 +280,7 @@ public class LibraryOptionsPanel implements Disposable {
     }
     else {
       selectedOption = Choice.USE_LIBRARY;
+      doCreate(true);
     }
     myButtonEnumModel.setSelected(selectedOption);
 
@@ -297,7 +298,7 @@ public class LibraryOptionsPanel implements Disposable {
     myCreateButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        doCreate();
+        doCreate(false);
       }
     });
     myConfigureButton.addActionListener(new ActionListener() {
@@ -381,8 +382,10 @@ public class LibraryOptionsPanel implements Disposable {
     }
   }
 
-  private void doCreate() {
-    final NewLibraryConfiguration libraryConfiguration = myLibraryDescription.createNewLibrary(myCreateButton, getBaseDirectory());
+  private void doCreate(boolean useDefaultSettings) {
+    final NewLibraryConfiguration libraryConfiguration = useDefaultSettings
+                                                         ? myLibraryDescription.createNewLibraryWithDefaultSettings(getBaseDirectory())
+                                                         : myLibraryDescription.createNewLibrary(myCreateButton, getBaseDirectory());
     if (libraryConfiguration != null) {
       final NewLibraryEditor libraryEditor = new NewLibraryEditor(libraryConfiguration.getLibraryType(), libraryConfiguration.getProperties());
       libraryEditor.setName(myLibrariesContainer.suggestUniqueLibraryName(libraryConfiguration.getDefaultLibraryName()));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
@@ -125,10 +124,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private ConnectionServiceWrapper myConnectionService;
   private Map<String, Connector.Argument> myArguments;
 
-  private final List<NodeRenderer> myRenderers = new ArrayList<NodeRenderer>();
+  private final List<NodeRenderer> myRenderers = new ArrayList<>();
 
   // we use null key here
-  private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<Type, NodeRenderer>();
+  private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<>();
 
   private final NodeRendererSettingsListener mySettingsListener = new NodeRendererSettingsListener() {
     @Override
@@ -181,13 +180,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
         }
         finally {
-          DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
-            @Override
-            public void run() {
-              final DebuggerSession session = mySession;
-              if (session != null && session.isAttached()) {
-                DebuggerAction.refreshViews(mySession.getXDebugSession());
-              }
+          DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+            final DebuggerSession session = mySession;
+            if (session != null && session.isAttached()) {
+              DebuggerAction.refreshViews(mySession.getXDebugSession());
             }
           });
         }
@@ -435,7 +431,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @NotNull
   static List<ClassFilter> getActiveFilters() {
-    List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
+    List<ClassFilter> activeFilters = new ArrayList<>();
     DebuggerSettings settings = DebuggerSettings.getInstance();
     if (settings.TRACING_FILTERS_ENABLED) {
       for (ClassFilter filter : settings.getSteppingFilters()) {
@@ -458,7 +454,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
     List<StepRequest> stepRequests = requestManager.stepRequests();
     if (!stepRequests.isEmpty()) {
-      final List<StepRequest> toDelete = new ArrayList<StepRequest>(stepRequests.size());
+      final List<StepRequest> toDelete = new ArrayList<>(stepRequests.size());
       for (final StepRequest request : stepRequests) {
         ThreadReference threadReference = request.thread();
         // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occurs
@@ -921,8 +917,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private static int getInvokePolicy(SuspendContext suspendContext) {
-    //return ThreadReference.INVOKE_SINGLE_THREADED;
-    return suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? ObjectReference.INVOKE_SINGLE_THREADED : 0;
+    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || isResumeOnlyCurrentThread()) {
+      return ObjectReference.INVOKE_SINGLE_THREADED;
+    }
+    return 0;
   }
 
   @Override
@@ -993,6 +991,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       if (SuspendManagerUtil.isEvaluating(getSuspendManager(), invokeThread)) {
         throw EvaluateExceptionUtil.NESTED_EVALUATION_ERROR;
+      }
+
+      if (!suspendContext.suspends(invokeThread)) {
+        throw EvaluateExceptionUtil.THREAD_WAS_RESUMED;
       }
 
       Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), invokeThread);
@@ -1436,7 +1438,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
         forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
       }
-      final List<Mirror> args = new ArrayList<Mirror>(); // do not use unmodifiable lists because the list is modified by JPDA
+      final List<Mirror> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
       final StringReference qNameMirror = virtualMachine.mirrorOf(qName);
       args.add(qNameMirror);
       if (classLoader != null) {
@@ -1690,11 +1692,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     protected void resumeAction() {
       SuspendContextImpl context = getSuspendContext();
       if (context != null &&
-          (context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || Registry.is("debugger.step.resumes.one.thread"))) {
+          (context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || isResumeOnlyCurrentThread())) {
         myThreadBlockedMonitor.startWatching(myContextThread);
       }
       if (context != null
-          && Registry.is("debugger.step.resumes.one.thread")
+          && isResumeOnlyCurrentThread()
           && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL
           && myContextThread != null) {
         getSuspendManager().resumeThread(context, myContextThread);
@@ -2222,5 +2224,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public DebuggerSession getSession() {
     return mySession;
+  }
+
+  static boolean isResumeOnlyCurrentThread() {
+    return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
   }
 }

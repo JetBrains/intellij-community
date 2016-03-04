@@ -33,6 +33,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
@@ -80,7 +81,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     if (SkipAutopopupInStrings.isInStringLiteral(position)) {
       return true;
     }
-    if (PsiTreeUtil.getParentOfType(position, PsiComment.class, false) != null) {
+    PsiComment comment = PsiTreeUtil.getParentOfType(position, PsiComment.class, false);
+    if (comment != null && !(comment instanceof PsiDocComment)) {
       return true;
     }
     return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -89,14 +90,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }
     if (infos.isEmpty()) return;
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        destroyProcessesImpl(infos);
-        if (wait) {
-          for (Info o : infos) {
-            o.handler.waitFor();
-          }
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      destroyProcessesImpl(infos);
+      if (wait) {
+        for (Info o : infos) {
+          o.handler.waitFor();
         }
       }
     });
@@ -164,7 +162,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return acquire(info);
   }
 
-  public void release(@NotNull Target target, @Nullable Parameters configuration) {
+  @NotNull
+  public Future<?> release(@NotNull Target target, @Nullable Parameters configuration) {
     List<Info> infos = ContainerUtil.newArrayList();
     synchronized (myProcMap) {
       for (Pair<Target, Parameters> key : myProcMap.keySet()) {
@@ -174,9 +173,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         }
       }
     }
-    if (infos.isEmpty()) return;
-    destroyProcessesImpl(infos);
-    fireModificationCountChanged();
+    if (infos.isEmpty()) return new FixedFuture<>(null);
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        destroyProcessesImpl(infos);
+        fireModificationCountChanged();
+        for (Info o : infos) {
+          o.handler.waitFor();
+        }
+    });
   }
 
   private static void destroyProcessesImpl(@NotNull List<Info> infos) {

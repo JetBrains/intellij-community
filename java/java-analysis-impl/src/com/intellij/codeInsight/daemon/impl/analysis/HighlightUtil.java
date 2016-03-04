@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -178,7 +181,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   /**
-   * make element protected/package local/public suggestion
+   * make element protected/package-private/public suggestion
    */
   static void registerAccessQuickFixAction(@NotNull PsiMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
@@ -240,7 +243,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   private static PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
     if (place instanceof PsiReferenceExpression) {
-      // check for package local classes in the middle
+      // check for package-private classes in the middle
       PsiReferenceExpression expression = (PsiReferenceExpression)place;
       while (true) {
         PsiElement resolved = expression.resolve();
@@ -1388,7 +1391,13 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkNotAStatement(@NotNull PsiStatement statement) {
     if (!PsiUtil.isStatement(statement) && !PsiUtilCore.hasErrorElementChild(statement)) {
-      String description = JavaErrorMessages.message("not.a.statement");
+      boolean isDeclarationNotAllowed = false;
+      if (statement instanceof PsiDeclarationStatement) {
+        final PsiElement parent = statement.getParent();
+        isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
+      }
+      
+      String description = JavaErrorMessages.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
     }
     return null;
@@ -1548,12 +1557,25 @@ public class HighlightUtil extends HighlightUtilBase {
       //or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
       final PsiClass classT = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
       if (classT != null) {
+        final PsiElement parent = expr.getParent();
+        final PsiElement resolved = parent instanceof PsiReferenceExpression ? ((PsiReferenceExpression)parent).resolve() : null;
+
         for (PsiClass superClass : classT.getSupers()) {
-          if (superClass.isInterface() && //check spec-javac relations
-              superClass.isInheritor(aClass, true)) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(qualifier)
-              .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", format(aClass), formatClass(superClass))).create();
+          if (superClass.isInheritor(aClass, true)) {
+            String cause = null;
+            if (superClass.isInterface()) {
+              cause = "redundant interface " + format(aClass) + " is extended by ";
+            }
+            else if (resolved instanceof PsiMethod &&
+                     MethodSignatureUtil.findMethodBySuperMethod(superClass, (PsiMethod)resolved, true) != resolved) {
+              cause = "method " + ((PsiMethod)resolved).getName() + " is overridden in ";
+            }
+
+            if (cause != null) {
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(qualifier)
+                .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", cause + formatClass(superClass))).create();
+            }
           }
         }
 
@@ -2357,8 +2379,11 @@ public class HighlightUtil extends HighlightUtilBase {
           final String name1 = PsiFormatUtil.formatClass(class1, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
           final String name2 = PsiFormatUtil.formatClass(class2, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
           final String message = JavaErrorMessages.message("exception.must.be.disjoint", sub ? name1 : name2, sub ? name2 : name1);
-          PsiElement element = typeElements.get(sub ? i : j);
-          result.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create());
+          final PsiTypeElement element = typeElements.get(sub ? i : j);
+          final HighlightInfo highlight =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
+          QuickFixAction.registerQuickFixAction(highlight, QUICK_FIX_FACTORY.createDeleteMultiCatchFix(element));
+          result.add(highlight);
           break;
         }
       }

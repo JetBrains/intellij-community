@@ -239,6 +239,10 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTestExistingClass("Param", "", false);
   }
 
+  public void testExistingWithAnotherFieldNames() throws Exception {
+    doTestExistingClass("Param", "", true);
+  }
+
   public void testWrongBean() throws Exception {
     checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Getters for the following fields are required:\n" + "i.\n");
   }

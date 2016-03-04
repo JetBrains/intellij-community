@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.List;
  * Date: Apr 12, 2005
  */
 public class CompositeDataBinding implements DataBinding{
-  private final List<DataBinding> myBindings = new ArrayList<DataBinding>();
+  private final List<DataBinding> myBindings = new ArrayList<>();
 
   void addBinding(DataBinding binding) {
     myBindings.add(binding);

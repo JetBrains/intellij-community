@@ -25,8 +25,10 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 public class GoToHashOrRefAction extends DumbAwareAction {
@@ -40,7 +42,9 @@ public class GoToHashOrRefAction extends DumbAwareAction {
       return;
     }
 
-    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, VcsLogUtil.getVisibleBranches(log, logUi), new Function<String, Future>() {
+    Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(logUi);
+    Collection<VcsRef> visibleBranches = VcsLogUtil.getVisibleBranches(log, visibleRoots);
+    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, visibleBranches, visibleRoots, new Function<String, Future>() {
       @Override
       public Future fun(String text) {
         return log.jumpToReference(text);

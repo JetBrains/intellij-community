@@ -826,6 +826,14 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("fooDontMigrateName", PsiType.BOOLEAN);
   }
 
+  public void testMigrationToSuper() {
+    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.A<java.lang.String>", null));
+  }
+
+  public void testMigrationToSuper2() {
+    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.Base<java.lang.String>", null));
+  }
+
   private void doTestReturnType(final String methodName, final String migrationType) {
     start(new RulesProvider() {
       @Override

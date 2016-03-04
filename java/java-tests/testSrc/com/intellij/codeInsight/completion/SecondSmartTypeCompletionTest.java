@@ -59,8 +59,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   public void testSuggestArraysAsListWildcard() throws Throwable { doTest(); }
 
   public void testSuggestToArrayWithNewEmptyArray() throws Throwable { doTest(); }
-  public void testSuggestToArrayWithNewNonEmptyArray() throws Throwable { doTest(); }
-  
+
   public void testSuggestToArrayWithExistingEmptyArray() throws Throwable {
     configure();
     assertStringItems("foos().toArray(EMPTY_ARRAY)", "foos().toArray(EMPTY_ARRAY2)");

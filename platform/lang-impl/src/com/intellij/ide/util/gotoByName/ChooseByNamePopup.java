@@ -343,11 +343,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
     Pattern regex = null;
-    if (pattern.indexOf(':') != -1 ||
-        pattern.indexOf(',') != -1 ||
-        pattern.indexOf(';') != -1 ||
-        //pattern.indexOf('#') != -1 ||
-        pattern.indexOf('@') != -1) { // quick test if reg exp should be used
+    if (StringUtil.containsAnyChar(pattern, ":,;@[(") || pattern.contains(" line ")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
     }
 

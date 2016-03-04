@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +106,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public String getTooltipTextFor(PopupFactoryImpl.ActionItem value) {
     return value.getDescription();
+  }
+
+  @Override
+  public void setEmptyText(@NotNull StatusText emptyText) {
+
   }
 
   @Override

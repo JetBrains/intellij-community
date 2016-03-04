@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import java.util.List;
 @State(
   name = "UpdatesConfigurable",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/updates.xml", roamingType = RoamingType.DISABLED),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+    @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED),
+    @Storage(value = "other.xml", deprecated = true)
   }
 )
 public class UpdateSettings implements PersistentStateComponent<UpdateSettings.State>, UserUpdateSettings {

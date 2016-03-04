@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,12 +173,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   protected BreakpointWithHighlighter(@NotNull Project project, XBreakpoint xBreakpoint) {
     //for persistency
     super(project, xBreakpoint);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        reload();
-      }
-    });
+    ApplicationManager.getApplication().runReadAction((Runnable)this::reload);
   }
 
   @Override
@@ -331,12 +326,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
                   }
                 }
               });
-              DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
-                @Override
-                public void run() {
-                  updateGutter();
-                }
-              });
+              DebuggerInvocationUtil.swingInvokeLater(project, BreakpointWithHighlighter.this::updateGutter);
             }
           });
         }

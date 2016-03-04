@@ -40,6 +40,7 @@ public class FxmlConstants {
   @NonNls public static final String TYPE = "type";
   @NonNls public static final String RESOURCES = "resources";
   @NonNls public static final String CHARSET = "charset";
+  @NonNls public static final String CONTROLLER = "controller";
 
   @NonNls public static final String STYLE_CLASS = "styleClass";
   @NonNls public static final String STYLESHEETS = "stylesheets";
@@ -50,6 +51,7 @@ public class FxmlConstants {
   public static final String FX_ELEMENT_SOURCE = "source";
 
   public static final Map<String, List<String>> FX_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
+
   static {
     FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID, RESOURCES, CHARSET));
     FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Collections.singletonList(FX_ELEMENT_SOURCE));

@@ -22,7 +22,6 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -165,12 +164,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
             @Override
             public void run() {
               CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  ProgressManager.getInstance().run(progressTask);
-                }
-              });
+              ProgressManager.getInstance().run(progressTask);
             }
           }, getTemplatePresentation().getText(), null);
         }

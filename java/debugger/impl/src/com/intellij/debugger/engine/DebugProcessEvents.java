@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,11 +181,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   return;
                 }
 
+                LocatableEvent locatableEvent = getLocatableEvent(eventSet);
                 if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
                   // check if there is already one request with policy SUSPEND_ALL
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-                      if (Registry.is("debugger.step.resumes.one.thread") && getStepEvent(eventSet) != null) {
+                      if (isResumeOnlyCurrentThread() && locatableEvent != null && !context.isEvaluating()) {
                         // if step event is present - switch context
                         getSuspendManager().resume(context);
                         //((SuspendManagerImpl)getSuspendManager()).popContext(context);
@@ -201,10 +202,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
                 SuspendContextImpl suspendContext = null;
 
-                StepEvent stepEvent = getStepEvent(eventSet);
-                if (Registry.is("debugger.step.resumes.one.thread") && stepEvent != null) {
+                if (isResumeOnlyCurrentThread() && locatableEvent != null) {
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
-                    ThreadReferenceProxyImpl threadProxy = getVirtualMachineProxy().getThreadReferenceProxy(stepEvent.thread());
+                    ThreadReferenceProxyImpl threadProxy = getVirtualMachineProxy().getThreadReferenceProxy(locatableEvent.thread());
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
                         context.isExplicitlyResumed(threadProxy)) {
                       context.myResumedThreads.remove(threadProxy);
@@ -526,10 +526,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   @Nullable
-  private static StepEvent getStepEvent(EventSet eventSet) {
+  private static LocatableEvent getLocatableEvent(EventSet eventSet) {
     for (Event event : eventSet) {
-      if (event instanceof StepEvent) {
-        return (StepEvent)event;
+      if (event instanceof LocatableEvent) {
+        return (LocatableEvent)event;
       }
     }
     return null;

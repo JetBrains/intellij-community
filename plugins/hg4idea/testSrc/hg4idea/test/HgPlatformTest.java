@@ -18,8 +18,9 @@ package hg4idea.test;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -96,6 +97,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
       myProjectFixture.tearDown();
     }
     finally {
@@ -125,6 +127,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     FileUtil.appendToFile(hgrc, text);
     assertTrue(hgrc.exists());
     repositoryRoot.refresh(false, true);
+    cd(repositoryRoot);
   }
 
 

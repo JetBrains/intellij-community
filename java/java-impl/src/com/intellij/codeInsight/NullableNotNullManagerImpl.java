@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,9 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.psi.PsiElement;
 
-@State(
-  name = "NullableNotNullManager",
-  storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)}
-)
+@State(name = "NullableNotNullManager")
 public class NullableNotNullManagerImpl extends NullableNotNullManager {
   protected boolean hasHardcodedContracts(PsiElement element) {
     return HardcodedContracts.hasHardcodedContracts(element);

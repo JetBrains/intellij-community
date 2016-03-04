@@ -38,7 +38,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -64,11 +63,13 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.Attribute;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
@@ -76,8 +77,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.intellij.reference.SoftReference.dereference;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
                          implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx, Queryable, PsiClassOwnerEx, PsiCompiledFile {
@@ -99,8 +98,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private final boolean myIsForDecompiling;
   private volatile SoftReference<StubTree> myStub;
   private volatile TreeElement myMirrorFileElement;
-  private volatile ClsPackageStatementImpl myPackageStatement = null;
-  private volatile LanguageLevel myLanguageLevel = null;
+  private volatile ClsPackageStatementImpl myPackageStatement;
+  private volatile LanguageLevel myLanguageLevel;
   private boolean myIsPhysical = true;
   private boolean myInvalidated;
 
@@ -154,7 +153,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return !myInvalidated && (myIsForDecompiling || getVirtualFile().isValid());
   }
 
-  protected boolean isForDecompiling() {
+  boolean isForDecompiling() {
     return myIsForDecompiling;
   }
 
@@ -259,12 +258,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
+    throw cannotModifyException(this);
   }
 
   @Override
   public void checkSetName(String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
+    throw cannotModifyException(this);
   }
 
   @Override
@@ -347,6 +346,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           try {
             final TreeElement finalMirrorTreeElement = mirrorTreeElement;
             ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+              @Override
               public void run() {
                 setMirror(finalMirrorTreeElement);
                 putUserData(CLS_DOCUMENT_LINK_KEY, document);
@@ -478,7 +478,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    StubTree stubTree = dereference(myStub);
+    StubTree stubTree = SoftReference.dereference(myStub);
     if (stubTree != null) return stubTree;
 
     // build newStub out of lock to avoid deadlock
@@ -491,7 +491,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     synchronized (myStubLock) {
-      stubTree = dereference(myStub);
+      stubTree = SoftReference.dereference(myStub);
       if (stubTree != null) return stubTree;
 
       stubTree = newStubTree;
@@ -520,7 +520,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     synchronized (myStubLock) {
-      StubTree stubTree = dereference(myStub);
+      StubTree stubTree = SoftReference.dereference(myStub);
       myStub = null;
       if (stubTree != null) {
         //noinspection unchecked
@@ -583,19 +583,31 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Nullable
   public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, @NotNull byte[] bytes) throws ClsFormatException {
-    if (ClassFileViewProvider.isInnerClass(file)) {
-      return null;
-    }
+    return buildFileStub(file, bytes, new Function<String, PsiJavaFileStub>() {
+      @Override
+      public PsiJavaFileStub fun(String packageName) {
+        return new PsiJavaFileStubImpl(packageName, true);
+      }
+    });
+  }
 
+  @Nullable
+  public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file,
+                                              @NotNull byte[] bytes,
+                                              @NotNull Function<String, PsiJavaFileStub> stubBuilder) throws ClsFormatException {
     try {
+      if (ClassFileViewProvider.isInnerClass(file, bytes)) {
+        return null;
+      }
+
       ClassReader reader = new ClassReader(bytes);
       String className = file.getNameWithoutExtension();
       String packageName = getPackageName(reader.getClassName());
-      PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl(packageName, true);
+      PsiJavaFileStub stub = stubBuilder.fun(packageName);
 
       try {
         StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);
-        reader.accept(visitor, ClassReader.SKIP_FRAMES);
+        reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
         PsiClassStub<?> result = visitor.getResult();
         if (result == null) return null;
       }
@@ -612,7 +624,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   private static String getPackageName(String internalName) {
     int p = internalName.lastIndexOf('/');
-    return p > 0 ? internalName.substring(0, p).replace('/', '.') : StringUtilRt.EMPTY_STRING;
+    return p > 0 ? internalName.substring(0, p).replace('/', '.') : "";
   }
 
   private static final InnerClassSourceStrategy<VirtualFile> STRATEGY = new InnerClassSourceStrategy<VirtualFile>() {
@@ -629,9 +641,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     public void accept(VirtualFile innerClass, StubBuildingVisitor<VirtualFile> visitor) {
       try {
         byte[] bytes = innerClass.contentsToByteArray(false);
-        new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
+        new ClassReader(bytes).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
       }
       catch (IOException ignored) { }
     }
   };
+
+  public static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.RetinaImage;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.ImageUtil;
@@ -254,7 +251,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static Icon checkIcon(final Image image, @NotNull URL url) {
+  private static ImageIcon checkIcon(final Image image, @NotNull URL url) {
     if (image == null || image.getHeight(LabelHolder.ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
     }
@@ -264,7 +261,8 @@ public final class IconLoader {
       LOG.error("Invalid icon: " + url); // # 22481
       return EMPTY_ICON;
     }
-    return icon;
+    assert icon instanceof ImageIcon;
+    return (ImageIcon)icon;
   }
 
   public static boolean isGoodSize(@NotNull final Icon icon) {
@@ -300,7 +298,7 @@ public final class IconLoader {
       graphics.dispose();
 
       Image img = ImageUtil.filter(image, UIUtil.getGrayFilter());
-      if (UIUtil.isRetina()) img = RetinaImage.createFrom(img, 2, ImageLoader.ourComponent);
+      if (UIUtil.isRetina()) img = RetinaImage.createFrom(img);
 
       disabledIcon = new JBImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
@@ -352,7 +350,7 @@ public final class IconLoader {
     }
 
     @NotNull
-    private synchronized Icon getRealIcon() {
+    private synchronized ImageIcon getRealIcon() {
       if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size())) return EMPTY_ICON;
 
       if (!isValid()) {
@@ -374,12 +372,12 @@ public final class IconLoader {
         }
       }
       Object realIcon = myRealIcon;
-      if (realIcon instanceof Icon) return (Icon)realIcon;
+      if (realIcon instanceof Icon) return (ImageIcon)realIcon;
 
-      Icon icon;
+      ImageIcon icon;
       if (realIcon instanceof Reference) {
-        icon = ((Reference<Icon>)realIcon).get();
-        if (icon != null) return icon;
+        icon = ((Reference<ImageIcon>)realIcon).get();
+        if (icon != null) return (ImageIcon)icon;
       }
 
       Image image = ImageLoader.loadFromUrl(myUrl, true, filter);
@@ -390,7 +388,7 @@ public final class IconLoader {
           realIcon = icon;
         }
         else {
-          realIcon = new SoftReference<Icon>(icon);
+          realIcon = new SoftReference<ImageIcon>(icon);
         }
         myRealIcon = realIcon;
       }
@@ -476,10 +474,14 @@ public final class IconLoader {
           Image image = getOrigImage(needRetinaImage);
 
           if (image != null) {
-            Icon realIcon = getRealIcon();
-            int width = (int)(realIcon.getIconWidth() * scale);
-            int height = (int)(realIcon.getIconHeight() * scale);
-            icon = getIcon(Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height));
+            Image iconImage = getRealIcon().getImage();
+            int width = (int)(ImageUtil.getRealWidth(iconImage) * scale);
+            int height = (int)(ImageUtil.getRealHeight(iconImage) * scale);
+
+            Image resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+            if (UIUtil.isRetina()) resizedImage = RetinaImage.createFrom(resizedImage);
+
+            icon = getIcon(resizedImage);
             scaledIconsCache.put(effectiveScale, new SoftReference<Icon>(icon));
           }
         }

@@ -4,9 +4,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>Represents a unique reference to a VCS commit.</p>
- *
+ * <p>
  * <p>It is called "Hash", because in DVCSs it is represented by a SHA-hash value.</p>
- *
+ * <p>
  * TODO move to vcs-api
  *
  * @author Kirill Likhodedov
@@ -22,13 +22,12 @@ public interface Hash {
 
   /**
    * <p>
-   *   Returns a short part of the {@link #asString() hash string},
-   *   which may be non-unique, but usually enough to be a commit reference, and it is easier to read than the complete hash string.
+   * Returns a short part of the {@link #asString() hash string},
+   * which may be non-unique, but usually enough to be a commit reference, and it is easier to read than the complete hash string.
    * </p>
-   *
+   * <p>
    * <p>Usually (e.g. it is default for Git) the short hash is 7 symbols long.</p>
    */
   @NotNull
   String toShortString();
-
 }

@@ -256,6 +256,27 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return null;
   }
 
+  @Override
+  public Collection<String> findConflicts(PsiElement element, PsiElement[] elements, UsageInfo[] usages) {
+    String methodRefFound = null;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && (element instanceof PsiMethod || element instanceof PsiParameter)) {
+      for (UsageInfo usage : usages) {
+        final PsiElement refElement = usage.getElement();
+        if (refElement instanceof PsiMethodReferenceExpression) {
+          methodRefFound = RefactoringBundle.message("expand.method.reference.warning");
+          break;
+        }
+      }
+    }
+    if (methodRefFound != null) {
+      Collection<String> result = new ArrayList<>();
+      result.add(methodRefFound);
+      result.addAll(super.findConflicts(element, elements, usages));
+      return result;
+    }
+    return super.findConflicts(element, elements, usages);
+  }
+
   public Collection<String> findConflicts(@NotNull final PsiElement element, @NotNull final PsiElement[] allElementsToDelete) {
     if (element instanceof PsiMethod) {
       final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
@@ -519,9 +540,13 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           }
           LOG.assertTrue(element.getTextRange() != null);
           final PsiFile containingFile = psiClass.getContainingFile();
-          final boolean sameFileWithSingleClass = containingFile instanceof PsiClassOwner &&
-                                                  ((PsiClassOwner)containingFile).getClasses().length == 1 &&
-                                                  element.getContainingFile() == containingFile;
+          boolean sameFileWithSingleClass = false;
+          if (containingFile instanceof PsiClassOwner) {
+            final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
+            sameFileWithSingleClass = classes.length == 1 && 
+                                      classes[0] == psiClass && 
+                                      element.getContainingFile() == containingFile;
+          }
           usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, sameFileWithSingleClass || isInNonStaticImport(element)));
         }
         return true;

@@ -687,7 +687,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       if (MouseEvent.MOUSE_DRAGGED == e.getID() && myWasPressedOnMe) {
         myDragging = true;
         setCursor(getResizeCursor());
-        myGlassPane.setCursor(getResizeCursor(), myListener);
+
+        if (myGlassPane != null) {
+          myGlassPane.setCursor(getResizeCursor(), myListener);
+        }
 
         myPoint = SwingUtilities.convertPoint(this, e.getPoint(), ThreeComponentsSplitter.this);
         final int size = getOrientation() ? ThreeComponentsSplitter.this.getHeight() : ThreeComponentsSplitter.this.getWidth();

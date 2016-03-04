@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -93,12 +91,7 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
           UpdateChecker.saveDisabledToUpdatePlugins();
           boolean updated = UpdateChecker.installPluginUpdates(myUploadedPlugins, indicator);
           if (updated) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                PluginManagerMain.notifyPluginsUpdated(null);
-              }
-            }, ModalityState.NON_MODAL);
+            ApplicationManager.getApplication().invokeLater(() -> PluginManagerMain.notifyPluginsUpdated(null), ModalityState.NON_MODAL);
           }
         }
       });
@@ -115,25 +108,21 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
       myPluginsToUpdateLabel.setVisible(true);
       myPluginsPanel.setVisible(true);
 
-      final DetectedPluginsPanel foundPluginsPanel = new DetectedPluginsPanel();
+      DetectedPluginsPanel foundPluginsPanel = new DetectedPluginsPanel();
       foundPluginsPanel.addAll(myUploadedPlugins);
       TableUtil.ensureSelectionExists(foundPluginsPanel.getEntryTable());
-      foundPluginsPanel.addStateListener(new DetectedPluginsPanel.Listener() {
-        @Override
-        public void stateChanged() {
-          final Set<String> skipped = foundPluginsPanel.getSkippedPlugins();
-          final PluginDownloader any = ContainerUtil.find(myUploadedPlugins, new Condition<PluginDownloader>() {
-            @Override
-            public boolean value(PluginDownloader plugin) {
-              return !skipped.contains(plugin.getPluginId());
-            }
-          });
-          getOKAction().setEnabled(any != null);
-        }
-      });
+      foundPluginsPanel.addStateListener(() -> updateState(foundPluginsPanel));
       myPluginsPanel.add(foundPluginsPanel, BorderLayout.CENTER);
 
       configureMessageArea(myMessageArea);
+
+      updateState(foundPluginsPanel);
+    }
+
+    private void updateState(DetectedPluginsPanel panel) {
+      Set<String> skipped = panel.getSkippedPlugins();
+      boolean nothingSelected = myUploadedPlugins.stream().allMatch(plugin -> skipped.contains(plugin.getPluginId()));
+      getOKAction().setEnabled(!nothingSelected);
     }
   }
 }

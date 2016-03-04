@@ -44,6 +44,7 @@ import com.intellij.util.concurrency.BlockingSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +130,21 @@ public class PythonSdkUpdater implements StartupActivity {
     if (!updateLocalSdkPaths(sdk, sdkModificator)) {
       return false;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+
+    final Application application = ApplicationManager.getApplication();
+
+    if (application.isUnitTestMode()) {
+      /**
+       * All actions we take after this line are dedicated to skeleton update process.
+       * Not all tests do need them.
+       * To find test API that updates skeleton, find usage of following method:
+       * {@link PySkeletonRefresher#refreshSkeletonsOfSdk(Project, Component, String, Sdk)}
+       */
+      return true;
+    }
+
+    application.invokeLater(new Runnable() {
       @Override
       public void run() {
         synchronized (ourLock) {
@@ -146,7 +161,7 @@ public class PythonSdkUpdater implements StartupActivity {
             if (sdk != null) {
               ourUnderRefresh.put(homePath);
               try {
-                final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), homePath);
+                final String skeletonsPath = getBinarySkeletonsPath(homePath);
                 try {
                   if (PythonSdkType.isRemote(sdk) && project == null && ownerComponent == null) {
                     LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
@@ -156,7 +171,13 @@ public class PythonSdkUpdater implements StartupActivity {
                   updateRemoteSdkPaths(sdk);
                 }
                 catch (InvalidSdkException e) {
-                  if (PythonSdkType.isVagrant(sdk) || PythonSdkType.isDocker(sdk)) {
+                  if (PythonSdkType.isVagrant(sdk)
+                      || new CredentialsTypeExChecker() {
+                    @Override
+                    protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
+                      return languageContribution.shouldNotifySdkSkeletonFail();
+                    }
+                  }.check(sdk)) {
                     PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
                       @Override
                       public void run() {
@@ -173,7 +194,12 @@ public class PythonSdkUpdater implements StartupActivity {
                 }
               }
               finally {
-                ourUnderRefresh.remove(homePath);
+                try {
+                  ourUnderRefresh.remove(homePath);
+                }
+                catch (IllegalStateException e) {
+                  LOG.error(e);
+                }
               }
             }
           }
@@ -208,6 +234,7 @@ public class PythonSdkUpdater implements StartupActivity {
   private static boolean updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator) {
     if (!PythonSdkType.isRemote(sdk)) {
       final List<VirtualFile> localSdkPaths;
+      final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
       try {
         localSdkPaths = getLocalSdkPaths(sdk);
       }
@@ -217,7 +244,7 @@ public class PythonSdkUpdater implements StartupActivity {
         }
         return false;
       }
-      commitSdkPathsIfChanged(sdk, sdkModificator, localSdkPaths);
+      commitSdkPathsIfChanged(sdk, sdkModificator, localSdkPaths, forceCommit);
     }
     return true;
   }
@@ -231,9 +258,20 @@ public class PythonSdkUpdater implements StartupActivity {
    */
   private static void updateRemoteSdkPaths(Sdk sdk) {
     if (PythonSdkType.isRemote(sdk)) {
+      final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
       final List<VirtualFile> remoteSdkPaths = getRemoteSdkPaths(sdk);
-      commitSdkPathsIfChanged(sdk, null, remoteSdkPaths);
+      commitSdkPathsIfChanged(sdk, null, remoteSdkPaths, forceCommit);
     }
+  }
+
+  private static boolean ensureBinarySkeletonsDirectoryExists(Sdk sdk) {
+    final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
+    if (skeletonsPath != null) {
+      if (new File(skeletonsPath).mkdirs()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -323,10 +361,8 @@ public class PythonSdkUpdater implements StartupActivity {
   @NotNull
   private static List<VirtualFile> getSkeletonsPaths(@NotNull Sdk sdk) {
     final List<VirtualFile> results = Lists.newArrayList();
-    final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
+    final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
     if (skeletonsPath != null) {
-      //noinspection ResultOfMethodCallIgnored
-      new File(skeletonsPath).mkdirs();
       final VirtualFile skeletonsDir = StandardFileSystems.local().refreshAndFindFileByPath(skeletonsPath);
       if (skeletonsDir != null) {
         results.add(skeletonsDir);
@@ -341,6 +377,11 @@ public class PythonSdkUpdater implements StartupActivity {
                userSkeletonsDir.getPath());
     }
     return results;
+  }
+
+  @Nullable
+  private static String getBinarySkeletonsPath(@Nullable String path) {
+    return path != null ? PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), path) : null;
   }
 
   /**
@@ -366,11 +407,12 @@ public class PythonSdkUpdater implements StartupActivity {
    */
   private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
                                               @Nullable final SdkModificator sdkModificator,
-                                              @NotNull final List<VirtualFile> sdkPaths) {
+                                              @NotNull final List<VirtualFile> sdkPaths,
+                                              boolean forceCommit) {
     final String homePath = sdk.getHomePath();
     final SdkModificator modificatorToGetRoots = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
     final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToGetRoots.getRoots(OrderRootType.CLASSES));
-    if (!Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
+    if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {

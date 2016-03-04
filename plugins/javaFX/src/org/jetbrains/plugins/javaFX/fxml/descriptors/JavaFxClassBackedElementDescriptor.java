@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -89,7 +89,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
 
   private JavaFxPropertyElementDescriptor getDefaultPropertyDescriptor() {
     final PsiAnnotation defaultProperty = AnnotationUtil
-      .findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+      .findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
     if (defaultProperty != null) {
       final PsiAnnotationMemberValue defaultPropertyAttributeValue = defaultProperty.findAttributeValue("value");
       if (defaultPropertyAttributeValue instanceof PsiLiteralExpression) {
@@ -138,7 +138,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
                 if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
                   final PsiParameter[] parameters = method.getParameterList().getParameters();
                   if (parameters.length == 2 &&
-                      InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
+                      InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonNames.JAVAFX_SCENE_NODE)) {
                     meths.add(method);
                   }
                 }
@@ -247,7 +247,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
               if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
               final PsiType fieldType = field.getType();
               if (!JavaFxPsiUtil.isReadOnly(myPsiClass, field) &&
-                  InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) ||
+                  InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_BEANS_PROPERTY) ||
                   acceptablePropertyType(fieldType)) {
                 acceptableFields.add(field);
               }
@@ -273,8 +273,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         private boolean acceptablePropertyType(PsiType fieldType) {
           return fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
                  (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
-                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_OBSERVABLE_LIST_PROPERTY) && JavaGenericsUtil.getCollectionItemType(fieldType, myPsiClass.getResolveScope()) != null ||
-                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER);
+                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_OBSERVABLE_LIST_PROPERTY) && JavaGenericsUtil.getCollectionItemType(fieldType, myPsiClass.getResolveScope()) != null ||
+                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER);
         }
       });
     if (fieldList != null) {

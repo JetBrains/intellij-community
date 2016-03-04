@@ -19,10 +19,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -30,6 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -54,8 +59,25 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     myElement = namedElement;
     myNewName = newName;
     final Project project = namedElement.getProject();
-    myRenameProcessor = !(namedElement instanceof PsiNamedElement) || Comparing.equal(((PsiNamedElement)namedElement).getName(), myNewName) 
-                        ? null : new RenameProcessor(project, namedElement, newName, false, false);
+    final boolean canRename =
+      namedElement instanceof PsiNamedElement && !Comparing.equal(((PsiNamedElement)namedElement).getName(), myNewName);
+    myRenameProcessor = canRename ? new RenameProcessor(project, namedElement, newName, false, false) {
+      @NotNull
+      @Override
+      protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
+        return new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
+          @Override
+          public void run() {
+            InvertBooleanProcessor.this.execute(usages);
+          }
+        }, false, true);
+      }
+
+      @Override
+      protected void prepareSuccessful() {
+        InvertBooleanProcessor.this.prepareSuccessful();
+      }
+    } : null;
     mySmartPointerManager = SmartPointerManager.getInstance(project);
     myDelegate = InvertBooleanDelegate.findInvertBooleanDelegate(myElement);
     LOG.assertTrue(myDelegate != null);
@@ -70,10 +92,11 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    myDelegate.findConflicts(refUsages.get(), conflicts);
+    final UsageInfo[] usageInfos = refUsages.get();
+    myDelegate.findConflicts(usageInfos, conflicts);
     
     if (!conflicts.isEmpty())  {
-      return showConflicts(conflicts, null);
+      return showConflicts(conflicts, usageInfos);
     }
 
     if (myRenameProcessor == null || myRenameProcessor.preprocessUsages(refUsages)) {
@@ -138,7 +161,6 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     }
     return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
   }
-
 
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {

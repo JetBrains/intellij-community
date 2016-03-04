@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class StringUtilRt {
-  public static final String EMPTY_STRING = "";
-
   @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {
     return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
@@ -42,14 +40,14 @@ public class StringUtilRt {
 
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
-      char upcased = toUpperCase(c);
-      if (answer == null && upcased != c) {
+      char upCased = toUpperCase(c);
+      if (answer == null && upCased != c) {
         answer = new StringBuilder(s.length());
         answer.append(s.subSequence(0, i));
       }
 
       if (answer != null) {
-        answer.append(upcased);
+        answer.append(upCased);
       }
     }
 
@@ -118,12 +116,6 @@ public class StringUtilRt {
                                              @Nullable int[] offsetsToKeep,
                                              boolean keepCarriageReturn) {
     return unifyLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn).toString();
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static CharSequence unifyLineSeparators(@NotNull CharSequence text) {
-    return unifyLineSeparators(text, "\n", null, false);
   }
 
   @NotNull
@@ -209,6 +201,19 @@ public class StringUtilRt {
 
     try {
       return Integer.parseInt(string);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
+  @Contract(pure = true)
+  public static long parseLong(@Nullable String string, long defaultValue) {
+    if (string == null) {
+      return defaultValue;
+    }
+    try {
+      return Long.parseLong(string);
     }
     catch (Exception e) {
       return defaultValue;
@@ -302,6 +307,4 @@ public class StringUtilRt {
     }
     return -1;
   }
-
-
 }

@@ -50,4 +50,8 @@ public class UnpredictableBigDecimalConstructorCallFixTest extends IGQuickFixesT
   public void testConstructor() {
     doTest(InspectionGadgetsBundle.message("unpredictable.big.decimal.constructor.call.quickfix", "new BigDecimal(\"0.1\")"));
   }
+
+  public void testLiteral() {
+    doTest(InspectionGadgetsBundle.message("unpredictable.big.decimal.constructor.call.quickfix", "BigDecimal.valueOf(2d)"));
+  }
 }
