@@ -43,6 +43,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -518,5 +519,17 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     public boolean startInWriteAction() {
       return true;
     }
+  }
+
+  @Override
+  public JComponent getCustomPreviewPanel(RefEntity entity) {
+    JEditorPane htmlView = new JEditorPane();
+    htmlView.setContentType(UIUtil.HTML_MIME);
+    htmlView.setEditable(false);
+    htmlView.setOpaque(false);
+    final StringBuffer buf = new StringBuffer();
+    getComposer().compose(buf, entity);
+    htmlView.setText(buf.toString());
+    return htmlView;
   }
 }

@@ -30,6 +30,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -92,4 +93,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   void exportResults(@NotNull final Element parentNode,
                      @NotNull final Set<RefEntity> excludedEntities,
                      @NotNull final Set<CommonProblemDescriptor> excludedDescriptors);
+
+  default JComponent getCustomPreviewPanel(RefEntity entity) {
+    return null;
+  };
 }

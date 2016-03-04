@@ -445,10 +445,17 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final JPanel editorPanel = new JPanel();
       editorPanel.setLayout(new BorderLayout());
       final int problemCount = myTree.getSelectedProblemCount();
-      editorPanel.add(createBaseRightComponentFor(problemCount, refEntity), BorderLayout.CENTER);
+      JComponent previewPanel = null;
+      final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
+      if (tool != null && refEntity != null && problemCount == 1) {
+        final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
+        previewPanel = presentation.getCustomPreviewPanel(refEntity);
+      }
+      if (previewPanel == null) {
+        previewPanel = createBaseRightComponentFor(problemCount, refEntity);
+      }
+      editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
-        LOG.assertTrue(tool != null);
         editorPanel.add(new QuickFixToolbar(myTree,
                                             myProject,
                                             myPreviewEditor,
