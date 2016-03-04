@@ -53,11 +53,12 @@ import org.jetbrains.annotations.NotNull;
  * {@link #submitMergeableTransaction(TransactionKind, Runnable)} call.<p/>
  *
  * Q: I've got <b>"Nested transactions are not allowed"</b> exception, what do I do?<br/>
- * A: First, find the place in the stack where the outer transaction is started. Then, see if there is any Swing event pumping
- * in between two transactions (e.g. a dialog is shown). If not, one of two transactions is superfluous, remove it. If there
- * is event pumping, check if the client code (e.g. the one showing the dialog) is prepared to the nested model modifications
- * of the specified kinds. For example, refactoring dialogs might be prepared to {@link TransactionKind#TEXT_EDITING} kind
- * (for text field editing inside the dialogs) but not
+ * A: First, identify the place in the stack where the outer transaction is started (the exception attachment should contain it).
+ * Then, see if there is any Swing event pumping
+ * in between two transactions (e.g. a dialog is shown). If not, one of the two involved transactions is superfluous, remove it. If there
+ * is event pumping present, check if the client code (e.g. the one showing the dialog) is prepared to such nested model modifications.
+ * For example, refactoring dialogs might be prepared to {@link TransactionKind#TEXT_EDITING} kind
+ * (for text field editing inside the dialogs) but not to
  * other model changes, e.g. root changes. The outer transaction code might then specify which kinds it's prepared to (by using
  * {@link #acceptNestedTransactions(TransactionKind...)}), and the inner transaction code should have the very same transaction kind
  * (by using {@link #submitMergeableTransaction(TransactionKind, Runnable)} or {@link #startSynchronousTransaction(TransactionKind)}).

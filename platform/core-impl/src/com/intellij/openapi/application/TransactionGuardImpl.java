@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +35,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Runnable> myQueue = new LinkedBlockingQueue<Runnable>();
   private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
-  private boolean myInsideTransaction;
+  private String myTransactionStartTrace;
 
   @Override
   @NotNull
@@ -42,15 +44,16 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (kind != TransactionKind.NO_MERGE && myMergeableKinds.contains(kind)) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
-    if (myInsideTransaction) {
-      LOG.error("Nested transactions are not allowed");
+    if (myTransactionStartTrace != null) {
+      LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment.",
+                new Attachment("trace.txt", myTransactionStartTrace));
       //throw new IllegalStateException("Nested transactions are not allowed");
     }
-    myInsideTransaction = true;
+    myTransactionStartTrace = DebugUtil.currentStackTrace();
     return new AccessToken() {
       @Override
       public void finish() {
-        myInsideTransaction = false;
+        myTransactionStartTrace = null;
         if (!myQueue.isEmpty()) {
           pollQueueLater();
         }
@@ -64,7 +67,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     app.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myInsideTransaction) return;
+        if (isInsideTransaction()) return;
 
         Runnable next = myQueue.poll();
         if (next != null) {
@@ -87,7 +90,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   public boolean isInsideTransaction() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return myInsideTransaction;
+    return myTransactionStartTrace != null;
   }
 
   @Override
@@ -95,7 +98,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (!myInsideTransaction || kind != TransactionKind.NO_MERGE && myMergeableKinds.contains(kind)) {
+        if (!isInsideTransaction() || kind != TransactionKind.NO_MERGE && myMergeableKinds.contains(kind)) {
           runSyncTransaction(kind, transaction);
         }
         else {
