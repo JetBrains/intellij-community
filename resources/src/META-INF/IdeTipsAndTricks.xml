@@ -175,5 +175,6 @@
     <tipAndTrick file="GoToFile.html"/>
     <tipAndTrick file="DiagramShowDiff.html"/>
     <tipAndTrick file="HippieCompletion.html"/>
+    <tipAndTrick file="ChangeSignatureAfterMovingParameters.html"/>
   </extensions>
 </idea-plugin>
