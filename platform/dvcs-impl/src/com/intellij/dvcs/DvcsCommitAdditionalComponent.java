@@ -50,7 +50,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
 
   protected final JPanel myPanel;
   protected final JCheckBox myAmend;
-  @Nullable private final String myPreviousMessage;
+  @NotNull private final String myPreviousMessage;
   @Nullable private String myAmendedMessage;
   @NotNull protected final CheckinProjectPanel myCheckinPanel;
   @Nullable  private  Map<VirtualFile, String> myMessagesForRoots;
