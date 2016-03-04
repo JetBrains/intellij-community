@@ -284,6 +284,16 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       }
       else if (statements.length == 1) {
         PsiElement replacement = getMatchExpr(statements[0], elementToReplace);
+        if (elementToReplace instanceof PsiParameter && replacement instanceof PsiLocalVariable) {
+          final PsiVariable variable = (PsiVariable)replacement;
+          final PsiIdentifier identifier = variable.getNameIdentifier();
+          assert identifier != null;
+          final String text = variable.getText();
+
+          // chop off unneeded semicolons & initializers
+          final String parameterText = text.substring(0, identifier.getStartOffsetInParent() + identifier.getTextLength());
+          replacement = JavaPsiFacade.getElementFactory(variable.getProject()).createParameterFromText(parameterText, variable);
+        }
 
         copyUnmatchedElements(elementToReplace, replacement);
         replacement = handleSymbolReplacement(replacement, elementToReplace);

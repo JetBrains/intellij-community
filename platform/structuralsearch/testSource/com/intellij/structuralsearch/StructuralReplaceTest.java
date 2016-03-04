@@ -2457,4 +2457,15 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  abstract void a(int i);\n" +
                  "}", replacer.testReplace(in, what, by, options));
   }
+
+  public void testReplaceParameterWithComment() {
+    final String in = "class A {\n" +
+                      "  void a(int b) {}\n" +
+                      "}";
+    final String what = "int '_a = '_b{0,1};";
+    final String by = "final long /*!*/ $a$ = $b$;";
+    assertEquals("class A {\n" +
+                 "  void a(final long /*!*/ b) {}\n" +
+                 "}", replacer.testReplace(in, what, by, options));
+  }
 }
