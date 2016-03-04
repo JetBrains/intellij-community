@@ -1294,7 +1294,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "  private int c = 2;\n" +
                 "}";
 
-    String s2 = "@Modifier(\"PackageLocal\") '_Type '_Instance = '_Init?;";
+    String s2 = "@Modifier(\"packageLocal\") '_Type '_Instance = '_Init?;";
     String s3 = "public $Type$ $Instance$ = $Init$;";
 
     String expectedResult = "class A {\n" +
