@@ -69,10 +69,19 @@ public class HgRevisionNumber implements VcsRevisionNumber {
                           @NotNull String authorInfo,
                           @NotNull String commitMessage,
                           @NotNull List<HgRevisionNumber> parents) {
+    this(revision, changeset, HgUtil.parseUserNameAndEmail(authorInfo).getFirst(), HgUtil.parseUserNameAndEmail(authorInfo).getSecond(),
+         commitMessage, parents);
+  }
+
+  public HgRevisionNumber(@NotNull String revision,
+                          @NotNull String changeset,
+                          @NotNull String author,
+                          @NotNull String email,
+                          @NotNull String commitMessage,
+                          @NotNull List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
-    Couple<String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
-    this.author = authorArgs.getFirst();
-    this.email = authorArgs.getSecond();
+    this.author = author;
+    this.email = email;
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();

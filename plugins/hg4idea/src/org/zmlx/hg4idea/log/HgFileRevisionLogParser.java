@@ -53,7 +53,7 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
     int numAttributes = attributes.size();
     String commitMessage = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
     String branchName = parseAdditionalStringAttribute(attributes, BRANCH_INDEX);
-    final HgRevisionNumber vcsRevisionNumber = new HgRevisionNumber(rev, changeset, author, commitMessage, parents);
+    final HgRevisionNumber vcsRevisionNumber = new HgRevisionNumber(rev, changeset, author, email, commitMessage, parents);
 
     Set<String> filesAdded = Collections.emptySet();
     Set<String> filesModified = Collections.emptySet();
