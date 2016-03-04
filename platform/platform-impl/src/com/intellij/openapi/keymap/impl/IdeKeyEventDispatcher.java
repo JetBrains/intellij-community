@@ -23,9 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -592,7 +590,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
           .showInBestPositionFor(ctx);
       }
       else {
-        action.actionPerformed(actionEvent);
+        ActionUtil.performActionDumbAware(action, actionEvent);
       }
 
       if (Registry.is("actionSystem.fixLostTyping")) {

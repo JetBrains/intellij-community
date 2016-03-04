@@ -130,11 +130,11 @@ public class EventLog {
         public String fun(AnAction action) {
           return "<a href=\"" + index++ + "\">" + action.getTemplatePresentation().getText()+"</a>";
         }
-      }, actions.size() > 3 ? "<br>" : "&nbsp;") + "</p>";
+      }, isLongLine(actions) ? "<br>" : "&nbsp;") + "</p>";
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
-          Notification.fire(notification.getActions().get(Integer.parseInt(event.getDescription())));
+          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())));
         }
       });
       if (title.length() > 0 || content.length() > 0) {
@@ -167,6 +167,21 @@ public class EventLog {
     }
 
     return new LogEntry(logDoc.getText(), status, list);
+  }
+
+  private static boolean isLongLine(@NotNull List<AnAction> actions) {
+    int size = actions.size();
+    if (size > 3) {
+      return true;
+    }
+    if (size > 1) {
+      int length = 0;
+      for (AnAction action : actions) {
+        length += StringUtil.length(action.getTemplatePresentation().getText());
+      }
+      return length > 30;
+    }
+    return false;
   }
 
   @NotNull

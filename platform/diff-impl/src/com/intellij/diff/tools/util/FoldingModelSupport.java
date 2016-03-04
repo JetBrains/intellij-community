@@ -420,10 +420,6 @@ public class FoldingModelSupport {
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {
       DiffDividerDrawUtil.paintSeparators(gg, divider.getWidth(), myEditors[myLeft], myEditors[myRight], this);
     }
-
-    public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
-      DiffDividerDrawUtil.paintSeparatorsOnScrollbar(gg, width, myEditors[myLeft], myEditors[myRight], this);
-    }
   }
 
   //

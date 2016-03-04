@@ -858,7 +858,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                     ActionManager.getInstance(), modifiers);
       event.setInjectedContext(action.isInInjectedContext());
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        action.actionPerformed(event);
+        ActionUtil.performActionDumbAware(action, event);
       }
     }
 

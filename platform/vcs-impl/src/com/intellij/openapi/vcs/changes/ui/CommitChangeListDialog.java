@@ -1218,6 +1218,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitMessageArea.setText(currentDescription);
   }
 
+  @NotNull
   @Override
   public String getCommitMessage() {
     return myCommitMessageArea.getComment();

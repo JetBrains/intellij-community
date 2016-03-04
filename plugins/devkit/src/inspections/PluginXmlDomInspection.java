@@ -79,6 +79,12 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     else if (element instanceof AddToGroup) {
       annotateAddToGroup((AddToGroup)element, holder);
     }
+    else if (element instanceof Action) {
+      annotateAction((Action)element, holder);
+    }
+    else if (element instanceof Group) {
+      annotateGroup((Group)element, holder);
+    }
   }
 
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
@@ -159,7 +165,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
           if (vendor != null && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
             LocalQuickFix fix = new RemoveDomElementQuickFix(extension);
             holder.createProblem(extension, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                 "Exceptions from plugins developed by JetBrains are reported via ITNReporter automatically, there is no need to specify it explicitly", null, fix).highlightWholeElement();
+                                 "Exceptions from plugins developed by JetBrains are reported via ITNReporter automatically," +
+                                 " there is no need to specify it explicitly",
+                                 null, fix).highlightWholeElement();
           }
         }
       }
@@ -172,14 +180,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
       // IconsReferencesContributor
       if ("icon".equals(attributeDescription.getXmlElementName())) {
-        final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
-        if (value != null) {
-          for (PsiReference reference : value.getReferences()) {
-            if (reference.resolve() == null) {
-              holder.createResolveProblem(attributeValue, reference);
-            }
-          }
-        }
+        annotateResolveProblems(holder, attributeValue);
       }
 
       final PsiElement declaration = attributeDescription.getDeclaration(extension.getManager().getProject());
@@ -225,6 +226,32 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
     holder.createProblem(addToGroup.getAnchor(), "Must use '" + Anchor.after + "'|'" + Anchor.before + "' with 'relative-to-action'");
   }
+
+  private static void annotateGroup(Group group, DomElementAnnotationHolder holder) {
+    final GenericAttributeValue<String> iconAttribute = group.getIcon();
+    if (DomUtil.hasXml(iconAttribute)) {
+      annotateResolveProblems(holder, iconAttribute);
+    }
+  }
+
+  private static void annotateAction(Action action, DomElementAnnotationHolder holder) {
+    final GenericAttributeValue<String> iconAttribute = action.getIcon();
+    if (DomUtil.hasXml(iconAttribute)) {
+      annotateResolveProblems(holder, iconAttribute);
+    }
+  }
+
+  private static void annotateResolveProblems(DomElementAnnotationHolder holder, GenericAttributeValue attributeValue) {
+    final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
+    if (value != null) {
+      for (PsiReference reference : value.getReferences()) {
+        if (reference.resolve() == null) {
+          holder.createResolveProblem(attributeValue, reference);
+        }
+      }
+    }
+  }
+
 
   private static class SpecifyJetBrainsAsVendorQuickFix implements LocalQuickFix {
     @Nls

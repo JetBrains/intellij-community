@@ -51,6 +51,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.ui.DialogEarthquakeShaker;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
@@ -61,6 +62,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
@@ -215,7 +217,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
               final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
               JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
                              (JFrame)WindowManager.getInstance().getIdeFrame(project);
-              if (frame != null) frame.requestFocus();
+              if (frame != null) {
+                frame.toFront();
+                if (!(frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen())) {
+                  DialogEarthquakeShaker.shake(frame);
+                }
+              }
             }
           });
         }

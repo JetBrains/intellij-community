@@ -63,6 +63,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
@@ -582,6 +583,18 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Nullable
   public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, @NotNull byte[] bytes) throws ClsFormatException {
+    return buildFileStub(file, bytes, new Function<String, PsiJavaFileStub>() {
+      @Override
+      public PsiJavaFileStub fun(String packageName) {
+        return new PsiJavaFileStubImpl(packageName, true);
+      }
+    });
+  }
+
+  @Nullable
+  public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file,
+                                              @NotNull byte[] bytes,
+                                              @NotNull Function<String, PsiJavaFileStub> stubBuilder) throws ClsFormatException {
     try {
       if (ClassFileViewProvider.isInnerClass(file, bytes)) {
         return null;
@@ -590,7 +603,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       ClassReader reader = new ClassReader(bytes);
       String className = file.getNameWithoutExtension();
       String packageName = getPackageName(reader.getClassName());
-      PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl(packageName, true);
+      PsiJavaFileStub stub = stubBuilder.fun(packageName);
 
       try {
         StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);

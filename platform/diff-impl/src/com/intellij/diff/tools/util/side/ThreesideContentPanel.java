@@ -67,8 +67,4 @@ public class ThreesideContentPanel extends JPanel {
     if (side == Side.RIGHT && myBaseEditor != null) myBaseEditor.getScrollPane().getVerticalScrollBar().repaint();
     mySplitter.repaintDivider(side);
   }
-
-  public void setScrollbarPainter(@NotNull ButtonlessScrollBarUI.ScrollbarRepaintCallback painter) {
-    if (myBaseEditor != null) myBaseEditor.registerScrollBarRepaintCallback(painter);
-  }
 }

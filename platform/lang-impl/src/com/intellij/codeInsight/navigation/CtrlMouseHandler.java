@@ -416,6 +416,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public abstract DocInfo getInfo();
 
     public abstract boolean isValid(@NotNull Document document);
+    
+    public abstract boolean isNavigatable();
 
     public abstract void showDocInfo(@NotNull DocumentationManager docManager);
 
@@ -467,9 +469,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public boolean isValid(@NotNull Document document) {
       if (!myTargetElement.isValid()) return false;
       if (!myElementAtPointer.isValid()) return false;
-      if (myTargetElement == myElementAtPointer) return false;
 
       return rangesAreCorrect(document);
+    }
+
+    @Override
+    public boolean isNavigatable() {
+      return myTargetElement != myElementAtPointer && myTargetElement != myElementAtPointer.getParent();
     }
 
     @Override
@@ -497,6 +503,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     public boolean isValid(@NotNull Document document) {
       return rangesAreCorrect(document);
+    }
+
+    @Override
+    public boolean isNavigatable() {
+      return true;
     }
 
     @Override
@@ -611,6 +622,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           @Override
           public boolean isValid(@NotNull Document document) {
             return element.isValid();
+          }
+
+          @Override
+          public boolean isNavigatable() {
+            return true;
           }
         };
       }
@@ -871,7 +887,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
         else {
           // highlighter already set
-          internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          if (info.isNavigatable()) {
+            internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          }
           return;
         }
       }
@@ -960,11 +978,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     internalComponent.addKeyListener(myEditorKeyListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     final Cursor cursor = internalComponent.getCursor();
-    internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    if (info.isNavigatable()) {
+      internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    TextAttributes attributes = myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
+    TextAttributes attributes = info.isNavigatable() 
+                                ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR) 
+                                : new TextAttributes(null, HintUtil.INFORMATION_COLOR, null, null, Font.PLAIN);
     for (TextRange range : info.getRanges()) {
       TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),

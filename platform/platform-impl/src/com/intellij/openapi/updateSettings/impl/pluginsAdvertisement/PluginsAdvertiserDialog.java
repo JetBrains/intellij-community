@@ -40,7 +40,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
   private final List<PluginId> myAllPlugins;
   private final Set<String> mySkippedPlugins = new HashSet<String>();
 
-  private final PluginEnablerImpl pluginHelper = new PluginEnablerImpl();
+  private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
 
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<PluginId> allPlugins) {
     super(project);
@@ -116,23 +116,5 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
       }
     }
     super.doOKAction();
-  }
-
-  private static class PluginEnablerImpl implements PluginManagerMain.PluginEnabler {
-    @Override
-    public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
-      for (IdeaPluginDescriptor descriptor : disabled) {
-        PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
-      }
-    }
-
-    @Override
-    public boolean isDisabled(PluginId pluginId) {
-      return PluginManagerCore.getDisabledPlugins().contains(pluginId.getIdString());
-    }
-
-    public boolean isDisabled(String pluginId) {
-      return PluginManagerCore.getDisabledPlugins().contains(pluginId);
-    }
   }
 }

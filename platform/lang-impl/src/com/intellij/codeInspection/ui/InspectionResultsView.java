@@ -275,7 +275,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement();
           }
         }
-        updateView(false);
+        myTree.queueUpdate();
       }
 
       @Override
@@ -385,10 +385,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final Editor oldEditor = myPreviewEditor;
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
       if (myTree.getSelectedToolWrapper() == null) {
-        final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
-        multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
-        multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
-        mySplitter.setSecondComponent(multipleSelectionLabel);
+        mySplitter.setSecondComponent(getNothingToShowTextLabel());
       }
       else {
         showInRightPanel(myTree.getCommonSelectedElement());
@@ -408,7 +405,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           showInRightPanel(node.getContainingFileLocalEntity());
         }
         else if (node instanceof InspectionNode) {
-          showInRightPanel(null);
+          final String shortName = ((InspectionNode)node).getToolWrapper().getShortName();
+          if (shortName.isEmpty()) {
+            mySplitter.setSecondComponent(getNothingToShowTextLabel());
+          } else {
+            showInRightPanel(null);
+          }
         }
         else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
           mySplitter.setSecondComponent(new InspectionViewNavigationPanel(node, myTree));
@@ -428,6 +430,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
+  @NotNull
+  private static JLabel getNothingToShowTextLabel() {
+    final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
+    multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
+    multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 14, 0, 0));
+    return multipleSelectionLabel;
+  }
+
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
     Cursor currentCursor = getCursor();
     try {
@@ -435,10 +445,17 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final JPanel editorPanel = new JPanel();
       editorPanel.setLayout(new BorderLayout());
       final int problemCount = myTree.getSelectedProblemCount();
-      editorPanel.add(createBaseRightComponentFor(problemCount, refEntity), BorderLayout.CENTER);
+      JComponent previewPanel = null;
+      final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
+      if (tool != null && refEntity != null && problemCount == 1) {
+        final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
+        previewPanel = presentation.getCustomPreviewPanel(refEntity);
+      }
+      if (previewPanel == null) {
+        previewPanel = createBaseRightComponentFor(problemCount, refEntity);
+      }
+      editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
-        LOG.assertTrue(tool != null);
         editorPanel.add(new QuickFixToolbar(myTree,
                                             myProject,
                                             myPreviewEditor,

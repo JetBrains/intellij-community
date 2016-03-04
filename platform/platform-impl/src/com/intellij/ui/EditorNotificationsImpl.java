@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -144,26 +145,18 @@ public class EditorNotificationsImpl extends EditorNotifications {
         for (final FileEditor editor : editors) {
           for (final Provider<?> provider : providers) {
             final JComponent component = provider.createNotificationPanel(file, editor);
-            updates.add(new Runnable() {
-              @Override
-              public void run() {
-                updateNotification(editor, provider.getKey(), component);
-              }
-            });
+            updates.add(() -> updateNotification(editor, provider.getKey(), component));
           }
         }
 
-        return new Continuation(new Runnable() {
-          @Override
-          public void run() {
-            if (!isOutdated()) {
-              file.putUserData(CURRENT_UPDATES, null);
-              for (Runnable update : updates) {
-                update.run();
-              }
+        return new Continuation(() -> {
+          if (!isOutdated()) {
+            file.putUserData(CURRENT_UPDATES, null);
+            for (Runnable update : updates) {
+              update.run();
             }
           }
-        });
+        }, ModalityState.any());
       }
 
       @Override

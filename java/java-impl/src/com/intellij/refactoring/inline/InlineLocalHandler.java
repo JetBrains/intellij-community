@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,7 +77,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final String localName = local.getName();
 
-    final Query<PsiReference> query = ReferencesSearch.search(local, GlobalSearchScope.allScope(project), false);
+    final Query<PsiReference> query = ReferencesSearch.search(local, local.getUseScope());
     if (query.findFirst() == null){
       LOG.assertTrue(refExpr == null);
       String message = RefactoringBundle.message("variable.is.never.used", localName);

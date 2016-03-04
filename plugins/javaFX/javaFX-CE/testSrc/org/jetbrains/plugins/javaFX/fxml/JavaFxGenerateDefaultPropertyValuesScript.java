@@ -2,9 +2,14 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.NodeOrientation;
+import javafx.geometry.Pos;
+import javafx.scene.AccessibleRole;
 import javafx.scene.Scene;
+import javafx.scene.chart.LineChart;
 import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
+import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +25,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * This is not a test, this is a config generator for JavaFxRedundantPropertyValueInspection
+ * This is not a test, this is a resource generator for JavaFxRedundantPropertyValueInspection
  * <p>
  * When launched without arguments it produces default values for JavaFX classes having default constructor and their superclasses, including some (but not all) abstract classes
  * <p>
@@ -59,70 +64,57 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     });
   }
 
-  private static final Map<Class, Class> ourToBoxed = new HashMap<>();
+  private static final Map<String, Object> ourFromSource = new TreeMap<>();
 
   static {
-    ourToBoxed.put(Boolean.TYPE, Boolean.class);
-    ourToBoxed.put(Character.TYPE, Character.class);
-    ourToBoxed.put(Byte.TYPE, Byte.class);
-    ourToBoxed.put(Short.TYPE, Short.class);
-    ourToBoxed.put(Integer.TYPE, Integer.class);
-    ourToBoxed.put(Long.TYPE, Long.class);
-    ourToBoxed.put(Float.TYPE, Float.class);
-    ourToBoxed.put(Double.TYPE, Double.class);
-  }
-
-  private static final Map<String, String> ourFromSource = new TreeMap<>();
-
-  static {
-    ourFromSource.put("javafx.concurrent.ScheduledService#maximumFailureCount", "Integer=2147483647");
-    ourFromSource.put("javafx.concurrent.ScheduledService#restartOnFailure", "Boolean=true");
-    ourFromSource.put("javafx.scene.Node#accessibleRole", "Enum=NODE");
-    ourFromSource.put("javafx.scene.Node#focusTraversable", "Boolean=false");
-    ourFromSource.put("javafx.scene.Node#nodeOrientation", "Enum=INHERIT");
-    ourFromSource.put("javafx.scene.Node#pickOnBounds", "Boolean=false");
-    ourFromSource.put("javafx.scene.SubScene#height", "Double=0.0");
-    ourFromSource.put("javafx.scene.SubScene#width", "Double=0.0");
-    ourFromSource.put("javafx.scene.chart.AreaChart#createSymbols", "Boolean=true");
-    ourFromSource.put("javafx.scene.chart.Axis#label", "String=");
-    ourFromSource.put("javafx.scene.chart.BarChart#barGap", "Double=4.0");
-    ourFromSource.put("javafx.scene.chart.BarChart#categoryGap", "Double=10.0");
-    ourFromSource.put("javafx.scene.chart.Chart#title", "String=");
-    ourFromSource.put("javafx.scene.chart.LineChart#axisSortingPolicy", "Enum=X_AXIS");
-    ourFromSource.put("javafx.scene.chart.LineChart#createSymbols", "Boolean=true");
-    ourFromSource.put("javafx.scene.chart.StackedAreaChart#createSymbols", "Boolean=true");
-    ourFromSource.put("javafx.scene.chart.StackedBarChart#categoryGap", "Double=10.0");
-    ourFromSource.put("javafx.scene.chart.XYChart#alternativeColumnFillVisible", "Boolean=false");
-    ourFromSource.put("javafx.scene.chart.XYChart#alternativeRowFillVisible", "Boolean=true");
-    ourFromSource.put("javafx.scene.chart.XYChart#horizontalGridLinesVisible", "Boolean=true");
-    ourFromSource.put("javafx.scene.chart.XYChart#horizontalZeroLineVisible", "Boolean=true");
-    ourFromSource.put("javafx.scene.chart.XYChart#verticalGridLinesVisible", "Boolean=true");
-    ourFromSource.put("javafx.scene.chart.XYChart#verticalZeroLineVisible", "Boolean=true");
-    ourFromSource.put("javafx.scene.control.ComboBoxBase#editable", "Boolean=false");
-    ourFromSource.put("javafx.scene.control.CustomMenuItem#hideOnClick", "Boolean=true");
-    ourFromSource.put("javafx.scene.control.Labeled#alignment", "Enum=CENTER_LEFT");
-    ourFromSource.put("javafx.scene.control.Labeled#mnemonicParsing", "Boolean=false");
-    ourFromSource.put("javafx.scene.control.SpinnerValueFactory#wrapAround", "Boolean=false");
-    ourFromSource.put("javafx.scene.control.TableSelectionModel#cellSelectionEnabled", "Boolean=false");
-    ourFromSource.put("javafx.scene.media.AudioClip#balance", "Double=0.0");
-    ourFromSource.put("javafx.scene.media.AudioClip#cycleCount", "Integer=1");
-    ourFromSource.put("javafx.scene.media.AudioClip#pan", "Double=0.0");
-    ourFromSource.put("javafx.scene.media.AudioClip#priority", "Integer=0");
-    ourFromSource.put("javafx.scene.media.AudioClip#rate", "Double=1.0");
-    ourFromSource.put("javafx.scene.media.AudioClip#volume", "Double=1.0");
-    ourFromSource.put("javafx.scene.media.AudioEqualizer#enabled", "Boolean=false");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#audioSpectrumInterval", "Double=0.1");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#audioSpectrumNumBands", "Integer=128");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#audioSpectrumThreshold", "Integer=-60");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#autoPlay", "Boolean=false");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#balance", "Double=0.0");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#cycleCount", "Integer=1");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#mute", "Boolean=false");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#rate", "Double=1.0");
-    ourFromSource.put("javafx.scene.media.MediaPlayer#volume", "Double=1.0");
-    ourFromSource.put("javafx.stage.PopupWindow#anchorLocation", "Enum=WINDOW_TOP_LEFT");
-    ourFromSource.put("javafx.stage.PopupWindow#autoHide", "Boolean=false");
-    ourFromSource.put("javafx.stage.PopupWindow#consumeAutoHidingEvents", "Boolean=true");
+    ourFromSource.put("javafx.concurrent.ScheduledService#maximumFailureCount", Integer.MAX_VALUE);
+    ourFromSource.put("javafx.concurrent.ScheduledService#restartOnFailure", true);
+    ourFromSource.put("javafx.scene.Node#accessibleRole", AccessibleRole.NODE);
+    ourFromSource.put("javafx.scene.Node#focusTraversable", false);
+    ourFromSource.put("javafx.scene.Node#nodeOrientation", NodeOrientation.INHERIT);
+    ourFromSource.put("javafx.scene.Node#pickOnBounds", false);
+    ourFromSource.put("javafx.scene.SubScene#height", 0.0);
+    ourFromSource.put("javafx.scene.SubScene#width", 0.0);
+    ourFromSource.put("javafx.scene.chart.AreaChart#createSymbols", true);
+    ourFromSource.put("javafx.scene.chart.Axis#label", "");
+    ourFromSource.put("javafx.scene.chart.BarChart#barGap", 4.0);
+    ourFromSource.put("javafx.scene.chart.BarChart#categoryGap", 10.0);
+    ourFromSource.put("javafx.scene.chart.Chart#title", "");
+    ourFromSource.put("javafx.scene.chart.LineChart#axisSortingPolicy", LineChart.SortingPolicy.X_AXIS);
+    ourFromSource.put("javafx.scene.chart.LineChart#createSymbols", true);
+    ourFromSource.put("javafx.scene.chart.StackedAreaChart#createSymbols", true);
+    ourFromSource.put("javafx.scene.chart.StackedBarChart#categoryGap", 10.0);
+    ourFromSource.put("javafx.scene.chart.XYChart#alternativeColumnFillVisible", false);
+    ourFromSource.put("javafx.scene.chart.XYChart#alternativeRowFillVisible", true);
+    ourFromSource.put("javafx.scene.chart.XYChart#horizontalGridLinesVisible", true);
+    ourFromSource.put("javafx.scene.chart.XYChart#horizontalZeroLineVisible", true);
+    ourFromSource.put("javafx.scene.chart.XYChart#verticalGridLinesVisible", true);
+    ourFromSource.put("javafx.scene.chart.XYChart#verticalZeroLineVisible", true);
+    ourFromSource.put("javafx.scene.control.ComboBoxBase#editable", false);
+    ourFromSource.put("javafx.scene.control.CustomMenuItem#hideOnClick", true);
+    ourFromSource.put("javafx.scene.control.Labeled#alignment", Pos.CENTER_LEFT);
+    ourFromSource.put("javafx.scene.control.Labeled#mnemonicParsing", false);
+    ourFromSource.put("javafx.scene.control.SpinnerValueFactory#wrapAround", false);
+    ourFromSource.put("javafx.scene.control.TableSelectionModel#cellSelectionEnabled", false);
+    ourFromSource.put("javafx.scene.media.AudioClip#balance", 0.0);
+    ourFromSource.put("javafx.scene.media.AudioClip#cycleCount", 1);
+    ourFromSource.put("javafx.scene.media.AudioClip#pan", 0.0);
+    ourFromSource.put("javafx.scene.media.AudioClip#priority", 0);
+    ourFromSource.put("javafx.scene.media.AudioClip#rate", 1.0);
+    ourFromSource.put("javafx.scene.media.AudioClip#volume", 1.0);
+    ourFromSource.put("javafx.scene.media.AudioEqualizer#enabled", false);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#audioSpectrumInterval", 0.1);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#audioSpectrumNumBands", 128);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#audioSpectrumThreshold", -60);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#autoPlay", false);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#balance", 0.0);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#cycleCount", 1);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#mute", false);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#rate", 1.0);
+    ourFromSource.put("javafx.scene.media.MediaPlayer#volume", 1.0);
+    ourFromSource.put("javafx.stage.PopupWindow#anchorLocation", PopupWindow.AnchorLocation.WINDOW_TOP_LEFT);
+    ourFromSource.put("javafx.stage.PopupWindow#autoHide", false);
+    ourFromSource.put("javafx.stage.PopupWindow#consumeAutoHidingEvents", true);
   }
 
   private static final Set<String> ourSkippedProperties = new HashSet<>(
@@ -130,56 +122,6 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
                   "javafx.scene.web.WebEngine#userAgent",
                   "javafx.scene.control.ButtonBar#buttonOrder"));
 
-  static class TypedValue {
-
-    private final String kind;
-    private final String value;
-
-    TypedValue(@NotNull String kind, @NotNull String value) {
-      this.kind = kind;
-      this.value = value;
-    }
-
-    public String getKind() {
-      return kind;
-    }
-
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof TypedValue)) return false;
-
-      TypedValue that = (TypedValue)o;
-      return kind.equals(that.kind) && value.equals(that.value);
-    }
-
-    @Override
-    public int hashCode() {
-      return kind.hashCode() ^ value.hashCode();
-    }
-
-    @Override
-    public String toString() {
-      return kind + ':' + value;
-    }
-  }
-
-  static class ContainedValue extends TypedValue {
-    private final String declaringClass;
-
-    public ContainedValue(@NotNull String kind, @NotNull String value, @NotNull String declaringClass) {
-      super(kind, value);
-      this.declaringClass = declaringClass;
-    }
-
-    public String getDeclaringClass() {
-      return declaringClass;
-    }
-  }
 
   /**
    * Attempt to instantiate JavaFX classes on the FX thread, obtain default property values from instantiated objects.
@@ -187,8 +129,8 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
   private static void generate() {
     System.out.println("--- JavaFX default property values ---");
 
-    final Map<String, Map<String, ContainedValue>> containedProperties = new TreeMap<>();
-    final Map<String, Map<String, TypedValue>> declaredProperties = new TreeMap<>();
+    final Map<String, Map<String, DefaultValue>> defaultPropertyValues = new TreeMap<>();
+    final Map<String, Map<String, String>> declaredProperties = new TreeMap<>();
     final Map<String, Map<String, Set<String>>> overriddenProperties = new TreeMap<>();
     final Map<String, String> superClasses = new TreeMap<>();
     try (final ZipInputStream zip = new ZipInputStream(new FileInputStream(new File(BINARIES_PATH)))) {
@@ -213,7 +155,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
             }
           }
 
-          Object obj = null;
+          Object instance = null;
           for (PropertyDescriptor desc : info.getPropertyDescriptors()) {
             final String propName = desc.getName();
             final String propQualifiedName = currentClass.getName() + "#" + propName;
@@ -223,48 +165,41 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
             if (setter == null || !hasBinding) continue;
             final Type type = setter.getGenericParameterTypes()[0];
 
-            if (type instanceof Class) {
-              final Class<?> paramCls = (Class)type;
-              final String kind = kind(paramCls);
-              if (kind != null) {
-                if (obj == null) {
-                  obj = instantiate(currentClass);
-                  if (obj == null) break;
+            if (type instanceof Class && isSupportedPropertyType((Class)type)) {
+              if (instance == null) {
+                instance = instantiate(currentClass);
+                if (instance == null) break;
+              }
+              final Object value;
+              final Method getter = desc.getReadMethod();
+              try {
+                value = getter.invoke(instance);
+              }
+              catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException("Can't invoke " + getter + " on " + currentClass, e);
+              }
+              if (value != null) {
+                final Class<?> declaringClass = getter.getDeclaringClass();
+                final DefaultValue newValue = new DefaultValue(value, declaringClass.getName());
+                if (declaringClass.getName().startsWith("javafx")) {
+                  defaultPropertyValues
+                    .computeIfAbsent(currentClass.getName(), unused -> new TreeMap<>())
+                    .put(propName, newValue);
                 }
-                final Object value;
-                final Method getter = desc.getReadMethod();
-                try {
-                  value = getter.invoke(obj);
-                }
-                catch (IllegalAccessException | InvocationTargetException e) {
-                  throw new RuntimeException("Can't invoke " + getter + " on " + currentClass, e);
-                }
-                if (value != null) {
-                  if (!value.equals(validate(paramCls, value))) {
-                    throw new RuntimeException("Invalid " + currentClass + "#" + propName + ":" + paramCls + "=" + value);
-                  }
-                  final Class<?> declaringClass = getter.getDeclaringClass();
-                  final ContainedValue newValue = new ContainedValue(kind, String.valueOf(value), declaringClass.getName());
-                  if (declaringClass.getName().startsWith("javafx")) {
-                    containedProperties
-                      .computeIfAbsent(currentClass.getName(), unused -> new TreeMap<>())
-                      .put(propName, newValue);
-                  }
 
-                  final Map<String, TypedValue> shareableProperties =
-                    declaredProperties.computeIfAbsent(declaringClass.getName(), unused -> new TreeMap<>());
-                  final TypedValue sharedValue = shareableProperties.get(propName);
+                final Map<String, String> shareableProperties =
+                  declaredProperties.computeIfAbsent(declaringClass.getName(), unused -> new TreeMap<>());
+                final String sharedValue = shareableProperties.get(propName);
 
-                  if (sharedValue == null) {
-                    shareableProperties.put(propName, newValue);
-                  }
-                  else if (!sharedValue.equals(newValue)) {
-                    final Set<String> multipleValues = overriddenProperties
-                      .computeIfAbsent(declaringClass.getName(), unused -> new TreeMap<>())
-                      .computeIfAbsent(propName, unused -> new TreeSet<>());
-                    multipleValues.add(sharedValue.getValue());
-                    multipleValues.add(newValue.getValue());
-                  }
+                if (sharedValue == null) {
+                  shareableProperties.put(propName, newValue.getValueText());
+                }
+                else if (!sharedValue.equals(newValue.getValueText())) {
+                  final Set<String> multipleValues = overriddenProperties
+                    .computeIfAbsent(declaringClass.getName(), unused -> new TreeMap<>())
+                    .computeIfAbsent(propName, unused -> new TreeSet<>());
+                  multipleValues.add(sharedValue);
+                  multipleValues.add(newValue.getValueText());
                 }
               }
             }
@@ -277,60 +212,51 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     }
 
     System.out.println("-------- Collected from sources ---------");
-    ourFromSource.forEach((k, v) -> System.out.println(k + ":" + v));
+    ourFromSource.forEach((qualifiedPropName, value) -> System.out.println(qualifiedPropName + "=" + value));
 
     System.out.println("-------- Shared (not overridden) ---------");
     declaredProperties.forEach(
       (className, propertyMap) -> {
         final Map<String, Set<String>> multipleValues = overriddenProperties.getOrDefault(className, Collections.emptyMap());
-        propertyMap.forEach((propName, typedValue) -> {
+        propertyMap.forEach((propName, valueText) -> {
           if (!multipleValues.containsKey(propName)) {
-            System.out.println(className + "#" + propName + ":" + typedValue.getKind() + "=" + typedValue.getValue());
+            System.out.println(className + "#" + propName + "=" + valueText);
           }
         });
       });
     System.out.println("-------- Overridden in subclass ---------");
-    final Map<String, Map<String, ContainedValue>> fromSource = new TreeMap<>();
-    ourFromSource.forEach((classAndPropName, kindAndValue) -> {
-      final int p1 = classAndPropName.indexOf('#');
-      if (p1 > 0 && p1 < classAndPropName.length()) {
-        final String className = classAndPropName.substring(0, p1);
-        final String propName = classAndPropName.substring(p1 + 1);
-        final int p3 = kindAndValue.indexOf('=');
-        if (p3 > 0 && p3 < kindAndValue.length()) {
-          final String kind = kindAndValue.substring(0, p3);
-          final String value = kindAndValue.substring(p3 + 1);
-          final Map<String, ContainedValue> propMap = fromSource.computeIfAbsent(className, unused -> new TreeMap<>());
-          if (!propMap.containsKey(propName)) {
-            final ContainedValue valueFromSource = new ContainedValue(kind, value, className);
-            propMap.put(propName, valueFromSource);
-          }
-        }
+    final Map<String, Map<String, DefaultValue>> fromSource = new TreeMap<>();
+    ourFromSource.forEach((qualifiedPropName, value) -> {
+      final int p = qualifiedPropName.indexOf('#');
+      if (p > 0 && p < qualifiedPropName.length()) {
+        final String className = qualifiedPropName.substring(0, p);
+        final String propName = qualifiedPropName.substring(p + 1);
+        fromSource.computeIfAbsent(className, unused -> new TreeMap<>())
+          .computeIfAbsent(propName, unused -> new DefaultValue(value, className));
       }
     });
-    containedProperties.forEach(
+    defaultPropertyValues.forEach(
       (className, propertyMap) -> propertyMap.forEach(
         (propName, propValue) -> {
-          final ContainedValue sourceValue = fromSource.getOrDefault(className, Collections.emptyMap()).get(propName);
-          if (sourceValue != null &&
-              sourceValue.equals(propValue)) {
+          final DefaultValue sourceValue = fromSource.getOrDefault(className, Collections.emptyMap()).get(propName);
+          if (sourceValue != null && areValuesEqual(propValue, sourceValue)) {
             return;
           }
           final Map<String, Set<String>> multipleValues = overriddenProperties.get(propValue.getDeclaringClass());
           if (multipleValues != null && multipleValues.get(propName) != null) {
             boolean sameValueInSuperClass = false;
             for (String scName = superClasses.get(className); scName != null; scName = superClasses.get(scName)) {
-              final Map<String, ContainedValue> superPropMap = containedProperties.getOrDefault(scName, fromSource.get(scName));
+              final Map<String, DefaultValue> superPropMap = defaultPropertyValues.getOrDefault(scName, fromSource.get(scName));
               if (superPropMap != null) {
-                ContainedValue superValue = superPropMap.get(propName);
+                DefaultValue superValue = superPropMap.get(propName);
                 if (superValue != null) {
-                  sameValueInSuperClass = superValue.equals(propValue);
+                  sameValueInSuperClass = areValuesEqual(propValue, superValue);
                   break;
                 }
               }
             }
             if (!sameValueInSuperClass) {
-              System.out.println(className + "#" + propName + ":" + propValue.getKind() + "=" + propValue.getValue());
+              System.out.println(className + "#" + propName + "=" + propValue.getValueText());
             }
           }
         }));
@@ -343,46 +269,17 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     ourSkippedProperties.forEach(propName -> System.out.println("-- " + propName));
   }
 
-  private static String kind(Class aCls) {
-    String kind = null;
-    if (aCls.isPrimitive()) {
-      kind = ourToBoxed.get(aCls).getSimpleName();
-    }
-    else if (aCls.isEnum()) {
-      kind = "Enum";
-    }
-    else if (Number.class.isAssignableFrom(aCls) || Boolean.class.isAssignableFrom(aCls) || Character.class.isAssignableFrom(aCls)) {
-      kind = aCls.getSimpleName();
-    }
-    else if (CharSequence.class.isAssignableFrom(aCls)) {
-      kind = "String";
-    }
-    return kind;
+  private static boolean areValuesEqual(DefaultValue first, DefaultValue second) {
+    return second.getValueText().equals(first.getValueText());
   }
 
-  private static Object validate(Class<?> aCls, Object val) {
-    try {
-      if (aCls.isPrimitive()) {
-        aCls = ourToBoxed.get(aCls);
-        Method valueOf = aCls.getDeclaredMethod("valueOf", String.class);
-        return valueOf.invoke(null, String.valueOf(val));
-      }
-      if (Number.class.isAssignableFrom(aCls) || Boolean.class.isAssignableFrom(aCls) || Character.class.isAssignableFrom(aCls)) {
-        Method valueOf = aCls.getDeclaredMethod("valueOf", String.class);
-        return valueOf.invoke(null, String.valueOf(val));
-      }
-      if (CharSequence.class.isAssignableFrom(aCls)) {
-        return val;
-      }
-      if (aCls.isEnum()) {
-        Method valueOf = aCls.getDeclaredMethod("valueOf", String.class);
-        return valueOf.invoke(null, String.valueOf(val));
-      }
-      throw new IllegalStateException("Cannot cast " + val + " to unsupported class " + aCls);
-    }
-    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-      throw new IllegalStateException("Cannot cast " + val + " to " + aCls, e);
-    }
+  private static boolean isSupportedPropertyType(Class<?> propertyClass) {
+    return propertyClass.isPrimitive() ||
+           propertyClass.isEnum() ||
+           Number.class.isAssignableFrom(propertyClass) ||
+           Boolean.class.isAssignableFrom(propertyClass) ||
+           Character.class.isAssignableFrom(propertyClass) ||
+           CharSequence.class.isAssignableFrom(propertyClass);
   }
 
   private static Object instantiate(Class<?> aClass) {
@@ -529,5 +426,28 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     }
     System.out.println("--- Default values collected from JavaDoc and declarations. To be reviewed and manually edited ---");
     props.forEach((n, v) -> System.out.println(n + "=" + v));
+  }
+
+  private static class DefaultValue {
+    private final String myValueText;
+    private final String myDeclaringClass;
+
+    public DefaultValue(@NotNull Object value, @NotNull String declaringClass) {
+      myValueText = String.valueOf(value);
+      myDeclaringClass = declaringClass;
+    }
+
+    public String getDeclaringClass() {
+      return myDeclaringClass;
+    }
+
+    public String getValueText() {
+      return myValueText;
+    }
+
+    @Override
+    public String toString() {
+      return myValueText;
+    }
   }
 }

@@ -30,8 +30,12 @@
   </project-components>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-    <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.jetbrains.edu.learning.checker.StudyExecutor"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.jetbrains.edu.learning.StudyLanguageManager"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="Edu.studyToolWindowConfigurator" interface="com.jetbrains.edu.learning.StudyToolWindowConfigurator"/>
   </extensionPoints>
 

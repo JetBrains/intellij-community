@@ -90,7 +90,7 @@ public class JavaResolveCache {
       }
 
       //cache standalone expression types as they do not depend on the context
-      final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
+      final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck()  || LambdaUtil.isLambdaParameterCheck();
       if (isOverloadCheck && PsiPolyExpressionUtil.isPolyExpression(expr)) {
         return type;
       }

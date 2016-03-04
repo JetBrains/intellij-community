@@ -48,7 +48,7 @@ import java.util.function.Supplier;
  * @author Dmitry Batkovich
  */
 public class QuickFixToolbar extends JPanel {
-  private static final int MAX_FIX_COUNT = 2;
+  private static final int MAX_FIX_COUNT = 3;
 
   public QuickFixToolbar(@NotNull InspectionTree tree,
                          @NotNull Project project,
@@ -169,6 +169,9 @@ public class QuickFixToolbar extends JPanel {
     public JComponent createCustomComponent(Presentation presentation) {
       final JButton button = new JButton(presentation.getText());
       button.setIcon(presentation.getIcon());
+      if (presentation.getIcon() == null) {
+        button.setIcon(AllIcons.Actions.CreateFromUsage);
+      }
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent event, int clickCount) {

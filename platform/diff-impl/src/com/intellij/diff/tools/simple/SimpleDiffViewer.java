@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -57,6 +58,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
   public static final Logger LOG = Logger.getInstance(SimpleDiffViewer.class);
@@ -309,9 +311,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     super.onBeforeDocumentChange(e);
     if (myDiffChanges.isEmpty()) return;
 
-    Side side = null;
-    if (e.getDocument() == getEditor(Side.LEFT).getDocument()) side = Side.LEFT;
-    if (e.getDocument() == getEditor(Side.RIGHT).getDocument()) side = Side.RIGHT;
+    List<Document> documents = ContainerUtil.map(getEditors(), Editor::getDocument);
+    Side side = Side.fromValue(documents, e.getDocument());
     if (side == null) {
       LOG.warn("Unknown document changed");
       return;
@@ -525,13 +526,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != getEditor1() && editor != getEditor2()) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-
-      Side side = Side.fromLeft(editor == getEditor(Side.LEFT));
-      if (!isVisible(side)) {
+      Side side = Side.fromValue(getEditors(), editor);
+      if (side == null || !isVisible(side)) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
@@ -551,9 +547,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != getEditor1() && editor != getEditor2()) return;
-
-      final Side side = Side.fromLeft(editor == getEditor(Side.LEFT));
+      final Side side = assertNotNull(Side.fromValue(getEditors(), editor));
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 

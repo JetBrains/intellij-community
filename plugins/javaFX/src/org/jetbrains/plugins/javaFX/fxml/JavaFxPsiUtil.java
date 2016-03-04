@@ -446,7 +446,7 @@ public class JavaFxPsiUtil {
 
   public static boolean hasBuilder(@NotNull final PsiClass psiClass) {
     final Project project = psiClass.getProject();
-    return CachedValuesManager.getManager(project).getCachedValue(psiClass, new CachedValueProvider<Boolean>() {
+    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<Boolean>() {
       @Nullable
       @Override
       public Result<Boolean> compute() {
@@ -604,8 +604,6 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  private static final Key<CachedValue<Map<String, XmlAttributeValue>>> FILE_IDS_KEY = Key.create("FILE_IDS_KEY");
-
   @NotNull
   public static Map<String, XmlAttributeValue> collectFileIds(@Nullable final XmlTag currentTag) {
     if (currentTag == null) return Collections.emptyMap();
@@ -614,10 +612,8 @@ public class JavaFxPsiUtil {
     final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
     if (rootTag == null) return Collections.emptyMap();
 
-    final Map<String, XmlAttributeValue> cachedIds = CachedValuesManager.getManager(containingFile.getProject())
-      .getCachedValue(rootTag, FILE_IDS_KEY,
-                      () -> new CachedValueProvider.Result<>(prepareFileIds(rootTag), PsiModificationTracker.MODIFICATION_COUNT), false);
-
+    final Map<String, XmlAttributeValue> cachedIds = CachedValuesManager
+      .getCachedValue(rootTag, () -> new CachedValueProvider.Result<>(prepareFileIds(rootTag), PsiModificationTracker.MODIFICATION_COUNT));
     final XmlAttribute currentIdAttribute = currentTag.getAttribute(FxmlConstants.FX_ID);
     if (currentIdAttribute != null) {
       final String currentId = currentIdAttribute.getValue();
@@ -682,6 +678,21 @@ public class JavaFxPsiUtil {
   public static boolean hasConversionFromAnyType(@NotNull PsiClass targetClass) {
     return Comparing.strEqual(targetClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING)
            || findValueOfMethod(targetClass) != null;
+  }
+
+  @Nullable
+  public static String getBoxedPropertyType(@Nullable PsiElement declaration) {
+    PsiType psiType = getWritablePropertyType(declaration);
+    if (psiType instanceof PsiPrimitiveType) {
+      return ((PsiPrimitiveType)psiType).getBoxedTypeName();
+    }
+    if (PsiPrimitiveType.getUnboxedType(psiType) != null) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+      if (psiClass != null) {
+        return psiClass.getQualifiedName();
+      }
+    }
+    return null;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {

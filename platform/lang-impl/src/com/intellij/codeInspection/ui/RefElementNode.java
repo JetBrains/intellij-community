@@ -132,4 +132,9 @@ public class RefElementNode extends InspectionTreeNode {
            ? element
            : super.getContainingFileLocalEntity();
   }
+
+  @Override
+  public int getProblemCount() {
+    return Math.max(1, super.getProblemCount());
+  }
 }

@@ -502,14 +502,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       @Override
       public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
         if (!myProject.isDisposed() && condition.value(myProject)) {
-          return new Continuation(new Runnable() {
-            @Override
-            public void run() {
-              if (!myProject.isDisposed() && getToolWindow(bean.id) == null) {
-                initToolWindow(bean);
-              }
+          return new Continuation(() -> {
+            if (!myProject.isDisposed() && getToolWindow(bean.id) == null) {
+              initToolWindow(bean);
             }
-          });
+          }, ModalityState.any());
         }
         return null;
       }

@@ -35,7 +35,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +76,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter(Side.LEFT), Side.LEFT);
     myContentPanel.setPainter(new MyDividerPainter(Side.RIGHT), Side.RIGHT);
-    myContentPanel.setScrollbarPainter(new MyScrollbarPainter());
   }
 
   @Override
@@ -122,6 +120,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     };
   }
 
+  @CalledInAwt
   protected void clearDiffPresentation() {
     myStatusPanel.setBusy(false);
     myPanel.resetNotifications();
@@ -131,6 +130,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myStatusPanel.update();
   }
 
+  @CalledInAwt
   protected void destroyChangedBlocks() {
     myFoldingModel.destroy();
   }
@@ -384,21 +384,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     }
   }
 
-  protected class MyScrollbarPainter implements ButtonlessScrollBarUI.ScrollbarRepaintCallback {
-    @NotNull private final DividerPaintable myPaintable = getDividerPaintable(Side.RIGHT);
-
-    @Override
-    public void call(Graphics g) {
-      EditorEx editor1 = getEditor(ThreeSide.BASE);
-      EditorEx editor2 = getEditor(ThreeSide.RIGHT);
-
-      int width = editor1.getScrollPane().getVerticalScrollBar().getWidth();
-      DiffDividerDrawUtil.paintPolygonsOnScrollbar((Graphics2D)g, width, editor1, editor2, myPaintable);
-
-      myFoldingModel.paintOnScrollbar((Graphics2D)g, width);
-    }
-  }
-
   protected class MyStatusPanel extends StatusPanel {
     @Nullable
     @Override
@@ -449,10 +434,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider, @NotNull Side side) {
       MyPaintable paintable = side.select(myPaintable1, myPaintable2);
       paintable.paintOnDivider(gg, divider);
-    }
-
-    public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
-      myPaintable2.paintOnScrollbar(gg, width);
     }
   }
 

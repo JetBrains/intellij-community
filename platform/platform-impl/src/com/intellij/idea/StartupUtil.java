@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -23,20 +24,30 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.SwingHelper;
 import com.sun.jna.Native;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -45,6 +56,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -307,6 +320,11 @@ public class StartupUtil {
       Main.showMessage("Too Many Instances", message, true);
     }
 
+    if (status == SocketLock.ActivateStatus.ACTIVATED) {
+      System.out.println("Already running");
+      System.exit(0);
+    }
+
     return false;
   }
 
@@ -399,6 +417,69 @@ public class StartupUtil {
     }
 
     log.info("JNU charset: " + System.getProperty("sun.jnu.encoding"));
+  }
+
+  /**
+   * @param alternativeHTML Updated version of Privacy Policy text if any.
+   *                        If it's <code>null</code> the standard text from bundled resources would be used.
+   */
+  public static void showPrivacyPolicyAgreement(@Nullable String alternativeHTML) {
+    DialogWrapper dialog = new DialogWrapper(true) {
+      @Nullable
+      @Override
+      protected JComponent createCenterPanel() {
+        JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
+        String html = alternativeHTML;
+        if (html == null) {
+          try {
+            html = FileUtil.loadTextAndClose(StartupUtil.class.getResource("/PrivacyPolicy.html").openStream());
+          }
+          catch (IOException e) {
+            //ignore
+          }
+        }
+        JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        viewer.addHyperlinkListener(new HyperlinkAdapter() {
+          @Override
+          protected void hyperlinkActivated(HyperlinkEvent e) {
+            BrowserUtil.browse(e.getURL());
+          }
+        });
+        viewer.setText(html);
+        viewer.setCaretPosition(0);
+        viewer.setBorder(JBUI.Borders.empty(5));
+        centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
+        centerPanel
+          .add(new JBScrollPane(viewer, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+               BorderLayout.CENTER);
+        return centerPanel;
+      }
+
+      @Override
+      protected void createDefaultActions() {
+        super.createDefaultActions();
+        init();
+        setOKButtonText("Accept");
+        setCancelButtonText("Reject and Exit");
+        setAutoAdjustable(false);
+      }
+
+      @Override
+      public void doCancelAction() {
+        super.doCancelAction();
+        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+        if (application == null) {
+          System.exit(Main.PRIVACY_POLICY_REJECTION);
+        } else {
+          ((ApplicationImpl)application).exit(true, true, false, false);
+        }
+      }
+    };
+    dialog.setModal(true);
+    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement");
+    dialog.setResizable(false);
+    dialog.setSize(509, 395);
+    dialog.show();
   }
 
   static void runStartupWizard() {

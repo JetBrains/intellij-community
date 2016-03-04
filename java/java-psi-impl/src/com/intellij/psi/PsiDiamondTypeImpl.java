@@ -435,7 +435,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       public PsiType[] getArgumentTypes() {
         if (myExpressionTypes == null) {
           final PsiType[] expressionTypes = argumentList.getExpressionTypes();
-          if (MethodCandidateInfo.isOverloadCheck()) {
+          if (MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck()) {
             return expressionTypes;
           }
           myExpressionTypes = expressionTypes;

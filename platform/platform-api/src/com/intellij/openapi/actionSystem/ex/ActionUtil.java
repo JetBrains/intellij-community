@@ -16,7 +16,10 @@
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -187,11 +190,17 @@ public class ActionUtil {
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
+    WrapInTransaction annotation = action.getClass().getAnnotation(WrapInTransaction.class);
+    AccessToken token = annotation == null ? AccessToken.EMPTY_ACCESS_TOKEN
+                                           : TransactionGuard.getInstance().startSynchronousTransaction(annotation.value());
     try {
       action.actionPerformed(e);
     }
     catch (IndexNotReadyException e1) {
       showDumbModeWarning(e);
+    }
+    finally {
+      token.finish();
     }
   }
 
