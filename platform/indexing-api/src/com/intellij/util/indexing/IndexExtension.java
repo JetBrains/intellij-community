@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,29 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.util.indexing;
 
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
-public abstract class CustomImplementationFileBasedIndexExtension<K, V, I> extends FileBasedIndexExtension<K, V> {
+/**
+ * @author Eugene Zhuravlev
+ *         Date: Dec 26, 2007
+ * V class MUST have equals / hashcode properly defined!!!
+ */
+public abstract class IndexExtension<K, V, I> {
   @NotNull
-  public abstract UpdatableIndex<K, V, I> createIndexImplementation(@NotNull FileBasedIndexExtension<K, V> extension,
-                                                                    @NotNull IndexStorage<K, V> storage)
-    throws StorageException, IOException;
+  public abstract ID<K, V> getName();
+
+  @NotNull
+  public abstract DataIndexer<K, V, I> getIndexer();
+
+  @NotNull
+  public abstract KeyDescriptor<K> getKeyDescriptor();
+
+  @NotNull
+  public abstract DataExternalizer<V> getValueExternalizer();
+
+  public abstract int getVersion();
 }
