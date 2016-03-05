@@ -51,7 +51,7 @@ public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
           if (result == null) return null;
           Pattern pattern = getPattern();
           Matcher matcher = pattern.matcher(oneSecondBomb(line));
-          if (!matcher.find()) return result;
+          if (!matcher.lookingAt()) return result;
           int lineStart = entireLength - line.length();
           int start = lineStart + matcher.start();
           int end = lineStart + matcher.end();
