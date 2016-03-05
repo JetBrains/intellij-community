@@ -22,7 +22,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
@@ -40,14 +41,11 @@ public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
       new GradleConsoleFilter(project),
       new RegexpFilter(project, RegexpFilter.FILE_PATH_MACROS + ":" + RegexpFilter.LINE_MACROS) {
         private CachedValue<Boolean> myIsGradleProject = new CachedValueImpl<Boolean>(
-          () -> CachedValueProvider.Result.create(isGradleProject(), ModuleManager.getInstance(project)));
+          () -> CachedValueProvider.Result.create(isGradleProject(), ProjectRootModificationTracker.getInstance(project)));
 
         @Override
         public Result applyFilter(String line, int entireLength) {
-          if (line == null) return null;
-          boolean unixStyle = StringUtil.startsWith(line, "/");
-          boolean winStyle = line.length() >= 3 && line.substring(0, 3).matches("\\p{Alpha}:\\\\");
-          if (!unixStyle && !winStyle) return null;
+          if (line == null || !FileUtil.isAbsolutePlatformIndependent(line)) return null;
           if (Boolean.FALSE.equals(myIsGradleProject.getValue())) return null;
           Result result = super.applyFilter(line, entireLength);
           if (result == null) return null;
