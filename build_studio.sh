@@ -106,6 +106,7 @@ mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"/
 cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
 cp -Rfv "$OUT"/studio-aswb-plugin.zip "$DIST/android-studio-aswb-$BNUM.zip"
+cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
 # write the version number into the windows installer dir
 echo $BNUM > ../adt/idea/native/installer/win/version
 (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip

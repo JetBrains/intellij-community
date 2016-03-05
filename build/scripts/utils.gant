@@ -1150,10 +1150,22 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   }
 })
 
-binding.setVariable("layoutUpdater", { String target, String jarName = "updater.jar" ->
+binding.setVariable("layoutUpdater", { String target ->
   layout(target) {
-    jar(jarName) {
+    jar("updater.jar") {
       module("updater")
+    }
+    zip("sdk-patcher.zip") {
+      dir("sdk-patcher") {
+        def updaterModule = findModule("updater-ui")
+        def urls = updaterModule.getContentRootsList().getUrls()
+        def uri = new URI(urls.get(0))
+        fileset(file: "${uri.getPath()}/source.properties")
+        jar("patcher.jar") {
+          module("updater-ui")
+          module("updater")
+        }
+      }
     }
   }
 })
