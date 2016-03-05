@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
@@ -34,7 +35,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -67,8 +67,6 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-
-import static com.intellij.openapi.ui.impl.ShadowBorderPainter.*;
 
 /**
  * @author Anton Katilin
@@ -554,7 +552,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   public void doLayout() {
     super.doLayout();
     if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
-      getRootPane().setBounds(SIDE_SIZE, TOP_SIZE, getWidth() - 2 * SIDE_SIZE, getHeight() - TOP_SIZE - BOTTOM_SIZE);
+      final int side = AllIcons.Ide.Shadow.Right.getIconWidth();
+      final int top = AllIcons.Ide.Shadow.Top.getIconHeight();
+      final int bottom = AllIcons.Ide.Shadow.Bottom.getIconHeight();
+      getRootPane().setBounds(side, top, getWidth() - 2 * side, getHeight() - top - bottom);
     }
   }
 
