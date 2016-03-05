@@ -104,7 +104,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   };
 
   public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull final VcsLogDataManager logDataManager, @NotNull VisiblePack initialDataPack) {
-    super();
+    super(new GraphTableModel(initialDataPack, logDataManager, ui));
     myUi = ui;
     myLogDataManager = logDataManager;
     myGraphCommitCellRenderer = new GraphCommitCellRender(logDataManager, myGraphCellPainter, this);
@@ -124,14 +124,12 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
 
-    GraphTableModel model = new GraphTableModel(initialDataPack, myLogDataManager, myUi);
-    setModel(model);
     initColumnSize();
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     VcsLogGraphTable.Selection previousSelection = getSelection();
-    getGraphTableModel().setVisiblePack(visiblePack);
+    getModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true);
 
     for (VcsLogHighlighter highlighter : myHighlighters) {
@@ -351,12 +349,9 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     viewport.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        TableModel model = getModel();
-        if (model instanceof AbstractTableModel) {
-          Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
-          ((AbstractTableModel)model)
-            .fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
-        }
+        AbstractTableModel model = getModel();
+        Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
+        model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
       }
     });
   }
@@ -394,9 +389,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
                            @Nullable Selection previousSelection,
                            @Nullable MouseEvent e) {
     if (dataCouldChange) {
-      GraphTableModel graphTableModel = (GraphTableModel)getModel();
-
-      graphTableModel.fireTableDataChanged();
+      getModel().fireTableDataChanged();
 
       // since fireTableDataChanged clears selection we restore it here
       if (previousSelection != null) {
@@ -414,7 +407,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       setCursor(answer.getCursorToSet());
     }
     if (answer.getCommitToJump() != null) {
-      Integer row = getGraphTableModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
+      Integer row = getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
       if (row != null && row >= 0 && answer.doJump()) {
         jumpToRow(row);
         // TODO wait for the full log and then jump
@@ -433,7 +426,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       details = myLogDataManager.getMiniDetailsGetter().getCommitDataIfAvailable(commit);
     }
     else {
-      details = getGraphTableModel().getShortDetails(row);
+      details = getModel().getShortDetails(row);
     }
     String balloonText;
     if (details != null && !(details instanceof LoadingDetails)) {
@@ -462,9 +455,10 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     IdeTooltipManager.getInstance().show(tooltip, false);
   }
 
+  @Override
   @NotNull
-  public GraphTableModel getGraphTableModel() {
-    return (GraphTableModel)getModel();
+  public GraphTableModel getModel() {
+    return (GraphTableModel)super.getModel();
   }
 
   @NotNull
@@ -512,7 +506,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
 
     public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection) {
-      Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getGraphTableModel(), newVisibleGraph);
+      Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getModel(), newVisibleGraph);
       if (!toSelectAndScroll.first.isEmpty()) {
         myTable.getSelectionModel().setValueIsAdjusting(true);
         toSelectAndScroll.first.forEach(new TIntProcedure() {
@@ -639,7 +633,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   @NotNull
   public VisibleGraph<Integer> getVisibleGraph() {
-    return getGraphTableModel().getVisiblePack().getVisibleGraph();
+    return getModel().getVisiblePack().getVisibleGraph();
   }
 
   @NotNull

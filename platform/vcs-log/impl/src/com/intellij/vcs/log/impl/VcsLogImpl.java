@@ -50,7 +50,7 @@ public class VcsLogImpl implements VcsLog {
       @Nullable
       @Override
       public CommitId get(int index) {
-        return getTable().getGraphTableModel().getCommitIdAtRow(rows[index]);
+        return getTable().getModel().getCommitIdAtRow(rows[index]);
       }
 
       @Override
@@ -72,7 +72,7 @@ public class VcsLogImpl implements VcsLog {
       @NotNull
       @Override
       public VcsFullCommitDetails get(int index) {
-        return getTable().getGraphTableModel().getFullDetails(rows[index]);
+        return getTable().getModel().getFullDetails(rows[index]);
       }
 
       @Override
@@ -86,7 +86,7 @@ public class VcsLogImpl implements VcsLog {
   public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
     myDataManager.getCommitDetailsGetter()
-      .loadCommitsData(getTable().getGraphTableModel().convertToHashesAndRoots(rowsList), consumer, indicator);
+      .loadCommitsData(getTable().getModel().convertToHashesAndRoots(rowsList), consumer, indicator);
   }
 
   @Nullable

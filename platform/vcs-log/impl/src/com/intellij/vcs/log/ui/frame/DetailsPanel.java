@@ -178,7 +178,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     else {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
-      GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
+      GraphTableModel tableModel = myGraphTable.getModel();
       VcsFullCommitDetails commitData = tableModel.getFullDetails(row);
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();

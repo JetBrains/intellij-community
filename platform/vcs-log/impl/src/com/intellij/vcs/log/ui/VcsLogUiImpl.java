@@ -240,7 +240,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
                           @NotNull final SettableFuture<Boolean> future) {
     if (future.isCancelled()) return;
 
-    GraphTableModel model = getTable().getGraphTableModel();
+    GraphTableModel model = getTable().getModel();
 
     int row = rowGetter.fun(model, commitId);
     if (row >= 0) {
