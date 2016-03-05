@@ -86,14 +86,19 @@ public class UrlUtilTest {
   
   private static void doUrlTest(@NotNull final String line, @Nullable final String expectedUrl) {
     final Matcher matcher = URLUtil.URL_PATTERN.matcher(line);
+    boolean found = matcher.find();
     if (expectedUrl == null) {
-      if (matcher.find()) {
+      if (found) {
         fail("No URL expected in [" + line + "], detected: " + matcher.group());
       }
       return;
     }
 
-    assertTrue("Expected URL (" + expectedUrl + ") is not detected in [" + line + "]", matcher.find());
+    if (!URLUtil.canContainUrl(line) && found) {
+      fail("canContainUrl returns false for " + line);
+    }
+
+    assertTrue("Expected URL (" + expectedUrl + ") is not detected in [" + line + "]", found);
     assertEquals("Text: [" + line + "]", expectedUrl, matcher.group());
   }
 
