@@ -19,7 +19,6 @@ package com.intellij.find.findUsages;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -199,8 +198,7 @@ public class FindUsagesManager {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
-    FindUsagesHandler handler = GotoDeclarationAction.underModalProgress(myProject, "Preparing Find Usages...",
-                                                                         () -> getFindUsagesHandler(psiElement, false));
+    FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
     if (handler == null) return;
 
     boolean singleFile = scopeFile != null;
