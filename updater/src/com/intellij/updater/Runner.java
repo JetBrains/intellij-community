@@ -257,7 +257,7 @@ public class Runner {
                        });
   }
 
-  private static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {
+  public static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {
     try {
       try {
         File patchFile = Utils.createTempFile();
