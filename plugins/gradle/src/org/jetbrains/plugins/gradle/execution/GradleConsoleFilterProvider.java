@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
@@ -50,7 +51,7 @@ public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
           Result result = super.applyFilter(line, entireLength);
           if (result == null) return null;
           Pattern pattern = getPattern();
-          Matcher matcher = pattern.matcher(oneSecondBomb(line));
+          Matcher matcher = pattern.matcher(StringUtil.newBombedCharSequence(line, 100));
           if (!matcher.lookingAt()) return result;
           int lineStart = entireLength - line.length();
           int start = lineStart + matcher.start();

@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -140,7 +139,7 @@ public class RegexpFilter implements Filter {
 
   @Override
   public Result applyFilter(String line, int entireLength) {
-    Matcher matcher = myPattern.matcher(oneSecondBomb(line));
+    Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 100));
     if (!matcher.find()) {
       return null;
     }
@@ -176,11 +175,6 @@ public class RegexpFilter implements Filter {
     final int highlightEndOffset = highlightStartOffset + filePath.length();
     final HyperlinkInfo info = createOpenFileHyperlink(filePath, line1, column);
     return new Result(highlightStartOffset, highlightEndOffset, info);
-  }
-
-  @NotNull
-  protected static CharSequence oneSecondBomb(@NotNull String line) {
-    return StringUtil.newBombedCharSequence(line, 1000);
   }
 
   @Nullable
