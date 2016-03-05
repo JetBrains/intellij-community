@@ -3415,4 +3415,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find with simple method pattern 2", 1, findMatchesCount(source, "void one();"));
     assertEquals("find with simple static initializer pattern", 3, findMatchesCount(source, "static { '_statement*;}"));
   }
+
+  public void testFindPackageLocalAndInstanceFields() {
+    String source = "class X {" +
+                    "  final int var1;" +
+                    "  void a(final int var2) {" +
+                    "    final int var3;" +
+                    "  }" +
+                    "}";
+    assertEquals("parameters and local variables are not package local", 1, findMatchesCount(source, "@Modifier(\"packageLocal\") '_T '_a;"));
+    assertEquals("any variable can be final", 3, findMatchesCount(source, "@Modifier(\"final\") '_T '_a;"));
+    assertEquals("parameters and local variables are not instance fields", 1, findMatchesCount(source, "@Modifier(\"Instance\") '_T '_a;"));
+  }
 }
