@@ -41,7 +41,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   override fun createRepository(rootDir: String) = GitTestUtil.createRepository(myProject, rootDir, false)
 
-  override fun getDebugLogCategories() = listOf("#git4idea.rebase")
+  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#git4idea.rebase")
 
   protected fun GitRepository.`diverge feature and master`() {
     build(this) {

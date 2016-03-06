@@ -26,6 +26,6 @@
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="module" module-name="vcs-log-impl" />
     <orderEntry type="module" module-name="jira" scope="TEST" />
+    <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
   </component>
 </module>
-
