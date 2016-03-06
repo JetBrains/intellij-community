@@ -17,7 +17,6 @@ package git4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,17 +67,9 @@ public class GitUserFilterTest extends GitSingleRepoTest {
 
     StringBuilder builder = new StringBuilder();
     for (VcsUser user : commits.keySet()) {
-      VcsLogUserFilter userFilter =
-        new VcsLogUserFilterImpl(singleton(user.getName() + " <" + user.getEmail() + ">"), Collections.<VirtualFile, VcsUser>emptyMap(),
-                                 commits.keySet());
-      List<String> actualHashes = getFilteredHashes(userFilter);
-
-      List<String> expected = ContainerUtil.reverse(ContainerUtil.newArrayList(commits.get(user)));
-      if (!expected.equals(actualHashes)) {
-        builder.append(TestCase.format(user.toString(), commits.get(user), actualHashes)).append("\n");
-      }
+      checkFilterForUser(user, commits, builder);
     }
-    assertTrue("Incorrectly filtered log for\n" + builder.toString(), builder.toString().isEmpty());
+    assertFilteredCorrectly(builder);
   }
 
   public void testWeirdCharacters() throws Exception {
@@ -90,22 +81,44 @@ public class GitUserFilterTest extends GitSingleRepoTest {
       names.add(name + "@company.com");
     }
 
-    MultiMap<VcsUser, String> commits =
-      generateHistory(ArrayUtil.toStringArray(names));
+    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
 
     StringBuilder builder = new StringBuilder();
     for (VcsUser user : commits.keySet()) {
-      VcsLogUserFilter userFilter =
-        new VcsLogUserFilterImpl(singleton(user.getName()), Collections.<VirtualFile, VcsUser>emptyMap(),
-                                 commits.keySet());
-      List<String> actualHashes = getFilteredHashes(userFilter);
-
-      List<String> expected = ContainerUtil.reverse(ContainerUtil.newArrayList(commits.get(user)));
-      if (!expected.equals(actualHashes)) {
-        builder.append(TestCase.format(user.toString(), commits.get(user), actualHashes)).append("\n");
-      }
+      checkFilterForUser(user, commits, builder);
     }
+    assertFilteredCorrectly(builder);
+  }
+
+  public void testFullMatching() throws Exception {
+    VcsUser nik = myObjectsFactory.createUser("nik", "nik@company.com");
+    List<VcsUser> users = Arrays.asList(nik,
+                                        myObjectsFactory.createUser("Chainik", "chainik@company.com"),
+                                        myObjectsFactory.createUser("Nik Fury", "nikfury@company.com"),
+                                        myObjectsFactory.createUser("nikniknik", "nikniknik@company.com"));
+
+    MultiMap<VcsUser, String> commits = generateHistory(users);
+    StringBuilder builder = new StringBuilder();
+    checkFilterForUser(nik, commits, builder);
+    assertFilteredCorrectly(builder);
+  }
+
+  private static void assertFilteredCorrectly(@NotNull StringBuilder builder) {
     assertTrue("Incorrectly filtered log for\n" + builder.toString(), builder.toString().isEmpty());
+  }
+
+  private void checkFilterForUser(@NotNull VcsUser user,
+                                  @NotNull MultiMap<VcsUser, String> commits,
+                                  @NotNull StringBuilder errorMessageBuilder) throws VcsException {
+    VcsLogUserFilter userFilter =
+      new VcsLogUserFilterImpl(singleton(user.getName()), Collections.emptyMap(),
+                               commits.keySet());
+    List<String> actualHashes = getFilteredHashes(userFilter);
+
+    List<String> expected = ContainerUtil.reverse(ContainerUtil.newArrayList(commits.get(user)));
+    if (!expected.equals(actualHashes)) {
+      errorMessageBuilder.append(TestCase.format(user.toString(), commits.get(user), actualHashes)).append("\n");
+    }
   }
 
   @NotNull
@@ -120,21 +133,31 @@ public class GitUserFilterTest extends GitSingleRepoTest {
     });
   }
 
+  @NotNull
   private MultiMap<VcsUser, String> generateHistory(String... names) throws IOException {
-    MultiMap<VcsUser, String> commits = MultiMap.createLinked();
-
     assertTrue("Incorrect user names (should be pairs of users and emails) " + Arrays.toString(names), names.length % 2 == 0);
 
+    List<VcsUser> users = ContainerUtil.newArrayList();
     for (int i = 0; i < names.length / 2; i++) {
-      recordCommit(commits, names[2 * i], names[2 * i + 1]);
+      users.add(myObjectsFactory.createUser(names[2 * i], names[2 * i + 1]));
+    }
+
+    return generateHistory(users);
+  }
+
+  @NotNull
+  private MultiMap<VcsUser, String> generateHistory(@NotNull List<VcsUser> users) throws IOException {
+    MultiMap<VcsUser, String> commits = MultiMap.createLinked();
+
+    for (VcsUser user : users) {
+      recordCommit(commits, user);
     }
 
     refresh();
     return commits;
   }
 
-  private void recordCommit(@NotNull MultiMap<VcsUser, String> commits, @NotNull String name, @NotNull String email) throws IOException {
-    VcsUser user = myObjectsFactory.createUser(name, email);
+  private static void recordCommit(@NotNull MultiMap<VcsUser, String> commits, @NotNull VcsUser user) throws IOException {
     String commit = commit(user);
     commits.putValue(user, commit);
   }
