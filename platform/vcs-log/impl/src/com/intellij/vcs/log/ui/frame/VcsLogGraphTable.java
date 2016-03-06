@@ -93,6 +93,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRender myGraphCommitCellRenderer;
   private boolean myColumnsSizeInitialized = false;
+  @Nullable private Selection mySelection = null;
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
@@ -120,6 +121,8 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     MouseAdapter mouseAdapter = new MyMouseAdapter();
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
+
+    getSelectionModel().addListSelectionListener(new MyListSelectionListener());
 
     PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
@@ -463,7 +466,8 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   @NotNull
   public Selection getSelection() {
-    return new Selection(this);
+    if (mySelection == null) mySelection = new Selection(this);
+    return mySelection;
   }
 
   private static class Selection {
@@ -915,6 +919,13 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
       mouseInputListener.mouseMoved(convertMouseEvent(e));
+    }
+  }
+
+  private class MyListSelectionListener implements ListSelectionListener {
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      mySelection = null;
     }
   }
 }
