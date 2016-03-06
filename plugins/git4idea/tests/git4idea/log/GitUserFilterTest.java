@@ -33,9 +33,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static git4idea.test.GitExecutor.modify;
 import static java.util.Collections.singleton;
@@ -67,7 +65,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
 
     StringBuilder builder = new StringBuilder();
     for (VcsUser user : commits.keySet()) {
-      checkFilterForUser(user, commits, builder);
+      checkFilterForUser(user, commits.keySet(), commits.get(user), builder);
     }
     assertFilteredCorrectly(builder);
   }
@@ -85,7 +83,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
 
     StringBuilder builder = new StringBuilder();
     for (VcsUser user : commits.keySet()) {
-      checkFilterForUser(user, commits, builder);
+      checkFilterForUser(user, commits.keySet(), commits.get(user), builder);
     }
     assertFilteredCorrectly(builder);
   }
@@ -99,7 +97,18 @@ public class GitUserFilterTest extends GitSingleRepoTest {
 
     MultiMap<VcsUser, String> commits = generateHistory(users);
     StringBuilder builder = new StringBuilder();
-    checkFilterForUser(nik, commits, builder);
+    checkFilterForUser(nik, commits.keySet(), commits.get(nik), builder);
+    assertFilteredCorrectly(builder);
+  }
+
+  public void testSynonyms() throws Exception {
+    MultiMap<VcsUser, String> commits =
+      generateHistory("User Userovich", "user@company.com", "User.Userovich", "user@company.com");
+
+    StringBuilder builder = new StringBuilder();
+    for (VcsUser user : commits.keySet()) {
+      checkFilterForUser(user, commits.keySet(), commits.values(), builder);
+    }
     assertFilteredCorrectly(builder);
   }
 
@@ -108,16 +117,16 @@ public class GitUserFilterTest extends GitSingleRepoTest {
   }
 
   private void checkFilterForUser(@NotNull VcsUser user,
-                                  @NotNull MultiMap<VcsUser, String> commits,
+                                  @NotNull Set<VcsUser> allUsers,
+                                  @NotNull Collection<? extends String> expectedHashes,
                                   @NotNull StringBuilder errorMessageBuilder) throws VcsException {
     VcsLogUserFilter userFilter =
-      new VcsLogUserFilterImpl(singleton(user.getName()), Collections.emptyMap(),
-                               commits.keySet());
+      new VcsLogUserFilterImpl(singleton(user.getName()), Collections.emptyMap(), allUsers);
     List<String> actualHashes = getFilteredHashes(userFilter);
 
-    List<String> expected = ContainerUtil.reverse(ContainerUtil.newArrayList(commits.get(user)));
+    List<String> expected = ContainerUtil.reverse(ContainerUtil.newArrayList(expectedHashes));
     if (!expected.equals(actualHashes)) {
-      errorMessageBuilder.append(TestCase.format(user.toString(), commits.get(user), actualHashes)).append("\n");
+      errorMessageBuilder.append(TestCase.format(user.toString(), expectedHashes, actualHashes)).append("\n");
     }
   }
 
