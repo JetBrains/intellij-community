@@ -429,7 +429,7 @@ public class StartupUtil {
       @Nullable
       @Override
       protected JComponent createCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
+        JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
         String html = alternativeHTML;
         if (html == null) {
           try {
@@ -486,7 +486,7 @@ public class StartupUtil {
     dialog.setModal(true);
     dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement");
     dialog.setResizable(false);
-    dialog.setSize(509, 395);
+    dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
 
