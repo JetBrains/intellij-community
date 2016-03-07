@@ -49,7 +49,7 @@ public class ZipperUpdater {
     queue(runnable, false);
   }
 
-  public void queue(@NotNull final Runnable runnable, final boolean urgent) {
+  private void queue(@NotNull final Runnable runnable, final boolean urgent) {
     queue(runnable, urgent, false);
   }
 
@@ -70,6 +70,11 @@ public class ZipperUpdater {
             synchronized (myLock) {
               myIsEmpty = !myRaised;
             }
+          }
+
+          @Override
+          public String toString() {
+            return runnable.toString();
           }
         };
         if (Alarm.ThreadToUse.SWING_THREAD.equals(myThreadToUse)) {
