@@ -82,6 +82,7 @@ public class SingleClassesTest {
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
+  @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
 
   protected void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

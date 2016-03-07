@@ -28,9 +28,9 @@ import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
-import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.StructUtils;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
@@ -84,13 +84,17 @@ public class FieldExprent extends Exprent {
     return new FieldExprent(name, classname, isStatic, instance == null ? null : instance.copy(), descriptor, bytecode);
   }
 
+  private boolean isAmbiguous() {
+    return StructUtils.getCurrentMethodLocalVariableNames().contains(name);
+  }
+
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
 
     if (isStatic) {
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
-      if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
+      if (node == null || !classname.equals(node.classStruct.qualifiedName) || isAmbiguous()) {
         buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
         buf.append(".");
       }
