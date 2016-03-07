@@ -1,4 +1,4 @@
-public class Test {
+class Test {
   private int myFoo;
 
   public int getFoo() {

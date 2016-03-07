@@ -2,7 +2,7 @@ class Test {
   /**
    * Test.
    * @serial something
-   * @serial something else
+   * <warning descr="Duplicate @serial tag">@serial</warning> something else
    */
    private int a;
 }
