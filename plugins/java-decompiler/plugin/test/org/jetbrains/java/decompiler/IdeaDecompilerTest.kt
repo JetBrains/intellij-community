@@ -46,6 +46,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Alarm
 import com.intellij.util.io.URLUtil
 import java.awt.GraphicsEnvironment
+import java.util.concurrent.atomic.AtomicInteger
 
 class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -142,23 +143,23 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     assertNull(FileDocumentManager.getInstance().getCachedDocument(file))
     assertNull(decompiler.getProgress(file))
 
-    val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, project)
+    val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, testRootDisposable)
+    val counter = AtomicInteger(0)
     alarm.addRequest(object : Runnable {
       override fun run() {
+        counter.incrementAndGet()
         val progress = decompiler.getProgress(file)
-        if (progress != null) {
-          progress.cancel()
-        }
-        else {
-          alarm.addRequest(this, 200, ModalityState.any())
+        when (progress) {
+          null -> alarm.addRequest(this, 100, ModalityState.any())
+          else -> progress.cancel()
         }
       }
-    }, 750, ModalityState.any())
+    }, 500, ModalityState.any())
 
     try {
       FileDocumentManager.getInstance().getDocument(file)
       alarm.cancelAllRequests()
-      fail("should have been cancelled")
+      fail("should have been cancelled; alarm fired ${counter.get()} time(s)")
     }
     catch (ignored: ProcessCanceledException) { }
   }
