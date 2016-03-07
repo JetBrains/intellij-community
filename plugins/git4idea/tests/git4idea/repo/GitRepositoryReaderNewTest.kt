@@ -34,6 +34,20 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     return false
   }
 
+  // IDEA-152632
+  fun `test current branch is known during rebase`() {
+    makeCommit("file.txt")
+    conflict(myRepo, "feature")
+    git("checkout feature")
+    git("rebase master", true)
+
+    val state = readState()
+    assertEquals("State value is incorrect", State.REBASING, state.state)
+    val currentBranch = state.currentBranch
+    assertNotNull("Current branch should be known during rebase", currentBranch)
+    assertEquals("Current branch is incorrect", "feature", currentBranch!!.name)
+  }
+
   fun `test rebase with conflicts while being on detached HEAD`() {
     makeCommit("file.txt")
     conflict(myRepo, "feature")
