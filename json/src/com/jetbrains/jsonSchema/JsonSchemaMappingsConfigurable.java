@@ -374,6 +374,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         myText = FileUtil.loadFile(ioFile);
       }
       catch (IOException e1) {
+        JsonSchemaReader.LOG.info(e1);
         myError = "Problem during reading JSON schema from '" + myFile.getName() + "': " + e1.getMessage();
         return false;
       }
