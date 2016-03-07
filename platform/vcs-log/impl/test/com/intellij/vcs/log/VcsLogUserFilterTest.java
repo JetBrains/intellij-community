@@ -107,10 +107,13 @@ public abstract class VcsLogUserFilterTest {
       new VcsLogUserFilterImpl(singleton(VcsUserUtil.getShortPresentation(user)), Collections.emptyMap(), allUsers);
     List<String> actualHashes = getFilteredHashes(userFilter);
 
-    List<String> expected = ContainerUtil.reverse(ContainerUtil.newArrayList(expectedHashes));
-    if (!expected.equals(actualHashes)) {
+    if (!hasSameElements(expectedHashes, actualHashes)) {
       errorMessageBuilder.append(TestCase.format(user.toString(), expectedHashes, actualHashes)).append("\n");
     }
+  }
+
+  private static <T> boolean hasSameElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
+    return ContainerUtil.newHashSet(expected).equals(ContainerUtil.newHashSet(collection));
   }
 
   @NotNull
