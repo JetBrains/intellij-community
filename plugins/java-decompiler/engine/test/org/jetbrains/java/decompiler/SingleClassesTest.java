@@ -83,6 +83,7 @@ public class SingleClassesTest {
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
+  @Test public void testInterfaceWithObject() { doTest("pkg/TestInterfaceWithObject"); }
 
   protected void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
@@ -107,7 +108,7 @@ public class SingleClassesTest {
     File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
     assertTrue(decompiledFile.isFile());
     File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
-    assertTrue(referenceFile.isFile());
+    assertTrue("Expecting " + referenceFile.getAbsolutePath() + " to be a file", referenceFile.isFile());
     assertFilesEqual(referenceFile, decompiledFile);
   }
 
