@@ -22,6 +22,7 @@ public class JsonSchemaReader {
 
   public JsonSchemaObject read(@NotNull final Reader reader) throws IOException {
     final JsonReader in = new JsonReader(reader);
+    in.setLenient(true);
 
     in.beginObject();
     final JsonSchemaObject object = new JsonSchemaObject();
