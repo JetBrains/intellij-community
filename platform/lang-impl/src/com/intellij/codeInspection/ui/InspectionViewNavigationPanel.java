@@ -55,6 +55,6 @@ public class InspectionViewNavigationPanel extends JPanel {
 
   @NotNull
   public static String getTitleText(boolean addGroupWord, boolean addColon) {
-    return "Select inspection " + (addGroupWord ? "group" : "") + " to see problems" + (addColon ? ":" : ".");
+    return "Select inspection" + (addGroupWord ? " group " : " ") + "to see problems" + (addColon ? ":" : ".");
   }
 }
