@@ -244,6 +244,7 @@ libraryLicense(name: "jsr305", libraryName: "jsr305", version: "snapshot", licen
 libraryLicense(name: "Jsr305", version: "1.3.9", license: "New BSD", url: "http://code.google.com/p/jsr-305/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: "CPL 1.0", url: "http://junit.org/")
 libraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.11", license: "CPL 1.0", url: "http://junit.org/")
+libraryLicense(name: "junit5_rt", libraryName: "junit5_rt", version: "5.0.0", license: "Eclipse Public License 1.0", url: "http://junit.org/")
 libraryLicense(name: "jzlib", libraryName: "jzlib", version: "1.1.1", license: "BSD", url: "http://www.jcraft.com/jzlib/", licenseUrl: "http://www.jcraft.com/jzlib/LICENSE.txt")
 libraryLicense(name: "Kryo", libraryName: "Kryo", version: "2.22", license: "New BSD License", url: "https://github.com/EsotericSoftware/kryo", licenseUrl: "https://github.com/EsotericSoftware/kryo/blob/master/license.txt")
 libraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/")

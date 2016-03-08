@@ -472,6 +472,12 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
       jar("junit-rt.jar") {
         module("junit_rt")
       }
+      jar("junit5-rt.jar") {
+        module("junit5_rt")
+      }
+      fileset(dir: "$home/plugins/junit5_rt/lib") {
+        include(name: "*.jar")
+      }
     }
 
     pluginDir("ByteCodeViewer") {
