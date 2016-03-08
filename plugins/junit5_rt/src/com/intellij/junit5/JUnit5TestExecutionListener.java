@@ -34,7 +34,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private final PrintStream myPrintStream;
   private TestPlan myTestPlan;
   private long myCurrentTestStart;
-  
+  private int myFinishCount = 0;
+
   public JUnit5TestExecutionListener() {
     this(System.out);
   }
@@ -80,10 +81,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   @Override
   public void executionStarted(TestIdentifier testIdentifier) {
     if (testIdentifier.isTest()) {
-      myPrintStream.println("\n##teamcity[testStarted" + idAndName(testIdentifier) + "\']");
+      testStarted(testIdentifier);
       myCurrentTestStart = System.currentTimeMillis();
     }
     else {
+      myFinishCount = 0;
       myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + "\']");
     }
   }
@@ -99,10 +101,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   @Override
   public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
     final String displayName = testIdentifier.getDisplayName();
+    final TestExecutionResult.Status status = testExecutionResult.getStatus();
+    final Optional<Throwable> throwableOptional = testExecutionResult.getThrowable();
     if (testIdentifier.isTest()) {
-      final TestExecutionResult.Status status = testExecutionResult.getStatus();
       final long duration = System.currentTimeMillis() - myCurrentTestStart;
-      final Optional<Throwable> throwableOptional = testExecutionResult.getThrowable();
       if (status == TestExecutionResult.Status.FAILED) {
         testFailure(throwableOptional, MapSerializerUtil.TEST_FAILED, testIdentifier, duration);
       }
@@ -110,12 +112,31 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         testFailure(throwableOptional, MapSerializerUtil.TEST_IGNORED, testIdentifier, duration);
       }
       testFinished(testIdentifier, duration);
+      myFinishCount++;
     }
     else {
+      String messageName = null;
+      if (status == TestExecutionResult.Status.FAILED) {
+        messageName = MapSerializerUtil.TEST_FAILED;
+      }
+      else if (status == TestExecutionResult.Status.ABORTED) {
+        messageName = MapSerializerUtil.TEST_IGNORED;
+      }
+      if (messageName != null && myFinishCount == 0) {
+        for (TestIdentifier childIdentifier : myTestPlan.getChildren(testIdentifier)) {
+          testStarted(childIdentifier);
+          testFailure(throwableOptional, messageName, childIdentifier, 0);
+          testFinished(childIdentifier, 0);
+        }
+      }
       myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "\']");
     }
   }
 
+  private void testStarted(TestIdentifier testIdentifier) {
+    myPrintStream.println("\n##teamcity[testStarted" + idAndName(testIdentifier) + "\']");
+  }
+  
   private void testFinished(TestIdentifier testIdentifier, long duration) {
     myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") + "\']");
   }
