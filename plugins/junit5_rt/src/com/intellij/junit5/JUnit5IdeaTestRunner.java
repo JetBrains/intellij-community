@@ -33,9 +33,10 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
     Launcher launcher = LauncherFactory.create();
     launcher.registerTestExecutionListeners(myListener);
-    final TestDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, name, false);
+    final String[] packageNameRef = new String[1];
+    final TestDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
     final TestPlan testPlan = launcher.discover(discoveryRequest);
-    myListener.sendTree(testPlan);
+    myListener.sendTree(testPlan, packageNameRef[0]);
     launcher.execute(discoveryRequest);
 
     return 0;

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class JUnit5TestRunnerUtil {
   
-  public static TestDiscoveryRequest buildRequest(String[] suiteClassNames, final String name, boolean notForked) {
+  public static TestDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef) {
     if (suiteClassNames.length == 0) {
       return null;
     }
@@ -53,8 +53,7 @@ public class JUnit5TestRunnerUtil {
           while ((line = reader.readLine()) != null) {
             lines.add(line);
           }
-          //todo set package name
-          String suiteName = packageName.length() == 0 ? "<default package>" : packageName;
+          packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
         }
         finally {
           reader.close();

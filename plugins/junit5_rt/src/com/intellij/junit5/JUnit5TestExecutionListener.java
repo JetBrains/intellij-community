@@ -35,6 +35,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private TestPlan myTestPlan;
   private long myCurrentTestStart;
   private int myFinishCount = 0;
+  private String myRootName;
 
   public JUnit5TestExecutionListener() {
     this(System.out);
@@ -48,6 +49,20 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {
     myTestPlan = testPlan;
+    if (myRootName != null) {
+      int lastPointIdx = myRootName.lastIndexOf('.');
+      String name = myRootName;
+      String comment = null;
+      if (lastPointIdx >= 0) {
+        name = myRootName.substring(lastPointIdx + 1);
+        comment = myRootName.substring(0, lastPointIdx);
+      }
+
+      myPrintStream.println("##teamcity[rootName name = \'" + escapeName(name) +
+                            (comment != null ? ("\' comment = \'" + escapeName(comment)) : "") + "\'" +
+                            " location = \'java:suite://" + escapeName(myRootName) +
+                            "\']");
+    }
   }
 
   @Override
@@ -163,7 +178,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
 
-  public void sendTree(TestPlan testPlan) {
+  public void sendTree(TestPlan testPlan, String rootName) {
+    myRootName = rootName;
     for (TestIdentifier root : testPlan.getRoots()) {
       sendTreeUnderRoot(testPlan, root);
     }
