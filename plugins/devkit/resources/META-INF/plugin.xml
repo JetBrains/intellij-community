@@ -147,7 +147,7 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="false" isInternal="true"
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="QuickFixGetFamilyNameViolation"
+    <localInspection language="JAVA" shortName="QuickFixGetFamilyNameViolation"
                      displayName="QuickFix's getFamilyName() implementation must not depend on a specific context"
                      groupKey="inspections.group.name"
                      enabledByDefault="true"

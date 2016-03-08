@@ -45,7 +45,8 @@ public class TransactionGuardImpl extends TransactionGuard {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
     if (myTransactionStartTrace != null) {
-      LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment.",
+      // please assign exceptions that occur here to Peter
+      LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment. Kind is " + kind,
                 new Attachment("trace.txt", myTransactionStartTrace));
       //throw new IllegalStateException("Nested transactions are not allowed");
     }

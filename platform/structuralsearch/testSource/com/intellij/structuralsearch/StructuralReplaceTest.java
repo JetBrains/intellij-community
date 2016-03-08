@@ -584,8 +584,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
   public void testReplaceParameter() {
     String s1 = "class A { void b(int c, int d, int e) {} }";
-    String s2 = "int d";
-    String s3 = "int d2";
+    String s2 = "int d;";
+    String s3 = "int d2;";
     String expectedResult = "class A { void b(int c, int d2, int e) {} }";
 
     actualResult = replacer.testReplace(s1,s2,s3,options);
@@ -2194,12 +2194,12 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "     final int x = 5;\n" +
                 "  }\n" +
                 "}";
-    String s2 = "final '_type 'var = '_init?";
-    String s3 = "$type$ $var$ = $init$";
+    String s2 = "final '_type 'var = '_init?;";
+    String s3 = "$type$ $var$ = $init$;";
 
     String expected = "class Foo {\n" +
                       "  void foo(int i, int i2, int i3) {\n" +
-                      "     int x = 5\n" +
+                      "     int x = 5;\n" +
                       "  }\n" +
                       "}";
 

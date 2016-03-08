@@ -293,7 +293,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }), VcsRevisionNumber.class);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
-      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(myGraphTable.getSelectedRows()), new Function<Integer, VirtualFile>() {
+      int[] selectedRows = myGraphTable.getSelectedRows();
+      if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), new Function<Integer, VirtualFile>() {
         @Override
         public VirtualFile fun(@NotNull Integer row) {
           return myGraphTable.getModel().getRoot(row);
