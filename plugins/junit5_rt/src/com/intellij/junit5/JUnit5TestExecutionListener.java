@@ -48,7 +48,6 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {
-    myTestPlan = testPlan;
     if (myRootName != null) {
       int lastPointIdx = myRootName.lastIndexOf('.');
       String name = myRootName;
@@ -179,6 +178,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
 
   public void sendTree(TestPlan testPlan, String rootName) {
+    myTestPlan = testPlan;
     myRootName = rootName;
     for (TestIdentifier root : testPlan.getRoots()) {
       sendTreeUnderRoot(testPlan, root);
@@ -205,7 +205,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
   }
 
-  private static String getClassName(TestIdentifier description) {
+  static String getClassName(TestIdentifier description) {
     Optional<JavaSource> javaSource = getJavaSource(description);
     return javaSource.map(source -> {
       final Optional<Class<?>> javaClass = source.getJavaClass();
@@ -213,7 +213,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }).orElse(null);
   }
 
-  private static String getMethodName(TestIdentifier testIdentifier) {
+  static String getMethodName(TestIdentifier testIdentifier) {
     return getJavaSource(testIdentifier).map((source) -> source.getJavaMethodName().orElse(null)).orElse(null);
   }
 

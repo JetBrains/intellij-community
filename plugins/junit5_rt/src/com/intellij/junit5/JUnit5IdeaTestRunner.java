@@ -19,15 +19,17 @@ import com.intellij.rt.execution.junit.IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import org.junit.gen5.launcher.Launcher;
 import org.junit.gen5.launcher.TestDiscoveryRequest;
+import org.junit.gen5.launcher.TestIdentifier;
 import org.junit.gen5.launcher.TestPlan;
 import org.junit.gen5.launcher.main.LauncherFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   private JUnit5TestExecutionListener myListener;
+  private TestPlan myTestPlan;
 
   @Override
   public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
@@ -35,8 +37,8 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
     launcher.registerTestExecutionListeners(myListener);
     final String[] packageNameRef = new String[1];
     final TestDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
-    final TestPlan testPlan = launcher.discover(discoveryRequest);
-    myListener.sendTree(testPlan, packageNameRef[0]);
+    myTestPlan = launcher.discover(discoveryRequest);
+    myListener.sendTree(myTestPlan, packageNameRef[0]);
     launcher.execute(discoveryRequest);
 
     return 0;
@@ -52,21 +54,30 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
     return null;
   }
 
-  //forked mode todo not supported
-  
   @Override
   public Object getTestToStart(String[] args, String name) {
-    return null;
+    final TestDiscoveryRequest request = JUnit5TestRunnerUtil.buildRequest(args, new String[1]);
+    Launcher launcher = LauncherFactory.create();
+    myTestPlan = launcher.discover(request);
+    final Set<TestIdentifier> roots = myTestPlan.getRoots();
+    
+    return roots.isEmpty() ? null : roots.iterator().next();
   }
 
   @Override
   public List getChildTests(Object description) {
-    return Collections.emptyList();
+    return new ArrayList<>(myTestPlan.getChildren((TestIdentifier)description));
   }
 
   @Override
   public String getStartDescription(Object child) {
-    return null;
+    final TestIdentifier testIdentifier = (TestIdentifier)child;
+    final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
+    final String methodName = JUnit5TestExecutionListener.getMethodName(testIdentifier);
+    if (methodName != null) {
+      return className + "#" + methodName;
+    }
+    return className != null ? className : (testIdentifier).getDisplayName();
   }
 
   @Override
