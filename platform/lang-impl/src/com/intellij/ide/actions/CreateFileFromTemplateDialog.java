@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -106,7 +105,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if (myCreator != null && myCreator.tryCreate(getEnteredName(), Collections.<String, String>emptyMap()).length == 0) {
+    if (myCreator != null && myCreator.tryCreate(getEnteredName()).length == 0) {
       return;
     }
     super.doOKAction();
@@ -123,7 +122,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     myUpDownHint.setVisible(flag);
   }
 
-  public static Builder newBuilder(@NotNull final Project project) {
+  public static Builder createDialog(@NotNull final Project project) {
     final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
     return new BuilderImpl(dialog, project);
   }
@@ -166,9 +165,8 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override
-        protected PsiElement[] create(String newName, Map<String, String> creationOptions) throws Exception {
-          final T element = creator
-            .createFile(myDialog.getEnteredName(), Collections.<String, String>emptyMap(), myDialog.getKindCombo().getSelectedName());
+        protected PsiElement[] create(String newName) throws Exception {
+          final T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
           created.set(element);
           if (element != null) {
             return new PsiElement[]{element};
@@ -191,29 +189,25 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
     @Nullable
     @Override
-    public Map<String, String> getCustomProperties() {
+    public Map<String,String> getCustomProperties() {
       return null;
     }
   }
 
   public interface Builder {
     Builder setTitle(String title);
-
     Builder setValidator(InputValidator validator);
-
     Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
-
     @Nullable
     <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
-
     @Nullable
-    Map<String, String> getCustomProperties();
+    Map<String,String> getCustomProperties();
   }
 
   public interface FileCreator<T> {
 
     @Nullable
-    T createFile(@NotNull String name, Map<String, String> creationOptions, @NotNull String templateName);
+    T createFile(@NotNull String name, @NotNull String templateName);
 
     @NotNull
     String getActionName(@NotNull String name, @NotNull String templateName);

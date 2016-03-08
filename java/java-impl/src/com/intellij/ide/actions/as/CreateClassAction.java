@@ -15,122 +15,195 @@
  */
 package com.intellij.ide.actions.as;
 
+import com.google.common.base.Splitter;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
+import com.intellij.ide.IdeView;
+import com.intellij.ide.actions.CreateFromTemplateAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 
-public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> implements DumbAware {
+public final class CreateClassAction extends AnAction {
   private final JavaDirectoryService myJavaDirectoryService;
 
   public CreateClassAction() {
-    super("Java Class", IdeBundle.message("action.create.new.class.description"), PlatformIcons.CLASS_ICON, true);
+    super("Java Class");
     myJavaDirectoryService = JavaDirectoryService.getInstance();
   }
 
   @Override
-  protected void buildDialog(Project project, PsiDirectory directory,
-                             com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder builder) {
-    builder
-      .setTitle(IdeBundle.message("action.create.new.class"))
-      .addKind("Class", PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
-      .addKind("Interface", PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
-    if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) {
-      builder
-        .addKind("Enum", PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME)
-        .addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
+  public void actionPerformed(AnActionEvent event) {
+    DataContext context = event.getDataContext();
+    IdeView view = LangDataKeys.IDE_VIEW.getData(context);
+    if (view == null) {
+      return;
     }
 
-    for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
-      JavaCreateFromTemplateHandler handler = new JavaCreateFromTemplateHandler();
-      if (handler.handlesTemplate(template) && JavaCreateFromTemplateHandler.canCreate(directory)) {
-        builder.addKind(template.getName(), JavaFileType.INSTANCE.getIcon(), template.getName());
+    Project project = CommonDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return;
+    }
+
+    final PsiDirectory directory = view.getOrChooseDirectory();
+    if (directory == null) {
+      return;
+    }
+
+    CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project, directory);
+
+    try {
+      PsiClass createdElement = dialog.show(new CreateFileFromTemplateDialog.FileCreator() {
+        @Override
+        public PsiClass createFile(@NotNull String name, @NotNull Map<String, String> creationOptions, @NotNull String templateName) {
+          String enteredPackageName = creationOptions.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+          PsiDirectory packageSubdirectory = createPackageSubdirectory(directory, enteredPackageName);
+          return checkOrCreate(name, packageSubdirectory, templateName, creationOptions);
+        }
+
+        @Override
+        @NotNull
+        public String getActionName(@NotNull String name, @NotNull String templateName) {
+          String packageDirectoryQualifiedName = myJavaDirectoryService.getPackage(directory).getQualifiedName();
+          return IdeBundle.message("progress.creating.class", StringUtil.getQualifiedName(packageDirectoryQualifiedName, name));
+        }
+      });
+
+      view.selectElement(createdElement);
+      CreateFromTemplateAction.moveCaretAfterNameIdentifier(createdElement);
+      if (dialog.isShowSelectOverridesDialogCheckBoxSelected()) {
+        showOverridesDialog(event);
       }
     }
-
-    builder.setValidator(new CreateNewClassDialogValidatorExImpl(project));
+    catch (CreateFileFromTemplateDialog.FailedToCreateFileException exception) {
+      Logger.getInstance(CreateClassAction.class).warn(exception);
+    }
   }
 
-  //TODO: Undo any changes to com.intellij.ide.actions.CreateFromTemplateAction for API compatibility reasons.
-  @Override
+  /**
+   * Using the given directory, steps up the directory tree (if needed) to find a common ancestor with the desired package name.
+   * Then it builds the subdirectories (if needed) to create a directory for that package name.
+   * Example:
+   * directory: PsiDirectory "/home/username/androidStudio/myProject/com/example/widget/ui/buttons"
+   * packageName: com.example.widget.io.net
+   * <ol>
+   * <li>com.example.widget.ui.buttons != com.example.widget.io.net && com.example.widget.ui.buttons ⊄ com.example.widget.io.net
+   * So remove ".buttons" and step up one directory</li>
+   *
+   * <li>com.example.widget.ui != com.example.widget.io.net && com.example.widget.ui ⊄ com.example.widget.io.net
+   * So remove ".ui" and step up one directory</li>
+   *
+   * <li>com.example.widget != com.example.widget.io.net BUT com.example.widget ⊂ com.example.widget.io.net
+   * So append ".io" and create and enter that directory</li>
+   *
+   * <li>com.example.widget.io != com.example.widget.io.net BUT com.example.widget.io ⊂ com.example.widget.io.net
+   * So append ".net" and create and enter that directory</li>
+   *
+   * <li>com.example.widget.io.net == com.example.widget.io.net</li>
+   * Complete
+   * </ol>
+   *
+   * Why not just start with the com and move down the hierarchy? It requires a PsiDirectory object to build the directories in IJ and
+   * on disk and then to pass back to the caller. This requires starting from the known PsiDirectory.
+   *
+   * @param directory   The directory to start in. Usually the directory of the currently open file or package the user clicked on.
+   * @param packageName The name of the package to create a matching directory for.
+   * @return A PsiDirectory representing the new directory matching the package.
+   */
   @NotNull
-  protected com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder newBuilder(@NotNull Project project,
-                                                                                     @NotNull PsiDirectory defaultDirectory) {
-    return CreateFileFromTemplateDialog.newBuilder(project, defaultDirectory);
-  }
+  private static PsiDirectory createPackageSubdirectory(@NotNull PsiDirectory directory, @NotNull String packageName) {
+    PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    String startPackagePath = psiPackage != null ? psiPackage.getQualifiedName() : null;
 
-  @Override
-  protected String removeExtension(String templateName, String className) {
-    return StringUtil.trimEnd(className, ".java");
-  }
-
-  @Override
-  protected String getErrorTitle() {
-    return IdeBundle.message("title.cannot.create.class");
-  }
+    // If the start directory is the same as the desired one, no work required.
+    if (startPackagePath == null || startPackagePath.equals(packageName)) {
+      return directory;
+    }
 
 
-  @Override
-  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
-    String packageDirectoryQualifiedName = myJavaDirectoryService.getPackage(directory).getQualifiedName();
-    return IdeBundle.message("progress.creating.class", StringUtil.getQualifiedName(packageDirectoryQualifiedName, newName));
-  }
+    PsiPackage baseName = JavaDirectoryService.getInstance().getPackage(directory);
+    PsiDirectory dir = directory;
 
-  @Override
-  protected PsiClass doCreate(PsiDirectory directory, String className, String templateName, Map<String, String> creationOptions)
-    throws IncorrectOperationException {
-    return myJavaDirectoryService.createClass(directory, className, templateName, creationOptions, true);
-  }
-
-  @Override
-  protected PsiElement getNavigationElement(@NotNull PsiClass createdElement) {
-    return createdElement.getLBrace();
-  }
-
-  @Override
-  // TODO: Remove the AnActionEvent parameter, as part of the API compatability fix.
-  protected void postProcess(PsiClass createdElement,
-                             String templateName,
-                             @NotNull Map<String, String> customProperties,
-                             @NotNull AnActionEvent e) {
-    super.postProcess(createdElement, templateName, customProperties, e);
-    moveCaretAfterNameIdentifier(createdElement);
-    showOverridesDialog(customProperties, e);
-  }
-
-  private void showOverridesDialog(@NotNull Map<String, String> customProperties, @NotNull AnActionEvent e) {
-    if (Boolean.TRUE.toString().toUpperCase(Locale.ROOT).equals(customProperties.get(FileTemplate.ATTRIBUTE_SHOW_OVERRIDES_DIALOG))) {
-      Editor editor = FileEditorManager.getInstance(e.getProject()).getSelectedTextEditor();
-      if (editor instanceof EditorEx) {
-        EditorEx editorEx = (EditorEx)editor;
-        AnActionEvent event = new AnActionEvent(e.getInputEvent(), editorEx.getDataContext(), ActionPlaces.UNKNOWN,
-                                                e.getPresentation(), e.getActionManager(), 0);
-        ActionManager.getInstance().getAction("OverrideMethods").actionPerformed(event);
+    if (!packageName.startsWith(baseName.getQualifiedName())) {
+      // This means that baseName is not an ancestor of packageName (like in the example above).
+      // We need to walk up the package tree from baseName until we get to a common ancestor.
+      while (baseName.getParentPackage() != null) {
+        if (packageName.equals(baseName.getQualifiedName())) {
+          // We've stepped back in baseName and discovered packageName is an ancestor.
+          // (E.g. baseName started as com.example.widget.io and packageName is com.example.widget).
+          return dir;
+        }
+        else if (packageName.startsWith(baseName.getQualifiedName())) {
+          // We've traversed up the tree from baseName to the point where baseName is now an ancestor of packageName.
+          // (E.g. baseName started as com.example.widget.io, but is now com.example.widget and packageName is com.example.widget.ui).
+          break;
+        }
+        else {
+          // We still haven't found the common ancestor, so go up one level in the tree.
+          baseName = baseName.getParentPackage();
+          dir = dir.getParentDirectory();
+        }
       }
     }
+
+    // baseName is now an ancestor of packageName (or empty), so find the intervening nodes and make directories for them if needed.
+    String newPackageName = baseName.getQualifiedName().isEmpty() ? packageName
+                                                                  : packageName.substring(baseName.getQualifiedName().length() + 1);
+    for (String component : Splitter.on('.').split(newPackageName)) {
+      PsiDirectory d = dir.findSubdirectory(component);
+      dir = d == null ? dir.createSubdirectory(component) : d;
+    }
+
+    return dir;
+  }
+
+  private static void showOverridesDialog(@NotNull AnActionEvent event) {
+    Editor editor = FileEditorManager.getInstance(event.getProject()).getSelectedTextEditor();
+    if (editor instanceof EditorEx) {
+      EditorEx editorEx = (EditorEx)editor;
+      AnActionEvent newEvent =
+        new AnActionEvent(event.getInputEvent(), editorEx.getDataContext(), ActionPlaces.UNKNOWN, event.getPresentation(),
+                          event.getActionManager(), 0);
+      ActionManager.getInstance().getAction("OverrideMethods").actionPerformed(newEvent);
+    }
+  }
+
+  @Nullable
+  private PsiClass checkOrCreate(String newName, PsiDirectory directory, String templateName, Map<String, String> creationOptions)
+    throws IncorrectOperationException {
+    PsiDirectory dir = directory;
+    StringUtil.trimEnd(newName, ".java");
+
+    if (newName.contains(".")) {
+      List<String> names = Splitter.on(".").splitToList(newName);
+
+      for (String name : names.subList(0, names.size() - 1)) {
+        PsiDirectory subDir = dir.findSubdirectory(name);
+
+        if (subDir == null) {
+          subDir = dir.createSubdirectory(name);
+        }
+
+        dir = subDir;
+      }
+
+      newName = names.get(names.size() - 1);
+    }
+
+    return myJavaDirectoryService.createClass(dir, newName, templateName, true, creationOptions);
   }
 }

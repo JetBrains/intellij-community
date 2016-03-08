@@ -43,8 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-import java.util.Map;
-
 public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
 
   public NewGroovyClassAction() {
@@ -116,8 +114,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
   }
 
   @Override
-  protected final GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName, Map<String, String> creationOptions)
-    throws IncorrectOperationException {
+  protected final GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     final String fileName = className + NewGroovyActionBase.GROOVY_EXTENSION;
     final PsiFile fromTemplate = GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName, true);
     if (fromTemplate instanceof GroovyFile) {

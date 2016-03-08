@@ -17,7 +17,7 @@ package com.intellij.ide.actions.as;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
-import com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ElementCreator;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -25,11 +25,12 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.as.CreateNewClassDialogValidatorEx;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
@@ -43,6 +44,15 @@ import java.awt.event.ActionListener;
 import java.util.*;
 
 public class CreateFileFromTemplateDialog extends DialogWrapper {
+  private static final String ATTRIBUTE_INTERFACES = "INTERFACES";
+  private static final String ATTRIBUTE_VISIBILITY = "VISIBILITY";
+  private static final String ATTRIBUTE_SUPERCLASS = "SUPERCLASS";
+  private static final String ATTRIBUTE_FINAL = "FINAL";
+  private static final String ATTRIBUTE_ABSTRACT = "ABSTRACT";
+  private static final String ATTRIBUTE_IMPORT_BLOCK = "IMPORT_BLOCK";
+  private static final String VISIBILITY_PACKAGE_PRIVATE = "visibility_package_private";
+  private static final String VISIBILITY_PUBLIC = "visibility_public";
+
   private JPanel myPanel;
   private JLabel myNameLabel;
   private JTextField myNameField;
@@ -78,20 +88,19 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   private final JavaCodeFragmentFactory myFragmentFactory;
   private final PsiDocumentManager myPsiDocumentManager;
 
-  private static final String VISIBILITY_PACKAGE_PRIVATE = "visibility_package_private";
-  private static final String VISIBILITY_PUBLIC = "visibility_public";
   private final Map<String, String> myCreationOptions = new HashMap<String, String>();
 
   protected CreateFileFromTemplateDialog(@NotNull Project project, @NotNull PsiDirectory defaultDirectory) {
     super(project);
 
+    setTitle(IdeBundle.message("action.create.new.class"));
     mySelectedInterfaces = new LinkedHashSet<Type>();
     myKindLabel.setLabelFor(myKindCombo);
     myVisibilityLabel.setLabelFor(myPublicRadioButton);
-    myKindCombo.registerUpDownHint(myNameField);
     myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
 
     myProject = project;
+    myInputValidator = new CreateNewClassDialogValidatorExImpl(myProject);
     myDefaultPsiPackage =
       JavaPsiFacade.getInstance(project).findPackage(JavaDirectoryService.getInstance().getPackage(defaultDirectory).getQualifiedName());
     myFragmentFactory = JavaCodeFragmentFactory.getInstance(project);
@@ -111,15 +120,6 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     setKindComponentsVisible(false);
     initVisibilityButtons();
 
-    myKindCombo.getComboBox().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent actionEvent) {
-        if (actionEvent.getSource().equals(myKindCombo.getComboBox())) {
-          configureComponents(Kind.valueOfText(myKindCombo.getSelectedName()));
-        }
-      }
-    });
-
     myAddInterfaceButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
@@ -128,6 +128,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     });
 
     init();
+    initKindCombo();
   }
 
   /**
@@ -332,13 +333,13 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     String superclassAsString = getSuperclass();
     if (!superclassAsString.isEmpty()) {
       Type superclassAsType = Type.newType(superclassAsString, myProject);
-      myCreationOptions.put(FileTemplate.ATTRIBUTE_SUPERCLASS, superclassAsType.getClassWithNesting());
+      myCreationOptions.put(ATTRIBUTE_SUPERCLASS, superclassAsType.getClassWithNesting());
       if (superclassAsType.requiresImport(localPackage)) {
         imports.add(superclassAsType.getClassToImport());
       }
     }
     else {
-      myCreationOptions.put(FileTemplate.ATTRIBUTE_SUPERCLASS, "");
+      myCreationOptions.put(ATTRIBUTE_SUPERCLASS, "");
     }
 
     // There are three types of interfaces to deal with: those local to the new file's package (locals), those that are not local, but
@@ -375,16 +376,14 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       }
     }
 
-    myCreationOptions.put(FileTemplate.ATTRIBUTE_INTERFACES, Joiner.on(", ").join(interfaces));
+    myCreationOptions.put(ATTRIBUTE_INTERFACES, Joiner.on(", ").join(interfaces));
     myCreationOptions.put(FileTemplate.ATTRIBUTE_PACKAGE_NAME, localPackage);
     Visibility visibility = myPublicRadioButton.isSelected() ? Visibility.PUBLIC : Visibility.PACKAGE_PRIVATE;
-    myCreationOptions.put(FileTemplate.ATTRIBUTE_VISIBILITY, visibility.toString());
-    myCreationOptions.put(FileTemplate.ATTRIBUTE_ABSTRACT, Boolean.toString(myAbstractCheckBox.isSelected()).toUpperCase(Locale.ROOT));
-    myCreationOptions.put(FileTemplate.ATTRIBUTE_SHOW_OVERRIDES_DIALOG,
-                          Boolean.toString(myShowSelectOverridesDialogCheckBox.isSelected()).toUpperCase(Locale.ROOT));
-    myCreationOptions.put(FileTemplate.ATTRIBUTE_FINAL, Boolean.toString(myFinalCheckBox.isSelected()).toUpperCase(Locale.ROOT));
-    myCreationOptions.put(FileTemplate.ATTRIBUTE_IMPORT_BLOCK, formatImports(imports));
-    if (myCreator != null && myCreator.tryCreate(getName(), myCreationOptions).length == 0) {
+    myCreationOptions.put(ATTRIBUTE_VISIBILITY, visibility.toString());
+    myCreationOptions.put(ATTRIBUTE_ABSTRACT, Boolean.toString(myAbstractCheckBox.isSelected()).toUpperCase(Locale.ROOT));
+    myCreationOptions.put(ATTRIBUTE_FINAL, Boolean.toString(myFinalCheckBox.isSelected()).toUpperCase(Locale.ROOT));
+    myCreationOptions.put(ATTRIBUTE_IMPORT_BLOCK, formatImports(imports));
+    if (myCreator != null && myCreator.tryCreate(getName()).length == 0) {
       return;
     }
 
@@ -406,129 +405,88 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     return getNameField();
   }
 
-  public void setKindComponentsVisible(boolean visible) {
+  private void setKindComponentsVisible(boolean visible) {
     myKindCombo.setVisible(visible);
     myKindLabel.setVisible(visible);
     myUpDownHint.setVisible(visible);
   }
 
-  @NotNull
-  public static Builder newBuilder(@NotNull Project project, @NotNull PsiDirectory defaultDirectory) {
-    return new BuilderImpl(new CreateFileFromTemplateDialog(project, defaultDirectory), project);
+  private void addKind(@NotNull Kind kind) {
+    getKindCombo().addItem(kind.getName(), kind.getIcon(), kind.getTemplateName());
+    if (getKindCombo().getComboBox().getItemCount() > 1) {
+      setKindComponentsVisible(true);
+    }
   }
 
-  public String getInterface() {
+  PsiClass show(@NotNull final FileCreator creator) throws FailedToCreateFileException {
+    final Ref<PsiClass> ref = Ref.create(null);
+    myCreator = new ElementCreator(myProject, IdeBundle.message("title.cannot.create.class")) {
+      @Override
+      protected PsiElement[] create(String newName) throws Exception {
+        PsiClass element = creator.createFile(getName(), myCreationOptions, myKindCombo.getSelectedName());
+        ref.set(element);
+        return element == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{element};
+      }
+
+      @Override
+      protected String getActionName(String newName) {
+        return creator.getActionName(newName, myKindCombo.getSelectedName());
+      }
+    };
+
+    show();
+    if (getExitCode() == OK_EXIT_CODE) {
+      return ref.get();
+    }
+    else {
+      throw new FailedToCreateFileException("Create returned a null object.");
+    }
+  }
+
+  boolean isShowSelectOverridesDialogCheckBoxSelected() {
+    return myShowSelectOverridesDialogCheckBox.isSelected();
+  }
+
+  String getInterface() {
     return myInterfaceField.getText();
   }
 
-  public void setInterface(String iface) {
-    myInterfaceField.setText(iface);
+  void setInterface(String newInterface) {
+    myInterfaceField.setText(newInterface);
   }
 
-  private static class BuilderImpl implements Builder {
-    private CreateFileFromTemplateDialog myDialog;
-    private Project myProject;
-
-    private BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
-      myDialog = dialog;
-      myProject = project;
-    }
-
-    @Override
-    public Builder setTitle(String title) {
-      myDialog.setTitle(title);
-      return this;
-    }
-
-    @Override
-    public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
-      myDialog.getKindCombo().addItem(name, icon, templateName);
-      if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
-        myDialog.setKindComponentsVisible(true);
-      }
-      return this;
-    }
-
-    @Override
-    public Builder setValidator(InputValidator validator) {
-      if (validator instanceof CreateNewClassDialogValidatorEx) {
-        myDialog.myInputValidator = (CreateNewClassDialogValidatorEx)validator;
-        return this;
-      }
-      else {
-        throw new IllegalArgumentException("Validator must be of type CreateNewClassDialogValidatorEx");
-      }
-    }
-
-    @Override
-    public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable final String selectedTemplateName,
-                                         @NotNull final com.intellij.ide.actions.CreateFileFromTemplateDialog.FileCreator<T> creator) {
-      final Ref<T> ref = Ref.create(null);
-      myDialog.getKindCombo().setSelectedName(selectedTemplateName);
-      myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
-
-        @Override
-        protected PsiElement[] create(String newName, Map<String, String> creationOptions) throws Exception {
-          T element;
-          if (selectedTemplateName == null) {
-            element = creator.createFile(myDialog.getName(), creationOptions, myDialog.getKindCombo().getSelectedName());
-          }
-          else {
-            element = creator.createFile(myDialog.getName(), creationOptions, selectedTemplateName);
-          }
-          ref.set(element);
-          return element == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{element};
+  public void initKindCombo() {
+    myKindCombo.registerUpDownHint(myNameField);
+    myKindCombo.getComboBox().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        if (actionEvent.getSource().equals(myKindCombo.getComboBox())) {
+          configureComponents(Kind.valueOfText(myKindCombo.getSelectedName()));
         }
+      }
+    });
 
-        @Override
-        protected String getActionName(String newName) {
-          return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
-        }
-      };
-
-      myDialog.show();
-      return myDialog.getExitCode() == OK_EXIT_CODE ? ref.get() : null;
+    addKind(Kind.CLASS);
+    addKind(Kind.INTERFACE);
+    if (LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) {
+      addKind(Kind.ENUM);
+      addKind(Kind.ANNOTATION);
     }
 
+    addKind(Kind.SINGLETON);
+  }
+
+  interface FileCreator {
     @Nullable
-    @Override
-    public Map<String, String> getCustomProperties() {
-      return myDialog.getCreationOptions();
-    }
+    PsiClass createFile(@NotNull String name, @NotNull Map<String, String> creationOptions, @NotNull String templateName);
+
+    @NotNull
+    String getActionName(@NotNull String name, @NotNull String templateName);
   }
 
   public enum Visibility {
     PUBLIC,
     PACKAGE_PRIVATE
-  }
-
-  private enum Kind {
-    ANNOTATION("AnnotationType"),
-    CLASS("Class"),
-    ENUM("Enum"),
-    INTERFACE("Interface"),
-    SINGLETON("Singleton");
-
-    private final String myText;
-
-    Kind(String text) {
-      myText = text;
-    }
-
-    @Override
-    public String toString() {
-      return myText;
-    }
-
-    private static Kind valueOfText(String text) {
-      for (Kind kind : values()) {
-        if (kind.toString().equals(text)) {
-          return kind;
-        }
-      }
-
-      throw new IllegalArgumentException(text);
-    }
   }
 
   public static abstract class Type {
@@ -701,6 +659,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @Override
     boolean canUseAsInterface() {
       return true;
+    }
+  }
+
+  static class FailedToCreateFileException extends Exception {
+    FailedToCreateFileException(String message) {
+      super(message);
     }
   }
 }
