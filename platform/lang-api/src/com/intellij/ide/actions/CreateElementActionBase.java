@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * The base class for actions which create new file elements.
@@ -142,7 +140,7 @@ public abstract class CreateElementActionBase extends AnAction {
     }
 
     @Override
-    public PsiElement[] create(String newName, Map<String, String> creationOptions) throws Exception {
+    public PsiElement[] create(String newName) throws Exception {
       return CreateElementActionBase.this.create(newName, myDirectory);
     }
 
@@ -153,7 +151,7 @@ public abstract class CreateElementActionBase extends AnAction {
 
     @Override
     public boolean canClose(final String inputString) {
-      myCreatedElements = tryCreate(inputString, Collections.<String, String>emptyMap());
+      myCreatedElements = tryCreate(inputString);
       return myCreatedElements.length > 0;
     }
 

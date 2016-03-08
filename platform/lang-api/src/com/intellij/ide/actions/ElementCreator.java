@@ -35,7 +35,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author peter
@@ -50,10 +49,10 @@ public abstract class ElementCreator {
     myErrorTitle = errorTitle;
   }
 
-  protected abstract PsiElement[] create(String newName, Map<String, String> creationOptions) throws Exception;
+  protected abstract PsiElement[] create(String newName) throws Exception;
   protected abstract String getActionName(String newName);
 
-  public PsiElement[] tryCreate(@NotNull final String inputString, final Map<String, String> creationOptions) {
+  public PsiElement[] tryCreate(@NotNull final String inputString) {
     if (inputString.length() == 0) {
       Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
@@ -71,7 +70,7 @@ public abstract class ElementCreator {
         try {
           action = LocalHistory.getInstance().startAction(commandName);
 
-          PsiElement[] psiElements = create(inputString, creationOptions);
+          PsiElement[] psiElements = create(inputString);
           myCreatedElements[0] = new SmartPsiElementPointer[psiElements.length];
           SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
           for (int i = 0; i < myCreatedElements[0].length; i++) {
