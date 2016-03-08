@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,6 +51,7 @@ import com.sun.jna.Native;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 
@@ -421,24 +421,15 @@ public class StartupUtil {
   }
 
   /**
-   * @param alternativeHTML Updated version of Privacy Policy text if any.
+   * @param htmlText Updated version of Privacy Policy text if any.
    *                        If it's <code>null</code> the standard text from bundled resources would be used.
    */
-  public static void showPrivacyPolicyAgreement(@Nullable String alternativeHTML) {
+  public static void showPrivacyPolicyAgreement(@NotNull String htmlText) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Nullable
       @Override
       protected JComponent createCenterPanel() {
         JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
-        String html = alternativeHTML;
-        if (html == null) {
-          try {
-            html = FileUtil.loadTextAndClose(StartupUtil.class.getResource("/PrivacyPolicy.html").openStream());
-          }
-          catch (IOException e) {
-            //ignore
-          }
-        }
         JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
         viewer.setFocusable(true);
         viewer.addHyperlinkListener(new HyperlinkAdapter() {
@@ -447,12 +438,13 @@ public class StartupUtil {
             URL url = e.getURL();
             if (url != null) {
               BrowserUtil.browse(url);
-            } else {
+            } 
+            else {
               SwingHelper.scrollToReference(viewer, e.getDescription());
             }
           }
         });
-        viewer.setText(html);
+        viewer.setText(htmlText);
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
@@ -485,7 +477,6 @@ public class StartupUtil {
     };
     dialog.setModal(true);
     dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement");
-    dialog.setResizable(false);
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
