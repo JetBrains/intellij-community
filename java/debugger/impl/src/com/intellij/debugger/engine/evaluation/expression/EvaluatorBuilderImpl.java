@@ -300,28 +300,40 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitForStatement(PsiForStatement statement) {
-      Evaluator initializerEvaluator = accept(statement.getInitialization());
-      Evaluator conditionEvaluator = accept(statement.getCondition());
-      if (conditionEvaluator != null) {
-        conditionEvaluator = new UnBoxingEvaluator(conditionEvaluator);
-      }
-      Evaluator updateEvaluator = accept(statement.getUpdate());
-      Evaluator bodyEvaluator = accept(statement.getBody());
-      if (bodyEvaluator != null) {
-        myResult = new ForStatementEvaluator(initializerEvaluator, conditionEvaluator, updateEvaluator, bodyEvaluator, getLabel(statement));
+      CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
+      try {
+        Evaluator initializerEvaluator = accept(statement.getInitialization());
+        Evaluator conditionEvaluator = accept(statement.getCondition());
+        if (conditionEvaluator != null) {
+          conditionEvaluator = new UnBoxingEvaluator(conditionEvaluator);
+        }
+        Evaluator updateEvaluator = accept(statement.getUpdate());
+        Evaluator bodyEvaluator = accept(statement.getBody());
+        if (bodyEvaluator != null) {
+          myResult =
+            new ForStatementEvaluator(initializerEvaluator, conditionEvaluator, updateEvaluator, bodyEvaluator, getLabel(statement));
+        }
+      } finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
       }
     }
 
     @Override
     public void visitForeachStatement(PsiForeachStatement statement) {
-      String iterationParameterName = statement.getIterationParameter().getName();
-      myCurrentFragmentEvaluator.setInitialValue(iterationParameterName, null);
-      SyntheticVariableEvaluator iterationParameterEvaluator = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, iterationParameterName);
+      CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
+      try {
+        String iterationParameterName = statement.getIterationParameter().getName();
+        myCurrentFragmentEvaluator.setInitialValue(iterationParameterName, null);
+        SyntheticVariableEvaluator iterationParameterEvaluator =
+          new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, iterationParameterName);
 
-      Evaluator iteratedValueEvaluator = accept(statement.getIteratedValue());
-      Evaluator bodyEvaluator = accept(statement.getBody());
-      if (bodyEvaluator != null) {
-        myResult = new ForeachStatementEvaluator(iterationParameterEvaluator, iteratedValueEvaluator, bodyEvaluator, getLabel(statement));
+        Evaluator iteratedValueEvaluator = accept(statement.getIteratedValue());
+        Evaluator bodyEvaluator = accept(statement.getBody());
+        if (bodyEvaluator != null) {
+          myResult = new ForeachStatementEvaluator(iterationParameterEvaluator, iteratedValueEvaluator, bodyEvaluator, getLabel(statement));
+        }
+      } finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
       }
     }
 
