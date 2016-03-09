@@ -28,7 +28,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -170,16 +169,15 @@ public class BackgroundTaskUtil {
 
   @CalledInAwt
   @NotNull
-  public static ProgressIndicator executeOnPooledThread(@NotNull final Consumer<ProgressIndicator> task, @NotNull Disposable parent) {
+  public static ProgressIndicator executeOnPooledThread(@NotNull Consumer<ProgressIndicator> task, @NotNull Disposable parent) {
     final ModalityState modalityState = ModalityState.current();
     return executeOnPooledThread(task, parent, modalityState);
   }
 
   @NotNull
   @CalledInAny
-  public static ProgressIndicator executeOnPooledThread(@NotNull final Runnable runnable,
-                                                        @NotNull Disposable parent) {
-    return executeOnPooledThread(new NullableConsumer<ProgressIndicator>() {
+  public static ProgressIndicator executeOnPooledThread(@NotNull final Runnable runnable, @NotNull Disposable parent) {
+    return executeOnPooledThread(new Consumer<ProgressIndicator>() {
       @Override
       public void consume(@Nullable ProgressIndicator indicator) {
         runnable.run();
@@ -190,7 +188,8 @@ public class BackgroundTaskUtil {
   @NotNull
   @CalledInAny
   public static ProgressIndicator executeOnPooledThread(@NotNull final Consumer<ProgressIndicator> task,
-                                                        @NotNull Disposable parent, final ModalityState modalityState) {
+                                                        @NotNull Disposable parent,
+                                                        final ModalityState modalityState) {
     final ProgressIndicator indicator = new EmptyProgressIndicator() {
       @NotNull
       @Override
