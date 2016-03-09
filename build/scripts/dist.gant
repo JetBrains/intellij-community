@@ -88,7 +88,6 @@ target(compile: "Compile project") {
   projectBuilder.targetFolder = "$out/classes"
   clearBuildCaches()
   projectBuilder.cleanOutput()
-  bundledJDKs()
   projectBuilder.buildProduction()
   projectBuilder.makeModuleTests(findModule("jps-builders"))
 }
