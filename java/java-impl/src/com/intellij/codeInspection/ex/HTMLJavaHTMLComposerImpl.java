@@ -273,6 +273,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   public void appendReferencePresentation(RefEntity refElement, final StringBuffer buf, final boolean isPackageIncluded) {
     if (refElement instanceof RefImplicitConstructor) {
       buf.append(InspectionsBundle.message("inspection.export.results.implicit.constructor"));
+      buf.append("&nbsp;");
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
     }
 
@@ -304,7 +305,15 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       buf.append(myComposer.myExporter.getURL(refElement));
     }
 
-    buf.append("\">");
+    buf.append("\"");
+
+    if (isPackageIncluded) {
+      buf.append(" qualifiedname=\"");
+      buf.append(refElement.getQualifiedName());
+      buf.append("\"");
+    }
+
+    buf.append(">");
 
     if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) {
       buf.append(InspectionsBundle.message("inspection.reference.anonymous"));
@@ -336,7 +345,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       myComposer.appendElementReference(buf, ((RefElement)refElement.getOwner()), isPackageIncluded);
     }
     else if (isPackageIncluded) {
-      buf.append(" ").append(HTMLComposerImpl.CODE_OPENING).append("(");
+      buf.append(" ").append("<code class=\"package\">").append("(");
       myComposer.appendQualifiedName(buf, refElement.getOwner());
 //      buf.append(RefUtil.getPackageName(refElement));
       buf.append(")").append(HTMLComposerImpl.CODE_CLOSING);

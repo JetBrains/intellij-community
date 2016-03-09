@@ -26,7 +26,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -243,8 +242,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   protected static String formatVersion(String versionString, String build) {
-    Version version = Version.parseVersion(versionString);
-    String formattedVersion = version != null ? version.toString() : versionString;
-    return IdeBundle.message("updates.version.info", formattedVersion, build);
+    return IdeBundle.message("updates.version.info", versionString, build);
   }
 }
