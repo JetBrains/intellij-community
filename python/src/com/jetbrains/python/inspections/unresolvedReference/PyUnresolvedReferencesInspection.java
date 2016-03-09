@@ -500,13 +500,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (PyNames.COMPARISON_OPERATORS.contains(refName)) {
           return;
         }
-        if (expr.isQualified()) {
-          final PyClassTypeImpl object_type = (PyClassTypeImpl)PyBuiltinCache.getInstance(node).getObjectType();
-          if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refName)) {
-            return;
-          }
-        }
-        else {
+        if (!expr.isQualified()) {
           if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(expr)) {
             return;
           }

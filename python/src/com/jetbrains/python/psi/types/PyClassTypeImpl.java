@@ -684,19 +684,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  @NotNull
-  public Set<String> getPossibleInstanceMembers() {
-    Set<String> ret = new HashSet<String>();
-    /*
-    if (myClass != null) {
-      PyClassType otype = PyBuiltinCache.getInstance(myClass.getProject()).getObjectType();
-      ret.addAll(otype.getPossibleInstanceMembers());
-    }
-    */
-    // TODO: add our own ideas here, e.g. from methods other than constructor
-    return Collections.unmodifiableSet(ret);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
