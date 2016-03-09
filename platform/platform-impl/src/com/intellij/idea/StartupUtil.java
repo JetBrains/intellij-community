@@ -16,6 +16,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -152,6 +153,23 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
+      if (!PrivacyPolicy.isLatestVersionAccepted()) {
+        final PrivacyPolicy.Version latestVersion = PrivacyPolicy.getLatestVersion();
+        final String text = PrivacyPolicy.getText(latestVersion);
+        if (!text.isEmpty()) {
+          try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                showPrivacyPolicyAgreement(text);
+              }
+            });
+            PrivacyPolicy.setVersionAccepted(latestVersion);
+          }
+          catch (Exception ignored) {
+          }
+        }
+      }
     }
 
     appStarter.start(newConfigFolder);
