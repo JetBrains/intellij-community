@@ -10,6 +10,9 @@
 :: ---------------------------------------------------------------------
 IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
 IF NOT "%JDK%" == "" GOTO jdk
+SET USER_JDK_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
+IF EXIST "%USER_JDK_FILE%" set/pJDK=<%USER_JDK_FILE%
+IF NOT "%JDK%" == "" GOTO jdk
 IF EXIST "%~dp0\..\jre" SET JDK=%~dp0\..\jre
 IF NOT "%JDK%" == "" GOTO jdk
 IF EXIST "%JDK_HOME%" SET JDK=%JDK_HOME%
