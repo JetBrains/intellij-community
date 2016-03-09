@@ -585,7 +585,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   @Override
-  protected void uninstallListeners() {
+  public void uninstallListeners() {
     if (scrollTimer != null) {
       // it is already called otherwise
       super.uninstallListeners();

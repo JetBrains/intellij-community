@@ -416,7 +416,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     final MyErrorPanel panel = getErrorPanel();
     if (panel != null) {
       panel.uninstallListeners();
+    } else {
+      ScrollBarUI ui = myEditor.getVerticalScrollBar().getUI();
+      if(ui instanceof ButtonlessScrollBarUI){
+        ((ButtonlessScrollBarUI)ui).uninstallListeners();
+      }
     }
+
+    ScrollBarUI ui = myEditor.getScrollPane().getHorizontalScrollBar().getUI();
+    if(ui instanceof ButtonlessScrollBarUI){
+      ((ButtonlessScrollBarUI)ui).uninstallListeners();
+    }
+
 
     if (myErrorStripeRenderer instanceof Disposable) {
       Disposer.dispose((Disposable)myErrorStripeRenderer);
@@ -533,7 +544,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected void uninstallListeners() {
+    public void uninstallListeners() {
       scrollbar.removeMouseMotionListener(this);
       scrollbar.removeMouseListener(this);
       myErrorStripeButton.removeMouseMotionListener(this);
