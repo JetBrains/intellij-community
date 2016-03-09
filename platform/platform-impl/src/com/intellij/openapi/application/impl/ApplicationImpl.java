@@ -17,6 +17,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
@@ -166,6 +167,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return "ANY";
     }
   };
+
+  static {
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+  }
 
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
