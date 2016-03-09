@@ -32,7 +32,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +42,9 @@ public class NextVariableAction extends EditorAction {
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorActionHandler {
+  private static class Handler extends EditorWriteActionHandler {
     @Override
-    protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       assert templateState != null;
       CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("template.next.variable.command"));
