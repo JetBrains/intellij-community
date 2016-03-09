@@ -72,6 +72,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.*;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -643,6 +644,12 @@ public class FindDialog extends DialogWrapper {
           }
         };
         myResultsPreviewTable = table;
+        new TableSpeedSearch(table, new Convertor<Object, String>() {
+          @Override
+          public String convert(Object o) {
+            return ((UsageInfo2UsageAdapter)o).getFile().getName();
+          }
+        });
         myResultsPreviewTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
           @Override
           public void valueChanged(ListSelectionEvent e) {
