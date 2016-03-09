@@ -24,8 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VcsUserUtil {
-  @NotNull private static final Pattern NAME_WITH_DOT = Pattern.compile("(\\w*)\\.(\\w*)");
-  @NotNull private static final Pattern NAME_WITH_SPACE = Pattern.compile("(\\w*) (\\w*)");
+  @NotNull private static final Pattern NAME_PATTERN = Pattern.compile("(\\w*)[\\W_](\\w*)");
 
   @NotNull
   public static String toExactString(@NotNull VcsUser user) {
@@ -77,13 +76,9 @@ public class VcsUserUtil {
 
   @Nullable
   public static Pair<String, String> getFirstAndLastName(@NotNull String name) {
-    Matcher nameWithDotMatcher = NAME_WITH_DOT.matcher(name);
-    if (nameWithDotMatcher.matches()) {
-      return Pair.create(nameWithDotMatcher.group(1), nameWithDotMatcher.group(2));
-    }
-    Matcher nameWithSpaceMatcher = NAME_WITH_SPACE.matcher(name);
-    if (nameWithSpaceMatcher.matches()) {
-      return Pair.create(nameWithSpaceMatcher.group(1), nameWithSpaceMatcher.group(2));
+    Matcher matcher = NAME_PATTERN.matcher(name);
+    if (matcher.matches()) {
+      return Pair.create(matcher.group(1), matcher.group(2));
     }
     return null;
   }

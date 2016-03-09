@@ -64,7 +64,7 @@ public abstract class VcsLogUserFilterTest {
     List<String> names = ContainerUtil.newArrayList();
 
     for (Character c : UserNameRegex.EXTENDED_REGEX_CHARS) {
-      String name = "user" + Character.toString(c) + "userovich";
+      String name = "user" + Character.toString(c) + "userovich" + c.hashCode(); // hashCode is required so that uses wont be synonyms
       names.add(name);
       names.add(name + "@company.com");
     }
@@ -93,14 +93,34 @@ public abstract class VcsLogUserFilterTest {
     assertFilteredCorrectly(builder);
   }
 
-  public void testSynonyms() throws Exception {
-    MultiMap<VcsUser, String> commits =
-      generateHistory("User Userovich", "user@company.com", "User.Userovich", "user@company.com");
+  public void testSynonyms(@NotNull Set<Character> excludes) throws Exception {
+    List<String> names = ContainerUtil.newArrayList();
+
+    Set<String> synonyms = ContainerUtil.newHashSet();
+    for (char c = ' '; c <= '~'; c++) {
+      if (c == '\'' || c == '!' || c == '\\' || Character.isUpperCase(c) || excludes.contains(c)) continue;
+      String name = "User" + Character.toString(c) + "Userovich";
+      names.add(name);
+      names.add(name + "@company.com");
+      if (!Character.isLetterOrDigit(c)) synonyms.add(name);
+    }
+
+    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
+
+    List<String> synonymCommits = ContainerUtil.newArrayList();
+    for (VcsUser user : commits.keySet()) {
+      if (synonyms.contains(user.getName())) synonymCommits.addAll(commits.get(user));
+    }
 
     StringBuilder builder = new StringBuilder();
     for (VcsUser user : commits.keySet()) {
-      checkFilterForUser(user, commits.keySet(), commits.values(), metadata, builder);
+      if (synonyms.contains(user.getName())) {
+        checkFilterForUser(user, commits.keySet(), synonymCommits, metadata, builder);
+      }
+      else {
+        checkFilterForUser(user, commits.keySet(), commits.get(user), metadata, builder);
+      }
     }
     assertFilteredCorrectly(builder);
   }
@@ -108,7 +128,8 @@ public abstract class VcsLogUserFilterTest {
   private void checkFilterForUser(@NotNull VcsUser user,
                                   @NotNull Set<VcsUser> allUsers,
                                   @NotNull Collection<? extends String> expectedHashes,
-                                  @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder) throws VcsException {
+                                  @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
+    throws VcsException {
     VcsLogUserFilter userFilter =
       new VcsLogUserFilterImpl(singleton(VcsUserUtil.getShortPresentation(user)), Collections.emptyMap(), allUsers);
 
@@ -116,13 +137,13 @@ public abstract class VcsLogUserFilterTest {
     List<String> actualHashes = getFilteredHashes(userFilter);
 
     if (!hasSameElements(expectedHashes, actualHashes)) {
-      errorMessageBuilder.append(TestCase.format(user.toString(), expectedHashes, actualHashes)).append("\n");
+      errorMessageBuilder.append(TestCase.format("VCS filter for: " + user.toString(), expectedHashes, actualHashes)).append("\n");
     }
 
     // filter in memory
     actualHashes = getFilteredHashes(userFilter, metadata);
     if (!hasSameElements(expectedHashes, actualHashes)) {
-      errorMessageBuilder.append(TestCase.format(user.toString(), expectedHashes, actualHashes)).append("\n");
+      errorMessageBuilder.append(TestCase.format("Memory filter for: " + user.toString(), expectedHashes, actualHashes)).append("\n");
     }
   }
 

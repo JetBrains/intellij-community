@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUserFilterTest;
 import com.intellij.vcs.log.VcsUser;
 import git4idea.test.GitSingleRepoTest;
@@ -47,7 +48,8 @@ public class GitUserFilterTest extends GitSingleRepoTest {
   }
 
   public void testSynonyms() throws Exception {
-    myVcsLogUserFilterTest.testSynonyms();
+    // commit by user with < or > in username does not contain them somewhy
+    myVcsLogUserFilterTest.testSynonyms(ContainerUtil.newHashSet('<', '>'));
   }
 
   public void testWeirdCharacters() throws Exception {

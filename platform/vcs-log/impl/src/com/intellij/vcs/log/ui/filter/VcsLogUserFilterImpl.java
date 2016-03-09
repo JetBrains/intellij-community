@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -12,7 +11,9 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
@@ -32,12 +33,12 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     for (VcsUser user : allUsers) {
       String name = user.getName();
       if (!name.isEmpty()) {
-        myAllUsersByNames.putValue(name.toLowerCase(), user);
+        myAllUsersByNames.putValue(VcsUserUtil.getNameInStandardForm(name), user);
       }
       String email = user.getEmail();
       String nameFromEmail = VcsUserUtil.getNameFromEmail(email);
       if (nameFromEmail != null) {
-        myAllUsersByEmails.putValue(nameFromEmail.toLowerCase(), user);
+        myAllUsersByEmails.putValue(VcsUserUtil.getNameInStandardForm(nameFromEmail), user);
       }
     }
   }
@@ -110,21 +111,9 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   private Set<VcsUser> getUsers(@NotNull String name) {
     Set<VcsUser> result = ContainerUtil.newHashSet();
 
-    for (String variant : getSynonyms(name)) {
-      result.addAll(myAllUsersByNames.get(variant.toLowerCase()));
-      result.addAll(myAllUsersByEmails.get(variant.toLowerCase()));
-    }
+    result.addAll(myAllUsersByNames.get(VcsUserUtil.getNameInStandardForm(name)));
+    result.addAll(myAllUsersByEmails.get(VcsUserUtil.getNameInStandardForm(name)));
 
     return result;
-  }
-
-  @NotNull
-  private static List<String> getSynonyms(@NotNull String name) {
-    Pair<String, String> firstAndLastName = VcsUserUtil.getFirstAndLastName(name);
-    if (firstAndLastName != null) {
-      return Arrays.asList(firstAndLastName.first + " " + firstAndLastName.second,
-                           firstAndLastName.first + "." + firstAndLastName.second);
-    }
-    return Collections.singletonList(name);
   }
 }

@@ -32,6 +32,7 @@ import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.log.HgLogProvider;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
@@ -70,7 +71,7 @@ public class HgUserFilterTest extends HgPlatformTest {
   }
 
   public void testSynonyms() throws Exception {
-    myVcsLogUserFilterTest.testSynonyms();
+    myVcsLogUserFilterTest.testSynonyms(Collections.emptySet());
   }
 
   public void testWeirdCharacters() throws Exception {
