@@ -16,20 +16,16 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PySliceExpression;
+import com.jetbrains.python.psi.PySliceItem;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author yole
@@ -54,24 +50,7 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
     }
 
     if (type instanceof PyClassType) {
-      final List<? extends RatedResolveResult> resolveResults = type.resolveMember(
-        PyNames.GETITEM,
-        null,
-        AccessDirection.READ,
-        PyResolveContext.noImplicits().withTypeEvalContext(context)
-      );
-
-      if (resolveResults != null) {
-        final List<PyType> types = new ArrayList<>();
-
-        for (RatedResolveResult resolveResult : resolveResults) {
-          types.addAll(
-            getPossibleReturnTypes(resolveResult.getElement(), context)
-          );
-        }
-
-        return PyUnionType.union(types);
-      }
+      return PyUtil.getReturnTypeOfMember(type, PyNames.GETITEM, null, context);
     }
 
     return null;
@@ -87,33 +66,5 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   @Override
   public PySliceItem getSliceItem() {
     return PsiTreeUtil.getChildOfType(this, PySliceItem.class);
-  }
-
-  @NotNull
-  private static List<PyType> getPossibleReturnTypes(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
-    final List<PyType> result = new ArrayList<PyType>();
-
-    if (element instanceof PyTypedElement) {
-      final PyType elementType = context.getType((PyTypedElement)element);
-
-      result.addAll(getPossibleReturnTypes(elementType, context));
-
-      if (elementType instanceof PyUnionType) {
-        for (PyType type : ((PyUnionType)elementType).getMembers()) {
-          result.addAll(getPossibleReturnTypes(type, context));
-        }
-      }
-    }
-
-    return result;
-  }
-
-  @NotNull
-  private static List<PyType> getPossibleReturnTypes(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyCallableType) {
-      return Collections.singletonList(((PyCallableType)type).getReturnType(context));
-    }
-
-    return Collections.emptyList();
   }
 }
