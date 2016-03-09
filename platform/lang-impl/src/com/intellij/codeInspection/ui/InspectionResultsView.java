@@ -50,10 +50,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -144,6 +141,23 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     createActionsToolbar();
     TreeUtil.selectFirstNode(myTree);
+
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+      @Override
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
+        myTree.queueUpdate();
+      }
+
+      @Override
+      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
+        myTree.queueUpdate();
+      }
+
+      @Override
+      public void childMoved(@NotNull PsiTreeChangeEvent event) {
+        myTree.queueUpdate();
+      }
+    }, this);
   }
 
 
