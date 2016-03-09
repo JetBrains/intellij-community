@@ -48,6 +48,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -256,6 +257,21 @@ public class FSRecords implements Forceable {
       final File recordsFile = new File(basePath, "records" + VFS_FILES_EXTENSION);
 
       final File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
+
+      // Android Studio unit tests: print out more details on the cache files
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        for (File f : new File[] {namesFile, attributesFile, contentsFile, contentsHashesFile, recordsFile, vfsDependentEnumBaseFile}) {
+          if (f.exists()) {
+            System.out.println(String.format("Cache file: %s from: %s", f, new Date(f.lastModified())));
+          } else {
+            for (File other : f.getParentFile().listFiles()) {
+              if (other.getName().startsWith(f.getName())) {
+                System.out.println(String.format("Cache file: %s ts: %s", other, new Date(other.lastModified())));
+              }
+            }
+          }
+        }
+      }
 
       if (!namesFile.exists()) {
         invalidateIndex("'" + namesFile.getAbsolutePath() + "' does not exist");
