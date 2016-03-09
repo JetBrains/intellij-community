@@ -27,7 +27,8 @@ public class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWor
   public static void setupForkJoinCommonPool() {
     System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", String.valueOf(PARALLELISM));
     System.setProperty("java.util.concurrent.ForkJoinPool.common.threadFactory", IdeaForkJoinWorkerThreadFactory.class.getName());
-    if (ForkJoinPool.commonPool().getFactory().getClass() != IdeaForkJoinWorkerThreadFactory.class) {
+
+    if (!ForkJoinPool.commonPool().getFactory().getClass().getName().equals(IdeaForkJoinWorkerThreadFactory.class.getName())) {
       throw new IllegalStateException("Could not set ForkJoinPool thread factory: got "+ForkJoinPool.commonPool().getFactory());
     }
   }
