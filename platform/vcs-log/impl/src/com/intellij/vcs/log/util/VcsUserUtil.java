@@ -15,7 +15,7 @@
  */
 package com.intellij.vcs.log.util;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +67,7 @@ public class VcsUserUtil {
 
   @NotNull
   public static String getNameInStandardForm(@NotNull String name) {
-    Pair<String, String> firstAndLastName = getFirstAndLastName(name);
+    Couple<String> firstAndLastName = getFirstAndLastName(name);
     if (firstAndLastName != null) {
       return firstAndLastName.first.toLowerCase() + " " + firstAndLastName.second.toLowerCase();
     }
@@ -75,10 +75,10 @@ public class VcsUserUtil {
   }
 
   @Nullable
-  public static Pair<String, String> getFirstAndLastName(@NotNull String name) {
+  public static Couple<String> getFirstAndLastName(@NotNull String name) {
     Matcher matcher = NAME_PATTERN.matcher(name);
     if (matcher.matches()) {
-      return Pair.create(matcher.group(1), matcher.group(2));
+      return Couple.of(matcher.group(1), matcher.group(2));
     }
     return null;
   }

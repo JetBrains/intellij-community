@@ -17,6 +17,8 @@ package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUserFilter;
@@ -95,7 +97,10 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     return ContainerUtil.map(myDataManager.getAllUsers(), new Function<VcsUser, String>() {
       @Override
       public String fun(VcsUser user) {
-        return VcsUserUtil.getShortPresentation(user);
+        String shortPresentation = VcsUserUtil.getShortPresentation(user);
+        Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
+        if (firstAndLastName == null) return shortPresentation;
+        return StringUtil.capitalize(firstAndLastName.first) + " " + StringUtil.capitalize(firstAndLastName.second);
       }
     });
   }
