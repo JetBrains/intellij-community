@@ -472,6 +472,38 @@ public class PyTypingTest extends PyTestCase {
 
   }
 
+  // PY-18386
+  public void testRecursiveType() {
+    doTest("Union[int, Any]",
+           "from typing import Union\n" +
+           "\n" +
+           "Type = Union[int, 'Type']\n" +
+           "expr = 42 # type: Type");
+  }
+
+  // PY-18386
+  public void testRecursiveType2() {
+    doTest("Dict[str, Union[Union[str, int, float], Any]]",
+           "from typing import Dict, Union\n" +
+           "\n" +
+           "JsonDict = Dict[str, Union[str, int, float, 'JsonDict']]\n" +
+           "\n" +
+           "def f(x: JsonDict):\n" +
+           "    expr = x");
+  }
+
+  // PY-18386
+  public void testRecursiveType3() {
+    doTest("Union[Union[str, int], Any]",
+           "from typing import Union\n" +
+           "\n" +
+           "Type1 = Union[str, 'Type2']\n" +
+           "Type2 = Union[int, Type1]\n" +
+           "\n" +
+           "expr = None # type: Type1");
+
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

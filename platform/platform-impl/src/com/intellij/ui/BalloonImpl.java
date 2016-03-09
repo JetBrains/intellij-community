@@ -917,8 +917,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     Toolkit.getDefaultToolkit().removeAWTEventListener(myAwtActivityListener);
     if (myLayeredPane != null) {
       myLayeredPane.removeComponentListener(myComponentListener);
-      Disposer.register(ApplicationManager.getApplication(),
-                        this); // to be safe if Application suddenly exits and animation wouldn't have a chance to complete
 
       runAnimation(false, myLayeredPane, disposeRunnable);
     }

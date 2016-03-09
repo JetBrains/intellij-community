@@ -303,4 +303,20 @@ public class EditorImplTest extends AbstractEditorTest {
     
     verifySoftWrapPositions();
   }
+  
+  public void testUpDownNearDocumentTopAndBottom() throws Exception {
+    initText("abc\nd<caret>ef\nghi");
+    up();
+    checkResultByText("a<caret>bc\ndef\nghi");
+    up();
+    checkResultByText("<caret>abc\ndef\nghi");
+    down();
+    checkResultByText("abc\nd<caret>ef\nghi");
+    down();
+    checkResultByText("abc\ndef\ng<caret>hi");
+    down();
+    checkResultByText("abc\ndef\nghi<caret>");
+    up();
+    checkResultByText("abc\nd<caret>ef\nghi");
+  }
 }

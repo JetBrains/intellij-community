@@ -16,10 +16,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.execution.HgRemoteCommandExecutor;
 
 import java.util.LinkedList;
@@ -63,7 +61,7 @@ public class HgPushCommand {
     myBookmarkName = bookmark;
   }
 
-  public void execute(final HgCommandResultHandler resultHandler) {
+  public HgCommandResult executeInCurrentThread() {
     final List<String> arguments = new LinkedList<String>();
     if (!StringUtil.isEmptyOrSpaces(myRevision)) {
       arguments.add("-r");
@@ -87,15 +85,9 @@ public class HgPushCommand {
 
     final HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(myProject, myDestination);
     executor.setShowOutput(true);
-    executor.execute(myRepo, "push", arguments, new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (!myProject.isDisposed()) {
-          myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
-        }
-        resultHandler.process(result);
-      }
-    });
+    HgCommandResult result = executor.executeInCurrentThread(myRepo, "push", arguments);
+    myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
+    return result;
   }
 
   public VirtualFile getRepo() {

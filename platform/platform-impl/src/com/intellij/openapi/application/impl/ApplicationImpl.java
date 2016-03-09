@@ -17,7 +17,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
-import com.intellij.Patches;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
@@ -77,12 +77,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.picocontainer.MutablePicoContainer;
+import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -167,6 +167,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return "ANY";
     }
   };
+
+  static {
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+  }
 
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
@@ -1077,15 +1081,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    try {
-      // use sun.awt.AWTAccessor.EventQueueAccessor?
-      assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
-      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
-      return (Thread)method.invoke(eventQueue);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return AWTAccessor.getEventQueueAccessor().getDispatchThread(eventQueue);
   }
 
   @Override

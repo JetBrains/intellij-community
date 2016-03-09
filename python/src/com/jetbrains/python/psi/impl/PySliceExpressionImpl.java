@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceExpression;
 import com.jetbrains.python.psi.PySliceItem;
-import com.jetbrains.python.psi.types.PyTupleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +39,21 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = context.getType(getOperand());
+
     // TODO: Currently we don't evaluate the static range of the slice, so we have to return a generic tuple type without elements
     if (type instanceof PyTupleType) {
       return PyBuiltinCache.getInstance(this).getTupleType();
     }
-    return type;
+
+    if (type instanceof PyCollectionType) {
+      return type;
+    }
+
+    if (type instanceof PyClassType) {
+      return PyUtil.getReturnTypeOfMember(type, PyNames.GETITEM, null, context);
+    }
+
+    return null;
   }
 
   @NotNull

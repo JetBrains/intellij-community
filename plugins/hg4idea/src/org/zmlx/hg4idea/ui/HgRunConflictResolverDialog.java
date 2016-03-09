@@ -73,7 +73,7 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
     VirtualFile repo = repositorySelector.getRepository().getRoot();
     HgResolveCommand command = new HgResolveCommand(project);
     final ModalityState modalityState = ApplicationManager.getApplication().getModalityStateForComponent(getRootPane());
-    command.list(repo, new Consumer<Map<HgFile, HgResolveStatusEnum>>() {
+    command.getListAsynchronously(repo, new Consumer<Map<HgFile, HgResolveStatusEnum>>() {
       @Override
       public void consume(Map<HgFile, HgResolveStatusEnum> status) {
         final DefaultListModel model = new DefaultListModel();

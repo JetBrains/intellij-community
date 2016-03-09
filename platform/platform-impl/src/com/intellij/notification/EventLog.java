@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -535,8 +538,7 @@ public class EventLog {
       if (target != null) {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
         assert frame != null;
-        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, null);
-        Disposer.register(project, balloon);
+        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, null, project);
         balloon.show(target, Balloon.Position.above);
       }
     }

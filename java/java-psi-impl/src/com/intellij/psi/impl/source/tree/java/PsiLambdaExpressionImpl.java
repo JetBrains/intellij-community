@@ -214,7 +214,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
         PsiParameter parameter = lambdaParameters[lambdaParamIdx];
         final PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null) {
-          final PsiType lambdaFormalType = toArray(typeElement.getType());
+          final PsiType lambdaFormalType = toArray(parameter.getType());
           final PsiType methodParameterType = toArray(parameterTypes[lambdaParamIdx]);
           if (!lambdaFormalType.equals(methodParameterType)) {
             return false;

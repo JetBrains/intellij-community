@@ -62,7 +62,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     //do a simple pull without an update
     HgPullCommand pull = new HgPullCommand(myProject, projectRepoVirtualFile);
     pull.setSource(HgUtil.getRepositoryDefaultPath(myProject, projectRepoVirtualFile));
-    pull.execute();
+    pull.executeInCurrentThread();
 
     assertEquals( determineNumberOfIncomingChanges( projectRepo ), 0,
                   "The update operation should have pulled the incoming changes from the default repository." );
@@ -99,23 +99,23 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     //create multiple heads locally
     HgUpdateCommand updateCommand = new HgUpdateCommand(myProject, projectRepoVirtualFile);
-    HgRevisionNumber parent = new HgParentsCommand(myProject).execute(projectRepoVirtualFile).get(0);
+    HgRevisionNumber parent = new HgParentsCommand(myProject).executeInCurrentThread(projectRepoVirtualFile).get(0);
     HgParentsCommand parentsCommand = new HgParentsCommand(myProject);
     parentsCommand.setRevision(parent);
-    List<HgRevisionNumber> parents = parentsCommand.execute(projectRepoVirtualFile);
+    List<HgRevisionNumber> parents = parentsCommand.executeInCurrentThread(projectRepoVirtualFile);
     updateCommand.setRevision(parents.get(0).getChangeset());
     updateCommand.execute();
 
     createFileInCommand(projectRepoVirtualFile.findChild("com"),"c.txt", "updated content");
     runHg(projectRepo, "commit", "-m", "creating new local head");
 
-    List<HgRevisionNumber> branchHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).execute();
+    List<HgRevisionNumber> branchHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
     assertEquals(branchHeads.size(), 2);
 
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(myProject).identify(projectRepoVirtualFile).getFirst();
     assertUpdateThroughPluginFails();
     HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(myProject).identify(projectRepoVirtualFile).getFirst();
-    List<HgRevisionNumber> branchHeadsAfterUpdate = new HgHeadsCommand(myProject, projectRepoVirtualFile).execute();
+    List<HgRevisionNumber> branchHeadsAfterUpdate = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
 
     assertEquals(branchHeadsAfterUpdate.size(), 3);
     assertEquals(parentBeforeUpdate, parentAfterUpdate);
@@ -143,7 +143,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     List<VcsException> nonFatalWarnings = updateThroughPlugin();
 
     assertTrue(nonFatalWarnings.isEmpty());
-    HgRevisionNumber parentAfterUpdate = new HgParentsCommand(myProject).execute(projectRepoVirtualFile).get(0);
+    HgRevisionNumber parentAfterUpdate = new HgParentsCommand(myProject).executeInCurrentThread(projectRepoVirtualFile).get(0);
     assertEquals(incomingHead, parentAfterUpdate);
 
     assertIsChanged(HgFileStatusEnum.MODIFIED, "com", "b.txt");
@@ -163,14 +163,14 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     assertUpdateThroughPluginFails();
 
-    List<HgRevisionNumber> branchHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).execute();
+    List<HgRevisionNumber> branchHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
     assertEquals(branchHeads.size(), 2);
 
 
   }
 
   private void assertIsChanged(HgFileStatusEnum status, String... filepath) {
-    Set<HgChange> localChanges = new HgStatusCommand.Builder(true).build(myProject).execute(projectRepoVirtualFile);
+    Set<HgChange> localChanges = new HgStatusCommand.Builder(true).build(myProject).executeInCurrentThread(projectRepoVirtualFile);
     assertTrue(localChanges.contains(new HgChange(getHgFile(filepath), status)));
   }
 
@@ -184,12 +184,12 @@ public class HgUpdateTest extends HgCollaborativeTest {
   }
 
   private void assertCurrentHeadIsMerge(HgRevisionNumber incomingHead, HgRevisionNumber headBeforeUpdate) {
-    List<HgRevisionNumber> newHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).execute();
+    List<HgRevisionNumber> newHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
     assertEquals(newHeads.size(), 1, "After updating, there should be only one head because the remote heads should have been merged");
     HgRevisionNumber newHead = newHeads.get(0);
     HgParentsCommand parents = new HgParentsCommand(myProject);
     parents.setRevision(newHead);
-    List<HgRevisionNumber> parentRevisions = parents.execute(projectRepoVirtualFile);
+    List<HgRevisionNumber> parentRevisions = parents.executeInCurrentThread(projectRepoVirtualFile);
     assertEquals(parentRevisions.size(), 2);
     assertTrue(parentRevisions.contains(incomingHead));
     assertTrue(parentRevisions.contains(headBeforeUpdate));
@@ -233,8 +233,8 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     assertUpdateThroughPluginFails();
 
-    assertEquals( new HgHeadsCommand( myProject, projectRepoVirtualFile ).execute().size(), 2,
-                  "Remote head should have been pulled in" );
+    assertEquals(new HgHeadsCommand( myProject, projectRepoVirtualFile ).executeInCurrentThread().size(), 2,
+                 "Remote head should have been pulled in" );
 
     assertEquals( new HgWorkingCopyRevisionsCommand( myProject ).parents( projectRepoVirtualFile ).size(), 1,
                   "No merge should have been attempted" );
@@ -293,8 +293,8 @@ public class HgUpdateTest extends HgCollaborativeTest {
     }
 
     public PreUpdateInformation getPreUpdateInformation() {
-      List<HgRevisionNumber> currentHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).execute();
-      List<HgRevisionNumber> incomingChangesets = new HgIncomingCommand(myProject).execute(projectRepoVirtualFile);
+      List<HgRevisionNumber> currentHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
+      List<HgRevisionNumber> incomingChangesets = new HgIncomingCommand(myProject).executeInCurrentThread(projectRepoVirtualFile);
 
       assertEquals(currentHeads.size(), 1);
       assertEquals(incomingChangesets.size(), 1);

@@ -39,7 +39,7 @@ public class HgTagCreateCommand {
     this.revisionNumberOrHash = revisionNumberOrHash;
   }
 
-  public void execute(HgCommandResultHandler resultHandler) throws HgCommandException {
+  public void executeAsynchronously(HgCommandResultHandler resultHandler) throws HgCommandException {
     if (StringUtil.isEmptyOrSpaces(tagName)) {
       throw new HgCommandException("tag name is empty");
     }
