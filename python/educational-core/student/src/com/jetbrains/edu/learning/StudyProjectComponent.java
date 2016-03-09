@@ -102,7 +102,7 @@ public class StudyProjectComponent implements ProjectComponent {
         studyToolWindow.show(null);
       }
       if (progressToolWindow != null) {
-        StudyUtils.updateToolWindows(myProject);
+        StudyUtils.initToolWindows(myProject);
         progressToolWindow.show(null);
       }
     }

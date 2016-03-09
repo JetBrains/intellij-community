@@ -21,17 +21,13 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -43,7 +39,6 @@ import java.util.Map;
 
 public abstract class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
-  private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
   private static final String TASK_INFO_ID = "taskInfo";
   private final JBCardLayout myCardLayout;
   private final JPanel myContentPanel;
@@ -57,7 +52,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   }
 
   public void init(Project project) {
-    String taskText = getTaskText(project);
+    String taskText = StudyUtils.getTaskText(project);
     if (taskText == null) return;
 
     JPanel toolbarPanel = createToolbarPanel(project);
@@ -117,27 +112,8 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   public JPanel getContentPanel() {
     return myContentPanel;
   }
-  
-  
-  private static String getTaskText(@NotNull final Project project) {
-    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-    TaskFile taskFile = null;
-    for (VirtualFile file : files) {
-      taskFile = StudyUtils.getTaskFile(project, file);
-      if (taskFile != null) {
-        break;
-      }
-    }
-    if (taskFile == null) {
-      return EMPTY_TASK_TEXT;
-    }
-    final Task task = taskFile.getTask();
-    if (task != null) {
-      return StudyUtils.getTaskTextFromTask(task, task.getTaskDir(project));
-    }
-    return null;
-  }
-  
+
+
   public abstract JComponent createTaskInfoPanel(String taskText, Project project);
 
   private static JPanel createToolbarPanel(@NotNull final Project project) {

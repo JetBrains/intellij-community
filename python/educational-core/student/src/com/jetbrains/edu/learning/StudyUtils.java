@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -26,26 +27,30 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.EduAnswerPlaceholderDeleteHandler;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
+import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.Collection;
@@ -56,6 +61,7 @@ public class StudyUtils {
   }
 
   private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
+  private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
 
   public static void closeSilently(@Nullable final Closeable stream) {
     if (stream != null) {
@@ -123,13 +129,40 @@ public class StudyUtils {
 
   public static void updateToolWindows(@NotNull final Project project) {
     final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
+    StudyToolWindowFactory factory = new StudyToolWindowFactory();
+    factory.update(project);
+
+    createProgressToolWindowContent(project, windowManager);
+  }
+
+  public static void initToolWindows(@NotNull final Project project) {
+    final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     windowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
     StudyToolWindowFactory factory = new StudyToolWindowFactory();
     factory.createToolWindowContent(project, windowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
 
+    createProgressToolWindowContent(project, windowManager);
+  }
+
+  private static void createProgressToolWindowContent(@NotNull Project project, ToolWindowManager windowManager) {
     windowManager.getToolWindow(StudyProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
     StudyProgressToolWindowFactory windowFactory = new StudyProgressToolWindowFactory();
     windowFactory.createToolWindowContent(project, windowManager.getToolWindow(StudyProgressToolWindowFactory.ID));
+  }
+  
+  @Nullable
+  public static StudyToolWindow getStudyToolWindow(@NotNull final Project project) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+    if (toolWindow != null) {
+      Content[] contents = toolWindow.getContentManager().getContents();
+      for (Content content: contents) {
+        JComponent component = content.getComponent();
+        if (component != null && component instanceof StudyToolWindow) {
+          return (StudyToolWindow)component;
+        }
+      }
+    }
+    return null;
   }
 
   public static void deleteFile(@NotNull final VirtualFile file) {
@@ -424,6 +457,25 @@ public class StudyUtils {
       if (extension.accept(project)) {
         return extension;
       }
+    }
+    return null;
+  }
+
+  public static String getTaskText(@NotNull final Project project) {
+    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+    TaskFile taskFile = null;
+    for (VirtualFile file : files) {
+      taskFile = getTaskFile(project, file);
+      if (taskFile != null) {
+        break;
+      }
+    }
+    if (taskFile == null) {
+      return EMPTY_TASK_TEXT;
+    }
+    final Task task = taskFile.getTask();
+    if (task != null) {
+      return getTaskTextFromTask(task, task.getTaskDir(project));
     }
     return null;
   }
