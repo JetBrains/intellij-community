@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.ToolExtensionPoints;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -168,16 +169,10 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     boolean required = aPackage != null && JavadocHighlightUtil.isJavaDocRequired(this, aPackage);
     ProblemHolderImpl holder = new ProblemHolderImpl(manager, isOnTheFly);
 
-    if (IGNORE_DEPRECATED) {
-      if (aPackage != null) {
-        PsiModifierList modifierList = aPackage.getModifierList();
-        if (modifierList != null && modifierList.findAnnotation("java.lang.Deprecated") != null) {
-          return null;
-        }
-      }
-      if (docComment != null && docComment.findTagByName("deprecated") != null) {
-        return null;
-      }
+    if (IGNORE_DEPRECATED &&
+        (AnnotationUtil.findAnnotation(aPackage, CommonClassNames.JAVA_LANG_DEPRECATED) != null ||
+         docComment != null && docComment.findTagByName("deprecated") != null)) {
+      return null;
     }
 
     if (docComment == null) {
