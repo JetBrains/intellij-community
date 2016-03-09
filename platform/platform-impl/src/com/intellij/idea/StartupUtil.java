@@ -449,9 +449,15 @@ public class StartupUtil {
         viewer.setText(htmlText);
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
         styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
-        styleSheet.addRule("h2 {margin-top:" + JBUI.scaleFontSize(30) + "pt;}");
+        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
+        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
+        styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+        styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
+        styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
+        styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
+        styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
         viewer.setCaretPosition(0);
-        viewer.setBorder(JBUI.Borders.empty(5));
+        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
         centerPanel
           .add(new JBScrollPane(viewer, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
