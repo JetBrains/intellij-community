@@ -13,7 +13,7 @@ try:
 except:
     from urllib.parse import quote  # @UnresolvedImport
 
-from _pydev_imps import _pydev_threading as threading
+from _pydev_imps._pydev_saved_modules import threading
 threadingCurrentThread = threading.currentThread
 
 
