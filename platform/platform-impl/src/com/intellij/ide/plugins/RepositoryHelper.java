@@ -102,7 +102,7 @@ public class RepositoryHelper {
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
     boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
-    return loadPlugins(repositoryUrl, null, forceHttps, indicator);
+    return loadPlugins(repositoryUrl, null, null, forceHttps, indicator);
   }
   
   /**
@@ -110,22 +110,25 @@ public class RepositoryHelper {
    */
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber buildnumber,
+                                                       @Nullable BuildNumber apiVersion,
+                                                       @Nullable BuildNumber buildNumber,
                                                        @Nullable ProgressIndicator indicator) throws IOException {
     boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
-    return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
+    return loadPlugins(repositoryUrl, apiVersion, buildNumber, forceHttps, indicator);
   }
 
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber buildnumber,
+                                                       @Nullable BuildNumber apiVersion,
+                                                       @Nullable BuildNumber buildNumber,
                                                        boolean forceHttps,
                                                        @Nullable ProgressIndicator indicator) throws IOException {
-    return loadPlugins(repositoryUrl, buildnumber, null, forceHttps, indicator);
+    return loadPlugins(repositoryUrl, apiVersion, buildNumber, null, forceHttps, indicator);
   }
 
   @NotNull
-  public static Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> loadPluginsFromChannels(@Nullable BuildNumber buildnumber,
+  public static Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> loadPluginsFromChannels(@Nullable BuildNumber apiVersion,
+                                                                                                @Nullable BuildNumber buildNumber,
                                                                                                 @Nullable ProgressIndicator indicator)
       throws IOException {
     Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> result = new LinkedHashMap<PluginId, List<Pair<String, IdeaPluginDescriptor>>>();
@@ -134,7 +137,7 @@ public class RepositoryHelper {
     try {
       URIBuilder uriBuilder = new URIBuilder(ApplicationInfoImpl.getShadowInstance().getChannelsListUrl());
       uriBuilder.addParameter("build",
-                              (buildnumber != null ? buildnumber.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+                              (apiVersion != null ? apiVersion.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
       url = uriBuilder.build().toString();
     }
     catch (URISyntaxException e) {
@@ -153,7 +156,7 @@ public class RepositoryHelper {
 
 
     for (String channel : channelList) {
-      List<IdeaPluginDescriptor> channelPlugins = loadPlugins(null, buildnumber, channel, forceHttps, indicator);
+      List<IdeaPluginDescriptor> channelPlugins = loadPlugins(null, apiVersion, buildNumber, channel, forceHttps, indicator);
       for (IdeaPluginDescriptor plugin : channelPlugins) {
         PluginId pluginId = plugin.getPluginId();
         List<Pair<String, IdeaPluginDescriptor>> pluginChannelDescriptors = result.get(pluginId);
@@ -170,7 +173,8 @@ public class RepositoryHelper {
 
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber buildnumber,
+                                                       @Nullable BuildNumber apiVersion,
+                                                       @Nullable BuildNumber buildNumber,
                                                        @Nullable String channel,
                                                        boolean forceHttps,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
@@ -193,8 +197,12 @@ public class RepositoryHelper {
       }
 
       if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
-        uriBuilder.addParameter("build",
-                                (buildnumber != null ? buildnumber.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+        uriBuilder.addParameter("build", (apiVersion != null
+                                          ? apiVersion.asString()
+                                          : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+        uriBuilder.addParameter("product-build", (buildNumber != null
+                                                  ? buildNumber.asString()
+                                                  : ApplicationInfoImpl.getShadowInstance().getBuild().asString()));
         if (channel != null) uriBuilder.addParameter("channel", channel);
       }
 
