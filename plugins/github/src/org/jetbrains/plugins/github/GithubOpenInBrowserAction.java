@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitRevisionNumber;
@@ -131,15 +132,12 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return null;
     }
 
-    final String rootPath = repository.getRoot().getPath();
-    final String path = virtualFile.getPath();
-    if (!path.startsWith(rootPath)) {
-      GithubNotifications
-        .showError(project, CANNOT_OPEN_IN_BROWSER, "File is not under repository root", "Root: " + rootPath + ", file: " + path);
+    String relativePath = VfsUtilCore.getRelativePath(virtualFile, repository.getRoot());
+    if (relativePath == null) {
+      GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "File is not under repository root",
+                                    "Root: " + repository.getRoot().getPresentableUrl() + ", file: " + virtualFile.getPresentableUrl());
       return null;
     }
-
-    String relativePath = path.substring(rootPath.length());
 
     String hash = getCurrentFileRevisionHash(project, virtualFile);
     if (hash != null) {
@@ -164,7 +162,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       builder.append(githubRepoUrl).append("/tree/").append(branch);
     }
     else {
-      builder.append(githubRepoUrl).append("/blob/").append(branch).append(relativePath);
+      builder.append(githubRepoUrl).append("/blob/").append(branch).append('/').append(relativePath);
     }
 
     if (editor != null && editor.getDocument().getLineCount() >= 1) {
