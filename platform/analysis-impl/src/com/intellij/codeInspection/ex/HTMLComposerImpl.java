@@ -322,6 +322,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void startList(@NonNls final StringBuffer buf) {
+    buf.append("<div class=\"problem-description\">");
     buf.append("<ul>");
     myListStackTop++;
     myListStack[myListStackTop] = 0;
@@ -334,6 +335,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       buf.append("<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\"><tr><td>&nbsp;</td></tr></table>");
     }
     myListStackTop--;
+    buf.append("</div>");
   }
 
   @Override

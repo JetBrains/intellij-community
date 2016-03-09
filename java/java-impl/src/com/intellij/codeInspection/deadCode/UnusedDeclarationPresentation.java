@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -38,11 +39,14 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -50,6 +54,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
@@ -100,7 +106,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   @NotNull
-  public HTMLComposerImpl getComposer() {
+  public DeadHTMLComposer getComposer() {
     if (myComposer == null) {
       myComposer = new DeadHTMLComposer(this);
     }
@@ -527,9 +533,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     htmlView.setContentType(UIUtil.HTML_MIME);
     htmlView.setEditable(false);
     htmlView.setOpaque(false);
+    final StyleSheet css = ((HTMLEditorKit)htmlView.getEditorKit()).getStyleSheet();
+    css.addRule("p.problem-description-group {text-indent: " + JBUI.scale(12) + "px;font-weight:bold;}");
+    css.addRule("div.problem-description {margin-left: 0;}");
+    css.addRule("ul {margin-left:" + JBUI.scale(22) + "px;text-indent: 0}");
     final StringBuffer buf = new StringBuffer();
-    getComposer().compose(buf, entity);
-    htmlView.setText(buf.toString());
-    return htmlView;
+    getComposer().compose(buf, entity, false);
+    final String text = buf.toString();
+    SingleInspectionProfilePanel.readHTML(htmlView, SingleInspectionProfilePanel.toHTML(htmlView, text, false));
+    return ScrollPaneFactory.createScrollPane(htmlView, true);
   }
 }
