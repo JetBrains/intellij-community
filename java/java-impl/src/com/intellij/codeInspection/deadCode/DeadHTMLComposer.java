@@ -351,6 +351,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
+        buf.append("<div class=\"problem-description\">");
       }
       @NonNls final String ul = "<ul>";
       buf.append(ul);
@@ -367,6 +368,9 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       }
       @NonNls final String closeUl = "</ul>";
       buf.append(closeUl);
+      if (appendCallees) {
+        buf.append("</div>");
+      }
     }
   }
 

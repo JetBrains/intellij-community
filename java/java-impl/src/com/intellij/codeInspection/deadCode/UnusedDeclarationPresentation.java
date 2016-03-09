@@ -535,8 +535,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     htmlView.setOpaque(false);
     final StyleSheet css = ((HTMLEditorKit)htmlView.getEditorKit()).getStyleSheet();
     css.addRule("p.problem-description-group {text-indent: " + JBUI.scale(12) + "px;font-weight:bold;}");
-    css.addRule("div.problem-description {margin-left: 0;}");
-    css.addRule("ul {margin-left:" + JBUI.scale(22) + "px;text-indent: 0}");
+    css.addRule("div.problem-description {margin-left: " + JBUI.scale(10) + "px;}");
+    css.addRule("ul {margin-left:" + JBUI.scale(10) + "px;text-indent: 0}");
     final StringBuffer buf = new StringBuffer();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
