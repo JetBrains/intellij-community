@@ -168,11 +168,12 @@ object UpdateChecker {
       externalUpdates = null
     }
     else {
-      val buildNumber: BuildNumber? = result.updatedChannel?.latestBuild?.apiVersion
+      val apiVersion: BuildNumber? = result.updatedChannel?.latestBuild?.apiVersion
+      val buildNumber: BuildNumber? = result.updatedChannel?.latestBuild?.number
 
       incompatiblePlugins = if (buildNumber != null) HashSet<IdeaPluginDescriptor>() else null
       try {
-        updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
+        updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, apiVersion, buildNumber)
         externalUpdates = updateExternal(manualCheck, updateSettings, indicator);
       }
       catch (e: IOException) {
@@ -244,6 +245,7 @@ object UpdateChecker {
   private fun checkPluginsUpdate(updateSettings: UpdateSettings,
                                  indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
+                                 apiVersion: BuildNumber?,
                                  buildNumber: BuildNumber?): Collection<PluginDownloader>? {
     val updateable = collectUpdateablePlugins()
 
@@ -258,7 +260,7 @@ object UpdateChecker {
     outer@ for (host in hosts) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
-        val list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator)
+        val list = RepositoryHelper.loadPlugins(host, apiVersion, buildNumber, forceHttps, indicator)
         for (descriptor in list) {
           val id = descriptor.pluginId
           if (updateable.containsKey(id)) {
