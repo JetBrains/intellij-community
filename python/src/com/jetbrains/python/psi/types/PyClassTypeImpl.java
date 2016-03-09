@@ -380,54 +380,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   private PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyCallSiteExpression callSite) {
     if (!isDefinition()) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final List<? extends RatedResolveResult> resolveResults = resolveMember(PyNames.CALL, callSite, AccessDirection.READ, resolveContext);
-
-      if (resolveResults != null) {
-        final ArrayList<PyType> result = new ArrayList<PyType>();
-
-        for (RatedResolveResult resolveResult : resolveResults) {
-          result.addAll(
-            getPossibleReturnTypes(resolveResult.getElement(), context)
-          );
-        }
-
-        return PyUnionType.union(result);
-      }
+      return PyUtil.getReturnTypeOfMember(this, PyNames.CALL, callSite, context);
     }
     else {
       return new PyClassTypeImpl(getPyClass(), false);
     }
-
-    return null;
-  }
-
-  @NotNull
-  private static List<PyType> getPossibleReturnTypes(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
-    final ArrayList<PyType> result = new ArrayList<PyType>();
-
-    if (element instanceof PyTypedElement) {
-      final PyType elementType = context.getType((PyTypedElement)element);
-
-      result.addAll(getPossibleReturnTypes(elementType, context));
-
-      if (elementType instanceof PyUnionType) {
-        for (PyType type : ((PyUnionType)elementType).getMembers()) {
-          result.addAll(getPossibleReturnTypes(type, context));
-        }
-      }
-    }
-
-    return result;
-  }
-
-  @NotNull
-  private static List<PyType> getPossibleReturnTypes(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyCallableType) {
-      return Collections.singletonList(((PyCallableType)type).getReturnType(context));
-    }
-
-    return Collections.emptyList();
   }
 
   @Nullable
