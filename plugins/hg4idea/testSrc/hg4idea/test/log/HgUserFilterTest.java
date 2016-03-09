@@ -82,6 +82,10 @@ public class HgUserFilterTest extends HgPlatformTest {
     myVcsLogUserFilterTest.testYoutrackIssuesWithWeirdNames();
   }
 
+  public void testJeka() throws Exception {
+    myVcsLogUserFilterTest.testJeka();
+  }
+
   public static HgLogProvider findLogProvider(@NotNull Project project) {
     List<VcsLogProvider> providers =
       ContainerUtil.filter(Extensions.getExtensions(VcsLogManager.LOG_PROVIDER_EP, project), new Condition<VcsLogProvider>() {

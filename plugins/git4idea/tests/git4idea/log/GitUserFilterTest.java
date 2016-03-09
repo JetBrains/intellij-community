@@ -60,6 +60,10 @@ public class GitUserFilterTest extends GitSingleRepoTest {
     myVcsLogUserFilterTest.testYoutrackIssuesWithWeirdNames();
   }
 
+  public void testJeka() throws Exception {
+    myVcsLogUserFilterTest.testJeka();
+  }
+
   @Override
   protected void tearDown() throws Exception {
     myVcsLogUserFilterTest = null;

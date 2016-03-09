@@ -125,25 +125,46 @@ public abstract class VcsLogUserFilterTest {
     assertFilteredCorrectly(builder);
   }
 
+  public void testJeka() throws Exception {
+    VcsUser jeka = myObjectsFactory.createUser("User Userovich", "jeka@company.com");
+    List<VcsUser> users = Arrays.asList(jeka,
+                                        myObjectsFactory.createUser("Auser Auserovich", "auser@company.com"),
+                                        myObjectsFactory.createUser("Buser Buserovich", "buser@company.com"),
+                                        myObjectsFactory.createUser("Cuser cuserovich", "cuser@company.com"));
+
+    MultiMap<VcsUser, String> commits = generateHistory(users);
+    List<VcsCommitMetadata> metadata = generateMetadata(commits);
+    StringBuilder builder = new StringBuilder();
+    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton("jeka"), Collections.emptyMap(), commits.keySet());
+    checkFilter(userFilter, "jeka", commits.get(jeka), metadata, builder);
+    assertFilteredCorrectly(builder);
+  }
+
   private void checkFilterForUser(@NotNull VcsUser user,
                                   @NotNull Set<VcsUser> allUsers,
-                                  @NotNull Collection<? extends String> expectedHashes,
+                                  @NotNull Collection<String> expectedHashes,
                                   @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
     throws VcsException {
     VcsLogUserFilter userFilter =
       new VcsLogUserFilterImpl(singleton(VcsUserUtil.getShortPresentation(user)), Collections.emptyMap(), allUsers);
+    checkFilter(userFilter, user.toString(), expectedHashes, metadata, errorMessageBuilder);
+  }
 
+  private void checkFilter(VcsLogUserFilter userFilter,
+                           String filterDescription,
+                           @NotNull Collection<String> expectedHashes,
+                           @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder) throws VcsException {
     // filter by vcs
     List<String> actualHashes = getFilteredHashes(userFilter);
 
     if (!hasSameElements(expectedHashes, actualHashes)) {
-      errorMessageBuilder.append(TestCase.format("VCS filter for: " + user.toString(), expectedHashes, actualHashes)).append("\n");
+      errorMessageBuilder.append(TestCase.format("VCS filter for: " + filterDescription, expectedHashes, actualHashes)).append("\n");
     }
 
     // filter in memory
     actualHashes = getFilteredHashes(userFilter, metadata);
     if (!hasSameElements(expectedHashes, actualHashes)) {
-      errorMessageBuilder.append(TestCase.format("Memory filter for: " + user.toString(), expectedHashes, actualHashes)).append("\n");
+      errorMessageBuilder.append(TestCase.format("Memory filter for: " + filterDescription, expectedHashes, actualHashes)).append("\n");
     }
   }
 
