@@ -706,16 +706,19 @@ binding.setVariable("forceDelete", { String dirPath ->
 
 binding.setVariable("patchPropertiesFile", { String target, Map args = [:] ->
   String file = "$target/bin/idea.properties"
+  String tmpfile = "$target/bin/idea.properties.tmp"
 
-  ant.echo(file: file, message: configNotice());
+  ant.concat(destfile: tmpfile) {
+    header(configNotice())
+    fileset(file: file)
 
-  if (args.appendices != null) {
-    ant.concat(destfile: file, append:  true) {
+    if (args.appendices != null) {
       args.appendices.each {
         fileset(file: it)
       }
     }
   }
+  ant.move(file: tmpfile, tofile: file)
 
   String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
   String settings_dir = args.system_selector.replaceFirst("\\d+", "")
