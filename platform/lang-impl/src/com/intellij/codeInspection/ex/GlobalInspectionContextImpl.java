@@ -779,7 +779,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   public void close(boolean noSuspisiousCodeFound) {
-    if (!noSuspisiousCodeFound && (myView == null || myView.isRerun())) return;
+    if (!noSuspisiousCodeFound) {
+      if (myView.isRerun()) {
+        myViewClosed = true;
+        myView = null;
+      }
+      if (myView == null) {
+        return;
+      }
+    }
     AnalysisUIOptions.getInstance(getProject()).save(myUIOptions);
     if (myContent != null) {
       final ContentManager contentManager = getContentManager();
