@@ -126,7 +126,7 @@ public class LineStatusTracker {
 
     synchronized (myLock) {
       try {
-        if (myInitialized || myReleased) return;
+        if (myReleased) return;
         if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
 
         myBaseRevisionNumber = baseRevisionNumber;
