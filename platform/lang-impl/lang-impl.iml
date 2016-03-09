@@ -29,7 +29,5 @@
     <orderEntry type="module" module-name="structure-view-impl" exported="" />
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module" module-name="diff-impl" />
-    <orderEntry type="module" module-name="java-psi-api" />
-    <orderEntry type="module" module-name="java-psi-impl" />
   </component>
 </module>
