@@ -448,8 +448,8 @@ public class StartupUtil {
         });
         viewer.setText(htmlText);
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
-        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(17) + "pt;}");
-        styleSheet.addRule("h4 {font-size:" + JBUI.scaleFontSize(18) + "pt;}");
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("h2 {margin-top:" + JBUI.scaleFontSize(30) + "pt;}");
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
