@@ -57,6 +57,8 @@ import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
@@ -438,13 +440,16 @@ public class StartupUtil {
             URL url = e.getURL();
             if (url != null) {
               BrowserUtil.browse(url);
-            } 
+            }
             else {
               SwingHelper.scrollToReference(viewer, e.getDescription());
             }
           }
         });
         viewer.setText(htmlText);
+        StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("h2 {margin-top:" + JBUI.scaleFontSize(30) + "pt;}");
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
