@@ -41,20 +41,20 @@ public class CommitLegendPanel {
 
   public void update() {
     myRootPanel.clear();
-    appendText(myInfoCalculator.getNew(), myInfoCalculator.getIncludedNew(), FileStatus.ADDED, "commit.legend.new");
-    appendText(myInfoCalculator.getModified(), myInfoCalculator.getIncludedModified(), FileStatus.MODIFIED, "commit.legend.modified");
-    appendText(myInfoCalculator.getDeleted(), myInfoCalculator.getIncludedDeleted(), FileStatus.DELETED, "commit.legend.deleted");
+    appendText(myInfoCalculator.getNew(), myInfoCalculator.getIncludedNew(), FileStatus.ADDED, VcsBundle.message("commit.legend.new"));
+    appendText(myInfoCalculator.getModified(), myInfoCalculator.getIncludedModified(), FileStatus.MODIFIED, VcsBundle.message("commit.legend.modified"));
+    appendText(myInfoCalculator.getDeleted(), myInfoCalculator.getIncludedDeleted(), FileStatus.DELETED, VcsBundle.message("commit.legend.deleted"));
     appendText(myInfoCalculator.getUnversioned(), myInfoCalculator.getIncludedUnversioned(), FileStatus.UNKNOWN,
-               "commit.legend.unversioned");
+               VcsBundle.message("commit.legend.unversioned"));
   }
 
-  private void appendText(int total, int included, @NotNull FileStatus fileStatus, @NotNull String labelKey) {
+  private void appendText(int total, int included, @NotNull FileStatus fileStatus, @NotNull  String labelName) {
     if (total > 0) {
       if (!isPanelEmpty()) {
         appendSpace();
       }
       String pattern = total == included ? "%s %d" : "%s %d of %d";
-      String text = String.format(pattern, VcsBundle.message(labelKey), included, total);
+      String text = String.format(pattern, labelName, included, total);
       myRootPanel.append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor()));
     }
   }
@@ -63,7 +63,7 @@ public class CommitLegendPanel {
     return !myRootPanel.iterator().hasNext();
   }
 
-  private void appendSpace() {
+  protected void appendSpace() {
     myRootPanel.append("   ");
   }
 

@@ -152,7 +152,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myChangesTreeList = new MyChangeTreeList(project, Collections.<AbstractFilePatchInProgress.PatchChange>emptyList(),
                                              new Runnable() {
                                                public void run() {
-                                                 final NamedTrinity includedTrinity = new NamedTrinity();
+                                                 final NamedLegendStatuses includedNameStatuses = new NamedLegendStatuses();
                                                  final Collection<AbstractFilePatchInProgress.PatchChange> includedChanges =
                                                    myChangesTreeList.getIncludedChanges();
                                                  final Set<Couple<String>> set = new HashSet<Couple<String>>();
@@ -161,9 +161,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                                    final Couple<String> pair = Couple.of(patch.getBeforeName(), patch.getAfterName());
                                                    if (set.contains(pair)) continue;
                                                    set.add(pair);
-                                                   acceptChange(includedTrinity, change);
+                                                   acceptChange(includedNameStatuses, change);
                                                  }
-                                                 myInfoCalculator.setIncluded(includedTrinity);
+                                                 myInfoCalculator.setIncluded(includedNameStatuses);
                                                  myCommitLegendPanel.update();
                                                  updateOkActions();
                                                }
@@ -207,7 +207,17 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myChangeListChooser.init();
 
     myInfoCalculator = new ChangesLegendCalculator();
-    myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
+    myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator) {
+      @Override
+      public void update() {
+        super.update();
+        final int inapplicable = myInfoCalculator.getInapplicable();
+        if (inapplicable > 0) {
+          appendSpace();
+          appendText(inapplicable, myInfoCalculator.getIncludedInapplicable(), FileStatus.MERGED_WITH_CONFLICTS, "Inapplicable:");
+        }
+      }
+    };
 
     init();
 
@@ -623,31 +633,34 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                     });
   }
 
-  private static void acceptChange(final NamedTrinity trinity, final AbstractFilePatchInProgress.PatchChange change) {
+  private static void acceptChange(final NamedLegendStatuses nameStatuses, final AbstractFilePatchInProgress.PatchChange change) {
     final AbstractFilePatchInProgress patchInProgress = change.getPatchInProgress();
     if (FilePatchStatus.ADDED.equals(patchInProgress.getStatus())) {
-      trinity.plusAdded();
+      nameStatuses.plusAdded();
     }
     else if (FilePatchStatus.DELETED.equals(patchInProgress.getStatus())) {
-      trinity.plusDeleted();
+      nameStatuses.plusDeleted();
     }
     else {
-      trinity.plusModified();
+      nameStatuses.plusModified();
+    }
+    if (!patchInProgress.baseExistsOrAdded()) {
+      nameStatuses.plusInapplicable(); // may be deleted or modified, but still not applicable
     }
   }
 
   private Collection<AbstractFilePatchInProgress.PatchChange> getIncluded(boolean doInitCheck,
                                                                           List<AbstractFilePatchInProgress.PatchChange> changes) {
-    final NamedTrinity totalTrinity = new NamedTrinity();
-    final NamedTrinity includedTrinity = new NamedTrinity();
+    final NamedLegendStatuses totalNameStatuses = new NamedLegendStatuses();
+    final NamedLegendStatuses includedNameStatuses = new NamedLegendStatuses();
 
     final Collection<AbstractFilePatchInProgress.PatchChange> included = new LinkedList<AbstractFilePatchInProgress.PatchChange>();
     if (doInitCheck) {
       for (AbstractFilePatchInProgress.PatchChange change : changes) {
-        acceptChange(totalTrinity, change);
+        acceptChange(totalNameStatuses, change);
         final AbstractFilePatchInProgress abstractFilePatchInProgress = change.getPatchInProgress();
         if (abstractFilePatchInProgress.baseExistsOrAdded() && (myPreselectedChanges == null || myPreselectedChanges.contains(change))) {
-          acceptChange(includedTrinity, change);
+          acceptChange(includedNameStatuses, change);
           included.add(change);
         }
       }
@@ -662,15 +675,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       for (AbstractFilePatchInProgress.PatchChange change : changes) {
         final AbstractFilePatchInProgress patch = change.getPatchInProgress();
-        acceptChange(totalTrinity, change);
+        acceptChange(totalNameStatuses, change);
         if (toBeIncluded.contains(patch) && patch.baseExistsOrAdded()) {
-          acceptChange(includedTrinity, change);
+          acceptChange(includedNameStatuses, change);
           included.add(change);
         }
       }
     }
-    myInfoCalculator.setTotal(totalTrinity);
-    myInfoCalculator.setIncluded(includedTrinity);
+    myInfoCalculator.setTotal(totalNameStatuses);
+    myInfoCalculator.setIncluded(includedNameStatuses);
     myCommitLegendPanel.update();
     return included;
   }
@@ -739,15 +752,17 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private static class NamedTrinity {
+  private static class NamedLegendStatuses {
     private int myAdded;
     private int myModified;
     private int myDeleted;
+    private int myInapplicable;
 
-    public NamedTrinity() {
+    public NamedLegendStatuses() {
       myAdded = 0;
       myModified = 0;
       myDeleted = 0;
+      myInapplicable = 0;
     }
 
     public void plusAdded() {
@@ -762,6 +777,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       ++myDeleted;
     }
 
+    public void plusInapplicable() {
+      ++myInapplicable;
+    }
+
     public int getAdded() {
       return myAdded;
     }
@@ -773,23 +792,27 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     public int getDeleted() {
       return myDeleted;
     }
+
+     public int getInapplicable() {
+      return myInapplicable;
+    }
   }
 
   private static class ChangesLegendCalculator implements CommitLegendPanel.InfoCalculator {
-    private NamedTrinity myTotal;
-    private NamedTrinity myIncluded;
+    private NamedLegendStatuses myTotal;
+    private NamedLegendStatuses myIncluded;
 
     private ChangesLegendCalculator() {
-      myTotal = new NamedTrinity();
-      myIncluded = new NamedTrinity();
+      myTotal = new NamedLegendStatuses();
+      myIncluded = new NamedLegendStatuses();
     }
 
-    public void setTotal(final NamedTrinity trinity) {
-      myTotal = trinity;
+    public void setTotal(final NamedLegendStatuses nameStatuses) {
+      myTotal = nameStatuses;
     }
 
-    public void setIncluded(final NamedTrinity trinity) {
-      myIncluded = trinity;
+    public void setIncluded(final NamedLegendStatuses nameStatuses) {
+      myIncluded = nameStatuses;
     }
 
     public int getNew() {
@@ -809,6 +832,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       return 0;
     }
 
+    public int getInapplicable() {
+      return myTotal.getInapplicable();
+    }
+
     public int getIncludedNew() {
       return myIncluded.getAdded();
     }
@@ -824,6 +851,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     public int getIncludedUnversioned() {
       return 0;
+    }
+
+    public int getIncludedInapplicable() {
+      return myIncluded.getInapplicable();
     }
   }
 
