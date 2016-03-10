@@ -61,6 +61,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -621,32 +622,38 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public void buildTree() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        try {
-          setUpdating(true);
-          InspectionProfile profile = myInspectionProfile;
-          boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
-          myGroups.clear();
-          final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
-          for (Tools currentTools : tools.values()) {
-            InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
-            final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
-            for (ScopeToolState state : myProvider.getTools(currentTools)) {
-              InspectionToolWrapper toolWrapper = state.getTool();
-              if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
-                addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject),
-                        isGroupedBySeverity);
-              }
+    final Application app = ApplicationManager.getApplication();
+    final Runnable buildAction = () -> {
+      try {
+        setUpdating(true);
+        InspectionProfile profile = myInspectionProfile;
+        boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
+        myGroups.clear();
+        final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
+        for (Tools currentTools : tools.values()) {
+          InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+          final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
+          for (ScopeToolState state : myProvider.getTools(currentTools)) {
+            InspectionToolWrapper toolWrapper = state.getTool();
+            if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+              addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject),
+                      isGroupedBySeverity);
             }
           }
         }
-        finally {
-          setUpdating(false);
-          ApplicationManager.getApplication().invokeLater(myTree::restoreExpansionAndSelection, ModalityState.any());
-        }
+      }
+      finally {
+        setUpdating(false);
+        UIUtil.invokeLaterIfNeeded(myTree::restoreExpansionAndSelection);
+      }
+    };
+    if (app.isUnitTestMode()) {
+      buildAction.run();
+    } else {
+      app.executeOnPooledThread(() -> {
+        app.runReadAction(buildAction);
       });
-    });
+    }
   }
 
   @NotNull
