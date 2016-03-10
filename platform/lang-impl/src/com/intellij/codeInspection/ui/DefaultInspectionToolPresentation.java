@@ -52,7 +52,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -262,8 +261,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
           content.add(refElement);
 
           view.getProvider().appendToolNodeContent(context, toolNode,
-                                                        (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
-                                                        contents, problems, (DefaultTreeModel)view.getTree().getModel());
+                                                   (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
+                                                   contents, problems);
 
         }
       }

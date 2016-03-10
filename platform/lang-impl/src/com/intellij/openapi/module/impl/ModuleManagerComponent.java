@@ -19,8 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -126,26 +125,15 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
       return;
     }
 
-    Runnable runnableWithProgress = new Runnable() {
-      @Override
-      public void run() {
-        for (final Module module : myModuleModel.myModules.values()) {
-          final Application app = ApplicationManager.getApplication();
-          final Runnable swingRunnable = new Runnable() {
-            @Override
-            public void run() {
-              fireModuleAddedInWriteAction(module);
-            }
-          };
-          ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-          app.invokeAndWait(swingRunnable, pi.getModalityState());
-        }
+    Runnable runnableWithProgress = () -> {
+      for (final Module module : myModuleModel.myModules.values()) {
+        TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, () -> fireModuleAddedInWriteAction(module));
       }
     };
 
     ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
     if (progressIndicator == null) {
-      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Initializing modules...", false, myProject);
+      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Initializing Modules...", false, myProject);
     }
     else {
       runnableWithProgress.run();

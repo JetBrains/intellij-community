@@ -18,5 +18,5 @@ public @interface WrapInTransaction {
   /**
    * @return the kind of transaction to wrap the action into. By default, it's {@link TransactionKind#NO_MERGE}.
    */
-  TransactionKind.Common value() default TransactionKind.Common.NO_MERGE;
+  TransactionKind.Common value() default TransactionKind.Common.ANY_CHANGE;
 }

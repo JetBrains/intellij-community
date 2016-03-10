@@ -136,7 +136,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   protected boolean finishCommitInWriteAction(@NotNull Document document,
                                               @NotNull List<Processor<Document>> finishProcessors,
                                               boolean synchronously) {
-    EditorWindowImpl.disposeInvalidEditors();  // in write action
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
+      EditorWindowImpl.disposeInvalidEditors();
+    }
     return super.finishCommitInWriteAction(document, finishProcessors, synchronously);
   }
 

@@ -94,7 +94,20 @@ public abstract class TransactionGuard {
    * @param transaction code to execute inside a transaction.
    */
   public static void submitTransaction(@NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(TransactionKind.NO_MERGE, transaction);
+    getInstance().submitMergeableTransaction(TransactionKind.ANY_CHANGE, transaction);
+  }
+
+  /**
+   * Runs the given code synchronously inside a transaction. Fails if transactions of given kind are not allowed at this moment.
+   * @see #startSynchronousTransaction(TransactionKind)
+   */
+  public static void syncTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction) {
+    AccessToken token = getInstance().startSynchronousTransaction(kind);
+    try {
+      transaction.run();
+    } finally {
+      token.finish();
+    }
   }
 
   /**

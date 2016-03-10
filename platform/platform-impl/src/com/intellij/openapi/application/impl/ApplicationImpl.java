@@ -308,12 +308,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }
     }
-    runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(ApplicationImpl.this);
-      }
-    });
+    TransactionGuard.syncTransaction(TransactionKind.ANY_CHANGE, () -> runWriteAction(() -> Disposer.dispose(this)));
 
     Disposer.assertIsEmpty();
     return true;
@@ -376,6 +371,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
     return ourThreadExecutorsService.submit(new Runnable() {
+      @Override
+      public String toString() {
+        return action.toString();
+      }
+
       @Override
       public void run() {
         assert !isReadAccessAllowed(): describe(Thread.currentThread());
@@ -864,7 +864,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private boolean doExit(boolean allowListenersToCancel, boolean restart) {
-    saveSettings();
+    TransactionGuard.syncTransaction(TransactionKind.ANY_CHANGE, this::saveSettings);
 
     if (allowListenersToCancel && !canExit()) {
       return false;
@@ -1230,8 +1230,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     if (!TransactionGuard.getInstance().isInsideTransaction() && Registry.is("ide.require.transaction.for.model.changes", false)) {
+      // please assign exceptions that occur here to Peter
       LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
-      //todo throw new IllegalStateException("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
     }
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
