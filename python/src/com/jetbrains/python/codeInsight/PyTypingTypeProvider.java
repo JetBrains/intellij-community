@@ -355,7 +355,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return PyUnionType.union(elementTypes.get(0), PyNoneType.INSTANCE);
     }
     if ("typing.Callable".equals(qualifiedName) && elementTypes.size() == 2) {
-      return new PyCallableTypeImpl(null, elementTypes.get(1));
+      final List<PyCallableParameter> paramTypes = new ArrayList<>();
+      final PyTupleType firstType = as(elementTypes.get(0), PyTupleType.class);
+      if (firstType != null) {
+        for (int i = 0; i < firstType.getElementCount(); i++) {
+          paramTypes.add(new PyCallableParameterImpl(null, firstType.getElementType(i)));
+        }
+        return new PyCallableTypeImpl(paramTypes, elementTypes.get(1));
+      }
     }
     if ("typing.Tuple".equals(qualifiedName)) {
       return PyTupleType.create(resolved, elementTypes.toArray(new PyType[elementTypes.size()]));
