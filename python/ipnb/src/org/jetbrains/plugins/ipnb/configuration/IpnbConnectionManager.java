@@ -94,34 +94,32 @@ public final class IpnbConnectionManager implements ProjectComponent {
   }
 
   private void startConnection(@NotNull final IpnbCodePanel codePanel, final IpnbFileEditor fileEditor, final String path) {
-    String url = IpnbSettings.getInstance(myProject).getURL();
-    if (StringUtil.isEmptyOrSpaces(url)) {
-      url = IpnbSettings.DEFAULT_URL;
-    }
+    String url = getURL();
 
     boolean connectionStarted = startConnection(codePanel, path, url, false);
     if (!connectionStarted) {
-      final String finalUrl = url;
-      url = showDialogUrl(url);
-      if (url == null) return;
-      IpnbSettings.getInstance(myProject).setURL(url);
 
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
-          final boolean serverStarted = startIpythonServer(finalUrl, fileEditor);
+          final boolean serverStarted = startIpythonServer(url, fileEditor);
           if (!serverStarted) {
             return;
           }
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
-              startConnection(codePanel, path, finalUrl, true);
+              startConnection(codePanel, path, url, true);
             }
           });
         }
       });
     }
+  }
+
+  private String getURL() {
+    String url = IpnbSettings.getInstance(myProject).getURL();
+    return StringUtil.isEmptyOrSpaces(url) ? IpnbSettings.DEFAULT_URL : url;
   }
 
   @Nullable
@@ -258,7 +256,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     });
   }
 
-  public boolean startIpythonServer(@NotNull final String url, @NotNull final IpnbFileEditor fileEditor) {
+  public boolean startIpythonServer(@NotNull final String initUrl, @NotNull final IpnbFileEditor fileEditor) {
     final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());
     if (module == null) return false;
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
@@ -275,6 +273,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (ExecutionException ignored) {
     }
+
+    String url = showDialogUrl(initUrl);
+    if (url == null) return false;
+    IpnbSettings.getInstance(myProject).setURL(url);
 
     final Pair<String, String> hostPort = getHostPortFromUrl(url);
     if (hostPort == null) {
