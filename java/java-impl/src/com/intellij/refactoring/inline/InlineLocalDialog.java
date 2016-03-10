@@ -79,4 +79,9 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
   protected boolean isInlineThis() {
     return JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS;
   }
+
+  @Override
+  protected boolean hasPreviewButton() {
+    return false;
+  }
 }
