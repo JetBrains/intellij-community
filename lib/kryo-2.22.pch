@@ -1,0 +1,20 @@
+diff --git a/src/com/esotericsoftware/kryo/util/Util.java b/src/com/esotericsoftware/kryo/util/Util.java
+index 659f275..4e30c64 100644
+--- a/src/com/esotericsoftware/kryo/util/Util.java
++++ b/src/com/esotericsoftware/kryo/util/Util.java
+@@ -6,14 +6,7 @@ import static com.esotericsoftware.minlog.Log.*;
+ /** A few utility methods, mostly for private use.
+  * @author Nathan Sweet <misc@n4te.com> */
+ public class Util {
+-	static public boolean isAndroid;
+-	static {
+-		try {
+-			Class.forName("android.os.Process");
+-			isAndroid = true;
+-		} catch (Exception ignored) {
+-		}
+-	}
++	static public boolean isAndroid = "Dalvik".equals(System.getProperty("java.vm.name"));
+ 
+ 	/** Returns the primitive wrapper class for a primitive class.
+ 	 * @param type Must be a primitive class. */
