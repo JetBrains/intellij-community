@@ -1988,5 +1988,20 @@ class Main {
     }
 }
 '''
+    testHighlighting '''
+class Main {
+
+    static <T> T foo() {}
+
+    static void main(String[] args) {
+        def main = new Main()
+        (main[Main]) = foo()
+    }
+
+    def putAt(x, String t) {
+        println "Works: $x = $t"
+    }
+}
+'''
   }
 }

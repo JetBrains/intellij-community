@@ -96,12 +96,12 @@ public class SubstitutorComputer {
       }
     }
     else if (parent instanceof GrAssignmentExpression && myPlaceToInferContext.equals(((GrAssignmentExpression)parent).getRValue())) {
-      GrExpression lValue = ((GrAssignmentExpression)parent).getLValue();
-      if (lValue instanceof GrIndexProperty) {
-        return null;
+      PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)parent).getLValue(), false);
+      if ((lValue instanceof GrExpression) && !(lValue instanceof GrIndexProperty)) {
+        return ((GrExpression)lValue).getType();
       }
       else {
-        return lValue.getType();
+        return null;
       }
     }
     else if (parent instanceof GrVariable) {

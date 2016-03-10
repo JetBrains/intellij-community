@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
  * @author ven
@@ -169,7 +171,7 @@ public class TypeInferenceHelper {
 
   @Nullable
   public static PsiType getInitializerTypeFor(PsiElement element) {
-    final PsiElement parent = element.getParent();
+    final PsiElement parent = skipParentheses(element.getParent(), true);
     if (parent instanceof GrAssignmentExpression) {
       if (element instanceof GrIndexProperty) {
         final GrExpression rvalue = ((GrAssignmentExpression)parent).getRValue();
