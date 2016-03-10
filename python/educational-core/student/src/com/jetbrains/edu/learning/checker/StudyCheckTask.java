@@ -100,6 +100,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     else {
       onTaskFailed(testsOutput);
     }
+    runAfterTaskSolvedActions();
   }
 
   protected void onTaskFailed(StudyTestsOutputParser.TestsOutput testsOutput) {
@@ -112,16 +113,15 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     myTaskManger.setStatus(myTask, StudyStatus.Solved);
     ApplicationManager.getApplication().invokeLater(
       () -> StudyCheckUtils.showTestResultPopUp(testsOutput.getMessage(), MessageType.INFO.getPopupBackground(), myProject));
-    runAfterTaskActions();
   }
 
-  private void runAfterTaskActions() {
+  private void runAfterTaskSolvedActions() {
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(myProject);
     if (configurator != null) {
       StudyAfterCheckAction[] checkActions = configurator.getAfterCheckActions();
       if (checkActions != null) {
         for (StudyAfterCheckAction action: checkActions) {
-          action.run(myProject, myTask);
+          action.run(myProject, myTask, myStatusBeforeCheck);
         }
       }
     }
