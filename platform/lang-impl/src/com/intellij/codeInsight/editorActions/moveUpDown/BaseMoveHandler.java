@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -41,8 +42,9 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
+  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
     final Project project = editor.getProject();
+    assert project != null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
     PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
@@ -56,7 +58,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (editor.isViewer() || editor.isOneLineMode()) return false;
     final Project project = editor.getProject();
     if (project == null || project.isDisposed()) return false;
