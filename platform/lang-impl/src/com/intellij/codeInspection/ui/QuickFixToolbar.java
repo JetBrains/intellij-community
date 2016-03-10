@@ -27,41 +27,76 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ContainerAdapter;
+import java.awt.event.ContainerEvent;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.util.function.Supplier;
 
 /**
  * @author Dmitry Batkovich
  */
-public class QuickFixToolbar extends JPanel {
+public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProgressAware {
   private static final int MAX_FIX_COUNT = 3;
+  @Nullable private final Editor myEditor;
+  @NotNull private final InspectionResultsView myView;
+
+  private AsyncProcessIcon myWaitingIcon;
+  private SimpleColoredComponent myLabel;
 
   public QuickFixToolbar(@NotNull InspectionTree tree,
                          @NotNull Project project,
                          @Nullable Editor editor,
-                         @Nullable QuickFixAction[] fixes) {
-    final boolean hasFixes = fixes != null && fixes.length != 0;
+                         @NotNull InspectionResultsView view) {
+    myEditor = editor;
+    myView = view;
     CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
     int problemCount = descriptors.length;
     final boolean multipleDescriptors = problemCount > 1;
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    setBorder(IdeBorderFactory.createEmptyBorder(7 + (hasFixes ? 0 : 5), hasFixes ? 12 : 9, hasFixes ? 0 : 6, 0));
 
+    if (view.isUpdating()) {
+      myWaitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
+      myWaitingIcon.addContainerListener(new ContainerAdapter() {
+        @Override
+        public void componentRemoved(ContainerEvent e) {
+          Disposer.dispose(myWaitingIcon);
+        }
+      });
+      myLabel = getLabel(null, null, problemCount);
+      add(myLabel);
+      add(myWaitingIcon);
+    }
+    else {
+
+      QuickFixAction[] fixes = view.getProvider().getQuickFixes(view.getTree().getSelectedToolWrapper(), view.getTree());
+      final boolean hasFixes = fixes != null && fixes.length != 0;
+      setBorder(IdeBorderFactory.createEmptyBorder(7 + (hasFixes ? 0 : 5), hasFixes ? 12 : 9, hasFixes ? 0 : 6, 0));
+      fillPanel(tree, project, editor, fixes, hasFixes, descriptors, problemCount, multipleDescriptors);
+    }
+
+  }
+
+  private void fillPanel(@NotNull InspectionTree tree,
+                                @NotNull Project project,
+                                @Nullable Editor editor,
+                                @Nullable QuickFixAction[] fixes,
+                                boolean hasFixes,
+                                CommonProblemDescriptor[] descriptors,
+                                int problemCount,
+                                boolean multipleDescriptors) {
     fill(multipleDescriptors, () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), this);
     fill(hasFixes, () -> createFixPanel(fixes, multipleDescriptors), this);
     fill(true, () -> createSuppressionCombo(tree.getSelectedToolWrapper(), tree.getSelectionPaths(), project, multipleDescriptors), this);
@@ -70,19 +105,26 @@ public class QuickFixToolbar extends JPanel {
   }
 
   @NotNull
-  private static JComponent getLabel(QuickFixAction[] fixes, InspectionTreeNode targetNode, int problemsCount) {
+  private static SimpleColoredComponent getLabel(QuickFixAction[] fixes, InspectionTreeNode targetNode, int problemsCount) {
     final String targetName = targetNode instanceof RefElementNode ? ((RefElementNode)targetNode).getElement().getName() : null;
     SimpleColoredComponent label = new SimpleColoredComponent();
+    appendTextToLabel(label, problemsCount, targetName, fixes);
+    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
+    return label;
+  }
+
+  private static void appendTextToLabel(SimpleColoredComponent label,
+                                        int problemsCount,
+                                        String targetName,
+                                        QuickFixAction[] fixes) {
     boolean hasFixesNonIntersectedFixes = fixes != null && fixes.length == 0;
     label.append(problemsCount + " problems" +
                  (targetName == null ? "" : (" in " + targetName)) +
-                 (problemsCount > 1 && (fixes != null && fixes.length == MAX_FIX_COUNT) ? "    Fix all:" : "") +
+                 (problemsCount > 1 && (fixes != null && fixes.length >= MAX_FIX_COUNT) ? "    Fix all:" : "") +
                  (hasFixesNonIntersectedFixes ? ":" : "" ));
     if (hasFixesNonIntersectedFixes) {
       label.append(" select a single problem to see its quick fixes");
     }
-    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
-    return label;
   }
 
   private static JComponent createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
@@ -154,6 +196,28 @@ public class QuickFixToolbar extends JPanel {
       action.getTemplatePresentation().setText("Fix all '" + fix.getText() + "'");
     }
     return action.createCustomComponent(action.getTemplatePresentation());
+  }
+
+  @Override
+  public void updateLoadingProgress() {
+    if (myLabel != null) {
+      myLabel.clear();
+      final InspectionTree tree = myView.getTree();
+      appendTextToLabel(myLabel, tree.getSelectedProblemCount(), null, null);
+    }
+  }
+
+  @Override
+  public void treeLoaded() {
+    removeAll();
+    final InspectionTree tree = myView.getTree();
+    QuickFixAction[] fixes = myView.getProvider().getQuickFixes(tree.getSelectedToolWrapper(), tree);
+    final boolean hasFixes = fixes != null && fixes.length != 0;
+    CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
+    int problemCount = descriptors.length;
+    final boolean multipleDescriptors = problemCount > 1;
+    setBorder(IdeBorderFactory.createEmptyBorder(7 + (hasFixes ? 0 : 5), hasFixes ? 12 : 9, hasFixes ? 0 : 6, 0));
+    fillPanel(tree, myView.getProject(), myEditor, fixes, hasFixes, descriptors, problemCount, multipleDescriptors);
   }
 
   private static class MyCustomComponentLocalQuickFixWrapper extends AnAction implements CustomComponentAction {

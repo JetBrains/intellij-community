@@ -105,12 +105,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final GlobalInspectionContextImpl myGlobalInspectionContext;
   private boolean myRerun;
   private volatile boolean myDisposed;
+  private boolean myUpdating;
 
   @NotNull
   private final InspectionRVContentProvider myProvider;
   private AnAction myIncludeAction;
   private AnAction myExcludeAction;
   private Editor myPreviewEditor;
+  private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
 
   private final Object myTreeWriteLock = new Object();
 
@@ -123,7 +125,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
 
-    myTree = new InspectionTree(myProject, globalInspectionContext);
+    myTree = new InspectionTree(myProject, globalInspectionContext, this);
     initTreeListeners();
 
     myOccurenceNavigator = initOccurenceNavigator();
@@ -397,6 +399,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private void syncRightPanel() {
     final Editor oldEditor = myPreviewEditor;
+    myLoadingProgressPreview = null;
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
       if (myTree.getSelectedToolWrapper() == null) {
         mySplitter.setSecondComponent(getNothingToShowTextLabel());
@@ -470,10 +473,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        editorPanel.add(new QuickFixToolbar(myTree,
-                                            myProject,
-                                            myPreviewEditor,
-                                            myProvider.getQuickFixes(tool, myTree)),
+        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myTree,
+                                                               myProject,
+                                                               myPreviewEditor,
+                                                               this);
+        myLoadingProgressPreview = fixToolbar;
+        editorPanel.add(fixToolbar,
                         BorderLayout.NORTH);
       }
       mySplitter.setSecondComponent(editorPanel);
@@ -592,6 +597,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     boolean resultsFound = buildTree();
     myTree.restoreExpansionAndSelection();
     return resultsFound;
+  }
+
+  public void setUpdating(boolean isUpdating) {
+    myUpdating = isUpdating;
+    myTree.setPaintBusy(isUpdating);
+    if (myLoadingProgressPreview != null) {
+      myLoadingProgressPreview.treeLoaded();
+    }
   }
 
   public Object getTreeWriteLock() {
@@ -912,6 +925,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   public void updateRightPanel() {
     syncRightPanel();
+  }
+
+  boolean isUpdating() {
+    return myUpdating;
+  }
+
+  public void updateRightPanelLoading() {
+    if (!myDisposed && isUpdating() && myLoadingProgressPreview != null) {
+      myLoadingProgressPreview.updateLoadingProgress();
+    }
   }
 
   private class CloseAction extends AnAction implements DumbAware {

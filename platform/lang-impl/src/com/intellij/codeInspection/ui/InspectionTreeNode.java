@@ -22,7 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
 /**
@@ -87,7 +89,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super.add(newChild);
     if (myUpdater != null) {
       ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      myUpdater.update();
+      myUpdater.updateWithPreviewPanel();
     }
   }
 
@@ -96,7 +98,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super.insert(newChild, childIndex);
     if (myUpdater != null) {
       ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      myUpdater.update();
+      myUpdater.updateWithPreviewPanel();
     }
   }
 

@@ -125,7 +125,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
 
     myView = view;
-    myView.getTree().setPaintBusy(true);
+    myView.setUpdating(true);
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
 
     myContent.setDisposer(myView);
@@ -355,7 +355,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           addView(view);
         }
         if (myView != null) {
-          myView.getTree().setPaintBusy(false);
+          myView.setUpdating(false);
         }
       }
     });
@@ -808,7 +808,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
     }
     if (myView != null) {
-      myView.getTree().setPaintBusy(false);
+      myView.setUpdating(false);
     }
     super.cleanup();
   }
