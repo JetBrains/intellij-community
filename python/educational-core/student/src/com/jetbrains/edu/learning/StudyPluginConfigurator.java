@@ -5,7 +5,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.settings.ModifiableSettingsPanel;
+import com.jetbrains.edu.learning.twitter.StudyTwitterUtils;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +21,6 @@ public interface StudyPluginConfigurator {
 
   /**
    * Provide action group that should be placed on the tool window toolbar.
-   * @param project
    * @return
    */
   @NotNull
@@ -26,7 +28,6 @@ public interface StudyPluginConfigurator {
 
   /**
    * Provide panels, that could be added to Task tool window.
-   * @param project
    * @return Map from panel id, i.e. "Task description", to panel itself.
    */
   @NotNull
@@ -45,9 +46,50 @@ public interface StudyPluginConfigurator {
   StudyAfterCheckAction[] getAfterCheckActions();
   
   @NotNull String getLanguageScriptUrl();
-  
-  boolean accept(@NotNull final Project project);
 
   @Nullable
   ModifiableSettingsPanel getSettingsPanel();
+
+  /**
+   * To implement tweeting you should register you app in twitter. For registered application twitter provide
+   * consumer key and consumer secret, that are used for authorize by OAuth.
+   * @return consumer key for current educational plugin
+   */
+  @NotNull String getConsumerKey(@NotNull final Project project);
+
+  /**
+   * To implement tweeting you should register you app in twitter. For registered application twitter provide
+   * consumer key and consumer secret, that are used for authorize by OAuth.
+   * @return consumer secret for current educational plugin
+   */
+  @NotNull String getConsumerSecret(@NotNull final Project project);
+
+  /**
+   * The plugin implemented tweeting should define policy when user will be asked to tweet.
+   *@param statusBeforeCheck @return 
+   */
+  boolean askToTweet(@NotNull final Project project, Task solvedTask, StudyStatus statusBeforeCheck);
+  
+  /**
+   * Stores access token and token secret, obtained by authorizing PyCharm.
+   */
+  void storeTwitterTokens(@NotNull final Project project, @NotNull final String accessToken, @NotNull final String tokenSecret);
+
+  /**
+   * @return stored access token
+   */
+  @NotNull String getTwitterAccessToken(@NotNull Project project);
+
+  /**
+   * @return stored token secret
+   */
+  @NotNull String getTwitterTokenSecret(@NotNull Project project);
+
+  /**
+   * @return panel that will be shown to user in ask to tweet dialog. 
+   */
+  @Nullable
+  StudyTwitterUtils.TwitterDialogPanel getTweetDialogPanel(@NotNull Task solvedTask);
+  
+  boolean accept(@NotNull final Project project);
 }

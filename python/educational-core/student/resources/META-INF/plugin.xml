@@ -80,8 +80,6 @@
                              displayName="Educational"/>
     <applicationService serviceInterface="com.jetbrains.edu.learning.stepic.StudySettings"
                         serviceImplementation="com.jetbrains.edu.learning.stepic.StudySettings"/>
-    <projectService serviceInterface="com.jetbrains.edu.learning.settings.PyStudySettings"
-                    serviceImplementation="com.jetbrains.edu.learning.settings.PyStudySettings"/>
 
     <toolWindow id="Task Description" anchor="right" factoryClass="com.jetbrains.edu.learning.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
     <toolWindow id="Course Progress" anchor="left" factoryClass="com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
