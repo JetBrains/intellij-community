@@ -16,7 +16,7 @@ import java.lang.annotation.*;
 public @interface WrapInTransaction {
 
   /**
-   * @return the kind of transaction to wrap the action into. By default, it's {@link TransactionKind#NO_MERGE}.
+   * @return the kind of transaction to wrap the action into. By default, it's {@link TransactionKind#ANY_CHANGE}.
    */
   TransactionKind.Common value() default TransactionKind.Common.ANY_CHANGE;
 }
