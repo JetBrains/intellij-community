@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -107,6 +109,10 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
 
     if (isCategoryMethod) {
       myModifierList.addModifier(PsiModifier.STATIC);
+    }
+
+    if (mySkippedParameters.length != 0) {
+      myModifierList.removeModifier(GrModifierFlags.ABSTRACT_MASK);
     }
   }
 
@@ -235,7 +241,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
 
   @Override
   public String toString() {
-    return "reflected method";
+    return getName() + " (" + StringUtil.join(getParameters(), f -> f.getType().getPresentableText() + " " + f.getName(), ", ") + ")";
   }
 
   @NotNull
