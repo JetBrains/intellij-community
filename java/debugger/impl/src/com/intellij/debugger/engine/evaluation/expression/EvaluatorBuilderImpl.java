@@ -193,19 +193,25 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       Evaluator bodyEvaluator = accept(statement.getTryBlock());
       if (bodyEvaluator != null) {
         PsiCatchSection[] catchSections = statement.getCatchSections();
-        CatchEvaluator[] evaluators = new CatchEvaluator[catchSections.length];
-        for (int i = 0; i < catchSections.length; i++) {
-          CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
-          try {
-            PsiCatchSection section = catchSections[i];
-            PsiParameter parameter = section.getParameter();
-            if (parameter != null) {
+        List<CatchEvaluator> evaluators = new ArrayList<>();
+        for (PsiCatchSection catchSection : catchSections) {
+          PsiParameter parameter = catchSection.getParameter();
+          PsiCodeBlock catchBlock = catchSection.getCatchBlock();
+          if (parameter != null && catchBlock != null) {
+            CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
+            try {
               myCurrentFragmentEvaluator.setInitialValue(parameter.getName(), null);
-              myCurrentFragmentEvaluator.setStatements(visitStatements(section.getCatchBlock().getStatements()));
-              evaluators[i] = new CatchEvaluator(parameter.getType().getCanonicalText(), parameter.getName(), myCurrentFragmentEvaluator);
+              myCurrentFragmentEvaluator.setStatements(visitStatements(catchBlock.getStatements()));
+              PsiType type = parameter.getType();
+              List<PsiType> types =
+                type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
+              for (PsiType psiType : types) {
+                evaluators.add(new CatchEvaluator(psiType.getCanonicalText(), parameter.getName(), myCurrentFragmentEvaluator));
+              }
             }
-          } finally {
-            myCurrentFragmentEvaluator = oldFragmentEvaluator;
+            finally{
+              myCurrentFragmentEvaluator = oldFragmentEvaluator;
+            }
           }
         }
         myResult = new TryEvaluator(bodyEvaluator, evaluators, accept(statement.getFinallyBlock()));
