@@ -387,7 +387,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
 
-    if (runGlobalToolsOnly) return;
+    if (runGlobalToolsOnly || (localTools.isEmpty() && globalSimpleTools.isEmpty())) return;
 
     final Set<VirtualFile> localScopeFiles = scope.toSearchScope() instanceof LocalSearchScope ? new THashSet<VirtualFile>() : null;
     for (Tools tools : globalSimpleTools) {
