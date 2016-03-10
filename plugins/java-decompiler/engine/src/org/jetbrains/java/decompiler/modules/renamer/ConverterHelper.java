@@ -35,12 +35,16 @@ public class ConverterHelper {
     return fullName.substring(0, fullName.lastIndexOf('/') + 1);
   }
 
-  public static String getClassPrefix(int accessFlags) {
-    if ((accessFlags & CodeConstants.ACC_INTERFACE) == CodeConstants.ACC_INTERFACE) {
-      return "interface_";
-    }
-    else if ((accessFlags & CodeConstants.ACC_ENUM) == CodeConstants.ACC_ENUM) {
+  public static String getNextClassNamePrefix(int accessFlags) {
+    if ((accessFlags & CodeConstants.ACC_ENUM) == CodeConstants.ACC_ENUM) {
       return "enum_";
+    }
+    //ACC_INTERFACE must be set whenever ACC_ANNOTATION is set, so we need to do the ACC_ANNOTATION check first
+    else if ((accessFlags & CodeConstants.ACC_ANNOTATION) == CodeConstants.ACC_ANNOTATION) {
+      return "annotation_";
+    }
+    else if ((accessFlags & CodeConstants.ACC_INTERFACE) == CodeConstants.ACC_INTERFACE) {
+      return "interface_";
     }
     else {
       return "class_";

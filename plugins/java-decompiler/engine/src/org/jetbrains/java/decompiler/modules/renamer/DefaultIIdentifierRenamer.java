@@ -75,7 +75,7 @@ public class DefaultIIdentifierRenamer implements IIdentifierRenamer {
   @Override
   public String getNextClassName(String simpleName, String fullName, int accessFlags) {
     if (fullName == null) {
-      return ConverterHelper.getClassPrefix(accessFlags) + (classCounter++);
+      return ConverterHelper.getNextClassNamePrefix(accessFlags) + (classCounter++);
     }
 
     int index = 0;
@@ -83,7 +83,7 @@ public class DefaultIIdentifierRenamer implements IIdentifierRenamer {
       index++;
     }
     if (index == 0 || index == fullName.length()) {
-      return ConverterHelper.getClassPrefix(accessFlags) + (classCounter++);
+      return ConverterHelper.getNextClassNamePrefix(accessFlags) + (classCounter++);
     }
     else {
       String name = fullName.substring(index);
