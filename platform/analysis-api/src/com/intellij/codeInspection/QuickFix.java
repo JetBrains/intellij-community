@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.intention.WriteActionAware;
+import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
