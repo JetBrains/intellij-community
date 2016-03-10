@@ -18,8 +18,8 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.editor.Document;
 
 /**
- * A kind of transaction used in {@link TransactionGuard#submitMergeableTransaction(TransactionKind, Runnable)}
- * and {@link TransactionGuard#acceptNestedTransactions(TransactionKind...)}.
+ * A kind of transaction used in {@link TransactionGuard#submitMergeableTransaction(TransactionKind, Runnable)},
+ * {@link TransactionGuard#acceptNestedTransactions(TransactionKind...)} and {@link AcceptNestedTransactions}.
  */
 public interface TransactionKind {
   /**

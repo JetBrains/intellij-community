@@ -60,7 +60,10 @@ import org.jetbrains.annotations.NotNull;
  *
  * Having said all that, it's still advisable that the transactions be as short as possible and preferably exclude any modal dialogs
  * for which transaction-ness is not critical. So a better overall strategy would be to either make the dialogs non-modal,
- * or at least make them and the code that shows them prepared for possible model changes while the dialog is shown.
+ * or at least make them and the code that shows them prepared for possible model changes while the dialog is shown.<p/>
+ *
+ * Dialogs that have per-project modality must never be shown from a transaction, because this would disallow making changes in another
+ * project: they'd be blocked by the running transaction.
  *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
  * A: Add a transaction somewhere into the call stack, to the outermost callee where having read/write model consistency is needed.
@@ -177,8 +180,10 @@ public abstract class TransactionGuard {
   /**
    * Allow incoming transactions of the specified kinds to be executed immediately, instead of being queued until the current transaction is finished.<p/>
    *
-   * Example: outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document)
-   * should be allowed.
+   * Example: outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document).
+   * should be allowed.<p/>
+   *
+   * For dialogs, consider using {@link AcceptNestedTransactions} annotation instead of explicit call to this method.
    * @param kinds kinds of transactions to allow
    * @return a token object for this session. Please call {@link AccessToken#finish()} (inside finally clause) when you don't want
    * nested transactions anymore.
