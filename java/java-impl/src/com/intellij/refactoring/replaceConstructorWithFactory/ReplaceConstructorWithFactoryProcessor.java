@@ -175,6 +175,10 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       }
     }
 
+    final PsiMethod factoryMethod = myTargetClass.findMethodBySignature(createFactoryMethod(), false);
+    if (factoryMethod != null) {
+      conflicts.putValue(factoryMethod, "Factory method " + factoryMethod.getName() + " already exists and would be used instead of newly created.");
+    }
 
     return showConflicts(conflicts, usages);
   }
@@ -193,9 +197,11 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     try {
       PsiReferenceExpression classReferenceExpression =
         myFactory.createReferenceExpression(myTargetClass);
-      PsiReferenceExpression qualifiedMethodReference =
-        (PsiReferenceExpression)myFactory.createExpressionFromText("A." + myFactoryName, null);
-      PsiMethod factoryMethod = (PsiMethod)myTargetClass.add(createFactoryMethod());
+      PsiReferenceExpression qualifiedMethodReference = (PsiReferenceExpression)myFactory.createExpressionFromText("A." + myFactoryName, null);
+
+      PsiMethod factoryMethod = createFactoryMethod();
+      final PsiMethod oldFactoryMethod = myTargetClass.findMethodBySignature(factoryMethod, false);
+      factoryMethod = oldFactoryMethod != null ? oldFactoryMethod : (PsiMethod)myTargetClass.add(factoryMethod);
       if (myConstructor != null) {
         PsiUtil.setModifierProperty(myConstructor, PsiModifier.PRIVATE, true);
         VisibilityUtil.escalateVisibility(myConstructor, factoryMethod);
