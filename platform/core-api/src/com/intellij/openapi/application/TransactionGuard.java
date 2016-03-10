@@ -17,6 +17,8 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -96,13 +98,26 @@ public abstract class TransactionGuard {
   }
 
   /**
-   * Schedules a transaction and waits for it to be completed. Only allowed to be invoked on non-UI thread and outside read action.
+   * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
+   * or inside a read action on non-UI thread.
    * @see #submitMergeableTransaction(TransactionKind, Runnable)
-   * @param kind
-   * @param transaction
    * @throws ProcessCanceledException if current thread is interrupted
    */
   public abstract void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull Runnable transaction) throws ProcessCanceledException;
+
+  /**
+   * Same as {@link #submitTransactionAndWait(TransactionKind, Runnable)}, but returns a value computed by the transaction.
+   */
+  public <T> T submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Computable<T> transaction) throws ProcessCanceledException {
+    final Ref<T> result = Ref.create();
+    submitTransactionAndWait(kind, new Runnable() {
+      @Override
+      public void run() {
+        result.set(transaction.compute());
+      }
+    });
+    return result.get();
+  }
 
   /**
    * A synchronous version of {@link #submitMergeableTransaction(TransactionKind, Runnable)}.

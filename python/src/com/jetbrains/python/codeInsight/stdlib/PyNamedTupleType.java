@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -69,7 +70,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
       return classMembers;
     }
     if (myFields.contains(name)) {
-      return Collections.singletonList(new RatedResolveResult(1000, new PyElementImpl(myDeclaration.getNode())));
+      return Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_HIGH, new PyElementImpl(myDeclaration.getNode())));
     }
     return null;
   }
@@ -98,7 +99,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (myDefinitionLevel > 0) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel-1);
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel - 1);
     }
     return null;
   }
@@ -111,6 +112,15 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Override
   public String toString() {
     return "PyNamedTupleType: " + myName;
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> result = super.getMemberNames(inherited, context);
+    result.addAll(myFields);
+
+    return result;
   }
 
   @Nullable

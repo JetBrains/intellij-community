@@ -26,6 +26,7 @@ import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -87,7 +88,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
       XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
       Map<?, ValueMarkup> markupMap = markers != null ? markers.getAllMarkers() : null;
       //final Map<ObjectReference, ValueMarkup> markupMap = ValueDescriptorImpl.getMarkupMap(process);
-      if (markupMap != null && markupMap.size() > 0) {
+      if (!ContainerUtil.isEmpty(markupMap)) {
         final Pair<String, Map<String, ObjectReference>> markupVariables = createMarkupVariablesText(markupMap);
         int offset = markupVariables.getFirst().length() - 1;
         final TextWithImportsImpl textWithImports = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, markupVariables.getFirst(), "", myDelegate.getFileType());

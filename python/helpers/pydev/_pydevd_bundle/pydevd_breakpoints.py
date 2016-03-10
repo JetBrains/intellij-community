@@ -8,7 +8,7 @@ _original_excepthook = None
 _handle_exceptions = None
 
 
-from _pydev_imps import _pydev_threading as threading
+from _pydev_imps._pydev_saved_modules import threading
 
 threadingCurrentThread = threading.currentThread
 

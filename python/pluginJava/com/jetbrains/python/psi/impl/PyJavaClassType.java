@@ -31,9 +31,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -49,7 +47,7 @@ public class PyJavaClassType implements PyClassLikeType {
 
   @Nullable
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
-                                                          PyExpression location,
+                                                          @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
     return resolveMember(name, location, direction, resolveContext, true);
@@ -153,14 +151,72 @@ public class PyJavaClassType implements PyClassLikeType {
 
   @Override
   public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
-    // TODO: Implement
+    for (PsiMethod method : myClass.getAllMethods()) {
+      processor.process(method);
+    }
+
+    for (PsiField field : myClass.getAllFields()) {
+      processor.process(field);
+    }
+
+    if (!inherited) {
+      return;
+    }
+
+    for (PyClassLikeType type : getAncestorTypes(context)) {
+      if (type != null) {
+        type.visitMembers(processor, false, context);
+      }
+    }
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> result = new LinkedHashSet<>();
+
+    for (PsiMethod method : myClass.getAllMethods()) {
+      result.add(method.getName());
+    }
+
+    for (PsiField field : myClass.getAllFields()) {
+      result.add(field.getName());
+    }
+
+    if (inherited) {
+      for (PyClassLikeType type : getAncestorTypes(context)) {
+        if (type != null) {
+          result.addAll(type.getMemberNames(false, context));
+        }
+      }
+    }
+
+    return result;
   }
 
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
-    // TODO: Implement
-    return Collections.emptyList();
+    final List<PyClassLikeType> result = new ArrayList<>();
+
+    final Deque<PsiClass> deque = new LinkedList<>();
+    final Set<PsiClass> visited = new HashSet<>();
+
+    deque.addAll(Arrays.asList(myClass.getSupers()));
+
+    while (!deque.isEmpty()) {
+      final PsiClass current = deque.pollFirst();
+
+      if (current == null || !visited.add(current)) {
+        continue;
+      }
+
+      result.add(new PyJavaClassType(current, myDefinition));
+
+      deque.addAll(Arrays.asList(current.getSupers()));
+    }
+
+    return result;
   }
 
   @Override

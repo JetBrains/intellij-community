@@ -24,6 +24,9 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 /**
  * User: anna
@@ -33,10 +36,24 @@ public abstract class AbstractJavaFXTestCase extends LightCodeInsightFixtureTest
   public static final DefaultLightProjectDescriptor JAVA_FX_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
        public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-       PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
+       addJavaFxJarAsLibrary(module, model);
        super.configureModule(module, model, contentEntry);
      }
    };
+
+  public static void addJavaFxJarAsLibrary(@NotNull Module module) {
+    addJavaFxJarAsLibrary(module, null);
+  }
+
+  public static void addJavaFxJarAsLibrary(@NotNull Module module, @Nullable ModifiableRootModel model) {
+    final String libPath = System.getProperty("java.home") + File.separator + "lib" + File.separator + "ext";
+    if (model != null) {
+      PsiTestUtil.addLibrary(module, model, "javafx", libPath, "jfxrt.jar");
+    }
+    else {
+      PsiTestUtil.addLibrary(module, "javafx", libPath, "jfxrt.jar");
+    }
+  }
 
   @NotNull
   @Override

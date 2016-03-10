@@ -22,7 +22,6 @@ package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
-import junit.framework.ComparisonFailure;
 import org.junit.Ignore;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
@@ -36,9 +35,6 @@ import java.lang.annotation.Annotation;
 import java.util.*;
 
 public class JUnit4TestListener extends RunListener {
-  private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
-  private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
-  private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
   public static final String EMPTY_SUITE_NAME = "junit.framework.TestSuite$1";
   public static final String EMPTY_SUITE_WARNING = "warning";
 
@@ -202,7 +198,7 @@ public class JUnit4TestListener extends RunListener {
       if (failure != null) {
         final String trace = getTrace(failure);
         final Throwable ex = failure.getException();
-        final ComparisonFailureData notification = createExceptionNotification(ex);
+        final ComparisonFailureData notification = ExpectedPatterns.createExceptionNotification(ex);
         ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, ex);
       }
     }
@@ -281,55 +277,6 @@ public class JUnit4TestListener extends RunListener {
     attrs.put("name", methodName);
     myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_IGNORED, attrs));
     testFinished(description);
-  }
-
-  private static boolean isComparisonFailure(Throwable throwable) {
-    if (throwable == null) return false;
-    return isComparisonFailure(throwable.getClass());
-  }
-
-  private static boolean isComparisonFailure(Class aClass) {
-    if (aClass == null) return false;
-    final String throwableClassName = aClass.getName();
-    if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME)) return true;
-    return isComparisonFailure(aClass.getSuperclass());
-  }
-
-  static ComparisonFailureData createExceptionNotification(Throwable assertion) {
-    if (isComparisonFailure(assertion)) {
-      return ComparisonFailureData.create(assertion);
-    }
-    try {
-      final Throwable cause = assertion.getCause();
-      if (isComparisonFailure(cause)) {
-        return ComparisonFailureData.create(cause);
-      }
-    }
-    catch (Throwable ignore) {
-    }
-    final String message = assertion.getMessage();
-    if (message != null  && acceptedByThreshold(message.length())) {
-      try {
-        return ExpectedPatterns.createExceptionNotification(message);
-      }
-      catch (Throwable ignored) {}
-    }
-    return null;
-  }
-
-  private static boolean acceptedByThreshold(int messageLength) {
-    int threshold = 10000;
-    try {
-      final String property = System.getProperty(MESSAGE_LENGTH_FOR_PATTERN_MATCHING);
-      if (property != null) {
-        try {
-          threshold = Integer.parseInt(property);
-        }
-        catch (NumberFormatException ignore) {}
-      }
-    }
-    catch (SecurityException ignored) {}
-    return messageLength < threshold;
   }
 
   private void sendTree(Description description, Description parent, List currentParents) {

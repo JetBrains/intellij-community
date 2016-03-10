@@ -338,17 +338,20 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
     buf.append(HTMLComposerImpl.CODE_CLOSING);
 
-    if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) {
-      buf.append(" ");
-      buf.append(InspectionsBundle.message("inspection.export.results.anonymous.ref.in.owner"));
-      buf.append(" ");
-      myComposer.appendElementReference(buf, ((RefElement)refElement.getOwner()), isPackageIncluded);
-    }
-    else if (isPackageIncluded) {
-      buf.append(" ").append("<code class=\"package\">").append("(");
-      myComposer.appendQualifiedName(buf, refElement.getOwner());
-//      buf.append(RefUtil.getPackageName(refElement));
-      buf.append(")").append(HTMLComposerImpl.CODE_CLOSING);
+    final RefEntity owner = refElement.getOwner();
+    if (owner != null) {
+      if ((refElement instanceof RefClass && ((RefClass)refElement).isAnonymous())) {
+        buf.append(" ");
+        buf.append(InspectionsBundle.message("inspection.export.results.anonymous.ref.in.owner"));
+        buf.append(" ");
+        myComposer.appendElementReference(buf, (RefElement) owner, isPackageIncluded);
+      }
+      else if (isPackageIncluded) {
+        buf.append(" ").append("<code class=\"package\">").append("(");
+        myComposer.appendQualifiedName(buf, owner);
+        //      buf.append(RefUtil.getPackageName(refElement));
+        buf.append(")").append(HTMLComposerImpl.CODE_CLOSING);
+      }
     }
   }
 

@@ -248,7 +248,7 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Remove tag";
     }
 
     @Override

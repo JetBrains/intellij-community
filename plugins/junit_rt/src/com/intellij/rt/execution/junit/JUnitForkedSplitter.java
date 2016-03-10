@@ -43,7 +43,7 @@ public class JUnitForkedSplitter extends ForkedSplitter {
 
   protected Object createRootDescription(String[] args, String configName)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-    myTestRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(Boolean.valueOf((String)myNewArgs.get(0)).booleanValue()).newInstance();
+    myTestRunner = (IdeaTestRunner)JUnitStarter.getAgentClass((String)myNewArgs.get(0)).newInstance();
     myTestRunner.setStreams(myOut, myErr, 0);
     return myTestRunner.getTestToStart(args, configName);
   }

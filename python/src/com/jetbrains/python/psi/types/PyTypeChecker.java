@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -46,8 +45,8 @@ public class PyTypeChecker {
    * For example int matches object, while str doesn't match int.
    * Work for builtin types, classes, tuples etc.
    *
-   * @param expected expected type
-   * @param actual type to be matched against expected
+   * @param expected      expected type
+   * @param actual        type to be matched against expected
    * @param context
    * @param substitutions
    * @return
@@ -179,11 +178,11 @@ public class PyTypeChecker {
       if (overridesGetAttr(actualClassType.getPyClass(), context)) {
         return true;
       }
-      final Set<String> actualAttributes = getClassTypeAttributes(actualClassType, true, context);
+      final Set<String> actualAttributes = actualClassType.getMemberNames(true, context);
       return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
     }
     if (actual instanceof PyStructuralType && expected instanceof PyClassType) {
-      final Set<String> expectedAttributes = getClassTypeAttributes((PyClassType)expected, true, context);
+      final Set<String> expectedAttributes = ((PyClassType)expected).getMemberNames(true, context);
       return expectedAttributes.containsAll(((PyStructuralType)actual).getAttributeNames());
     }
     if (actual instanceof PyCallableType && expected instanceof PyCallableType) {
@@ -210,47 +209,6 @@ public class PyTypeChecker {
       }
     }
     return matchNumericTypes(expected, actual);
-  }
-
-  @NotNull
-  public static Set<String> getClassTypeAttributes(@NotNull PyClassType type, boolean inherited, @NotNull TypeEvalContext context) {
-    final Set<String> attributes = getClassAttributes(type.getPyClass(), inherited, type.isDefinition(), context);
-    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      final Collection<PyCustomMember> members = provider.getMembers(type, null, context);
-      for (PyCustomMember member : members) {
-        attributes.add(member.getName());
-      }
-    }
-    return attributes;
-  }
-
-  @NotNull
-  private static Set<String> getClassAttributes(@NotNull PyClass cls,
-                                                boolean inherited,
-                                                boolean isDefinition,
-                                                @NotNull TypeEvalContext context) {
-    final Set<String> attributes = new HashSet<String>();
-    for (PyFunction function : cls.getMethods()) {
-      attributes.add(function.getName());
-    }
-    for (PyTargetExpression instanceAttribute : cls.getInstanceAttributes()) {
-      attributes.add(instanceAttribute.getName());
-    }
-    for (PyTargetExpression classAttribute : cls.getClassAttributes()) {
-      attributes.add(classAttribute.getName());
-    }
-    if (inherited) {
-      for (PyClass ancestor : cls.getAncestorClasses(null)) {
-        final PyType ancestorType = context.getType(ancestor);
-        if (ancestorType instanceof PyClassLikeType) {
-          final PyClassLikeType classType = isDefinition ? (PyClassLikeType)ancestorType : ((PyClassLikeType)ancestorType).toInstance();
-          if (classType instanceof PyClassType) {
-            attributes.addAll(getClassTypeAttributes((PyClassType)classType, false, context));
-          }
-        }
-      }
-    }
-    return attributes;
   }
 
   private static boolean matchNumericTypes(PyType expected, PyType actual) {
@@ -527,7 +485,7 @@ public class PyTypeChecker {
       return isUnionCallable((PyUnionType)type);
     }
     if (type instanceof PyCallableType) {
-      return ((PyCallableType) type).isCallable();
+      return ((PyCallableType)type).isCallable();
     }
     if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
       return true;

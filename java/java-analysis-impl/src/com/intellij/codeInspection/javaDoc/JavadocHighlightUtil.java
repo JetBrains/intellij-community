@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -39,6 +42,8 @@ import java.util.stream.Stream;
 public class JavadocHighlightUtil {
   private static final String[] TAGS_TO_CHECK = {"author", "version", "since"};
   private static final Set<String> UNIQUE_TAGS = ContainerUtil.newHashSet("return", "deprecated", "serial", "serialData");
+  private static final TokenSet SEE_TAG_REFS = TokenSet.create(
+    JavaDocElementType.DOC_REFERENCE_HOLDER, JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
 
   public interface ProblemHolder {
     Project project();
@@ -181,7 +186,18 @@ public class JavadocHighlightUtil {
         }
       }
 
-      checkInlineTags(tag.getDataElements(), holder);
+      PsiElement[] dataElements = tag.getDataElements();
+
+      if ("see".equals(tagName)) {
+        if (dataElements.length == 0 || dataElements.length == 1 && empty(dataElements[0])) {
+          holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
+        }
+        else if (!SEE_TAG_REFS.contains(dataElements[0].getNode().getElementType())) {
+          holder.problem(dataElements[0], InspectionsBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
+        }
+      }
+
+      checkInlineTags(dataElements, holder);
     }
   }
 

@@ -91,7 +91,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
   private final NotNullLazyValue<ContentManager> myContentManager;
-  private InspectionResultsView myView;
+  private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
 
@@ -125,7 +125,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
 
     myView = view;
-    myView.getTree().setPaintBusy(true);
+    myView.setUpdating(true);
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
 
     myContent.setDisposer(myView);
@@ -344,7 +344,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         } else {
           view = null;
         }
-        if (!(myView == null ? view : myView).update() && !getUIOptions().SHOW_ONLY_DIFF) {
+        if (!(myView == null ? view : myView).hasProblems() && !getUIOptions().SHOW_ONLY_DIFF) {
           NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
           close(true);
           if (view != null) {
@@ -355,7 +355,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           addView(view);
         }
         if (myView != null) {
-          myView.getTree().setPaintBusy(false);
+          myView.setUpdating(false);
         }
       }
     });
@@ -779,7 +779,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   public void close(boolean noSuspisiousCodeFound) {
-    if (!noSuspisiousCodeFound && (myView == null || myView.isRerun())) return;
+    if (!noSuspisiousCodeFound) {
+      if (myView.isRerun()) {
+        myViewClosed = true;
+        myView = null;
+      }
+      if (myView == null) {
+        return;
+      }
+    }
     AnalysisUIOptions.getInstance(getProject()).save(myUIOptions);
     if (myContent != null) {
       final ContentManager contentManager = getContentManager();
@@ -800,7 +808,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
     }
     if (myView != null) {
-      myView.getTree().setPaintBusy(false);
+      myView.setUpdating(false);
     }
     super.cleanup();
   }

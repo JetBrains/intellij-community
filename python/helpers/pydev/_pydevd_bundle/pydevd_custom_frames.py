@@ -1,6 +1,6 @@
 from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
-from _pydev_imps import _pydev_thread
+from _pydev_imps._pydev_saved_modules import thread
 threadingCurrentThread = threading.currentThread
 
 DEBUG = False
@@ -22,7 +22,7 @@ class CustomFramesContainer:
 
 def custom_frames_container_init(): #Note: no staticmethod on jython 2.1 (so, use free-function)
 
-    CustomFramesContainer.custom_frames_lock = _pydev_thread.allocate_lock()
+    CustomFramesContainer.custom_frames_lock = thread.allocate_lock()
 
     # custom_frames can only be accessed if properly locked with custom_frames_lock!
     # Key is a string identifying the frame (as well as the thread it belongs to).

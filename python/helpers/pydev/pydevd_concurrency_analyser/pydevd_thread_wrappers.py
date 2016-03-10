@@ -1,4 +1,4 @@
-from _pydev_imps import _pydev_threading as threading
+from _pydev_imps._pydev_saved_modules import threading
 
 
 def wrapper(fun):
