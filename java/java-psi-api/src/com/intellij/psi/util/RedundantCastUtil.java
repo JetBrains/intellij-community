@@ -281,10 +281,13 @@ public class RedundantCastUtil {
         final JavaResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
         if (!newResult.isValidResult()) return;
         final PsiMethod newTargetMethod = (PsiMethod)newResult.getElement();
-        final PsiType newReturnType = newCall.getType();
-        final PsiType oldReturnType = methodCall.getType();
+        PsiType newReturnType = newCall.getType(), oldReturnType = methodCall.getType();
+        if (newReturnType instanceof PsiCapturedWildcardType && oldReturnType instanceof PsiCapturedWildcardType) {
+          newReturnType = ((PsiCapturedWildcardType)newReturnType).getUpperBound();
+          oldReturnType = ((PsiCapturedWildcardType)oldReturnType).getUpperBound();
+        }
         if (Comparing.equal(newReturnType, oldReturnType)) {
-          if (newTargetMethod.equals(targetMethod) ||
+          if (Comparing.equal(newTargetMethod, targetMethod) ||
               (newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&
                !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&  // see SCR11555, SCR14559
                areThrownExceptionsCompatible(targetMethod, newTargetMethod))) {
