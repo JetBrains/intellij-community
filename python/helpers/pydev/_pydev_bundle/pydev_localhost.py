@@ -1,5 +1,5 @@
 from _pydevd_bundle import pydevd_constants
-from _pydev_imps import _pydev_socket as socket
+from _pydev_imps._pydev_saved_modules import socket
 
 _cache = None
 def get_localhost():

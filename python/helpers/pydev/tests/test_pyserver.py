@@ -4,10 +4,12 @@
 import sys
 import os
 try:
-    from _pydev_imps._pydev_thread import start_new_thread
+    from _pydev_imps._pydev_saved_modules import thread
+    start_new_thread = thread.start_new_thread
 except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    from _pydev_imps._pydev_thread import start_new_thread
+    from _pydev_imps._pydev_saved_modules import thread
+    start_new_thread = thread.start_new_thread
 
 
 #make it as if we were executing from the directory above this one (so that we can use pycompletionserver

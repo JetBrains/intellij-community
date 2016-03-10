@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen",
                                                                     "pathlib.Path.open");
-  private static final String BINARY_FILE_TYPE = "io.FileIO[bytes]";
-  private static final String TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
+
+  private static final String PY2K_FILE_TYPE = "file";
+  private static final String PY3K_BINARY_FILE_TYPE = "io.FileIO[bytes]";
+  private static final String PY3K_TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
@@ -275,19 +277,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     final LanguageLevel level = LanguageLevel.forElement(anchor);
-    // Binary mode
-    if (mode.contains("b")) {
-      return PyTypeParser.getTypeByName(anchor, BINARY_FILE_TYPE);
-    }
-    // Text mode
-    else {
-      if (level.isPy3K() || "io.open".equals(callQName)) {
-        return PyTypeParser.getTypeByName(anchor, TEXT_FILE_TYPE);
-      }
-      else {
-        return PyTypeParser.getTypeByName(anchor, BINARY_FILE_TYPE);
+
+    if (level.isPy3K() || "io.open".equals(callQName)) {
+      if (mode.contains("b")) {
+        return PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE);
+      } else {
+        return PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE);
       }
     }
+
+    return PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE);
   }
 
   @Nullable
