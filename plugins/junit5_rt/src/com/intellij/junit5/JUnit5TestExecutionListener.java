@@ -15,6 +15,7 @@
  */
 package com.intellij.junit5;
 
+import com.intellij.junit4.ExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.gen5.engine.TestExecutionResult;
@@ -22,6 +23,7 @@ import org.junit.gen5.engine.support.descriptor.JavaSource;
 import org.junit.gen5.launcher.TestExecutionListener;
 import org.junit.gen5.launcher.TestIdentifier;
 import org.junit.gen5.launcher.TestPlan;
+import org.opentest4j.AssertionFailedError;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -116,7 +118,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
     final String displayName = testIdentifier.getDisplayName();
     final TestExecutionResult.Status status = testExecutionResult.getStatus();
-    final Optional<Throwable> throwableOptional = testExecutionResult.getThrowable();
+    final Throwable throwableOptional = testExecutionResult.getThrowable().orElse(null);
     if (testIdentifier.isTest()) {
       final long duration = System.currentTimeMillis() - myCurrentTestStart;
       if (status == TestExecutionResult.Status.FAILED) {
@@ -155,7 +157,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") + "\']");
   }
   
-  private void testFailure(Optional<Throwable> failure, String messageName, TestIdentifier testIdentifier, long duration) {
+  private void testFailure(Throwable ex, String messageName, TestIdentifier testIdentifier, long duration) {
     final Map<String, String> attrs = new HashMap<>();
     attrs.put("name", testIdentifier.getDisplayName());
     attrs.put("id", testIdentifier.getUniqueId().toString());
@@ -163,12 +165,20 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       attrs.put("duration", Long.toString(duration));
     }
     try {
-      if (failure.isPresent()) {
-        final Throwable ex = failure.get();
+      if (ex != null) {
         final StringWriter stringWriter = new StringWriter();
         final PrintWriter writer = new PrintWriter(stringWriter);
         ex.printStackTrace(writer);
-        ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), ex.getMessage(), attrs, ex);
+        final ComparisonFailureData failureData;
+        if (ex instanceof AssertionFailedError && ((AssertionFailedError)ex).isActualDefined() && ((AssertionFailedError)ex).isExpectedDefined()) {
+          final Object actual = ((AssertionFailedError)ex).getActual();
+          final Object expected = ((AssertionFailedError)ex).getExpected();
+          failureData = new ComparisonFailureData(expected.toString(), actual.toString());
+        }
+        else {
+          failureData = ExpectedPatterns.createExceptionNotification(ex);
+        }
+        ComparisonFailureData.registerSMAttributes(failureData, stringWriter.toString(), ex.getMessage(), attrs, ex);
       }
     }
     finally {

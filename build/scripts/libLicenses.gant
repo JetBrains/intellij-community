@@ -267,6 +267,7 @@ libraryLicense(name: "NanoXML", version: "2.2.3", license: "zlib/libpng", url: "
 libraryLicense(name: "nekohtml", libraryName: "nekohtml", version: "1.9.14", license: "Apache 2.0", url: "http://nekohtml.sourceforge.net/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0.txt")
 libraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.0.Beta3", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Objenesis", libraryName: "objenesis-1.2.jar", version: "1.2", license: "Apache 2.0", url: "http://objenesis.org/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "opentest4j", libraryName: "opentest4j", version: "1.0.0", license: "Apache 2.0", url: "https://github.com/ota4j-team/opentest4j", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "pep8.py", attachedTo: "python-helpers", version: "1.6.2", license: "MIT", url: "http://pep8.readthedocs.org/")
 libraryLicense(name: "PicoContainer", libraryName: "picocontainer", version: "1.2", license: "BSD", url: "http://www.picocontainer.org/", licenseUrl: "http://docs.codehaus.org/display/PICO/License")
 libraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver-2.4.4.jar", version: "2.4.4", license: "Apache 2.0", url: "https://github.com/codehaus-plexus/plexus-archiver", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
