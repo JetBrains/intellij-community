@@ -18,9 +18,15 @@ package com.intellij.util.textCompletion;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+
+import static com.intellij.codeInsight.AutoPopupController.ALWAYS_AUTO_POPUP;
 
 /**
  * @author sergey.evdokimov
@@ -42,5 +48,16 @@ public class TextCompletionContributor extends CompletionContributor implements 
     CompletionResultSet activeResult = provider.applyPrefixMatcher(result, prefix);
 
     provider.fillCompletionVariants(parameters, prefix, activeResult);
+  }
+
+  @Override
+  public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
+    TextCompletionProvider provider = TextCompletionUtil.getProvider(position.getContainingFile());
+    if (provider != null) {
+      if (Boolean.TRUE.equals(position.getContainingFile().getUserData(ALWAYS_AUTO_POPUP))) {
+        return Objects.equals(CharFilter.Result.ADD_TO_PREFIX, provider.acceptChar(typeChar));
+      }
+    }
+    return super.invokeAutoPopup(position, typeChar);
   }
 }

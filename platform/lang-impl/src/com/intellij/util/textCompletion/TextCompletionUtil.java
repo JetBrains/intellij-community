@@ -15,6 +15,7 @@
  */
 package com.intellij.util.textCompletion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -87,14 +88,17 @@ public class TextCompletionUtil {
 
   public static class DocumentWithCompletionCreator extends LanguageTextField.SimpleDocumentCreator {
     @NotNull private final TextCompletionProvider myProvider;
+    private final boolean myAutoPopup;
 
-    public DocumentWithCompletionCreator(@NotNull TextCompletionProvider provider) {
+    public DocumentWithCompletionCreator(@NotNull TextCompletionProvider provider, boolean autoPopup) {
       myProvider = provider;
+      myAutoPopup = autoPopup;
     }
 
     @Override
     public void customizePsiFile(@NotNull PsiFile file) {
       installProvider(file, myProvider);
+      file.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, myAutoPopup);
     }
   }
 }
