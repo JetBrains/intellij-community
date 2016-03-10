@@ -80,8 +80,9 @@ public class ClassesProcessor {
               }
               else if (simpleName != null && DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
                 IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getHelper();
-                if (renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
-                  simpleName = renamer.getNextClassName(innerName, simpleName);
+                // TODO: rename packages using renamer.getNextPackageName
+                if (renamer.shouldRenameClass(simpleName, innerName)) {
+                  simpleName = renamer.getNextClassName(simpleName, innerName);
                   mapNewSimpleNames.put(innerName, simpleName);
                 }
               }

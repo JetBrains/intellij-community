@@ -52,7 +52,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
   }
 
   public static AnnotationExprent parseAnnotation(DataInputStream data, ConstantPool pool) throws IOException {
-    String className = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
+    String className = pool.getPrimitiveConstant(data.readUnsignedShort(), true).getString();
 
     List<String> names;
     List<Exprent> values;

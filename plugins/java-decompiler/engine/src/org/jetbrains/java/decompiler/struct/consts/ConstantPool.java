@@ -184,10 +184,13 @@ public class ConstantPool implements NewClassNameBuilder {
   }
 
   public PrimitiveConstant getPrimitiveConstant(int index) {
-    PrimitiveConstant cn = (PrimitiveConstant)getConstant(index);
+    return getPrimitiveConstant(index, false);
+  }
 
+  public PrimitiveConstant getPrimitiveConstant(int index, boolean forceRename) {
+    PrimitiveConstant cn = (PrimitiveConstant)getConstant(index);
     if (cn != null && interceptor != null) {
-      if (cn.type == CodeConstants.CONSTANT_Class) {
+      if (forceRename || cn.type == CodeConstants.CONSTANT_Class) {
         String newName = buildNewClassname(cn.getString());
         if (newName != null) {
           cn = new PrimitiveConstant(CodeConstants.CONSTANT_Class, newName);

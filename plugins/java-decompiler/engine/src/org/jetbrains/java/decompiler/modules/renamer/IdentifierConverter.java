@@ -49,7 +49,8 @@ public class IdentifierConverter implements NewClassNameBuilder {
         try {
           helper = (IIdentifierRenamer)IdentifierConverter.class.getClassLoader().loadClass(user_class).newInstance();
         }
-        catch (Exception ignored) { }
+        catch (Exception ignored) {
+        }
       }
 
       if (helper == null) {
@@ -178,13 +179,13 @@ public class IdentifierConverter implements NewClassNameBuilder {
 
     String classOldFullName = cl.qualifiedName;
 
-    // TODO: rename packages
+    // TODO: rename packages using helper.getNextPackageName
     String clSimpleName = ConverterHelper.getSimpleClassName(classOldFullName);
-    if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, clSimpleName, null, null)) {
+    if (helper.shouldRenameClass(clSimpleName, classOldFullName)) {
       String classNewFullName;
 
       do {
-        String classname = helper.getNextClassName(classOldFullName, ConverterHelper.getSimpleClassName(classOldFullName));
+        String classname = helper.getNextClassName(ConverterHelper.getSimpleClassName(classOldFullName), classOldFullName);
         classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName, classname);
       }
       while (context.getClasses().containsKey(classNewFullName));
@@ -223,7 +224,7 @@ public class IdentifierConverter implements NewClassNameBuilder {
           names.put(key, name);
         }
       }
-      else if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
+      else if (helper.shouldRenameMethod(classOldFullName, name, mt.getDescriptor())) {
         if (isPrivate || !names.containsKey(key)) {
           do {
             name = helper.getNextMethodName(classOldFullName, name, mt.getDescriptor());
@@ -256,7 +257,7 @@ public class IdentifierConverter implements NewClassNameBuilder {
     }
 
     for (StructField fd : cl.getFields()) {
-      if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_FIELD, classOldFullName, fd.getName(), fd.getDescriptor())) {
+      if (helper.shouldRenameField(classOldFullName, fd.getName(), fd.getDescriptor())) {
         String newName;
         do {
           newName = helper.getNextFieldName(classOldFullName, fd.getName(), fd.getDescriptor());
