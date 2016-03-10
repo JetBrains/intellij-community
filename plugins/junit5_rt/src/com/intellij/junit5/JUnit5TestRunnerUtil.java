@@ -15,7 +15,9 @@
  */
 package com.intellij.junit5;
 
+import com.intellij.rt.execution.junit.JUnitStarter;
 import org.junit.gen5.engine.discovery.NameBasedSelector;
+import org.junit.gen5.engine.discovery.PackageSelector;
 import org.junit.gen5.launcher.TestDiscoveryRequest;
 import org.junit.gen5.launcher.main.TestDiscoveryRequestBuilder;
 
@@ -28,7 +30,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class JUnit5TestRunnerUtil {
-  
+
   public static TestDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef) {
     if (suiteClassNames.length == 0) {
       return null;
@@ -54,6 +56,10 @@ public class JUnit5TestRunnerUtil {
             lines.add(line);
           }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
+          if (JUnitStarter.isJUnit5Preferred()) {
+            final PackageSelector selector = PackageSelector.forPackageName(packageName);
+            return builder.select(selector).build();
+          }
         }
         finally {
           reader.close();

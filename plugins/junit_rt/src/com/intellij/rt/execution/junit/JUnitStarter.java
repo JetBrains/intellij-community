@@ -36,6 +36,7 @@ public class JUnitStarter {
   public static final String JUNIT3_PARAMETER = "-junit3";
   public static final String JUNIT4_PARAMETER = "-junit4";
   public static final String JUNIT5_PARAMETER = "-junit5";
+  public static final String JUNIT5_KEY = "idea.is.junit5";
 
   private static final String SOCKET = "-socket";
   public static final String JUNIT3_RUNNER_NAME = "com.intellij.junit3.JUnit3IdeaTestRunner";
@@ -83,7 +84,7 @@ public class JUnitStarter {
   }
 
   private static String processParameters(Vector args, final List listeners, String[] params) {
-    String agentName = JUNIT4_RUNNER_NAME;
+    String agentName = isJUnit5Preferred() ? JUNIT5_RUNNER_NAME : JUNIT4_RUNNER_NAME;
     Vector result = new Vector(args.size());
     for (int i = 0; i < args.size(); i++) {
       String arg = (String)args.get(i);
@@ -174,6 +175,12 @@ public class JUnitStarter {
     }
     catch (SecurityException ignored) {}
     return agentName;
+  }
+
+  public static boolean isJUnit5Preferred() {
+    final String useJUnit5 = System.getProperty(JUNIT5_KEY);
+    final Boolean boolValue = useJUnit5 == null ? null : Boolean.valueOf(useJUnit5);
+    return boolValue != null && boolValue.booleanValue();
   }
 
   public static boolean checkVersion(String[] args, PrintStream printStream) {
