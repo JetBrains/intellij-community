@@ -936,7 +936,6 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         include(name: "log4j.jar")
         include(name: "jgoodies-forms.jar")
         include(name: "ecj*.jar")
-        include(name: "jsr166e.jar")
         include(name: "netty-all-*.jar")
         include(name: "snappy-in-java-*.jar")
       }
