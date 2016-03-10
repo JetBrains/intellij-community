@@ -251,7 +251,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
     if (containingFileByTree != null) {
       boolean isFromCommit = ApplicationManager.getApplication().isDispatchThread() &&
-                             ApplicationManager.getApplication().hasWriteAction(CommitToPsiFileAction.class);
+                             ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).isCommitInProgress();
       if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) {
         reparseParallelTrees(containingFileByTree);
         if (docSynced) {

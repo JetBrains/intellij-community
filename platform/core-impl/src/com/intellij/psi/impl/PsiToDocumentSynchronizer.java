@@ -209,7 +209,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public boolean toProcessPsiEvent() {
-    return !myIgnorePsiEvents && !ApplicationManager.getApplication().hasWriteAction(IgnorePsiEventsMarker.class);
+    return !myIgnorePsiEvents && !myPsiDocumentManager.isCommitInProgress() && !ApplicationManager.getApplication().hasWriteAction(IgnorePsiEventsMarker.class);
   }
 
   @TestOnly
