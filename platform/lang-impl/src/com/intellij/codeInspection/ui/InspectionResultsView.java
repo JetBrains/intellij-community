@@ -44,6 +44,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -400,7 +401,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private void syncRightPanel() {
     final Editor oldEditor = myPreviewEditor;
-    myLoadingProgressPreview = null;
+    if (myLoadingProgressPreview != null) {
+      Disposer.dispose(myLoadingProgressPreview);
+      myLoadingProgressPreview = null;
+    }
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
       if (myTree.getSelectedToolWrapper() == null) {
         mySplitter.setSecondComponent(getNothingToShowTextLabel());
@@ -474,9 +478,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myTree,
-                                                               myProject,
-                                                               myPreviewEditor,
+        final QuickFixToolbar fixToolbar = new QuickFixToolbar(
+          myPreviewEditor,
                                                                this);
         myLoadingProgressPreview = fixToolbar;
         editorPanel.add(fixToolbar,

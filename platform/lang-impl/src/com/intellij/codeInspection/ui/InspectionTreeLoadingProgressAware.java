@@ -15,12 +15,18 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.openapi.Disposable;
+
 /**
  * @author Dmitry Batkovich
  */
-public interface InspectionTreeLoadingProgressAware {
+public interface InspectionTreeLoadingProgressAware extends Disposable {
 
   void updateLoadingProgress();
 
   void treeLoaded();
+
+  @Override
+  default void dispose() {
+  }
 }
