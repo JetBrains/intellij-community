@@ -28,6 +28,11 @@ public class SaveAndSyncHandlerStub extends SaveAndSyncHandler {
   }
 
   @Override
+  public void saveAll() {
+
+  }
+
+  @Override
   public void refreshOpenFiles() {
   }
 

@@ -100,13 +100,7 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
     frameStateManager.addListener(new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
-        LOG.debug("save(): enter");
-        TransactionGuard.submitTransaction(() -> {
-          if (canSyncOrSave()) {
-            saveProjectsAndDocuments();
-          }
-          LOG.debug("save(): exit");
-        });
+        saveAll();
       }
 
       @Override
@@ -158,6 +152,17 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
     myRefreshDelayAlarm.cancelAndRequest();
   }
 
+  @Override
+  public void saveAll() {
+    LOG.debug("save(): enter");
+    TransactionGuard.submitTransaction(() -> {
+      if (canSyncOrSave()) {
+        saveProjectsAndDocuments();
+      }
+      LOG.debug("save(): exit");
+    });
+  }
+
   public void maybeRefresh(@NotNull ModalityState modalityState) {
     if (myBlockSyncOnFrameActivationCount.get() == 0 && mySettings.isSyncOnFrameActivation()) {
       RefreshQueue queue = RefreshQueue.getInstance();
@@ -170,8 +175,10 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
       LOG.debug("vfs refreshed");
     }
     else if (LOG.isDebugEnabled()) {
-      LOG.debug("vfs refresh rejected, blocked: " + (myBlockSyncOnFrameActivationCount.get() != 0)
-                + ", isSyncOnFrameActivation: " + mySettings.isSyncOnFrameActivation());
+      LOG.debug("vfs refresh rejected, blocked: " +
+                (myBlockSyncOnFrameActivationCount.get() != 0) +
+                ", isSyncOnFrameActivation: " +
+                mySettings.isSyncOnFrameActivation());
     }
   }
 
