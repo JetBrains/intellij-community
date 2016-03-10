@@ -435,7 +435,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           }
         }
         else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
-          mySplitter.setSecondComponent(new InspectionViewNavigationPanel(node, myTree));
+          final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
+          myLoadingProgressPreview = panel;
+          mySplitter.setSecondComponent(panel);
         }
         else {
           LOG.error("Unexpected node: " + node.getClass());
@@ -478,12 +480,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final QuickFixToolbar fixToolbar = new QuickFixToolbar(
-          myPreviewEditor,
-                                                               this);
+        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myPreviewEditor, this);
         myLoadingProgressPreview = fixToolbar;
-        editorPanel.add(fixToolbar,
-                        BorderLayout.NORTH);
+        editorPanel.add(fixToolbar, BorderLayout.NORTH);
       }
       mySplitter.setSecondComponent(editorPanel);
     }
