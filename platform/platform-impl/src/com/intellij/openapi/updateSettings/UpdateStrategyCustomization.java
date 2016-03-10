@@ -35,4 +35,8 @@ public class UpdateStrategyCustomization {
   public boolean allowMajorVersionUpdate() {
     return false;
   }
+
+  public boolean useOnlyCurrentChannel() {
+    return false;
+  }
 }
