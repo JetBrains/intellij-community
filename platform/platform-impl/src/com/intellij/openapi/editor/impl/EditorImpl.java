@@ -31,8 +31,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -990,8 +989,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (event.isConsumed()) {
           return;
         }
-        if (processKeyTyped(event)) {
-          event.consume();
+        try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
+          if (processKeyTyped(event)) {
+            event.consume();
+          }
         }
       }
 
