@@ -327,7 +327,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
     if (myEditor.myUseNewRendering) {
       com.intellij.openapi.editor.impl.view.IterationState state =
-        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, 
+        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset,
                                                                  false, true, false, true, false);
       while (!state.atEnd()) {
         drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
@@ -566,7 +566,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public Object getData(@NonNls String dataId) {
     if (myEditor.isDisposed()) return null;
-    
+
     if (EditorGutter.KEY.is(dataId)) {
       return this;
     }
@@ -728,7 +728,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     int width = editorLocationX + editorComponent.getWidth();
     if (rightMarginX < width && editorLocationX < width - rightMarginX) {
-      int centeredSize = (width - rightMarginX - editorLocationX) / 2 - (getLineMarkerAreaWidth() + getLineNumberAreaWidth() + 
+      int centeredSize = (width - rightMarginX - editorLocationX) / 2 - (getLineMarkerAreaWidth() + getLineNumberAreaWidth() +
                                                                          getFoldingAreaWidth() + 2 * GAP_BETWEEN_AREAS);
       myTextAnnotationExtraSize = Math.max(0, centeredSize - myTextAnnotationGuttersSize);
     }
@@ -790,7 +790,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         return true;
       }
     });
-    
+
     if (isDumbMode()) {
       myIconsAreaWidth = Math.max(myIconsAreaWidth, myLastNonDumbModeIconAreaWidth);
     }
@@ -865,7 +865,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
   }
-  
+
   private boolean isLineMarkerVisible(RangeHighlighter highlighter) {
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
@@ -934,7 +934,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void processIconsRow(int line, List<GutterMark> row, LineGutterIconRendererProcessor processor) {
-    processIconsRow(line, row, processor, false);    
+    processIconsRow(line, row, processor, false);
   }
 
   private void processIconsRow(int line, List<GutterMark> row, LineGutterIconRendererProcessor processor, boolean force) {
@@ -1326,7 +1326,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public int getLeftFreePaintersAreaOffset() {
     return getLineMarkerAreaOffset();
   }
-  
+
   @Override
   public int getLineMarkerFreePaintersAreaOffset() {
     return getIconAreaOffset() + myIconsAreaWidth + getGapAfterIconsArea();
@@ -1589,7 +1589,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Project project = myEditor.getProject();
     return project != null && DumbService.isDumb(project);
   }
-  
+
   private boolean checkDumbAware(@NotNull Object possiblyDumbAware) {
     return !isDumbMode() || DumbService.isDumbAware(possiblyDumbAware);
   }
@@ -1601,7 +1601,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private static void performAction(@NotNull AnAction action, @NotNull InputEvent e, @NotNull String place, @NotNull DataContext context) {
+  private void performAction(@NotNull AnAction action, @NotNull InputEvent e, @NotNull String place, @NotNull DataContext context) {
+    if (!checkDumbAware(action)) {
+      notifyNotDumbAware();
+      return;
+    }
+
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
     action.update(actionEvent);
     if (actionEvent.getPresentation().isEnabledAndVisible()) {
