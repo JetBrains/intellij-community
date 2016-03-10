@@ -472,6 +472,16 @@ public class PyTypingTest extends PyTestCase {
 
   }
 
+  // PY-18726
+  public void testFunctionTypeCommentCallableParameter() {
+    doTest("(bool, str) -> int", 
+           "from typing import Callable\n" +
+           "\n" +
+           "def f(cb):\n" +
+           "    # type: (Callable[[bool, str], int]) -> None\n" +
+           "    expr = cb");
+  }
+
   // PY-18386
   public void testRecursiveType() {
     doTest("Union[int, Any]",

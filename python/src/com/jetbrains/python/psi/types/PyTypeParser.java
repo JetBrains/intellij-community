@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
@@ -325,14 +326,33 @@ public class PyTypeParser {
                        .cached()
                        .named("class-type");
 
+    final FunctionalParser<ParseResult, PyElementType> typeList = 
+      op("[").skipThen(maybe(typeExpr.then(many(op(",").skipThen(typeExpr))))).thenSkip(op("]"))
+        .map(pair -> {
+          if (pair != null) {
+            final List<PyType> itemTypes = new ArrayList<>();
+            ParseResult result = pair.getFirst();
+            itemTypes.add(pair.getFirst().getType());
+            for (ParseResult r : pair.getSecond()) {
+              result = result.merge(r);
+              itemTypes.add(r.getType());
+            }
+            final PyTupleType tupleType = PyTupleType.create(anchor, ArrayUtil.toObjectArray(itemTypes, PyType.class));
+            return result.withType(tupleType);
+          }
+          return EMPTY_RESULT.withType(PyTupleType.create(anchor, new PyType[0]));
+        });
+
+    final FunctionalParser<ParseResult, PyElementType> typeParam = typeExpr.or(typeList);
+
     final FunctionalParser<ParseResult, PyElementType> paramExpr =
-      classType.thenSkip(op("[")).then(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op("]"))
+      classType.thenSkip(op("[")).then(typeParam).then(many(op(",").skipThen(typeParam))).thenSkip(op("]"))
                .map(value -> {
                  final Pair<ParseResult, ParseResult> firstPair = value.getFirst();
                  final ParseResult first = firstPair.getFirst();
                  final ParseResult second = firstPair.getSecond();
                  final List<ParseResult> third = value.getSecond();
-                 final List<PyType> typesInBrackets = new ArrayList<PyType>();
+                 final List<PyType> typesInBrackets = new ArrayList<>();
                  typesInBrackets.add(second.getType());
                  ParseResult result = first;
                  result = result.merge(second);
@@ -352,13 +372,9 @@ public class PyTypeParser {
                })
                .named("param-expr");
 
-    final FunctionalParser<ParseResult, PyElementType> singleExpr =
+    typeExpr.define(
       paramExpr
-        .or(classType)
-        .named("single-expr");
-
-    typeExpr
-      .define(singleExpr)
+        .or(classType))
       .named("type-expr");
 
     final FunctionalParser<ParseResult, PyElementType> argExpr =
