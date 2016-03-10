@@ -16,10 +16,14 @@
 package org.jetbrains.java.decompiler.main.extern;
 
 public interface IIdentifierRenamer {
-
+  /**
+   * Determines if the package should be renamed.
+   * @param name the package name
+   * @return true if the package should be renamed
+   */
   boolean shouldRenamePackage(String name);
 
-  boolean shouldRenameClass(String shortName, String fullName);
+  boolean shouldRenameClass(String simpleName, String fullName);
 
   boolean shouldRenameField(String className, String field, String descriptor);
 
@@ -27,7 +31,13 @@ public interface IIdentifierRenamer {
 
   String getNextPackageName(String name);
 
-  String getNextClassName(String shortName, String fullName);
+  /**
+   * Generates the next simple name for a class
+   * @param simpleName the current simple name of the class
+   * @param fullName the current full name of the class
+   * @return a generated String that is a valid class name
+   */
+  String getNextClassName(String simpleName, String fullName);
 
   String getNextFieldName(String className, String field, String descriptor);
 
