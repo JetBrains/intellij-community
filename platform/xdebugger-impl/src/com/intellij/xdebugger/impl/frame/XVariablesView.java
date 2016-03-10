@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Comparing;
@@ -49,19 +50,20 @@ import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createIn
 /**
  * @author nik
  */
-public class XVariablesView extends XVariablesViewBase {
+public class XVariablesView extends XVariablesViewBase implements DataProvider {
   public static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
   public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
-  private final JComponent myComponent;
+  private final JPanel myComponent;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
-    myComponent = new MyPanel();
+    myComponent = new BorderLayoutPanel();
     myComponent.add(super.getPanel());
+    DataManager.registerDataProvider(myComponent, this);
   }
 
   @Override
-  public JComponent getPanel() {
+  public JPanel getPanel() {
     return myComponent;
   }
 
@@ -117,6 +119,15 @@ public class XVariablesView extends XVariablesViewBase {
     }
     tree.setRoot(node, true);
     super.clear();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return getCurrentFile(getTree());
+    }
+    return null;
   }
 
   public static class InlineVariablesInfo {
@@ -184,17 +195,6 @@ public class XVariablesView extends XVariablesViewBase {
       public int hashCode() {
         return myNode.hashCode();
       }
-    }
-  }
-
-  private class MyPanel extends BorderLayoutPanel implements DataProvider {
-    @Nullable
-    @Override
-    public Object getData(@NonNls String dataId) {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return getCurrentFile(getTree());
-      }
-      return null;
     }
   }
 }

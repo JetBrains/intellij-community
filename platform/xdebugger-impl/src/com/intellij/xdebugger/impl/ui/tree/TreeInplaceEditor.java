@@ -94,7 +94,10 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   protected abstract Project getProject();
 
   private static void setInplaceEditorBounds(JComponent component, int x, int y, int width, int height) {
-    component.setBounds(x, y, width, Math.max(height, component.getPreferredSize().height));
+    int preferredHeight = component.getPreferredSize().height;
+    int h = Math.max(height, preferredHeight);
+    int delta = Math.max(0, h - height) / 2;
+    component.setBounds(x, y - delta, width, Math.max(height, preferredHeight));
   }
 
   public final void show() {
