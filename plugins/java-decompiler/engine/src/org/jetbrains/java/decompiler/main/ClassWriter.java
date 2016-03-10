@@ -299,6 +299,8 @@ public class ClassWriter {
       appendDeprecation(buffer, indent);
     }
 
+    appendAnnotations(buffer, cl, indent);
+
     if (interceptor != null) {
       String oldName = interceptor.getOldName(cl.qualifiedName);
       appendRenameComment(buffer, oldName, MType.CLASS, indent);
@@ -307,8 +309,6 @@ public class ClassWriter {
     if (isSynthetic) {
       appendComment(buffer, "synthetic class", indent);
     }
-
-    appendAnnotations(buffer, cl, indent);
 
     buffer.appendIndent(indent);
 
@@ -395,6 +395,8 @@ public class ClassWriter {
       appendDeprecation(buffer, indent);
     }
 
+    appendAnnotations(buffer, fd, indent);
+
     if (interceptor != null) {
       String oldName = interceptor.getOldName(cl.qualifiedName + " " + fd.getName() + " " + fd.getDescriptor());
       appendRenameComment(buffer, oldName, MType.FIELD, indent);
@@ -403,8 +405,6 @@ public class ClassWriter {
     if (fd.isSynthetic()) {
       appendComment(buffer, "synthetic field", indent);
     }
-
-    appendAnnotations(buffer, fd, indent);
 
     buffer.appendIndent(indent);
 
@@ -611,6 +611,8 @@ public class ClassWriter {
         appendDeprecation(buffer, indent);
       }
 
+      appendAnnotations(buffer, mt, indent);
+
       if (interceptor != null) {
         String oldName = interceptor.getOldName(cl.qualifiedName + " " + mt.getName() + " " + mt.getDescriptor());
         appendRenameComment(buffer, oldName, MType.METHOD, indent);
@@ -624,8 +626,6 @@ public class ClassWriter {
       if (isBridge) {
         appendComment(buffer, "bridge method", indent);
       }
-
-      appendAnnotations(buffer, mt, indent);
 
       buffer.appendIndent(indent);
 
