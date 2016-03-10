@@ -22,12 +22,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ConverterHelper implements IIdentifierRenamer {
-
-  private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
+  //Packages, classes, fields, and methods may have these names due to obfuscation, but they're not valid names in Java.
+  private static final Set<String> RESERVED_JAVA_KEYWORDS = new HashSet<>(Arrays.asList(
     "abstract", "do", "if", "package", "synchronized", "boolean", "double", "implements", "private", "this", "break", "else", "import",
     "protected", "throw", "byte", "extends", "instanceof", "public", "throws", "case", "false", "int", "return", "transient", "catch",
     "final", "interface", "short", "true", "char", "finally", "long", "static", "try", "class", "float", "native", "strictfp", "void",
     "const", "for", "new", "super", "volatile", "continue", "goto", "null", "switch", "while", "default", "assert", "enum"));
+  //Packages and Classes cannot be extracted from an archive if they have a variation of any of these names.
   private static final Set<String> RESERVED_WINDOWS_NAMESPACE = new HashSet<>(Arrays.asList(
     "aux", "prn", "aux", "nul",
     "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
@@ -46,46 +47,49 @@ public class ConverterHelper implements IIdentifierRenamer {
     if (name == null) {
       return false;
     }
-    String lowerCaseName = name.toLowerCase();
-    if (setKnownPackageNames.contains(lowerCaseName)) {
+    name = name.toLowerCase();
+    if (setKnownPackageNames.contains(name)) {
       return true;
     }
-    setKnownPackageNames.add(lowerCaseName);
-    for (String segment : lowerCaseName.split("/")) {
-      if (RESERVED_WINDOWS_NAMESPACE.contains(segment)) {
+    for (String segment : name.split("/")) {
+      if (Character.isDigit(segment.charAt(0))
+          || RESERVED_JAVA_KEYWORDS.contains(segment)
+          || RESERVED_WINDOWS_NAMESPACE.contains(segment)) {
         return true;
       }
     }
+    setKnownPackageNames.add(name);
     return false;
   }
 
   @Override
-  public boolean shouldRenameClass(String shortName, String fullName) {
-    if (shortName == null || fullName == null) {
+  public boolean shouldRenameClass(String simpleName, String fullName) {
+    if (simpleName == null || fullName == null) {
       return true;
     }
-    try {
-      return shortName.length() == 0 || shortName.length() <= 2
-             || Character.isDigit(shortName.charAt(0))
-             || KEYWORDS.contains(shortName)
-             || RESERVED_WINDOWS_NAMESPACE.contains(shortName.toLowerCase())
-             || setKnownClassNames.contains(fullName.toLowerCase());
+    simpleName = simpleName.toLowerCase();
+    fullName = fullName.toLowerCase();
+    if (simpleName.length() == 0 || simpleName.length() <= 2
+        || Character.isDigit(simpleName.charAt(0))
+        || RESERVED_JAVA_KEYWORDS.contains(simpleName)
+        || RESERVED_WINDOWS_NAMESPACE.contains(simpleName)
+        || setKnownClassNames.contains(fullName)) {
+      return true;
     }
-    finally {
-      setKnownClassNames.add(fullName.toLowerCase());
-    }
+    setKnownClassNames.add(fullName);
+    return false;
   }
 
   @Override
   public boolean shouldRenameField(String className, String field, String descriptor) {
     return field == null || field.length() == 0 || field.length() <= 2
-           || Character.isDigit(field.charAt(0)) || KEYWORDS.contains(field);
+           || Character.isDigit(field.charAt(0)) || RESERVED_JAVA_KEYWORDS.contains(field);
   }
 
   @Override
   public boolean shouldRenameMethod(String className, String method, String descriptor) {
     return method == null || method.length() == 0 || method.length() <= 2
-           || Character.isDigit(method.charAt(0)) || KEYWORDS.contains(method);
+           || Character.isDigit(method.charAt(0)) || RESERVED_JAVA_KEYWORDS.contains(method);
   }
 
   @Override
@@ -96,21 +100,21 @@ public class ConverterHelper implements IIdentifierRenamer {
   // TODO: consider possible conflicts with not renamed classes, fields and methods!
   // We should get all relevant information here.
   @Override
-  public String getNextClassName(String shortName, String fullName) {
+  public String getNextClassName(String simpleName, String fullName) {
 
-    if (shortName == null) {
+    if (simpleName == null) {
       return "class_" + (classCounter++);
     }
 
     int index = 0;
-    while (Character.isDigit(shortName.charAt(index))) {
+    while (Character.isDigit(simpleName.charAt(index))) {
       index++;
     }
-    if (index == 0 || index == shortName.length()) {
+    if (index == 0 || index == simpleName.length()) {
       return "class_" + (classCounter++);
     }
     else {
-      String name = shortName.substring(index);
+      String name = simpleName.substring(index);
 
       if (setNonStandardClassNames.contains(name)) {
         return "Inner" + name + "_" + (classCounter++);
