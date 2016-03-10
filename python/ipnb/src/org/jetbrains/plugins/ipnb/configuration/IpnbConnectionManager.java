@@ -271,7 +271,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     try {
       final PyPackage ipythonPackage = PyPackageManager.getInstance(sdk).findPackage("ipython", false);
-      if (ipythonPackage == null) {
+      final PyPackage jupyterPackage = PyPackageManager.getInstance(sdk).findPackage("jupyter", false);
+      if (ipythonPackage == null && jupyterPackage == null) {
         showWarning(fileEditor, "Add Jupyter to the interpreter of the current project.", null);
         return false;
       }
