@@ -98,6 +98,19 @@ public abstract class TransactionGuard {
   }
 
   /**
+   * Runs the given code synchronously inside a transaction. Fails if transactions of given kind are not allowed at this moment.
+   * @see #startSynchronousTransaction(TransactionKind)
+   */
+  public static void syncTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction) {
+    AccessToken token = getInstance().startSynchronousTransaction(kind);
+    try {
+      transaction.run();
+    } finally {
+      token.finish();
+    }
+  }
+
+  /**
    * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
    * or inside a read action on non-UI thread.
    * @see #submitMergeableTransaction(TransactionKind, Runnable)
