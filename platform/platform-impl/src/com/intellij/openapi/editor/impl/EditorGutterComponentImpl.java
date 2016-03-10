@@ -31,6 +31,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1570,13 +1571,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                     : renderer.getClickAction();
     }
     if (clickAction != null) {
-      if (checkDumbAware(clickAction)) {
-        performAction(clickAction, e, "ICON_NAVIGATION", myEditor.getDataContext());
-        repaint();
-      }
-      else {
-        notifyNotDumbAware();
-      }
+      performAction(clickAction, e, "ICON_NAVIGATION", myEditor.getDataContext());
+      repaint();
       e.consume();
     }
     else {
@@ -1608,7 +1604,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static void performAction(@NotNull AnAction action, @NotNull InputEvent e, @NotNull String place, @NotNull DataContext context) {
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
     action.update(actionEvent);
-    if (actionEvent.getPresentation().isEnabledAndVisible()) action.actionPerformed(actionEvent);
+    if (actionEvent.getPresentation().isEnabledAndVisible()) {
+      ActionUtil.performActionDumbAware(action, actionEvent);
+    }
   }
 
   @Nullable
@@ -1778,11 +1776,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         else {
           AnAction rightButtonAction = renderer.getRightButtonClickAction();
           if (rightButtonAction != null) {
-            if (checkDumbAware(rightButtonAction)) {
-              performAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext());
-            } else {
-              notifyNotDumbAware();
-            }
+            performAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext());
             e.consume();
           }
         }
