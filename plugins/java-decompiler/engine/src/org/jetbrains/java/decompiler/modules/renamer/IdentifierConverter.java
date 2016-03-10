@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import java.util.*;
 public class IdentifierConverter implements NewClassNameBuilder {
 
   private StructContext context;
-  private IIdentifierRenamer helper;
+  private IIdentifierRenamer renamer;
   private PoolInterceptor interceptor;
   private List<ClassWrapperNode> rootClasses = new ArrayList<ClassWrapperNode>();
   private List<ClassWrapperNode> rootInterfaces = new ArrayList<ClassWrapperNode>();
@@ -47,16 +47,17 @@ public class IdentifierConverter implements NewClassNameBuilder {
       String user_class = (String)DecompilerContext.getProperty(IFernflowerPreferences.USER_RENAMER_CLASS);
       if (user_class != null) {
         try {
-          helper = (IIdentifierRenamer)IdentifierConverter.class.getClassLoader().loadClass(user_class).newInstance();
+          renamer = (IIdentifierRenamer)IdentifierConverter.class.getClassLoader().loadClass(user_class).newInstance();
         }
-        catch (Exception ignored) { }
+        catch (Exception ignored) {
+        }
       }
 
-      if (helper == null) {
-        helper = new ConverterHelper();
+      if (renamer == null) {
+        renamer = new DefaultIIdentifierRenamer();
       }
 
-      interceptor = new PoolInterceptor(helper);
+      interceptor = new PoolInterceptor(renamer);
 
       buildInheritanceTree();
 
@@ -179,12 +180,12 @@ public class IdentifierConverter implements NewClassNameBuilder {
     String classOldFullName = cl.qualifiedName;
 
     // TODO: rename packages
-    String clSimpleName = ConverterHelper.getSimpleClassName(classOldFullName);
-    if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, clSimpleName, null, null)) {
+    String classOldSimpleName = ConverterHelper.getSimpleClassName(classOldFullName);
+    if (renamer.shouldRenameClass(classOldSimpleName, classOldFullName)) {
       String classNewFullName;
 
       do {
-        String classname = helper.getNextClassName(classOldFullName, ConverterHelper.getSimpleClassName(classOldFullName));
+        String classname = renamer.getNextClassName(classOldSimpleName, classOldFullName);
         classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName, classname);
       }
       while (context.getClasses().containsKey(classNewFullName));
@@ -223,10 +224,10 @@ public class IdentifierConverter implements NewClassNameBuilder {
           names.put(key, name);
         }
       }
-      else if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
+      else if (renamer.shouldRenameMethod(classOldFullName, name, mt.getDescriptor())) {
         if (isPrivate || !names.containsKey(key)) {
           do {
-            name = helper.getNextMethodName(classOldFullName, name, mt.getDescriptor());
+            name = renamer.getNextMethodName(classOldFullName, name, mt.getDescriptor());
           }
           while (setMethodNames.contains(name));
 
@@ -256,10 +257,10 @@ public class IdentifierConverter implements NewClassNameBuilder {
     }
 
     for (StructField fd : cl.getFields()) {
-      if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_FIELD, classOldFullName, fd.getName(), fd.getDescriptor())) {
+      if (renamer.shouldRenameField(classOldFullName, fd.getName(), fd.getDescriptor())) {
         String newName;
         do {
-          newName = helper.getNextFieldName(classOldFullName, fd.getName(), fd.getDescriptor());
+          newName = renamer.getNextFieldName(classOldFullName, fd.getName(), fd.getDescriptor());
         }
         while (setFieldNames.contains(newName));
 
