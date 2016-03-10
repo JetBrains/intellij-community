@@ -100,13 +100,13 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
             if (element1 != null && element1.getText().startsWith("</")) {
               // case of top-level jsp tag
               XmlTag tag1 = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
-              if (shouldReplace(tag, tag1)) {
+              if (shouldReplace(tag, tag1, offset)) {
                 tag = tag1;
               }
               else {
                 // if we have enclosing jsp tag, actual tag to be completed will be previous sibling
                 tag1 = PsiTreeUtil.getPrevSiblingOfType(element1.getParent(), XmlTag.class);
-                if (shouldReplace(tag, tag1)) {
+                if (shouldReplace(tag, tag1, offset)) {
                   tag = tag1;
                 }
               }
@@ -145,9 +145,12 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  private static boolean shouldReplace(XmlTag tag, XmlTag tag1) {
-    return tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset() &&
-           hasUnclosedParent(tag1);
+  private static boolean shouldReplace(XmlTag tag, XmlTag tag1, int offset) {
+    if (tag1 == null || tag1 == tag || tag1.getTextOffset() <= tag.getTextOffset()) return false;
+    if (hasUnclosedParent(tag1)) return true;
+    if (XmlUtil.getTokenOfType(tag1, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return false;
+    XmlToken element = XmlTagUtil.getEndTagNameElement(tag1);
+    return element != null && element.getTextOffset() > offset;
   }
 
   private static boolean hasUnclosedParent(XmlTag tag) {
