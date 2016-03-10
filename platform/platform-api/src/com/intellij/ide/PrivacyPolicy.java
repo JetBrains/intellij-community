@@ -36,6 +36,7 @@ public final class PrivacyPolicy {
   private static final String VERSION_COMMENT_END = "-->";
   private static final String ACCEPTED_VERSION_KEY = "JetBrains.privacy_policy.accepted_version";
   private static final Version EMBEDDED_VERSION = new Version(1, 0);
+  private static final Version MAGIC_VERSION = new Version(999, 999);
   @Nullable
   private static volatile Version ourLatestVersion;
 
@@ -75,7 +76,8 @@ public final class PrivacyPolicy {
   }
 
   public static boolean isLatestVersionAccepted() {
-    return getAcceptedVersion().equals(getLatestVersion());
+    final Version latest = getLatestVersion();
+    return getAcceptedVersion().equals(latest) || MAGIC_VERSION.equals(latest);
   }
 
   public static void setVersionAccepted(@NotNull Version version) {
@@ -110,7 +112,7 @@ public final class PrivacyPolicy {
 
   @NotNull
   public static Version getAcceptedVersion() {
-    return new Version(Prefs.get(ACCEPTED_VERSION_KEY, null));
+    return Version.fromString(Prefs.get(ACCEPTED_VERSION_KEY, null));
   }
 
   public static String getText() {
@@ -175,7 +177,7 @@ public final class PrivacyPolicy {
           if (startComment >= 0 ) {
             final int endComment = line.indexOf(VERSION_COMMENT_END);
             if (endComment > startComment) {
-              return new Version(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
+              return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
             }
           }
         }
@@ -196,24 +198,22 @@ public final class PrivacyPolicy {
     private final int myMajor;
     private final int myMinor;
 
-    /**
-     * @param version string in format "[major].[minor]"
-     */
-    public Version(@Nullable String version) {
-      final int dot = version == null? -1 : version.indexOf('.');
-      if (dot > 0) {
-        myMajor = Integer.parseInt(version.substring(0, dot));
-        myMinor = Integer.parseInt(version.substring(dot + 1));
-      }
-      else {
-        myMajor = -1;
-        myMinor = -1;
-      }
-    }
-
     private Version(int major, int minor) {
       myMajor = major;
       myMinor = minor;
+    }
+
+    /**
+     * @param ver string in format "[major].[minor]"
+     */
+    public static Version fromString(@Nullable String ver) {
+      int major = -1, minor = -1;
+      final int dot = ver == null ? -1 : ver.indexOf('.');
+      if (dot > 0) {
+        major = Integer.parseInt(ver.substring(0, dot));
+        minor = Integer.parseInt(ver.substring(dot + 1));
+      }
+      return major < 0 || minor < 0? UNKNOWN : new Version(major, minor);
     }
 
     public boolean isUnknown() {
