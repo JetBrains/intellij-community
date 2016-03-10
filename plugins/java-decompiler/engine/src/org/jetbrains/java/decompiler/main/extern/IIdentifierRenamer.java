@@ -17,11 +17,17 @@ package org.jetbrains.java.decompiler.main.extern;
 
 public interface IIdentifierRenamer {
 
-  enum Type {ELEMENT_CLASS, ELEMENT_FIELD, ELEMENT_METHOD}
+  boolean shouldRenamePackage(String name);
 
-  boolean toBeRenamed(Type elementType, String className, String element, String descriptor);
+  boolean shouldRenameClass(String shortName, String fullName);
 
-  String getNextClassName(String fullName, String shortName);
+  boolean shouldRenameField(String className, String field, String descriptor);
+
+  boolean shouldRenameMethod(String className, String method, String descriptor);
+
+  String getNextPackageName(String name);
+
+  String getNextClassName(String shortName, String fullName);
 
   String getNextFieldName(String className, String field, String descriptor);
 

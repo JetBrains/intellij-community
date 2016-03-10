@@ -23,32 +23,80 @@ import java.util.Set;
 
 public class ConverterHelper implements IIdentifierRenamer {
 
-  private static final Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(
+  private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
     "abstract", "do", "if", "package", "synchronized", "boolean", "double", "implements", "private", "this", "break", "else", "import",
     "protected", "throw", "byte", "extends", "instanceof", "public", "throws", "case", "false", "int", "return", "transient", "catch",
     "final", "interface", "short", "true", "char", "finally", "long", "static", "try", "class", "float", "native", "strictfp", "void",
     "const", "for", "new", "super", "volatile", "continue", "goto", "null", "switch", "while", "default", "assert", "enum"));
-  private static final Set<String> RESERVED_WINDOWS_NAMESPACE = new HashSet<String>(Arrays.asList(
+  private static final Set<String> RESERVED_WINDOWS_NAMESPACE = new HashSet<>(Arrays.asList(
     "aux", "prn", "aux", "nul",
     "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
     "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"));
 
+  private int packageCounter = 0;
   private int classCounter = 0;
   private int fieldCounter = 0;
   private int methodCounter = 0;
-  private final Set<String> setNonStandardClassNames = new HashSet<String>();
+  private final Set<String> setNonStandardClassNames = new HashSet<>();
+  private final Set<String> setKnownClassNames = new HashSet<>();
+  private final Set<String> setKnownPackageNames = new HashSet<>();
 
   @Override
-  public boolean toBeRenamed(Type elementType, String className, String element, String descriptor) {
-    String value = elementType == Type.ELEMENT_CLASS ? className : element;
-    return value == null || value.length() == 0 || value.length() <= 2 || KEYWORDS.contains(value) || Character.isDigit(value.charAt(0))
-      || elementType == Type.ELEMENT_CLASS && RESERVED_WINDOWS_NAMESPACE.contains(value.toLowerCase());
+  public boolean shouldRenamePackage(String name) {
+    if (name == null) {
+      return false;
+    }
+    String lowerCaseName = name.toLowerCase();
+    if (setKnownPackageNames.contains(lowerCaseName)) {
+      return true;
+    }
+    setKnownPackageNames.add(lowerCaseName);
+    for (String segment : lowerCaseName.split("/")) {
+      if (RESERVED_WINDOWS_NAMESPACE.contains(segment)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean shouldRenameClass(String shortName, String fullName) {
+    if (shortName == null || fullName == null) {
+      return true;
+    }
+    try {
+      return shortName.length() == 0 || shortName.length() <= 2
+             || Character.isDigit(shortName.charAt(0))
+             || KEYWORDS.contains(shortName)
+             || RESERVED_WINDOWS_NAMESPACE.contains(shortName.toLowerCase())
+             || setKnownClassNames.contains(fullName.toLowerCase());
+    }
+    finally {
+      setKnownClassNames.add(fullName.toLowerCase());
+    }
+  }
+
+  @Override
+  public boolean shouldRenameField(String className, String field, String descriptor) {
+    return field == null || field.length() == 0 || field.length() <= 2
+           || Character.isDigit(field.charAt(0)) || KEYWORDS.contains(field);
+  }
+
+  @Override
+  public boolean shouldRenameMethod(String className, String method, String descriptor) {
+    return method == null || method.length() == 0 || method.length() <= 2
+           || Character.isDigit(method.charAt(0)) || KEYWORDS.contains(method);
+  }
+
+  @Override
+  public String getNextPackageName(String name) {
+    return "package_" + (packageCounter++) + "/";
   }
 
   // TODO: consider possible conflicts with not renamed classes, fields and methods!
   // We should get all relevant information here.
   @Override
-  public String getNextClassName(String fullName, String shortName) {
+  public String getNextClassName(String shortName, String fullName) {
 
     if (shortName == null) {
       return "class_" + (classCounter++);
@@ -58,7 +106,6 @@ public class ConverterHelper implements IIdentifierRenamer {
     while (Character.isDigit(shortName.charAt(index))) {
       index++;
     }
-
     if (index == 0 || index == shortName.length()) {
       return "class_" + (classCounter++);
     }
@@ -94,6 +141,14 @@ public class ConverterHelper implements IIdentifierRenamer {
   }
 
   public static String replaceSimpleClassName(String fullName, String newName) {
-    return fullName.substring(0, fullName.lastIndexOf('/') + 1) + newName;
+    return getPackageName(fullName) + newName;
+  }
+
+  public static String getPackageName(String fullName) {
+    return fullName.substring(0, fullName.lastIndexOf('/') + 1);
+  }
+
+  public static String replacePackageName(String fullName, String newName) {
+    return newName + getSimpleClassName(fullName);
   }
 }
