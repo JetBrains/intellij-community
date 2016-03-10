@@ -40,10 +40,12 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.junit5.JUnit5IdeaTestRunner;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
@@ -51,6 +53,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
@@ -155,6 +158,13 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         LOG.error(e);
       }
     }
+
+    final Project project = getConfiguration().getProject();
+    if (JUnitUtil.isJUnit5(GlobalSearchScope.allScope(project), project)) {
+      javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
+      javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
+    }
+    
     return javaParameters;
   }
 

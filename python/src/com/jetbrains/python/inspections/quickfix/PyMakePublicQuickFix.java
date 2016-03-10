@@ -59,4 +59,9 @@ public class PyMakePublicQuickFix implements LocalQuickFix {
       }
     }
   }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }

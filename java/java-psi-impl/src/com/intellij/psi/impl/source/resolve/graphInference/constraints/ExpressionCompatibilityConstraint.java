@@ -45,7 +45,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       PsiType exprType = myExpression.getType();
 
       if (session.isProperType(myT)) {
-        final boolean assignmentCompatible = TypeConversionUtil.isAssignable(myT, exprType);
+        final boolean assignmentCompatible = exprType == null || TypeConversionUtil.isAssignable(myT, exprType);
         if (!assignmentCompatible) {
           final PsiType type = myExpression.getType();
           session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));

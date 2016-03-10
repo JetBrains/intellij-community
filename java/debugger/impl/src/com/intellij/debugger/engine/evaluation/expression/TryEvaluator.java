@@ -22,16 +22,18 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author egor
  */
 public class TryEvaluator implements Evaluator {
   @NotNull private final Evaluator myBodyEvaluator;
-  private final CatchEvaluator[] myCatchBlockEvaluators;
+  private final List<CatchEvaluator> myCatchBlockEvaluators;
   @Nullable private final Evaluator myFinallyEvaluator;
 
   public TryEvaluator(@NotNull Evaluator bodyEvaluator,
-                      CatchEvaluator[] catchBlockEvaluators,
+                      List<CatchEvaluator> catchBlockEvaluators,
                       @Nullable Evaluator finallyEvaluator) {
     myBodyEvaluator = bodyEvaluator;
     myCatchBlockEvaluators = catchBlockEvaluators;

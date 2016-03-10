@@ -133,9 +133,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @Override
   public boolean startTemplate(@NotNull Editor editor, char shortcutChar) {
-    PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
     Runnable runnable = prepareTemplate(editor, shortcutChar, null);
     if (runnable != null) {
+      PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
       runnable.run();
     }
     return runnable != null;

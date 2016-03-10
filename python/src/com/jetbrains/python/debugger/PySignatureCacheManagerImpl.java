@@ -249,7 +249,11 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     if (parts.length > 0) {
       PySignature signature = new PySignature(path, parts[0]);
       for (int i = 1; i < parts.length; i++) {
-        String[] var = parts[i].split(":");
+        String part = parts[i];
+        if (part.isEmpty()) {
+          continue;
+        }
+        String[] var = part.split(":");
         if (var.length == 2) {
           if (RETURN_TYPE.equals(var[0])) {
             signature = signature.addReturnType(var[1]);
@@ -260,7 +264,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
         }
         else {
           throw new IllegalStateException(
-            "Should be <name>:<type> format for arg or " + RETURN_TYPE + ":<type> for return type; '" + parts[i] + "' instead.");
+            "Should be <name>:<type> format for arg or " + RETURN_TYPE + ":<type> for return type; '" + part + "' instead.");
         }
       }
       return signature;
