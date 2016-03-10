@@ -102,6 +102,12 @@ public class UpdateStrategy {
     List<UpdateChannel> result = new ArrayList<UpdateChannel>();
 
     for (UpdateChannel channel : product.getChannels()) {
+
+      // Check if we can only offer the same channel as selected
+      if (myStrategyCustomization.useOnlyCurrentChannel() && !channel.getStatus().equals(myChannelStatus)) {
+        continue;
+      }
+
       // If the update is to a new version and on a stabler channel, choose it.
       if ((channel.getMajorVersion() >= myMajorVersion && channel.getStatus().compareTo(myChannelStatus) >= 0) &&
           (myStrategyCustomization.allowMajorVersionUpdate() ||
