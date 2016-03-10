@@ -179,7 +179,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   
   @Override
   public void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    myQuickDocFontSize = fontSize;
+    if (myQuickDocFontSize != fontSize) {
+      myQuickDocFontSize = fontSize;
+      myIsSaveNeeded = true;
+    }
   }
 
   @Override
