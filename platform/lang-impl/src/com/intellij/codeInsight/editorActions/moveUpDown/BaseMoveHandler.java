@@ -51,8 +51,11 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
 
     if (file != null) {
       final MoverWrapper mover = getSuitableMover(editor, file);
-      if (mover != null) {
-        mover.move(editor,file);
+      if (mover != null && mover.getInfo().toMove2 != null) {
+        LineRange range = mover.getInfo().toMove;
+        if ((range.startLine > 0 || isDown) && (range.endLine < document.getLineCount() || !isDown)) {
+          mover.move(editor, file);
+        }
       }
     }
   }
@@ -62,19 +65,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
     if (editor.isViewer() || editor.isOneLineMode()) return false;
     final Project project = editor.getProject();
     if (project == null || project.isDisposed()) return false;
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document document = editor.getDocument();
-    documentManager.commitDocument(document);
-    PsiFile psiFile = documentManager.getPsiFile(document);
-    PsiFile file = getRoot(psiFile, editor);
-    if (file == null) return false;
-    final MoverWrapper mover = getSuitableMover(editor, file);
-    if (mover == null || mover.getInfo().toMove2 == null) return false;
-    final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    final LineRange range = mover.getInfo().toMove;
-    if (range.startLine == 0 && !isDown) return false;
-
-    return range.endLine <= maxLine || !isDown;
+    return true;
   }
 
   @Nullable
