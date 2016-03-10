@@ -94,7 +94,7 @@ public abstract class TransactionGuard {
    * @param transaction code to execute inside a transaction.
    */
   public static void submitTransaction(@NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(TransactionKind.NO_MERGE, transaction);
+    getInstance().submitMergeableTransaction(TransactionKind.ANY_CHANGE, transaction);
   }
 
   /**
