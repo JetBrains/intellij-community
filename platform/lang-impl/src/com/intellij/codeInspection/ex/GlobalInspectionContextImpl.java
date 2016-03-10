@@ -91,7 +91,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
   private final NotNullLazyValue<ContentManager> myContentManager;
-  private InspectionResultsView myView;
+  private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
 

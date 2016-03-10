@@ -34,6 +34,7 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -600,10 +601,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public void setUpdating(boolean isUpdating) {
-    myUpdating = isUpdating;
-    myTree.setPaintBusy(isUpdating);
-    if (myLoadingProgressPreview != null) {
-      myLoadingProgressPreview.treeLoaded();
+    final Runnable update = () -> {
+      myUpdating = isUpdating;
+      myTree.setPaintBusy(isUpdating);
+      if (!isUpdating && myLoadingProgressPreview != null) {
+        myLoadingProgressPreview.treeLoaded();
+      }
+    };
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      update.run();
+    } else {
+      app.invokeLater(update, ModalityState.any());
     }
   }
 
