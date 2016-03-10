@@ -269,7 +269,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             ((InspectionTreeNode)path.getLastPathComponent()).amnesty();
           }
         }
-        updateView(false);
+        myTree.queueUpdate();
       }
 
       @Override
@@ -576,11 +576,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private void clearTree() {
-    myTree.removeAllNodes();
-    mySeverityGroupNodes.clear();
-  }
-
   @Nullable
   public String getCurrentProfileName() {
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
@@ -590,19 +585,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myInspectionProfile;
   }
 
-  public boolean update() {
-    return updateView(true);
+  public void update() {
+    updateView(true);
   }
 
-  public boolean updateView(boolean strict) {
+  public void updateView(boolean strict) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
       myTree.repaint();
-      return false;
     }
-    clearTree();
-    boolean resultsFound = buildTree();
-    myTree.restoreExpansionAndSelection();
-    return resultsFound;
+    myTree.removeAllNodes();
+    mySeverityGroupNodes.clear();
+    buildTree();
   }
 
   public void setUpdating(boolean isUpdating) {
@@ -626,27 +620,33 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myTreeWriteLock;
   }
 
-  public boolean buildTree() {
-    synchronized (myTreeWriteLock) {
-      InspectionProfile profile = myInspectionProfile;
-      boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
-      myGroups.clear();
-      final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
-      boolean resultsFound = false;
-      for (Tools currentTools : tools.values()) {
-        InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
-        final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
-        for (ScopeToolState state : myProvider.getTools(currentTools)) {
-          InspectionToolWrapper toolWrapper = state.getTool();
-          if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
-            addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject),
-                    isGroupedBySeverity);
-            resultsFound = true;
+  public void buildTree() {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        try {
+          setUpdating(true);
+          InspectionProfile profile = myInspectionProfile;
+          boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
+          myGroups.clear();
+          final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
+          for (Tools currentTools : tools.values()) {
+            InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+            final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
+            for (ScopeToolState state : myProvider.getTools(currentTools)) {
+              InspectionToolWrapper toolWrapper = state.getTool();
+              if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+                addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject),
+                        isGroupedBySeverity);
+              }
+            }
           }
         }
-      }
-      return resultsFound;
-    }
+        finally {
+          setUpdating(false);
+          ApplicationManager.getApplication().invokeLater(myTree::restoreExpansionAndSelection, ModalityState.any());
+        }
+      });
+    });
   }
 
   @NotNull
@@ -943,7 +943,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     syncRightPanel();
   }
 
-  boolean isUpdating() {
+  public boolean isUpdating() {
     return myUpdating;
   }
 
