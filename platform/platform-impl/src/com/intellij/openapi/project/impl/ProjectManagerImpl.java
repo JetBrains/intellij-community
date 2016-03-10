@@ -606,7 +606,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (checkCanClose && !canClose(project)) return false;
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
-    try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.NO_MERGE)) {
+    try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE)) {
       if (save) {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
