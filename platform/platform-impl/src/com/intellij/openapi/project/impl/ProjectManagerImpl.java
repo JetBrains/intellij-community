@@ -28,10 +28,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -351,9 +348,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     fireProjectOpened(project);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
+    try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE)) {
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () ->
         DumbService.getInstance(project).queueTask(new DumbModeTask() {
           @Override
           public void performInDumbMode(@NotNull ProgressIndicator indicator) {
@@ -364,9 +360,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           public String toString() {
             return "wait for file watcher";
           }
-        });
-      }
-    });
+        })
+      );
+    }
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
@@ -374,15 +370,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       public void run() {
         startupManager.runStartupActivities();
 
-        // dumb mode should start before post-startup activities
-        // only when startCacheUpdate is called from UI thread, we can guarantee that
-        // when the method returns, the application has entered dumb mode
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            startupManager.startCacheUpdate();
-          }
-        });
+        // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
+        // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
+        // Post-startup activities should not ever see unindexed and at the same time non-dumb state
+        TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, startupManager::startCacheUpdate);
 
         startupManager.runPostStartupActivitiesFromExtensions();
 
@@ -615,7 +606,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (checkCanClose && !canClose(project)) return false;
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
-    try {
+    try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE)) {
       if (save) {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();

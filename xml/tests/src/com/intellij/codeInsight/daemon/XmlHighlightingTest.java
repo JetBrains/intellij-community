@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2208,25 +2208,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     configureByFile(BASE_PATH +getTestName(false) + ".xml");
     doDoTest(true, false);
 
-    final List<WebReference> list = new ArrayList<WebReference>();
+    List<WebReference> list = PlatformTestUtil.collectWebReferences(myFile);
+    assertEquals(2, list.size());
 
-    myFile.accept(new XmlRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        for(PsiReference reference: element.getReferences()) {
-          if (reference instanceof WebReference) list.add((WebReference)reference);
-        }
-        super.visitElement(element);
-      }
-    });
-
-    assertEquals(list.size(), 2);
-    Collections.sort(list, new Comparator<WebReference>() {
-      @Override
-      public int compare(WebReference o1, WebReference o2) {
-        return o1.getCanonicalText().length() - o2.getCanonicalText().length();
-      }
-    });
+    Collections.sort(list, (o1, o2) -> o1.getCanonicalText().length() - o2.getCanonicalText().length());
 
     assertEquals("https://www.jetbrains.com/ruby/download", list.get(0).getCanonicalText());
     assertTrue(list.get(0).getElement() instanceof  XmlAttributeValue);

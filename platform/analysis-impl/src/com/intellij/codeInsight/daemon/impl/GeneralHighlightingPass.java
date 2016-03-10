@@ -23,7 +23,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.CustomHighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.problems.ProblemImpl;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,6 +49,7 @@ import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -428,18 +428,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
                                                   @NotNull final Project project) throws ProcessCanceledException {
     progress.cancel();
-    JobScheduler.getScheduler().schedule(new Runnable() {
-      @Override
-      public void run() {
-        Application application = ApplicationManager.getApplication();
-        if (!project.isDisposed() && !application.isDisposed() && !application.isUnitTestMode()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              DaemonCodeAnalyzer.getInstance(project).restart();
-            }
-          }, project.getDisposed());
-        }
+    EdtExecutorService.getScheduledExecutorInstance().schedule((Runnable)() -> {
+      Application application = ApplicationManager.getApplication();
+      if (!project.isDisposed() && !application.isDisposed() && !application.isUnitTestMode()) {
+        DaemonCodeAnalyzer.getInstance(project).restart();
       }
     }, RESTART_DAEMON_RANDOM.nextInt(100), TimeUnit.MILLISECONDS);
     throw new ProcessCanceledException();

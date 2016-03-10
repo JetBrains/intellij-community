@@ -205,6 +205,12 @@ public class ProgressIndicatorUtils {
                 }
               }
             }
+
+            @Override
+            public String toString() {
+              return readTask.toString();
+            }
+
           });
         }
         catch (RuntimeException e) {

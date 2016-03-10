@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public class SlowLineMarkersPassFactory extends AbstractProjectComponent implements DirtyScopeTrackingHighlightingPassFactory {
   public SlowLineMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.UPDATE_OVERRIDEN_MARKERS);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.UPDATE_OVERRIDDEN_MARKERS);
   }
 
   @Override
@@ -54,11 +54,11 @@ public class SlowLineMarkersPassFactory extends AbstractProjectComponent impleme
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {
-    return FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_OVERRIDEN_MARKERS);
+    return FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_OVERRIDDEN_MARKERS);
   }
 
   @Override
   public int getPassId() {
-    return Pass.UPDATE_OVERRIDEN_MARKERS;
+    return Pass.UPDATE_OVERRIDDEN_MARKERS;
   }
 }

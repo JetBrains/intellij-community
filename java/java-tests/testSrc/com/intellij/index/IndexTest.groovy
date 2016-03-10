@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.openapi.util.Factory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -71,7 +70,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testUpdate() throws StorageException, IOException {
-    StringIndex index = createIndex(new EnumeratorStringDescriptor())
+    StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor())
 
     try {
       // build index
@@ -118,7 +117,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testUpdateWithCustomEqualityPolicy() {
-    def index = createIndex(new CaseInsensitiveEnumeratorStringDescriptor())
+    def index = createIndex(getTestName(false), new CaseInsensitiveEnumeratorStringDescriptor())
     try {
       index.update("a.java", "x", null)
       assertDataEquals(index.getFilesByWord("x"), "a.java")
@@ -136,21 +135,12 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  private static StringIndex createIndex(EnumeratorStringDescriptor keyDescriptor) {
+  private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor) {
     final File storageFile = FileUtil.createTempFile("index_test", "storage");
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage");
+    PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile);
     final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024);
-    return new StringIndex(indexStorage, new Factory<PersistentHashMap<Integer, Collection<String>>>() {
-      @Override
-      public PersistentHashMap<Integer, Collection<String>> create() {
-        try {
-          return createMetaIndex(metaIndexFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    return new StringIndex(testName, indexStorage, index);
   }
   
   private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {

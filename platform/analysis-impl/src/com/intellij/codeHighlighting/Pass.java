@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeHighlighting;
 
 public interface Pass {
   int UPDATE_FOLDING = 1;
   int POPUP_HINTS = 3;
   int UPDATE_ALL = 4;
-  int UPDATE_OVERRIDEN_MARKERS = 6;
+  int UPDATE_OVERRIDDEN_MARKERS = 6;
   int LOCAL_INSPECTIONS = 7;
   int EXTERNAL_TOOLS = 8;
   int WOLF = 9;
@@ -29,4 +28,8 @@ public interface Pass {
   int WHOLE_FILE_LOCAL_INSPECTIONS = 12;
 
   int LAST_PASS = WHOLE_FILE_LOCAL_INSPECTIONS;
+
+  /** @deprecated use {@link #UPDATE_OVERRIDDEN_MARKERS} (to be removed in IDEA 17) */
+  @SuppressWarnings({"unused", "SpellCheckingInspection"})
+  int UPDATE_OVERRIDEN_MARKERS = UPDATE_OVERRIDDEN_MARKERS;
 }

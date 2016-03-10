@@ -31,6 +31,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
+import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -73,7 +75,9 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     final PsiFile targetFile = targetClass.getContainingFile();
 
     PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
-    PsiType type = expectedTypes[0];
+    final SmartTypePointer defaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(expectedTypes[0]);
+    final PsiType preferredType = TypeSelectorManagerImpl.getPreferredType(expectedTypes, expectedTypes[0]);
+    PsiType type = preferredType != null ? preferredType : expectedTypes[0];
 
     String varName = myReferenceExpression.getReferenceName();
     PsiExpression initializer = null;
@@ -116,7 +120,10 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     var = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(var);
     if (var == null) return;
     TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
-    builder.replaceElement(var.getTypeElement(), expression);
+    final PsiTypeElement typeElement = var.getTypeElement();
+    LOG.assertTrue(typeElement != null);
+    builder.replaceElement(typeElement,
+                           AbstractJavaInplaceIntroducer.createExpression(expression, typeElement.getText()));
     builder.setEndVariableAfter(var.getNameIdentifier());
     Template template = builder.buildTemplate();
 
@@ -132,6 +139,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
         final int offset = newEditor.getCaretModel().getOffset();
         final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiLocalVariable.class, false);
         if (localVariable != null) {
+          TypeSelectorManagerImpl.typeSelected(localVariable.getType(), defaultType.getType());
+
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {

@@ -32,6 +32,8 @@ public class UrlFilter implements Filter {
   @Nullable
   @Override
   public Result applyFilter(String line, int entireLength) {
+    if (!URLUtil.canContainUrl(line)) return null;
+
     int textStartOffset = entireLength - line.length();
     Matcher m = URLUtil.URL_PATTERN.matcher(line);
     ResultItem item = null;

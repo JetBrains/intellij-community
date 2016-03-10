@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -25,6 +24,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -34,30 +34,32 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
   public static final DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
 
   public static class SearchParameters {
-    private final PsiClass myClass;
-    private final SearchScope myScope;
+    @NotNull private final PsiClass myClass;
+    @NotNull private final SearchScope myScope;
     private final boolean myIncludeAnonymous;
     private final boolean myCheckInheritance;
 
-    public SearchParameters(PsiClass aClass, SearchScope scope, boolean includeAnonymous, boolean checkInheritance) {
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous, boolean checkInheritance) {
       myClass = aClass;
       myScope = scope;
       myIncludeAnonymous = includeAnonymous;
       myCheckInheritance = checkInheritance;
     }
 
-    public SearchParameters(final PsiClass aClass, SearchScope scope, final boolean includeAnonymous) {
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, final boolean includeAnonymous) {
       this(aClass, scope, includeAnonymous, true);
     }
 
-    public SearchParameters(final PsiClass aClass, final SearchScope scope) {
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
       this(aClass, scope, true);
     }
 
+    @NotNull
     public PsiClass getClassToProcess() {
       return myClass;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -92,12 +94,7 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
     final Query<PsiClass> raw = INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, includeAnonymous, checkInheritance));
 
     if (!includeAnonymous) {
-      return new FilteredQuery<PsiClass>(raw, new Condition<PsiClass>() {
-        @Override
-        public boolean value(final PsiClass psiClass) {
-          return !(psiClass instanceof PsiAnonymousClass);
-        }
-      });
+      return new FilteredQuery<>(raw, psiClass -> !(psiClass instanceof PsiAnonymousClass));
     }
 
     return raw;

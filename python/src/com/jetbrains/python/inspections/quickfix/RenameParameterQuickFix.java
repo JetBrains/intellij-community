@@ -52,4 +52,9 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   public String getName() {
     return PyBundle.message("QFIX.rename.parameter.to.$0", myNewName);
   }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }

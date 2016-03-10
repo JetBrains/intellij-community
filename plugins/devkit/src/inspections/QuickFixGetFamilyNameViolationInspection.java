@@ -34,14 +34,16 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
   @Nullable
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if ("getFamilyName".equals(method.getName()) && method.getParameterList().getParametersCount() == 0 && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if ("getFamilyName".equals(method.getName()) &&
+        method.getParameterList().getParametersCount() == 0 &&
+        !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final PsiClass aClass = method.getContainingClass();
       if (InheritanceUtil.isInheritor(aClass, QuickFix.class.getName()) && doesMethodViolate(method)) {
         final PsiIdentifier identifier = method.getNameIdentifier();
         LOG.assertTrue(identifier != null);
-        //noinspection DialogTitleCapitalization
         return new ProblemDescriptor[]{
-          manager.createProblemDescriptor(identifier, "QuickFix's getFamilyName() implementation must not depend on a specific context", (LocalQuickFix) null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)};
+          manager.createProblemDescriptor(identifier, "QuickFix's getFamilyName() implementation must not depend on a specific context",
+                                          (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)};
       }
     }
     return null;

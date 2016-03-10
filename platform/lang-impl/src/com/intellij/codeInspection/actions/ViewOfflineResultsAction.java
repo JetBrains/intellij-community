@@ -225,9 +225,7 @@ public class ViewOfflineResultsAction extends AnAction {
     final InspectionResultsView view = new InspectionResultsView(context,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ApplicationManager.getApplication().runReadAction((Runnable)view::buildTree);
-    });
+    view.update();
     TreeUtil.selectFirstNode(view.getTree());
     context.addView(view, title);
     return view;

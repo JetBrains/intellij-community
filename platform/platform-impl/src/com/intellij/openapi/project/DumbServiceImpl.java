@@ -18,10 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -188,7 +185,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return;
     }
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) {
@@ -251,7 +248,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           }, ModalityState.any(), myProject.getDisposed());
         }
       }
-    });
+    };
+    if (application.isDispatchThread()) {
+      runnable.run();
+    } else {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> TransactionGuard.submitTransaction(runnable));
+    }
   }
 
   @Nullable
@@ -530,16 +533,25 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private static void invokeAndWaitIfNeeded(Runnable runnable) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
+      return;
     }
-    else {
-      try {
-        SwingUtilities.invokeAndWait(runnable);
-      }
-      catch (InterruptedException ignore) {
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+
+    Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    //todo remove invokeLater when transactions are executed in "any" modality state
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(
+      () -> TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.ANY_CHANGE, () -> {
+        try {
+          runnable.run();
+        } finally {
+          semaphore.up();
+        }
+      }));
+    try {
+      semaphore.waitFor();
+    }
+    catch (ProcessCanceledException ignore) {
     }
   }
 

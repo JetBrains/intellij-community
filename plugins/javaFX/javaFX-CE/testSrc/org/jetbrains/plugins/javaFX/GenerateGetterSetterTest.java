@@ -26,6 +26,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
 
 @PlatformTestCase.WrapInCommand
 public class GenerateGetterSetterTest extends DaemonAnalyzerTestCase {
@@ -40,7 +41,7 @@ public class GenerateGetterSetterTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
+    AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
   }
 
   protected void doTest() throws Exception {

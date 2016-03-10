@@ -105,6 +105,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testTry1() throws Exception { doTest(); }
 
+  public void testInsideResourceVariable() { doTest(); }
+
   public void testBlock1() throws Exception { doTest(); }
 
   public void testAfterFor() throws Exception { doTest(); }

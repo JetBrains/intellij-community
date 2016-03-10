@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -228,8 +229,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       final boolean noProjects = projectManager.getOpenProjects().length == 0;
       final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
       Ref<Object> layoutDataRef = newEnabled() ? new Ref<Object>() : null;
-      final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef);
-      Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
+      final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef, project != null ? project : ApplicationManager.getApplication());
 
       if (notification.isExpired()) {
         return null;
@@ -295,8 +295,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                       @NotNull final Notification notification,
                                       final boolean showCallout,
                                       final boolean hideOnClickOutside,
-                                      @Nullable Ref<Object> layoutDataRef) {
-    return createBalloon(window.getComponent(), notification, showCallout, hideOnClickOutside, layoutDataRef);
+                                      @Nullable Ref<Object> layoutDataRef,
+                                      @NotNull Disposable parentDisposable) {
+    return createBalloon(window.getComponent(), notification, showCallout, hideOnClickOutside, layoutDataRef, parentDisposable);
   }
 
   @NotNull
@@ -304,9 +305,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                       @NotNull final Notification notification,
                                       final boolean showCallout,
                                       final boolean hideOnClickOutside,
-                                      @Nullable Ref<Object> layoutDataRef) {
+                                      @Nullable Ref<Object> layoutDataRef,
+                                      @NotNull Disposable parentDisposable) {
     if (layoutDataRef != null) {
-      return createNewBalloon(windowComponent, notification, showCallout, hideOnClickOutside, layoutDataRef);
+      Balloon balloon = createNewBalloon(windowComponent, notification, showCallout, hideOnClickOutside, layoutDataRef);
+      Disposer.register(parentDisposable, balloon);
+      return balloon;
     }
 
     final JEditorPane text = new JEditorPane();
@@ -380,6 +384,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     final Balloon balloon = builder.createBalloon();
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
+    Disposer.register(parentDisposable, balloon);
     return balloon;
   }
 

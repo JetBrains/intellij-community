@@ -16,6 +16,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -34,7 +35,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,16 +52,20 @@ import com.sun.jna.Native;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -149,6 +153,23 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
+      if (!PrivacyPolicy.isLatestVersionAccepted()) {
+        final PrivacyPolicy.Version latestVersion = PrivacyPolicy.getLatestVersion();
+        final String text = PrivacyPolicy.getText(latestVersion);
+        if (!text.isEmpty()) {
+          try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                showPrivacyPolicyAgreement(text);
+              }
+            });
+            PrivacyPolicy.setVersionAccepted(latestVersion);
+          }
+          catch (Exception ignored) {
+          }
+        }
+      }
     }
 
     appStarter.start(newConfigFolder);
@@ -420,34 +441,41 @@ public class StartupUtil {
   }
 
   /**
-   * @param alternativeHTML Updated version of Privacy Policy text if any.
+   * @param htmlText Updated version of Privacy Policy text if any.
    *                        If it's <code>null</code> the standard text from bundled resources would be used.
    */
-  public static void showPrivacyPolicyAgreement(@Nullable String alternativeHTML) {
+  public static void showPrivacyPolicyAgreement(@NotNull String htmlText) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Nullable
       @Override
       protected JComponent createCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
-        String html = alternativeHTML;
-        if (html == null) {
-          try {
-            html = FileUtil.loadTextAndClose(StartupUtil.class.getResource("/PrivacyPolicy.html").openStream());
-          }
-          catch (IOException e) {
-            //ignore
-          }
-        }
+        JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
         JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        viewer.setFocusable(true);
         viewer.addHyperlinkListener(new HyperlinkAdapter() {
           @Override
           protected void hyperlinkActivated(HyperlinkEvent e) {
-            BrowserUtil.browse(e.getURL());
+            URL url = e.getURL();
+            if (url != null) {
+              BrowserUtil.browse(url);
+            }
+            else {
+              SwingHelper.scrollToReference(viewer, e.getDescription());
+            }
           }
         });
-        viewer.setText(html);
+        viewer.setText(htmlText);
+        StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
+        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
+        styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+        styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
+        styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
+        styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
+        styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
         viewer.setCaretPosition(0);
-        viewer.setBorder(JBUI.Borders.empty(5));
+        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
         centerPanel
           .add(new JBScrollPane(viewer, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
@@ -470,15 +498,15 @@ public class StartupUtil {
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         if (application == null) {
           System.exit(Main.PRIVACY_POLICY_REJECTION);
-        } else {
+        }
+        else {
           ((ApplicationImpl)application).exit(true, true, false, false);
         }
       }
     };
     dialog.setModal(true);
     dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement");
-    dialog.setResizable(false);
-    dialog.setSize(509, 395);
+    dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
 

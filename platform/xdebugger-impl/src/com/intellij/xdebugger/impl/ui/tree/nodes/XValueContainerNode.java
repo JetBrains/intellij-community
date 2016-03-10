@@ -104,7 +104,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       else {
         newChildren = new SmartList<>();
         if (myValueChildren == null) {
-          myValueChildren = last ? Collections.emptyList() : new SmartList<>();
+          myValueChildren = new SmartList<>();
         }
       }
 

@@ -51,7 +51,13 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
   @Override
   public void compose(final StringBuffer buf, RefEntity refEntity) {
-    genPageHeader(buf, refEntity);
+    compose(buf, refEntity, true);
+  }
+
+  public void compose(final StringBuffer buf, RefEntity refEntity, boolean toExternalHtml) {
+    if (toExternalHtml) {
+      genPageHeader(buf, refEntity);
+    }
 
     if (refEntity instanceof RefElement) {
       RefElementImpl refElement = (RefElementImpl)refEntity;
@@ -59,12 +65,12 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
         //noinspection HardCodedStringLiteral
         buf.append("<br>");
-        appendAfterHeaderIndention(buf);
         appendProblemSynopsis(refElement, buf);
 
-        //noinspection HardCodedStringLiteral
-        buf.append("<br><br>");
-        appendResolution(buf, refElement, DescriptorComposer.quickFixTexts(refElement, myToolPresentation));
+        if (toExternalHtml) {
+          buf.append("<br><br>");
+          appendResolution(buf, refElement, DescriptorComposer.quickFixTexts(refElement, myToolPresentation));
+        }
         refElement.accept(new RefJavaVisitor() {
           @Override public void visitClass(@NotNull RefClass aClass) {
             appendClassInstantiations(buf, aClass);
@@ -94,6 +100,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   public static void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
+    buf.append("<div class=\"problem-description\">");
     refElement.accept(new RefJavaVisitor() {
       @Override public void visitField(@NotNull RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
@@ -210,6 +217,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         }
       }
     });
+    buf.append("</div>");
   }
 
   @Override
@@ -343,6 +351,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
+        buf.append("<div class=\"problem-description\">");
       }
       @NonNls final String ul = "<ul>";
       buf.append(ul);
@@ -359,6 +368,9 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       }
       @NonNls final String closeUl = "</ul>";
       buf.append(closeUl);
+      if (appendCallees) {
+        buf.append("</div>");
+      }
     }
   }
 

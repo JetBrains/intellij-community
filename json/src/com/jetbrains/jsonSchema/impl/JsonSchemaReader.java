@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowablePairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +19,12 @@ import java.util.*;
  * @author Irina.Chernushina on 8/27/2015.
  */
 public class JsonSchemaReader {
+  public static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.impl.JsonSchemaReader");
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
 
   public JsonSchemaObject read(@NotNull final Reader reader) throws IOException {
     final JsonReader in = new JsonReader(reader);
+    in.setLenient(true);
 
     in.beginObject();
     final JsonSchemaObject object = new JsonSchemaObject();
@@ -43,9 +46,11 @@ public class JsonSchemaReader {
       new JsonSchemaReader().read(new java.io.StringReader(string));
       return true;
     } catch (IOException e) {
+      LOG.info(e);
       errorConsumer.consume(e.getMessage());
       return false;
     } catch (Exception e) {
+      LOG.info(e);
       errorConsumer.consume(e.getMessage());
       return false;
     }
@@ -293,7 +298,12 @@ public class JsonSchemaReader {
         }
 
         private JsonSchemaType parseType(JsonReader in) throws IOException {
-          return JsonSchemaType.valueOf("_" + in.nextString());
+          final String typeString = in.nextString();
+          try {
+            return JsonSchemaType.valueOf("_" + typeString);
+          } catch (IllegalArgumentException e) {
+            throw new IOException("Wrong type value: " + typeString + "\"");
+          }
         }
       };
     }

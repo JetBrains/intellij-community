@@ -79,6 +79,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new BlockBraceFixer());
     fixers.add(new MissingIfBranchesFixer());
     fixers.add(new MissingWhileBodyFixer());
+    fixers.add(new MissingTryBodyFixer());
     fixers.add(new MissingSwitchBodyFixer());
     fixers.add(new MissingCatchBodyFixer());
     fixers.add(new MissingSynchronizedBodyFixer());

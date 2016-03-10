@@ -39,6 +39,7 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 
 /**
@@ -99,7 +100,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private final MouseMotionAdapter myMouseMotionListener;
   private final MouseAdapter myMouseListener;
   private final HierarchyListener myHierarchyListener;
-  private final AWTEventListener myAWTMouseListener;
+  private final AWTEventListener myAWTMouseListener; // holds strong reference while a scroll bar in the hierarchy
+  private final AWTEventListener myWeakListener;
   private final NSScrollerHelper.ScrollbarStyleListener myNSScrollerListener;
   private boolean myGlobalListenersAdded;
 
@@ -248,6 +250,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         }
       }
     };
+    myWeakListener = new WeakLestener(myAWTMouseListener);
     myNSScrollerListener = new NSScrollerHelper.ScrollbarStyleListener() {
       @Override
       public void styleChanged() {
@@ -507,13 +510,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     boolean shouldAdd = scrollbar.isDisplayable();
 
     if (myGlobalListenersAdded && (!shouldAdd || forceRemove)) {
-      Toolkit.getDefaultToolkit().removeAWTEventListener(myAWTMouseListener);
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myWeakListener);
       NSScrollerHelper.removeScrollbarStyleListener(myNSScrollerListener);
       myGlobalListenersAdded = false;
     }
 
     if (!myGlobalListenersAdded && shouldAdd && !forceRemove) {
-      Toolkit.getDefaultToolkit().addAWTEventListener(myAWTMouseListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+      Toolkit.getDefaultToolkit().addAWTEventListener(myWeakListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
       NSScrollerHelper.addScrollbarStyleListener(myNSScrollerListener);
       myGlobalListenersAdded = true;
     }
@@ -1133,6 +1136,25 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       }
       else {
         g.fillRoundRect(gap, 0, thumbBounds.width - 2 * gap, thumbBounds.height, arc, arc);
+      }
+    }
+  }
+
+  private static final class WeakLestener implements AWTEventListener {
+    private final WeakReference<AWTEventListener> myReference;
+
+    private WeakLestener(AWTEventListener listener) {
+      myReference = new WeakReference<AWTEventListener>(listener);
+    }
+
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      AWTEventListener listener = myReference.get();
+      if (listener != null) {
+        listener.eventDispatched(event);
+      }
+      else {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(this);
       }
     }
   }

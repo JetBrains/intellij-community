@@ -17,6 +17,8 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,6 +43,28 @@ import org.jetbrains.annotations.NotNull;
  *
  * <p><h1>FAQ</h1></p>
  *
+ * Q: How large/long should transactions be?
+ * A: As short as possible, but not shorter. Take them for minimal period of time that you need the model you're working with
+ * to be consistent. If your action doesn't require any user interaction, the whole action can be wrapped inside
+ * a transaction (see {@link WrapInTransaction}). If the action only displays a dialog (e.g. Settings) and does nothing else,
+ * it probably shouldn't take a transaction for all the dialog showing time.
+ * Actions inside the dialog should care of transactions themselves.<p/>
+ *
+ * The most complicated case is when the action both displays modal dialogs and performs modifications. The only case when those dialogs
+ * should be shown under a transaction is when the mere reason of their showing lies somewhere in PSI/VFS/project model, and the are not
+ * prepared to foreign code affecting the state of things at the moment of showing. For example, dialogs asking for making files writable
+ * are shown only because VFS indicates the file is read-only. So they wouldn't make sense if they allowed modifications to that file
+ * while they're shown. Their clients are not prepared to such changes either. So such dialogs should be shown under the same transaction,
+ * as the following meaningful modifications performed by the action. Most refactoring dialogs are similar and refactoring actions should
+ * take transactions for the whole refactoring process, with all the dialogs inside.<p/>
+ *
+ * Having said all that, it's still advisable that the transactions be as short as possible and preferably exclude any modal dialogs
+ * for which transaction-ness is not critical. So a better overall strategy would be to either make the dialogs non-modal,
+ * or at least make them and the code that shows them prepared for possible model changes while the dialog is shown.<p/>
+ *
+ * Dialogs that have per-project modality must never be shown from a transaction, because this would disallow making changes in another
+ * project: they'd be blocked by the running transaction.
+ *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
  * A: Add a transaction somewhere into the call stack, to the outermost callee where having read/write model consistency is needed.
  * If it's a user action, transaction should be synchronous (see {@link #startSynchronousTransaction(TransactionKind)}. For AnAction
@@ -53,11 +77,12 @@ import org.jetbrains.annotations.NotNull;
  * {@link #submitMergeableTransaction(TransactionKind, Runnable)} call.<p/>
  *
  * Q: I've got <b>"Nested transactions are not allowed"</b> exception, what do I do?<br/>
- * A: First, find the place in the stack where the outer transaction is started. Then, see if there is any Swing event pumping
- * in between two transactions (e.g. a dialog is shown). If not, one of two transactions is superfluous, remove it. If there
- * is event pumping, check if the client code (e.g. the one showing the dialog) is prepared to the nested model modifications
- * of the specified kinds. For example, refactoring dialogs might be prepared to {@link TransactionKind#TEXT_EDITING} kind
- * (for text field editing inside the dialogs) but not
+ * A: First, identify the place in the stack where the outer transaction is started (the exception attachment should contain it).
+ * Then, see if there is any Swing event pumping
+ * in between two transactions (e.g. a dialog is shown). If not, one of the two involved transactions is superfluous, remove it. If there
+ * is event pumping present, check if the client code (e.g. the one showing the dialog) is prepared to such nested model modifications.
+ * For example, refactoring dialogs might be prepared to {@link TransactionKind#TEXT_EDITING} kind
+ * (for text field editing inside the dialogs) but not to
  * other model changes, e.g. root changes. The outer transaction code might then specify which kinds it's prepared to (by using
  * {@link #acceptNestedTransactions(TransactionKind...)}), and the inner transaction code should have the very same transaction kind
  * (by using {@link #submitMergeableTransaction(TransactionKind, Runnable)} or {@link #startSynchronousTransaction(TransactionKind)}).
@@ -86,22 +111,48 @@ public abstract class TransactionGuard {
    * The code will be run on Swing thread immediately or after all other queued transactions (if any) have been completed.<p/>
    *
    * For more advanced version, see {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
-   * Transactions submitted via this method use {@link TransactionKind#NO_MERGE} kind.
+   * Transactions submitted via this method use {@link TransactionKind#ANY_CHANGE} kind.
    *
    * @param transaction code to execute inside a transaction.
    */
   public static void submitTransaction(@NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(TransactionKind.NO_MERGE, transaction);
+    getInstance().submitMergeableTransaction(TransactionKind.ANY_CHANGE, transaction);
   }
 
   /**
-   * Schedules a transaction and waits for it to be completed. Only allowed to be invoked on non-UI thread and outside read action.
+   * Runs the given code synchronously inside a transaction. Fails if transactions of given kind are not allowed at this moment.
+   * @see #startSynchronousTransaction(TransactionKind)
+   */
+  public static void syncTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction) {
+    AccessToken token = getInstance().startSynchronousTransaction(kind);
+    try {
+      transaction.run();
+    } finally {
+      token.finish();
+    }
+  }
+
+  /**
+   * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
+   * or inside a read action on non-UI thread.
    * @see #submitMergeableTransaction(TransactionKind, Runnable)
-   * @param kind
-   * @param transaction
    * @throws ProcessCanceledException if current thread is interrupted
    */
   public abstract void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull Runnable transaction) throws ProcessCanceledException;
+
+  /**
+   * Same as {@link #submitTransactionAndWait(TransactionKind, Runnable)}, but returns a value computed by the transaction.
+   */
+  public <T> T submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Computable<T> transaction) throws ProcessCanceledException {
+    final Ref<T> result = Ref.create();
+    submitTransactionAndWait(kind, new Runnable() {
+      @Override
+      public void run() {
+        result.set(transaction.compute());
+      }
+    });
+    return result.get();
+  }
 
   /**
    * A synchronous version of {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
@@ -121,7 +172,7 @@ public abstract class TransactionGuard {
    * and executes the provided code immediately. Otherwise
    * adds the runnable to a queue. When all transactions scheduled before this one are finished, executes the given
    * runnable under a transaction.
-   * @param kind a kind object to enable transaction merging or {@link TransactionKind#NO_MERGE}, if no merging is required.
+   * @param kind a "kind" object for transaction merging
    * @param transaction code to execute inside a transaction.
    */
   public abstract void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction);
@@ -129,8 +180,10 @@ public abstract class TransactionGuard {
   /**
    * Allow incoming transactions of the specified kinds to be executed immediately, instead of being queued until the current transaction is finished.<p/>
    *
-   * Example: outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document)
-   * should be allowed.
+   * Example: outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document).
+   * should be allowed.<p/>
+   *
+   * For dialogs, consider using {@link AcceptNestedTransactions} annotation instead of explicit call to this method.
    * @param kinds kinds of transactions to allow
    * @return a token object for this session. Please call {@link AccessToken#finish()} (inside finally clause) when you don't want
    * nested transactions anymore.

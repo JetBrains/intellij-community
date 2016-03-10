@@ -31,8 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
@@ -42,7 +44,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
  */
 final class MacScrollBarUI extends DefaultScrollBarUI {
   private static final RegistryValue DISABLED = Registry.get("ide.mac.disableMacScrollbars");
-  private static final List<MacScrollBarUI> UI = Collections.synchronizedList(new ArrayList<MacScrollBarUI>());
+  private static final List<Reference<MacScrollBarUI>> UI = new ArrayList<>();
   private final Alarm myAlarm = new Alarm();
   private boolean myTrackHovered;
 
@@ -119,14 +121,43 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   public void installUI(JComponent c) {
     super.installUI(c);
     updateStyle(Style.CURRENT.get());
-    UI.add(this);
+    processReferences(this, null, null);
   }
 
   @Override
   public void uninstallUI(JComponent c) {
-    UI.remove(this);
+    processReferences(null, this, null);
     myAlarm.cancelAllRequests();
     super.uninstallUI(c);
+  }
+
+  /**
+   * Processes references in the static list of references synchronously.
+   * This method removes all cleared references and the reference specified to remove,
+   * collects objects from other references into the specified list and
+   * adds the reference specified to add.
+   *
+   * @param toAdd    the object to add to the static list of references (ignored if {@code null})
+   * @param toRemove the object to remove from the static list of references (ignored if {@code null})
+   * @param list     the list to collect all available objects (ignored if {@code null})
+   */
+  private static void processReferences(MacScrollBarUI toAdd, MacScrollBarUI toRemove, List<MacScrollBarUI> list) {
+    synchronized (UI) {
+      Iterator<Reference<MacScrollBarUI>> iterator = UI.iterator();
+      while (iterator.hasNext()) {
+        Reference<MacScrollBarUI> reference = iterator.next();
+        MacScrollBarUI ui = reference.get();
+        if (ui == null || ui == toRemove) {
+          iterator.remove();
+        }
+        else if (list != null) {
+          list.add(ui);
+        }
+      }
+      if (toAdd != null) {
+        UI.add(new WeakReference<MacScrollBarUI>(toAdd));
+      }
+    }
   }
 
   private void updateStyle(Style style) {
@@ -209,7 +240,9 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         if (!DISABLED.asBoolean() && SystemInfo.isMacOSMountainLion) super.run();
         Style newStyle = get();
         if (newStyle != oldStyle) {
-          for (MacScrollBarUI ui : UI.toArray(new MacScrollBarUI[0])) {
+          List<MacScrollBarUI> list = new ArrayList<>();
+          processReferences(null, null, list);
+          for (MacScrollBarUI ui : list) {
             ui.updateStyle(newStyle);
           }
         }

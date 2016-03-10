@@ -32,6 +32,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
@@ -52,14 +53,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   private XWatchesViewImpl myWatchesView;
-  private final List<XDebugView> myViews = new ArrayList<XDebugView>();
+  private final List<XDebugView> myViews = ContainerUtil.newArrayList();
 
   @Nullable
   private XDebugSessionImpl mySession;
@@ -107,7 +107,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
-    myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
+    if (!Registry.is("debugger.watches.in.variables")) {
+      myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
+    }
 
     for (XDebugView view : myViews) {
       Disposer.register(myRunContentDescriptor, view);
@@ -180,7 +182,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private Content createVariablesContent(@NotNull XDebugSessionImpl session) {
-    final XVariablesView variablesView = new XVariablesView(session);
+    XVariablesView variablesView;
+    if (Registry.is("debugger.watches.in.variables")) {
+      variablesView = myWatchesView = new XWatchesViewImpl(session);
+    }
+    else {
+      variablesView = new XVariablesView(session);
+    }
     myViews.add(variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
@@ -195,7 +203,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private Content createWatchesContent(@NotNull XDebugSessionImpl session) {
     myWatchesView = new XWatchesViewImpl(session);
     myViews.add(myWatchesView);
-    Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
+    Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
                                                 XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
     watchesContent.setCloseable(false);
     return watchesContent;

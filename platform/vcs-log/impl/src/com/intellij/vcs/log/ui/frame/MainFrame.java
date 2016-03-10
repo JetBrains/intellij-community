@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui.frame;
 
+import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -292,20 +293,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }), VcsRevisionNumber.class);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
-      List<CommitId> commits = myLog.getSelectedCommits();
-      Collection<VcsLogProvider> logProviders = myLog.getLogProviders();
-      if (logProviders.size() == 1) {
-        if (!commits.isEmpty()) {
-          return myLogDataManager.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs();
-        }
-        return null;
-      }
-      if (commits.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-
-      Set<VirtualFile> roots = ContainerUtil.map2Set(commits, new Function<CommitId, VirtualFile>() {
+      int[] selectedRows = myGraphTable.getSelectedRows();
+      if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), new Function<Integer, VirtualFile>() {
         @Override
-        public VirtualFile fun(CommitId commitId) {
-          return commitId.getRoot();
+        public VirtualFile fun(@NotNull Integer row) {
+          return myGraphTable.getModel().getRoot(row);
         }
       });
       if (roots.size() == 1) {

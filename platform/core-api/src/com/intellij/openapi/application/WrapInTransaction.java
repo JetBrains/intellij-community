@@ -3,7 +3,7 @@ package com.intellij.openapi.application;
 import java.lang.annotation.*;
 
 /**
- * Add this annotation to actions (AnAction inheritors) to make them run inside a transaction.
+ * Add this annotation to actions (AnAction inheritors) to make them run inside a synchronous transaction.
  *
  * @see TransactionGuard
  * @since 146.*
@@ -16,7 +16,7 @@ import java.lang.annotation.*;
 public @interface WrapInTransaction {
 
   /**
-   * @return the kind of transaction to wrap the action into. By default, it's {@link TransactionKind#NO_MERGE}.
+   * @return the kind of transaction to wrap the action into. By default, it's {@link TransactionKind#ANY_CHANGE}.
    */
-  TransactionKind.Common value() default TransactionKind.Common.NO_MERGE;
+  TransactionKind.Common value() default TransactionKind.Common.ANY_CHANGE;
 }

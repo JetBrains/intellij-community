@@ -30,7 +30,10 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -176,7 +179,9 @@ public class CodeCompletionHandlerBase {
       }
     };
     if (autopopup) {
-      CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+      try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
+        CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+      }
       CompletionAssertions.checkEditorValid(editor);
       if (!restarted && shouldSkipAutoPopup(editor, initializationContext[0].getFile())) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
@@ -626,20 +631,18 @@ public class CodeCompletionHandlerBase {
 
   private static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
     if (laterRunnable != null) {
-      final Runnable runnable1 = new Runnable() {
-        @Override
-        public void run() {
-          if (!indicator.getProject().isDisposed()) {
-            laterRunnable.run();
-          }
-          indicator.disposeIndicator();
+      final Runnable runnable1 = () -> {
+        if (!indicator.getProject().isDisposed()) {
+          laterRunnable.run();
         }
+        indicator.disposeIndicator();
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         runnable1.run();
       }
       else {
-        ApplicationManager.getApplication().invokeLater(runnable1);
+        ApplicationManager.getApplication().invokeLater(
+          () -> TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, runnable1));
       }
     }
     else {

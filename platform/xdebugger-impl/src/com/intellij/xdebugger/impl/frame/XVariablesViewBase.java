@@ -43,6 +43,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,23 +55,25 @@ import java.awt.*;
  * @author nik
  */
 public abstract class XVariablesViewBase extends XDebugView {
-  protected final XDebuggerTreePanel myDebuggerTreePanel;
+  private final XDebuggerTreePanel myTreePanel;
   private XDebuggerTreeState myTreeState;
-  private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;
+
+  private Object myFrameEqualityObject;
   private MySelectionListener mySelectionListener;
 
   protected XVariablesViewBase(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @Nullable XValueMarkers<?, ?> markers) {
-    myDebuggerTreePanel = new XDebuggerTreePanel(project, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
-    myDebuggerTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
-    DnDManager.getInstance().registerSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
+    myTreePanel = new XDebuggerTreePanel(
+      project, editorsProvider, this, null, this instanceof XWatchesView ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
+    myTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
+    DnDManager.getInstance().registerSource(myTreePanel, myTreePanel.getTree());
   }
 
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
-    XDebuggerTree tree = myDebuggerTreePanel.getTree();
-    final XSourcePosition position = stackFrame.getSourcePosition();
+    XSourcePosition position = stackFrame.getSourcePosition();
+    XDebuggerTree tree = getTree();
     tree.setSourcePosition(position);
-    tree.setRoot(new XStackFrameNode(tree, stackFrame), false);
+    tree.setRoot(buildRootNode(stackFrame), false);
     final Project project = tree.getProject();
     project.putUserData(XVariablesView.DEBUG_VARIABLES, new XVariablesView.InlineVariablesInfo());
     project.putUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS, new ObjectLongHashMap<VirtualFile>());
@@ -83,6 +86,11 @@ public abstract class XVariablesViewBase extends XDebugView {
     if (position != null && Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
       registerInlineEvaluator(stackFrame, position, project);
     }
+  }
+
+  @NotNull
+  protected XDebuggerTreeNode buildRootNode(@NotNull XStackFrame stackFrame) {
+    return new XStackFrameNode(getTree(), stackFrame);
   }
 
   private void registerInlineEvaluator(final XStackFrame stackFrame,
@@ -102,7 +110,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     disposeTreeRestorer();
     removeSelectionListener();
     myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
-    myTreeState = XDebuggerTreeState.saveState(myDebuggerTreePanel.getTree());
+    myTreeState = XDebuggerTreeState.saveState(myTreePanel.getTree());
   }
 
   private void removeSelectionListener() {
@@ -125,18 +133,18 @@ public abstract class XVariablesViewBase extends XDebugView {
   }
 
   public XDebuggerTree getTree() {
-    return myDebuggerTreePanel.getTree();
+    return myTreePanel.getTree();
   }
 
   public JComponent getPanel() {
-    return myDebuggerTreePanel.getMainPanel();
+    return myTreePanel.getMainPanel();
   }
 
   @Override
   public void dispose() {
     disposeTreeRestorer();
     removeSelectionListener();
-    DnDManager.getInstance().unregisterSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
+    DnDManager.getInstance().unregisterSource(myTreePanel, myTreePanel.getTree());
   }
 
   private class MySelectionListener implements SelectionListener {

@@ -15,8 +15,7 @@
  */
 
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
+
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -103,28 +102,17 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                                       replaceAllOccurrences, replaceFieldsWithGetters, declareFinal, generateDelegate, null,
                                       parametersToRemove);
 
-    CommandProcessor.instance.executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.application.runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              processor.run();
-              if (conflicts != null) fail("Conflicts were expected");
-            }
-            catch (Exception e) {
-              if (conflicts == null){
-                e.printStackTrace();
-                fail("Conflicts were not expected");
-              }
-              assertEquals(conflicts, e.message);
-            }
-          }
-        });
+    try {
+      processor.run();
+      if (conflicts != null) fail("Conflicts were expected");
+    }
+    catch (Exception e) {
+      if (conflicts == null){
+        e.printStackTrace();
+        fail("Conflicts were not expected");
       }
-    }, "introduce Parameter", null);
-
+      assertEquals(conflicts, e.message);
+    }
 
     editor.selectionModel.removeSelection();
     return true;
