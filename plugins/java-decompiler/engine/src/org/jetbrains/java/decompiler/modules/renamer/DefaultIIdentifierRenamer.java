@@ -73,9 +73,9 @@ public class DefaultIIdentifierRenamer implements IIdentifierRenamer {
   // TODO: consider possible conflicts with not renamed classes, fields and methods!
   // We should get all relevant information here.
   @Override
-  public String getNextClassName(String simpleName, String fullName) {
+  public String getNextClassName(String simpleName, String fullName, int accessFlags) {
     if (fullName == null) {
-      return "class_" + (classCounter++);
+      return ConverterHelper.getClassPrefix(accessFlags) + (classCounter++);
     }
 
     int index = 0;
@@ -83,7 +83,7 @@ public class DefaultIIdentifierRenamer implements IIdentifierRenamer {
       index++;
     }
     if (index == 0 || index == fullName.length()) {
-      return "class_" + (classCounter++);
+      return ConverterHelper.getClassPrefix(accessFlags) + (classCounter++);
     }
     else {
       String name = fullName.substring(index);

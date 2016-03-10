@@ -38,7 +38,7 @@ public interface IIdentifierRenamer {
    * @param fullName the current simple name of the class
    * @return a generated String that is a valid class name
    */
-  String getNextClassName(String simpleName, String fullName);
+  String getNextClassName(String simpleName, String fullName, int accessFlags);
 
   /**
    * Generates the next name for a field

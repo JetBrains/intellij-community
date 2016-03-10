@@ -15,6 +15,8 @@
  */
 package org.jetbrains.java.decompiler.modules.renamer;
 
+import org.jetbrains.java.decompiler.code.CodeConstants;
+
 public class ConverterHelper {
 
   // *****************************************************************************
@@ -31,5 +33,17 @@ public class ConverterHelper {
 
   public static String getPackageName(String fullName) {
     return fullName.substring(0, fullName.lastIndexOf('/') + 1);
+  }
+
+  public static String getClassPrefix(int accessFlags) {
+    if ((accessFlags & CodeConstants.ACC_INTERFACE) == CodeConstants.ACC_INTERFACE) {
+      return "interface_";
+    }
+    else if ((accessFlags & CodeConstants.ACC_ENUM) == CodeConstants.ACC_ENUM) {
+      return "enum_";
+    }
+    else {
+      return "class_";
+    }
   }
 }

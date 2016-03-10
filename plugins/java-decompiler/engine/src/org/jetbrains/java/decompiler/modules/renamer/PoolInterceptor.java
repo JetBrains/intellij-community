@@ -21,14 +21,14 @@ import java.util.HashMap;
 
 public class PoolInterceptor {
 
-  private final IIdentifierRenamer helper;
+  private final IIdentifierRenamer renamer;
 
   private final HashMap<String, String> mapOldToNewNames = new HashMap<String, String>();
 
   private final HashMap<String, String> mapNewToOldNames = new HashMap<String, String>();
 
-  public PoolInterceptor(IIdentifierRenamer helper) {
-    this.helper = helper;
+  public PoolInterceptor(IIdentifierRenamer renamer) {
+    this.renamer = renamer;
   }
 
   public void addName(String oldName, String newName) {
@@ -44,7 +44,7 @@ public class PoolInterceptor {
     return mapNewToOldNames.get(newName);
   }
 
-  public IIdentifierRenamer getHelper() {
-    return helper;
+  public IIdentifierRenamer getRenamer() {
+    return renamer;
   }
 }
