@@ -43,6 +43,25 @@ import org.jetbrains.annotations.NotNull;
  *
  * <p><h1>FAQ</h1></p>
  *
+ * Q: How large/long should transactions be?
+ * A: As short as possible, but not shorter. Take them for minimal period of time that you need the model you're working with
+ * to be consistent. If your action doesn't require any user interaction, the whole action can be wrapped inside
+ * a transaction (see {@link WrapInTransaction}). If the action only displays a dialog (e.g. Settings) and does nothing else,
+ * it probably shouldn't take a transaction for all the dialog showing time.
+ * Actions inside the dialog should care of transactions themselves.<p/>
+ *
+ * The most complicated case is when the action both displays modal dialogs and performs modifications. The only case when those dialogs
+ * should be shown under a transaction is when the mere reason of their showing lies somewhere in PSI/VFS/project model, and the are not
+ * prepared to foreign code affecting the state of things at the moment of showing. For example, dialogs asking for making files writable
+ * are shown only because VFS indicates the file is read-only. So they wouldn't make sense if they allowed modifications to that file
+ * while they're shown. Their clients are not prepared to such changes either. So such dialogs should be shown under the same transaction,
+ * as the following meaningful modifications performed by the action. Most refactoring dialogs are similar and refactoring actions should
+ * take transactions for the whole refactoring process, with all the dialogs inside.<p/>
+ *
+ * Having said all that, it's still advisable that the transactions be as short as possible and preferably exclude any modal dialogs
+ * for which transaction-ness is not critical. So a better overall strategy would be to either make the dialogs non-modal,
+ * or at least make them and the code that shows them prepared for possible model changes while the dialog is shown.
+ *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
  * A: Add a transaction somewhere into the call stack, to the outermost callee where having read/write model consistency is needed.
  * If it's a user action, transaction should be synchronous (see {@link #startSynchronousTransaction(TransactionKind)}. For AnAction
@@ -89,7 +108,7 @@ public abstract class TransactionGuard {
    * The code will be run on Swing thread immediately or after all other queued transactions (if any) have been completed.<p/>
    *
    * For more advanced version, see {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
-   * Transactions submitted via this method use {@link TransactionKind#NO_MERGE} kind.
+   * Transactions submitted via this method use {@link TransactionKind#ANY_CHANGE} kind.
    *
    * @param transaction code to execute inside a transaction.
    */
@@ -150,7 +169,7 @@ public abstract class TransactionGuard {
    * and executes the provided code immediately. Otherwise
    * adds the runnable to a queue. When all transactions scheduled before this one are finished, executes the given
    * runnable under a transaction.
-   * @param kind a kind object to enable transaction merging or {@link TransactionKind#NO_MERGE}, if no merging is required.
+   * @param kind a "kind" object for transaction merging
    * @param transaction code to execute inside a transaction.
    */
   public abstract void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction);
