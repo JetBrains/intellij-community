@@ -17,6 +17,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +51,13 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JB
   protected void replaceModel(@NotNull List<PsiElement> data) {
     final Object selectedValue = myComponent.getSelectedValue();
     final int index = myComponent.getSelectedIndex();
-    ((NameFilteringListModel)myComponent.getModel()).replaceAll(data);
+    ListModel model = myComponent.getModel();
+    if (model instanceof NameFilteringListModel) {
+      ((NameFilteringListModel)model).replaceAll(data);
+    } else if (model instanceof CollectionListModel){
+      ((CollectionListModel)model).replaceAll(data);
+    }
+
     if (index == 0) {
       myComponent.setSelectedIndex(0);
     }
