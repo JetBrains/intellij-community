@@ -94,6 +94,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
+  private volatile boolean mySingleInspectionRun;
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
@@ -987,5 +988,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public boolean isViewClosed() {
     return myViewClosed;
+  }
+
+  public void setSingleInspectionRun(boolean singleInspectionRun) {
+    mySingleInspectionRun = singleInspectionRun;
+  }
+
+  public boolean isSingleInspectionRun() {
+    return mySingleInspectionRun;
   }
 }

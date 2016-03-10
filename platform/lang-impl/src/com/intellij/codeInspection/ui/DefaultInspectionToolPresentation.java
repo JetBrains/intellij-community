@@ -247,7 +247,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
           final InspectionNode toolNode;
           toolNode = myToolNode == null ?
                      view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
-                                       context.getUIOptions().GROUP_BY_SEVERITY) : myToolNode;
+                                  context.getUIOptions().GROUP_BY_SEVERITY, context.isSingleInspectionRun()) : myToolNode;
 
           final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
           problems.put(refElement, descriptors);

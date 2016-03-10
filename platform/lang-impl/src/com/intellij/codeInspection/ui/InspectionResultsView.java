@@ -552,10 +552,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   @NotNull
   public InspectionNode addTool(@NotNull final InspectionToolWrapper toolWrapper,
                                 HighlightDisplayLevel errorLevel,
-                                boolean groupedBySeverity) {
+                                boolean groupedBySeverity,
+                                boolean isSingleInspectionRun) {
     String groupName =
       toolWrapper.getGroupDisplayName().isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : toolWrapper.getGroupDisplayName();
-    InspectionTreeNode parentNode = getToolParentNode(groupName, errorLevel, groupedBySeverity);
+    InspectionTreeNode parentNode = getToolParentNode(groupName, errorLevel, groupedBySeverity, isSingleInspectionRun);
     InspectionNode toolNode = new InspectionNode(toolWrapper);
     boolean showStructure = myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE;
     myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure);
@@ -628,6 +629,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         setUpdating(true);
         InspectionProfile profile = myInspectionProfile;
         boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
+        boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
         myGroups.clear();
         final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
         for (Tools currentTools : tools.values()) {
@@ -637,7 +639,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             InspectionToolWrapper toolWrapper = state.getTool();
             if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
               addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject),
-                      isGroupedBySeverity);
+                      isGroupedBySeverity, singleInspectionRun);
             }
           }
         }
@@ -657,7 +659,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   @NotNull
-  private InspectionTreeNode getToolParentNode(@NotNull String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
+  private InspectionTreeNode getToolParentNode(@NotNull String groupName,
+                                               HighlightDisplayLevel errorLevel,
+                                               boolean groupedBySeverity,
+                                               boolean isSingleInspectionRun) {
+    if (!groupedBySeverity && isSingleInspectionRun) {
+      return getTree().getRoot();
+    }
     if (groupName.isEmpty()) {
       return getRelativeRootNode(groupedBySeverity, errorLevel);
     }
@@ -676,6 +684,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     }
     if (group == null) {
+      if (isSingleInspectionRun) {
+        return getRelativeRootNode(true, errorLevel);
+      }
       group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName));
       if (!myDisposed) {
         insertByIndex(group, getRelativeRootNode(groupedBySeverity, errorLevel));

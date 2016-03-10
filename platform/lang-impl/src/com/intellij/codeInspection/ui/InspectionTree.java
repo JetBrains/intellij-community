@@ -63,6 +63,7 @@ public class InspectionTree extends Tree {
     myContext = context;
 
     setCellRenderer(new CellRenderer());
+    setRootVisible(!myContext.isSingleInspectionRun());
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());

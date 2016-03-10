@@ -134,6 +134,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     model.setEditable(toolWrapper.getDisplayName());
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(model);
+    inspectionContext.setSingleInspectionRun(true);
     return inspectionContext;
   }
 
