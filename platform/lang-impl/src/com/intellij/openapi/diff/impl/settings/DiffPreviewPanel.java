@@ -41,13 +41,16 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -55,6 +58,7 @@ import java.util.List;
  * The panel from the Settings, that allows to see changes to diff/merge coloring scheme right away.
  */
 class DiffPreviewPanel implements PreviewPanel {
+  private final JPanel myPanel;
   private final SimpleThreesideDiffViewer myViewer;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
@@ -76,11 +80,13 @@ class DiffPreviewPanel implements PreviewPanel {
       editor.addEditorMouseListener(clickListener);
       editor.getCaretModel().addCaretListener(clickListener);
     }
+
+    myPanel = JBUI.Panels.simplePanel(myViewer.getComponent()).withBorder(IdeBorderFactory.createBorder());
   }
 
   @Override
   public Component getPanel() {
-    return myViewer.getComponent();
+    return myPanel;
   }
 
   @Override
