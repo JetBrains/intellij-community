@@ -73,25 +73,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   @Override
   public void executionSkipped(TestIdentifier testIdentifier, String reason) {
-    testIgnored(testIdentifier, reason);
-  }
-
-  private void testIgnored(TestIdentifier testIdentifier, String reason) {
-    if (testIdentifier.isTest()) {
-      executionStarted(testIdentifier);
-      Map<String, String> attrs = new HashMap<>();
-      if (reason != null) {
-        attrs.put("message", reason);
-      }
-      attrs.put("name", testIdentifier.getDisplayName());
-      attrs.put("id", testIdentifier.getUniqueId().toString());
-      myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_IGNORED, attrs));
-      
-      testFinished(testIdentifier, System.currentTimeMillis() - myCurrentTestStart);
-    }
-    else {
-      myTestPlan.getDescendants(testIdentifier).forEach(identifier -> testIgnored(identifier, reason));
-    }
+    executionStarted (testIdentifier);
+    executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, reason);
   }
 
   @Override
@@ -116,16 +99,23 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   @Override
   public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-    final String displayName = testIdentifier.getDisplayName();
     final TestExecutionResult.Status status = testExecutionResult.getStatus();
     final Throwable throwableOptional = testExecutionResult.getThrowable().orElse(null);
+    executionFinished(testIdentifier, status, throwableOptional, null);
+  }
+
+  private void executionFinished(TestIdentifier testIdentifier,
+                                 TestExecutionResult.Status status,
+                                 Throwable throwableOptional,
+                                 String reason) {
+    final String displayName = testIdentifier.getDisplayName();
     if (testIdentifier.isTest()) {
       final long duration = System.currentTimeMillis() - myCurrentTestStart;
       if (status == TestExecutionResult.Status.FAILED) {
-        testFailure(throwableOptional, MapSerializerUtil.TEST_FAILED, testIdentifier, duration);
+        testFailure(testIdentifier, MapSerializerUtil.TEST_FAILED, throwableOptional, duration, reason);
       }
       else if (status == TestExecutionResult.Status.ABORTED) {
-        testFailure(throwableOptional, MapSerializerUtil.TEST_IGNORED, testIdentifier, duration);
+        testFailure(testIdentifier, MapSerializerUtil.TEST_IGNORED, throwableOptional, duration, reason);
       }
       testFinished(testIdentifier, duration);
       myFinishCount++;
@@ -139,9 +129,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         messageName = MapSerializerUtil.TEST_IGNORED;
       }
       if (messageName != null && myFinishCount == 0) {
-        for (TestIdentifier childIdentifier : myTestPlan.getChildren(testIdentifier)) {
+        for (TestIdentifier childIdentifier : myTestPlan.getDescendants(testIdentifier)) {
           testStarted(childIdentifier);
-          testFailure(throwableOptional, messageName, childIdentifier, 0);
+          testFailure(childIdentifier, messageName, throwableOptional, 0, reason);
           testFinished(childIdentifier, 0);
         }
       }
@@ -157,12 +147,19 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") + "\']");
   }
   
-  private void testFailure(Throwable ex, String messageName, TestIdentifier testIdentifier, long duration) {
+  private void testFailure(TestIdentifier testIdentifier,
+                           String messageName, 
+                           Throwable ex,
+                           long duration, 
+                           String reason) {
     final Map<String, String> attrs = new HashMap<>();
     attrs.put("name", testIdentifier.getDisplayName());
     attrs.put("id", testIdentifier.getUniqueId().toString());
     if (duration > 0) {
       attrs.put("duration", Long.toString(duration));
+    }
+    if (reason != null) {
+      attrs.put("message", reason);
     }
     try {
       if (ex != null) {
