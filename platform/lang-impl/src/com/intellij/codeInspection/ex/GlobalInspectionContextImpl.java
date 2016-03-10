@@ -344,7 +344,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         } else {
           view = null;
         }
-        if (!(myView == null ? view : myView).update() && !getUIOptions().SHOW_ONLY_DIFF) {
+        if (!(myView == null ? view : myView).hasProblems() && !getUIOptions().SHOW_ONLY_DIFF) {
           NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
           close(true);
           if (view != null) {

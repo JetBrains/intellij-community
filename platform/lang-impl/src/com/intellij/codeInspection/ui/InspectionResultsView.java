@@ -93,7 +93,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private final Project myProject;
   private final InspectionTree myTree;
-  private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups =
+    ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
   private volatile InspectionProfile myInspectionProfile;
   @NotNull
@@ -165,7 +166,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
 
-
   private void initTreeListeners() {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -199,7 +199,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     SmartExpander.installOn(myTree);
   }
 
-  private OccurenceNavigatorSupport initOccurenceNavigator(){
+  private OccurenceNavigatorSupport initOccurenceNavigator() {
     return new OccurenceNavigatorSupport(myTree) {
       @Override
       @Nullable
@@ -256,7 +256,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @SuppressWarnings({"NonStaticInitializer"})
   private JComponent createRightActionsToolbar() {
-    myIncludeAction = new AnAction(InspectionsBundle.message("inspections.result.view.include.action.text")){
+    myIncludeAction = new AnAction(InspectionsBundle.message("inspections.result.view.include.action.text")) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
       }
@@ -275,7 +275,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void update(final AnActionEvent e) {
         final TreePath[] paths = myTree.getSelectionPaths();
-        e.getPresentation().setEnabled(paths != null && paths.length > 0 && 
+        e.getPresentation().setEnabled(paths != null && paths.length > 0 &&
                                        !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS);
       }
     };
@@ -430,7 +430,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           final String shortName = ((InspectionNode)node).getToolWrapper().getShortName();
           if (shortName.isEmpty()) {
             mySplitter.setSecondComponent(getNothingToShowTextLabel());
-          } else {
+          }
+          else {
             showInRightPanel(null);
           }
         }
@@ -548,7 +549,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   @NotNull
-  public InspectionNode addTool(@NotNull final InspectionToolWrapper toolWrapper, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
+  public InspectionNode addTool(@NotNull final InspectionToolWrapper toolWrapper,
+                                HighlightDisplayLevel errorLevel,
+                                boolean groupedBySeverity) {
     String groupName =
       toolWrapper.getGroupDisplayName().isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : toolWrapper.getGroupDisplayName();
     InspectionTreeNode parentNode = getToolParentNode(groupName, errorLevel, groupedBySeverity);
@@ -587,12 +590,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myInspectionProfile;
   }
 
-  public boolean update(){
+  public boolean update() {
     return updateView(true);
   }
 
   public boolean updateView(boolean strict) {
-    if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS){
+    if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
       myTree.repaint();
       return false;
     }
@@ -613,7 +616,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       update.run();
-    } else {
+    }
+    else {
       app.invokeLater(update, ModalityState.any());
     }
   }
@@ -636,7 +640,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           InspectionToolWrapper toolWrapper = state.getTool();
           if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
             addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject),
-                      isGroupedBySeverity);
+                    isGroupedBySeverity);
             resultsFound = true;
           }
         }
@@ -665,7 +669,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     }
     if (group == null) {
-      group  = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName));
+      group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName));
       if (!myDisposed) {
         insertByIndex(group, getRelativeRootNode(groupedBySeverity, errorLevel));
       }
@@ -794,7 +798,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   @Nullable
   private Navigatable getSelectedNavigatable(final CommonProblemDescriptor descriptor, final PsiElement psiElement) {
     if (descriptor instanceof ProblemDescriptorBase) {
-      Navigatable navigatable = ((ProblemDescriptorBase) descriptor).getNavigatable();
+      Navigatable navigatable = ((ProblemDescriptorBase)descriptor).getNavigatable();
       if (navigatable != null) {
         return navigatable;
       }
@@ -875,7 +879,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   @NotNull
-  public InspectionTree getTree(){
+  public InspectionTree getTree() {
     return myTree;
   }
 
@@ -925,7 +929,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final InputEvent event = e.getInputEvent();
     if (event instanceof MouseEvent) {
       popup.showUnderneathOf(event.getComponent());
-    } else {
+    }
+    else {
       popup.showInBestPositionFor(e.getDataContext());
     }
   }
@@ -946,6 +951,19 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (!myDisposed && isUpdating() && myLoadingProgressPreview != null) {
       myLoadingProgressPreview.updateLoadingProgress();
     }
+  }
+
+  public boolean hasProblems() {
+    final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
+    for (Tools currentTools : tools.values()) {
+      for (ScopeToolState state : myProvider.getTools(currentTools)) {
+        InspectionToolWrapper toolWrapper = state.getTool();
+        if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private class CloseAction extends AnAction implements DumbAware {
@@ -977,9 +995,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       if (toolWrapper != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
-        if (key != null){
-          if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, profileIsDefined)
-              && profileIsDefined){
+        if (key != null) {
+          if (new EditInspectionToolsSettingsAction(key)
+                .editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, profileIsDefined)
+              && profileIsDefined) {
             updateCurrentProfile();
           }
           return;
@@ -989,7 +1008,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         updateCurrentProfile();
       }
     }
- }
+  }
 
   public void updateCurrentProfile() {
     final String name = myInspectionProfile.getName();
@@ -1012,6 +1031,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     public void actionPerformed(AnActionEvent e) {
       rerun();
     }
+
     private void rerun() {
       myRerun = true;
       if (myScope.isValid()) {
