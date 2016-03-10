@@ -291,20 +291,29 @@ def getProperties(String home, String buildNumber) {
       ant.copy(file: "$home/$androidRoot/android/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
     }
 
-    // Patches plugin XML to stamp the current version and link the plugin to only this version of the IDE.
-    // Different to setPluginVersionAndSince as this will use an existing version tag and only add idea-version
-    def patchPluginXml(String moduleName, String version) {
-      def file = new File(projectBuilder.moduleOutput(findModule(moduleName)) + "/META-INF/plugin.xml")
-      if (file.isFile()) {
-        def text = file.text
-        text = text.replaceAll("SNAPSHOT", version);
-        text = text.replace("</version>", "</version>\n  <idea-version since-build=\"${version}\" until-build=\"${version}\"/>\n");
-        file.text = text;
+    // Patches plugin.xml to replace the "SNAPSHOT" in the version with build number and product-build.txt to replace "PRODUCT_BUILD"
+    // with the full build number.
+    def updateAswbPlugin() {
+      def aswb = projectBuilder.moduleOutput(findModule("aswb"))
+
+      def pluginFile = new File(aswb + "/META-INF/plugin.xml")
+      if (pluginFile.isFile()) {
+        def text = pluginFile.text
+        text = text.replaceAll("SNAPSHOT", buildNumber);
+        pluginFile.text = text;
       }
+
+      def productBuildFile = new File(aswb + "/META-INF/product-build.txt")
+      if (productBuildFile.isFile()) {
+        def text = productBuildFile.text
+        text = text.replaceAll("PRODUCT_BUILD", fullBuildNumber());
+        productBuildFile.text = text;
+      }
+
     }
 
     def finishLayout(out) {
-      patchPluginXml("aswb", buildNumber);
+      updateAswbPlugin();
 
       layout(out) {
         zip("studio-aswb-plugin.zip") {
