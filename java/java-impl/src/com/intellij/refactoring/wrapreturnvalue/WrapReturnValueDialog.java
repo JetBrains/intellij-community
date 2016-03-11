@@ -17,8 +17,6 @@ package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.AcceptNestedTransactions;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -49,7 +47,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
-@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 class WrapReturnValueDialog extends RefactoringDialog {
 
   private final PsiMethod sourceMethod;
