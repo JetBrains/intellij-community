@@ -102,7 +102,16 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Override
   public PyClassType toInstance() {
-    return myIsDefinition ? new PyClassTypeImpl(myClass, false) : this;
+    return myIsDefinition ? withUserDataCopy(new PyClassTypeImpl(myClass, false)) : this;
+  }
+
+  /**
+   * Wrap new instance to copy user data to it
+   */
+  @NotNull
+  final <T extends PyClassTypeImpl> T withUserDataCopy(@NotNull final T newInstance) {
+    newInstance.setUserMap(getUserMap());
+    return newInstance;
   }
 
   @Override
@@ -155,7 +164,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember =
-      resolveByOverridingMembersProviders(this, name, location); //overriding members provers have priority to normal resolve
+      resolveByOverridingMembersProviders(this, name, location, context); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -383,7 +392,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return PyUtil.getReturnTypeOfMember(this, PyNames.CALL, callSite, context);
     }
     else {
-      return new PyClassTypeImpl(getPyClass(), false);
+      return withUserDataCopy(new PyClassTypeImpl(getPyClass(), false));
     }
   }
 
@@ -425,10 +434,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
+  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass,
+                                                                String name,
+                                                                @Nullable PsiElement location,
+                                                                @NotNull final TypeEvalContext context) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, null);
+        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, context);
         if (resolveResult != null) return resolveResult;
       }
     }

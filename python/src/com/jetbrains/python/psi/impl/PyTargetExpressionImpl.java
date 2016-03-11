@@ -220,7 +220,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           if (enterType != null) {
             return enterType;
           }
-          for (PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
             PyType typeFromProvider = provider.getContextManagerVariableType(cls, expression, context);
             if (typeFromProvider != null) {
               return typeFromProvider;
@@ -313,7 +313,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Nullable
   public static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
-                                         @NotNull TypeEvalContext context) {
+                                        @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)iterableType;
       final List<PyType> memberTypes = new ArrayList<PyType>();
@@ -389,7 +389,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Nullable
   public static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
-                                                @Nullable PyExpression source) {
+                                               @Nullable PyExpression source) {
     return function.getCallType(source, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
   }
 
@@ -403,7 +403,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (exceptClass instanceof PyReferenceExpression) {
       final PsiElement element = ((PyReferenceExpression)exceptClass).getReference().resolve();
       if (element instanceof PyClass) {
-        return new PyClassTypeImpl((PyClass) element, false);
+        return new PyClassTypeImpl((PyClass)element, false);
       }
     }
     return null;
@@ -411,7 +411,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   public PyExpression getQualifier() {
     ASTNode qualifier = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
-    return qualifier != null ? (PyExpression) qualifier.getPsi() : null;
+    return qualifier != null ? (PyExpression)qualifier.getPsi() : null;
   }
 
   @Nullable
@@ -572,7 +572,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
     // find highest level function containing our var
     PyElement container = this;
-    while(true) {
+    while (true) {
       PyElement parentContainer = PsiTreeUtil.getParentOfType(container, PyFunction.class, PyClass.class);
       if (parentContainer instanceof PyClass) {
         if (isQualified()) {
@@ -602,7 +602,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       if (parentStub instanceof PyFunctionStub) {
         final StubElement functionParent = parentStub.getParentStub();
         if (functionParent instanceof PyClassStub) {
-          return ((PyClassStub) functionParent).getPsi();
+          return ((PyClassStub)functionParent).getPsi();
         }
       }
 
