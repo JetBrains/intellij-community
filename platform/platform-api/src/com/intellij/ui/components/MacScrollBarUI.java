@@ -121,7 +121,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
           public void run() {
             myThumbAnimator.start(false);
           }
-        }, 500);
+        }, 700);
       }
     }
   }
