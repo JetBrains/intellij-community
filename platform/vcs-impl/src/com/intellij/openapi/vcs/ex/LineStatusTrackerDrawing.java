@@ -75,9 +75,6 @@ import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-/**
- * @author irengrig
- */
 public class LineStatusTrackerDrawing {
   private LineStatusTrackerDrawing() {
   }
@@ -483,7 +480,7 @@ public class LineStatusTrackerDrawing {
   }
 
   private static class PopupPanel extends JPanel {
-    private final JComponent myEditorComponent;
+    @Nullable private final JComponent myEditorComponent;
 
     public PopupPanel(@NotNull final Editor editor,
                       @NotNull ActionToolbar toolbar,
@@ -551,7 +548,7 @@ public class LineStatusTrackerDrawing {
     }
 
     public int getEditorTextOffset() {
-      return 3;
+      return 3; // myEditorComponent.getInsets().left
     }
   }
 }

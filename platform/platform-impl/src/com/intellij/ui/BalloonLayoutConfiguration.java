@@ -49,6 +49,9 @@ public class BalloonLayoutConfiguration {
   public static final int FixedWidth;
   public static final int MaxWidth;
 
+  public static final int MaxFullContentWidth = JBUI.scale(350);
+  public static final String MaxFullContentWidthStyle = "width:" + MaxFullContentWidth + "px;";
+
   public static final int MinWidth = JBUI.scale(100);
 
   public static final String MaxWidthStyle;

@@ -190,6 +190,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitTryStatement(PsiTryStatement statement) {
+      if (statement.getResourceList() != null) {
+        throw new EvaluateRuntimeException(new UnsupportedExpressionException("Try with resources is not yet supported"));
+      }
       Evaluator bodyEvaluator = accept(statement.getTryBlock());
       if (bodyEvaluator != null) {
         PsiCatchSection[] catchSections = statement.getCatchSections();

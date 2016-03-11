@@ -93,8 +93,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                     @NotNull final InspectionTreeNode parentNode,
                                     final boolean showStructure,
                                     @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems,
-                                    DefaultTreeModel model) {
+                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
@@ -114,7 +113,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       entities.addAll(moduleProblems);
     }
     buildTree(context, contents, false, toolWrapper, computeContainer, showStructure, node -> {
-      merge(model, node, toolNode, true);
+      merge(node, toolNode, true);
     });
 
     if (presentation.isOldProblemsIncluded()) {
@@ -127,10 +126,10 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       };
 
       buildTree(context, presentation.getOldContent(), true, toolWrapper, computeContainer, showStructure, node -> {
-        merge(model, node, toolNode, true);
+        merge(node, toolNode, true);
       });
     }
-    merge(model, toolNode, parentNode, false);
+    merge(toolNode, parentNode, false);
   }
 
   @Override

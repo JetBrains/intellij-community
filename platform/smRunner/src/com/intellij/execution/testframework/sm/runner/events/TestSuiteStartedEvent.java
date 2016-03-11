@@ -33,7 +33,7 @@ public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
   }
 
   public TestSuiteStartedEvent(@NotNull String name, @Nullable String locationUrl) {
-    super(name, -1, -1, locationUrl, null, null, true);
+    super(name, null, null, locationUrl, null, null, true);
   }
 
 }

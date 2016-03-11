@@ -41,6 +41,7 @@ interface MultiVmDebugProcess {
   val mainVm: Vm?
   val activeOrMainVm: Vm?
   val childConnections: List<VmConnection<*>>
+    get() = emptyList()
 }
 
 abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,

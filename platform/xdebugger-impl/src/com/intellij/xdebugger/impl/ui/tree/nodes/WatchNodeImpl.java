@@ -15,10 +15,16 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author nik
@@ -26,10 +32,17 @@ import org.jetbrains.annotations.NotNull;
 public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   private final XExpression myExpression;
 
-  public WatchNodeImpl(final @NotNull XDebuggerTree tree, final @NotNull WatchesRootNode parent, final @NotNull XValue result,
-                       final @NotNull XExpression expression) {
+  public WatchNodeImpl(@NotNull XDebuggerTree tree, @NotNull WatchesRootNode parent,
+                       @NotNull XValue result, @NotNull XExpression expression) {
     super(tree, parent, expression.getExpression(), result);
     myExpression = expression;
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return getValuePresentation() instanceof XErrorValuePresentation?
+           XDebuggerUIConstants.ERROR_MESSAGE_ICON : AllIcons.Debugger.Watch;
   }
 
   @Override

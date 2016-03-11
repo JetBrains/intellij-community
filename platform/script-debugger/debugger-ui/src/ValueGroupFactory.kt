@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.debugger
 
-package com.intellij.psi.impl;
+import com.intellij.xdebugger.frame.XValueGroup
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.IgnorePsiEventsMarker;
-
-
-public abstract class CommitToPsiFileAction extends DocumentRunnable implements IgnorePsiEventsMarker {
-  protected CommitToPsiFileAction(Document document, Project project) {
-    super(document,project);
-  }
+internal interface ValueGroupFactory<T> {
+  fun create(data: T, start: Int, end: Int, context: VariableContext): XValueGroup
 }
-
-
-
-

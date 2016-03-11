@@ -13,20 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.intention;
+package com.intellij.openapi.application;
 
-import com.intellij.openapi.application.Application;
+import java.lang.annotation.*;
 
-public interface WriteActionAware {
+/**
+ * Add this annotation to modal dialogs (DialogWrapper inheritors) shown from within transactions,
+ * to allow nested transactions inside those dialogs.
+ *
+ * @see TransactionGuard#acceptNestedTransactions(TransactionKind...)
+ * @since 146.*
+ * @author peter
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+public @interface AcceptNestedTransactions {
+
   /**
-   * Indicate whether this action should be invoked inside write action.
-   * Should return false if e.g. modal dialog is shown inside the action.
-   * If false is returned the action itself is responsible for starting write action
-   * when needed, by calling {@link Application#runWriteAction(Runnable)}.
-   *
-   * @return true if the action requires a write action, false otherwise.
+   * @return the kinds of transaction to allow inside the dialog
    */
-  default boolean startInWriteAction() {
-    return true;
-  }
+  TransactionKind.Common[] value();
 }

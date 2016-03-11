@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -37,7 +35,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.junit.Assert
-
 /**
  * @author Maxim.Medvedev
  */
@@ -123,34 +120,30 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
                       final Project project,
                       final Editor editor,
                       final PsiFile file) {
-    CommandProcessor.instance.executeCommand(project, {
-      ApplicationManager.application.runWriteAction {
-        try {
-          final GrIntroduceParameterHandler hackedHandler = new GrIntroduceParameterHandler() {
-            @Override
-            protected void showDialog(IntroduceParameterInfo info) {
-              final GrIntroduceParameterSettings hackedSettings =
-                getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
-              if (info.getToReplaceIn() instanceof GrMethod) {
-                new GrIntroduceParameterProcessor(hackedSettings).run();
-              }
-              else {
-                new GrIntroduceClosureParameterProcessor(hackedSettings).run();
-              }
-            }
-          };
-          hackedHandler.invoke(project, editor, file, null);
-          if (conflicts != null) fail("Conflicts were expected");
-        }
-        catch (Exception e) {
-          if (conflicts == null) {
-            e.printStackTrace();
-            fail("Conflicts were not expected");
+    try {
+      final GrIntroduceParameterHandler hackedHandler = new GrIntroduceParameterHandler() {
+        @Override
+        protected void showDialog(IntroduceParameterInfo info) {
+          final GrIntroduceParameterSettings hackedSettings =
+            getSettings(info, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
+          if (info.getToReplaceIn() instanceof GrMethod) {
+            new GrIntroduceParameterProcessor(hackedSettings).run();
           }
-          Assert.assertEquals(conflicts, e.getMessage());
+          else {
+            new GrIntroduceClosureParameterProcessor(hackedSettings).run();
+          }
         }
+      };
+      hackedHandler.invoke(project, editor, file, null);
+      if (conflicts != null) fail("Conflicts were expected");
+    }
+    catch (Exception e) {
+      if (conflicts == null) {
+        e.printStackTrace();
+        fail("Conflicts were not expected");
       }
-    }, "introduce Parameter", null);
+      Assert.assertEquals(conflicts, e.getMessage());
+    }
   }
 
   private static GrIntroduceParameterSettings getSettings(final IntroduceParameterInfo context,

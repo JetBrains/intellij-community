@@ -22,15 +22,15 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
 
-  private final int myParentId;
+  private final String myParentId;
   private final String myLocationUrl;
   private final String myNodeType;
   private final String myNodeArgs;
   private final boolean myRunning;
 
   protected BaseStartedNodeEvent(@Nullable String name,
-                                 int id,
-                                 int parentId,
+                                 @Nullable String id,
+                                 @Nullable String parentId,
                                  @Nullable final String locationUrl,
                                  @Nullable String nodeType,
                                  @Nullable String nodeArgs,
@@ -44,9 +44,10 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   }
 
   /**
-   * @return parent node id (non-negative integer), or -1 if undefined
+   * @return parent node id, or null if undefined
    */
-  public int getParentId() {
+  @Nullable
+  public String getParentId() {
     return myParentId;
   }
 
@@ -76,8 +77,9 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
     append(buf, "running", myRunning);
   }
 
-  public static int getParentNodeId(@NotNull MessageWithAttributes message) {
-    return TreeNodeEvent.getIntAttribute(message, "parentNodeId");
+  @Nullable
+  public static String getParentNodeId(@NotNull MessageWithAttributes message) {
+    return TreeNodeEvent.getNodeId(message, "parentNodeId");
   }
 
   @Nullable

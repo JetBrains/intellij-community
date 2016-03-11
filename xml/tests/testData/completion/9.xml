@@ -1,3 +1,0 @@
-<foo xmlns="myns1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="myns1 ./8.xsd"
-  visibility="<caret>" />

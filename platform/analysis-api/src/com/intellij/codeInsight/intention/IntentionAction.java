@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;

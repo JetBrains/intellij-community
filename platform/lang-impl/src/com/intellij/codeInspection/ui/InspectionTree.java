@@ -24,7 +24,6 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -40,7 +39,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,11 +57,13 @@ public class InspectionTree extends Tree {
   private SelectionPath mySelectionPath;
   private boolean myQueueUpdate;
 
-  public InspectionTree(@NotNull Project project, @NotNull GlobalInspectionContextImpl context) {
-    setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(this))));
+  public InspectionTree(@NotNull Project project,
+                        @NotNull GlobalInspectionContextImpl context, InspectionResultsView view) {
+    setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
 
     setCellRenderer(new CellRenderer());
+    setRootVisible(!myContext.isSingleInspectionRun());
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());

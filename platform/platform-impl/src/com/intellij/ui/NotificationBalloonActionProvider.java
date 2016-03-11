@@ -40,9 +40,9 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   private final BalloonLayoutData myLayoutData;
   private final String myDisplayGroupId;
   private final Component myRepaintPanel;
-  private final BalloonImpl.ActionButton mySettingButton;
-  private final BalloonImpl.ActionButton myCloseButton;
-  private final List<BalloonImpl.ActionButton> myActions = new ArrayList<BalloonImpl.ActionButton>();
+  private BalloonImpl.ActionButton mySettingButton;
+  private BalloonImpl.ActionButton myCloseButton;
+  private List<BalloonImpl.ActionButton> myActions;
 
   private static final Rectangle CloseHoverBounds = new JBRectangle(5, 5, 12, 10);
 
@@ -54,8 +54,15 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     myDisplayGroupId = displayGroupId;
     myBalloon = balloon;
     myRepaintPanel = repaintPanel;
+  }
 
-    if (myDisplayGroupId == null || !NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myDisplayGroupId)) {
+  @NotNull
+  @Override
+  public List<BalloonImpl.ActionButton> createActions() {
+    myActions = new ArrayList<BalloonImpl.ActionButton>();
+
+    if (!myLayoutData.showSettingButton || myDisplayGroupId == null ||
+        !NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myDisplayGroupId)) {
       mySettingButton = null;
     }
     else {
@@ -85,8 +92,8 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
       };
       myActions.add(mySettingButton);
 
-      if (repaintPanel != null) {
-        layoutData.showActions = new Computable<Boolean>() {
+      if (myRepaintPanel != null) {
+        myLayoutData.showActions = new Computable<Boolean>() {
           @Override
           public Boolean compute() {
             for (BalloonImpl.ActionButton action : myActions) {
@@ -127,11 +134,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
       }
     };
     myActions.add(myCloseButton);
-  }
 
-  @NotNull
-  @Override
-  public List<BalloonImpl.ActionButton> getActions() {
     return myActions;
   }
 

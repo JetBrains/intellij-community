@@ -247,45 +247,11 @@ Function VersionSplit
 FunctionEnd
 
 Function OnDirectoryPageLeave
-    StrCpy $IS_UPGRADE_60 "0"
-    ${InstDirState} "$INSTDIR" $R0
-    IntCmp $R0 1 check_build skip_abort skip_abort
-check_build:
-    FileOpen $R1 "$INSTDIR\build.txt" "r"
-    IfErrors do_abort
-    FileRead $R1 $R2
-    FileClose $R1
-    IfErrors do_abort
-    ${VersionSplit} ${MIN_UPGRADE_BUILD} $R3 $R4 $R5
-    ${VersionSplit} ${MAX_UPGRADE_BUILD} $R6 $R7 $R8
-    ${VersionSplit} $R2 $R9 $R2 $R0
-    StrCmp $R9 $R3 0 do_abort
-    IntCmp $R2 $R4 0 do_abort
-    IntCmp $R0 $R5 do_accept do_abort
-
-    StrCmp $R9 $R6 0 do_abort
-    IntCmp $R2 $R7 0 0 do_abort
-    IntCmp $R0 $R8 do_abort do_accept do_abort
-
-do_accept:
-    StrCpy $IS_UPGRADE_60 "1"
-    FileClose $R1
-    Goto skip_abort
-
-do_abort:
   ;check
-  ; - if there are no files into $INSTDIR (recursively) just excepted property files
-  ; - if property files have the same installation time.
+  ; - if there are no files into $INSTDIR (recursively)
   StrCpy $9 "$INSTDIR"
   Call instDirEmpty
-  StrCmp $9 "not empty" abort 0
-  Push "Complete"
-  Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
-  Push "$INSTDIR\bin\idea.properties"
-  ${StrRep} $0 ${PRODUCT_EXE_FILE} ".exe" "64.exe.vmoptions"
-  Push "$INSTDIR\bin\$0"
-  Call compareFileInstallationTime
-  StrCmp $9 "Modified" abort skip_abort
+  StrCmp $9 "not empty" abort skip_abort
 abort:
   MessageBox MB_OK|MB_ICONEXCLAMATION "$(empty_or_upgrade_folder)"
   Abort
@@ -300,6 +266,7 @@ Function instDirEmpty
   Push $2
   ClearErrors
   FindFirst $1 $2 "$9\*.*"
+  IfErrors done 0
 nextElemement:
   ;is the element a folder?
   StrCmp $2 "." getNextElement

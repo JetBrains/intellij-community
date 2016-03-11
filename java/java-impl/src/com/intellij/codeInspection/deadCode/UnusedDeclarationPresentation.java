@@ -595,10 +595,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     css.addRule("p.problem-description-group {text-indent: " + JBUI.scale(12) + "px;font-weight:bold;}");
     css.addRule("div.problem-description {margin-left: " + JBUI.scale(10) + "px;}");
     css.addRule("ul {margin-left:" + JBUI.scale(10) + "px;text-indent: 0}");
-    //TODO Dmitry Batkovich: it's hack to hide tags in JEditorPane (any standard methods (display...) are unsupported in java)
-    final StringBuilder sb = new StringBuilder();
-    UIUtil.appendColor(UIUtil.getLabelBackground(), sb);
-    css.addRule(".package {color: #" + sb.toString() + ";}");
     final StringBuffer buf = new StringBuffer();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();

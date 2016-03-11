@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,9 +180,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           public void run() {
             highlight.run();
             progress.checkCanceled();
-            HighlightingSession highlightingSession = HighlightingSessionImpl.getHighlightingSession(file, progress);
             PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder);
-            highlightingVisitor.collectHighlights(file, holder, progress);
+            highlightingVisitor.collectHighlights(holder, progress);
           }
         });
       }

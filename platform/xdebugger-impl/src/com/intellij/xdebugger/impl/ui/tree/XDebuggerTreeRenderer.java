@@ -51,7 +51,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
   public XDebuggerTreeRenderer() {
-    setSupportFontFallback(true);
     getIpad().right = 0;
     myLink.getIpad().left = 0;
   }

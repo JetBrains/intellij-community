@@ -18,7 +18,7 @@ package com.intellij.xdebugger.impl.frame.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
@@ -32,16 +32,16 @@ public class XEditWatchAction extends XWatchesTreeActionBase {
   @Override
   public void update(final AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e);
-    e.getPresentation().setVisible(tree != null && getSelectedNodes(tree, WatchNode.class).size() == 1);
+    e.getPresentation().setVisible(tree != null && getSelectedNodes(tree, WatchNodeImpl.class).size() == 1);
     super.update(e);
   }
 
   @Override
   protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
-    List<? extends WatchNode> watchNodes = getSelectedNodes(tree, WatchNode.class);
+    List<? extends WatchNodeImpl> watchNodes = getSelectedNodes(tree, WatchNodeImpl.class);
     if (watchNodes.size() != 1) return;
 
-    WatchNode node = watchNodes.get(0);
+    WatchNodeImpl node = watchNodes.get(0);
     XDebuggerTreeNode root = tree.getRoot();
     if (root instanceof WatchesRootNode) {
       ((WatchesRootNode)root).editWatch(node);

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
+import com.intellij.openapi.application.AcceptNestedTransactions;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
@@ -48,6 +50,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class IntroducePropertyDialog extends DialogWrapper {
 
   private final Project myProject;
