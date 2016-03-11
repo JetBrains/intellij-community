@@ -36,6 +36,7 @@
       <module name="annotations-java8" target="1.8" />
       <module name="aswb" target="1.8" />
       <module name="blaze-api-aswb" target="1.8" />
+      <module name="blaze-cpp-aswb" target="1.8" />
       <module name="blaze-impl-aswb" target="1.8" />
       <module name="community-tests" target="1.8" />
       <module name="configuration-store-tests" target="1.8" />
