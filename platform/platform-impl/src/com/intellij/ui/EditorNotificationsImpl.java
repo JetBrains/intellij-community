@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,39 +82,36 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   @Override
   public void updateNotifications(@NotNull final VirtualFile file) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ProgressIndicator indicator = getCurrentProgress(file);
-        if (indicator != null) {
-          indicator.cancel();
-        }
-        file.putUserData(CURRENT_UPDATES, null);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      ProgressIndicator indicator = getCurrentProgress(file);
+      if (indicator != null) {
+        indicator.cancel();
+      }
+      file.putUserData(CURRENT_UPDATES, null);
 
-        if (myProject.isDisposed() || !file.isValid()) {
-          return;
-        }
+      if (myProject.isDisposed() || !file.isValid()) {
+        return;
+      }
 
-        indicator = new ProgressIndicatorBase();
-        final ReadTask task = createTask(indicator, file);
-        if (task == null) return;
+      indicator = new ProgressIndicatorBase();
+      final ReadTask task = createTask(indicator, file);
+      if (task == null) return;
 
-        file.putUserData(CURRENT_UPDATES, new WeakReference<ProgressIndicator>(indicator));
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          ReadTask.Continuation continuation = task.performInReadAction(indicator);
-          if (continuation != null) {
-            continuation.getAction().run();
-          }
+      file.putUserData(CURRENT_UPDATES, new WeakReference<>(indicator));
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        ReadTask.Continuation continuation = task.performInReadAction(indicator);
+        if (continuation != null) {
+          continuation.getAction().run();
         }
-        else {
-          ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, ourExecutor, task);
-        }
+      }
+      else {
+        ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, ourExecutor, task);
       }
     });
   }
 
   @Nullable
-  private ReadTask createTask(final ProgressIndicator indicator, @NotNull final VirtualFile file) {
+  private ReadTask createTask(@NotNull final ProgressIndicator indicator, @NotNull final VirtualFile file) {
     final FileEditor[] editors = FileEditorManager.getInstance(myProject).getAllEditors(file);
     if (editors.length == 0) return null;
 
