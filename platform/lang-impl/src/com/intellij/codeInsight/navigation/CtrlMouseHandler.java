@@ -306,7 +306,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   @Nullable
   @TestOnly
   public static String getInfo(PsiElement element, PsiElement atPointer) {
-    return generateInfo(element, atPointer).text;
+    return generateInfo(element, atPointer, true).text;
   }
 
   @Nullable
@@ -321,22 +321,17 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @NotNull
-  private static DocInfo generateInfo(PsiElement element, PsiElement atPointer) {
+  private static DocInfo generateInfo(PsiElement element, PsiElement atPointer, boolean fallbackToBasicInfo) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
-    String result = doGenerateInfo(element, atPointer, documentationProvider);
+    String result = documentationProvider.getQuickNavigateInfo(element, atPointer);
+    if (result == null && fallbackToBasicInfo) {
+      result = doGenerateInfo(element);
+    }
     return result == null ? DocInfo.EMPTY : new DocInfo(result, documentationProvider, element);
   }
 
   @Nullable
-  private static String doGenerateInfo(@NotNull PsiElement element,
-                                       @NotNull PsiElement atPointer,
-                                       @NotNull DocumentationProvider documentationProvider)
-  {
-    String info = documentationProvider.getQuickNavigateInfo(element, atPointer);
-    if (info != null) {
-      return info;
-    }
-
+  private static String doGenerateInfo(@NotNull PsiElement element) {
     if (element instanceof PsiFile) {
       final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       if (virtualFile != null) {
@@ -344,7 +339,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
-    info = getQuickNavigateInfo(element);
+    String info = getQuickNavigateInfo(element);
     if (info != null) {
       return info;
     }
@@ -454,7 +449,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         @Override
         public DocInfo compute() {
           try {
-            return generateInfo(myTargetElement, myElementAtPointer);
+            return generateInfo(myTargetElement, myElementAtPointer, isNavigatable());
           }
           catch (IndexNotReadyException e) {
             showDumbModeNotification(myTargetElement.getProject());
@@ -893,7 +888,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       }
 
-      if (!info.isValid(myEditor.getDocument())) {
+      if (!info.isValid(myEditor.getDocument()) || !info.isNavigatable() && docInfo.text == null) {
         return;
       }
 
