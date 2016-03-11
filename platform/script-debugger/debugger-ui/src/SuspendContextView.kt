@@ -115,7 +115,7 @@ class ExecutionStackView(val suspendContext: SuspendContext<*>,
   override fun getTopFrame(): CallFrameView? {
     val topCallFrame = suspendContext.topFrame
     if (topCallFrameView == null || topCallFrameView!!.callFrame != topCallFrame) {
-      topCallFrameView = topCallFrame?.let { CallFrameView(it, viewSupport, topFrameScript, topFrameSourceInfo) }
+      topCallFrameView = topCallFrame?.let { CallFrameView(it, viewSupport, topFrameScript, topFrameSourceInfo, vm = suspendContext.vm) }
     }
     return topCallFrameView
   }

@@ -38,4 +38,7 @@ interface VariableContext {
 
   val scope: Scope?
     get() = null
+
+  val vm: Vm?
+    get() = null
 }

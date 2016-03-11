@@ -29,7 +29,8 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
                                               override val viewSupport: DebuggerViewSupport,
                                               val script: Script? = null,
                                               sourceInfo: SourceInfo? = null,
-                                              isInLibraryContent: Boolean? = null) : XStackFrame(), VariableContext {
+                                              isInLibraryContent: Boolean? = null,
+                                              override val vm: Vm? = null) : XStackFrame(), VariableContext {
   private val sourceInfo = sourceInfo ?: viewSupport.getSourceInfo(script, callFrame)
   private val isInLibraryContent: Boolean = isInLibraryContent ?: (this.sourceInfo != null && viewSupport.isInLibraryContent(this.sourceInfo, script))
 

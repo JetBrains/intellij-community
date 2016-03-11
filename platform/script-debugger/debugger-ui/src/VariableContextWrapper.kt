@@ -36,5 +36,8 @@ internal open class VariableContextWrapper(override val parent: VariableContext,
   override val viewSupport: DebuggerViewSupport
     get() = parent.viewSupport
 
+  override val vm: Vm?
+    get() = parent.vm
+
   override fun watchableAsEvaluationExpression() = parent.watchableAsEvaluationExpression()
 }

@@ -62,6 +62,9 @@ class VariableView(override val variableName: String, private val variable: Vari
   override val scope: Scope?
     get() = context.scope
 
+  override val vm: Vm?
+    get() = context.vm
+
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     value = variable.value
     if (value != null) {
@@ -322,13 +325,10 @@ class VariableView(override val variableName: String, private val variable: Vari
     if (value is FunctionValue) {
       (value as FunctionValue).resolve()
         .done { function ->
-          viewSupport.vm!!.scriptManager.getScript(function)
+          vm!!.scriptManager.getScript(function)
             .done {
-              val position = if (it == null) null else viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn)
-              navigatable.setSourcePosition(if (position == null)
-                null
-              else
-                object : XSourcePositionWrapper(position) {
+              navigatable.setSourcePosition(it?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
+                object : XSourcePositionWrapper(it) {
                   override fun createNavigatable(project: Project): Navigatable {
                     return PsiVisitors.visit(myPosition, project) { position, element, positionOffset, document ->
                       // element will be "open paren", but we should navigate to function name,
@@ -357,7 +357,8 @@ class VariableView(override val variableName: String, private val variable: Vari
                       (if (psiReference == null) element.navigationElement else psiReference.navigationElement) as? Navigatable
                     } ?: super.createNavigatable(project)
                   }
-                })
+                }
+              })
             }
         }
     }
