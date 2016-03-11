@@ -94,7 +94,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
   public static Collection<String> getTrackingBranches(@NotNull GitRepository repository, @NotNull String remoteBranch) {
     Collection<String> trackingBranches = new ArrayList<String>(1);
     for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
-      if (remoteBranch.equals(trackInfo.getRemote().getName() + "/" + trackInfo.getRemoteBranch())) {
+      if (remoteBranch.equals(trackInfo.getRemoteBranch().getNameForLocalOperations())) {
         trackingBranches.add(trackInfo.getLocalBranch().getName());
       }
     }
