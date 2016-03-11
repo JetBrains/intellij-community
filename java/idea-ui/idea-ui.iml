@@ -14,6 +14,5 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="properties-psi-api" />
   </component>
 </module>
