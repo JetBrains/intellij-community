@@ -27,6 +27,8 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.AcceptNestedTransactions;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -46,6 +48,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class IntroduceParameterDialog extends RefactoringDialog {
   private static final String INTRODUCE_PARAMETER_LAMBDA = "introduce.parameter.lambda";
   private TypeSelector myTypeSelector;

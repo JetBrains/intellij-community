@@ -18,6 +18,8 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.AcceptNestedTransactions;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class EditMigrationEntryDialog extends DialogWrapper{
   private JRadioButton myRbPackage;
   private JRadioButton myRbClass;
