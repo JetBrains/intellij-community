@@ -37,7 +37,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author yole
  */
-public class TextComponentEditor extends UserDataHolderBase implements Editor {
+public class TextComponentEditorImpl extends UserDataHolderBase implements TextComponentEditor {
   private final Project myProject;
   private final JTextComponent myTextComponent;
   private final TextComponentDocument myDocument;
@@ -48,7 +48,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   private final TextComponentFoldingModel myFoldingModel;
   private EditorSettings mySettings;
 
-  public TextComponentEditor(final Project project, @NotNull JTextComponent textComponent) {
+  public TextComponentEditorImpl(final Project project, @NotNull JTextComponent textComponent) {
     myProject = project;
     myTextComponent = textComponent;
     if (textComponent instanceof JTextArea) {
