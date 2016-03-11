@@ -64,11 +64,11 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
             FxmlConstants.FX_CONTROLLER.equals(attributeName)) {
           return;
         }
-
-        final String defaultValue = getDefaultValue(attributeName, attribute.getParent());
+        final PsiClass tagClass = JavaFxPsiUtil.getTagClass(attribute.getParent());
+        final String defaultValue = getDefaultValue(attributeName, tagClass);
         if (defaultValue == null) return;
 
-        if (isEqualValue(attributeValue, defaultValue, descriptor.getDeclaration())) {
+        if (isEqualValue(tagClass, attributeValue, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(attribute, "Attribute is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveAttributeIntentionFix(attributeName, attribute));
@@ -90,10 +90,11 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
           return;
         }
 
-        final String defaultValue = getDefaultValue(tag.getName(), tag.getParentTag());
+        final PsiClass tagClass = JavaFxPsiUtil.getTagClass(tag.getParentTag());
+        final String defaultValue = getDefaultValue(tag.getName(), tagClass);
         if (defaultValue == null) return;
 
-        if (isEqualValue(tagText, defaultValue, descriptor.getDeclaration())) {
+        if (isEqualValue(tagClass, tagText, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(tag, "Tag is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveTagFix(tag.getName()));
@@ -103,28 +104,24 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
   }
 
   @Nullable
-  private static String getDefaultValue(@NotNull String propertyName, @Nullable XmlTag enclosingTag) {
-    if (enclosingTag != null) {
-      final XmlElementDescriptor descriptor = enclosingTag.getDescriptor();
-      if (descriptor != null) {
-        final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiClass) {
-          for (PsiClass psiClass = ((PsiClass)declaration); psiClass != null; psiClass = psiClass.getSuperClass()) {
-            final String qualifiedName = psiClass.getQualifiedName();
-            if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) break;
-            final String defaultValue = getDefaultPropertyValue(qualifiedName, propertyName);
-            if (defaultValue != null) {
-              return defaultValue;
-            }
-          }
-        }
+  private static String getDefaultValue(@NotNull String propertyName, @Nullable PsiClass containingClass) {
+    for (PsiClass psiClass = containingClass; psiClass != null; psiClass = psiClass.getSuperClass()) {
+      final String qualifiedName = psiClass.getQualifiedName();
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) break;
+      final String defaultValue = getDefaultPropertyValue(qualifiedName, propertyName);
+      if (defaultValue != null) {
+        return defaultValue;
       }
     }
     return null;
   }
 
-  private static boolean isEqualValue(@NotNull String attributeValue, @NotNull String defaultValue, @Nullable PsiElement declaration) {
-    final String boxedQName = JavaFxPsiUtil.getBoxedPropertyType(declaration);
+  private static boolean isEqualValue(@Nullable PsiClass containingClass,
+                                      @NotNull String attributeValue,
+                                      @NotNull String defaultValue,
+                                      @Nullable PsiElement declaration) {
+    if (!(declaration instanceof PsiMember)) return false;
+    final String boxedQName = JavaFxPsiUtil.getBoxedPropertyType(containingClass, (PsiMember)declaration);
     if (boxedQName == null) {
       return defaultValue.equals(attributeValue);
     }
