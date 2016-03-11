@@ -1,4 +1,19 @@
-package org.jetbrains.plugins.groovy.ivy;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.jarFinder;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -25,8 +40,7 @@ import java.util.List;
  * @author Sergey Evdokimov
  */
 public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
-
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.ivy.IvyAttachSourceProvider");
+  private static final Logger LOG = Logger.getInstance(IvyAttachSourceProvider.class);
 
   @Nullable
   private static String extractUrl(PropertiesFile properties, String artifactName) {
@@ -79,11 +93,11 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
       if (srcFile != null) {
         // File already downloaded.
         VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(srcFile);
-        if (jarRoot == null || ArrayUtil.contains(jarRoot, library.getFiles(OrderRootType.SOURCES))) {
+        if (jarRoot == null || ArrayUtil.contains(jarRoot, (Object[])library.getFiles(OrderRootType.SOURCES))) {
           return Collections.emptyList(); // Sources already attached.
         }
 
-        return Collections.<AttachSourcesAction>singleton(new AttachExistingSourceAction(jarRoot, library, "Attache sources from Ivy repository") );
+        return Collections.singleton(new AttachExistingSourceAction(jarRoot, library, "Attache sources from Ivy repository") );
       }
     }
 
@@ -93,7 +107,7 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
     final String url = extractUrl((PropertiesFile)propertiesFileFile, artifactName);
     if (StringUtil.isEmptyOrSpaces(url)) return Collections.emptyList();
 
-    return Collections.<AttachSourcesAction>singleton(new DownloadSourcesAction(psiFile.getProject(), "Downloading Ivy Sources", url) {
+    return Collections.singleton(new DownloadSourcesAction(psiFile.getProject(), "Downloading Ivy Sources", url) {
       @Override
       protected void storeFile(byte[] content) {
         try {
@@ -118,5 +132,4 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
       }
     });
   }
-
 }
