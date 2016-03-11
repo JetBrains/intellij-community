@@ -1,8 +1,13 @@
+import sys
+IS_PY2 = True
+if sys.version_info[0] >= 3:
+    IS_PY2 = False
+
 import threading
 
-try:
+if IS_PY2:
     import thread
-except:
+else:
     import _thread as thread
 
 import time
@@ -11,22 +16,22 @@ import socket
 
 import select
 
-try:
+if IS_PY2:
     import Queue as _queue
-except:
+else:
     import queue as _queue
 
-try:
+if IS_PY2:
     import xmlrpclib
-except:
+else:
     import xmlrpc.client as xmlrpclib
 
-try:
+if IS_PY2:
     import SimpleXMLRPCServer as _pydev_SimpleXMLRPCServer
-except:
+else:
     import xmlrpc.server as _pydev_SimpleXMLRPCServer
 
-try:
+if IS_PY2:
     import BaseHTTPServer
-except:
+else:
     import http.server as BaseHTTPServer
