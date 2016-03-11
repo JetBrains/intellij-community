@@ -10,7 +10,6 @@ import com.intellij.ui.content.ContentManager;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,14 +36,6 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       final Content content = contentManager.getFactory().createContent(studyToolWindow, null, false);
       contentManager.addContent(content);
       Disposer.register(project, studyToolWindow);
-    }
-  }
-
-  public void update(Project project) {
-    final StudyToolWindow studyToolWindow = StudyUtils.getStudyToolWindow(project);
-    if (studyToolWindow != null) {
-      String taskText = StudyUtils.getTaskText(project);
-      studyToolWindow.setTaskText(taskText);
     }
   }
 }
