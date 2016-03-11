@@ -31,12 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
+import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Function;
@@ -538,13 +536,20 @@ public class EventLog {
       if (target != null) {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
         assert frame != null;
-        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, null, project);
+        Ref<Object> layoutDataRef = null;
+        if (NotificationsManagerImpl.newEnabled()) {
+          BalloonLayoutData layoutData = new BalloonLayoutData();
+          layoutData.showFullContent = true;
+          layoutData.showSettingButton = false;
+          layoutDataRef = new Ref<>(layoutData);
+        }
+        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, layoutDataRef, project);
         balloon.show(target, Balloon.Position.above);
       }
     }
 
-    private static void hideBalloon(Notification notification1) {
-      Balloon balloon = notification1.getBalloon();
+    private static void hideBalloon(Notification notification) {
+      Balloon balloon = notification.getBalloon();
       if (balloon != null) {
         balloon.hide(true);
       }
