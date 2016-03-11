@@ -266,6 +266,7 @@ Function instDirEmpty
   Push $2
   ClearErrors
   FindFirst $1 $2 "$9\*.*"
+  IfErrors done 0
 nextElemement:
   ;is the element a folder?
   StrCmp $2 "." getNextElement
