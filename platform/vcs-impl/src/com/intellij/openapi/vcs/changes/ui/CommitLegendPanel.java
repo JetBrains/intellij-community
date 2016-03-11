@@ -48,7 +48,7 @@ public class CommitLegendPanel {
                VcsBundle.message("commit.legend.unversioned"));
   }
 
-  private void appendText(int total, int included, @NotNull FileStatus fileStatus, @NotNull  String labelName) {
+  protected void appendText(int total, int included, @NotNull FileStatus fileStatus, @NotNull String labelName) {
     if (total > 0) {
       if (!isPanelEmpty()) {
         appendSpace();
@@ -63,7 +63,7 @@ public class CommitLegendPanel {
     return !myRootPanel.iterator().hasNext();
   }
 
-  protected void appendSpace() {
+  protected final void appendSpace() {
     myRootPanel.append("   ");
   }
 

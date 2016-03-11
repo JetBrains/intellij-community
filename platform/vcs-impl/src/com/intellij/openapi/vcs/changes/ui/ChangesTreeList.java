@@ -486,9 +486,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   }
 
   public void includeChange(final T change) {
-    myIncludedChanges.add(change);
-    notifyInclusionListener();
-    myTree.repaint();
+    includeChanges(Collections.singleton(change));
   }
 
   public void includeChanges(final Collection<T> changes) {
@@ -498,9 +496,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   }
 
   public void excludeChange(final T change) {
-    myIncludedChanges.remove(change);
-    notifyInclusionListener();
-    myTree.repaint();
+    excludeChanges(Collections.singleton(change));
   }
 
   public void excludeChanges(final Collection<T> changes) {
