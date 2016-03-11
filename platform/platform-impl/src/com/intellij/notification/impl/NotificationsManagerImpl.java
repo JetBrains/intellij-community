@@ -308,9 +308,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                       @Nullable Ref<Object> layoutDataRef,
                                       @NotNull Disposable parentDisposable) {
     if (layoutDataRef != null) {
-      Balloon balloon = createNewBalloon(windowComponent, notification, showCallout, hideOnClickOutside, layoutDataRef);
-      Disposer.register(parentDisposable, balloon);
-      return balloon;
+      return createNewBalloon(windowComponent, notification, showCallout, hideOnClickOutside, layoutDataRef, parentDisposable);
     }
 
     final JEditorPane text = new JEditorPane();
@@ -463,9 +461,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                           @NotNull Notification notification,
                                           boolean showCallout,
                                           boolean hideOnClickOutside,
-                                          @NotNull Ref<Object> layoutDataRef) {
-    final BalloonLayoutData layoutData = new BalloonLayoutData();
+                                          @NotNull Ref<Object> layoutDataRef,
+                                          @NotNull Disposable parentDisposable) {
+    final BalloonLayoutData layoutData = layoutDataRef.isNull() ? new BalloonLayoutData() : (BalloonLayoutData)layoutDataRef.get();
     layoutDataRef.set(layoutData);
+
+    boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
 
     Color foregroundR = Gray._0;
     Color foregroundD = Gray._191;
@@ -497,6 +498,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     String fontStyle = NotificationsUtil.getFontStyle();
     int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
     String style = prefSize > BalloonLayoutConfiguration.MaxWidth ? BalloonLayoutConfiguration.MaxWidthStyle : null;
+
+    if (layoutData.showFullContent) {
+      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth ? BalloonLayoutConfiguration.MaxFullContentWidthStyle : null;
+    }
 
     String textR = NotificationsUtil.buildHtml(notification, style, true, foregroundR, fontStyle);
     String textD = NotificationsUtil.buildHtml(notification, style, true, foregroundD, fontStyle);
@@ -548,8 +553,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
     layoutData.twoLineHeight = calculateContentHeight(lines);
     layoutData.maxScrollHeight = Math.min(layoutData.fullHeight, calculateContentHeight(10));
     layoutData.configuration = BalloonLayoutConfiguration.create(notification, layoutData);
-
-    boolean showFullContent = notification instanceof NotificationActionProvider;
 
     if (!showFullContent && layoutData.maxScrollHeight != layoutData.fullHeight) {
       pane.setViewport(new GradientViewport(text, JBUI.insets(10, 0), true) {
@@ -731,6 +734,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         new NotificationBalloonActionProvider(balloon, layout.getTitle(), layoutData, notification.getGroupId()));
     }
 
+    Disposer.register(parentDisposable, balloon);
     return balloon;
   }
 
@@ -977,7 +981,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
       int actionWidth = actionSize.width + expandSize.width;
 
       int width = Math.max(centerWidth, Math.max(titleWidth, actionWidth));
-      width = Math.min(width, BalloonLayoutConfiguration.MaxWidth);
+      if (!myLayoutData.showFullContent) {
+        width = Math.min(width, BalloonLayoutConfiguration.MaxWidth);
+      }
       width = Math.max(width, BalloonLayoutConfiguration.MinWidth);
 
       return new Dimension(width, height);
