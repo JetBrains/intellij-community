@@ -281,8 +281,11 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     PsiElement resolved = referenceExpression.advancedResolve(true).getElement();
     if (!(resolved instanceof PsiMember)) return false;
     PsiClass aClass = ((PsiMember)resolved).getContainingClass();
-    if (aClass instanceof PsiAnonymousClass) aClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
-    return aClass == targetElement.getContainingClass();
+    if (aClass instanceof PsiAnonymousClass) {
+      aClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
+      return aClass == targetElement.getContainingClass();
+    }
+    return resolved == targetElement;
   }
 
   @Nullable
