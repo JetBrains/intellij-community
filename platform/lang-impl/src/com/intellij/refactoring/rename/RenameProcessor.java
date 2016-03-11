@@ -257,7 +257,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean showAutomaticRenamingDialog(AutomaticRenamer automaticVariableRenamer) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
       for (PsiNamedElement element : automaticVariableRenamer.getElements()) {
         automaticVariableRenamer.setRename(element, automaticVariableRenamer.getNewName(element));
       }
