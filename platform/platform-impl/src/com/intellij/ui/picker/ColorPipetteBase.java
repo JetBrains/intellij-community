@@ -28,8 +28,13 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
 public abstract class ColorPipetteBase implements ColorPipette {
+  protected static final int SIZE = 31;
+  protected static final int DIALOG_SIZE = SIZE - 4;
+  protected static final Point HOT_SPOT = new Point(DIALOG_SIZE/2, DIALOG_SIZE/2);
+
   private final Alarm myColorListenersNotifier = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   protected final JComponent myParent;
   private final ColorListener myColorListener;
@@ -52,11 +57,27 @@ public abstract class ColorPipetteBase implements ColorPipette {
   @Override
   public void pickAndClose() {
     PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-    Point location = pointerInfo.getLocation();
-    Color pixelColor = myRobot.getPixelColor(location.x, location.y);
+    Color pixelColor = getPixelColor(pointerInfo.getLocation());
     cancelPipette();
     notifyListener(pixelColor, 0);
     setInitialColor(pixelColor);
+  }
+
+  protected Color getPixelColor(Point mouseLocation) {
+    Color result = null;
+    if (SystemInfo.isMac) {
+      BufferedImage image = MacColorPipette.captureScreen(myPickerFrame, new Rectangle(mouseLocation.x - HOT_SPOT.x + SIZE / 2,
+                                                                              mouseLocation.y - HOT_SPOT.y + SIZE / 2, 1, 1));
+      if (image != null) {
+        //noinspection UseJBColor
+        result = new Color(image.getRGB(0, 0));
+      }
+    }
+    if (result == null) {
+      result =
+        myRobot.getPixelColor(mouseLocation.x - HOT_SPOT.x + SIZE / 2 , mouseLocation.y - HOT_SPOT.y + SIZE / 2 );
+    }
+    return result;
   }
 
   @Nullable
@@ -96,7 +117,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     Point mouseLoc = pointerInfo.getLocation();
     Dialog pickerDialog = getPickerDialog();
     if (pickerDialog != null) {
-      pickerDialog.setLocation(mouseLoc.x - pickerDialog.getWidth() / 2, mouseLoc.y - pickerDialog.getHeight() / 2);
+      pickerDialog.setLocation(mouseLoc.x - HOT_SPOT.x, mouseLoc.y - HOT_SPOT.y);
     }
     return mouseLoc;
   }
