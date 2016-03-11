@@ -26,6 +26,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
@@ -45,6 +46,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 
+import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
 import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.*;
@@ -414,30 +416,46 @@ public class PyTypeParser {
         })
         .named("param-expr");
 
+    final FunctionalParser<ParseResult, PyElementType> ellipsis = op("...").map(token -> EMPTY_RESULT.withType(EllipsisType.INSTANCE));
+
+    final FunctionalParser<ParseResult, PyElementType> paramTypes = argExpr.then(many(op(",").skipThen(argExpr))).map(pair -> {
+      final List<PyType> types = new ArrayList<>();
+      final ParseResult first = pair.getFirst();
+      final List<ParseResult> second = pair.getSecond();
+      ParseResult result = first;
+      types.add(first.getType());
+      for (ParseResult r : second) {
+        result = result.merge(r);
+        types.add(r.getType());
+      }
+      return result.withType(new PyTypeParser.ParameterListType(types));
+    });
+    
     final FunctionalParser<ParseResult, PyElementType> funcExpr =
-      op("(").skipThen(maybe(argExpr.then(many(op(",").skipThen(argExpr))))).thenSkip(op(")")).thenSkip(op("->")).then(typeExpr)
-             .map(value -> {
-               final List<PyCallableParameter> parameters = new ArrayList<PyCallableParameter>();
-               final ParseResult returnResult = value.getSecond();
-               ParseResult result;
-               final Pair<ParseResult, List<ParseResult>> firstPair = value.getFirst();
-               if (firstPair != null) {
-                 final ParseResult first = firstPair.getFirst();
-                 final List<ParseResult> second = firstPair.getSecond();
-                 result = first;
-                 parameters.add(new PyCallableParameterImpl(null, first.getType()));
-                 for (ParseResult r : second) {
-                   result = result.merge(r);
-                   parameters.add(new PyCallableParameterImpl(null, r.getType()));
-                 }
-                 result = result.merge(returnResult);
-               }
-               else {
-                 result = returnResult;
-               }
-               return result.withType(new PyCallableTypeImpl(parameters, returnResult.getType()));
-             })
-             .named("func-expr");
+      op("(").skipThen(maybe(paramTypes.or(ellipsis))).thenSkip(op(")"))
+        .thenSkip(op("->")).then(typeExpr)
+        .map(value -> {
+          final ParseResult paramsResult = value.getFirst(), returnResult = value.getSecond();
+          final List<PyCallableParameter> parameters;
+          ParseResult result = returnResult;
+          if (paramsResult != null) {
+            result = result.merge(paramsResult);
+            final ParameterListType paramsType = as(paramsResult.getType(), ParameterListType.class);
+            if (paramsType != null) {
+              parameters = ContainerUtil.map(paramsType.getTypes(), type -> new PyCallableParameterImpl(null, type));
+            }
+            // ellipsis
+            else {
+              parameters = null;
+            }
+          }
+          else {
+            parameters = Collections.emptyList();
+            result = returnResult;
+          }
+          return result.withType(new PyCallableTypeImpl(parameters, returnResult.getType()));
+        })
+        .named("func-expr");
 
     final FunctionalParser<ParseResult, PyElementType> typeFile =
       funcExpr
@@ -758,4 +776,12 @@ public class PyTypeParser {
       return myTypes;
     }
   } 
+  
+  public static class EllipsisType extends PyTypeAdapter {
+    public static final EllipsisType INSTANCE = new EllipsisType();
+
+    private EllipsisType() {
+    }
+  }
+  
 }

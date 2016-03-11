@@ -97,7 +97,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyCallableType functionType = as(result.getType(), PyCallableType.class);
       if (functionType != null) {
         final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
-        assert paramTypes != null;
+        // Function annotation of kind (...) -> Type
+        if (paramTypes == null) {
+          return Ref.create();
+        }
         final PyParameter[] funcParams = func.getParameterList().getParameters();
         final int startOffset = omitFirstParamInTypeComment(func) ? 1 : 0;
         for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
@@ -357,12 +360,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         paramListTypePositions.add(i);
       }
     }
+    
     if (!paramListTypePositions.isEmpty()) {
       if (!("typing.Callable".equals(qualifiedName) && paramListTypePositions.equals(Collections.singletonList(0)))) {
         return null;
       }
     }
-
+    
     if ("typing.Union".equals(qualifiedName)) {
       return PyUnionType.union(elementTypes);
     }
