@@ -442,7 +442,6 @@ public class GenericsHighlightUtil {
 
   static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass,
                                                     @NotNull PsiIdentifier classIdentifier) {
-    if (aClass instanceof PsiTypeParameter) return null;
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
       new THashMap<MethodSignature, Set<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     PsiClass[] supers = aClass.getSupers();
@@ -501,7 +500,8 @@ public class GenericsHighlightUtil {
         final PsiMethod unrelatedMethod = astracts != null ? astracts.get(0) : defaults.get(1);
         final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
         if (unrelatedMethodContainingClass == null) continue;
-        if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && astracts != null && unrelatedMethodContainingClass.isInterface()) {
+        if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter) 
+            && astracts != null && unrelatedMethodContainingClass.isInterface()) {
           if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) && 
               MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(unrelatedMethodContainingClass, defaultMethodContainingClass, PsiSubstitutor.EMPTY)), 
                                                  defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
