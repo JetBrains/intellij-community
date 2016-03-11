@@ -20,7 +20,6 @@
        on how to target different products -->
 
   <depends>com.intellij.modules.lang</depends>
-  <depends>com.jetbrains.edu.core</depends>
 
   <project-components>
     <component>
@@ -83,8 +82,8 @@
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.stepic.StudyConfigurable"
                              id="com.jetbrains.edu.learning.stepic.StudyConfigurable"
                              displayName="Educational"/>
-    <applicationService serviceInterface="com.jetbrains.edu.stepic.StudySettings"
-                        serviceImplementation="com.jetbrains.edu.stepic.StudySettings"/>
+    <applicationService serviceInterface="com.jetbrains.edu.learning.stepic.StudySettings"
+                        serviceImplementation="com.jetbrains.edu.learning.stepic.StudySettings"/>
 
     <toolWindow id="Task Description" anchor="right" factoryClass="com.jetbrains.edu.learning.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
     <toolWindow id="Course Progress" anchor="left" factoryClass="com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>

@@ -22,12 +22,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.jetbrains.edu.EduDocumentListener;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.core.EduDocumentListener;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;

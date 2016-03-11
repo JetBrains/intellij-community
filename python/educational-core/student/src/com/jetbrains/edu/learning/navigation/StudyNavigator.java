@@ -3,10 +3,10 @@ package com.jetbrains.edu.learning.navigation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

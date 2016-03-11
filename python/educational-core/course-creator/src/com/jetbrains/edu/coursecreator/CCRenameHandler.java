@@ -12,8 +12,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CCRenameHandler implements RenameHandler {

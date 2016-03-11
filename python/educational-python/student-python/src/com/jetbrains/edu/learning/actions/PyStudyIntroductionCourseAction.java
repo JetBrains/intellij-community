@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
-import com.jetbrains.edu.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.actions.GenerateProjectCallback;
 import com.jetbrains.python.newProject.actions.ProjectSpecificSettingsStep;
