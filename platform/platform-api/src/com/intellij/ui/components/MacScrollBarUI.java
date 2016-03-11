@@ -77,9 +77,15 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   void onTrackHover(boolean hover) {
     myTrackHovered = hover;
-    myTrackAnimator.start(hover);
-    if (!hover || myScrollBar != null && myScrollBar.isOpaque()) {
+    if (myScrollBar != null && myScrollBar.isOpaque()) {
+      myTrackAnimator.start(hover);
       myThumbAnimator.start(hover);
+    }
+    else if (hover) {
+      myTrackAnimator.start(true);
+    }
+    else {
+      myThumbAnimator.start(false);
     }
   }
 
@@ -106,6 +112,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   void onThumbMove() {
     if (myScrollBar != null && myScrollBar.isShowing() && !myScrollBar.isOpaque()) {
+      if (myThumbAnimator.myValue == 0) myTrackAnimator.rewind(false);
       myThumbAnimator.rewind(true);
       myAlarm.cancelAllRequests();
       if (!myTrackHovered) {
