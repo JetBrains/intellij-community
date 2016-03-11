@@ -74,12 +74,12 @@ public class HighlightingSessionImpl implements HighlightingSession {
                                                             @Nullable EditorColorsScheme editorColorsScheme) {
     HighlightingSession session = getHighlightingSession(psiFile, progressIndicator);
     if (session == null) {
-      session = new HighlightingSessionImpl(psiFile, editor, progressIndicator, editorColorsScheme);
       ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
       if (map == null) {
         map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, ContainerUtil.newConcurrentMap());
       }
-      session = ConcurrencyUtil.cacheOrGet(map, psiFile, session);
+      session = ConcurrencyUtil.cacheOrGet(map, psiFile,
+                                           new HighlightingSessionImpl(psiFile, editor, progressIndicator, editorColorsScheme));
     }
     return session;
   }
