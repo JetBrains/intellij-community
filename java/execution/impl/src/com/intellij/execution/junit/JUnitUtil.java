@@ -146,10 +146,11 @@ public class JUnitUtil {
     }
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
-    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
-
     final boolean hasJUnit5 = isJUnit5(modifierList);
     if (!PsiClassUtil.isRunnableClass(psiClass, !hasJUnit5, checkAbstract)) return false;
+
+    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
+
     if (checkForTestCaseInheritance && (!hasJUnit5 || psiClass.hasModifierProperty(PsiModifier.PUBLIC)) && isTestCaseInheritor(psiClass)) return true;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
