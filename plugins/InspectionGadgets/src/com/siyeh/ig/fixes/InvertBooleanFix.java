@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
@@ -54,23 +52,22 @@ public class InvertBooleanFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  protected void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiNameIdentifierOwner owner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiVariable.class, PsiMethod.class);
     if (owner == null) {
       return;
     }
     final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createInvertBooleanHandler();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        handler.invoke(project, new PsiElement[]{owner}, null);
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-    }
+    handler.invoke(project, new PsiElement[]{owner}, null);
+  }
+
+  @Override
+  protected boolean prepareForWriting() {
+    return false;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }
