@@ -57,10 +57,7 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
     extractProcessor.prepare();
     extractProcessor.testPrepare();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
-    });
-
+    ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
 
     checkResultByFile("/refactoring/extractMethodObject/" + testName + ".java" + ".after");
   }
