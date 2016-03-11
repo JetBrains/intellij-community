@@ -31,7 +31,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 public abstract class ColorPipetteBase implements ColorPipette {
-  protected static final int SIZE = 31;
+  protected static final int SIZE = 30;
   protected static final int DIALOG_SIZE = SIZE - 4;
   protected static final Point HOT_SPOT = new Point(DIALOG_SIZE/2, DIALOG_SIZE/2);
 
