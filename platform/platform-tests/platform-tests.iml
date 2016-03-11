@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="util-tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="purejavacomm" level="project" />
   </component>
 </module>
