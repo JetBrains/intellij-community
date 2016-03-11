@@ -440,6 +440,7 @@ public class GenericsHighlightUtil {
 
   static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass,
                                                     @NotNull PsiIdentifier classIdentifier) {
+    if (aClass instanceof PsiTypeParameter) return null;
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
       new THashMap<MethodSignature, Set<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     PsiClass[] supers = aClass.getSupers();
