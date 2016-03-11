@@ -3,10 +3,10 @@
     <hgap>1</hgap>
     <vgap>0</vgap>
     <minWidth>
-      100
+        100
     </minWidth>
     <minHeight>
-      -1
+        -1
     </minHeight>
     <maxWidth>500</maxWidth>
     <maxHe<caret>ight>-1</maxHeight>

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveTagIntentionFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
@@ -83,7 +84,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
           return;
         }
         if (tag.getSubTags().length != 0) return;
-        final String tagText = tag.getValue().getText().trim();
+        final String tagText = tag.getValue().getTrimmedText();
         if (tagText.startsWith("$") ||
             tagText.startsWith("#") ||
             tagText.startsWith("%")) {
@@ -97,7 +98,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (isEqualValue(tagClass, tagText, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(tag, "Tag is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new RemoveTagFix(tag.getName()));
+                                 new RemoveTagIntentionFix(tag.getName(), tag));
         }
       }
     };
