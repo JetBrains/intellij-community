@@ -482,6 +482,28 @@ public class PyTypingTest extends PyTestCase {
            "    expr = cb");
   }
 
+  // PY-18726
+  public void testFunctionTypeCommentBadCallableParameter1() {
+    doTest("Any",
+           "from typing import Callable, Tuple\n" +
+           "\n" +
+           "def f(cb):\n" +
+           "    # type: (Callable[Tuple[bool, str], int]) -> None\n" +
+           "    expr = cb");
+
+  }
+  
+  // PY-18726
+  public void testFunctionTypeCommentBadCallableParameter2() {
+    doTest("Any",
+           "from typing import Callable, Tuple\n" +
+           "\n" +
+           "def f(cb):\n" +
+           "    # type: (Callable[[bool, int], [int]]) -> None\n" +
+           "    expr = cb");
+
+  }
+
   // PY-18386
   public void testRecursiveType() {
     doTest("Union[int, Any]",

@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
@@ -337,10 +338,9 @@ public class PyTypeParser {
               result = result.merge(r);
               itemTypes.add(r.getType());
             }
-            final PyTupleType tupleType = PyTupleType.create(anchor, ArrayUtil.toObjectArray(itemTypes, PyType.class));
-            return result.withType(tupleType);
+            return result.withType(new ParameterListType(itemTypes));
           }
-          return EMPTY_RESULT.withType(PyTupleType.create(anchor, new PyType[0]));
+          return EMPTY_RESULT.withType(new ParameterListType(Collections.emptyList()));
         });
 
     final FunctionalParser<ParseResult, PyElementType> typeParam = typeExpr.or(typeList);
@@ -713,4 +713,49 @@ public class PyTypeParser {
     }
     return tokens;
   }
+  
+  private static abstract class PyTypeAdapter implements PyType {
+    @Nullable
+    @Override
+    public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                            @Nullable PyExpression location,
+                                                            @NotNull AccessDirection direction,
+                                                            @NotNull PyResolveContext resolveContext) {
+      return null;
+    }
+
+    @Override
+    public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    @Nullable
+    @Override
+    public String getName() {
+      return null;
+    }
+
+    @Override
+    public boolean isBuiltin() {
+      return false;
+    }
+
+    @Override
+    public void assertValid(String message) {
+
+    }
+  }
+
+  public static class ParameterListType extends PyTypeAdapter {
+    private final List<PyType> myTypes;
+
+    public ParameterListType(@NotNull List<PyType> types) {
+      myTypes = types;
+    }
+
+    @NotNull
+    public List<PyType> getTypes() {
+      return myTypes;
+    }
+  } 
 }
