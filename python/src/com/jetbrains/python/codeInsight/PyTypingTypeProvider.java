@@ -25,7 +25,6 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -374,11 +373,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return PyUnionType.union(elementTypes.get(0), PyNoneType.INSTANCE);
     }
     if ("typing.Callable".equals(qualifiedName) && elementTypes.size() == 2) {
-      final PyTypeParser.ParameterListType firstType = as(elementTypes.get(0), PyTypeParser.ParameterListType.class);
-      if (firstType != null) {
-        final List<PyCallableParameter> paramTypes = ContainerUtil.map(firstType.getTypes(),
-                                                                       type -> new PyCallableParameterImpl(null, type));
-        return new PyCallableTypeImpl(paramTypes, elementTypes.get(1));
+      final PyTypeParser.ParameterListType paramList = as(elementTypes.get(0), PyTypeParser.ParameterListType.class);
+      if (paramList != null) {
+        return new PyCallableTypeImpl(paramList.getCallableParameters(), elementTypes.get(1));
       }
     }
     if ("typing.Tuple".equals(qualifiedName)) {

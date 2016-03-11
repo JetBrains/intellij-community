@@ -320,70 +320,75 @@ public class PyTypeParser {
   }
 
   @NotNull
-  public static ParseResult parsePep484FunctionTypeComment(@NotNull final PsiElement anchor, @NotNull String text) {
+  public static ParseResult parsePep484FunctionTypeComment(@NotNull PsiElement anchor, @NotNull String text) {
     final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
 
+    final Function<Pair<ParseResult, List<ParseResult>>, ParseResult> toParamTypeList = pair -> {
+      if (pair != null) {
+        final ParseResult first = pair.getFirst();
+        final List<ParseResult> second = pair.getSecond();
+        final List<PyType> itemTypes = new ArrayList<>();
+        ParseResult result = first;
+        itemTypes.add(result.getType());
+        for (ParseResult r : second) {
+          result = result.merge(r);
+          itemTypes.add(r.getType());
+        }
+        return result.withType(ParameterListType.fromParameterTypes(itemTypes));
+      }
+      return EMPTY_RESULT.withType(new ParameterListType(Collections.emptyList()));
+    };
+    
     final FunctionalParser<ParseResult, PyElementType> classType =
       token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
-                       .map(new MakeSimpleType(anchor))
-                       .cached()
-                       .named("class-type");
+        .map(new MakeSimpleType(anchor))
+        .cached()
+        .named("class-type");
 
-    final FunctionalParser<ParseResult, PyElementType> typeList = 
+    final FunctionalParser<ParseResult, PyElementType> typeParamList =
       op("[").skipThen(maybe(typeExpr.then(many(op(",").skipThen(typeExpr))))).thenSkip(op("]"))
-        .map(pair -> {
-          if (pair != null) {
-            final List<PyType> itemTypes = new ArrayList<>();
-            ParseResult result = pair.getFirst();
-            itemTypes.add(pair.getFirst().getType());
-            for (ParseResult r : pair.getSecond()) {
-              result = result.merge(r);
-              itemTypes.add(r.getType());
-            }
-            return result.withType(new ParameterListType(itemTypes));
-          }
-          return EMPTY_RESULT.withType(new ParameterListType(Collections.emptyList()));
-        });
+        .map(toParamTypeList)
+        .named("type-param-list");
 
-    final FunctionalParser<ParseResult, PyElementType> typeParam = typeExpr.or(typeList);
+    final FunctionalParser<ParseResult, PyElementType> typeParam = typeExpr.or(typeParamList).named("type-param");
 
-    final FunctionalParser<ParseResult, PyElementType> paramExpr =
+    final FunctionalParser<ParseResult, PyElementType> genericType =
       classType.thenSkip(op("[")).then(typeParam).then(many(op(",").skipThen(typeParam))).thenSkip(op("]"))
-               .map(value -> {
-                 final Pair<ParseResult, ParseResult> firstPair = value.getFirst();
-                 final ParseResult first = firstPair.getFirst();
-                 final ParseResult second = firstPair.getSecond();
-                 final List<ParseResult> third = value.getSecond();
-                 final List<PyType> typesInBrackets = new ArrayList<>();
-                 typesInBrackets.add(second.getType());
-                 ParseResult result = first;
-                 result = result.merge(second);
-                 for (ParseResult r : third) {
-                   typesInBrackets.add(r.getType());
-                   result = result.merge(r);
-                 }
-                 final List<PyType> elementTypes = third.isEmpty() ? Collections.singletonList(second.getType()) : typesInBrackets;
-                 final PsiElement resolved = first.getElement();
-                 if (resolved != null) {
-                   final PyType typingType = PyTypingTypeProvider.getType(resolved, elementTypes);
-                   if (typingType != null) {
-                     return result.withType(typingType);
-                   }
-                 }
-                 return EMPTY_RESULT;
-               })
-               .named("param-expr");
+        .map(value -> {
+          final Pair<ParseResult, ParseResult> firstPair = value.getFirst();
+          final ParseResult first = firstPair.getFirst();
+          final ParseResult second = firstPair.getSecond();
+          final List<ParseResult> third = value.getSecond();
+          final List<PyType> typesInBrackets = new ArrayList<>();
+          typesInBrackets.add(second.getType());
+          ParseResult result = first;
+          result = result.merge(second);
+          for (ParseResult r : third) {
+            typesInBrackets.add(r.getType());
+            result = result.merge(r);
+          }
+          final List<PyType> elementTypes = third.isEmpty() ? Collections.singletonList(second.getType()) : typesInBrackets;
+          final PsiElement resolved = first.getElement();
+          if (resolved != null) {
+            final PyType typingType = PyTypingTypeProvider.getType(resolved, elementTypes);
+            if (typingType != null) {
+              return result.withType(typingType);
+            }
+          }
+          return EMPTY_RESULT;
+        })
+        .named("generic-type");
 
     typeExpr.define(
-      paramExpr
+      genericType
         .or(classType))
       .named("type-expr");
 
-    final FunctionalParser<ParseResult, PyElementType> argExpr =
+    final FunctionalParser<ParseResult, PyElementType> paramType =
       maybe(op("*")).then(maybe(op("*"))).then(typeExpr)
         .map(pair -> {
           final ParseResult paramResult = pair.getSecond();
-          final PyType paramType = paramResult.getType();
+          final PyType type = paramResult.getType();
           int starCount = 0;
           if (pair.getFirst().getFirst() != null) {
             starCount++;
@@ -395,7 +400,7 @@ public class PyTypeParser {
             return paramResult;
           }
           else if (starCount == 1) {
-            final PyClassType tupleType = PyBuiltinCache.getInstance(anchor).getTupleType();;
+            final PyClassType tupleType = PyBuiltinCache.getInstance(anchor).getTupleType();
             // TODO How to represent unbound homogeneous tuple?
             if (tupleType != null) {
               return paramResult.withType(tupleType);
@@ -404,45 +409,39 @@ public class PyTypeParser {
           }
           else if (starCount == 2) {
             final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
-            final PyClassType type = builtinCache.getDictType();
-            if (type != null) {
-              final PyClass pyClass = type.getPyClass();
+            final PyClassType dictType = builtinCache.getDictType();
+            if (dictType != null) {
+              final PyClass pyClass = dictType.getPyClass();
               return paramResult.withType(new PyCollectionTypeImpl(pyClass, false,
-                                                                   Arrays.asList(builtinCache.getStrType(), paramType)));
+                                                                   Arrays.asList(builtinCache.getStrType(), type)));
             }
             return EMPTY_RESULT;
           }
           return EMPTY_RESULT;
         })
-        .named("param-expr");
+        .named("param-type");
 
-    final FunctionalParser<ParseResult, PyElementType> ellipsis = op("...").map(token -> EMPTY_RESULT.withType(EllipsisType.INSTANCE));
+    final FunctionalParser<ParseResult, PyElementType> paramTypes = paramType.then(many(op(",").skipThen(paramType)))
+      .map(toParamTypeList)
+      .named("param-types");
 
-    final FunctionalParser<ParseResult, PyElementType> paramTypes = argExpr.then(many(op(",").skipThen(argExpr))).map(pair -> {
-      final List<PyType> types = new ArrayList<>();
-      final ParseResult first = pair.getFirst();
-      final List<ParseResult> second = pair.getSecond();
-      ParseResult result = first;
-      types.add(first.getType());
-      for (ParseResult r : second) {
-        result = result.merge(r);
-        types.add(r.getType());
-      }
-      return result.withType(new PyTypeParser.ParameterListType(types));
-    });
+    final FunctionalParser<ParseResult, PyElementType> ellipsis = op("...")
+      .map(token -> EMPTY_RESULT.withType(EllipsisType.INSTANCE))
+      .named("ellipsis");
     
-    final FunctionalParser<ParseResult, PyElementType> funcExpr =
+    final FunctionalParser<ParseResult, PyElementType> funcType =
       op("(").skipThen(maybe(paramTypes.or(ellipsis))).thenSkip(op(")"))
         .thenSkip(op("->")).then(typeExpr)
         .map(value -> {
-          final ParseResult paramsResult = value.getFirst(), returnResult = value.getSecond();
+          final ParseResult paramsResult = value.getFirst();
+          final ParseResult returnResult = value.getSecond();
           final List<PyCallableParameter> parameters;
           ParseResult result = returnResult;
           if (paramsResult != null) {
             result = result.merge(paramsResult);
-            final ParameterListType paramsType = as(paramsResult.getType(), ParameterListType.class);
-            if (paramsType != null) {
-              parameters = ContainerUtil.map(paramsType.getTypes(), type -> new PyCallableParameterImpl(null, type));
+            final ParameterListType paramTypesList = as(paramsResult.getType(), ParameterListType.class);
+            if (paramTypesList != null) {
+              parameters = paramTypesList.getCallableParameters();
             }
             // ellipsis
             else {
@@ -455,12 +454,12 @@ public class PyTypeParser {
           }
           return result.withType(new PyCallableTypeImpl(parameters, returnResult.getType()));
         })
-        .named("func-expr");
+        .named("func-type");
 
     final FunctionalParser<ParseResult, PyElementType> typeFile =
-      funcExpr
+      funcType
         .endOfInput()
-        .named("type-file");
+        .named("function-type-comment");
 
     try {
       return typeFile.parse(tokenize(text));
@@ -765,15 +764,19 @@ public class PyTypeParser {
   }
 
   public static class ParameterListType extends PyTypeAdapter {
-    private final List<PyType> myTypes;
+    private final List<PyCallableParameter> myParams;
 
-    public ParameterListType(@NotNull List<PyType> types) {
-      myTypes = types;
+    public static ParameterListType fromParameterTypes(@NotNull Iterable<PyType> types) {
+      return new ParameterListType(ContainerUtil.map(types, type -> new PyCallableParameterImpl(null, type)));
+    }
+    
+    private ParameterListType(@NotNull List<PyCallableParameter> types) {
+      myParams = types;
     }
 
     @NotNull
-    public List<PyType> getTypes() {
-      return myTypes;
+    public List<PyCallableParameter> getCallableParameters() {
+      return myParams;
     }
   } 
   
