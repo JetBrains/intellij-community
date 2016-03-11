@@ -19,9 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -60,6 +58,7 @@ public class RedundantCastUtil {
     while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
     if (parent instanceof PsiExpressionList) parent = parent.getParent();
     if (parent instanceof PsiReferenceExpression) parent = parent.getParent();
+    if (parent instanceof PsiAnonymousClass) parent = parent.getParent();
     MyIsRedundantVisitor visitor = new MyIsRedundantVisitor(false);
     parent.accept(visitor);
     return visitor.isRedundant;
@@ -725,27 +724,22 @@ public class RedundantCastUtil {
   }
 
   private static boolean isCastRedundantInRefExpression (final PsiReferenceExpression refExpression, final PsiExpression castOperand) {
+    if (refExpression.getParent() instanceof PsiMethodCallExpression) return false;
     final PsiElement resolved = refExpression.resolve();
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    CodeStyleManager.getInstance(refExpression.getProject()).performActionWithFormatterDisabled(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refExpression.getProject()).getElementFactory();
-          final PsiExpression copyExpression = elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
-          if (copyExpression instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression copy = (PsiReferenceExpression)copyExpression;
-            final PsiExpression qualifier = copy.getQualifierExpression();
-            if (qualifier != null) {
-              qualifier.replace(castOperand);
-              result.set(Boolean.valueOf(copy.resolve() == resolved));
-            }
-          }
+    try {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refExpression.getProject()).getElementFactory();
+      final PsiExpression copyExpression = elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
+      if (copyExpression instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression copy = (PsiReferenceExpression)copyExpression;
+        final PsiExpression qualifier = copy.getQualifierExpression();
+        if (qualifier != null) {
+          qualifier.replace(castOperand);
+          return copy.resolve() == resolved;
         }
-        catch (IncorrectOperationException ignore) { }
       }
-    });
-    return result.get().booleanValue();
+    }
+    catch (IncorrectOperationException ignore) { }
+    return false;
   }
 
   private static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
