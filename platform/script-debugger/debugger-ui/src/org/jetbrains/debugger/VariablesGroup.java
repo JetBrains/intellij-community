@@ -13,48 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XValueGroup;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XValueGroup
 
-import java.util.List;
-
-public class VariablesGroup extends XValueGroup {
-  public static final ValueGroupFactory<List<Variable>> GROUP_FACTORY = new ValueGroupFactory<List<Variable>>() {
-    @Override
-    public XValueGroup create(@NotNull List<Variable> variables, int start, int end, @NotNull VariableContext context) {
-      return createArrayRangeGroup(start, end, variables, context);
-    }
-  };
-
-  private final int start;
-  private final int end;
-  private final List<Variable> variables;
-  private final VariableContext context;
-
-  public VariablesGroup(@NotNull String name, @NotNull List<Variable> variables, VariableContext context) {
-    this(0, variables.size(), variables, context, name);
+internal class VariablesGroup(private val start: Int, private val end: Int, private val variables: List<Variable>, private val context: VariableContext, name: String) : XValueGroup(name) {
+  constructor(name: String, variables: List<Variable>, context: VariableContext) : this(0, variables.size, variables, context, name) {
   }
 
-  private VariablesGroup(int start, int end, @NotNull List<Variable> variables, @NotNull VariableContext context, @NotNull String name) {
-    super(name);
-
-    this.start = start;
-    this.end = end;
-    this.variables = variables;
-    this.context = context;
+  override fun computeChildren(node: XCompositeNode) {
+    node.setAlreadySorted(true)
+    node.addChildren(createVariablesList(variables, start, end, context, null), true)
   }
+}
 
-  public static VariablesGroup createArrayRangeGroup(int start, int end, List<Variable> variables, VariableContext variableContext) {
-    String name = "[" + variables.get(start).getName() + " \u2026 " + variables.get(end - 1).getName() + "]";
-    return new VariablesGroup(start, end, variables, variableContext, name);
+internal val GROUP_FACTORY: ValueGroupFactory<List<Variable>> = object : ValueGroupFactory<List<Variable>> {
+  override fun create(data: List<Variable>, start: Int, end: Int, context: VariableContext): XValueGroup {
+    return createArrayRangeGroup(start, end, data, context)
   }
+}
 
-  @Override
-  public void computeChildren(@NotNull XCompositeNode node) {
-    node.setAlreadySorted(true);
-    node.addChildren(VariablesKt.createVariablesList(variables, start, end, context, null), true);
-  }
+private fun createArrayRangeGroup(start: Int, end: Int, variables: List<Variable>, variableContext: VariableContext): VariablesGroup {
+  val name = "[" + variables[start].name + " \u2026 " + variables[end - 1].name + "]"
+  return VariablesGroup(start, end, variables, variableContext, name)
 }

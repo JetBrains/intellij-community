@@ -1,30 +1,26 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promise
 
-public interface VariableContext {
-  @NotNull
-  EvaluateContext getEvaluateContext();
+interface VariableContext {
+  val evaluateContext: EvaluateContext
 
   /**
-   * Parent variable name if this context is {@link org.jetbrains.debugger.VariableView}
+   * Parent variable name if this context is [org.jetbrains.debugger.VariableView]
    */
-  @Nullable
-  String getName();
+  val variableName: String?
+    get() = null
 
-  @Nullable
-  VariableContext getParent();
+  val parent: VariableContext?
+    get() = null
 
-  boolean watchableAsEvaluationExpression();
+  fun watchableAsEvaluationExpression(): Boolean
 
-  @NotNull
-  DebuggerViewSupport getViewSupport();
+  val viewSupport: DebuggerViewSupport
 
-  @NotNull
-  Promise<MemberFilter> getMemberFilter();
+  val memberFilter: Promise<MemberFilter>
+    get() = viewSupport.getMemberFilter(this)
 
-  @Nullable
-  Scope getScope();
+  val scope: Scope?
+    get() = null
 }

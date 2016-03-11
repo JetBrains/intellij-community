@@ -1,8 +1,7 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.xdebugger.frame.XValueGroup;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.xdebugger.frame.XValueGroup
 
-interface ValueGroupFactory<T> {
-  XValueGroup create(@NotNull T data, int start, int end, @NotNull VariableContext context);
+internal interface ValueGroupFactory<T> {
+  fun create(data: T, start: Int, end: Int, context: VariableContext): XValueGroup
 }
