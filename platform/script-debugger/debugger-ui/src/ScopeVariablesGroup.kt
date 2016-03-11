@@ -73,8 +73,6 @@ fun createVariableContext(scope: Scope, parentContext: VariableContext, callFram
 
 private class ParentlessVariableContext(parentContext: VariableContext, scope: Scope, private val watchableAsEvaluationExpression: Boolean) : VariableContextWrapper(parentContext, scope) {
   override fun watchableAsEvaluationExpression() = watchableAsEvaluationExpression
-
-  override fun getParent() = null
 }
 
 private fun Scope.createScopeNodeName(): String {
