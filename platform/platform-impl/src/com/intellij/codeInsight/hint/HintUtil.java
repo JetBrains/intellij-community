@@ -197,10 +197,11 @@ public class HintUtil {
     );
   }
 
-  private static class HintLabel extends JPanel {
+  public static class HintLabel extends JPanel {
     private JEditorPane myPane;
     private SimpleColoredComponent myColored;
     private JLabel myIcon;
+    private String plainText;
 
     private HintLabel() {
       setLayout(new BorderLayout());
@@ -225,6 +226,7 @@ public class HintUtil {
     }
 
     public void setText(String s, HintHint hintHint) {
+      plainText = s;
       clearText();
 
       if (s != null) {
@@ -263,6 +265,10 @@ public class HintUtil {
 
       revalidate();
       repaint();
+    }
+
+    public String getPlainText() {
+      return plainText;
     }
 
     @Override
