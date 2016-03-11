@@ -25,6 +25,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -348,6 +349,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   public static PyType getType(@NotNull PsiElement resolved, @NotNull List<PyType> elementTypes) {
     final String qualifiedName = getQualifiedName(resolved);
+    
+    final List<Integer> paramListTypePositions = new ArrayList<>();
+    for (int i = 0; i < elementTypes.size(); i++) {
+      final PyType type = elementTypes.get(i);
+      if (type instanceof PyTypeParser.ParameterListType) {
+        paramListTypePositions.add(i);
+      }
+    }
+    if (!paramListTypePositions.isEmpty()) {
+      if (!("typing.Callable".equals(qualifiedName) && paramListTypePositions.equals(Collections.singletonList(0)))) {
+        return null;
+      }
+    }
+
     if ("typing.Union".equals(qualifiedName)) {
       return PyUnionType.union(elementTypes);
     }
@@ -355,12 +370,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return PyUnionType.union(elementTypes.get(0), PyNoneType.INSTANCE);
     }
     if ("typing.Callable".equals(qualifiedName) && elementTypes.size() == 2) {
-      final List<PyCallableParameter> paramTypes = new ArrayList<>();
-      final PyTupleType firstType = as(elementTypes.get(0), PyTupleType.class);
+      final PyTypeParser.ParameterListType firstType = as(elementTypes.get(0), PyTypeParser.ParameterListType.class);
       if (firstType != null) {
-        for (int i = 0; i < firstType.getElementCount(); i++) {
-          paramTypes.add(new PyCallableParameterImpl(null, firstType.getElementType(i)));
-        }
+        final List<PyCallableParameter> paramTypes = ContainerUtil.map(firstType.getTypes(),
+                                                                       type -> new PyCallableParameterImpl(null, type));
         return new PyCallableTypeImpl(paramTypes, elementTypes.get(1));
       }
     }
