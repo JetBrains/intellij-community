@@ -100,12 +100,12 @@ fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteAr
   return newBytes
 }
 
-fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element {
+fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element? {
   if (state is Element) {
     return state.clone()
   }
   else {
-    return newLiveStates?.get(key) ?: unarchiveState(state as ByteArray)
+    return newLiveStates?.get(key) ?: (state as? ByteArray)?.let { unarchiveState(it)  }
   }
 }
 

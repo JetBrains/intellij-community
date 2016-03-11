@@ -192,7 +192,7 @@ open class DirectoryBasedStorage(private val dir: Path,
 
         var element: Element? = null
         try {
-          element = states.getElement(fileName, null)
+          element = states.getElement(fileName) ?: continue
           storage.pathMacroSubstitutor?.collapsePaths(element)
 
           storeElement.setAttribute(FileStorageCoreUtil.NAME, storage.componentName!!)
