@@ -514,6 +514,18 @@ public class PyTypingTest extends PyTestCase {
           "expr = f"); 
   }
 
+  // PY-18741
+  public void testFunctionTypeCommentWithParamTypeComment() {
+    doTest("(x: int, y: bool, z: Any) -> str",
+           "def f(x, # type: int \n" +
+           "      y # type: bool\n" +
+           "      ,z):\n" +
+           "    # type: (...) -> str\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f");
+  }
+
   // PY-18386
   public void testRecursiveType() {
     doTest("Union[int, Any]",
