@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
   private final EditorColorsScheme myEditorColorsScheme;
   @NotNull private final Project myProject;
   private final Document myDocument;
-  private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<TextRange, RangeMarker>();
+  private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<>();
 
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                   @Nullable Editor editor,
@@ -74,12 +74,12 @@ public class HighlightingSessionImpl implements HighlightingSession {
                                                             @Nullable EditorColorsScheme editorColorsScheme) {
     HighlightingSession session = getHighlightingSession(psiFile, progressIndicator);
     if (session == null) {
-      session = new HighlightingSessionImpl(psiFile, editor, progressIndicator, editorColorsScheme);
       ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
       if (map == null) {
-        map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, ContainerUtil.<PsiFile, HighlightingSession>newConcurrentMap());
+        map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, ContainerUtil.newConcurrentMap());
       }
-      session = ConcurrencyUtil.cacheOrGet(map, psiFile, session);
+      session = ConcurrencyUtil.cacheOrGet(map, psiFile,
+                                           new HighlightingSessionImpl(psiFile, editor, progressIndicator, editorColorsScheme));
     }
     return session;
   }
@@ -119,34 +119,37 @@ public class HighlightingSessionImpl implements HighlightingSession {
     return myEditorColorsScheme;
   }
 
-  private final TransferToEDTQueue<Info> myAddHighlighterInEDTQueue = new TransferToEDTQueue<Info>("Apply highlighting results", new Processor<Info>() {
-    @Override
-    public boolean process(Info info) {
-      final EditorColorsScheme colorsScheme = getColorsScheme();
-      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), info.myRestrictRange.getStartOffset(),
-                                                                 info.myRestrictRange.getEndOffset(),
-                                                                 info.myInfo, colorsScheme, info.myGroupId, myRanges2markersCache);
+  private final TransferToEDTQueue<Info> myAddHighlighterInEDTQueue =
+    new TransferToEDTQueue<>("Apply highlighting results", new Processor<Info>() {
+      @Override
+      public boolean process(Info info) {
+        final EditorColorsScheme colorsScheme = getColorsScheme();
+        UpdateHighlightersUtil
+          .addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), info.myRestrictRange.getStartOffset(),
+                                               info.myRestrictRange.getEndOffset(),
+                                               info.myInfo, colorsScheme, info.myGroupId, myRanges2markersCache);
 
-      return true;
-    }
-  }, new Condition<Object>() {
-    @Override
-    public boolean value(Object o) {
-      return myProject.isDisposed() || getProgressIndicator().isCanceled();
-    }
-  }, 200);
-  private final TransferToEDTQueue<RangeHighlighterEx> myDisposeHighlighterInEDTQueue = new TransferToEDTQueue<RangeHighlighterEx>("Dispose abandoned highlighter", new Processor<RangeHighlighterEx>() {
-    @Override
-    public boolean process(@NotNull RangeHighlighterEx highlighter) {
-      highlighter.dispose();
-      return true;
-    }
-  }, new Condition<Object>() {
-    @Override
-    public boolean value(Object o) {
-      return myProject.isDisposed() || getProgressIndicator().isCanceled();
-    }
-  }, 200);
+        return true;
+      }
+    }, new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return myProject.isDisposed() || getProgressIndicator().isCanceled();
+      }
+    }, 200);
+  private final TransferToEDTQueue<RangeHighlighterEx> myDisposeHighlighterInEDTQueue =
+    new TransferToEDTQueue<>("Dispose abandoned highlighter", new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(@NotNull RangeHighlighterEx highlighter) {
+        highlighter.dispose();
+        return true;
+      }
+    }, new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return myProject.isDisposed() || getProgressIndicator().isCanceled();
+      }
+    }, 200);
 
 
   void queueHighlightInfo(@NotNull HighlightInfo info,

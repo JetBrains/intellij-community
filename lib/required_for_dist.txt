@@ -41,7 +41,6 @@ jsch.agentproxy.pageant.jar
 jsch.agentproxy.sshagent.jar
 jsch.agentproxy.usocket-jna.jar
 jsch.agentproxy.usocket-nc.jar
-jsr166e.jar
 jsr173_1.0_api.jar
 junit-4.12.jar
 junit.jar

@@ -128,10 +128,9 @@ public class StudyUtils {
   }
 
   public static void updateToolWindows(@NotNull final Project project) {
-    final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    StudyToolWindowFactory factory = new StudyToolWindowFactory();
-    factory.update(project);
+    update(project);
 
+    final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     createProgressToolWindowContent(project, windowManager);
   }
 
@@ -478,5 +477,13 @@ public class StudyUtils {
       return getTaskTextFromTask(task, task.getTaskDir(project));
     }
     return null;
+  }
+
+  public static void update(Project project) {
+    final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
+    if (studyToolWindow != null) {
+      String taskText = getTaskText(project);
+      studyToolWindow.setTaskText(taskText);
+    }
   }
 }

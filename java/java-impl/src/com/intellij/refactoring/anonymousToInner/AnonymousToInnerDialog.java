@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.anonymousToInner;
 
+import com.intellij.openapi.application.AcceptNestedTransactions;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -42,7 +44,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
-class AnonymousToInnerDialog extends DialogWrapper{
+@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)class AnonymousToInnerDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.anonymousToInner.AnonymousToInnerDialog");
 
   private final Project myProject;

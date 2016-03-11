@@ -281,10 +281,13 @@ public class RedundantCastUtil {
         final JavaResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
         if (!newResult.isValidResult()) return;
         final PsiMethod newTargetMethod = (PsiMethod)newResult.getElement();
-        final PsiType newReturnType = newCall.getType();
-        final PsiType oldReturnType = methodCall.getType();
+        PsiType newReturnType = newCall.getType(), oldReturnType = methodCall.getType();
+        if (newReturnType instanceof PsiCapturedWildcardType && oldReturnType instanceof PsiCapturedWildcardType) {
+          newReturnType = ((PsiCapturedWildcardType)newReturnType).getUpperBound();
+          oldReturnType = ((PsiCapturedWildcardType)oldReturnType).getUpperBound();
+        }
         if (Comparing.equal(newReturnType, oldReturnType)) {
-          if (newTargetMethod.equals(targetMethod) ||
+          if (Comparing.equal(newTargetMethod, targetMethod) ||
               (newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&
                !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&  // see SCR11555, SCR14559
                areThrownExceptionsCompatible(targetMethod, newTargetMethod))) {
@@ -377,8 +380,13 @@ public class RedundantCastUtil {
               newResult = newCall.resolveMethodGenerics();
             }
 
+            final PsiAnonymousClass oldAnonymousClass = expression instanceof PsiNewExpression ? ((PsiNewExpression)expression).getAnonymousClass() : null;
+            final PsiAnonymousClass newAnonymousClass = newCall instanceof PsiNewExpression ? ((PsiNewExpression)newCall).getAnonymousClass() : null;
+
             if (oldMethod.equals(newResult.getElement()) &&
-                (!(newCall instanceof PsiCallExpression) || Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) &&
+                (!(newCall instanceof PsiCallExpression) || 
+                 oldAnonymousClass != null && newAnonymousClass != null && Comparing.equal(oldAnonymousClass.getBaseClassType(), newAnonymousClass.getBaseClassType()) || 
+                 Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) &&
                 newResult.isValidResult()) {
               if (!(newArgs[i] instanceof PsiFunctionalExpression) || castType != null && castType.equals(((PsiFunctionalExpression)newArgs[i]).getFunctionalInterfaceType())) {
                 addToResults(cast);

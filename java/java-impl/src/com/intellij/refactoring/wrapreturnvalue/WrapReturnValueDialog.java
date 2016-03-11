@@ -15,8 +15,6 @@
  */
 package com.intellij.refactoring.wrapreturnvalue;
 
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.help.HelpManager;
@@ -37,6 +35,7 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
