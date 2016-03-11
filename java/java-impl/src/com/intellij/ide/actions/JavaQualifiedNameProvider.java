@@ -185,6 +185,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
         }
         if (((PsiMethod)targetElement).isConstructor()) {
           targetElement = targetElement.getContainingClass();
+          fqn = StringUtil.getPackageName(fqn);
         }
       }
       else if (targetElement instanceof PsiClass) {
