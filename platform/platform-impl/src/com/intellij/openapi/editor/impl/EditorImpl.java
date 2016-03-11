@@ -1124,7 +1124,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     for (int i = 0; i < text.length(); i++) {
       if (!processKeyTyped(text.charAt(i))) {
         result.setRejected();
-        break;
+        return result;
       }
     }
 
