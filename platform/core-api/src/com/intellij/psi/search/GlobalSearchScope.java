@@ -300,7 +300,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
-  public static GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile, @Nullable final String displayName) {
+  public static GlobalSearchScope fileScope(@NotNull Project project, @Nullable VirtualFile virtualFile, @Nullable final String displayName) {
     return new FileScope(project, virtualFile) {
       @NotNull
       @Override
@@ -707,7 +707,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final VirtualFile myVirtualFile; // files can be out of project roots
     private final Module myModule;
 
-    private FileScope(@NotNull Project project, VirtualFile virtualFile) {
+    private FileScope(@NotNull Project project, @Nullable VirtualFile virtualFile) {
       super(project);
       myVirtualFile = virtualFile;
       myModule = virtualFile == null || project.isDefault() ? null : FileIndexFacade.getInstance(project).getModuleForFile(virtualFile);
