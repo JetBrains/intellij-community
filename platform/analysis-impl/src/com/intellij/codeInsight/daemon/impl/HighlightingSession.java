@@ -23,14 +23,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-interface HighlightingSession {
+public interface HighlightingSession {
   @NotNull
   Project getProject();
+
   @NotNull
   PsiFile getPsiFile();
+
   Editor getEditor();
+
   @NotNull
   Document getDocument();
+
   @NotNull
   ProgressIndicator getProgressIndicator();
 
