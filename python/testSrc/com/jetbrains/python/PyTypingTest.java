@@ -504,6 +504,16 @@ public class PyTypingTest extends PyTestCase {
 
   }
 
+  // PY-18598
+  public void testFunctionTypeCommentEllipsisParameters() {
+   doTest("(x: Any, y: Any, z: Any) -> int", 
+          "def f(x, y=42, z='foo'):\n" +
+          "    # type: (...) -> int \n" +
+          "    pass\n" +
+          "\n" +
+          "expr = f"); 
+  }
+
   // PY-18386
   public void testRecursiveType() {
     doTest("Union[int, Any]",
