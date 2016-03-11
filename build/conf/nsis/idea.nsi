@@ -248,18 +248,10 @@ FunctionEnd
 
 Function OnDirectoryPageLeave
   ;check
-  ; - if there are no files into $INSTDIR (recursively) just excepted property files
-  ; - if property files have the same installation time.
+  ; - if there are no files into $INSTDIR (recursively)
   StrCpy $9 "$INSTDIR"
   Call instDirEmpty
-  StrCmp $9 "not empty" abort 0
-  Push "Complete"
-  Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
-  Push "$INSTDIR\bin\idea.properties"
-  ${StrRep} $0 ${PRODUCT_EXE_FILE} ".exe" "64.exe.vmoptions"
-  Push "$INSTDIR\bin\$0"
-  Call compareFileInstallationTime
-  StrCmp $9 "Modified" abort skip_abort
+  StrCmp $9 "not empty" abort skip_abort
 abort:
   MessageBox MB_OK|MB_ICONEXCLAMATION "$(empty_or_upgrade_folder)"
   Abort
@@ -274,6 +266,7 @@ Function instDirEmpty
   Push $2
   ClearErrors
   FindFirst $1 $2 "$9\*.*"
+  IfErrors done 0
 nextElemement:
   ;is the element a folder?
   StrCmp $2 "." getNextElement

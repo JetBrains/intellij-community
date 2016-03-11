@@ -53,6 +53,7 @@ public class StudyProjectGenerator {
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
   public static final String AUTHOR_ATTRIBUTE = "authors";
+  public static final String LANGUAGE_ATTRIBUTE = "language";
 
   public void setCourses(List<CourseInfo> courses) {
     myCourses = courses;
@@ -460,9 +461,11 @@ public class StudyProjectGenerator {
         String courseName = el.getAsJsonObject().get(COURSE_NAME_ATTRIBUTE).getAsString();
         String courseDescription = el.getAsJsonObject().get(COURSE_DESCRIPTION).getAsString();
         JsonArray courseAuthors = el.getAsJsonObject().get(AUTHOR_ATTRIBUTE).getAsJsonArray();
+        String language = el.getAsJsonObject().get(LANGUAGE_ATTRIBUTE).getAsString();
         courseInfo = new CourseInfo();
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
+        courseInfo.setType("pycharm " + language);
         final ArrayList<CourseInfo.Author> authors = new ArrayList<>();
         for (JsonElement author : courseAuthors) {
           final JsonObject authorAsJsonObject = author.getAsJsonObject();

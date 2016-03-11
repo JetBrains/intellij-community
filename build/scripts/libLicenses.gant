@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,7 +193,6 @@ libraryLicense(name: "Eclipse JDT Core", libraryName: "Eclipse", version: "4.2.1
 libraryLicense(name: "EditorConfig Java Core", libraryName: "editorconfig-core-java.jar", version: "1.0", license: "Apache 2.0", url: "https://github.com/editorconfig/editorconfig-core-java/", licenseUrl: "https://github.com/editorconfig/editorconfig-core-java/blob/master/LICENSE")
 libraryLicense(name: "epydoc", attachedTo: "python-helpers", version: "3.0.1", license: "MIT", url: "http://epydoc.sourceforge.net/")
 libraryLicense(name: "Fest", libraryName: "fest", version: "", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://code.google.com/p/fest/")
-libraryLicense(name: "ForkJoin", version: "", license: "Creative Commons Public Domain Dedication", url: "http://gee.cs.oswego.edu/dl/concurrency-interest/index.html", licenseUrl: "http://creativecommons.org/publicdomain/zero/1.0/")
 libraryLicense(name: "FreeMarker", attachedTo: "coverage", version: "2.3.15", license: "BSD", url: "http://freemarker.sourceforge.net/")
 libraryLicense(name: "FreeMarker", libraryName: "freemarker-2.3.20", version: "2.3.20", license: "BSD", url: "http://freemarker.sourceforge.net/")
 libraryLicense(name: "fxg-utils", libraryName: "fxg-utils", version: "4.9.1", license: "Apache 2.0", url: "http://flex.apache.org", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")

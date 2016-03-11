@@ -363,6 +363,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     mySplitter.dispose();
     myInspectionProfile = null;
     myDisposed = true;
+    if (myLoadingProgressPreview != null) {
+      Disposer.dispose(myLoadingProgressPreview);
+      myLoadingProgressPreview = null;
+    }
   }
 
 

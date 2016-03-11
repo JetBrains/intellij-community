@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -644,11 +644,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     @Override
     @NotNull
     public Module[] getModules() {
-      if (myModulesCache == null) {
+      Module[] cache = myModulesCache;
+      if (cache == null) {
         Collection<Module> modules = myModules.values();
-        myModulesCache = modules.toArray(new Module[modules.size()]);
+        myModulesCache = cache = modules.toArray(new Module[modules.size()]);
       }
-      return myModulesCache;
+      return cache;
     }
 
     @NotNull

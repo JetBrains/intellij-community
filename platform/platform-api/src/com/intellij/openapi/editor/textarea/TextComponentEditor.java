@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package icons;
+package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.editor.Editor;
 
-import javax.swing.*;
+import javax.swing.text.Document;
 
 /**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * An implementation of {@link Editor} on top of a plain {@link javax.swing.text.JTextComponent}.
+ * The corresponding document ({@link #getDocument()}) is a wrapper over Swing {@link Document} and
+ * doesn't require write action for modifications.
  */
-public class SpellcheckerIcons {
-  private static Icon load(String path) {
-    return IconLoader.getIcon(path, SpellcheckerIcons.class);
-  }
-
-  public static final Icon Spellcheck = load("/icons/spellcheck.png"); // 16x16
+public interface TextComponentEditor extends Editor {
 }

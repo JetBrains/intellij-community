@@ -458,19 +458,19 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return font;
   }
 
-  private TextLayout getCachedTextLayout(int fragmentIndex) {
+  private TextLayout getTextLayout(int fragmentIndex, Font font, FontRenderContext frc) {
     if (getBaseFont() != myLayoutFont) myLayouts.clear();
-    return fragmentIndex < myLayouts.size() ? myLayouts.get(fragmentIndex) : null;
+    TextLayout layout = fragmentIndex < myLayouts.size() ? myLayouts.get(fragmentIndex) : null;
+    if (layout == null && needFontFallback(font, myFragments.get(fragmentIndex))) {
+      layout = createAndCacheTextLayout(fragmentIndex, font, frc);
+    }
+    return layout;
   }
 
   private void doDrawString(Graphics2D g, int fragmentIndex, int x, int y) {
     String text = myFragments.get(fragmentIndex);
     if (StringUtil.isEmpty(text)) return;
-    Font font = g.getFont();
-    TextLayout layout = getCachedTextLayout(fragmentIndex);
-    if (layout == null && needFontFallback(font, text)) {
-      layout = createAndCacheTextLayout(fragmentIndex, font, g.getFontRenderContext());
-    }
+    TextLayout layout = getTextLayout(fragmentIndex, g.getFont(), g.getFontRenderContext());
     if (layout != null) {
       layout.draw(g, x, y);
     }
@@ -482,10 +482,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private int computeStringWidth(int fragmentIndex, Font font) {
     String text = myFragments.get(fragmentIndex);
     if (StringUtil.isEmpty(text)) return 0;
-    TextLayout layout = getCachedTextLayout(fragmentIndex);
-    if (layout == null && needFontFallback(font, text)) {
-      layout = createAndCacheTextLayout(fragmentIndex, font, getFontMetrics(font).getFontRenderContext());
-    }
+    TextLayout layout = getTextLayout(fragmentIndex, font, getFontMetrics(font).getFontRenderContext());
     if (layout != null) {
       return (int)layout.getAdvance();
     }

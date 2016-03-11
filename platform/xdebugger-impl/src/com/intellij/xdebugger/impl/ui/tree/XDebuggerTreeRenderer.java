@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.SimpleTextAttributes;
@@ -75,17 +76,18 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     if (myHaveLink) {
       setupLinkDimensions(treeVisibleRect, rowX);
     }
-    else {
-      if (rowX + super.getPreferredSize().width > treeVisibleRect.x + treeVisibleRect.width) {
-        // text does not fit visible area - show link
-        if (node instanceof XValueNodeImpl) {
-          final String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
-          if (!StringUtil.isEmpty(rawValue)) {
-            myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
-            append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
-            setupLinkDimensions(treeVisibleRect, rowX);
-            myLinkWidth = 0;
-          }
+    else if (node instanceof XValueNodeImpl && rowX + super.getPreferredSize().width > treeVisibleRect.x + treeVisibleRect.width) {
+      // text does not fit visible area - show link
+      String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
+      if (!StringUtil.isEmpty(rawValue) && tree.isShowing()) {
+        // text may fit the screen in ExpandableItemsHandler
+        Point locationOnScreen = tree.getLocationOnScreen();
+        Rectangle screen = AbstractExpandableItemsHandler.getScreenRectangle(locationOnScreen);
+        if (screen.x + screen.width < locationOnScreen.x + rowX + super.getPreferredSize().width) {
+          myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
+          append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
+          setupLinkDimensions(treeVisibleRect, rowX);
+          myLinkWidth = 0;
         }
       }
     }

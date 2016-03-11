@@ -16,6 +16,8 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.openapi.application.AcceptNestedTransactions;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 class IntroduceFieldDialog extends DialogWrapper {
 
 
