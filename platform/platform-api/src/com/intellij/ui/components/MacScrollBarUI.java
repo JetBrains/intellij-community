@@ -30,12 +30,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 
@@ -122,6 +124,8 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     super.installUI(c);
     updateStyle(Style.CURRENT.get());
     processReferences(this, null, null);
+    AWTEventListener listener = MOVEMENT_LISTENER.getAndSet(null); // add only one movement listener
+    if (listener != null) Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
   @Override
@@ -130,6 +134,39 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     myAlarm.cancelAllRequests();
     super.uninstallUI(c);
   }
+
+  /**
+   * The movement listener that is intended to do not hide shown thumb while mouse is moving.
+   */
+  private static final AtomicReference<AWTEventListener> MOVEMENT_LISTENER = new AtomicReference<>(new AWTEventListener() {
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      if (event != null && MouseEvent.MOUSE_MOVED == event.getID()) {
+        Object source = event.getSource();
+        if (source instanceof Component) {
+          JScrollPane pane = UIUtil.findParentByClass((Component)source, JScrollPane.class);
+          if (pane != null) {
+            pauseThumbAnimation(pane.getHorizontalScrollBar());
+            pauseThumbAnimation(pane.getVerticalScrollBar());
+          }
+        }
+      }
+    }
+
+    /**
+     * Pauses animation of the thumb if it is shown.
+     *
+     * @param bar the scroll bar with custom UI
+     */
+    private void pauseThumbAnimation(JScrollBar bar) {
+      Object object = bar == null ? null : bar.getUI();
+      if (object instanceof MacScrollBarUI) {
+        MacScrollBarUI ui = (MacScrollBarUI)object;
+        if (0 < ui.myThumbAnimator.myValue) ui.onThumbMove();
+      }
+    }
+  });
+
 
   /**
    * Processes references in the static list of references synchronously.
