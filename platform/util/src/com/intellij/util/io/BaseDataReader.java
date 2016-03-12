@@ -128,7 +128,9 @@ public abstract class BaseDataReader {
       while (true) {
         boolean read = readAvailable();
 
-        if (isStopped) {
+        if ((!read && isStopped) || mySleepingPolicy == SleepingPolicy.BLOCKING) {
+          // in non-blocking mode, if we have read something on a previous step, we should check
+          // if some additional output is available no matter whether the process is already stopped or not
           break;
         }
 
