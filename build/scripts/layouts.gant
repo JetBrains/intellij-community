@@ -820,7 +820,10 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("db-compilerCommon")
         module("db-compiler")
       }
-
+      jar("constraint-layout.jar") {
+        module("sherpa-solver")
+        module("sherpa-ui")
+      }
       jar("common.jar") {
         module("common")
       }
