@@ -482,6 +482,24 @@ public class PyTypingTest extends PyTestCase {
            "    expr = cb");
   }
 
+  // PY-18763  
+  public void testCallableTypeWithEllipsis() {
+    doTest("(...) -> int",
+           "from typing import Callable\n" +
+           "\n" +
+           "expr = unknown() # type: Callable[..., int]");
+  }
+
+  // PY-18763  
+  public void testFunctionTypeCommentCallableParameterWithEllipsis() {
+    doTest("(...) -> int",
+           "from typing import Callable\n" +
+           "\n" +
+           "def f(cb):\n" +
+           "    # type: (Callable[..., int]) -> None\n" +
+           "    expr = cb");
+  }
+
   // PY-18726
   public void testFunctionTypeCommentBadCallableParameter1() {
     doTest("Any",
@@ -492,7 +510,7 @@ public class PyTypingTest extends PyTestCase {
            "    expr = cb");
 
   }
-  
+
   // PY-18726
   public void testFunctionTypeCommentBadCallableParameter2() {
     doTest("Any",
