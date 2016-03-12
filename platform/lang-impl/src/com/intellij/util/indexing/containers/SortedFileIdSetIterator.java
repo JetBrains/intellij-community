@@ -64,7 +64,7 @@ public class SortedFileIdSetIterator implements ValueContainer.IntIterator {
   }
 
   public static ValueContainer.IntIterator getTransientIterator(ValueContainer.IntIterator intIterator) {
-    final ValueContainer.IntIterator intIteratorConed = intIterator.createCopyInInitialState();
+    final ValueContainer.IntIterator intIteratorCloned = intIterator.createCopyInInitialState();
     int max = 0, min = Integer.MAX_VALUE;
 
     while(intIterator.hasNext()) {
@@ -80,12 +80,15 @@ public class SortedFileIdSetIterator implements ValueContainer.IntIterator {
     final int[] bits = ourSpareBuffer.getBuffer(bitsLength);
     for(int i = 0; i < bitsLength; ++i) bits[i] = 0;
 
-    intIterator = intIteratorConed;
+    intIterator = intIteratorCloned;
     int size = 0;
     while(intIterator.hasNext()) {
       final int id = intIterator.next() - offset;
-      bits[id >> INT_BITS_SHIFT] |= (1 << (id));
-      ++size;
+      int mask = 1 << id;
+      if ((bits[id >> INT_BITS_SHIFT] & mask) == 0) {
+        bits[id >> INT_BITS_SHIFT] |= mask;
+        ++size;
+      }
     }
 
     return new SortedFileIdSetIterator(bits, bitsLength, offset, size);
