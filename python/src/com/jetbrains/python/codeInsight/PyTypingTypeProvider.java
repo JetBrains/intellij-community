@@ -377,15 +377,24 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final String qualifiedName = getQualifiedName(resolved);
     
     final List<Integer> paramListTypePositions = new ArrayList<>();
+    final List<Integer> ellipsisTypePositions = new ArrayList<>();
     for (int i = 0; i < elementTypes.size(); i++) {
       final PyType type = elementTypes.get(i);
       if (type instanceof PyTypeParser.ParameterListType) {
         paramListTypePositions.add(i);
       }
+      else if (type instanceof PyTypeParser.EllipsisType) {
+        ellipsisTypePositions.add(i);
+      }
     }
     
     if (!paramListTypePositions.isEmpty()) {
       if (!("typing.Callable".equals(qualifiedName) && paramListTypePositions.equals(Collections.singletonList(0)))) {
+        return null;
+      }
+    }
+    if (!ellipsisTypePositions.isEmpty()) {
+      if (!("typing.Callable".equals(qualifiedName) && ellipsisTypePositions.equals(Collections.singletonList(0)))) {
         return null;
       }
     }
@@ -400,6 +409,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyTypeParser.ParameterListType paramList = as(elementTypes.get(0), PyTypeParser.ParameterListType.class);
       if (paramList != null) {
         return new PyCallableTypeImpl(paramList.getCallableParameters(), elementTypes.get(1));
+      }
+      if (elementTypes.get(0) instanceof PyTypeParser.EllipsisType) {
+        return new PyCallableTypeImpl(null, elementTypes.get(1));
       }
     }
     if ("typing.Tuple".equals(qualifiedName)) {
@@ -511,15 +523,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           final PyExpression[] elements = tupleExpr.getElements();
           if (elements.length == 2) {
             final PyExpression parametersExpr = elements[0];
+            final PyExpression returnTypeExpr = elements[1];
             if (parametersExpr instanceof PyListLiteralExpression) {
               final List<PyCallableParameter> parameters = new ArrayList<PyCallableParameter>();
               final PyListLiteralExpression listExpr = (PyListLiteralExpression)parametersExpr;
               for (PyExpression argExpr : listExpr.getElements()) {
                 parameters.add(new PyCallableParameterImpl(null, getType(argExpr, context)));
               }
-              final PyExpression returnTypeExpr = elements[1];
               final PyType returnType = getType(returnTypeExpr, context);
               return new PyCallableTypeImpl(parameters, returnType);
+            }
+            if (parametersExpr instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)parametersExpr).isEllipsis()) {
+              return new PyCallableTypeImpl(null, getType(returnTypeExpr, context));
             }
           }
         }

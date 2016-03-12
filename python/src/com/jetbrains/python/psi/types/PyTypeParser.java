@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -338,6 +339,10 @@ public class PyTypeParser {
       }
       return EMPTY_RESULT.withType(new ParameterListType(Collections.emptyList()));
     };
+
+    final FunctionalParser<ParseResult, PyElementType> ellipsis = op("...")
+      .map(token -> EMPTY_RESULT.withType(EllipsisType.INSTANCE))
+      .named("ellipsis");
     
     final FunctionalParser<ParseResult, PyElementType> classType =
       token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
@@ -350,7 +355,11 @@ public class PyTypeParser {
         .map(toParamTypeList)
         .named("type-param-list");
 
-    final FunctionalParser<ParseResult, PyElementType> typeParam = typeExpr.or(typeParamList).named("type-param");
+    final FunctionalParser<ParseResult, PyElementType> typeParam = 
+      typeExpr
+        .or(typeParamList)
+        .or(ellipsis)
+        .named("type-param");
 
     final FunctionalParser<ParseResult, PyElementType> genericType =
       classType.thenSkip(op("[")).then(typeParam).then(many(op(",").skipThen(typeParam))).thenSkip(op("]"))
@@ -425,10 +434,6 @@ public class PyTypeParser {
       .map(toParamTypeList)
       .named("param-types");
 
-    final FunctionalParser<ParseResult, PyElementType> ellipsis = op("...")
-      .map(token -> EMPTY_RESULT.withType(EllipsisType.INSTANCE))
-      .named("ellipsis");
-    
     final FunctionalParser<ParseResult, PyElementType> funcType =
       op("(").skipThen(maybe(paramTypes.or(ellipsis))).thenSkip(op(")"))
         .thenSkip(op("->")).then(typeExpr)
@@ -778,12 +783,22 @@ public class PyTypeParser {
     public List<PyCallableParameter> getCallableParameters() {
       return myParams;
     }
+
+    @Override
+    public String toString() {
+      return "[" + StringUtil.join(myParams, ",") + "]";
+    }
   } 
   
   public static class EllipsisType extends PyTypeAdapter {
     public static final EllipsisType INSTANCE = new EllipsisType();
 
     private EllipsisType() {
+    }
+
+    @Override
+    public String toString() {
+      return "...";
     }
   }
   
