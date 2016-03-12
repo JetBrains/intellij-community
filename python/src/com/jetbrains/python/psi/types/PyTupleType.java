@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -33,33 +32,46 @@ import java.util.Arrays;
  */
 public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType {
   private final PyType[] myElementTypes;
-
-  PyTupleType(@NotNull PyClass tupleClass, PsiElement anchor, PyType[] elementTypes) {
-    super(tupleClass, false);
-    myElementTypes = elementTypes;
-  }
+  private final boolean myHomogeneous;
 
   @Nullable
-  public static PyTupleType create(PsiElement anchor, PyType[] elementTypes) {
+  public static PyTupleType create(@NotNull PsiElement anchor, @NotNull PyType[] elementTypes) {
     PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
     if (tuple != null) {
-      return new PyTupleType(tuple, anchor, elementTypes);
+      return new PyTupleType(tuple, elementTypes, false);
     }
     return null;
   }
 
-  public PyTupleType(PyTupleType origin, PyType[] elementTypes) {
-    super(origin.getPyClass(), false);
+  @Nullable
+  public static PyTupleType createHomogeneous(@NotNull PsiElement anchor, @Nullable PyType elementType) {
+    PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
+    if (tuple != null) {
+      return new PyTupleType(tuple, new PyType[] {elementType}, true);
+    }
+    return null;
+  }
+
+  PyTupleType(@NotNull PyClass tupleClass, @NotNull PyType[] elementTypes, boolean homogeneous) {
+    super(tupleClass, false);
     myElementTypes = elementTypes;
+    myHomogeneous = homogeneous;
+  }
+
+  public PyTupleType(@NotNull PyTupleType origin, @NotNull PyType[] elementTypes) {
+    this(origin.getPyClass(), elementTypes, false);
   }
 
   public String getName() {
-    return "(" + StringUtil.join(myElementTypes, new Function<PyType, String>() {
-      @Nullable
-      public String fun(PyType pyType) {
-        return pyType == null ? PyNames.UNKNOWN_TYPE : pyType.getName();
-      }
-    }, ", ") + ")";
+    if (myHomogeneous) {
+      return "(" + (getTypeName(myElementTypes[0])) + ", ...)";
+    }
+    return "(" + StringUtil.join(myElementTypes, PyTupleType::getTypeName, ", ") + ")";
+  }
+
+  @Nullable
+  private static String getTypeName(@Nullable PyType type) {
+    return type == null ? PyNames.UNKNOWN_TYPE : type.getName();
   }
 
   @Override
@@ -76,6 +88,9 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType 
   }
 
   public PyType getElementType(int index) {
+    if (myHomogeneous) {
+      return myElementTypes[0];
+    }
     if (index >= 0 && index < myElementTypes.length) {
       return myElementTypes[index];
     }
@@ -83,7 +98,11 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType 
   }
 
   public int getElementCount() {
-    return myElementTypes.length;
+    return myHomogeneous ? -1 : myElementTypes.length;
+  }
+
+  public boolean isHomogeneous() {
+    return myHomogeneous;
   }
 
   @Override

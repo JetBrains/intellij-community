@@ -532,6 +532,25 @@ public class PyTypingTest extends PyTestCase {
           "expr = f"); 
   }
 
+  // PY-18762
+  public void testHomogeneousTuple() {
+    doTest("Tuple[int, ...]", 
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f(xs: Tuple[int, ...]):\n" +
+           "    expr = xs");
+  }
+
+  // PY-18762
+  public void testFunctionTypeCommentHomogeneousTuple() {
+    doTest("Tuple[int, ...]",
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f(xs):\n" +
+           "    # type: (Tuple[int, ...]) -> None\n" +
+           "    expr = xs\n");
+  }
+
   // PY-18741
   public void testFunctionTypeCommentWithParamTypeComment() {
     doTest("(x: int, y: bool, z: Any) -> str",
