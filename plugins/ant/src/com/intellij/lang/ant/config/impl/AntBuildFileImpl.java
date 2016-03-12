@@ -175,8 +175,9 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myProjectOptions.registerProperty(ADDITIONAL_CLASSPATH, "entry", SinglePathEntry.EXTERNALIZER);
     myProjectOptions.registerProperty(ANT_REFERENCE, AntReference.EXTERNALIZER);
 
-    myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{myWorkspaceOptions, myProjectOptions,
-      GlobalAntConfiguration.getInstance().getProperties(getProject())});
+    myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{
+      myWorkspaceOptions, myProjectOptions, GlobalAntConfiguration.getInstance().getProperties(), configuration.getProperties()
+    });
 
     myClassloaderHolder = new AntBuildFileClassLoaderHolder(myAllOptions);
   }
