@@ -955,7 +955,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
       super.setNameAndTooltip(name, tooltip, attributes);
       if (myProjectsNavigator.getShowVersions()) {
-        addColoredFragment(":" + myMavenProject.getMavenId().getVersion(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+        addColoredFragment(":" + myMavenProject.getMavenId().getVersion(),
+                           new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
       }
     }
 
@@ -1278,7 +1279,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       int validChildCount = 0;
 
       for (MavenArtifactNode each : children) {
-        if (each.getState() != MavenArtifactState.ADDED && each.getState() != MavenArtifactState.CONFLICT) continue;
+        if (each.getState() != MavenArtifactState.ADDED &&
+            each.getState() != MavenArtifactState.CONFLICT &&
+            each.getState() != MavenArtifactState.DUPLICATE) {
+          continue;
+        }
 
         if (newNodes == null) {
           if (validChildCount < myChildren.size()) {
@@ -1375,7 +1380,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private String getToolTip() {
       final StringBuilder myToolTip = new StringBuilder("");
-      String scope = myArtifact.getScope();
+      String scope = myArtifactNode.getOriginalScope();
 
       if (StringUtil.isNotEmpty(scope) && !MavenConstants.SCOPE_COMPILE.equals(scope)) {
         myToolTip.append(scope).append(" ");
@@ -1386,12 +1391,26 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
           myToolTip.append(" with ").append(myArtifactNode.getRelatedArtifact().getVersion());
         }
       }
-      return myToolTip.toString();
+      if (myArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
+        myToolTip.append("omitted for duplicate");
+      }
+      return myToolTip.toString().trim();
     }
 
     @Override
     protected void doUpdate() {
       setNameAndTooltip(getName(), null, getToolTip());
+    }
+
+    @Override
+    protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
+      final SimpleTextAttributes mergedAttributes;
+      if (myArtifactNode.getState() == MavenArtifactState.CONFLICT || myArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
+        mergedAttributes = SimpleTextAttributes.merge(attributes, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      } else {
+        mergedAttributes = attributes;
+      }
+      super.setNameAndTooltip(name, tooltip, mergedAttributes);
     }
 
     private void updateDependency() {
