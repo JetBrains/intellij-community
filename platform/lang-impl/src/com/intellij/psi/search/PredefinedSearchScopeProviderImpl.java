@@ -101,10 +101,12 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
             result.add(module.getModuleScope());
           }
         }
-        if (dataContextElement.getContainingFile() != null) {
-          result.add(new LocalSearchScope(dataContextElement, IdeBundle.message("scope.current.file")));
-        }
       }
+      PsiElement[] currentFileScope = PsiElement.EMPTY_ARRAY;
+      if (dataContextElement != null && dataContextElement.getContainingFile() != null) {
+        currentFileScope = new PsiElement[]{dataContextElement};
+      }
+      result.add(new LocalSearchScope(currentFileScope, IdeBundle.message("scope.current.file")));
     }
 
     if (currentSelection) {
