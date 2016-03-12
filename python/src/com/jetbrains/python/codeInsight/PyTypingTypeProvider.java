@@ -39,6 +39,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.containers.ContainerUtil.list;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -389,12 +390,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
     
     if (!paramListTypePositions.isEmpty()) {
-      if (!("typing.Callable".equals(qualifiedName) && paramListTypePositions.equals(Collections.singletonList(0)))) {
+      if (!("typing.Callable".equals(qualifiedName) && paramListTypePositions.equals(list(0)))) {
         return null;
       }
     }
     if (!ellipsisTypePositions.isEmpty()) {
-      if (!("typing.Callable".equals(qualifiedName) && ellipsisTypePositions.equals(Collections.singletonList(0)))) {
+      if (!("typing.Callable".equals(qualifiedName) && ellipsisTypePositions.equals(list(0)) ||
+            "typing.Tuple".equals(qualifiedName) && ellipsisTypePositions.equals(list(1)) && elementTypes.size() == 2)) {
         return null;
       }
     }
@@ -415,6 +417,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     if ("typing.Tuple".equals(qualifiedName)) {
+      if (elementTypes.get(1) instanceof PyTypeParser.EllipsisType) {
+        return PyTupleType.createHomogeneous(resolved, elementTypes.get(0));
+      }
       return PyTupleType.create(resolved, elementTypes.toArray(new PyType[elementTypes.size()]));
     }
     final PyType builtinCollection = getBuiltinCollection(resolved);
@@ -533,7 +538,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
               final PyType returnType = getType(returnTypeExpr, context);
               return new PyCallableTypeImpl(parameters, returnType);
             }
-            if (parametersExpr instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)parametersExpr).isEllipsis()) {
+            if (isEllipsis(parametersExpr)) {
               return new PyCallableTypeImpl(null, getType(returnTypeExpr, context));
             }
           }
@@ -541,6 +546,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
+  }
+
+  private static boolean isEllipsis(@NotNull PyExpression parametersExpr) {
+    return parametersExpr instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)parametersExpr).isEllipsis();
   }
 
   @Nullable
@@ -616,6 +625,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         final PyClass cls = ((PyClassType)operandType).getPyClass();
         final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
         if (PyNames.TUPLE.equals(cls.getQualifiedName())) {
+          if (indexExpr instanceof PyTupleExpression) {
+            final PyExpression[] elements = ((PyTupleExpression)indexExpr).getElements();
+            if (elements.length == 2 && isEllipsis(elements[1])) {
+              return PyTupleType.createHomogeneous(element, indexTypes.get(0));
+            }
+          }
           return PyTupleType.create(element, indexTypes.toArray(new PyType[indexTypes.size()]));
         }
         else if (indexExpr != null) {
