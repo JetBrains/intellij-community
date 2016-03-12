@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -140,7 +141,7 @@ public class TypedAction {
     public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
       try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
         CommandProcessor.getInstance().executeCommand(
-          editor.getProject(), () -> {
+          CommonDataKeys.PROJECT.getData(dataContext), () -> {
             if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
               return;
             }
