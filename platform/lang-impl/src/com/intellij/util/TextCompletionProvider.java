@@ -18,15 +18,11 @@ package com.intellij.util;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface TextCompletionProvider {
-  Key<TextCompletionProvider> COMPLETING_TEXT_FIELD_KEY = Key.create("COMPLETING_TEXT_FIELD_KEY");
-
   @Nullable
   String getPrefix(@NotNull String text, int offset);
 
@@ -37,14 +33,4 @@ public interface TextCompletionProvider {
   CharFilter.Result acceptChar(char c);
 
   void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull String prefix, @NotNull CompletionResultSet result);
-
-  @Nullable
-  static TextCompletionProvider getProvider(@NotNull PsiFile file) {
-    TextCompletionProvider provider = file.getUserData(COMPLETING_TEXT_FIELD_KEY);
-
-    if (provider == null || (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(provider))) {
-      return null;
-    }
-    return provider;
-  }
 }

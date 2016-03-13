@@ -85,7 +85,7 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
     final PsiFile psiFile = PsiFileFactory.getInstance(project)
       .createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, text, stamp, true, false);
 
-    psiFile.putUserData(TextCompletionProvider.COMPLETING_TEXT_FIELD_KEY, this);
+    TextCompletionUtil.installProvider(psiFile, this);
 
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     assert document != null;

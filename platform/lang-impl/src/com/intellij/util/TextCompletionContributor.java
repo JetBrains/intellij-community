@@ -31,7 +31,7 @@ public class TextCompletionContributor extends CompletionContributor implements 
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
 
-    TextCompletionProvider provider = TextCompletionProvider.getProvider(file);
+    TextCompletionProvider provider = TextCompletionUtil.getProvider(file);
     if (provider == null) return;
 
     String text = file.getText();
