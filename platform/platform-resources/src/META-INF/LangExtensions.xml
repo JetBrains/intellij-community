@@ -880,7 +880,7 @@
     <completion.contributor language="TEXT" implementationClass="com.intellij.ui.TextFieldWithAutoCompletionContributor"
                             order="first, before commitCompletion"/>
 
-    <completion.contributor language="TEXT" implementationClass="com.intellij.util.CompletionContributorForTextField"
+    <completion.contributor language="TEXT" implementationClass="com.intellij.util.TextCompletionContributor"
                             order="first, before commitCompletion"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.CustomFileTypeCompletionContributor"/>
