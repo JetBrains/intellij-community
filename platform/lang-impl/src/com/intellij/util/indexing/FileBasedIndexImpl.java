@@ -2101,9 +2101,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       // When processing roots concurrently myFiles looses the local order of local vs archive files
       // If we process the roots in 2 threads we can just separate local vs archive
+      // IMPORTANT: also remove duplicated file that can appear due to roots intersection
+      BitSet usedFileIds = new BitSet(files.size());
       List<VirtualFile> localFileSystemFiles = new ArrayList<VirtualFile>(files.size() / 2);
       List<VirtualFile> archiveFiles = new ArrayList<VirtualFile>(files.size() / 2);
+
       for(VirtualFile file:files) {
+        int fileId = ((VirtualFileWithId)file).getId();
+        if (fileId > 0) {
+          if (usedFileIds.get(fileId)) continue;
+          usedFileIds.set(fileId);
+        }
         if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
         else archiveFiles.add(file);
       }
@@ -2408,7 +2416,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                     @Override
                     public void run() {
                       if (project.isDisposed() || module.isDisposed() || !root.isValid()) return;
-                      iterateRecursively(root, processor, indicator, null, projectFileIndex);
+                      iterateRecursively(root, processor, indicator, visitedRoots, projectFileIndex);
                     }
                   });
                 }
