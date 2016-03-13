@@ -139,7 +139,7 @@ public class ScriptGenerator {
     try {
       File file = ExecUtil.createTempExecutableScript(myPrefix, SCRIPT_EXT, content);
       if (SystemInfo.isWindows && file.getPath().contains(" ")) {
-        file = FileUtil.createTempFile(myPrefix, SCRIPT_EXT);
+        file = FileUtil.createTempFile(myPrefix, SCRIPT_EXT, true);
         FileUtil.writeToFile(file, content);
         FileUtil.setExecutableAttribute(file.getPath(), true);
       }
