@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.util.textCompletion;
 
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
