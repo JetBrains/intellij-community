@@ -16,11 +16,14 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +60,7 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
     myShowAutocompletionIsAvailableHint = showAutocompletionIsAvailableHint;
     myProvider = provider;
 
-    TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), project, provider, true);
+    installCompletion(getDocument(), project, provider, true);
   }
 
   public static TextFieldWithAutoCompletion<String> create(final Project project,
@@ -81,7 +84,17 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
   }
 
   public <T> void installProvider(@NotNull TextFieldWithAutoCompletionListProvider<T> provider) {
-    TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), getProject(), provider, true);
+    installCompletion(getDocument(), getProject(), provider, true);
+  }
+
+  public static void installCompletion(@NotNull Document document,
+                                       @NotNull Project project,
+                                       @NotNull TextFieldWithAutoCompletionListProvider provider,
+                                       boolean autoPopup) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile != null) {
+      TextCompletionUtil.installProvider(psiFile, provider, autoPopup);
+    }
   }
 
   @Override

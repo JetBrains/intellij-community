@@ -37,9 +37,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class TextCompletionUtil {
   public static final Key<TextCompletionProvider> COMPLETING_TEXT_FIELD_KEY = Key.create("COMPLETING_TEXT_FIELD_KEY");
+  public static final Key<Boolean> AUTO_POPUP_KEY = Key.create("AUTOPOPUP_TEXT_FIELD_KEY");
 
-  public static void installProvider(@NotNull PsiFile psiFile, @NotNull TextCompletionProvider provider) {
+  public static void installProvider(@NotNull PsiFile psiFile, @NotNull TextCompletionProvider provider, boolean autoPopup) {
     psiFile.putUserData(COMPLETING_TEXT_FIELD_KEY, provider);
+    psiFile.putUserData(AUTO_POPUP_KEY, autoPopup);
   }
 
   @Nullable
@@ -97,7 +99,7 @@ public class TextCompletionUtil {
 
     @Override
     public void customizePsiFile(@NotNull PsiFile file) {
-      installProvider(file, myProvider);
+      installProvider(file, myProvider, myAutoPopup);
       file.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, myAutoPopup);
     }
   }
