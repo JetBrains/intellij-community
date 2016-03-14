@@ -149,23 +149,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     createActionsToolbar();
     TreeUtil.selectFirstNode(myTree);
-
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        myTree.queueUpdate();
-      }
-
-      @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        myTree.queueUpdate();
-      }
-
-      @Override
-      public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        myTree.queueUpdate();
-      }
-    }, this);
   }
 
 
@@ -996,6 +979,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     }
     return false;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   private class CloseAction extends AnAction implements DumbAware {

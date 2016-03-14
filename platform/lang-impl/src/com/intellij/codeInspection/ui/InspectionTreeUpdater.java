@@ -20,6 +20,8 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -47,6 +49,7 @@ public class InspectionTreeUpdater {
     myUpdateQueue.queue(new Update("TreeRepaint") {
       @Override
       public void run() {
+        if (myView.isDisposed()) return;
         final InspectionTree tree = myView.getTree();
         try {
           tree.setQueueUpdate(true);

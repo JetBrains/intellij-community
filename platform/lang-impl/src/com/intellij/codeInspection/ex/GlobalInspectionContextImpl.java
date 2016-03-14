@@ -817,7 +817,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public void refreshViews() {
     if (myView != null) {
-      myView.updateView(false);
+      myView.getTree().queueUpdate();
     }
   }
 
