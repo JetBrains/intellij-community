@@ -16,39 +16,24 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Roman.Chernyatchik
  */
-public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comparator<T> {
+public abstract class TextFieldWithAutoCompletionListProvider<T> extends DefaultTextCompletionValueDescriptor<T> {
   @NotNull protected Collection<T> myVariants;
   @Nullable
   private String myCompletionAdvertisement;
-
-  @Nullable
-  protected abstract Icon getIcon(@NotNull final T item);
-
-  @NotNull
-  protected abstract String getLookupString(@NotNull final T item);
-
-  @Nullable
-  protected abstract String getTailText(@NotNull final T item);
-
-  @Nullable
-  protected abstract String getTypeText(@NotNull final T item);
-
-  @Override
-  public abstract int compare(T item1, T item2);
 
   protected TextFieldWithAutoCompletionListProvider(@Nullable final Collection<T> variants) {
     setItems(variants);
@@ -106,27 +91,6 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
     return new PlainPrefixMatcher(prefix);
   }
 
-  public LookupElementBuilder createLookupBuilder(@NotNull final T item) {
-    LookupElementBuilder builder = LookupElementBuilder.create(item, getLookupString(item))
-      .withIcon(getIcon(item));
-
-    final InsertHandler<LookupElement> handler = createInsertHandler(item);
-    if (handler != null) {
-      builder = builder.withInsertHandler(handler);
-    }
-
-    final String tailText = getTailText(item);
-    if (tailText != null) {
-      builder = builder.withTailText(tailText, true);
-    }
-
-    final String typeText = getTypeText(item);
-    if (typeText != null) {
-      builder = builder.withTypeText(typeText);
-    }
-    return builder;
-  }
-
   @Nullable
   public String getPrefix(@NotNull final CompletionParameters parameters) {
     return getCompletionPrefix(parameters);
@@ -142,11 +106,6 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
 
   @Nullable
   protected String getQuickDocHotKeyAdvertisementTail(@NotNull final String shortcut) {
-    return null;
-  }
-
-  @Nullable
-  protected InsertHandler<LookupElement> createInsertHandler(@NotNull final T item) {
     return null;
   }
 }
