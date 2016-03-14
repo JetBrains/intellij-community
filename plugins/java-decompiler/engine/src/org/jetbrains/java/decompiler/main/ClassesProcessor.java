@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,16 +79,18 @@ public class ClassesProcessor {
                 simpleName = savedName;
               }
               else if (simpleName != null && DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
-                IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getHelper();
-                if (renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
-                  simpleName = renamer.getNextClassName(innerName, simpleName);
+                IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getRenamer();
+                if (renamer.shouldRenameClass(simpleName, innerName)) {
+                  simpleName = renamer.getNextClassName(simpleName, innerName, entry.accessFlags);
                   mapNewSimpleNames.put(innerName, simpleName);
                 }
               }
 
               Inner rec = new Inner();
               rec.simpleName = simpleName;
-              rec.type = entry.outerNameIdx != 0 ? ClassNode.CLASS_MEMBER : entry.simpleNameIdx != 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_ANONYMOUS;
+              rec.type = entry.outerNameIdx != 0
+                         ? ClassNode.CLASS_MEMBER
+                         : entry.simpleNameIdx != 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_ANONYMOUS;
               rec.accessFlags = entry.accessFlags;
 
               // enclosing class
@@ -160,7 +162,8 @@ public class ClassesProcessor {
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
 
               if (inner == null || inner.getEntries().isEmpty()) {
-                DecompilerContext.getLogger().writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);
+                DecompilerContext.getLogger()
+                  .writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);
                 continue;
               }
 
@@ -183,7 +186,7 @@ public class ClassesProcessor {
                 Inner rec = mapInnerClasses.get(nestedClass);
 
                 //if ((Integer)arr[2] == ClassNode.CLASS_MEMBER) {
-                  // FIXME: check for consistent naming
+                // FIXME: check for consistent naming
                 //}
 
                 nestedNode.simpleName = rec.simpleName;

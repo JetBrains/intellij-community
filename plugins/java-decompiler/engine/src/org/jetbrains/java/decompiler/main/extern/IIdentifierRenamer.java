@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,44 @@ package org.jetbrains.java.decompiler.main.extern;
 
 public interface IIdentifierRenamer {
 
-  enum Type {ELEMENT_CLASS, ELEMENT_FIELD, ELEMENT_METHOD}
+  /**
+   * Determines whether or not the specified class should be renamed
+   */
+  boolean shouldRenameClass(String simpleName, String fullName);
 
-  boolean toBeRenamed(Type elementType, String className, String element, String descriptor);
+  /**
+   * Determines whether or not the specified field should be renamed
+   */
+  boolean shouldRenameField(String owner, String name, String descriptor);
 
-  String getNextClassName(String fullName, String shortName);
+  /**
+   * Determines whether or not the specified method should be renamed
+   */
+  boolean shouldRenameMethod(String owner, String name, String descriptor);
 
-  String getNextFieldName(String className, String field, String descriptor);
+  /**
+   * Generates the next simple name for a class
+   * @param simpleName the current full name of the class
+   * @param fullName the current simple name of the class
+   * @return a generated String that is a valid class name
+   */
+  String getNextClassName(String simpleName, String fullName, int accessFlags);
 
-  String getNextMethodName(String className, String method, String descriptor);
+  /**
+   * Generates the next name for a field
+   * @param owner the fields owner
+   * @param name the fields current name
+   * @param descriptor the fields descriptor
+   * @return a generated String that is a valid field name
+   */
+  String getNextFieldName(String owner, String name, String descriptor);
+
+  /**
+   * Generates the next name for a method
+   * @param owner the methods owner
+   * @param name the methods current name
+   * @param descriptor the methods descriptor
+   * @return a generated String that is a valid method name
+   */
+  String getNextMethodName(String owner, String name, String descriptor);
 }

@@ -78,11 +78,13 @@ code leads to a great number of conflicts. Therefore it is advisable to let the 
 ensuring uniqueness of each identifier.
 
 Option 'ren' (i.e. -ren=1) activates renaming functionality. Default renaming strategy goes as follows:
-- rename an element if its name is a reserved word or is shorter than 3 characters
-- new names are built according to a simple pattern: (class|method|field)_<consecutive unique number>  
-You can overwrite this rules by providing your own implementation of the 4 key methods invoked by the decompiler while renaming. Simply 
+- rename a class member element if its name is shorter than 3 characters, is reserved in java as a keyword, or it starts with a digit.
+- rename a class if it meets the criteria for renaming a class member element, its simple name is a reserved word in the windows
+  namespace (case insensitive), or its name is equal to another class's name (case insensitive).
+- new names are built according to a simple pattern: (class|interface|annotation|enum|method|field)_<consecutive unique number>
+You can overwrite these rules by providing your own implementation of the 6 key methods invoked by the decompiler while renaming. Simply
 pass a class that implements org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer in the option 'urc'
 (e.g. -urc=com.mypackage.MyRenamer) to Fernflower. The class must be available on the application classpath.
 
-The meaning of each method should be clear from naming: toBeRenamed determine whether the element will be renamed, while the other three
-provide new names for classes, methods and fields respectively.  
+The meaning of the methods should be clear from their names: shouldRename(Class|Method|Field) determines whether or not a specified element
+should be renamed while getNext(Class|Method|Field)Name provides new names for the elements.
