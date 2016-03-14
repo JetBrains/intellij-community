@@ -44,21 +44,18 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
 
       @Override
       public Element writeScheme(@NotNull CodeStyleSchemeImpl scheme) throws WriteExternalException {
-        Element newElement = new Element("code_scheme");
-        newElement.setAttribute("name", scheme.getName());
-        scheme.writeExternal(newElement);
-        return newElement;
+        return scheme.writeScheme();
       }
 
       @NotNull
       @Override
       public State getState(@NotNull CodeStyleSchemeImpl scheme) {
-        return scheme.isDefault() ? State.NON_PERSISTENT : State.POSSIBLY_CHANGED;
-      }
-
-      @Override
-      public void initScheme(@NotNull CodeStyleSchemeImpl scheme) {
-        scheme.init(mySchemeManager);
+        if (scheme.isDefault()) {
+          return State.NON_PERSISTENT;
+        }
+        else {
+          return scheme.isInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED;
+        }
       }
     });
 

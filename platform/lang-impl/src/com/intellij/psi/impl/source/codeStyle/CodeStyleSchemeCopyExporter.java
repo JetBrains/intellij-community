@@ -45,10 +45,7 @@ public class CodeStyleSchemeCopyExporter extends SchemeExporter<CodeStyleScheme>
   }
 
   private static Element schemeToDom(@NotNull CodeStyleSchemeImpl scheme) throws WriteExternalException {
-    Element newElement = new Element("code_scheme");
-    newElement.setAttribute("name", scheme.getName());
-    scheme.writeExternal(newElement);
-    return newElement;
+    return scheme.writeScheme();
   }
 
   private static void writeToStream(@NotNull OutputStream outputStream, @NotNull Element element) throws IOException {

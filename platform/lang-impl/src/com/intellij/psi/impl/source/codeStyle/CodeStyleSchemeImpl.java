@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -47,13 +46,6 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     init(parentScheme, null);
   }
 
-  void init(@NotNull SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> schemesManager) {
-    LOG.assertTrue(myCodeStyleSettings == null, "Already initialized");
-    init(myParentSchemeName == null ? null : schemesManager.findSchemeByName(myParentSchemeName), myRootElement);
-    myParentSchemeName = null;
-    myRootElement = null;
-  }
-
   private void init(@Nullable CodeStyleScheme parentScheme, Element root) {
     if (parentScheme == null) {
       myCodeStyleSettings = new CodeStyleSettings();
@@ -77,12 +69,23 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
-  public CodeStyleSettings getCodeStyleSettings(){
+  public CodeStyleSettings getCodeStyleSettings() {
+    if (myRootElement != null) {
+      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), myRootElement);
+      myParentSchemeName = null;
+      myRootElement = null;
+    }
     return myCodeStyleSettings;
+  }
+
+  boolean isInitialized() {
+    return myRootElement == null;
   }
 
   public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings){
     myCodeStyleSettings = codeStyleSettings;
+    myParentSchemeName = null;
+    myRootElement = null;
   }
 
   @Override
@@ -90,7 +93,16 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     return myIsDefault;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException{
-    myCodeStyleSettings.writeExternal(element);
+  @NotNull
+  public Element writeScheme() throws WriteExternalException {
+    if (myRootElement == null) {
+      Element newElement = new Element("code_scheme");
+      newElement.setAttribute("name", getName());
+      myCodeStyleSettings.writeExternal(newElement);
+      return newElement;
+    }
+    else {
+      return myRootElement;
+    }
   }
 }
