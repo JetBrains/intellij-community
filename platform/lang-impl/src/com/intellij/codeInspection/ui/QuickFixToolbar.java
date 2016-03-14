@@ -258,6 +258,7 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
       if (icon == null) {
         icon = AllIcons.Actions.CreateFromUsage;
       }
+      button.setEnabled(presentation.isEnabled());
       button.setIcon(IconLoader.getTransparentIcon(icon, 0.75f));
       new ClickListener() {
         @Override

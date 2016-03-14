@@ -486,7 +486,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private JComponent createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
-    if (selectedEntity instanceof RefElement && !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
+    if (selectedEntity instanceof RefElement &&
+        selectedEntity.isValid() &&
+        !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
       PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
       if (problemCount == 1) {
         CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
