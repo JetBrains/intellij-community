@@ -63,10 +63,18 @@ public class HelpManagerImpl extends HelpManager {
 
     if (broker == null) {
       ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
+      String productVersion = info.getMajorVersion() + "." + info.getMinorVersion();
+      String productCode = info.getPackageCode();
+
       String url = info.getWebHelpUrl() + "?";
+      
+      if (PlatformUtils.isJetBrainsProduct()) {
+        url += "utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion + "&";
+      }
+
       if (PlatformUtils.isCLion()) {
         url += "Keyword=" + id;
-        url += "&ProductVersion=" + info.getMajorVersion() + "." + info.getMinorVersion();
+        url += "&ProductVersion=" + productVersion;
         
         if (info.isEAP()) {
           url += "&EAP"; 

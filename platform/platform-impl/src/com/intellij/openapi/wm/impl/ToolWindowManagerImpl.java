@@ -497,7 +497,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         for (int i = beans.size() - 1; i >= 0; i--) {
           indicator.checkCanceled();
           ToolWindowEP bean = beans.remove(i);
-          Condition<Project> condition = ObjectUtils.notNull(bean.getCondition(), Conditions.alwaysTrue());
+          Condition<Project> condition = ObjectUtils.notNull(bean.getCondition(), Conditions.<Project>alwaysTrue());
           if (!myProject.isDisposed() && condition.value(myProject)) {
             checkedSuccessfully.add(bean);
           }
