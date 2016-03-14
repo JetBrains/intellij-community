@@ -469,7 +469,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private static JLabel getNothingToShowTextLabel() {
     final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
     multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
-    multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 14, 0, 0));
+    multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(16, 12, 0, 0));
     return multipleSelectionLabel;
   }
 
