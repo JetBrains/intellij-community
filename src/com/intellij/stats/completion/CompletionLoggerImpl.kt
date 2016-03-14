@@ -1,6 +1,5 @@
 package com.intellij.stats.completion
 
-import com.google.gson.Gson
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import java.util.*
@@ -241,41 +240,9 @@ class LogLineBuilder(val installationUID: String, val completionUID: String, val
     }
 
     fun addText(any: Any) = builder.append(" $any")
-    
+
     fun addPair(name: String, value: Any) = builder.append(" $name=$value")
-    
+
     fun text() = builder.toString()
 
 }
-
-object Serializer {
-    private val gson = Gson()
-    fun toJson(obj: Any) = gson.toJson(obj)
-}
-
-abstract class LogEvent(val userUid: String, val type: Action) {
-    @Transient val recorderId = 0
-    @Transient val timestamp = System.currentTimeMillis()
-    @Transient val sessionUid: String = UUID.randomUUID().toString()
-    @Transient val actionType: Action = type
-    
-    abstract fun serializeEventData(): String
-    
-    fun toLogLine(): String = "$timestamp $recorderId $userUid $sessionUid $actionType ${serializeEventData()}"
-}
-
-
-class CompletionStartedEvent(userId: String,
-                             performExperiment: Boolean, 
-                             experimentVersion: Int, 
-                             list: List<LookupEntryInfo>): LogEvent(userId, Action.COMPLETION_STARTED) {
-
-    var experimentVersion: Int = experimentVersion
-    var performExperiment: Boolean = performExperiment
-    var completionListLength: Int = list.size
-    var completionList: List<LookupEntryInfo> = list
-
-    override fun serializeEventData(): String = Serializer.toJson(this)
-}
-
-class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, Any>)
