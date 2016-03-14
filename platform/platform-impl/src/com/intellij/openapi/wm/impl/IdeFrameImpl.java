@@ -491,6 +491,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     // clear both our and swing hard refs
     if (myRootPane != null) {
+      Disposer.dispose(myRootPane);
       myRootPane = null;
       setRootPane(new JRootPane());
     }
