@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -979,6 +979,11 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-12425
   public void testInstanceFromProvidedCallAttr() {
     doMultiFileTest();
+  }
+
+  // PY-18684
+  public void testRPowSignature() {
+    doTest();
   }
 
   @Override
