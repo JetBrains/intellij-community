@@ -13,8 +13,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.LanguageTextField;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextCompletionUtil;
+import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,19 +81,8 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
     apply(field, "");
   }
 
-  private Document createDocument(final Project project, @NotNull String text) {
-    final FileType fileType = PlainTextLanguage.INSTANCE.getAssociatedFileType();
-    assert fileType != null;
-
-    final long stamp = LocalTimeCounter.currentTime();
-    final PsiFile psiFile = PsiFileFactory.getInstance(project)
-      .createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, text, stamp, true, false);
-
-    TextCompletionUtil.installProvider(psiFile, this, true);
-
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    assert document != null;
-    return document;
+  private Document createDocument(Project project, @NotNull String text) {
+    return LanguageTextField.createDocument(text, PlainTextLanguage.INSTANCE, project, new TextCompletionUtil.DocumentWithCompletionCreator(this, true));
   }
 
   public boolean isCaseInsensitivity() {
