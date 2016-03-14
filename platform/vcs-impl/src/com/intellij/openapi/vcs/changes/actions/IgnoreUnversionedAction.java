@@ -65,6 +65,5 @@ public class IgnoreUnversionedAction extends AnAction {
     }
     boolean enabled = files != null && !files.isEmpty();
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
   }
 }
