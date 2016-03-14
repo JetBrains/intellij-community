@@ -92,9 +92,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
         String productionModuleId = node.getData().getProductionModuleId();
-        if (productionModuleId != null) {
-          modelsProvider.setTestModuleProperties(module, productionModuleId);
-        }
+        modelsProvider.setTestModuleProperties(module, productionModuleId);
         setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
