@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,9 +28,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class ValuesCompletionProvider<T> implements TextCompletionProvider {
-  @NotNull private final TextCompletionValueDescriptor<T> myDescriptor;
+  @NotNull protected final TextCompletionValueDescriptor<T> myDescriptor;
   @NotNull private final List<Character> mySeparators;
-  @NotNull private final Collection<? extends T> myValues;
+  @NotNull protected final Collection<? extends T> myValues;
   private final boolean myCaseSensitive;
 
   public ValuesCompletionProvider(@NotNull TextCompletionValueDescriptor<T> descriptor,
