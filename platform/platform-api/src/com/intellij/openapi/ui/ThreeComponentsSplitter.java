@@ -117,13 +117,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         final FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
 
         if (policy == null) {
-          System.err.println ("Container must have provided a default focus traversal policy: " + container.getClass().getName());
           return container;
         }
 
         final Component defaultComponent = policy.getDefaultComponent(container);
         if (defaultComponent == null) {
-          System.err.println ("Container must have provided a default component: " + container.getClass().getName());
           return container;
         }
         return policy.getDefaultComponent(container);
