@@ -28,6 +28,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -39,6 +40,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -115,7 +117,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final InspectionRVContentProvider myProvider;
   private AnAction myIncludeAction;
   private AnAction myExcludeAction;
-  private Editor myPreviewEditor;
+  private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
 
   private final Object myTreeWriteLock = new Object();
@@ -456,6 +458,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       else {
         releaseEditor(oldEditor);
+        if (oldEditor == myPreviewEditor) {
+          myPreviewEditor = null;
+        }
       }
     }
   }
@@ -497,10 +502,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private boolean reuseEditorFor(Document document) {
-    return myPreviewEditor != null && !myPreviewEditor.isDisposed() && myPreviewEditor.getDocument() == document;
-  }
-
   private JComponent createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
     if (selectedEntity instanceof RefElement && !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
       PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
@@ -521,9 +522,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       if (reuseEditorFor(document)) {
         myPreviewEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, true);
+        myPreviewEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+          myPreviewEditor.getFoldingModel().clearFoldRegions();
+          myPreviewEditor.getMarkupModel().removeAllHighlighters();
+        });
       }
       else {
-        myPreviewEditor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
+        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
+        DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
         settings.setLineNumbersShown(false);
         settings.setLineMarkerAreaShown(false);
@@ -551,6 +557,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       return new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject);
     }
     return new JPanel();
+  }
+
+  private boolean reuseEditorFor(Document document) {
+    return myPreviewEditor != null && !myPreviewEditor.isDisposed() && myPreviewEditor.getDocument() == document;
   }
 
   @NotNull

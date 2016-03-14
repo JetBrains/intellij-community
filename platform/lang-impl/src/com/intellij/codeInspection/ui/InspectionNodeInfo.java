@@ -24,8 +24,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,24 +41,31 @@ import java.awt.event.MouseEvent;
  */
 public class InspectionNodeInfo extends JPanel {
   private final JButton myButton;
-  private final SimpleColoredComponent myTitle;
+  private final JBLabel myEnabledLabel;
   private final HighlightDisplayKey myKey;
   private final InspectionProfileImpl myCurrentProfile;
-  private final String myName;
   private final Project myProject;
 
   public InspectionNodeInfo(final InspectionToolWrapper toolWrapper, Project project) {
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(5, 12, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
     myProject = project;
-    myTitle = new SimpleColoredComponent();
     myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
     myKey = HighlightDisplayKey.find(toolWrapper.getID());
-    myName = toolWrapper.getDisplayName();
     myButton = new JButton();
 
-    add(myTitle,
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
+    JPanel titlePanel = new JPanel();
+    titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.LINE_AXIS));
+    JBLabelDecorator label = JBLabelDecorator.createJBLabelDecorator().setBold(true);
+    label.setText(toolWrapper.getDisplayName() + " inspection");
+    titlePanel.add(label);
+    titlePanel.add(Box.createHorizontalStrut(JBUI.scale(16)));
+    myEnabledLabel = new JBLabel();
+    myEnabledLabel.setForeground(JBColor.GRAY);
+    titlePanel.add(myEnabledLabel);
+
+    add(titlePanel,
+        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new JBInsets(0, 12, 5, 16),
                                0, 0));
 
     JEditorPane description = new JEditorPane();
@@ -65,13 +75,14 @@ public class InspectionNodeInfo extends JPanel {
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     final String toolDescription = toolWrapper.loadDescription();
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
 
-    add(ScrollPaneFactory.createScrollPane(description, true),
+    add(pane,
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 0), 0, 0));
+                               new JBInsets(0, 12, 0, 0), 0, 0));
     add(myButton,
         new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                               new Insets(15, 0, 0, 0), 0, 0));
+                               new JBInsets(15, 9, 9, 0), 0, 0));
     updateEnableButtonText(false);
 
     new ClickListener() {
@@ -98,10 +109,10 @@ public class InspectionNodeInfo extends JPanel {
       isEnabled = !isEnabled;
     }
     myButton.setText((isEnabled ? "Disable" : "Enable") + " inspection");
-    myTitle.clear();
-    myTitle.append(myName + " inspection", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-    if (!isEnabled) {
-      myTitle.append("   Disabled", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    }
+    myButton.revalidate();
+    myButton.repaint();
+    myEnabledLabel.setText(isEnabled ? "Enabled" : "Disabled");
+    myEnabledLabel.revalidate();
+    myEnabledLabel.repaint();
   }
 }

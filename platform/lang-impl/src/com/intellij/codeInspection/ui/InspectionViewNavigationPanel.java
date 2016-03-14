@@ -40,7 +40,7 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
     myNode = node;
     myTree = tree;
     setLayout(new BorderLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(18, 12, 0, 0));
     final String titleLabelText = getTitleText(myNode instanceof InspectionRootNode, true);
     add(new JBLabel(titleLabelText), BorderLayout.NORTH);
     myLinks = new JPanel();
