@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +60,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
   /**
    * Reads as much data as possible without blocking.
    * Relies on InputStream.ready method.
-   * In case of doubts look at #readAvailableBlocking
+   * When in doubt, take a look at {@link #readAvailableBlocking()}.
    *
    * @return true if non-zero amount of data has been read
    * @throws IOException If an I/O error occurs
@@ -98,8 +99,11 @@ public abstract class BaseOutputReader extends BaseDataReader {
       processLine(myInputBuffer, myLineBuffer, n);
 
       if (!myReader.ready()) {
-        if (myLineBuffer.length() > 0) sendLine(myLineBuffer);
-        onBufferExhaustion();
+        TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(true));
+        if (!myReader.ready()) {
+          if (myLineBuffer.length() > 0) sendLine(myLineBuffer);
+          onBufferExhaustion();
+        }
       }
     }
 
