@@ -23,6 +23,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+                        serviceImplementation="com.jetbrains.edu.learning.PyStudyInstructionPainter" overrides="true"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>
@@ -42,6 +44,8 @@
     <action id="StudyWatchTutorial" class="com.jetbrains.edu.learning.actions.PyStudyWatchTutorialAction">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
+    <action class="com.jetbrains.edu.learning.PyStudyCheckAction" id="PyCheckAction"
+            />
   </actions>
 
   <project-components>

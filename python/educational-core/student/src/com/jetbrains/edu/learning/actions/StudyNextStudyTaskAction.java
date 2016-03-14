@@ -27,4 +27,14 @@ public class StudyNextStudyTaskAction extends StudyTaskNavigationAction {
   protected Task getTargetTask(@NotNull final Task sourceTask) {
     return StudyNavigator.nextTask(sourceTask);
   }
+
+  @Override
+  public String getActionId() {
+    return ACTION_ID;
+  }
+
+  @Override
+  public String[] getShortcuts() {
+    return new String[]{SHORTCUT};
+  }
 }

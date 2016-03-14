@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class StudyRefreshTaskFileAction extends DumbAwareAction {
+public class StudyRefreshTaskFileAction extends StudyToolbarAction implements DumbAware {
   public static final String ACTION_ID = "RefreshTaskAction";
   public static final String SHORTCUT = "ctrl shift pressed X";
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
@@ -162,5 +162,15 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
         event.getPresentation().setEnabled(false);
       }
     }
+  }
+
+  @Override
+  public String getActionId() {
+    return ACTION_ID;
+  }
+
+  @Override
+  public String[] getShortcuts() {
+    return new String[]{SHORTCUT};
   }
 }

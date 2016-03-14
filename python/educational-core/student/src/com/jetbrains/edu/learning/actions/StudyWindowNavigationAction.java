@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-abstract public class StudyWindowNavigationAction extends DumbAwareAction {
+abstract public class StudyWindowNavigationAction extends StudyToolbarAction implements DumbAware {
 
   protected StudyWindowNavigationAction(String actionId, String description, Icon icon) {
     super(actionId, description, icon);

@@ -43,10 +43,6 @@
     <action id="Edu.NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" text="New Scratch File...">
       <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="before"/>
     </action>
-
-    <action id="CheckAction" class="com.jetbrains.edu.learning.actions.StudyCheckAction"  text="Check Task"
-            description="Check current task">
-    </action>
     <action id="PrevWindowAction" class="com.jetbrains.edu.learning.actions.StudyPrevWindowAction" text="Previous Answer Placeholder"
             description="Navigate to the previous answer placeholder">
     </action>
@@ -96,7 +92,5 @@
     <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
     <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
-    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
-                        serviceImplementation="com.jetbrains.edu.learning.StudyInstructionPainter" overrides="true"/>
   </extensions>
 </idea-plugin>

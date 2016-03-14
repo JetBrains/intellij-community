@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class StudyShowHintAction extends DumbAwareAction {
+public class StudyShowHintAction extends StudyToolbarAction implements DumbAware {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
   private static final String ourWarningMessage = "Put the caret in the answer placeholder to get hint";
@@ -88,5 +88,15 @@ public class StudyShowHintAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     StudyUtils.updateAction(e);
+  }
+
+  @Override
+  public String getActionId() {
+    return ACTION_ID;
+  }
+
+  @Override
+  public String[] getShortcuts() {
+    return new String[]{SHORTCUT};
   }
 }

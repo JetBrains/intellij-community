@@ -31,4 +31,14 @@ public class StudyPrevWindowAction extends StudyWindowNavigationAction {
     }
     return null;
   }
+
+  @Override
+  public String getActionId() {
+    return ACTION_ID;
+  }
+
+  @Override
+  public String[] getShortcuts() {
+    return new String[]{SHORTCUT};
+  }
 }
