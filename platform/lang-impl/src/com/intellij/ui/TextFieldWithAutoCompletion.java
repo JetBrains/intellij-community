@@ -132,15 +132,5 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
     protected String getLookupString(@NotNull final String item) {
       return item;
     }
-
-    @Override
-    protected String getTailText(@NotNull final String item) {
-      return null;
-    }
-
-    @Override
-    protected String getTypeText(@NotNull final String item) {
-      return null;
-    }
   }
 }
