@@ -430,4 +430,16 @@ public class PyStubsTest extends PyTestCase {
     assertEquals("(str) -> int", annotation);
     assertNotParsed(file);
   }
+
+  // PY-18741
+  public void testParameterTypeComment() {
+    final PyFile file = getTestFile();
+    final PyFunction func = file.findTopLevelFunction("func");
+    assertNotNull(func);
+    final PyParameter[] parameters = func.getParameterList().getParameters();
+    assertSize(2, parameters);
+    final String annotation = parameters[0].getTypeCommentAnnotation();
+    assertEquals("Callable[..., int]", annotation);
+    assertNotParsed(file);
+  }
 }
