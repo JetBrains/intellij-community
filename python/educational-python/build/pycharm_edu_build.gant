@@ -218,7 +218,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   }
 
 
-  String macAppRoot = isEap() ? "PyCharm Edu ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Edu ${p("component.version.major")}.${p("component.version.minor")}.app/Contents"
+  String macAppRoot = isEap() ? "PyCharm Edu ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Edu.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.mac.zip", [paths.distAll], paths.distMac)
 }
 
