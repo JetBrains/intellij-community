@@ -41,42 +41,39 @@ import java.util.Collection;
  * @author Roman Chernyatchik
  */
 public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
-
   public static final TextFieldWithAutoCompletionListProvider EMPTY_COMPLETION = new StringsCompletionProvider(null, null);
-  private final boolean myShowAutocompletionIsAvailableHint;
-  private final TextFieldWithAutoCompletionListProvider<T> myProvider;
+  @NotNull private final TextFieldWithAutoCompletionListProvider<T> myProvider;
+  private final boolean myShowCompletionHint;
 
-  @SuppressWarnings("unchecked")
-  public TextFieldWithAutoCompletion() {
-    this(null, EMPTY_COMPLETION, false, null);
-  }
-
-
-  public TextFieldWithAutoCompletion(final Project project,
-                                     @NotNull final TextFieldWithAutoCompletionListProvider<T> provider,
-                                     final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
+  public TextFieldWithAutoCompletion(@Nullable Project project,
+                                     @NotNull TextFieldWithAutoCompletionListProvider<T> provider,
+                                     boolean showCompletionHint,
+                                     @Nullable String text) {
     super(project == null ? null : PlainTextLanguage.INSTANCE, project, text == null ? "" : text);
 
-    myShowAutocompletionIsAvailableHint = showAutocompletionIsAvailableHint;
+    myShowCompletionHint = showCompletionHint;
     myProvider = provider;
 
-    installCompletion(getDocument(), project, provider, true);
+    if (project != null) {
+      installCompletion(getDocument(), project, provider, true);
+    }
   }
 
-  public static TextFieldWithAutoCompletion<String> create(final Project project,
-                                                           @NotNull final Collection<String> items,
-                                                           final boolean showAutocompletionIsAvailableHint,
-                                                           @Nullable final String text) {
-    return create(project, items, null, showAutocompletionIsAvailableHint, text);
+  @NotNull
+  public static TextFieldWithAutoCompletion<String> create(@Nullable Project project,
+                                                           @NotNull Collection<String> items,
+                                                           boolean showCompletionHint,
+                                                           @Nullable String text) {
+    return create(project, items, null, showCompletionHint, text);
   }
 
-  public static TextFieldWithAutoCompletion<String> create(final Project project,
-                                                           @NotNull final Collection<String> items,
-                                                           @Nullable final Icon icon,
-                                                           final boolean showAutocompletionIsAvailableHint,
-                                                           @Nullable final String text) {
-    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showAutocompletionIsAvailableHint,
-                                                   text);
+  @NotNull
+  public static TextFieldWithAutoCompletion<String> create(@Nullable Project project,
+                                                           @NotNull Collection<String> items,
+                                                           @Nullable Icon icon,
+                                                           boolean showCompletionHint,
+                                                           @Nullable String text) {
+    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showCompletionHint, text);
   }
 
   public void setVariants(@NotNull Collection<T> variants) {
@@ -101,7 +98,7 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
   protected EditorEx createEditor() {
     EditorEx editor = super.createEditor();
 
-    if (myShowAutocompletionIsAvailableHint) {
+    if (myShowCompletionHint) {
       TextCompletionUtil.installCompletionHint(editor);
     }
 
@@ -111,25 +108,24 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
   public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> implements DumbAware {
     @Nullable private final Icon myIcon;
 
-    public StringsCompletionProvider(@Nullable final Collection<String> variants,
-                                     @Nullable final Icon icon) {
+    public StringsCompletionProvider(@Nullable Collection<String> variants, @Nullable Icon icon) {
       super(variants);
       myIcon = icon;
     }
 
     @Override
-    public int compare(final String item1, final String item2) {
+    public int compare(String item1, String item2) {
       return StringUtil.compare(item1, item2, false);
     }
 
     @Override
-    protected Icon getIcon(@NotNull final String item) {
+    protected Icon getIcon(@NotNull String item) {
       return myIcon;
     }
 
     @NotNull
     @Override
-    protected String getLookupString(@NotNull final String item) {
+    protected String getLookupString(@NotNull String item) {
       return item;
     }
   }
