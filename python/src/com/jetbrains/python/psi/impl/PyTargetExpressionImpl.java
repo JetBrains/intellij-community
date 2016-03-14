@@ -317,7 +317,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (iterableType instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)iterableType;
       final List<PyType> memberTypes = new ArrayList<PyType>();
-      for (int i = 0; i < tupleType.getElementCount(); i++) {
+      for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
         memberTypes.add(tupleType.getElementType(i));
       }
       return PyUnionType.union(memberTypes);

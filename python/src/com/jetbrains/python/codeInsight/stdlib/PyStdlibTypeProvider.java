@@ -176,6 +176,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     if (rightExpression instanceof PyNumericLiteralExpression && ((PyNumericLiteralExpression)rightExpression).isIntegerLiteral()) {
+      if (leftTupleType.isHomogeneous()) {
+        return leftTupleType;
+      }
       final int multiplier = ((PyNumericLiteralExpression)rightExpression).getBigIntegerValue().intValue();
       final int originalSize = leftTupleType.getElementCount();
       // Heuristic
@@ -198,6 +201,11 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (addition.getRightExpression() != null) {
       final PyTupleType rightTupleType = as(context.getType(addition.getRightExpression()), PyTupleType.class);
       if (leftTupleType != null && rightTupleType != null) {
+        if (leftTupleType.isHomogeneous() || rightTupleType.isHomogeneous()) {
+          // We may try to find the common type of elements of two homogeneous tuple as an alternative
+          return null;
+        }
+        
         final PyType[] elementTypes = new PyType[leftTupleType.getElementCount() + rightTupleType.getElementCount()];
         for (int i = 0; i < leftTupleType.getElementCount(); i++) {
           elementTypes[i] = leftTupleType.getElementType(i);

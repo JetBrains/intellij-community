@@ -134,16 +134,33 @@ public class PyTypeChecker {
       else if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
         final PyTupleType subTupleType = (PyTupleType)actual;
-        if (superTupleType.getElementCount() != subTupleType.getElementCount()) {
-          return false;
+        if (!superTupleType.isHomogeneous() && !subTupleType.isHomogeneous()) {
+          if (superTupleType.getElementCount() != subTupleType.getElementCount()) {
+            return false;
+          }
+          else {
+            for (int i = 0; i < superTupleType.getElementCount(); i++) {
+              if (!match(superTupleType.getElementType(i), subTupleType.getElementType(i), context, substitutions, recursive)) {
+                return false;
+              }
+            }
+            return true;
+          }
         }
-        else {
-          for (int i = 0; i < superTupleType.getElementCount(); i++) {
-            if (!match(superTupleType.getElementType(i), subTupleType.getElementType(i), context, substitutions, recursive)) {
+        else if (superTupleType.isHomogeneous() && !subTupleType.isHomogeneous()) {
+          final PyType expectedElementType = superTupleType.getElementType(0);
+          for (int i = 0; i < subTupleType.getElementCount(); i++) {
+            if (!match(expectedElementType, subTupleType.getElementType(i), context)) {
               return false;
             }
           }
           return true;
+        }
+        else if (!superTupleType.isHomogeneous() && subTupleType.isHomogeneous()) {
+          return false;
+        }
+        else {
+          return match(superTupleType.getElementType(0), subTupleType.getElementType(0), context);
         }
       }
       else if (matchClasses(superClass, subClass, context)) {
@@ -542,7 +559,7 @@ public class PyTypeChecker {
                                                         @NotNull PyTupleType assignedTupleType) {
     final int count = assignedTupleType.getElementCount();
     final PyExpression[] elements = parentTuple.getElements();
-    if (elements.length == count) {
+    if (elements.length == count || assignedTupleType.isHomogeneous()) {
       final int index = ArrayUtil.indexOf(elements, target);
       if (index >= 0) {
         return assignedTupleType.getElementType(index);
