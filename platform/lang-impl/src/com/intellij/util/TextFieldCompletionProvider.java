@@ -116,12 +116,7 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
 
   @NotNull
   public EditorTextField createEditor(Project project) {
-    return createEditor(project, true);
-  }
-
-  @NotNull
-  public EditorTextField createEditor(Project project, final boolean shouldHaveBorder) {
-    return createEditor(project, shouldHaveBorder, null);
+    return createEditor(project, true, null);
   }
 
   @NotNull
