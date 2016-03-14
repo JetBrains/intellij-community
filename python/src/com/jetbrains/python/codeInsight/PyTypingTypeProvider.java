@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
@@ -92,12 +91,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
-    
-    if (context.maySwitchToAST(param)) {
-      final String comment = getTypeComment(param);
-      if (comment != null) {
-        return Ref.create(getStringBasedType(comment, param, new Context(context)));
-      }
+
+    final String paramComment = param.getTypeCommentAnnotation();
+    if (paramComment != null) {
+      return Ref.create(getStringBasedType(paramComment, param, new Context(context)));
     }
 
     final String comment = func.getTypeCommentAnnotation();
@@ -202,21 +199,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (comment != null) {
         final String text = comment.getText();
         return getTypeCommentValue(text);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String getTypeComment(@NotNull PyParameter parameter) {
-    for (PsiElement next = parameter.getNextSibling(); next != null; next = next.getNextSibling()) {
-      if (next.textContains('\n')) break;
-      if (!(next instanceof PsiWhiteSpace)) {
-        if (",".equals(next.getText())) continue;
-        if (next instanceof PsiComment) {
-          return getTypeCommentValue(next.getText());
-        }
-        break;
       }
     }
     return null;

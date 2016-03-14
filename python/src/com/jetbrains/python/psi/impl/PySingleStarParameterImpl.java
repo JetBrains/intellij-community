@@ -17,12 +17,14 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiComment;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.stubs.PySingleStarParameterStub;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -64,5 +66,17 @@ public class PySingleStarParameterImpl extends PyBaseElementImpl<PySingleStarPar
   @Override
   public ItemPresentation getPresentation() {
     return new PyElementPresentation(this);
+  }
+
+  @Nullable
+  @Override
+  public PsiComment getTypeComment() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getTypeCommentAnnotation() {
+    return null;
   }
 }
