@@ -2755,7 +2755,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String template = "transient @Modifier(\"packageLocal\") '_Type '_Variable = '_Value?;";
 
-    assertEquals("Finding package-local transient fields", 1, findMatchesCount(source, template));
+    assertEquals("Finding package-private transient fields", 1, findMatchesCount(source, template));
   }
 
   public void test() {
