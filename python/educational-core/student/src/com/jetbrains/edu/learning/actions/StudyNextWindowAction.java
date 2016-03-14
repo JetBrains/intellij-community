@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,11 +31,13 @@ public class StudyNextWindowAction extends StudyWindowNavigationAction {
     return null;
   }
 
+  @NotNull
   @Override
   public String getActionId() {
     return ACTION_ID;
   }
 
+  @Nullable
   @Override
   public String[] getShortcuts() {
     return new String[]{SHORTCUT, SHORTCUT2};

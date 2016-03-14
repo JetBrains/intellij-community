@@ -32,11 +32,13 @@ public class StudyPrevWindowAction extends StudyWindowNavigationAction {
     return null;
   }
 
+  @NotNull
   @Override
   public String getActionId() {
     return ACTION_ID;
   }
 
+  @Nullable
   @Override
   public String[] getShortcuts() {
     return new String[]{SHORTCUT};

@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -30,10 +29,11 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class StudyRefreshTaskFileAction extends StudyToolbarAction implements DumbAware {
+public class StudyRefreshTaskFileAction extends StudyToolbarAction {
   public static final String ACTION_ID = "RefreshTaskAction";
   public static final String SHORTCUT = "ctrl shift pressed X";
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
@@ -164,11 +164,13 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction implements Du
     }
   }
 
+  @NotNull
   @Override
   public String getActionId() {
     return ACTION_ID;
   }
 
+  @Nullable
   @Override
   public String[] getShortcuts() {
     return new String[]{SHORTCUT};

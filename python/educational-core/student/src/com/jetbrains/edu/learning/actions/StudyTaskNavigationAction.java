@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -28,7 +27,7 @@ import javax.swing.tree.TreePath;
 import java.util.Map;
 
 
-abstract public class StudyTaskNavigationAction extends StudyToolbarAction implements DumbAware {
+abstract public class StudyTaskNavigationAction extends StudyToolbarAction {
   public StudyTaskNavigationAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }

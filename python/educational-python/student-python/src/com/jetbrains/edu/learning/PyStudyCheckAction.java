@@ -2,22 +2,16 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.actions.StudyRunAction;
-import com.jetbrains.edu.learning.actions.StudyToolbarAction;
 import com.jetbrains.edu.learning.checker.StudyCheckTask;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
@@ -26,39 +20,16 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
-import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Map;
 
-public class PyStudyCheckAction extends StudyToolbarAction {
+public class PyStudyCheckAction extends StudyCheckAction {
   private static final Logger LOG = Logger.getInstance(PyStudyCheckAction.class);
-
   public static final String ACTION_ID = "PyCheckAction";
-  public static final String SHORTCUT = "ctrl alt pressed ENTER";
-
-  protected Ref<Boolean> myCheckInProgress = new Ref<>(false);
-
-  public PyStudyCheckAction() {
-    super("Check Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Check current task", InteractiveLearningIcons.Resolve);
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      return;
-    }
-    if (DumbService.isDumb(project)) {
-      StudyCheckUtils.showTestResultPopUp("Checking is not available while indexing is in progress", MessageType.WARNING.getPopupBackground(), project);
-      return;
-    }
-    check(project);
-  }
-
-  protected void check(@NotNull Project project) {
+  
+  public void check(@NotNull Project project) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> {
         final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
@@ -161,25 +132,10 @@ public class PyStudyCheckAction extends StudyToolbarAction {
     }
     return taskVirtualFile;
   }
-
-
-
+  
+  @NotNull
   @Override
   public String getActionId() {
     return ACTION_ID;
-  }
-
-  @Override
-  public String[] getShortcuts() {
-    return new String[]{SHORTCUT};
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    StudyUtils.updateAction(e);
-    if (presentation.isEnabled()) {
-      presentation.setEnabled(!myCheckInProgress.get());
-    }
   }
 }
