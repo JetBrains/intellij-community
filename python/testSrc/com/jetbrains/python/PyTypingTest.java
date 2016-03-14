@@ -542,6 +542,35 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-18762
+  public void testHomogeneousTupleIterationType() {
+    doTest("int",
+           "from typing import Tuple\n" +
+           "\n" +
+           "xs = unknown() # type: Tuple[int, ...]\n" +
+           "\n" +
+           "for x in xs:\n" +
+           "    expr = x");
+  }
+
+  // PY-18762
+  public void testHomogeneousTupleUnpackingTarget() {
+    doTest("int", 
+           "from typing import Tuple\n" +
+           "\n" +
+           "xs = unknown() # type: Tuple[int, ...]\n" +
+           "expr, yx = xs");
+  }
+
+  // PY-18762
+  public void testHomogeneousTupleMultiplication() {
+    doTest("Tuple[int, ...]",
+           "from typing import Tuple\n" +
+           "\n" +
+           "xs = unknown() # type: Tuple[int, ...]\n" +
+           "expr = xs * 42");
+  }
+
+  // PY-18762
   public void testFunctionTypeCommentHomogeneousTuple() {
     doTest("Tuple[int, ...]",
            "from typing import Tuple\n" +
