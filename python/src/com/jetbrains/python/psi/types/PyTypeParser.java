@@ -409,8 +409,7 @@ public class PyTypeParser {
             return paramResult;
           }
           else if (starCount == 1) {
-            final PyClassType tupleType = PyBuiltinCache.getInstance(anchor).getTupleType();
-            // TODO How to represent unbound homogeneous tuple?
+            final PyClassType tupleType = PyTupleType.createHomogeneous(anchor, type);
             if (tupleType != null) {
               return paramResult.withType(tupleType);
             }
