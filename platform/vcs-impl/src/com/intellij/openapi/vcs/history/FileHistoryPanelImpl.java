@@ -27,8 +27,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -1062,6 +1062,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public MyAnnotateAction() {
       super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"), AllIcons.Actions.Annotate);
       setShortcutSet(ActionManager.getInstance().getAction("Annotate").getShortcutSet());
+    }
+
+    @Nullable
+    @Override
+    protected Editor getEditor(@NotNull AnActionEvent e) {
+      VirtualFile virtualFile = getVirtualFile();
+      if (virtualFile == null) return null;
+
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      if (editor != null) {
+        VirtualFile editorFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+        if (Comparing.equal(editorFile, virtualFile)) return editor;
+      }
+
+      FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(virtualFile);
+      if (fileEditor instanceof TextEditor) {
+        return ((TextEditor)fileEditor).getEditor();
+      }
+      return null;
     }
 
     @Nullable
