@@ -15,9 +15,6 @@
  */
 package com.intellij.util
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.reference.SoftReference
 import com.intellij.util.text.CharSequenceReader
 import org.jdom.Document
@@ -25,6 +22,7 @@ import org.jdom.input.SAXBuilder
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import java.io.CharArrayReader
+import java.io.InputStream
 import java.io.Reader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -44,20 +42,19 @@ private fun getSaxBuilder(): SAXBuilder {
   return saxBuilder
 }
 
-fun loadElement(chars: CharSequence) = loadDocument(CharSequenceReader(chars)).detachRootElement()
+fun loadElement(chars: CharSequence) = loadElement(CharSequenceReader(chars))
+
+fun loadElement(reader: Reader) = loadDocument(reader).detachRootElement()
+
+fun loadElement(stream: InputStream) = loadDocument(stream.reader()).detachRootElement()
 
 fun loadElement(path: Path) = loadDocument(Files.newInputStream(path).bufferedReader()).detachRootElement()
 
 private fun loadDocument(reader: Reader): Document {
-  if (Registry.`is`("jdom.ignoring.whitespace", false) || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
-    try {
-      return getSaxBuilder().build(reader)
-    }
-    finally {
-      reader.close()
-    }
+  try {
+    return getSaxBuilder().build(reader)
   }
-  else {
-    return JDOMUtil.loadDocument(reader)
+  finally {
+    reader.close()
   }
 }

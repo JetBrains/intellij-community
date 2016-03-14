@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ide.updates;
 
 import com.intellij.openapi.updateSettings.impl.UpdatesInfo;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.JdomKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
@@ -31,7 +31,7 @@ public class InfoReader {
   @NotNull
   public static UpdatesInfo read(@NotNull URL url) {
     try (InputStream stream = url.openStream()) {
-      return new UpdatesInfo(JDOMUtil.load(stream));
+      return new UpdatesInfo(JdomKt.loadElement(stream));
     }
     catch (Exception e) {
       throw new RuntimeException(e);

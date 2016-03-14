@@ -42,7 +42,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -50,6 +49,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
+import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.apache.http.client.utils.URIBuilder
@@ -198,9 +198,9 @@ object UpdateChecker {
 
       updateInfo = HttpRequests.request(updateUrl)
           .forceHttps(settings.canUseSecureConnection())
-          .connect { request ->
+          .connect {
             try {
-              UpdatesInfo(JDOMUtil.load(request.reader))
+              UpdatesInfo(loadElement(it.reader))
             }
             catch (e: JDOMException) {
               // corrupted content, don't bother telling user

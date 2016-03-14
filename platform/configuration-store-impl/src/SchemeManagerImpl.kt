@@ -209,7 +209,7 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
         return
       }
 
-      val element = JDOMUtil.load(URLUtil.openStream(url))
+      val element = loadElement(URLUtil.openStream(url))
       val scheme = convertor.convert(element)
       if (scheme is ExternalizableScheme) {
         val fileName = PathUtilRt.getFileName(url.path)
@@ -340,7 +340,7 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
 
   private fun loadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): E? {
     try {
-      val element = JDOMUtil.load(input)
+      val element = loadElement(input)
       @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE", "UNCHECKED_CAST")
       val scheme = processor.readScheme(element, duringLoad) ?: return null
 
