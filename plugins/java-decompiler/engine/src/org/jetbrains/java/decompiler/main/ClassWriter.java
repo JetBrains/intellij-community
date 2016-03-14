@@ -54,7 +54,7 @@ public class ClassWriter {
     interceptor = DecompilerContext.getPoolInterceptor();
   }
 
-  private void invokeProcessors(ClassNode node) {
+  private static void invokeProcessors(ClassNode node) {
     ClassWrapper wrapper = node.getWrapper();
     StructClass cl = wrapper.getClassStruct();
 
