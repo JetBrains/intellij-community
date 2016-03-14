@@ -121,7 +121,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
-    new MyOpenInEditorWithMouseAction().register(getEditors());
+    new MyOpenInEditorWithMouseAction().install(getEditors());
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
 
