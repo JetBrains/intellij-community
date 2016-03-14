@@ -43,14 +43,14 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.*;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ClassWriter {
-  private final ClassReference14Processor ref14processor;
   private final PoolInterceptor interceptor;
 
   public ClassWriter() {
-    ref14processor = new ClassReference14Processor();
     interceptor = DecompilerContext.getPoolInterceptor();
   }
 
@@ -60,8 +60,10 @@ public class ClassWriter {
 
     InitializerProcessor.extractInitializers(wrapper);
 
-    if (node.type == ClassNode.CLASS_ROOT && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_CLASS_1_4)) {
-      ref14processor.processClassReferences(node);
+    if (node.type == ClassNode.CLASS_ROOT &&
+        !cl.isVersionGE_1_5() &&
+        DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_CLASS_1_4)) {
+      ClassReference14Processor.processClassReferences(node);
     }
 
     if (cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM)) {
@@ -273,7 +275,8 @@ public class ClassWriter {
   }
 
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
-    StructLineNumberTableAttribute table = (StructLineNumberTableAttribute)method.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
+    StructLineNumberTableAttribute table =
+      (StructLineNumberTableAttribute)method.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
     tracer.setLineNumberTable(table);
     String key = InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor());
     DecompilerContext.getBytecodeSourceMapper().addTracer(cls.qualifiedName, key, tracer);
@@ -385,7 +388,12 @@ public class ClassWriter {
     buffer.append('{').appendLineSeparator();
   }
 
-  private void fieldToJava(ClassWrapper wrapper, StructClass cl, StructField fd, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
+  private void fieldToJava(ClassWrapper wrapper,
+                           StructClass cl,
+                           StructField fd,
+                           TextBuffer buffer,
+                           int indent,
+                           BytecodeMappingTracer tracer) {
     int start = buffer.length();
     boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
     boolean isDeprecated = fd.getAttributes().containsKey("Deprecated");
@@ -571,7 +579,9 @@ public class ClassWriter {
         changed = true;
         res.append("_");
       }
-      else res.append(c);
+      else {
+        res.append(c);
+      }
     }
     if (!changed) {
       return name;
@@ -661,7 +671,7 @@ public class ClassWriter {
             int actualParams = md.params.length;
             List<VarVersionPair> sigFields = methodWrapper.signatureFields;
             if (sigFields != null) {
-               actualParams = 0;
+              actualParams = 0;
               for (VarVersionPair field : methodWrapper.signatureFields) {
                 if (field == null) {
                   actualParams++;
@@ -670,7 +680,8 @@ public class ClassWriter {
             }
             else if (isEnum && init) actualParams -= 2;
             if (actualParams != descriptor.params.size()) {
-              String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
+              String message =
+                "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
               DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
               descriptor = null;
             }
@@ -732,7 +743,8 @@ public class ClassWriter {
             if (descriptor != null) {
               GenericType parameterType = descriptor.params.get(i);
 
-              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
+              boolean isVarArg =
+                (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
@@ -752,7 +764,8 @@ public class ClassWriter {
             else {
               VarType parameterType = md.params[i];
 
-              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
+              boolean isVarArg =
+                (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
@@ -961,7 +974,8 @@ public class ClassWriter {
   }
 
   private static final String[] PARAMETER_ANNOTATION_ATTRIBUTES = {
-    StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
+    StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS,
+    StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
 
   private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int param) {
 
@@ -981,6 +995,7 @@ public class ClassWriter {
   }
 
   private static final Map<Integer, String> MODIFIERS;
+
   static {
     MODIFIERS = new LinkedHashMap<>();
     MODIFIERS.put(CodeConstants.ACC_PUBLIC, "public");
@@ -1003,8 +1018,15 @@ public class ClassWriter {
     CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE | CodeConstants.ACC_STATIC |
     CodeConstants.ACC_FINAL | CodeConstants.ACC_TRANSIENT | CodeConstants.ACC_VOLATILE;
   private static final int METHOD_ALLOWED =
-    CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE | CodeConstants.ACC_ABSTRACT |
-    CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNCHRONIZED | CodeConstants.ACC_NATIVE | CodeConstants.ACC_STRICT;
+    CodeConstants.ACC_PUBLIC |
+    CodeConstants.ACC_PROTECTED |
+    CodeConstants.ACC_PRIVATE |
+    CodeConstants.ACC_ABSTRACT |
+    CodeConstants.ACC_STATIC |
+    CodeConstants.ACC_FINAL |
+    CodeConstants.ACC_SYNCHRONIZED |
+    CodeConstants.ACC_NATIVE |
+    CodeConstants.ACC_STRICT;
 
   private static final int CLASS_EXCLUDED = CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_STATIC;
   private static final int FIELD_EXCLUDED = CodeConstants.ACC_PUBLIC | CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL;
