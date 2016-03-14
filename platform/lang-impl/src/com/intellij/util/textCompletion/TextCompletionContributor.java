@@ -40,6 +40,11 @@ public class TextCompletionContributor extends CompletionContributor implements 
     TextCompletionProvider provider = TextCompletionUtil.getProvider(file);
     if (provider == null) return;
 
+    if (parameters.getInvocationCount() == 0 &&
+        !Boolean.FALSE.equals(file.getUserData(TextCompletionUtil.AUTO_POPUP_KEY))) {
+      return;
+    }
+
     String advertisement = provider.getAdvertisement();
     if (advertisement != null) {
       result.addLookupAdvertisement(advertisement);
@@ -59,7 +64,7 @@ public class TextCompletionContributor extends CompletionContributor implements 
   public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
     TextCompletionProvider provider = TextCompletionUtil.getProvider(position.getContainingFile());
     if (provider != null) {
-      if (Boolean.TRUE.equals(position.getContainingFile().getUserData(ALWAYS_AUTO_POPUP))) {
+      if (Boolean.TRUE.equals(position.getContainingFile().getUserData(TextCompletionUtil.AUTO_POPUP_KEY))) {
         return Objects.equals(CharFilter.Result.ADD_TO_PREFIX, provider.acceptChar(typeChar));
       }
     }

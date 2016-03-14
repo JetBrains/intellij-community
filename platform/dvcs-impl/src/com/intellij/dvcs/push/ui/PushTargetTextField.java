@@ -30,7 +30,7 @@ import java.util.List;
 
 public class PushTargetTextField extends TextFieldWithCompletion {
   public PushTargetTextField(@NotNull Project project, @NotNull List<String> targetVariants, @NotNull String defaultTargetName) {
-    super(project, getCompletionProvider(targetVariants), defaultTargetName, true, true, true);
+    super(project, getCompletionProvider(targetVariants), defaultTargetName, true, false, true);
     addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {

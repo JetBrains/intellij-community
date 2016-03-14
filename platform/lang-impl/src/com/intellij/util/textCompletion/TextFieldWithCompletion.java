@@ -25,17 +25,27 @@ import com.intellij.ui.LanguageTextField;
 import org.jetbrains.annotations.NotNull;
 
 public class TextFieldWithCompletion extends LanguageTextField {
-  private final boolean myAutoPopup;
+  private final boolean myForceAutoPopup;
   private final boolean myShowHint;
+
+  public TextFieldWithCompletion(@NotNull Project project,
+                                   @NotNull TextCompletionProvider provider,
+                                   @NotNull String value,
+                                   boolean oneLineMode,
+                                   boolean forceAutoPopup,
+                                   boolean showHint) {
+    this(project, provider, value, oneLineMode, true, forceAutoPopup, showHint);
+  }
 
   public TextFieldWithCompletion(@NotNull Project project,
                                  @NotNull TextCompletionProvider provider,
                                  @NotNull String value,
                                  boolean oneLineMode,
                                  boolean autoPopup,
+                                 boolean forceAutoPopup,
                                  boolean showHint) {
     super(PlainTextLanguage.INSTANCE, project, value, new TextCompletionUtil.DocumentWithCompletionCreator(provider, autoPopup), oneLineMode);
-    myAutoPopup = autoPopup;
+    myForceAutoPopup = forceAutoPopup;
     myShowHint = showHint;
   }
 
@@ -44,7 +54,7 @@ public class TextFieldWithCompletion extends LanguageTextField {
     EditorEx editor = super.createEditor();
     EditorCustomization disableSpellChecking = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
     if (disableSpellChecking != null) disableSpellChecking.customize(editor);
-    editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, myAutoPopup);
+    editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, myForceAutoPopup);
 
     if (myShowHint) {
       TextCompletionUtil.installCompletionHint(editor);

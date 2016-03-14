@@ -85,9 +85,6 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
   public void fillCompletionVariants(@NotNull CompletionParameters parameters,
                                      @NotNull String prefix,
                                      @NotNull CompletionResultSet result) {
-    if (parameters.getInvocationCount() == 0 && !parameters.getOriginalFile().getUserData(TextCompletionUtil.AUTO_POPUP_KEY)) {   // is autopopup
-      return;
-    }
     Collection<T> items = getItems(prefix, true, parameters);
     addCompletionElements(result, this, items, -10000);
 

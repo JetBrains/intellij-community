@@ -15,7 +15,6 @@
  */
 package com.intellij.util.textCompletion;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -100,7 +99,6 @@ public class TextCompletionUtil {
     @Override
     public void customizePsiFile(@NotNull PsiFile file) {
       installProvider(file, myProvider, myAutoPopup);
-      file.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, myAutoPopup);
     }
   }
 }
