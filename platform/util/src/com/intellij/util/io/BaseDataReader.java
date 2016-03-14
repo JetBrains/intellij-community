@@ -125,16 +125,21 @@ public abstract class BaseDataReader {
 
   protected void doRun() {
     try {
+      boolean stopSignalled = false;
       while (true) {
-        boolean read = readAvailable();
+        final boolean read = readAvailable();
 
-        if ((!read && isStopped) || mySleepingPolicy == SleepingPolicy.BLOCKING) {
-          // in non-blocking mode, if we have read something on a previous step, we should check
-          // if some additional output is available no matter whether the process is already stopped or not
+        if (stopSignalled || mySleepingPolicy == SleepingPolicy.BLOCKING) {
           break;
         }
 
-        TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
+        stopSignalled = isStopped;
+
+        if (!stopSignalled) {
+          // if process stopped, there is no sense to sleep, 
+          // just check if there is unread output in the stream
+          TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
+        }
       }
     }
     catch (IOException e) {
