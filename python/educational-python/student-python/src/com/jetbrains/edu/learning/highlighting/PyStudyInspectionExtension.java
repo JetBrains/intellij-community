@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.python.inspections.PyInspectionExtension;

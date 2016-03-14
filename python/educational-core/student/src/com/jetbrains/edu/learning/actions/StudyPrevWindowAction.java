@@ -1,6 +1,6 @@
 package com.jetbrains.edu.learning.actions;
 
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.StudyUtils;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;

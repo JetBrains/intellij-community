@@ -16,14 +16,13 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.jetbrains.edu.courseFormat.StudyStatus;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.actions.StudyRunAction;
-import com.jetbrains.edu.learning.actions.StudyToolbarAction;
 import com.jetbrains.edu.learning.checker.StudyCheckTask;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
-import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.checker.StudyTestsOutputParser;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import icons.InteractiveLearningIcons;
@@ -57,7 +56,7 @@ public class PyStudyCheckAction extends StudyToolbarAction {
     }
     check(project);
   }
-  
+
   protected void check(@NotNull Project project) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> {

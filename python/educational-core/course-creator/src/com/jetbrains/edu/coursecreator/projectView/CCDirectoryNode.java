@@ -6,13 +6,13 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import icons.EducationalIcons;
+import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class CCDirectoryNode extends PsiDirectoryNode {
@@ -35,7 +35,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     if (course == null) return;
     if (myProject.getBaseDir().equals(myValue.getVirtualFile())) {
       data.clearText();
-      data.setIcon(EducationalIcons.Course);
+      data.setIcon(InteractiveLearningIcons.Course);
       data.addText(course.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
@@ -43,7 +43,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     final Lesson lesson = course.getLesson(valueName);
     if (lesson != null) {
       data.clearText();
-      data.setIcon(EducationalIcons.Lesson);
+      data.setIcon(InteractiveLearningIcons.Lesson);
       data.addText(lesson.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       return;
     }
@@ -55,7 +55,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
           final Task task = parentLesson.getTask(valueName);
           if (task != null) {
             data.clearText();
-            data.setIcon(EducationalIcons.Task);
+            data.setIcon(InteractiveLearningIcons.Task);
             data.addText(task.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
             return;
           }

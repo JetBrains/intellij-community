@@ -1,6 +1,6 @@
 package com.jetbrains.edu.learning;
 
-import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.learning.core.EduNames;
 import org.jetbrains.annotations.NotNull;
 
 public class PyStudyLanguageManager implements StudyLanguageManager {

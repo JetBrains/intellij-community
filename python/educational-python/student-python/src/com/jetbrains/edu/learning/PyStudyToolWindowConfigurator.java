@@ -2,7 +2,7 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
 
 public class PyStudyToolWindowConfigurator extends StudyBaseToolWindowConfigurator {
