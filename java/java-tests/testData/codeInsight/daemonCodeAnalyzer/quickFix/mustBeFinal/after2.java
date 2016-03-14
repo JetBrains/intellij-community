@@ -1,4 +1,4 @@
-// "Copy 'i' to temp final variable" "true"
+// "Copy 'i' to final temp variable" "true"
 import java.io.*;
 
 class a {
