@@ -16,12 +16,9 @@
 package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 
 public class Wrapper extends JPanel implements NullableComponent {
 
@@ -135,73 +132,6 @@ public class Wrapper extends JPanel implements NullableComponent {
       size.height = Math.max(size.height, myVerticalSizeReferent.getPreferredSize().height);
     }
     return size;
-  }
-
-  public static class FocusHolder extends Wrapper implements FocusListener {
-
-    private Runnable myFocusGainedCallback;
-
-    public FocusHolder() {
-      init();
-    }
-
-    public FocusHolder(final JComponent wrapped) {
-      super(wrapped);
-      init();
-    }
-
-    public FocusHolder(final LayoutManager layout, final JComponent wrapped) {
-      super(layout, wrapped);
-      init();
-    }
-
-    public FocusHolder(final boolean isDoubleBuffered) {
-      super(isDoubleBuffered);
-      init();
-    }
-
-    public FocusHolder(final LayoutManager layout) {
-      super(layout);
-      init();
-    }
-
-    public FocusHolder(final LayoutManager layout, final boolean isDoubleBuffered) {
-      super(layout, isDoubleBuffered);
-      init();
-    }
-
-    private void init() {
-      UIUtil.setFocusProxy(this, true);
-      setFocusable(true);
-      addFocusListener(this);
-    }
-
-    public void requestFocus(Runnable callback) {
-      myFocusGainedCallback = callback;
-      if (isFocusOwner()) {
-        processCallback();    
-      } else {
-        requestFocusInternal();
-      }
-    }
-
-    @Override
-    public void focusGained(final FocusEvent e) {
-      processCallback();
-    }
-
-    private void processCallback() {
-      if (myFocusGainedCallback != null) {
-        Runnable callback = myFocusGainedCallback;
-        myFocusGainedCallback = null;
-        callback.run();
-      }
-    }
-
-    @Override
-    public void focusLost(final FocusEvent e) {
-    }
-
   }
 
   public static class North extends Wrapper {

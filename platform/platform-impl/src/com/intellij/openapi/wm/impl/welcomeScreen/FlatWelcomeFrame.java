@@ -87,7 +87,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       @Override
       public void addNotify() {
         super.addNotify();
-        rootPane.remove(getProxyComponent());
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
