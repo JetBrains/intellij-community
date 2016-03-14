@@ -36,7 +36,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -115,12 +114,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   // separate method needed for tests
   public final void initializeConfigurationTypes(@NotNull final ConfigurationType[] factories) {
-    Arrays.sort(factories, new Comparator<ConfigurationType>() {
-      @Override
-      public int compare(@NotNull final ConfigurationType o1, @NotNull final ConfigurationType o2) {
-        return o1.getDisplayName().compareTo(o2.getDisplayName());
-      }
-    });
+    Arrays.sort(factories, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
 
     final ArrayList<ConfigurationType> types = new ArrayList<ConfigurationType>(Arrays.asList(factories));
     types.add(UnknownConfigurationType.INSTANCE);
@@ -478,42 +472,36 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
     if (myOrder.isEmpty()) {
       // IDEA-63663 Sort run configurations alphabetically if clean checkout
-      Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
-        @Override
-        public int compare(@NotNull Pair<String, RunnerAndConfigurationSettings> o1, @NotNull Pair<String, RunnerAndConfigurationSettings> o2) {
-          boolean temporary1 = o1.getSecond().isTemporary();
-          boolean temporary2 = o2.getSecond().isTemporary();
-          if (temporary1 == temporary2) {
-            return o1.first.compareTo(o2.first);
-          }
-          else {
-            return temporary1 ? 1 : -1;
-          }
+      Collections.sort(order, (o1, o2) -> {
+        boolean temporary1 = o1.getSecond().isTemporary();
+        boolean temporary2 = o2.getSecond().isTemporary();
+        if (temporary1 == temporary2) {
+          return o1.first.compareTo(o2.first);
+        }
+        else {
+          return temporary1 ? 1 : -1;
         }
       });
     }
     else {
-      Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
-        @Override
-        public int compare(@NotNull Pair<String, RunnerAndConfigurationSettings> o1, @NotNull Pair<String, RunnerAndConfigurationSettings> o2) {
-          int i1 = folderNames.indexOf(o1.getSecond().getFolderName());
-          int i2 = folderNames.indexOf(o2.getSecond().getFolderName());
-          if (i1 != i2) {
-            return i1 - i2;
+      Collections.sort(order, (o1, o2) -> {
+        int i1 = folderNames.indexOf(o1.getSecond().getFolderName());
+        int i2 = folderNames.indexOf(o2.getSecond().getFolderName());
+        if (i1 != i2) {
+          return i1 - i2;
+        }
+        boolean temporary1 = o1.getSecond().isTemporary();
+        boolean temporary2 = o2.getSecond().isTemporary();
+        if (temporary1 == temporary2) {
+          int index1 = myOrder.indexOf(o1.first);
+          int index2 = myOrder.indexOf(o2.first);
+          if (index1 == -1 && index2 == -1) {
+            return o1.second.getName().compareTo(o2.second.getName());
           }
-          boolean temporary1 = o1.getSecond().isTemporary();
-          boolean temporary2 = o2.getSecond().isTemporary();
-          if (temporary1 == temporary2) {
-            int index1 = myOrder.indexOf(o1.first);
-            int index2 = myOrder.indexOf(o2.first);
-            if (index1 == -1 && index2 == -1) {
-              return o1.second.getName().compareTo(o2.second.getName());
-            }
-            return index1 - index2;
-          }
-          else {
-            return temporary1 ? 1 : -1;
-          }
+          return index1 - index2;
+        }
+        else {
+          return temporary1 ? 1 : -1;
         }
       });
     }
@@ -693,13 +681,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     List<Element> children = parentNode.getChildren(CONFIGURATION);
     Element[] sortedElements = children.toArray(new Element[children.size()]);
     // ensure templates are loaded first
-    Arrays.sort(sortedElements, new Comparator<Element>() {
-      @Override
-      public int compare(@NotNull Element a, @NotNull Element b) {
-        final boolean aDefault = Boolean.valueOf(a.getAttributeValue("default", "false"));
-        final boolean bDefault = Boolean.valueOf(b.getAttributeValue("default", "false"));
-        return aDefault == bDefault ? 0 : aDefault ? -1 : 1;
-      }
+    Arrays.sort(sortedElements, (a, b) -> {
+      final boolean aDefault = Boolean.valueOf(a.getAttributeValue("default", "false"));
+      final boolean bDefault = Boolean.valueOf(b.getAttributeValue("default", "false"));
+      return aDefault == bDefault ? 0 : aDefault ? -1 : 1;
     });
 
     // element could be detached, so, we must not use for each
@@ -983,12 +968,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @NotNull
   public List<RunnerAndConfigurationSettings> getTempConfigurationsList() {
     List<RunnerAndConfigurationSettings> configurations =
-      ContainerUtil.filter(myConfigurations.values(), new Condition<RunnerAndConfigurationSettings>() {
-      @Override
-      public boolean value(RunnerAndConfigurationSettings settings) {
-        return settings.isTemporary();
-      }
-      });
+      ContainerUtil.filter(myConfigurations.values(), RunnerAndConfigurationSettings::isTemporary);
     return Collections.unmodifiableList(configurations);
   }
 
@@ -1082,42 +1062,39 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     Icon icon = myIdToIcon.get(uniqueID);
     if (icon == null) {
       icon = IconDeferrer.getInstance().deferAutoUpdatable(settings.getConfiguration().getIcon(), myProject.hashCode() ^ settings.hashCode(),
-                                              new Function<Integer, Icon>() {
-                                                @Override
-                                                public Icon fun(Integer param) {
-                                                  if (myProject.isDisposed()) return null;
+                                                           param -> {
+                                                             if (myProject.isDisposed()) return null;
 
-                                                  myIconCalcTime.remove(uniqueID);
-                                                  long startTime = System.currentTimeMillis();
+                                                             myIconCalcTime.remove(uniqueID);
+                                                             long startTime = System.currentTimeMillis();
 
-                                                  Icon icon;
-                                                  if (DumbService.isDumb(myProject) && !Registry.is("dumb.aware.run.configurations")) {
-                                                    icon =
-                                                      IconLoader.getDisabledIcon(ProgramRunnerUtil.getRawIcon(settings));
-                                                    if (settings.isTemporary()) {
-                                                      icon = ProgramRunnerUtil.getTemporaryIcon(icon);
-                                                    }
-                                                  }
-                                                  else {
-                                                    try {
-                                                      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
-                                                      settings.checkSettings();
-                                                      icon = ProgramRunnerUtil.getConfigurationIcon(settings, false);
-                                                    }
-                                                    catch (IndexNotReadyException e) {
-                                                      icon = ProgramRunnerUtil.getConfigurationIcon(settings, !Registry.is("dumb.aware.run.configurations"));
-                                                    }
-                                                    catch (RuntimeConfigurationException ignored) {
-                                                      icon = ProgramRunnerUtil.getConfigurationIcon(settings, true);
-                                                    }
-                                                    finally {
-                                                      DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
-                                                    }
-                                                  }
-                                                  myIconCalcTime.put(uniqueID, System.currentTimeMillis() - startTime);
-                                                  return icon;
-                                                }
-                                              });
+                                                             Icon icon1;
+                                                             if (DumbService.isDumb(myProject) && !Registry.is("dumb.aware.run.configurations")) {
+                                                               icon1 =
+                                                                 IconLoader.getDisabledIcon(ProgramRunnerUtil.getRawIcon(settings));
+                                                               if (settings.isTemporary()) {
+                                                                 icon1 = ProgramRunnerUtil.getTemporaryIcon(icon1);
+                                                               }
+                                                             }
+                                                             else {
+                                                               try {
+                                                                 DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
+                                                                 settings.checkSettings();
+                                                                 icon1 = ProgramRunnerUtil.getConfigurationIcon(settings, false);
+                                                               }
+                                                               catch (IndexNotReadyException e) {
+                                                                 icon1 = ProgramRunnerUtil.getConfigurationIcon(settings, !Registry.is("dumb.aware.run.configurations"));
+                                                               }
+                                                               catch (RuntimeConfigurationException ignored) {
+                                                                 icon1 = ProgramRunnerUtil.getConfigurationIcon(settings, true);
+                                                               }
+                                                               finally {
+                                                                 DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
+                                                               }
+                                                             }
+                                                             myIconCalcTime.put(uniqueID, System.currentTimeMillis() - startTime);
+                                                             return icon1;
+                                                           });
 
       myIdToIcon.put(uniqueID, icon);
       myIconCheckTimes.put(uniqueID, System.currentTimeMillis());
@@ -1245,7 +1222,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         }
       }
     }
-    myConfigurationToBeforeTasksMap.put(runConfiguration, result.isEmpty() ? Collections.<BeforeRunTask>emptyList() : result);
+    myConfigurationToBeforeTasksMap.put(runConfiguration, ContainerUtil.notNullize(result));
     fireBeforeRunTasksUpdated();
   }
 

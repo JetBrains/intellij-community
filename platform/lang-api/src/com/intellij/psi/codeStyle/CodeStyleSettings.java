@@ -524,8 +524,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
     List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(getCustomSettingsValues());
-    
-    Collections.sort(customSettings, (o1, o2) -> o1.getTagName().compareTo(o2.getTagName()));
+    customSettings.sort((o1, o2) -> o1.getTagName().compareTo(o2.getTagName()));
 
     for (final CustomCodeStyleSettings settings : customSettings) {
       final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
