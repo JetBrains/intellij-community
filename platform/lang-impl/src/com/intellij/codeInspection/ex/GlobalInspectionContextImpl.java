@@ -353,6 +353,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
         }
         else if (view != null) {
+          view.update();
           addView(view);
         }
         if (myView != null) {
