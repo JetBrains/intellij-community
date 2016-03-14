@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,11 @@ import java.awt.*;
 public class DarculaInternalBorder implements UIResource, Border {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    g.setColor(Color.ORANGE);
-    g.fillRect(x, y, width, height);
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new InsetsUIResource(20, 3, 3, 3);
+    return new InsetsUIResource(0, 0, 0, 0);
   }
 
   @Override
