@@ -68,13 +68,13 @@ import java.net.URL;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor, Disposable {
   private final BalloonLayout myBalloonLayout;
-  private final WelcomeScreen myScreen;
+  private final ProjectManagerAdapter myListener;
 
   public FlatWelcomeFrame() {
     final JRootPane rootPane = getRootPane();
-    myScreen = createScreen(rootPane);
+    WelcomeScreen screen = createScreen(rootPane);
 
     final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
       @Override
@@ -93,7 +93,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
     setGlassPane(glassPane);
     glassPane.setVisible(false);
     //setUndecorated(true);
-    setContentPane(myScreen.getWelcomePanel());
+    setContentPane(screen.getWelcomePanel());
     setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : 777;
@@ -109,31 +109,27 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
     ));
 
     //setLocation(x, y);
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    myListener = new ProjectManagerAdapter() {
       @Override
       public void projectOpened(Project project) {
-        dispose();
+        Disposer.dispose(FlatWelcomeFrame.this);
       }
-    });
+    };
+    ProjectManager.getInstance().addProjectManagerListener(myListener);
 
     myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
-    myScreen.setupFrame(this);
-    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
-      @Override
-      public void dispose() {
-        FlatWelcomeFrame.this.dispose();
-      }
-    });
+    screen.setupFrame(this);
+    Disposer.register(ApplicationManager.getApplication(), this);
   }
 
   @Override
   public void dispose() {
+    ProjectManager.getInstance().removeProjectManagerListener(myListener);
     saveLocation(getBounds());
     super.dispose();
-    Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
   }
 
@@ -152,6 +148,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
     if (screen == null) {
       screen = new FlatWelcomeScreen();
     }
+    Disposer.register(this, screen);
     return screen;
   }
 
