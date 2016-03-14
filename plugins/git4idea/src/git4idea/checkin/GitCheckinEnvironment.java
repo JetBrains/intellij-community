@@ -45,6 +45,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider;
+import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -622,7 +623,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @NotNull
     private EditorTextField createTextField(@NotNull Project project, @NotNull List<String> list) {
       TextCompletionProvider completionProvider =
-        new ValuesCompletionProvider<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), list);
+        new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), list);
       return new TextFieldWithCompletion(project, completionProvider, "", true, true, true);
     }
 

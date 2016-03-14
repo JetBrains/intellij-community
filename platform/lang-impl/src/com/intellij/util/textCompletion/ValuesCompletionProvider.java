@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,5 +103,19 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
   @NotNull
   protected Collection<? extends T> getValues(@NotNull String prefix, @NotNull CompletionResultSet result) {
     return myValues;
+  }
+
+  public static class ValuesCompletionProviderDumbAware<T> extends ValuesCompletionProvider<T> implements DumbAware {
+    public ValuesCompletionProviderDumbAware(@NotNull TextCompletionValueDescriptor<T> descriptor,
+                                             @NotNull List<Character> separators,
+                                             @NotNull Collection<? extends T> values,
+                                             boolean caseSensitive) {
+      super(descriptor, separators, values, caseSensitive);
+    }
+
+    public ValuesCompletionProviderDumbAware(@NotNull TextCompletionValueDescriptor<T> presentation,
+                                             @NotNull Collection<? extends T> values) {
+      super(presentation, values);
+    }
   }
 }

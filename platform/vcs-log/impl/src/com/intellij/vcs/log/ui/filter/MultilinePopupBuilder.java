@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider;
+import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +108,7 @@ class MultilinePopupBuilder {
     });
   }
 
-  private static class MyCompletionProvider extends ValuesCompletionProvider<String> {
+  private static class MyCompletionProvider extends ValuesCompletionProviderDumbAware<String> {
     MyCompletionProvider(@NotNull Collection<String> values, boolean supportsNegativeValues) {
       super(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(),
             supportsNegativeValues ? ContainerUtil.append(Chars.asList(SEPARATORS), '-') : Chars.asList(SEPARATORS), values, false);

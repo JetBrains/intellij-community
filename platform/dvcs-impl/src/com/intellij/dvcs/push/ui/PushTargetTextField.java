@@ -22,6 +22,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider;
+import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.FocusAdapter;
@@ -30,7 +31,7 @@ import java.util.List;
 
 public class PushTargetTextField extends TextFieldWithCompletion {
   public PushTargetTextField(@NotNull Project project, @NotNull List<String> targetVariants, @NotNull String defaultTargetName) {
-    super(project, getCompletionProvider(targetVariants), defaultTargetName, true, false, true);
+    super(project, getCompletionProvider(targetVariants), defaultTargetName, true, true, true);
     addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -50,7 +51,7 @@ public class PushTargetTextField extends TextFieldWithCompletion {
 
   @NotNull
   private static TextCompletionProvider getCompletionProvider(@NotNull final List<String> targetVariants) {
-    return new ValuesCompletionProvider<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor() {
+    return new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor() {
       @Override
       public int compare(String item1, String item2) {
         return Integer.valueOf(ContainerUtil.indexOf(targetVariants, item1)).compareTo(ContainerUtil.indexOf(targetVariants, item2));
