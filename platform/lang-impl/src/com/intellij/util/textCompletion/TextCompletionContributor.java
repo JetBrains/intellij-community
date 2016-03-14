@@ -40,6 +40,11 @@ public class TextCompletionContributor extends CompletionContributor implements 
     TextCompletionProvider provider = TextCompletionUtil.getProvider(file);
     if (provider == null) return;
 
+    String advertisement = provider.getAdvertisement();
+    if (advertisement != null) {
+      result.addLookupAdvertisement(advertisement);
+    }
+
     String text = file.getText();
     int offset = Math.min(text.length(), parameters.getOffset());
     String prefix = provider.getPrefix(text, offset);

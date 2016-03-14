@@ -16,8 +16,6 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.google.common.primitives.Chars;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -37,6 +35,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -114,12 +113,10 @@ class MultilinePopupBuilder {
             supportsNegativeValues ? ContainerUtil.append(Chars.asList(SEPARATORS), '-') : Chars.asList(SEPARATORS), values, false);
     }
 
+    @Nullable
     @Override
-    public void fillCompletionVariants(@NotNull CompletionParameters parameters,
-                                       @NotNull String prefix,
-                                       @NotNull CompletionResultSet result) {
-      result.addLookupAdvertisement("Select one or more users separated with | or new lines");
-      super.fillCompletionVariants(parameters, prefix, result);
+    public String getAdvertisement() {
+      return "Select one or more values separated with | or new lines";
     }
   }
 }

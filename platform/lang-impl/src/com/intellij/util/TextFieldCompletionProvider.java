@@ -103,6 +103,12 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
     return currentTextPrefix;
   }
 
+  @Nullable
+  @Override
+  public String getAdvertisement() {
+    return null;
+  }
+
   protected abstract void addCompletionVariants(@NotNull String text,
                                                 int offset,
                                                 @NotNull String prefix,

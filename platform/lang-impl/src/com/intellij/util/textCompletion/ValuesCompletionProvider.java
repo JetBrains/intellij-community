@@ -52,6 +52,12 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
 
   @Nullable
   @Override
+  public String getAdvertisement() {
+    return "";
+  }
+
+  @Nullable
+  @Override
   public String getPrefix(@NotNull String text, int offset) {
     return getPrefix(text, offset, mySeparators);
   }

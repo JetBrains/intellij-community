@@ -24,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 public interface TextCompletionProvider {
   @Nullable
+  String getAdvertisement();
+
+  @Nullable
   String getPrefix(@NotNull String text, int offset);
 
   @NotNull
