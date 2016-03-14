@@ -110,7 +110,7 @@ class SimpleRequestService: RequestService() {
             val httpResponse = response.returnResponse()
             return ResponseData(httpResponse.statusLine.statusCode)
         } catch (e: IOException) {
-            LOG.warn(e)
+            LOG.debug(e)
             return null
         }
     }
@@ -124,7 +124,7 @@ class SimpleRequestService: RequestService() {
             }
             return data
         } catch (e: IOException) {
-            LOG.warn(e)
+            LOG.debug(e)
             return null
         }
     }
