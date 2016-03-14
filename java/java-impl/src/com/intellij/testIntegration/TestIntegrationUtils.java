@@ -167,7 +167,8 @@ public class TestIntegrationUtils {
                                            final PsiMethod method,
                                            boolean automatic, final Template template) {
 
-    final TextRange range = method.getTextRange();
+    final int startOffset = method.getModifierList().getTextRange().getStartOffset();
+    final TextRange range = new TextRange(startOffset, method.getTextRange().getEndOffset());
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
     editor.getCaretModel().moveToOffset(range.getStartOffset());
 
