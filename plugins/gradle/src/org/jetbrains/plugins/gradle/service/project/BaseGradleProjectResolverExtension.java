@@ -206,8 +206,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           }
         }
         else {
-          sourceSetData.setProductionModuleId(getInternalModuleName(gradleModule, "main"));
           if ("test".equals(sourceSet.getName())) {
+            sourceSetData.setProductionModuleId(getInternalModuleName(gradleModule, "main"));
             final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
             if (testsArtifacts != null) {
               artifacts.addAll(testsArtifacts);
