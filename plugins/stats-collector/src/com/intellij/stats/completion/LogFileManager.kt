@@ -10,7 +10,6 @@ interface LogFileManager {
     fun println(message: String)
     fun read(): String
     fun renameLogFile(swap: File): Boolean
-    fun <R> withFileLock(block: () -> R): R
     fun dispose()
 }
 
@@ -85,7 +84,7 @@ class LogFileManagerImpl: LogFileManager {
         }
     }
 
-    override fun <R> withFileLock(block: () -> R): R {
+    private fun <R> withFileLock(block: () -> R): R {
         lock.lock()
         try {
             return block()
