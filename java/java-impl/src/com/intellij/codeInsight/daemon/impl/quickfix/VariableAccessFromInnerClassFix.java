@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -70,7 +71,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         message = "make.final.transform.to.one.element.array";
         break;
       case COPY_TO_FINAL:
-        return QuickFixBundle.message("make.final.copy.to.temp", myVariable.getName());
+        return QuickFixBundle.message("make.final.copy.to.temp", myVariable.getName(), (!PsiUtil.isLanguageLevel8OrHigher(myContext) ? "" : "effectively ") + "final");
       default:
         return "";
     }
@@ -197,13 +198,16 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private void copyToFinal() throws IncorrectOperationException {
     PsiManager psiManager = myContext.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final Project project = psiManager.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiExpression initializer = factory.createExpressionFromText(myVariable.getName(), myContext);
-    String newName = suggestNewName(psiManager.getProject(), myVariable);
+    String newName = suggestNewName(project, myVariable);
     PsiType type = myVariable.getType();
     PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
     PsiVariable newVariable = (PsiVariable)copyDecl.getDeclaredElements()[0];
-    PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, true);
+    final boolean mustBeFinal =
+      !PsiUtil.isLanguageLevel8OrHigher(myContext) || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS;
+    PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, mustBeFinal);
     PsiElement statement = getStatementToInsertBefore();
     if (statement == null) return;
     PsiExpression newExpression = factory.createExpressionFromText(newName, myVariable);
