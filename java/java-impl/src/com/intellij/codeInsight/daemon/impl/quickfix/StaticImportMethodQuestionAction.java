@@ -121,7 +121,17 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     }
     final BaseListPopupStep<T> step =
       new BaseListPopupStep<T>(getPopupTitle(), myCandidates) {
+        
+        @Override
+        public boolean isAutoSelectionEnabled() {
+          return false;
+        }
 
+        @Override
+        public boolean isSpeedSearchEnabled() {
+          return true;
+        }
+        
         @Override
         public PopupStep onChosen(T selectedValue, boolean finalChoice) {
           if (selectedValue == null) {
