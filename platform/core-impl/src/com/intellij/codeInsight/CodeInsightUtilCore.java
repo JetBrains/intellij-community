@@ -33,10 +33,19 @@ import java.util.List;
 
 public abstract class CodeInsightUtilCore extends FileModificationService {
   public static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
+                                                            int startOffset,
+                                                            int endOffset,
+                                                            @NotNull Class<T> klass,
+                                                            @NotNull Language language) {
+    return findElementInRange(file, startOffset, endOffset, klass, language, null);
+  }
+
+  private static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
                                                              int startOffset,
                                                              int endOffset,
                                                              @NotNull Class<T> klass,
-                                                             @NotNull Language language) {
+                                                             @NotNull Language language,
+                                                             @Nullable PsiElement initialElement) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
     if (element1 instanceof PsiWhiteSpace) {
@@ -52,6 +61,11 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     final T element =
       ReflectionUtil.isAssignable(klass, commonParent.getClass())
       ? (T)commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
+
+    if (element == initialElement) {
+      return element;
+    }
+    
     if (element == null || element.getTextRange().getStartOffset() != startOffset || element.getTextRange().getEndOffset() != endOffset) {
       return null;
     }
@@ -75,7 +89,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
 
     T elementInRange = findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
                                           (Class<? extends T>)element.getClass(),
-                                          language);
+                                          language, element);
     rangeMarker.dispose();
     return elementInRange;
   }
