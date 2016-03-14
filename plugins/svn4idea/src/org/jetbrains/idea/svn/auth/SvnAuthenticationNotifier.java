@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.auth;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -65,7 +66,8 @@ import java.io.FilenameFilter;
 import java.net.*;
 import java.util.*;
 import java.util.List;
-import java.util.Timer;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationNotifier.class);
@@ -76,7 +78,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final Map<SVNURL, Boolean> myCopiesPassiveResults;
-  private Timer myTimer;
+  private ScheduledFuture<?> myTimer;
   private volatile boolean myVerificationInProgress;
 
   public SvnAuthenticationNotifier(final SvnVcs svnVcs) {
@@ -91,18 +93,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     if (myTimer != null) {
       stop();
     }
-    myTimer = new Timer("SVN authentication timer");
+    myTimer =
     // every 10 minutes
-    myTimer.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        myCopiesPassiveResults.clear();
-      }
-    }, 10000, 10 * 60 * 1000);
+    JobScheduler.getScheduler().scheduleWithFixedDelay(myCopiesPassiveResults::clear, 10, 10 * 60, TimeUnit.SECONDS);
   }
 
   public void stop() {
-    myTimer.cancel();
+    myTimer.cancel(false);
     myTimer = null;
   }
 
