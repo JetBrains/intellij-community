@@ -451,7 +451,7 @@ public class PyTypingTest extends PyTestCase {
   
   // PY-18254
   public void testFunctionTypeComment() {
-    doTest("(x: int, args: tuple, kwargs: Dict[str, str]) -> List[bool]",
+    doTest("(x: int, args: Tuple[float, ...], kwargs: Dict[str, str]) -> List[bool]",
            "from typing import List\n" +
            "\n" +
            "def f(x, *args, **kwargs):\n" +
