@@ -19,12 +19,12 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -136,7 +136,7 @@ public class FileManagerImpl implements FileManager {
     myVFileToViewProviderMap.clear();
     for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
       VirtualFile vFile = iterator.next();
-      Language language = getLanguage(vFile, vFile.getFileType());
+      Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), vFile);
       if (language != null && language != fileToPsiFileMap.get(vFile).getBaseLanguage()) {
         iterator.remove();
       }
@@ -274,23 +274,13 @@ public class FileManagerImpl implements FileManager {
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean eventSystemEnabled) {
     FileType fileType = file.getFileType();
-    Language language = getLanguage(file, fileType);
+    Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), file);
     FileViewProviderFactory factory = language == null
                                       ? FileTypeFileViewProviders.INSTANCE.forFileType(fileType)
                                       : LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory == null ? null : factory.createFileViewProvider(file, language, myManager, eventSystemEnabled);
 
     return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled, fileType) : viewProvider;
-  }
-
-  @Nullable
-  private Language getLanguage(@NotNull VirtualFile file, final FileType fileType) {
-    if (fileType instanceof LanguageFileType) {
-      Language language = ((LanguageFileType)fileType).getLanguage();
-      return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, myManager.getProject());
-    }
-
-    return null;
   }
 
   public void markInitialized() {
