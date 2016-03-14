@@ -368,7 +368,7 @@ public class ExprProcessor implements CodeConstants {
           }
           else if (cn instanceof LinkConstant) {
             //TODO: for now treat Links as Strings
-            pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_STRING, ((LinkConstant)cn).elementname , bytecode_offsets));
+            pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_STRING, ((LinkConstant)cn).elementname, bytecode_offsets));
           }
           break;
         case opc_iload:
@@ -422,7 +422,8 @@ public class ExprProcessor implements CodeConstants {
           Exprent index_store = stack.pop();
           Exprent arr_store = stack.pop();
           AssignmentExprent arrassign =
-            new AssignmentExprent(new ArrayExprent(arr_store, index_store, arrtypes[instr.opcode - opc_iastore], bytecode_offsets), value, bytecode_offsets);
+            new AssignmentExprent(new ArrayExprent(arr_store, index_store, arrtypes[instr.opcode - opc_iastore], bytecode_offsets), value,
+                                  bytecode_offsets);
           exprlist.add(arrassign);
           break;
         case opc_iadd:
@@ -523,7 +524,7 @@ public class ExprProcessor implements CodeConstants {
         case opc_tableswitch:
         case opc_lookupswitch:
           exprlist.add(new SwitchExprent(stack.pop(), bytecode_offsets));
-        break;
+          break;
         case opc_ireturn:
         case opc_lreturn:
         case opc_freturn:
@@ -538,7 +539,7 @@ public class ExprProcessor implements CodeConstants {
                                        : ((MethodDescriptor)DecompilerContext
                                          .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret,
                                        bytecode_offsets));
-        break;
+          break;
         case opc_monitorenter:
         case opc_monitorexit:
           exprlist.add(new MonitorExprent(func8[instr.opcode - opc_monitorenter], stack.pop(), bytecode_offsets));
@@ -552,13 +553,15 @@ public class ExprProcessor implements CodeConstants {
         case opc_getstatic:
         case opc_getfield:
           pushEx(stack, exprlist,
-                 new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_getstatic ? null : stack.pop(), bytecode_offsets));
+                 new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_getstatic ? null : stack.pop(),
+                                  bytecode_offsets));
           break;
         case opc_putstatic:
         case opc_putfield:
           Exprent valfield = stack.pop();
           Exprent exprfield =
-            new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_putstatic ? null : stack.pop(), bytecode_offsets);
+            new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_putstatic ? null : stack.pop(),
+                             bytecode_offsets);
           exprlist.add(new AssignmentExprent(exprfield, valfield, bytecode_offsets));
           break;
         case opc_invokevirtual:
@@ -755,7 +758,7 @@ public class ExprProcessor implements CodeConstants {
     return prlst;
   }
 
-  public static boolean endsWithSemikolon(Exprent expr) {
+  public static boolean endsWithSemicolon(Exprent expr) {
     int type = expr.type;
     return !(type == Exprent.EXPRENT_SWITCH ||
              type == Exprent.EXPRENT_MONITOR ||
@@ -768,7 +771,8 @@ public class ExprProcessor implements CodeConstants {
     if (stat instanceof BasicBlockStatement) {
       BasicBlock block = ((BasicBlockStatement)stat).getBlock();
       List<Integer> offsets = block.getInstrOldOffsets();
-      if (!offsets.isEmpty() && offsets.size() > block.getSeq().length()) { // some instructions have been deleted, but we still have offsets
+      if (!offsets.isEmpty() &&
+          offsets.size() > block.getSeq().length()) { // some instructions have been deleted, but we still have offsets
         tracer.addMapping(offsets.get(offsets.size() - 1)); // add the last offset
       }
     }
@@ -840,7 +844,7 @@ public class ExprProcessor implements CodeConstants {
         if (expr.type == Exprent.EXPRENT_MONITOR && ((MonitorExprent)expr).getMonType() == MonitorExprent.MONITOR_ENTER) {
           buf.append("{}"); // empty synchronized block
         }
-        if (endsWithSemikolon(expr)) {
+        if (endsWithSemicolon(expr)) {
           buf.append(";");
         }
         buf.appendLineSeparator();
