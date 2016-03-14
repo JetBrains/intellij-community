@@ -122,5 +122,6 @@
     <orderEntry type="module" module-name="analytics" />
     <orderEntry type="module" module-name="android-ndk" />
     <orderEntry type="module" module-name="games" />
+    <orderEntry type="module" module-name="firebase" />
   </component>
 </module>
