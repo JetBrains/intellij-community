@@ -102,10 +102,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   private void readFromFile(boolean showError) {
     try {
-      IpnbFile file = IpnbParser.parseIpnbFile(myDocument, myVirtualFile);
-      if (file.equals(myIpnbFile)) return;
       removeAll();
-      myIpnbFile = file;
+      myIpnbFile = IpnbParser.parseIpnbFile(myDocument, myVirtualFile);
       myIpnbPanels.clear();
       mySelectedCell = null;
       if (myIpnbFile.getCells().isEmpty()) {
