@@ -61,7 +61,7 @@ class MultilinePopupBuilder {
                                                  boolean supportsNegativeValues,
                                                  @NotNull String initialValue) {
     TextFieldWithCompletion textField =
-      new TextFieldWithCompletion(project, new MyCompletionProvider(values, supportsNegativeValues), initialValue, false, true) {
+      new TextFieldWithCompletion(project, new MyCompletionProvider(values, supportsNegativeValues), initialValue, false, true, false) {
         @Override
         protected EditorEx createEditor() {
           EditorEx editor = super.createEditor();

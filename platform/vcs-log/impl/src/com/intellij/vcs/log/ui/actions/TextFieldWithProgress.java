@@ -36,7 +36,7 @@ public abstract class TextFieldWithProgress extends JPanel {
     setBorder(IdeBorderFactory.createEmptyBorder(3));
 
     myProgressIcon = new AsyncProcessIcon("Loading commits");
-    myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true) {
+    myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true, false) {
       @Override
       public void setBackground(Color bg) {
         super.setBackground(bg);

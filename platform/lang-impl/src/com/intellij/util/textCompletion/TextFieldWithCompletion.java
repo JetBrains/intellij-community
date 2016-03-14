@@ -26,14 +26,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class TextFieldWithCompletion extends LanguageTextField {
   private final boolean myAutoPopup;
+  private final boolean myShowHint;
 
   public TextFieldWithCompletion(@NotNull Project project,
                                  @NotNull TextCompletionProvider provider,
                                  @NotNull String value,
                                  boolean oneLineMode,
-                                 boolean autoPopup) {
+                                 boolean autoPopup,
+                                 boolean showHint) {
     super(PlainTextLanguage.INSTANCE, project, value, new TextCompletionUtil.DocumentWithCompletionCreator(provider), oneLineMode);
     myAutoPopup = autoPopup;
+    myShowHint = showHint;
   }
 
   @Override
@@ -42,6 +45,11 @@ public class TextFieldWithCompletion extends LanguageTextField {
     EditorCustomization disableSpellChecking = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
     if (disableSpellChecking != null) disableSpellChecking.customize(editor);
     editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, myAutoPopup);
+
+    if (myShowHint) {
+      TextCompletionUtil.installCompletionHint(editor);
+    }
+
     return editor;
   }
 }
