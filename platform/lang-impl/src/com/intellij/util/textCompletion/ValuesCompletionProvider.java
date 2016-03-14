@@ -19,12 +19,12 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class ValuesCompletionProvider<T> implements TextCompletionProvider {
@@ -40,6 +40,14 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
     mySeparators = separators;
     myValues = values;
     myCaseSensitive = caseSensitive;
+  }
+
+  /*
+  Single-line single-value case-insensitive completion.
+   */
+  public ValuesCompletionProvider(@NotNull TextCompletionValueDescriptor<T> presentation,
+                                  @NotNull Collection<? extends T> values) {
+    this(presentation, Collections.emptyList(), values, false);
   }
 
   @Nullable

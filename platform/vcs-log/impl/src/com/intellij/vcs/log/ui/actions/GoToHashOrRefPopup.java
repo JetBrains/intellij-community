@@ -163,7 +163,7 @@ public class GoToHashOrRefPopup {
                                     @NotNull Collection<VirtualFile> roots,
                                     @NotNull VcsLogColorManager colorManager,
                                     @NotNull Comparator<VcsRef> comparator) {
-      super(new VcsRefDescriptor(project, colorManager, comparator, roots), Collections.emptyList(), variants, false);
+      super(new VcsRefDescriptor(project, colorManager, comparator, roots), variants);
     }
 
     @NotNull
