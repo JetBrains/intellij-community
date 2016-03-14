@@ -344,7 +344,7 @@ public class JavaFxPsiUtil {
     if (descriptor != null) {
       final PsiElement declaration = descriptor.getDeclaration();
       if (declaration instanceof PsiClass) {
-        return !collectProperties((PsiClass)declaration).containsKey(attributeName);
+        return !collectWritableProperties((PsiClass)declaration).containsKey(attributeName);
       }
     }
     return false;
@@ -719,7 +719,7 @@ public class JavaFxPsiUtil {
   }
 
   @NotNull
-  public static Map<String, PsiMember> collectProperties(@Nullable PsiClass psiClass) {
+  public static Map<String, PsiMember> collectWritableProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () ->
         CachedValueProvider.Result.create(prepareWritableProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
@@ -785,21 +785,13 @@ public class JavaFxPsiUtil {
 
   @Nullable
   private static String getPropertyNameFromNamedArgAnnotation(@NotNull PsiParameter parameter) {
-    final PsiModifierList modifierList = parameter.getModifierList();
-    if (modifierList == null) return null;
-    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      if (JavaFxCommonNames.JAVAFX_BEANS_NAMED_ARG.equals(annotation.getQualifiedName())) {
-        for (PsiNameValuePair pair : annotation.getParameterList().getAttributes()) {
-          final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
-          if (nameIdentifier == null || JavaFxCommonNames.VALUE.equals(nameIdentifier.getText())) {
-            final PsiAnnotationMemberValue psiValue = pair.getValue();
-            if (psiValue instanceof PsiLiteralExpression) {
-              final Object value = ((PsiLiteralExpression)psiValue).getValue();
-              if (value instanceof String) {
-                return (String)value;
-              }
-            }
-          }
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameter, JavaFxCommonNames.JAVAFX_BEANS_NAMED_ARG);
+    if (annotation != null) {
+      final PsiAnnotationMemberValue psiValue = annotation.findAttributeValue(JavaFxCommonNames.VALUE);
+      if (psiValue instanceof PsiLiteralExpression) {
+        final Object value = ((PsiLiteralExpression)psiValue).getValue();
+        if (value instanceof String) {
+          return (String)value;
         }
       }
     }

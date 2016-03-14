@@ -61,17 +61,14 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     if (context != null) {
       if (myPsiClass != null) {
         final List<XmlElementDescriptor> children = new ArrayList<XmlElementDescriptor>();
-        collectProperties(children, new Function<PsiMember, XmlElementDescriptor>() {
-          @Override
-          public XmlElementDescriptor fun(PsiMember member) {
-            return new JavaFxPropertyElementDescriptor(myPsiClass, member instanceof PsiMethod ? PropertyUtil.getPropertyName(member) : member.getName(), false);
-          }
-        });
+        collectWritableProperties(children,
+                                  (member) -> new JavaFxPropertyElementDescriptor(myPsiClass, PropertyUtil.getPropertyName(member), false));
 
         final JavaFxPropertyElementDescriptor defaultPropertyDescriptor = getDefaultPropertyDescriptor();
         if (defaultPropertyDescriptor != null) {
           Collections.addAll(children, defaultPropertyDescriptor.getElementsDescriptors(context));
-        } else {
+        }
+        else {
           for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
             children.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
           }
@@ -179,7 +176,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     if (myPsiClass != null) {
       if (!FxmlConstants.FX_DEFINE.equals(parentTagName)) {
         if (FxmlConstants.FX_ROOT.equals(parentTagName)) {
-          final Map<String, PsiMember> properties = JavaFxPsiUtil.collectProperties(myPsiClass);
+          final Map<String, PsiMember> properties = JavaFxPsiUtil.collectWritableProperties(myPsiClass);
           if (properties.get(name) != null) {
             return new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
           }
@@ -194,7 +191,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
               }
             }
           }
-          final Map<String, PsiMember> properties = JavaFxPsiUtil.collectProperties(myPsiClass);
+          final Map<String, PsiMember> properties = JavaFxPsiUtil.collectWritableProperties(myPsiClass);
           if (properties.get(name) != null) {
             return new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
           }
@@ -225,16 +222,12 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   }
 
   protected void collectInstanceProperties(List<XmlAttributeDescriptor> simpleAttrs) {
-    collectProperties(simpleAttrs, new Function<PsiMember, XmlAttributeDescriptor>() {
-      @Override
-      public XmlAttributeDescriptor fun(PsiMember member) {
-        return new JavaFxPropertyAttributeDescriptor(member instanceof PsiMethod ? PropertyUtil.getPropertyName(member) : member.getName(), myPsiClass);
-      }
-    });
+    collectWritableProperties(simpleAttrs,
+                              (member) -> new JavaFxPropertyAttributeDescriptor(PropertyUtil.getPropertyName(member), myPsiClass));
   }
 
-  private <T> void collectProperties(final List<T> children, final Function<PsiMember, T> factory) {
-    final Map<String, PsiMember> fieldList = JavaFxPsiUtil.collectProperties(myPsiClass);
+  private <T> void collectWritableProperties(final List<T> children, final Function<PsiMember, T> factory) {
+    final Map<String, PsiMember> fieldList = JavaFxPsiUtil.collectWritableProperties(myPsiClass);
     for (PsiMember field : fieldList.values()) {
       children.add(factory.fun(field));
     }
@@ -251,7 +244,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     if (propertySetter != null) {
       return new JavaFxStaticSetterAttributeDescriptor(propertySetter, attributeName);
     }
-    final PsiMember psiMember = JavaFxPsiUtil.collectProperties(myPsiClass).get(attributeName);
+    final PsiMember psiMember = JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(attributeName);
     if (psiMember != null) {
       return new JavaFxPropertyAttributeDescriptor(attributeName, myPsiClass);
     }
