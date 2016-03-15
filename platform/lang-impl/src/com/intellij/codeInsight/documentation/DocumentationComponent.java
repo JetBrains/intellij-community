@@ -756,21 +756,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
 
       final PsiElement element = myElement.getElement();
-      final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
       final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-      if (!(provider instanceof CompositeDocumentationProvider &&
-            ((CompositeDocumentationProvider)provider).handleExternal(element, originalElement))) {
-        List<String> urls;
-        if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl)) {
-          urls = Collections.singletonList(myEffectiveExternalUrl);
-        }
-        else {
-          urls = provider.getUrlFor(element, originalElement);
-          assert urls != null : provider;
-          assert !urls.isEmpty() : provider;
-        }
-        ExternalJavaDocAction.showExternalJavadoc(urls, PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()));
-      }
+      
+      ExternalJavaDocAction.showExternalJavadoc(element, originalElement, myEffectiveExternalUrl, e.getDataContext());
     }
 
     @Override
