@@ -429,17 +429,22 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       if (oldEditor != null) {
         EditorFactory.getInstance().releaseEditor(oldEditor);
       }
+      final Boolean[] isViewer = new Boolean[1];
       ((EditorEx) editor).addFocusListener(new FocusChangeListener() {
         @Override
         public void focusGained(final Editor editor) {
           mySelectedEditor = editor;
           final EditorEx editorEx = (EditorEx)editor;
-          editorEx.setViewer(ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(propertiesFile.getVirtualFile()).hasReadonlyFiles());
+          if (isViewer[0] == null) {
+            final boolean readOnly = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(propertiesFile.getVirtualFile()).hasReadonlyFiles();
+            editorEx.setViewer(readOnly);
+            isViewer[0] = readOnly;
+          }
         }
 
         @Override
         public void focusLost(final Editor eventEditor) {
-          if (propertiesFile.getContainingFile().isValid()) {
+          if (Boolean.FALSE.equals(isViewer[0]) && propertiesFile.getContainingFile().isValid()) {
             writeEditorPropertyValue(null, editor, propertiesFile);
           }
         }
