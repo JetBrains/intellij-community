@@ -80,7 +80,7 @@ public class ResourceBundleRenameUtil {
 
     @Override
     public boolean checkInput(final String inputString) {
-      return inputString.indexOf('.') < 0;
+      return true;
     }
 
     @Override
