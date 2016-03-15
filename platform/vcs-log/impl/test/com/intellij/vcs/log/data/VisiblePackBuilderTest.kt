@@ -149,8 +149,8 @@ class VisiblePackBuilderTest {
       }.toMap()
 
       val commitDetailsGetter = object : DataGetter<VcsFullCommitDetails> {
-        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails? {
-          return null
+        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails {
+          throw UnsupportedOperationException()
         }
 
         override fun loadCommitsData(hashes: MutableList<Int>, consumer: Consumer<MutableList<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
