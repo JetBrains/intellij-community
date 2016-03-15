@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.completion.scope;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstanceBase;
 import com.intellij.openapi.util.Condition;
@@ -39,8 +37,6 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,7 +66,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private PsiClass myQualifierClass = null;
   private final Condition<String> myMatcher;
   private final Options myOptions;
-  private final Set<PsiField> myNonInitializedFields = new HashSet<>();
   private final boolean myAllowStaticWithInstanceQualifier;
 
   public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<String> nameCondition) {
@@ -115,80 +110,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       myQualifierType = JavaPsiFacade.getElementFactory(element.getProject()).createType(myQualifierClass);
     }
 
-    if (myOptions.checkInitialized) {
-      myNonInitializedFields.addAll(getNonInitializedFields(element));
-    }
-
     myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance ||
                                          SuppressManager.getInstance()
                                            .isSuppressedFor(element, AccessStaticViaInstanceBase.ACCESS_STATIC_VIA_INSTANCE);
 
-  }
-
-  private static boolean isInitializedImplicitly(PsiField field) {
-    field = CompletionUtil.getOriginalOrSelf(field);
-    for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensions()) {
-      if (provider.isImplicitWrite(field)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static Set<PsiField> getNonInitializedFields(PsiElement element) {
-    final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    //noinspection SSBasedInspection
-    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class);
-    if (statement == null || method == null || !method.isConstructor()) {
-      return Collections.emptySet();
-    }
-
-    PsiElement parent = element.getParent();
-    while (parent != statement) {
-      PsiElement next = parent.getParent();
-      if (next instanceof PsiAssignmentExpression && parent == ((PsiAssignmentExpression)next).getLExpression()) {
-        return Collections.emptySet();
-      }
-      if (parent instanceof PsiReferenceExpression && next instanceof PsiExpressionStatement) {
-        return Collections.emptySet();
-      }
-      parent = next;
-    }
-
-    final Set<PsiField> fields = new HashSet<>();
-    final PsiClass containingClass = method.getContainingClass();
-    assert containingClass != null;
-    for (PsiField field : containingClass.getFields()) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() == null && !isInitializedImplicitly(field)) {
-        fields.add(field);
-      }
-    }
-
-    method.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
-          final PsiExpression lExpression = expression.getLExpression();
-          if (lExpression instanceof PsiReferenceExpression) {
-            //noinspection SuspiciousMethodCalls
-            fields.remove(((PsiReferenceExpression)lExpression).resolve());
-          }
-        }
-        super.visitAssignmentExpression(expression);
-      }
-
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
-          final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-          if (methodExpression.textMatches("this")) {
-            fields.clear();
-          }
-        }
-        super.visitMethodCallExpression(expression);
-      }
-    });
-    return fields;
   }
 
   @Override
@@ -208,11 +133,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
 
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-    //noinspection SuspiciousMethodCalls
-    if (myNonInitializedFields.contains(element)) {
-      return true;
-    }
-
     if (element instanceof PsiPackage && !isQualifiedContext()) {
       if (myScope instanceof PsiClass) {
         return true;
@@ -402,31 +322,26 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   public static class Options {
-    public static final Options DEFAULT_OPTIONS = new Options(true, false, true, false);
-    public static final Options CHECK_NOTHING = new Options(false, false, false, false);
+    public static final Options DEFAULT_OPTIONS = new Options(true, true, false);
+    public static final Options CHECK_NOTHING = new Options(false, false, false);
     final boolean checkAccess;
-    final boolean checkInitialized;
     final boolean filterStaticAfterInstance;
     final boolean showInstanceInStaticContext;
 
-    private Options(boolean checkAccess, boolean checkInitialized, boolean filterStaticAfterInstance, boolean showInstanceInStaticContext) {
+    private Options(boolean checkAccess, boolean filterStaticAfterInstance, boolean showInstanceInStaticContext) {
       this.checkAccess = checkAccess;
-      this.checkInitialized = checkInitialized;
       this.filterStaticAfterInstance = filterStaticAfterInstance;
       this.showInstanceInStaticContext = showInstanceInStaticContext;
     }
 
-    public Options withInitialized(boolean checkInitialized) {
-      return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
-    }
     public Options withCheckAccess(boolean checkAccess) {
-      return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
+      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext);
     }
     public Options withFilterStaticAfterInstance(boolean filterStaticAfterInstance) {
-      return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
+      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext);
     }
     public Options withShowInstanceInStaticContext(boolean showInstanceInStaticContext) {
-      return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
+      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext);
     }
   }
   

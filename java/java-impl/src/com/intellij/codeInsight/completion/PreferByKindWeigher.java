@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.Condition;
@@ -76,7 +75,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     super("kind");
     myCompletionType = completionType;
     myPosition = position;
-    myNonInitializedFields = JavaCompletionProcessor.getNonInitializedFields(position);
+    myNonInitializedFields = CheckInitialized.getNonInitializedFields(position);
     myRequiredSuper = createSuitabilityCondition(position);
   }
 

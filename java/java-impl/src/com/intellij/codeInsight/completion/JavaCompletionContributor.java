@@ -62,7 +62,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -102,6 +105,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> CATCH_OR_FINALLY = psiElement().afterLeaf(
     psiElement().withText("}").withParent(
       psiElement(PsiCodeBlock.class).afterLeaf(PsiKeyword.TRY)));
+  private static final ElementPattern<PsiElement> INSIDE_CONSTRUCTOR = psiElement().inside(psiMethod().constructor(true));
 
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
@@ -347,8 +351,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       @Override
       public void consume(final PsiReference reference, final CompletionResultSet result) {
         if (reference instanceof PsiJavaReference) {
-          final ElementFilter filter = getReferenceFilter(position);
+          ElementFilter filter = getReferenceFilter(position);
           if (filter != null) {
+            if (INSIDE_CONSTRUCTOR.accepts(position) &&
+                (parameters.getInvocationCount() <= 1 || CheckInitialized.isInsideConstructorCall(position))) {
+              filter = new AndFilter(filter, new CheckInitialized(position));
+            }
             final PsiFile originalFile = parameters.getOriginalFile();
             JavaCompletionProcessor.Options options =
               JavaCompletionProcessor.Options.DEFAULT_OPTIONS

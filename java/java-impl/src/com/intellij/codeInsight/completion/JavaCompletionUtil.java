@@ -291,10 +291,7 @@ public class JavaCompletionUtil {
     final Set<LookupElement> set = new LinkedHashSet<>();
     final Condition<String> nameCondition = matcher::prefixMatches;
 
-    PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-    boolean checkInitialized = parameters.getInvocationCount() <= 1 && call != null && PsiKeyword.SUPER.equals(call.getMethodExpression().getText());
-
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, options.withInitialized(checkInitialized), nameCondition);
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, options, nameCondition);
     final PsiType plainQualifier = processor.getQualifierType();
     PsiType qualifierType = plainQualifier;
 

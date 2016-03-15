@@ -50,7 +50,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDelegatingConstructorCall() {
-    checkPreferredItems 0, 'element', 'equals'
+    checkPreferredItems 0, 'element'
   }
 
   public void testPreferAnnotationMethods() throws Throwable {
