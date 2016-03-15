@@ -20,15 +20,44 @@ abstract class LogEvent(val userUid: String, val type: Action) {
     fun toLogLine(): String = "$timestamp $recorderId $userUid $sessionUid $actionType ${serializeEventData()}"
 }
 
+class UpPressedEvent(
+        userId: String,
+        var completionListIds: List<Int>,
+        var newCompletionListItems: List<LookupEntryInfo>,
+        var selectedPosition: Int,
+        var selectedId: Int) : LogEvent(userId, Action.UP)
+
+class DownPressedEvent(
+        userId: String,
+        var completionListIds: List<Int>,
+        var newCompletionListItems: List<LookupEntryInfo>,
+        var selectedPosition: Int,
+        var selectedId: Int) : LogEvent(userId, Action.DOWN)
+
+
+class CompletionCancelledEvent(userId: String) : LogEvent(userId, Action.COMPLETION_CANCELED)
+
+class ItemSelectedByTypingEvent(userId: String, var selectedItemId: Int) : LogEvent(userId, Action.TYPED_SELECT)
+
+class ExplicitSelectEvent(userId: String, 
+                          var completionListIds: List<Int>,
+                          var newCompletionListItems: List<LookupEntryInfo>,
+                          var selectedPosition: Int,
+                          var selectedItemId: Int) : LogEvent(userId, Action.EXPLICIT_SELECT)
+
 class BackspaceEvent(
         userId: String,
         var completionListIds: List<Int>,
-        var newCompletionListItems: List<LookupEntryInfo>) : LogEvent(userId, Action.BACKSPACE)
+        var newCompletionListItems: List<LookupEntryInfo>, 
+        var selectedPosition: Int,
+        var selectedId: Int) : LogEvent(userId, Action.BACKSPACE)
 
 class TypeEvent(
         userId: String,
         var completionListIds: List<Int>,
-        var newCompletionListItems: List<LookupEntryInfo>) : LogEvent(userId, Action.TYPE)
+        var newCompletionListItems: List<LookupEntryInfo>,
+        var selectedPosition: Int,
+        var selectedId: Int) : LogEvent(userId, Action.TYPE)
 
 class CompletionStartedEvent(
         userId: String,
