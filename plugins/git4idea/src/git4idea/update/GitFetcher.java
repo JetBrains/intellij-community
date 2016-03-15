@@ -79,13 +79,7 @@ public class GitFetcher {
    */
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
-    GitFetchResult fetchResult = GitFetchResult.success();
-    if (myFetchAll) {
-      fetchResult = fetchAll(repository, fetchResult);
-    }
-    else {
-      fetchResult = fetchCurrentRemote(repository);
-    }
+    GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
     repository.getRepositoryFiles().refresh(false);
     return fetchResult;
   }
@@ -162,7 +156,8 @@ public class GitFetcher {
   }
 
   @NotNull
-  private GitFetchResult fetchAll(@NotNull GitRepository repository, @NotNull GitFetchResult fetchResult) {
+  private static GitFetchResult fetchAll(@NotNull GitRepository repository) {
+    GitFetchResult fetchResult = GitFetchResult.success();
     for (GitRemote remote : repository.getRemotes()) {
       String url = remote.getFirstUrl();
       if (url == null) {
