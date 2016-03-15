@@ -20,9 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,8 +36,6 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -476,21 +472,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
             else {
               s1.down();
               s2.down();
-              final Runnable commitRunnable = new Runnable() {
+              TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, new Runnable() {
                 @Override
                 public void run() {
                   commitAllDocuments();
                   s1.up();
                   s2.waitFor();
                 }
-              };
-              final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-              if (progressIndicator == null) {
-                ApplicationManager.getApplication().invokeLater(commitRunnable);
-              }
-              else {
-                ApplicationManager.getApplication().invokeLater(commitRunnable, progressIndicator.getModalityState());
-              }
+              });
             }
           }
         }
