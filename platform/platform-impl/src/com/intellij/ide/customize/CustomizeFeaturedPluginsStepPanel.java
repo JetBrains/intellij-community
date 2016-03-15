@@ -257,13 +257,17 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       groupPanel.add(buttonWrapper, gbc);
       gridPanel.add(groupPanel);
     }
+    while (gridPanel.getComponentCount() < 4) {
+      gridPanel.add(Box.createVerticalBox());
+    }
     int cursor = 0;
     Component[] components = gridPanel.getComponents();
     int rowCount = components.length / COLS;
     for (Component component : components) {
       ((JComponent)component).setBorder(
-        new CompoundBorder(new CustomLineBorder(ColorUtil.withAlpha(JBColor.foreground(), .2), 0, 0, cursor / 3 < rowCount ? 1 : 0,
-                                                cursor % COLS != COLS - 1 ? 1 : 0) {
+        new CompoundBorder(new CustomLineBorder(ColorUtil.withAlpha(JBColor.foreground(), .2), 0, 0,
+                                                cursor / 3 < rowCount && (!(component instanceof Box)) ? 1 : 0,
+                                                cursor % COLS != COLS - 1 && (!(component instanceof Box)) ? 1 : 0) {
           @Override
           protected Color getColor() {
             return ColorUtil.withAlpha(JBColor.foreground(), .2);
