@@ -86,9 +86,9 @@ fun PrintElementGenerator.asString(size: Int): String {
     val elements = getPrintElements(row).sortedBy {
       val pos = it.getPositionInCurrentRow()
       if (it is SimplePrintElement) {
-        1024 * pos + it.getType().ordinal()
+        1024 * pos + it.getType().ordinal
       } else if (it is EdgePrintElement) {
-        1024 * pos + (it.getType().ordinal() + 1) * 64 + it.getPositionInOtherRow()
+        1024 * pos + (it.getType().ordinal + 1) * 64 + it.getPositionInOtherRow()
       } else 0
     }
     elements.map { it.asString() }.joinTo(s, separator = "\n  ")
