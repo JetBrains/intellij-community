@@ -573,9 +573,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                     @Nullable String debuggerSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
     if (!StringUtil.isEmpty(debuggerSetup)) {
+      final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
       final String[] lines = {
         "gradle.taskGraph.beforeTask { Task task ->",
-        "    if (task instanceof JavaForkOptions) {",
+        "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
         "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib') && !it?.startsWith('-Xrunjdwp')}",
         "        jvmArgs << '" + debuggerSetup.trim() + '\'',
         "        task.jvmArgs jvmArgs",
