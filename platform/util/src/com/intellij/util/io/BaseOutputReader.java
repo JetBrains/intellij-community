@@ -69,9 +69,11 @@ public abstract class BaseOutputReader extends BaseDataReader {
     boolean read = false;
 
     int n;
-    while (myReader.ready() && (n = myReader.read(myInputBuffer)) > 0) {
-      read = true;
-      processLine(myInputBuffer, myLineBuffer, n);
+    while (myReader.ready() && (n = myReader.read(myInputBuffer)) >= 0) {
+      if (n > 0) {
+        read = true;
+        processLine(myInputBuffer, myLineBuffer, n);
+      }
     }
 
     if (myLineBuffer.length() > 0) {
@@ -94,14 +96,17 @@ public abstract class BaseOutputReader extends BaseDataReader {
     boolean read = false;
 
     int n;
-    while ((n = myReader.read(myInputBuffer)) > 0) {
-      read = true;
-      processLine(myInputBuffer, myLineBuffer, n);
-
+    while ((n = myReader.read(myInputBuffer)) >= 0) {
+      if (n > 0) {
+        read = true;
+        processLine(myInputBuffer, myLineBuffer, n);
+      }
       if (!myReader.ready()) {
-        TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(true));
+        TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(n > 0));
         if (!myReader.ready()) {
-          if (myLineBuffer.length() > 0) sendLine(myLineBuffer);
+          if (myLineBuffer.length() > 0) {
+            sendLine(myLineBuffer);
+          }
           onBufferExhaustion();
         }
       }
