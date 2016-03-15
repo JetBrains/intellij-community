@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * User: dcheryasov
  * Date: Jul 5, 2009 8:30:13 PM
  */
-public interface PyParameter extends PyElement, PyTypeCommentOwner {
+public interface PyParameter extends PyElement {
 
   /**
    * @return the named parameter which is represented by this parameter, or null if the parameter is a tuple.

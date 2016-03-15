@@ -17,13 +17,11 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiComment;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a tuple parameter as stubbed element.
@@ -80,17 +78,5 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   @Override
   public ItemPresentation getPresentation() {
     return new PyElementPresentation(this);
-  }
-
-  @Nullable
-  @Override
-  public PsiComment getTypeComment() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public String getTypeCommentAnnotation() {
-    return null;
   }
 }
