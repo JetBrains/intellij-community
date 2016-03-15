@@ -165,6 +165,7 @@ public class GraphTableModel extends AbstractTableModel {
     fireTableDataChanged();
   }
 
+  @NotNull
   public VisiblePack getVisiblePack() {
     return myDataPack;
   }
@@ -180,11 +181,12 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  private <T extends VcsShortCommitDetails> T getDetails(int row, DataGetter<T> dataGetter) {
+  private <T extends VcsShortCommitDetails> T getDetails(int row, @NotNull DataGetter<T> dataGetter) {
     Iterable<Integer> iterable = createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, getRowCount());
     return dataGetter.getCommitData(getIdAtRow(row), iterable);
   }
 
+  @NotNull
   private Iterable<Integer> createRowsIterable(final int row, final int above, final int below, final int maxRows) {
     return new Iterable<Integer>() {
       @NotNull
