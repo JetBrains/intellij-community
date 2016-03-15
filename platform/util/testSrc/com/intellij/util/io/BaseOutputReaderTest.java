@@ -94,7 +94,7 @@ public class BaseOutputReaderTest {
     }
     else {
       assertThat(reader.myLines.size()).isGreaterThanOrEqualTo(TEST_DATA.length);
-      assertThat(StringUtil.join(reader.myLines, "/")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), "/"));
+      assertThat(StringUtil.join(reader.myLines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
     }
   }
 
