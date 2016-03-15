@@ -133,7 +133,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     VcsLogGraphTable.Selection previousSelection = getSelection();
     getModel().setVisiblePack(visiblePack);
-    previousSelection.restore(visiblePack.getVisibleGraph(), true);
+    previousSelection.restore(visiblePack.getVisibleGraph(), true, permGraphChanged);
 
     for (VcsLogHighlighter highlighter : myHighlighters) {
       highlighter.update(visiblePack, permGraphChanged);
@@ -396,7 +396,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
       // since fireTableDataChanged clears selection we restore it here
       if (previousSelection != null) {
-        previousSelection.restore(getVisibleGraph(), answer == null || (answer.getCommitToJump() != null && answer.doJump()));
+        previousSelection.restore(getVisibleGraph(), answer == null || (answer.getCommitToJump() != null && answer.doJump()), false);
       }
     }
 
@@ -475,14 +475,14 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     @NotNull private final TIntHashSet mySelectedCommits;
     @Nullable private final Integer myVisibleSelectedCommit;
     @Nullable private final Integer myDelta;
-    private final boolean myScrollToTop;
+    private final boolean myIsOnTop;
 
 
     public Selection(@NotNull VcsLogGraphTable table) {
       myTable = table;
       List<Integer> selectedRows = ContainerUtil.sorted(Ints.asList(myTable.getSelectedRows()));
       Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(myTable);
-      myScrollToTop = visibleRows.first - 1 == 0;
+      myIsOnTop = visibleRows.first - 1 == 0;
 
       VisibleGraph<Integer> graph = myTable.getVisibleGraph();
 
@@ -509,7 +509,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       myDelta = delta;
     }
 
-    public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection) {
+    public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection, boolean permGraphChanged) {
       Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getModel(), newVisibleGraph);
       if (!toSelectAndScroll.first.isEmpty()) {
         myTable.getSelectionModel().setValueIsAdjusting(true);
@@ -523,7 +523,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
         myTable.getSelectionModel().setValueIsAdjusting(false);
       }
       if (scrollToSelection) {
-        if (myScrollToTop) {
+        if (myIsOnTop && permGraphChanged) { // scroll on top when some fresh commits arrive
           scrollToRow(0, 0);
         }
         else if (toSelectAndScroll.second != null) {
