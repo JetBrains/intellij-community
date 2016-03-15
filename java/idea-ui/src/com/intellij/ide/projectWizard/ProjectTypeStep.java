@@ -652,6 +652,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       myWizard.getSequence().setType(builder.getBuilderId());
     }
     myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
+    myWizard.updateWizardButtons();
   }
 
   @TestOnly
