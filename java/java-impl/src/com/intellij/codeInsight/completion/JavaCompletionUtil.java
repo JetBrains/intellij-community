@@ -550,15 +550,8 @@ public class JavaCompletionUtil {
       return Collections.singletonList(JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor));
     }
     if (completion instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)completion;
-      JavaMethodCallElement item = new JavaMethodCallElement(method).setQualifierSubstitutor(substitutor);
-      if (processor.shouldQualifyMethodCall(method)) {
-        PsiClass containingClass = method.getContainingClass();
-        String className = containingClass == null ? null : containingClass.getName();
-        if (className != null) {
-          item.setForcedQualifier(className + (method.hasModifierProperty(PsiModifier.STATIC) ? "." : ".this."));
-        }
-      }
+      JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
+      item.setForcedQualifier(completionElement.getQualifierText());
       return Collections.singletonList(item);
     }
     if (completion instanceof PsiVariable) {

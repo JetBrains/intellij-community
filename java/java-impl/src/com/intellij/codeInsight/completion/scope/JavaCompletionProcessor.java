@@ -61,7 +61,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final Set<String> myShadowedNames = ContainerUtil.newHashSet();
   private final Set<String> myCurrentScopeMethodNames = ContainerUtil.newHashSet();
   private final Set<String> myFinishedScopesMethodNames = ContainerUtil.newHashSet();
-  private final Set<PsiMethod> myMethodsToQualify = ContainerUtil.newHashSet();
   private final PsiElement myElement;
   private final PsiElement myScope;
   private final ElementFilter myFilter;
@@ -245,33 +244,39 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       }
     }
 
+    if (element instanceof PsiMethod) {
+      myCurrentScopeMethodNames.add(((PsiMethod)element).getName());
+    }
+
     if (!satisfies(element, state) || !isAccessible(element)) return true;
 
     StaticProblem sp = myElement.getParent() instanceof PsiMethodReferenceExpression ? StaticProblem.none : getStaticProblem(element);
     if (sp == StaticProblem.instanceAfterStatic) return true;
 
-    CompletionElement completion = new CompletionElement(element,  state.get(PsiSubstitutor.KEY));
+    CompletionElement completion = new CompletionElement(element, state.get(PsiSubstitutor.KEY), getCallQualifierText(element));
     CompletionElement prev = myResults.get(completion);
     if (prev == null || completion.isMoreSpecificThan(prev)) {
       myResults.put(completion, completion);
       if (sp == StaticProblem.staticAfterInstance) {
         mySecondRateResults.add(completion);
       }
-
-      if (element instanceof PsiMethod) {
-        String name = ((PsiMethod)element).getName();
-        myCurrentScopeMethodNames.add(name);
-        if (myFinishedScopesMethodNames.contains(name)) {
-          myMethodsToQualify.add((PsiMethod)element);
-        }
-      }
     }
 
     return true;
   }
 
-  public boolean shouldQualifyMethodCall(@NotNull PsiMethod method) {
-    return myMethodsToQualify.contains(method);
+  @NotNull
+  private String getCallQualifierText(@NotNull PsiElement element) {
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      if (myFinishedScopesMethodNames.contains(method.getName())) {
+        String className = myDeclarationHolder instanceof PsiClass ? ((PsiClass)myDeclarationHolder).getName() : null;
+        if (className != null) {
+          return className + (method.hasModifierProperty(PsiModifier.STATIC) ? "." : ".this.");
+        }
+      }
+    }
+    return "";
   }
 
   private boolean isQualifiedContext() {
