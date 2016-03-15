@@ -21,6 +21,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -71,8 +72,11 @@ public class ResourceBundlePropertiesUpdateManager {
   public void insertOrUpdateTranslation(String key, String value, final PropertiesFile propertiesFile) throws IncorrectOperationException {
     final IProperty property = propertiesFile.findPropertyByKey(key);
     if (property != null) {
-      property.setValue(value);
-      myCodeStyleManager.reformat(property.getPsiElement());
+      final String oldValue = property.getValue();
+      if (!Comparing.equal(oldValue, value)) {
+        property.setValue(value);
+        myCodeStyleManager.reformat(property.getPsiElement());
+      }
       return;
     }
 

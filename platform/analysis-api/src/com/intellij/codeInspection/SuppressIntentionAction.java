@@ -84,7 +84,7 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file == null) return false;
+    if (file == null || editor == null) return false;
     PsiElement element = getElement(editor, file);
     return element != null && isAvailable(project, editor, element);
   }
