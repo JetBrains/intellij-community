@@ -84,9 +84,8 @@ public class GitFetcher {
       fetchResult = fetchAll(repository, fetchResult);
     }
     else {
-      return fetchCurrentRemote(repository);
+      fetchResult = fetchCurrentRemote(repository);
     }
-
     repository.getRepositoryFiles().refresh(false);
     return fetchResult;
   }
