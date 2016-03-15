@@ -440,14 +440,13 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(func);
     final PyParameter[] parameters = func.getParameterList().getParameters();
     assertSize(2, parameters);
-    final PyParameter param = parameters[0];
+    final PyNamedParameter param = assertInstanceOf(parameters[0], PyNamedParameter.class);
     final String annotation = param.getTypeCommentAnnotation();
     assertEquals("int", annotation);
     assertNotParsed(file);
-    
+
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
-    final PyNamedParameter namedParam = assertInstanceOf(param, PyNamedParameter.class);
-    final PyType paramType = context.getType(namedParam);
+    final PyType paramType = context.getType(param);
     assertInstanceOf(paramType, PyClassType.class);
     assertNotParsed(file);
   }
