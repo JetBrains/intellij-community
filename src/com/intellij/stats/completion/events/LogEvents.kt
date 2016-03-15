@@ -20,50 +20,53 @@ abstract class LogEvent(val userUid: String, val type: Action) {
     fun toLogLine(): String = "$timestamp $recorderId $userUid $sessionUid $actionType ${serializeEventData()}"
 }
 
+
+abstract class LookupStateLogData(userId: String,
+                                  action: Action,
+                                  var completionListIds: List<Int>,
+                                  var newCompletionListItems: List<LookupEntryInfo>,
+                                  var currentPosition: Int): LogEvent(userId, action)
+
 class UpPressedEvent(
-        userId: String,
-        var completionListIds: List<Int>,
-        var newCompletionListItems: List<LookupEntryInfo>,
-        var selectedPosition: Int,
-        var selectedId: Int) : LogEvent(userId, Action.UP)
+        userId: String, 
+        completionListIds: List<Int>, 
+        newCompletionListItems: List<LookupEntryInfo>, 
+        selectedPosition: Int) : LookupStateLogData(userId, Action.UP, completionListIds, newCompletionListItems, selectedPosition)
 
 class DownPressedEvent(
         userId: String,
-        var completionListIds: List<Int>,
-        var newCompletionListItems: List<LookupEntryInfo>,
-        var selectedPosition: Int,
-        var selectedId: Int) : LogEvent(userId, Action.DOWN)
-
+        completionListIds: List<Int>,
+        newCompletionListItems: List<LookupEntryInfo>,
+        selectedPosition: Int) : LookupStateLogData(userId, Action.DOWN, completionListIds, newCompletionListItems, selectedPosition)
 
 class CompletionCancelledEvent(userId: String) : LogEvent(userId, Action.COMPLETION_CANCELED)
 
-class ItemSelectedByTypingEvent(userId: String, var selectedItemId: Int) : LogEvent(userId, Action.TYPED_SELECT)
+class ItemSelectedByTypingEvent(userId: String, var selectedId: Int) : LogEvent(userId, Action.TYPED_SELECT)
 
 class ExplicitSelectEvent(userId: String, 
-                          var completionListIds: List<Int>,
-                          var newCompletionListItems: List<LookupEntryInfo>,
-                          var selectedPosition: Int,
-                          var selectedItemId: Int) : LogEvent(userId, Action.EXPLICIT_SELECT)
+                          completionListIds: List<Int>,
+                          newCompletionListItems: List<LookupEntryInfo>,
+                          selectedPosition: Int) : LookupStateLogData(userId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition)
 
 class BackspaceEvent(
         userId: String,
-        var completionListIds: List<Int>,
-        var newCompletionListItems: List<LookupEntryInfo>, 
-        var selectedPosition: Int,
-        var selectedId: Int) : LogEvent(userId, Action.BACKSPACE)
+        completionListIds: List<Int>,
+        newCompletionListItems: List<LookupEntryInfo>, 
+        selectedPosition: Int) : LookupStateLogData(userId, Action.BACKSPACE, completionListIds, newCompletionListItems, selectedPosition)
 
 class TypeEvent(
         userId: String,
-        var completionListIds: List<Int>,
-        var newCompletionListItems: List<LookupEntryInfo>,
-        var selectedPosition: Int,
-        var selectedId: Int) : LogEvent(userId, Action.TYPE)
+        completionListIds: List<Int>,
+        newCompletionListItems: List<LookupEntryInfo>,
+        selectedPosition: Int) : LookupStateLogData(userId, Action.TYPE, completionListIds, newCompletionListItems, selectedPosition)
 
 class CompletionStartedEvent(
         userId: String,
         var performExperiment: Boolean,
         var experimentVersion: Int,
-        var completionList: List<LookupEntryInfo>) : LogEvent(userId, Action.COMPLETION_STARTED) 
+        completionList: List<LookupEntryInfo>,
+        selectedPosition: Int) : LookupStateLogData(userId, Action.COMPLETION_STARTED, completionList.map { it.id }, completionList, selectedPosition) 
+
 {
     var completionListLength: Int = completionList.size
 }
