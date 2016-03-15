@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.Obsolescent;
@@ -91,11 +90,10 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     }
   }
 
-  @Nullable
+  @NotNull
   @Override
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
-    List<? extends XValueContainerNode<?>> empty = Collections.<XValueGroupNodeImpl>emptyList();
-    return ContainerUtil.concat(myChildren, ObjectUtils.notNull(super.getLoadedChildren(), empty));
+    return ContainerUtil.concat(myChildren, super.getLoadedChildren());
   }
 
   @NotNull
@@ -232,33 +230,24 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
 
     @Override
     public void evaluated(@NotNull final XValue result) {
-      DebuggerUIUtil.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
-          root.replaceNode(myResultPlace, new WatchNodeImpl(root.myTree, root, result, myResultPlace.getExpression()));
-        }
+      DebuggerUIUtil.invokeLater(() -> {
+        WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
+        root.replaceNode(myResultPlace, new WatchNodeImpl(root.myTree, root, result, myResultPlace.getExpression()));
       });
     }
 
     @Override
     public void errorOccurred(@NotNull final String errorMessage) {
-      DebuggerUIUtil.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
-          root.replaceNode(myResultPlace, createErrorNode(root.myTree, root, myResultPlace.getExpression(), errorMessage));
-        }
+      DebuggerUIUtil.invokeLater(() -> {
+        WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
+        root.replaceNode(myResultPlace, createErrorNode(root.myTree, root, myResultPlace.getExpression(), errorMessage));
       });
     }
 
     public void noSession() {
-      DebuggerUIUtil.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
-          root.replaceNode(myResultPlace, createMessageNode(root.myTree, root, myResultPlace.getExpression()));
-        }
+      DebuggerUIUtil.invokeLater(() -> {
+        WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
+        root.replaceNode(myResultPlace, createMessageNode(root.myTree, root, myResultPlace.getExpression()));
       });
     }
   }

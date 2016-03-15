@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -386,22 +386,20 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   public void removeWatches(List<? extends XDebuggerTreeNode> nodes) {
     List<? extends WatchNode> children = myRootNode.getWatchChildren();
     int minIndex = Integer.MAX_VALUE;
-    List<XDebuggerTreeNode> toRemove = new ArrayList<XDebuggerTreeNode>();
-    if (children != null) {
-      for (XDebuggerTreeNode node : nodes) {
-        @SuppressWarnings("SuspiciousMethodCalls")
-        int index = children.indexOf(node);
-        if (index != -1) {
-          toRemove.add(node);
-          minIndex = Math.min(minIndex, index);
-        }
+    List<XDebuggerTreeNode> toRemove = new ArrayList<>();
+    for (XDebuggerTreeNode node : nodes) {
+      @SuppressWarnings("SuspiciousMethodCalls")
+      int index = children.indexOf(node);
+      if (index != -1) {
+        toRemove.add(node);
+        minIndex = Math.min(minIndex, index);
       }
     }
     myRootNode.removeChildren(toRemove);
 
     List<? extends WatchNode> newChildren = myRootNode.getWatchChildren();
-    if (newChildren != null && !newChildren.isEmpty()) {
-      WatchNode node = minIndex < newChildren.size() ? newChildren.get(minIndex) : newChildren.get(newChildren.size() - 1);
+    if (!newChildren.isEmpty()) {
+      WatchNode node = newChildren.get(Math.min(minIndex, newChildren.size() - 1));
       TreeUtil.selectNode(getTree(), node);
     }
     updateSessionData();
