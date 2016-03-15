@@ -177,7 +177,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
     final PsiMethod factoryMethod = myTargetClass.findMethodBySignature(createFactoryMethod(), false);
     if (factoryMethod != null) {
-      conflicts.putValue(factoryMethod, "Factory method " + factoryMethod.getName() + " already exists and would be used instead of newly created.");
+      conflicts.putValue(factoryMethod, "Factory method " + RefactoringUIUtil.getDescription(factoryMethod, false) + " already exists and will be used instead of newly created.");
     }
 
     return showConflicts(conflicts, usages);
@@ -220,6 +220,9 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       for (UsageInfo usage : usages) {
         PsiNewExpression newExpression = (PsiNewExpression)usage.getElement();
         if (newExpression == null) continue;
+        if (oldFactoryMethod != null && PsiTreeUtil.isAncestor(oldFactoryMethod, newExpression, false)) {
+          continue;
+        }
 
         VisibilityUtil.escalateVisibility(factoryMethod, newExpression);
         PsiMethodCallExpression factoryCall =
