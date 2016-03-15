@@ -104,6 +104,8 @@ public abstract class VcsLogUserFilterTest {
       names.add(name + "@company.com");
       if (!Character.isLetterOrDigit(c)) synonyms.add(name);
     }
+    names.add("User Userovich Userov");
+    names.add("UserUserovich@company.com");
 
     MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
