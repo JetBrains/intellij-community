@@ -1,6 +1,3 @@
-from typing import Callable
-
-
-def func(cb,  # type: Callable[..., int]
+def func(cb,  # type: int
          other):
     pass

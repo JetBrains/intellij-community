@@ -33,6 +33,8 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
@@ -438,8 +440,15 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(func);
     final PyParameter[] parameters = func.getParameterList().getParameters();
     assertSize(2, parameters);
-    final String annotation = parameters[0].getTypeCommentAnnotation();
-    assertEquals("Callable[..., int]", annotation);
+    final PyParameter param = parameters[0];
+    final String annotation = param.getTypeCommentAnnotation();
+    assertEquals("int", annotation);
+    assertNotParsed(file);
+    
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    final PyNamedParameter namedParam = assertInstanceOf(param, PyNamedParameter.class);
+    final PyType paramType = context.getType(namedParam);
+    assertInstanceOf(paramType, PyClassType.class);
     assertNotParsed(file);
   }
 }
