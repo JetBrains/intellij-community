@@ -896,7 +896,7 @@ private bundledJDK(boolean win64) {
     def customJdkDir = new File("${home}/build/jdk/win/custom")
     if (p("jdk.custom.win") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
       setProperty("winCustomJDK", getPathToBundledJDK(new File(customJdkDir), p("jdk.custom.win"), ".tar.gz"))
-      extractRedistJre(winCustomJDK, "${paths.sandbox}/jdk.custom.win/jre")
+      extractRedistJre(winCustomJDK, "${paths.sandbox}/jdk.custom.win")
     }
     customJdkDir = new File("${home}/build/jdk/mac/custom")
     if (p("jdk.mac") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
