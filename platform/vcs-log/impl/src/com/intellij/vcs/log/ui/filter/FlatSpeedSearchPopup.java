@@ -23,7 +23,7 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   public FlatSpeedSearchPopup(@NotNull ActionGroup actionGroup,
                               @NotNull ActionGroup speedSearchActionGroup,
                               @NotNull DataContext dataContext) {
-    super(null, new DefaultActionGroup(actionGroup, speedSearchActionGroup), dataContext, false, false, false, false, null, -1, null, null);
+    super(null, new DefaultActionGroup(actionGroup, speedSearchActionGroup), dataContext, false, false, false, false, null, -1, null, null, true);
   }
 
   public FlatSpeedSearchPopup(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext) {

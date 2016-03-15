@@ -353,6 +353,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
         }
         else if (view != null) {
+          view.update();
           addView(view);
         }
         if (myView != null) {
@@ -796,11 +797,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
     myViewClosed = true;
     myView = null;
-    super.close(noSuspisiousCodeFound);
-  }
-
-  @Override
-  public void cleanup() {
     ((InspectionManagerEx)InspectionManager.getInstance(getProject())).closeRunningContext(this);
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
@@ -808,6 +804,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         getPresentation(toolWrapper).finalCleanup();
       }
     }
+    super.close(noSuspisiousCodeFound);
+  }
+
+  @Override
+  public void cleanup() {
     if (myView != null) {
       myView.setUpdating(false);
     }
@@ -816,7 +817,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public void refreshViews() {
     if (myView != null) {
-      myView.updateView(false);
+      myView.getTree().queueUpdate();
     }
   }
 

@@ -34,7 +34,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class BaseOutputReaderTest {
-  private static final String[] TEST_DATA = {"first\n", "incomplete", "-continuation\n", "last\n"};
+  private static final String[] TEST_DATA =
+    {"first\n", "incomplete", "-continuation\n", new String(new char[16*1024]).replace('\0', 'x') + '\n', "last\n"};
   private static final int SEND_TIMEOUT = 500;
   private static final int SLEEP_TIMEOUT = 60000;
 

@@ -36,7 +36,7 @@ public class ShadowPainter {
   @Nullable
   private Color myBorderColor;
 
-  ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft) {
+  public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft) {
     myTop = top;
     myTopRight = topRight;
     myRight = right;
@@ -47,7 +47,7 @@ public class ShadowPainter {
     myTopLeft = topLeft;
   }
 
-  ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft, Color borderColor) {
+  public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft, @Nullable Color borderColor) {
     this(top, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft);
     myBorderColor = borderColor;
   }
@@ -63,7 +63,8 @@ public class ShadowPainter {
     final BufferedImage image = graphicsConfiguration.createCompatibleImage(width, height, Transparency.TRANSLUCENT);
     final Graphics2D g = image.createGraphics();
 
-    final int sideSize = myLeft.getIconWidth();
+    final int leftSize = myLeft.getIconWidth();
+    final int rightSize = myRight.getIconWidth();
     final int bottomSize = myBottom.getIconHeight();
     final int topSize = myTop.getIconHeight();
 
@@ -83,12 +84,12 @@ public class ShadowPainter {
       myLeft.paintIcon(c, g, 0, _y);
     }
     for (int _y = myTopRight.getIconHeight(); _y < height - myBottomRight.getIconHeight(); _y++) {
-      myRight.paintIcon(c, g, width - sideSize, _y);
+      myRight.paintIcon(c, g, width - rightSize, _y);
     }
 
     if (myBorderColor != null) {
       g.setColor(myBorderColor);
-      g.drawRect(sideSize - 1, topSize - 1, width - sideSize * 2 + 1, height - topSize - bottomSize + 1);
+      g.drawRect(leftSize - 1, topSize - 1, width - leftSize - rightSize + 1, height - topSize - bottomSize + 1);
     }
 
     g.dispose();

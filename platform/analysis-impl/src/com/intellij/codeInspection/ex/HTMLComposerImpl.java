@@ -273,7 +273,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @Override
   public void appendElementOutReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getOutReferences().size() > 0) {
-      buf.append(BR);
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.uses"));
       startList(buf);
       for (RefElement refCallee : refElement.getOutReferences()) {

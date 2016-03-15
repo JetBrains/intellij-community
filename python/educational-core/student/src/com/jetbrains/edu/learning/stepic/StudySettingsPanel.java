@@ -17,8 +17,6 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.jetbrains.edu.stepic.EduStepicConnector;
-import com.jetbrains.edu.stepic.StudySettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

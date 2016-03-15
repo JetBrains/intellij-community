@@ -242,7 +242,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   private PsiMember getDeclarationImpl() {
-    return JavaFxPsiUtil.collectProperties(myPsiClass).get(myName);
+    return JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(myName);
   }
 
   @Override

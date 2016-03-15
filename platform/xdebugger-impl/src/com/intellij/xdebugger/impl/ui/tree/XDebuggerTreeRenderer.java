@@ -76,18 +76,23 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     if (myHaveLink) {
       setupLinkDimensions(treeVisibleRect, rowX);
     }
-    else if (node instanceof XValueNodeImpl && rowX + super.getPreferredSize().width > treeVisibleRect.x + treeVisibleRect.width) {
-      // text does not fit visible area - show link
-      String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
-      if (!StringUtil.isEmpty(rawValue) && tree.isShowing()) {
-        // text may fit the screen in ExpandableItemsHandler
-        Point locationOnScreen = tree.getLocationOnScreen();
-        Rectangle screen = AbstractExpandableItemsHandler.getScreenRectangle(locationOnScreen);
-        if (screen.x + screen.width < locationOnScreen.x + rowX + super.getPreferredSize().width) {
-          myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
-          append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
-          setupLinkDimensions(treeVisibleRect, rowX);
-          myLinkWidth = 0;
+    else {
+      int visibleRectRightX = treeVisibleRect.x + treeVisibleRect.width;
+      int notFittingWidth = rowX + super.getPreferredSize().width - visibleRectRightX;
+      if (node instanceof XValueNodeImpl && notFittingWidth > 0) {
+        // text does not fit visible area - show link
+        String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
+        if (!StringUtil.isEmpty(rawValue) && tree.isShowing()) {
+          Point treeRightSideOnScreen = new Point(visibleRectRightX, 0);
+          SwingUtilities.convertPointToScreen(treeRightSideOnScreen, tree);
+          Rectangle screen = AbstractExpandableItemsHandler.getScreenRectangle(treeRightSideOnScreen);
+          // text may fit the screen in ExpandableItemsHandler
+          if (screen.x + screen.width < treeRightSideOnScreen.x + notFittingWidth) {
+            myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
+            append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
+            setupLinkDimensions(treeVisibleRect, rowX);
+            myLinkWidth = 0;
+          }
         }
       }
     }

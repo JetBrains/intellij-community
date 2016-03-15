@@ -19,16 +19,16 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
-import com.intellij.codeInspection.ui.actions.occurrences.GoToSubsequentOccurrenceAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
@@ -49,16 +49,16 @@ import java.util.function.Supplier;
 public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProgressAware {
   private static final Logger LOG = Logger.getInstance(QuickFixToolbar.class);
   private static final int MAX_FIX_COUNT = 3;
-  @Nullable private final Editor myEditor;
   @Nullable private final String myTargetName;
   @NotNull private final InspectionResultsView myView;
   private final InspectionToolWrapper myWrapper;
+  private final ProblemPreviewEditorFoldings myFoldings;
 
   private SimpleColoredComponent myWaitingLabel;
 
-  public QuickFixToolbar(@Nullable Editor editor,
+  public QuickFixToolbar(@Nullable EditorEx editor,
                          @NotNull InspectionResultsView view) {
-    myEditor = editor;
+    myFoldings = editor == null ? null : new ProblemPreviewEditorFoldings(editor);
     myView = view;
     myWrapper = view.getTree().getSelectedToolWrapper();
     LOG.assertTrue(myWrapper != null);
@@ -66,10 +66,10 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     int problemCount = descriptors.length;
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    setBorder(IdeBorderFactory.createEmptyBorder(7, 11, 0, 0));
     myTargetName = getTargetName();
 
     if (view.isUpdating() && !areDescriptorNodesSelected()) {
+      setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
       myWaitingLabel = getLabel(null, problemCount);
@@ -77,8 +77,9 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
       add(waitingIcon);
     }
     else {
+      setBorder(IdeBorderFactory.createEmptyBorder(2, 8, 0, 0));
       QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
-      fillPanel(editor, fixes, descriptors);
+      fillPanel(fixes, descriptors);
     }
   }
 
@@ -86,10 +87,13 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
   public void treeLoaded() {
     if (myWaitingLabel != null) {
       removeAll();
+      setBorder(IdeBorderFactory.createEmptyBorder(2, 8, 0, 0));
       final InspectionTree tree = myView.getTree();
       QuickFixAction[] fixes = myView.getProvider().getQuickFixes(myWrapper, tree);
       CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
-      fillPanel(myEditor, fixes, descriptors);
+      fillPanel(fixes, descriptors);
+      revalidate();
+      repaint();
     }
   }
 
@@ -102,9 +106,9 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     }
   }
 
-  private void fillPanel(@Nullable Editor editor,
-                         @Nullable QuickFixAction[] fixes,
+  private void fillPanel(@Nullable QuickFixAction[] fixes,
                          CommonProblemDescriptor[] descriptors) {
+    if (myFoldings != null) myFoldings.appendFoldings(descriptors);
     InspectionTree tree = myView.getTree();
     Project project = myView.getProject();
     boolean hasFixes = fixes != null && fixes.length != 0;
@@ -113,9 +117,6 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     fill(multipleDescriptors, () -> getLabel(fixes, problemCount), this);
     fill(hasFixes, () -> createFixPanel(fixes, multipleDescriptors), this);
     fill(true, () -> createSuppressionCombo(myWrapper, tree.getSelectionPaths(), project, multipleDescriptors), this);
-    fill(multipleDescriptors && editor != null,
-         () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
-           editor, descriptors), true).getComponent(), this);
   }
 
   @Nullable
@@ -152,7 +153,7 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     label.append(problemsCount + " problems" +
                  (myTargetName == null ? "" : (" in " + myTargetName)) +
                  (problemsCount > 1 && (fixes != null && fixes.length >= MAX_FIX_COUNT) ? "    Fix all:" : "") +
-                 (hasFixesNonIntersectedFixes ? ":" : ""));
+                 (!hasFixesNonIntersectedFixes ? ":" : ""));
     if (hasFixesNonIntersectedFixes) {
       label.append(" select a single problem to see its quick fixes");
     }
@@ -178,7 +179,14 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
       }
     };
     action.setSmallVariant(false);
-    return action.createCustomComponent(action.getTemplatePresentation());
+    return fixComboBoxActionComponent(action.createCustomComponent(action.getTemplatePresentation()));
+  }
+
+  private static JComponent fixComboBoxActionComponent(JComponent component) {
+    JPanel containingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    containingPanel.add(component);
+    containingPanel.setBorder(IdeBorderFactory.createEmptyBorder(7, 0, 8, 0));
+    return containingPanel;
   }
 
   private static void fill(boolean add,
@@ -190,8 +198,7 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
   }
 
   @NotNull
-  private static JPanel createFixPanel(QuickFixAction[] fixes, boolean multipleDescriptors) {
-    JPanel fixPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, JBUI.scale(3), JBUI.scale(5)));
+  private static JComponent createFixPanel(QuickFixAction[] fixes, boolean multipleDescriptors) {
     if (fixes.length > MAX_FIX_COUNT) {
       final ComboBoxAction fixComboBox = new ComboBoxAction() {
         {
@@ -210,15 +217,21 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
           return actionGroup;
         }
       };
-      fixPanel.add(fixComboBox.createCustomComponent(fixComboBox.getTemplatePresentation()));
+      return fixComboBoxActionComponent(fixComboBox.createCustomComponent(fixComboBox.getTemplatePresentation()));
     }
     else {
+      JPanel fixPanel = new JPanel();
+      fixPanel.setLayout(new BoxLayout(fixPanel, BoxLayout.LINE_AXIS));
+      fixPanel.setBorder(IdeBorderFactory.createEmptyBorder(7, 0, 8, 0));
       final boolean multipleFixes = fixes.length > 1;
       for (QuickFixAction fix : fixes) {
         fixPanel.add(createQuickFixButton(fix, multipleDescriptors && !multipleFixes));
+        if (fix != fixes[fixes.length - 1]) {
+          fixPanel.add(Box.createHorizontalStrut(3));
+        }
       }
+      return fixPanel;
     }
-    return fixPanel;
   }
 
   private static JComponent createQuickFixButton(@NotNull QuickFixAction fix, boolean multipleFixes) {
@@ -241,10 +254,12 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     @Override
     public JComponent createCustomComponent(Presentation presentation) {
       final JButton button = new JButton(presentation.getText());
-      button.setIcon(presentation.getIcon());
-      if (presentation.getIcon() == null) {
-        button.setIcon(AllIcons.Actions.CreateFromUsage);
+      Icon icon = presentation.getIcon();
+      if (icon == null) {
+        icon = AllIcons.Actions.CreateFromUsage;
       }
+      button.setEnabled(presentation.isEnabled());
+      button.setIcon(IconLoader.getTransparentIcon(icon, 0.75f));
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent event, int clickCount) {

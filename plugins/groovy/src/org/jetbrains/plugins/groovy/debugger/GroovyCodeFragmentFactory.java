@@ -20,8 +20,10 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -338,10 +340,13 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       if (context.getLanguage().equals(GroovyLanguage.INSTANCE)) {
         return true;
       }
-      if (JavaPsiFacade.getInstance(context.getProject())
-            .findClass("org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()) != null) {
-        return true;
-      }
+      Ref<Boolean> result = Ref.create(false);
+      DumbService.getInstance(context.getProject()).withAlternativeResolveEnabled(
+        () -> result.set(JavaPsiFacade.getInstance(context.getProject()).findClass(
+          "org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()
+        ) != null)
+      );
+      return result.get();
     }
     return false;
   }

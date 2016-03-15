@@ -180,7 +180,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myEntriesFileListener = new SvnEntriesFileListener(project);
       upgradeIfNeeded(bus);
 
-      myChangeListListener = new SvnChangelistListener(myProject, this);
+      myChangeListListener = new SvnChangelistListener(this);
 
       myVcsListener = new VcsListener() {
         @Override
@@ -279,7 +279,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       public void processLoadedLists(final List<LocalChangeList> lists) {
         if (lists.isEmpty()) return;
         try {
-          ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
+          ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.DEFAULT_NAME, true);
 
           if (!myConfiguration.changeListsSynchronized()) {
             processChangeLists(lists);
@@ -713,7 +713,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     VirtualFile file = filePath.getVirtualFile();
     WorkingCopy wcRoot = file != null ? myRootsToWorkingCopies.getWcRoot(file) : null;
     if (wcRoot != null) {
-      isWcRoot = wcRoot.getFile().getAbsolutePath().equals(filePath.getIOFile().getAbsolutePath());
+      isWcRoot = wcRoot.getFile().getAbsolutePath().equals(filePath.getPath());
     }
     return isWcRoot;
   }

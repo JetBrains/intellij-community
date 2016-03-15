@@ -388,7 +388,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       TypeInfo typeInfo = TypeInfo.fromString(arg, isEllipsisParam);
 
       String paramName = i < parameterNames.length ? parameterNames[i] : "p" + (i + 1);
-      PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, paramName, typeInfo, isEllipsisParam);
+      PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, paramName, typeInfo, isEllipsisParam, true);
       paramStubs[i] = parameterStub;
       new PsiModifierListStubImpl(parameterStub, 0);
     }

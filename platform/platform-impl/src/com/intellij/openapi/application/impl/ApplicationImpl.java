@@ -1233,10 +1233,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       // please assign exceptions that occur here to Peter
       LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
     }
-    if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
+    boolean writeActionPending = myWriteActionPending;
+    if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
       writePauses.started();
     }
-    boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
     try {
       ActivityTracker.getInstance().inc();

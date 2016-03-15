@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,23 +65,24 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
     LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
     String name = RecordUtil.intern(tree.getCharTable(), id);
-    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis);
+    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis, false);
   }
 
   @Override
   public void serialize(@NotNull PsiParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
-    dataStream.writeBoolean(stub.isParameterTypeEllipsis());
+    dataStream.writeByte(((PsiParameterStubImpl)stub).getFlags());
   }
 
   @NotNull
   @Override
   public PsiParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
+    if (name == null) throw new IOException("corrupted indices");
     TypeInfo type = TypeInfo.readTYPE(dataStream);
-    boolean isEllipsis = dataStream.readBoolean();
-    return new PsiParameterStubImpl(parentStub, name, type, isEllipsis);
+    byte flags = dataStream.readByte();
+    return new PsiParameterStubImpl(parentStub, name, type, flags);
   }
 
   @Override

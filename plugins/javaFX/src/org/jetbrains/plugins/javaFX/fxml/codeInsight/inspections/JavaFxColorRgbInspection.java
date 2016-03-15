@@ -7,7 +7,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -66,7 +65,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
                                           @NotNull String propertyName,
                                           @NotNull String propertyValue,
                                           @NotNull PsiElement location) {
-        final PsiMember declaration = JavaFxPsiUtil.collectProperties(psiClass).get(propertyName);
+        final PsiMember declaration = JavaFxPsiUtil.collectWritableProperties(psiClass).get(propertyName);
         final String boxedQName = JavaFxPsiUtil.getBoxedPropertyType(psiClass, declaration);
         if (CommonClassNames.JAVA_LANG_FLOAT.equals(boxedQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(boxedQName)) {
           try {

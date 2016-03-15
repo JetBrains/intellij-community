@@ -11,15 +11,8 @@
   <change-notes><![CDATA[
     ]]>
   </change-notes>
-  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
 
-  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
-       on how to target different products -->
-  <!-- uncomment to enable plugin in all products
-  <depends>com.intellij.modules.lang</depends>
-  -->
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.jetbrains.edu.core</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
 
   <extensions defaultExtensionNs="com.intellij">

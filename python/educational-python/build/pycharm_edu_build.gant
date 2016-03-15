@@ -275,10 +275,6 @@ private layoutFull(Map args, String target, Set usedJars) {
         }
       }
 
-      jar("educational-core.jar") {
-        module("educational-core")
-      }
-
       jar("pycharm-pydev.jar") {
         module("python-pydev")
       }

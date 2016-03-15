@@ -11,7 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import org.jetbrains.annotations.NotNull;

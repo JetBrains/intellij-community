@@ -499,7 +499,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     archs += "<string>${it}</string>"
   }
   archs +="</array>\n"
-  
+
   String urlSchemes = ""
   if (args.urlSchemes != null) {
     urlSchemes += """
@@ -884,6 +884,7 @@ private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
   requireProperty("jdk.win", "jdk1.8")
+  requireProperty("jdk.custom.win", "false")
   requireProperty("jdk.mac", "openjdk.1.8")
   requireProperty("jdk.linux", "openjdk.1.8")
 
@@ -892,7 +893,12 @@ private bundledJDK(boolean win64) {
       setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
       extractRedistJre(winJDK, "${paths.sandbox}/jdk.win/jre")
     }
-    def customJdkDir = new File("${home}/build/jdk/mac/custom")
+    def customJdkDir = new File("${home}/build/jdk/win/custom")
+    if (p("jdk.custom.win") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
+      setProperty("winCustomJDK", getPathToBundledJDK(new File(customJdkDir), p("jdk.custom.win"), ".tar.gz"))
+      extractRedistJre(winCustomJDK, "${paths.sandbox}/jdk.custom.win")
+    }
+    customJdkDir = new File("${home}/build/jdk/mac/custom")
     if (p("jdk.mac") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
       setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, p("jdk.mac"), ".tar.gz"))
     }

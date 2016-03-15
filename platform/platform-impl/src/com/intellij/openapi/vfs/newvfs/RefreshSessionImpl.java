@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
@@ -179,37 +177,23 @@ public class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  public void fireEvents(final boolean hasWriteAction) {
-    AccessToken token = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace);
-    try {
-      if (!iHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) return;
+  void fireEvents(boolean async) {
+    if (!iHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) {
+      mySemaphore.up();
+      return;
+    }
 
-      Runnable runnable = new Runnable() {
-        public void run() {
-          if (hasWriteAction) {
-            fireEventsInWriteAction();
-          }
-          else {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                fireEventsInWriteAction();
-              }
-            });
-          }
-        }
-      };
-
+    //noinspection unused
+    try (AccessToken dumb  = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace);
+         AccessToken guard = async ? TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE) : null;
+         AccessToken write = WriteAction.start()) {
       if (myDumbModePermission != null) {
-        DumbService.allowStartingDumbModeInside(myDumbModePermission, runnable);
+        DumbService.allowStartingDumbModeInside(myDumbModePermission, this::fireEventsInWriteAction);
       } else {
-        runnable.run();
+        fireEventsInWriteAction();
       }
     }
     finally {
-      if (token != null) {
-        token.finish();
-      }
       mySemaphore.up();
     }
   }

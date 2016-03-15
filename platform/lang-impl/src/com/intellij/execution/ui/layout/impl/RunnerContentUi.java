@@ -91,7 +91,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @NotNull private final ActionManager myActionManager;
   private final String mySessionName;
-  private final MyComponent myComponent = new MyComponent();
+  private NonOpaquePanel myComponent;
 
   private final Wrapper myToolbar = new Wrapper();
   final MyDragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
@@ -144,7 +144,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
   private MyDropAreaPainter myCurrentPainter;
-  
+
   private RunnerContentUi myOriginal;
   private final CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<Listener>();
   private final Set<RunnerContentUi> myChildren = new TreeSet<RunnerContentUi>(new Comparator<RunnerContentUi>() {
@@ -230,12 +230,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs.getComponent().setBackground(myToolbar.getBackground());
     myTabs.getComponent().setBorder(new EmptyBorder(0, 1, 0, 0));
 
-    final NonOpaquePanel wrappper = new NonOpaquePanel(new BorderLayout(0, 0));
+    final NonOpaquePanel wrappper = new MyComponent(new BorderLayout(0, 0));
     wrappper.add(myToolbar, BorderLayout.WEST);
     wrappper.add(myTabs.getComponent(), BorderLayout.CENTER);
     wrappper.setBorder(new EmptyBorder(-1, 0, 0, 0));
 
-    myComponent.setContent(wrappper);
+    myComponent = wrappper;
 
     myTabs.addListener(new TabsListener.Adapter() {
 
@@ -588,10 +588,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     // 1/3 (left) |   (center/bottom) | 1/3 (right)
     if (point.x < size.width / 3) return PlaceInGrid.left;
     if (point.x > size.width * 2 / 3) return PlaceInGrid.right;
-    
+
     // 3/4 (center with tab titles) | 1/4 (bottom)
     if (point.y > size.height * 3 / 4) return PlaceInGrid.bottom;
-    
+
     return PlaceInGrid.center;
   }
 
@@ -1387,10 +1387,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
-  private class MyComponent extends Wrapper.FocusHolder implements DataProvider, QuickActionProvider {
+  private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
-    public MyComponent() {
+    public MyComponent(LayoutManager layout) {
+      super(layout);
       setOpaque(true);
       setFocusCycleRoot(true);
       setBorder(new ToolWindow.Border(false, false, false, false));
