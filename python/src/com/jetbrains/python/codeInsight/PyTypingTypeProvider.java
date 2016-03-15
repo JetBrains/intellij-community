@@ -21,7 +21,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -173,9 +172,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression && context.maySwitchToAST(referenceTarget)) {
+    if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      final String comment = getTypeComment(target);
+      final String comment = target.getTypeCommentAnnotation();
       if (comment != null) {
         final PyType type = getStringBasedType(comment, referenceTarget, new Context(context));
         if (type instanceof PyTupleType) {
@@ -185,20 +184,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
         }
         return type;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String getTypeComment(@NotNull PyTargetExpression target) {
-    final PsiElement commentContainer = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class, PyWithStatement.class,
-                                                                    PyForPart.class);
-    if (commentContainer != null) {
-      final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
-      if (comment != null) {
-        final String text = comment.getText();
-        return getTypeCommentValue(text);
       }
     }
     return null;
@@ -216,23 +201,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return m.group(1);
     }
     return null;
-  }
-
-  @Nullable
-  private static PsiComment getSameLineTrailingCommentChild(@NotNull PsiElement element) {
-    PsiElement child = element.getFirstChild();
-    while (true) {
-      if (child == null) {
-        return null;
-      }
-      if (child instanceof PsiComment) {
-        return (PsiComment)child;
-      }
-      if (child.getText().contains("\n")) {
-        return null;
-      }
-      child = child.getNextSibling();
-    }
   }
 
   private static boolean isAny(@NotNull PyType type) {

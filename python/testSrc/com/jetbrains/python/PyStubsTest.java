@@ -445,8 +445,23 @@ public class PyStubsTest extends PyTestCase {
     assertEquals("int", annotation);
     assertNotParsed(file);
 
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
     final PyType paramType = context.getType(param);
+    assertInstanceOf(paramType, PyClassType.class);
+    assertNotParsed(file);
+  }
+
+  public void testTargetExpressionTypeComment() {
+    final PyFile file = getTestFile();
+    final PyTargetExpression target = file.findTopLevelAttribute("x");
+    assertNotNull(target);
+
+    final String annotation = target.getTypeCommentAnnotation();
+    assertEquals("int", annotation);
+    assertNotParsed(file);
+    
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
+    final PyType paramType = context.getType(target);
     assertInstanceOf(paramType, PyClassType.class);
     assertNotParsed(file);
   }
