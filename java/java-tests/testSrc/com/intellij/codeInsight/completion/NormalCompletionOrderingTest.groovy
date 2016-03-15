@@ -435,6 +435,14 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'reaction', 'rezet', 'return'
   }
 
+  public void testDispreferReturnInConstructor() {
+    checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+
+  public void testDispreferReturnInVoidMethodTopLevel() {
+    checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+
   public void testDoNotPreferGetClass() {
     checkPreferredItems 0, 'get', 'getClass'
     incUseCount(lookup, 1)
