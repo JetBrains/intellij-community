@@ -391,9 +391,6 @@ public class Alarm implements Disposable {
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(scheduledTask);
           }
-          else if (app.isDispatchThread() && app.getCurrentModalityState().equals(myModalityState)) {
-            scheduledTask.run();
-          }
           else {
             app.invokeLater(scheduledTask, myModalityState);
           }

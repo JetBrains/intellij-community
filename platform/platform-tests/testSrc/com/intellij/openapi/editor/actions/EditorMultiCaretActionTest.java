@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,15 +29,12 @@ import org.junit.runner.RunWith;
 public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    new WriteCommandAction<Void>(null) {
-      @Override
-      protected void run(@NotNull Result<Void> result) throws Throwable {
-        configureByFile(getBeforeFileName());
-        EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
-        executeAction(getActionName());
-        checkResultByFile(getAfterFileName());
-      }
-    }.execute();
+    edt(() -> {
+      configureByFile(getBeforeFileName());
+      EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
+      executeAction(getActionName());
+      checkResultByFile(getAfterFileName());
+    });
   }
 
   @Nullable
