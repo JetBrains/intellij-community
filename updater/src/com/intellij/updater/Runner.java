@@ -248,7 +248,7 @@ public class Runner {
   }
 
   private static void install(final String jarFile, final String destFolder) throws Exception {
-    new SwingUpdaterUI(new SwingUpdaterUI.InstallOperation() {
+    new StandaloneSwingUpdaterUI(new StandaloneSwingUpdaterUI.InstallOperation() {
                          @Override
                          public boolean execute(UpdaterUI ui) throws OperationCancelledException {
                            logger.info("installing patch to the " + destFolder);
