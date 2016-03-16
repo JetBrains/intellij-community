@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
@@ -26,6 +27,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -571,9 +574,15 @@ public class GenerateMembersUtil {
     PsiModifierList targetModifierList = targetParam.getModifierList();
 
     if (sourceModifierList != null && targetModifierList != null) {
+      final Module module = ModuleUtilCore.findModuleForPsiElement(targetModifierList);
+      final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
+      final Project project = targetModifierList.getProject();
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       JVMElementFactory factory = JVMElementFactories.requireFactory(targetParam.getLanguage(), targetParam.getProject());
-      for (PsiAnnotation annotation : sourceModifierList.getAnnotations()) {
-        if (!AnnotationTargetUtil.isTypeAnnotation(annotation)) {
+      for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(sourceParam, false, null, false)) {
+        final String qualifiedName = annotation.getQualifiedName();
+        if (qualifiedName != null && (moduleScope == null || facade.findClass(qualifiedName, moduleScope) != null) &&
+            !AnnotationTargetUtil.isTypeAnnotation(annotation)) {
           targetModifierList.add(factory.createAnnotationFromText(annotation.getText(), sourceParam));
         }
       }
