@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionKind;
@@ -92,7 +93,10 @@ public class EndHandler extends EditorActionHandler {
           // documents). Hence, we check that and don't finish processing in case we have such a situation. AtomicBoolean is used
           // here just as a boolean value holder due to requirement to declare variable used from inner class as final.
           final AtomicBoolean stopProcessing = new AtomicBoolean(true);
-          TransactionGuard.syncTransaction(TransactionKind.TEXT_EDITING, () -> {
+
+          TransactionGuard guard = TransactionGuard.getInstance();
+          // sometimes this handler is invoked from other actions, then we're already inside a transaction
+          try (AccessToken ignore = guard.isInsideTransaction() ? null : guard.startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
             PsiDocumentManager.getInstance(project).commitAllDocuments();
             ApplicationManager.getApplication().runWriteAction(() -> {
               CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
@@ -117,7 +121,7 @@ public class EndHandler extends EditorActionHandler {
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
               editor.getSelectionModel().removeSelection();
             });
-          });
+          }
           if (stopProcessing.get()) {
             return;
           }
