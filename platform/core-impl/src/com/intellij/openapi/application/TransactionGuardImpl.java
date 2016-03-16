@@ -42,12 +42,12 @@ public class TransactionGuardImpl extends TransactionGuard {
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myTransactionStartTrace != null) {
-      if (myMergeableKinds.contains(kind)) {
-        return AccessToken.EMPTY_ACCESS_TOKEN;
+      if (!myMergeableKinds.contains(kind) && !ApplicationManager.getApplication().isUnitTestMode()) {
+        // please assign exceptions that occur here to Peter
+        LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment. Kind is " + kind,
+                  new Attachment("trace.txt", myTransactionStartTrace));
       }
-      // please assign exceptions that occur here to Peter
-      LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment. Kind is " + kind,
-                new Attachment("trace.txt", myTransactionStartTrace));
+      return AccessToken.EMPTY_ACCESS_TOKEN;
     }
     myTransactionStartTrace = DebugUtil.currentStackTrace();
     return new AccessToken() {
