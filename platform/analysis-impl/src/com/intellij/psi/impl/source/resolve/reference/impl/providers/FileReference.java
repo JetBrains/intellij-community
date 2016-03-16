@@ -457,20 +457,16 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       final FileReferenceHelper helper = FileReferenceHelperRegistrar.getNotNullHelper(file);
 
       final Collection<PsiFileSystemItem> contexts = getContextsForBindToElement(curVFile, project, helper);
-      switch (contexts.size()) {
-        case 0:
-          break;
-        default:
-          for (PsiFileSystemItem context : contexts) {
-            final VirtualFile contextFile = context.getVirtualFile();
-            assert contextFile != null;
-            if (VfsUtilCore.isAncestor(contextFile, dstVFile, true)) {
-              final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
-              if (path != null) {
-                return rename(path);
-              }
-            }
+
+      for (PsiFileSystemItem context : contexts) {
+        final VirtualFile contextFile = context.getVirtualFile();
+        assert contextFile != null;
+        if (VfsUtilCore.isAncestor(contextFile, dstVFile, true)) {
+          final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
+          if (path != null) {
+            return rename(path);
           }
+        }
       }
 
       PsiFileSystemItem dstItem = helper.getPsiFileSystemItem(project, dstVFile);
