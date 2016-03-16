@@ -1413,6 +1413,7 @@ public class GenericsHighlightUtil {
       }
 
       if (checkParameters) {
+        boolean isInLibrary = !index.isInContent(vFile);
         if (superType instanceof PsiClassType) {
           for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
             final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, true, resolveScope, factory);
@@ -1423,7 +1424,7 @@ public class GenericsHighlightUtil {
         }
 
         for (PsiClassType type : aClass.getSuperTypes()) {
-          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, true, resolveScope, factory);
+          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, !isInLibrary, resolveScope, factory);
           if (notAccessibleMessage != null) {
             return notAccessibleMessage;
           }
