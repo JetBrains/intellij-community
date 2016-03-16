@@ -38,12 +38,11 @@ import java.util.Map.Entry;
 
 public class ClassReference14Processor {
 
-  public final ExitExprent bodyexprent;
+  public static final ExitExprent bodyexprent;
 
-  public final ExitExprent handlerexprent;
+  public static final ExitExprent handlerexprent;
 
-
-  public ClassReference14Processor() {
+  static {
 
     InvocationExprent invfor = new InvocationExprent();
     invfor.setName("forName");
@@ -65,7 +64,7 @@ public class ClassReference14Processor {
     constr.setDescriptor(MethodDescriptor.parseDescriptor("()V"));
 
     NewExprent newexpr =
-      new NewExprent(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/NoClassDefFoundError"), new ArrayList<Exprent>(), null);
+      new NewExprent(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/NoClassDefFoundError"), new ArrayList<>(), null);
     newexpr.setConstructor(constr);
 
     InvocationExprent invcause = new InvocationExprent();
@@ -82,32 +81,13 @@ public class ClassReference14Processor {
                                      null, null);
   }
 
-
-  public void processClassReferences(ClassNode node) {
-
-    ClassWrapper wrapper = node.getWrapper();
-
-    //		int major_version = wrapper.getClassStruct().major_version;
-    //		int minor_version = wrapper.getClassStruct().minor_version;
-    //
-    //		if(major_version > 48 || (major_version == 48 && minor_version > 0)) {
-    //			// version 1.5 or above
-    //			return;
-    //		}
-
-    if (wrapper.getClassStruct().isVersionGE_1_5()) {
-      // version 1.5 or above
-      return;
-    }
-
+  public static void processClassReferences(ClassNode node) {
     // find the synthetic method Class class$(String) if present
     HashMap<ClassWrapper, MethodWrapper> mapClassMeths = new HashMap<ClassWrapper, MethodWrapper>();
     mapClassMethods(node, mapClassMeths);
-
     if (mapClassMeths.isEmpty()) {
       return;
     }
-
     HashSet<ClassWrapper> setFound = new HashSet<ClassWrapper>();
     processClassRec(node, mapClassMeths, setFound);
 
@@ -173,7 +153,7 @@ public class ClassReference14Processor {
     }
   }
 
-  private void mapClassMethods(ClassNode node, Map<ClassWrapper, MethodWrapper> map) {
+  private static void mapClassMethods(ClassNode node, Map<ClassWrapper, MethodWrapper> map) {
     boolean noSynthFlag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
 
     ClassWrapper wrapper = node.getWrapper();
