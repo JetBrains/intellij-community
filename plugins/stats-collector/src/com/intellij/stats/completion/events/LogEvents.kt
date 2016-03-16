@@ -33,8 +33,7 @@ object LogEventSerializer {
     )
 
     fun toString(event: LogEvent): String {
-        return "${event.timestamp} ${event.recorderId} ${event.userUid} ${event.sessionUid} " +
-                "${event.actionType} ${JsonSerializer.toJson(this)}"
+        return "${event.timestamp} ${event.recorderId} ${event.userUid} ${event.sessionUid} ${event.actionType} ${JsonSerializer.toJson(this)}"
     }
 
     fun fromString(line: String): LogEvent? {
