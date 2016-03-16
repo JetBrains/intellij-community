@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.options.SchemeExporter;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -36,16 +35,12 @@ public class CodeStyleSchemeCopyExporter extends SchemeExporter<CodeStyleScheme>
   @Override
   public void exportScheme(@NotNull final CodeStyleScheme scheme, @NotNull OutputStream outputStream) throws Exception {
     assert scheme instanceof CodeStyleSchemeImpl;
-    writeToStream(outputStream, schemeToDom((CodeStyleSchemeImpl)scheme));
+    writeToStream(outputStream, ((CodeStyleSchemeImpl)scheme).writeScheme());
   }
 
   @Override
   public String getExtension() {
     return "xml";
-  }
-
-  private static Element schemeToDom(@NotNull CodeStyleSchemeImpl scheme) throws WriteExternalException {
-    return scheme.writeScheme();
   }
 
   private static void writeToStream(@NotNull OutputStream outputStream, @NotNull Element element) throws IOException {
