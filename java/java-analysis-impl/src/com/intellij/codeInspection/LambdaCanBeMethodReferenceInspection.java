@@ -497,7 +497,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambdaExpression);
         final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(denotableFunctionalInterfaceType);
         PsiElement replace = lambdaExpression.replace(psiExpression);
-        final PsiType functionalTypeAfterReplacement = ((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType();
+        final PsiType functionalTypeAfterReplacement = GenericsUtil.getVariableTypeByExpressionType(((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType());
         functionalInterfaceType = typePointer.getType();
         if (functionalTypeAfterReplacement == null || functionalInterfaceType != null && !functionalTypeAfterReplacement.equals(functionalInterfaceType)) { //ambiguity
           final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(A)a", replace);
