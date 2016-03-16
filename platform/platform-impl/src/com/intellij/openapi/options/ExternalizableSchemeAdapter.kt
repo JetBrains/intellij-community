@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.options
 
+import org.jdom.Element
+import java.util.function.Function
+
 abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
   @JvmField
   protected var myName: String? = null
@@ -26,4 +29,12 @@ abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
   }
 
   override fun toString() = myName!!
+}
+
+interface SchemeDataHolder {
+  fun read(): Element
+}
+
+abstract class LazySchemeProcessor<T : ExternalizableScheme> : SchemeProcessor<T>() {
+  abstract fun createScheme(dataHolder: SchemeDataHolder, attributeProvider: Function<String, String?>, duringLoad: Boolean): T
 }

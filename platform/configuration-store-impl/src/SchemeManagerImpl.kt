@@ -44,10 +44,13 @@ import gnu.trove.THashSet
 import gnu.trove.TObjectObjectProcedure
 import org.jdom.Document
 import org.jdom.Element
+import org.xmlpull.mxp1.MXParser
+import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
+import java.util.function.Function
 
 class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: String,
                                                               private val processor: SchemeProcessor<E>,
@@ -337,65 +340,113 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
     return info != null && schemeExtension != info.fileExtension
   }
 
+  private class SchemeDataHolderImpl(private val bytes: ByteArray, private val externalInfo: ExternalInfo) : SchemeDataHolder {
+    override fun read(): Element {
+      val element = loadElement(bytes.inputStream().reader())
+      if (externalInfo.hash == 0) {
+        externalInfo.hash = JDOMUtil.getTreeHash(element, true)
+      }
+      return element
+    }
+  }
+
   private fun loadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): E? {
     try {
-      val element = loadElement(input)
-      @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-      val scheme = processor.readScheme(element, duringLoad) ?: return null
-
-      val extension = getFileExtension(fileName, false)
-      val fileNameWithoutExtension = fileName.subSequence(0, fileName.length - extension.length).toString()
-      if (duringLoad) {
-        if (filesToDelete.isNotEmpty() && filesToDelete.contains(fileName.toString())) {
-          LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
-          return null
-        }
-
-        val existingScheme = findSchemeByName(scheme.name)
-        if (existingScheme != null) {
-          if (existingScheme is ExternalizableScheme && isOverwriteOnLoad(existingScheme)) {
-            removeScheme(existingScheme)
-          }
-          else {
-            @Suppress("USELESS_CAST")
-            if (schemeExtension != extension && schemeToInfo[existingScheme as Scheme]?.fileNameWithoutExtension == fileNameWithoutExtension) {
-              // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
-              filesToDelete.add(fileName.toString())
-            }
-            else {
-              // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
-              // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
-              LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"${scheme.name}\"")
-            }
-            return null
-          }
-        }
-      }
-
-      var info: ExternalInfo? = schemeToInfo[scheme]
-      if (info == null) {
-        info = ExternalInfo(fileNameWithoutExtension, extension)
-        schemeToInfo.put(scheme, info)
-      }
-      else {
-        info.setFileNameWithoutExtension(fileNameWithoutExtension, extension)
-      }
-      info.hash = JDOMUtil.getTreeHash(element, true)
-      info.schemeName = scheme.name
-
-      @Suppress("UNCHECKED_CAST")
-      if (duringLoad) {
-        schemes.add(scheme as T)
-      }
-      else {
-        addScheme(scheme as T)
-      }
-      return scheme
+      return doLoadScheme(fileName, input, duringLoad)
     }
     catch (e: Throwable) {
       LOG.error("Cannot read scheme $fileName", e)
       return null
     }
+  }
+
+  private fun doLoadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): E? {
+    val extension = getFileExtension(fileName, false)
+    if (duringLoad && filesToDelete.isNotEmpty() && filesToDelete.contains(fileName.toString())) {
+      LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
+      return null
+    }
+
+    val fileNameWithoutExtension = fileName.subSequence(0, fileName.length - extension.length).toString()
+    fun checkExisting(schemeName: String): Boolean {
+      if (!duringLoad) {
+        return true
+      }
+
+      findSchemeByName(schemeName)?.let { existingScheme ->
+        if (existingScheme is ExternalizableScheme && isOverwriteOnLoad(existingScheme)) {
+          removeScheme(existingScheme)
+        }
+        else {
+          if (schemeExtension != extension && schemeToInfo.get(existingScheme as Scheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
+            // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
+            filesToDelete.add(fileName.toString())
+          }
+          else {
+            // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
+            // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
+            LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeName\"")
+          }
+          return false
+        }
+      }
+
+      return true
+    }
+
+    fun createInfo(schemeName: String, element: Element?): ExternalInfo {
+      val info = ExternalInfo(fileNameWithoutExtension, extension)
+      element?.let {
+        info.hash = JDOMUtil.getTreeHash(it, true)
+      }
+      info.schemeName = schemeName
+      return info
+    }
+
+    var scheme: E? = null
+    if (processor is LazySchemeProcessor) {
+      val bytes = input.readBytes()
+      val parser = MXParser()
+      parser.setInput(bytes.inputStream().reader())
+
+      var eventType = parser.eventType
+      read@ do {
+        when (eventType) {
+          XmlPullParser.START_TAG -> {
+            val schemeName = parser.getAttributeValue(null, "name")
+            if (!checkExisting(schemeName)) {
+              return null
+            }
+
+            val externalInfo = createInfo(schemeName, null)
+            scheme = processor.createScheme(SchemeDataHolderImpl(bytes, externalInfo), Function { parser.getAttributeValue(null, it) }, duringLoad)
+            schemeToInfo.put(scheme, externalInfo)
+            break@read
+          }
+        }
+        eventType = parser.next()
+      }
+      while (eventType != XmlPullParser.END_DOCUMENT)
+    }
+    else {
+      val element = loadElement(input)
+      scheme = processor.readScheme(element, duringLoad) ?: return null
+      val schemeName = scheme.name
+      if (!checkExisting(schemeName)) {
+        return null
+      }
+
+      schemeToInfo.put(scheme, createInfo(schemeName, element))
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    if (duringLoad) {
+      schemes.add(scheme as T)
+    }
+    else {
+      addScheme(scheme as T)
+    }
+    return scheme
   }
 
   private val ExternalizableScheme.fileName: String?

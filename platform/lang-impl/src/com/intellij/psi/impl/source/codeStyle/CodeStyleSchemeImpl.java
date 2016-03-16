@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
+import com.intellij.openapi.options.SchemeDataHolder;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -28,14 +29,14 @@ import org.jetbrains.annotations.Nullable;
 public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
-  private Element myRootElement;
+  private SchemeDataHolder myDataHolder;
   private String myParentSchemeName;
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
 
-  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, Element rootElement) {
+  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder dataHolder) {
     myName = name;
-    myRootElement = rootElement;
+    myDataHolder = dataHolder;
     myIsDefault = false;
     myParentSchemeName = parentSchemeName;
   }
@@ -70,22 +71,22 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
 
   @Override
   public CodeStyleSettings getCodeStyleSettings() {
-    if (myRootElement != null) {
-      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), myRootElement);
+    if (myDataHolder != null) {
+      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), myDataHolder.read());
       myParentSchemeName = null;
-      myRootElement = null;
+      myDataHolder = null;
     }
     return myCodeStyleSettings;
   }
 
   boolean isInitialized() {
-    return myRootElement == null;
+    return myDataHolder == null;
   }
 
   public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings){
     myCodeStyleSettings = codeStyleSettings;
     myParentSchemeName = null;
-    myRootElement = null;
+    myDataHolder = null;
   }
 
   @Override
@@ -95,14 +96,14 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
 
   @NotNull
   public Element writeScheme() throws WriteExternalException {
-    if (myRootElement == null) {
+    if (myDataHolder == null) {
       Element newElement = new Element("code_scheme");
       newElement.setAttribute("name", getName());
       myCodeStyleSettings.writeExternal(newElement);
       return newElement;
     }
     else {
-      return myRootElement;
+      return myDataHolder.read();
     }
   }
 }
