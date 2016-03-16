@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
@@ -92,26 +93,23 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     if (editor == null) return;
 
     final EditorActionHandler handler = getHandler();
-    Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
+    Runnable command = () -> handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
+
+    try (AccessToken ignored = handler.startTransaction(editor)) {
+      if (!handler.executeInCommand(editor, dataContext)) {
+        command.run();
+        return;
       }
-    };
 
-    if (!handler.executeInCommand(editor, dataContext)) {
-      command.run();
-      return;
+      String commandName = getTemplatePresentation().getText();
+      if (commandName == null) commandName = "";
+      CommandProcessor.getInstance().executeCommand(editor.getProject(),
+                                                    command,
+                                                    commandName,
+                                                    handler.getCommandGroupId(editor),
+                                                    UndoConfirmationPolicy.DEFAULT,
+                                                    editor.getDocument());
     }
-
-    String commandName = getTemplatePresentation().getText();
-    if (commandName == null) commandName = "";
-    CommandProcessor.getInstance().executeCommand(editor.getProject(),
-                                                  command,
-                                                  commandName,
-                                                  handler.getCommandGroupId(editor),
-                                                  UndoConfirmationPolicy.DEFAULT,
-                                                  editor.getDocument());
   }
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {

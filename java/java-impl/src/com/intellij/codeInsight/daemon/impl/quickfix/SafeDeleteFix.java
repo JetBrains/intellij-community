@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -30,6 +31,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@WrapInTransaction
 public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   public SafeDeleteFix(@NotNull PsiElement element) {
     super(element);

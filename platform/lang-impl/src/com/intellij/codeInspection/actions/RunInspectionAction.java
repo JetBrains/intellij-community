@@ -128,15 +128,16 @@ public class RunInspectionAction extends GotoActionBase {
       }
     }
 
+    final AnalysisUIOptions options = AnalysisUIOptions.getInstance(project);
     final FileFilterPanel fileFilterPanel = new FileFilterPanel();
-    fileFilterPanel.init();
+    fileFilterPanel.init(options);
 
     final AnalysisScope initialAnalysisScope = analysisScope;
     final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
       "Run '" + toolWrapper.getDisplayName() + "'",
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project, analysisScope, module != null ? module.getName() : null,
-      true, AnalysisUIOptions.getInstance(project), psiElement) {
+      true, options, psiElement) {
 
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {
@@ -159,7 +160,7 @@ public class RunInspectionAction extends GotoActionBase {
       }
 
       private AnalysisScope getScope() {
-        final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
+        final AnalysisUIOptions uiOptions = options;
         return getScope(uiOptions, initialAnalysisScope, project, module);
       }
 

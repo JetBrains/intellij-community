@@ -3,7 +3,7 @@ package com.intellij.openapi.application;
 import java.lang.annotation.*;
 
 /**
- * Add this annotation to actions (AnAction inheritors) to make them run inside a synchronous transaction.
+ * Add this annotation to actions (AnAction, IntentionAction or QuickFix inheritors) to make them run inside a synchronous transaction.
  *
  * @see TransactionGuard
  * @since 146.*

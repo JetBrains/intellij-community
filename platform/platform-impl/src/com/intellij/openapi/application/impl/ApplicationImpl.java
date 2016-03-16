@@ -1280,7 +1280,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void endWrite(/*@NotNull*/ Class clazz) {
     try {
       myWriteActionsStack.pop();
-      if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {
+      if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
         writePauses.finished("write action ("+clazz+")");
       }
       fireWriteActionFinished(clazz);

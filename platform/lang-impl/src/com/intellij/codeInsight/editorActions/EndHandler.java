@@ -21,6 +21,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -90,10 +92,9 @@ public class EndHandler extends EditorActionHandler {
           // documents). Hence, we check that and don't finish processing in case we have such a situation. AtomicBoolean is used
           // here just as a boolean value holder due to requirement to declare variable used from inner class as final.
           final AtomicBoolean stopProcessing = new AtomicBoolean(true);
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
+          TransactionGuard.syncTransaction(TransactionKind.TEXT_EDITING, () -> {
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
+            ApplicationManager.getApplication().runWriteAction(() -> {
               CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
               final String lineIndent = styleManager.getLineIndent(file, caretOffset);
               if (lineIndent != null) {
@@ -115,16 +116,7 @@ public class EndHandler extends EditorActionHandler {
 
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
               editor.getSelectionModel().removeSelection();
-            }
-
-            private int calcColumnNumber(final String lineIndent, final int tabSize) {
-              int result = 0;
-              for (char c : lineIndent.toCharArray()) {
-                if (c == ' ') result++;
-                if (c == '\t') result += tabSize;
-              }
-              return result;
-            }
+            });
           });
           if (stopProcessing.get()) {
             return;
@@ -137,4 +129,14 @@ public class EndHandler extends EditorActionHandler {
       myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
+
+  private int calcColumnNumber(final String lineIndent, final int tabSize) {
+    int result = 0;
+    for (char c : lineIndent.toCharArray()) {
+      if (c == ' ') result++;
+      if (c == '\t') result += tabSize;
+    }
+    return result;
+  }
+
 }

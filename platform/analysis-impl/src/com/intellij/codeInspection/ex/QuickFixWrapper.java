@@ -21,6 +21,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.openapi.application.TransactionKind;
+import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -93,6 +96,13 @@ public class QuickFixWrapper implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return getFix().startInWriteAction();
+  }
+
+  @Nullable
+  @Override
+  public TransactionKind getTransactionKind() {
+    WrapInTransaction annotation = getFix().getClass().getAnnotation(WrapInTransaction.class);
+    return annotation != null ? annotation.value() : startInWriteAction() ? TransactionKind.ANY_CHANGE : null;
   }
 
   public LocalQuickFix getFix() {

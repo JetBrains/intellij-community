@@ -246,11 +246,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  @NotNull
-  public VcsLogUi getLogUi() {
-    return myUi;
-  }
-
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
 
     @NotNull private final Computable<JComponent> myComponentCreator;

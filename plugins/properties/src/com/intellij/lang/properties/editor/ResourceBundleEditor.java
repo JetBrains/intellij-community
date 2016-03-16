@@ -64,6 +64,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -791,6 +792,27 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         }
       };
     }
+    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      for (Map.Entry<PropertiesFile, EditorEx> entry : myEditors.entrySet()) {
+        if (entry.getValue() == mySelectedEditor) {
+          final PropertiesFile file = entry.getKey();
+          final String name = getSelectedPropertyName();
+          if (name != null) {
+            final List<IProperty> properties = file.findPropertiesByKey(name);
+            if (properties.isEmpty()) {
+              return new Navigatable[]{entry.getKey().getContainingFile()};
+            } else {
+              return properties
+                .stream()
+                .map(IProperty::getPsiElement)
+                .map(PsiElement::getNavigationElement)
+                .filter(p -> p != null)
+                .toArray(Navigatable[]::new);
+            }
+          }
+        }
+      }
+    }
     return null;
   }
 
@@ -967,7 +989,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
           public void invokePopup(EditorMouseEvent event) {
             if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
               DefaultActionGroup group = new DefaultActionGroup();
-              group.copyFromGroup((DefaultActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
+              group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
+              group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
               group.addSeparator();
               group.add(new AnAction("Propagate Value Across of Resource Bundle") {
                 @Override

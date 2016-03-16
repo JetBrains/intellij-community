@@ -572,11 +572,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   }
 
   private class MyMouseAdapter extends MouseAdapter {
-    private final TableLinkMouseListener myLinkListener;
-
-    MyMouseAdapter() {
-      myLinkListener = new TableLinkMouseListener();
-    }
+    @NotNull private final TableLinkMouseListener myLinkListener = new TableLinkMouseListener();
 
     @Override
     public void mouseClicked(MouseEvent e) {
