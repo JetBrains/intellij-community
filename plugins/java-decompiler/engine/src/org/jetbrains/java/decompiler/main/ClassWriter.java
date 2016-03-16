@@ -388,12 +388,7 @@ public class ClassWriter {
     buffer.append('{').appendLineSeparator();
   }
 
-  private void fieldToJava(ClassWrapper wrapper,
-                           StructClass cl,
-                           StructField fd,
-                           TextBuffer buffer,
-                           int indent,
-                           BytecodeMappingTracer tracer) {
+  private void fieldToJava(ClassWrapper wrapper, StructClass cl, StructField fd, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
     int start = buffer.length();
     boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
     boolean isDeprecated = fd.getAttributes().containsKey("Deprecated");
@@ -680,8 +675,7 @@ public class ClassWriter {
             }
             else if (isEnum && init) actualParams -= 2;
             if (actualParams != descriptor.params.size()) {
-              String message =
-                "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
+              String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
               DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
               descriptor = null;
             }
@@ -743,8 +737,7 @@ public class ClassWriter {
             if (descriptor != null) {
               GenericType parameterType = descriptor.params.get(i);
 
-              boolean isVarArg =
-                (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
+              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
@@ -764,8 +757,7 @@ public class ClassWriter {
             else {
               VarType parameterType = md.params[i];
 
-              boolean isVarArg =
-                (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
+              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
@@ -995,7 +987,6 @@ public class ClassWriter {
   }
 
   private static final Map<Integer, String> MODIFIERS;
-
   static {
     MODIFIERS = new LinkedHashMap<>();
     MODIFIERS.put(CodeConstants.ACC_PUBLIC, "public");
@@ -1018,14 +1009,8 @@ public class ClassWriter {
     CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE | CodeConstants.ACC_STATIC |
     CodeConstants.ACC_FINAL | CodeConstants.ACC_TRANSIENT | CodeConstants.ACC_VOLATILE;
   private static final int METHOD_ALLOWED =
-    CodeConstants.ACC_PUBLIC |
-    CodeConstants.ACC_PROTECTED |
-    CodeConstants.ACC_PRIVATE |
-    CodeConstants.ACC_ABSTRACT |
-    CodeConstants.ACC_STATIC |
-    CodeConstants.ACC_FINAL |
-    CodeConstants.ACC_SYNCHRONIZED |
-    CodeConstants.ACC_NATIVE |
+    CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE | CodeConstants.ACC_ABSTRACT |
+    CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNCHRONIZED | CodeConstants.ACC_NATIVE |
     CodeConstants.ACC_STRICT;
 
   private static final int CLASS_EXCLUDED = CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_STATIC;

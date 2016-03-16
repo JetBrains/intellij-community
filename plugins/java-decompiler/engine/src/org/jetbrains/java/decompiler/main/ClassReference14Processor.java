@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,48 +37,39 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class ClassReference14Processor {
-
-  public static final ExitExprent bodyexprent;
-
-  public static final ExitExprent handlerexprent;
+  private static final ExitExprent BODY_EXPR;
+  private static final ExitExprent HANDLER_EXPR;
 
   static {
+    InvocationExprent invFor = new InvocationExprent();
+    invFor.setName("forName");
+    invFor.setClassname("java/lang/Class");
+    invFor.setStringDescriptor("(Ljava/lang/String;)Ljava/lang/Class;");
+    invFor.setDescriptor(MethodDescriptor.parseDescriptor("(Ljava/lang/String;)Ljava/lang/Class;"));
+    invFor.setStatic(true);
+    invFor.setLstParameters(Collections.singletonList(new VarExprent(0, VarType.VARTYPE_STRING, null)));
+    BODY_EXPR = new ExitExprent(ExitExprent.EXIT_RETURN, invFor, VarType.VARTYPE_CLASS, null);
 
-    InvocationExprent invfor = new InvocationExprent();
-    invfor.setName("forName");
-    invfor.setClassname("java/lang/Class");
-    invfor.setStringDescriptor("(Ljava/lang/String;)Ljava/lang/Class;");
-    invfor.setDescriptor(MethodDescriptor.parseDescriptor("(Ljava/lang/String;)Ljava/lang/Class;"));
-    invfor.setStatic(true);
-    invfor.setLstParameters(Arrays.asList(new Exprent[]{new VarExprent(0, VarType.VARTYPE_STRING, null)}));
+    InvocationExprent ctor = new InvocationExprent();
+    ctor.setName(CodeConstants.INIT_NAME);
+    ctor.setClassname("java/lang/NoClassDefFoundError");
+    ctor.setStringDescriptor("()V");
+    ctor.setFunctype(InvocationExprent.TYP_INIT);
+    ctor.setDescriptor(MethodDescriptor.parseDescriptor("()V"));
 
-    bodyexprent = new ExitExprent(ExitExprent.EXIT_RETURN,
-                                  invfor,
-                                  VarType.VARTYPE_CLASS, null);
+    NewExprent newExpr = new NewExprent(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/NoClassDefFoundError"), new ArrayList<>(), null);
+    newExpr.setConstructor(ctor);
 
-    InvocationExprent constr = new InvocationExprent();
-    constr.setName(CodeConstants.INIT_NAME);
-    constr.setClassname("java/lang/NoClassDefFoundError");
-    constr.setStringDescriptor("()V");
-    constr.setFunctype(InvocationExprent.TYP_INIT);
-    constr.setDescriptor(MethodDescriptor.parseDescriptor("()V"));
+    InvocationExprent invCause = new InvocationExprent();
+    invCause.setName("initCause");
+    invCause.setClassname("java/lang/NoClassDefFoundError");
+    invCause.setStringDescriptor("(Ljava/lang/Throwable;)Ljava/lang/Throwable;");
+    invCause.setDescriptor(MethodDescriptor.parseDescriptor("(Ljava/lang/Throwable;)Ljava/lang/Throwable;"));
+    invCause.setInstance(newExpr);
+    invCause.setLstParameters(
+      Collections.singletonList(new VarExprent(2, new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"), null)));
 
-    NewExprent newexpr =
-      new NewExprent(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/NoClassDefFoundError"), new ArrayList<>(), null);
-    newexpr.setConstructor(constr);
-
-    InvocationExprent invcause = new InvocationExprent();
-    invcause.setName("initCause");
-    invcause.setClassname("java/lang/NoClassDefFoundError");
-    invcause.setStringDescriptor("(Ljava/lang/Throwable;)Ljava/lang/Throwable;");
-    invcause.setDescriptor(MethodDescriptor.parseDescriptor("(Ljava/lang/Throwable;)Ljava/lang/Throwable;"));
-    invcause.setInstance(newexpr);
-    invcause.setLstParameters(
-      Arrays.asList(new Exprent[]{new VarExprent(2, new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"), null)}));
-
-    handlerexprent = new ExitExprent(ExitExprent.EXIT_THROW,
-                                     invcause,
-                                     null, null);
+    HANDLER_EXPR = new ExitExprent(ExitExprent.EXIT_THROW, invCause, null, null);
   }
 
   public static void processClassReferences(ClassNode node) {
@@ -176,8 +167,8 @@ public class ClassReference14Processor {
             BasicBlockStatement handler = (BasicBlockStatement)cst.getStats().get(1);
 
             if (body.getExprents().size() == 1 && handler.getExprents().size() == 1) {
-              if (bodyexprent.equals(body.getExprents().get(0)) &&
-                  handlerexprent.equals(handler.getExprents().get(0))) {
+              if (BODY_EXPR.equals(body.getExprents().get(0)) &&
+                  HANDLER_EXPR.equals(handler.getExprents().get(0))) {
                 map.put(wrapper, method);
                 break;
               }
