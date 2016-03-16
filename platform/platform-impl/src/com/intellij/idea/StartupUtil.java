@@ -32,6 +32,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -153,21 +154,18 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
-      if (!PrivacyPolicy.isLatestVersionAccepted()) {
-        final PrivacyPolicy.Version latestVersion = PrivacyPolicy.getLatestVersion();
-        final String text = PrivacyPolicy.getText(latestVersion);
-        if (!text.isEmpty()) {
-          try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                showPrivacyPolicyAgreement(text);
-              }
-            });
-            PrivacyPolicy.setVersionAccepted(latestVersion);
-          }
-          catch (Exception ignored) {
-          }
+      final Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
+      if (!PrivacyPolicy.isVersionAccepted(policy.getFirst())) {
+        try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              showPrivacyPolicyAgreement(policy.getSecond());
+            }
+          });
+          PrivacyPolicy.setVersionAccepted(policy.getFirst());
+        }
+        catch (Exception ignored) {
         }
       }
     }
