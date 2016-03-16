@@ -33,7 +33,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.VcsLogRefresher;
+import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogFiltererImpl;
+import com.intellij.vcs.log.data.VcsLogTabsProperties;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -59,6 +63,7 @@ public class VcsLogManager implements Disposable {
   private VcsLogDataManager myDataManager;
   private VcsLogColorManagerImpl myColorManager;
   private VcsLogTabsRefresher myTabsLogRefresher;
+  private PostponableLogRefresher myPostponableRefresher;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
@@ -74,40 +79,12 @@ public class VcsLogManager implements Disposable {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
-  public void watchTab(@NotNull final String contentTabName, @NotNull VcsLogUiImpl logUi) {
-    myTabsLogRefresher.addTabToWatch(contentTabName, logUi.getFilterer());
-    Disposer.register(logUi, new Disposable() {
-      @Override
-      public void dispose() {
-        unwatchTab(contentTabName);
-      }
-    });
+  public void watchTab(@NotNull String contentTabName, @NotNull VcsLogUiImpl logUi) {
+    Disposer.register(logUi, myTabsLogRefresher.addTabToWatch(contentTabName, logUi.getFilterer()));
   }
 
-  public void unwatchTab(@NotNull String contentTabName) {
-    if (myTabsLogRefresher != null) myTabsLogRefresher.removeTabFromWatch(contentTabName);
-  }
-
-  private void watch(@NotNull final VcsLogUiImpl ui) {
-    final DataPackChangeListener listener = new DataPackChangeListener() {
-      @Override
-      public void onDataPackChange(@NotNull DataPack dataPack) {
-        ui.getFilterer().onRefresh();
-      }
-    };
-    myDataManager.addDataPackChangeListener(listener);
-    Disposer.register(ui, new Disposable() {
-      @Override
-      public void dispose() {
-        myDataManager.removeDataPackChangeListener(listener);
-      }
-    });
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ui.getFilterer().onRefresh();
-      }
-    });
+  private void watch(@NotNull VcsLogUiImpl ui) {
+    Disposer.register(ui, myPostponableRefresher.addLogWindow(ui.getFilterer()));
   }
 
   @NotNull
@@ -138,9 +115,10 @@ public class VcsLogManager implements Disposable {
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(getVcsRoots(), myProject);
     myDataManager = new VcsLogDataManager(myProject, logProviders, new MyFatalErrorsConsumer());
-    myTabsLogRefresher = new VcsLogTabsRefresher(myProject, myDataManager);
+    myPostponableRefresher = new PostponableLogRefresher(myDataManager);
+    myTabsLogRefresher = new VcsLogTabsRefresher(myProject, myPostponableRefresher, myDataManager);
 
-    refreshLogOnVcsEvents(logProviders, myTabsLogRefresher);
+    refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myDataManager);
 
     myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
 
@@ -149,7 +127,8 @@ public class VcsLogManager implements Disposable {
   }
 
   private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                                            @NotNull VcsLogTabsRefresher refresher) {
+                                            @NotNull VcsLogRefresher refresher,
+                                            @NotNull Disposable disposableParent) {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
       providers2roots.putValue(entry.getValue(), entry.getKey());
@@ -157,7 +136,7 @@ public class VcsLogManager implements Disposable {
 
     for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
       Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
-      Disposer.register(refresher, disposable);
+      Disposer.register(disposableParent, disposable);
     }
   }
 
@@ -200,6 +179,7 @@ public class VcsLogManager implements Disposable {
 
     myDataManager = null;
     myTabsLogRefresher = null;
+    myPostponableRefresher = null;
     myColorManager = null;
     myUi = null;
   }

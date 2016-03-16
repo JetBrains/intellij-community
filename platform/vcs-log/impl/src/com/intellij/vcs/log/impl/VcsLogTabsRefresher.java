@@ -16,13 +16,10 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -33,111 +30,33 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackChangeListener;
-import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogFilterer;
+import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
-public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
+public class VcsLogTabsRefresher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
 
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final PostponableLogRefresher myRefresher;
+
   @NotNull private final ToolWindowManagerImpl myToolWindowManager;
   @NotNull private final ToolWindowImpl myToolWindow;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
 
-  @NotNull private final Map<String, VcsLogFilterer> myTabToFiltererMap = ContainerUtil.newHashMap();
-  @NotNull private final Set<VirtualFile> myRootsToRefresh = ContainerUtil.newHashSet();
-
-  public VcsLogTabsRefresher(@NotNull Project project, @NotNull VcsLogDataManager dataManager) {
-    myDataManager = dataManager;
+  public VcsLogTabsRefresher(@NotNull Project project, @NotNull PostponableLogRefresher refresher, @NotNull Disposable parentDisposable) {
+    myRefresher = refresher;
     myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
     myToolWindow = ObjectUtils.assertNotNull((ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID));
-
-    Disposer.register(dataManager, this);
 
     myPostponedEventsListener = new MyRefreshPostponedEventsListener();
     myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
     myToolWindowManager.addToolWindowManagerListener(myPostponedEventsListener);
 
-    myDataManager.addDataPackChangeListener(new DataPackChangeListener() {
-      @Override
-      public void onDataPackChange(@NotNull DataPack dataPack) {
-        for (Map.Entry<String, VcsLogFilterer> tabAndFilterer : myTabToFiltererMap.entrySet()) {
-          dataPackArrived(tabAndFilterer.getValue(), isTabVisible(tabAndFilterer.getKey()));
-        }
-      }
-    });
-  }
-
-  private void tabActivated(@NotNull VcsLogFilterer filterer, boolean firstTime) {
-    if (!myRootsToRefresh.isEmpty()) {
-      refreshPostponedRoots();
-    }
-    else {
-      if (!filterer.isValid() || firstTime) {
-        filterer.onRefresh();
-      }
-    }
-  }
-
-  private static void dataPackArrived(@NotNull VcsLogFilterer filterer, boolean visible) {
-    if (visible) {
-      filterer.onRefresh();
-    }
-    else {
-      filterer.invalidate();
-    }
-  }
-
-  @Override
-  public void refresh(@NotNull final VirtualFile root) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (canRefreshNow()) {
-          myDataManager.refresh(Collections.singleton(root));
-        }
-        else {
-          myRootsToRefresh.add(root);
-        }
-      }
-    }, ModalityState.any());
-  }
-
-  private void refreshPostponedRoots() {
-    Set<VirtualFile> toRefresh = new HashSet<VirtualFile>(myRootsToRefresh);
-    myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
-    myDataManager.refresh(toRefresh);
-  }
-
-  private static boolean keepUpToDate() {
-    return Registry.is("vcs.log.keep.up.to.date");
-  }
-
-  private boolean canRefreshNow() {
-    return isOneOfTabsVisible(myTabToFiltererMap.keySet()) || keepUpToDate();
-  }
-
-  protected boolean isTabVisible(@NotNull String tab) {
-    return isOneOfTabsVisible(Collections.singleton(tab));
-  }
-
-  private boolean isOneOfTabsVisible(@NotNull Set<String> tabs) {
-    if (tabs.isEmpty()) return true;
-    // probably, each log ui should determine where it is located (not necessarily in Log window tool tabs) and when it is visible
-    String selectedTab = getSelectedTabName();
-    return selectedTab != null && tabs.contains(selectedTab);
+    Disposer.register(parentDisposable, this);
   }
 
   @Nullable
@@ -151,13 +70,9 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     return null;
   }
 
-  public void addTabToWatch(@NotNull String contentTabName, @NotNull VcsLogFilterer filterer) {
-    myTabToFiltererMap.put(contentTabName, filterer);
-    tabActivated(filterer, true);
-  }
-
-  public void removeTabFromWatch(@NotNull String contentTabName) {
-    myTabToFiltererMap.remove(contentTabName);
+  @NotNull
+  public Disposable addTabToWatch(@NotNull String contentTabName, @NotNull VcsLogFilterer filterer) {
+    return myRefresher.addLogWindow(new VcsLogTab(filterer, contentTabName));
   }
 
   @Override
@@ -172,6 +87,21 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     }
   }
 
+  public class VcsLogTab extends PostponableLogRefresher.VcsLogWindow {
+    @NotNull private final String myTabName;
+
+    public VcsLogTab(@NotNull VcsLogFilterer filterer, @NotNull String tabName) {
+      super(filterer);
+      myTabName = tabName;
+    }
+
+    @Override
+    public boolean isVisible() {
+      String selectedTab = getSelectedTabName();
+      return selectedTab != null && myTabName.equals(selectedTab);
+    }
+  }
+
   private class MyRefreshPostponedEventsListener extends ContentManagerAdapter
     implements ToolWindowManagerListener, PropertyChangeListener {
 
@@ -183,9 +113,14 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     }
 
     private void selectionChanged(String tabName) {
-      VcsLogFilterer filterer = myTabToFiltererMap.get(tabName);
-      if (filterer != null) {
-        tabActivated(filterer, false);
+      VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(), new Condition<VcsLogWindow>() {
+        @Override
+        public boolean value(VcsLogWindow window) {
+          return window instanceof VcsLogTab && ((VcsLogTab)window).myTabName.equals(tabName);
+        }
+      });
+      if (logWindow != null) {
+        myRefresher.filtererActivated(logWindow.getFilterer(), false);
       }
     }
 
