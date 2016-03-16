@@ -62,6 +62,10 @@ public final class PsiUtil extends PsiUtilCore {
   public static final int ACCESS_LEVEL_PRIVATE = 1;
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
 
+  private static final Set<String> IGNORED_NAMES = ContainerUtil.newTroveSet(
+    "ignore", "ignore1", "ignore2", "ignore3", "ignore4", "ignore5",
+    "ignored", "ignored1", "ignored2", "ignored3", "ignored4", "ignored5");
+
   private PsiUtil() {}
 
   public static boolean isOnAssignmentLeftHand(@NotNull PsiExpression expr) {
@@ -1098,8 +1102,8 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiParameter && element.getParent() instanceof PsiCatchSection;
   }
 
-  public static boolean isIgnoredName(@Nullable final String name) {
-    return "ignore".equals(name) || "ignored".equals(name);
+  public static boolean isIgnoredName(@Nullable String name) {
+    return name != null && IGNORED_NAMES.contains(name);
   }
 
   @Nullable
