@@ -271,6 +271,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (parent instanceof PsiMethod) {
         return ((PsiMethod)parent).isConstructor() || PsiType.VOID.equals(((PsiMethod)parent).getReturnType());
       }
+      if (parent instanceof PsiLambdaExpression) {
+        PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+        return method != null && PsiType.VOID.equals(method.getReturnType());
+      }
     }
     return false;
   }

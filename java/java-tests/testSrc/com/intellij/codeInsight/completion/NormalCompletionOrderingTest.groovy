@@ -442,6 +442,9 @@ interface TxANotAnno {}
   public void testDispreferReturnInVoidMethodTopLevel() {
     checkPreferredItems 0, 'reaction', 'rezet', 'return'
   }
+  public void testDispreferReturnInVoidLambda() {
+    checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
 
   public void testDoNotPreferGetClass() {
     checkPreferredItems 0, 'get', 'getClass'
