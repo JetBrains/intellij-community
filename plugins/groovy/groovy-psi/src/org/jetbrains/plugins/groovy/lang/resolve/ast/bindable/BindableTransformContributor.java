@@ -20,21 +20,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import groovy.beans.Bindable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 
-import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.List;
 
 public class BindableTransformContributor extends AstTransformContributor {
 
-  private static final String BINDABLE_FQN = Bindable.class.getName();
-  private static final String PCL_FQN = PropertyChangeListener.class.getName();
+  private static final String BINDABLE_FQN = "groovy.beans.Bindable";
+  private static final String PCL_FQN = "java.beans.PropertyChangeListener";
   public static final String ORIGIN_INFO = "via @Bindable";
 
   private static boolean isApplicable(@NotNull GrTypeDefinition clazz) {

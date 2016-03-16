@@ -30,16 +30,19 @@ class SetupRule implements TestRule {
 
   @Override
   Statement apply(Statement base, Description description) {
-    return {
-      testCase.setUp()
-      try {
-        EdtTestUtil.runInEdtAndWait {
-          base.evaluate()
+    new Statement() {
+      @Override
+      void evaluate() throws Throwable {
+        testCase.setUp()
+        try {
+          EdtTestUtil.runInEdtAndWait {
+            base.evaluate()
+          }
+        }
+        finally {
+          testCase.tearDown()
         }
       }
-      finally {
-        testCase.tearDown()
-      }
-    } as Statement
+    }
   }
 }
