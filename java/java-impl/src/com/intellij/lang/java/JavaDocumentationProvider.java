@@ -27,9 +27,9 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProviderEx;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -620,6 +620,9 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   // this method is closely related to hasUrlFor, both should be updated in sync
   @Nullable
   public static List<String> getExternalJavaDocUrl(final PsiElement element) {
+    // this method can be slow, as it can perform IO (potentially via network), so it shouldn't be invoked on EDT 
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    
     List<String> urls = null;
 
     if (element instanceof PsiClass) {
@@ -680,7 +683,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   }
   
   // this method is closely related to getExternalJavaDocUrl, both should be updated in sync
-  private static boolean hasUrlFor(PsiElement element) {
+  public static boolean hasUrlFor(PsiElement element) {
     if (element instanceof PsiClass) {
       ClassInfo info = findUrlForClass((PsiClass)element);
       return info != null;
