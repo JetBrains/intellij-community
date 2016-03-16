@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,25 +69,17 @@ public class BulkDecompilationTest {
   }
 
   private static void unpack(File archive, File targetDir) {
-    try {
-      ZipFile zip = new ZipFile(archive);
-      try {
-        Enumeration<? extends ZipEntry> entries = zip.entries();
-        while (entries.hasMoreElements()) {
-          ZipEntry entry = entries.nextElement();
-          if (!entry.isDirectory()) {
-            File file = new File(targetDir, entry.getName());
-            assertTrue(file.getParentFile().mkdirs() || file.getParentFile().isDirectory());
-            InputStream in = zip.getInputStream(entry);
-            OutputStream out = new FileOutputStream(file);
+    try (ZipFile zip = new ZipFile(archive)) {
+      Enumeration<? extends ZipEntry> entries = zip.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        if (!entry.isDirectory()) {
+          File file = new File(targetDir, entry.getName());
+          assertTrue(file.getParentFile().mkdirs() || file.getParentFile().isDirectory());
+          try (InputStream in = zip.getInputStream(entry); OutputStream out = new FileOutputStream(file)) {
             InterpreterUtil.copyStream(in, out);
-            out.close();
-            in.close();
           }
         }
-      }
-      finally {
-        zip.close();
       }
     }
     catch (IOException e) {

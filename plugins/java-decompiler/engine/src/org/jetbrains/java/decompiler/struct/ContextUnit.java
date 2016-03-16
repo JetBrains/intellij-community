@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,12 +78,8 @@ public class ContextUnit {
       String oldName = cl.qualifiedName;
 
       StructClass newCl;
-      DataInputFullStream in = loader.getClassStream(oldName);
-      try {
+      try (DataInputFullStream in = loader.getClassStream(oldName)) {
         newCl = new StructClass(in, cl.isOwn(), loader);
-      }
-      finally {
-        in.close();
       }
 
       lstClasses.add(newCl);
