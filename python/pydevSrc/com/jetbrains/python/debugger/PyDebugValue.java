@@ -133,15 +133,30 @@ public class PyDebugValue extends XNamedValue {
     return "__len__".equals(name);
   }
 
+  private static boolean isCollection(@NotNull PyDebugValue parent) {
+    String type = parent.getType();
+    return type.equals("dict") || type.equals("list");
+  }
+
+  private static String getChildNamePresentation(@NotNull PyDebugValue parent, @NotNull String childName) {
+    if (isCollection(parent)) {
+      return "[".concat(removeId(childName)).concat("]");
+    }
+    else {
+      return ".".concat(childName);
+    }
+  }
+
   private String getFullName() {
-    String result = myName;
+    String result = "";
+    String curNodeName = myName;
     PyDebugValue parent = myParent;
     while (parent != null) {
-      result = "." + result;
-      result = parent.getName() + result;
+      result = getChildNamePresentation(parent, curNodeName).concat(result);
+      curNodeName = parent.getName();
       parent = parent.getParent();
     }
-    return result;
+    return curNodeName.concat(result);
   }
 
   @Override
