@@ -91,7 +91,11 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     }
 
     if (!projectFileIndex.isInLibrarySource(vFile) && !projectFileIndex.isInLibraryClasses(vFile)) {
-      return GlobalSearchScope.allScope(myProject);
+      GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
+      if (!allScope.contains(vFile)) {
+        return GlobalSearchScope.fileScope(myProject, vFile).uniteWith(allScope);
+      }
+      return allScope;
     }
     
     return LibraryScopeCache.getInstance(myProject).getLibraryScope(projectFileIndex.getOrderEntriesForFile(vFile));
