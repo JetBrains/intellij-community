@@ -107,7 +107,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       final boolean isVIM = PluginGroups.IDEA_VIM_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
 
       JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + title + "</h2></body></html>");
-      JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;\">" + topic + "</h4></body></html>");
+      JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;color:#808080;font-weight:bold;\">" + topic + "</h4></body></html>");
 
       JLabel descriptionLabel = createHTMLLabel(description);
       JLabel warningLabel = null;
@@ -234,6 +234,8 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
           indicator.cancel();
         }
       }, null);
+      gbc.insets.left = installButton.getInsets().left / 2;
+      gbc.insets.right = installButton.getInsets().right / 2;
       gbc.insets.bottom = -5;
       groupPanel.add(titleLabel, gbc);
       gbc.insets.bottom = SMALL_GAP;
@@ -245,6 +247,8 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       if (warningLabel != null) {
         Insets insetsBefore = gbc.insets;
         gbc.insets = new Insets(0, -10, SMALL_GAP, -10);
+        gbc.insets.left += insetsBefore.left;
+        gbc.insets.right += insetsBefore.right;
         JPanel warningPanel = new JPanel(new BorderLayout());
         warningPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
         warningPanel.add(warningLabel);
@@ -253,7 +257,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
         gbc.insets = insetsBefore;
       }
 
-      gbc.insets.bottom = 0;
+      gbc.insets.bottom = gbc.insets.left = gbc.insets.right = 0;
       groupPanel.add(buttonWrapper, gbc);
       gridPanel.add(groupPanel);
     }
