@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.util.EnumSet;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author Eugene Zhuravlev
@@ -52,7 +52,7 @@ public class ProblemsViewImpl extends ProblemsView{
   private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS = EnumSet.allOf(ErrorTreeElementKind.class);
 
   private final ProblemsViewPanel myPanel;
-  private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final ExecutorService myViewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
   private final Icon myActiveIcon = AllIcons.Toolwindows.Problems;
   private final Icon myPassiveIcon = IconLoader.getDisabledIcon(myActiveIcon);
 
