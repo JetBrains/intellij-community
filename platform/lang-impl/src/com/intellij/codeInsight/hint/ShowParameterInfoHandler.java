@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.LanguageParameterInfo;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -65,13 +66,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final PsiElement psiElement = findAnyElementAt(file, offset);
     if (psiElement == null) return;
 
-    final ShowParameterInfoContext context = new ShowParameterInfoContext(
-      editor,
-      project,
-      file,
-      offset,
-      lbraceOffset
-    );
+    final CreateParameterInfoContext context = ShowParameterInfoContextFactory
+      .SERVICE.getInstance().createShowParameterInfoContext(project, editor, file, lbraceOffset, offset);
 
     context.setHighlightedElement(highlightedElement);
 
