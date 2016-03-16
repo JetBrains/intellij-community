@@ -44,27 +44,31 @@ public class PlatformDocumentationUtil {
     for (String root : roots) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);
       if (virtualFile != null) {
-        if (virtualFile.getFileSystem() instanceof HttpFileSystem) {
-          String url = virtualFile.getUrl();
-          if (url.toLowerCase(Locale.getDefault()).endsWith("/index.html")) {
-            url = url.substring(0, url.length() - 10);
-          }
-          else if (!url.endsWith("/")) {
-            url += "/";
-          }
-          result.add(url + relPath);
-        }
-        else {
-          VirtualFile file = virtualFile.findFileByRelativePath(relPath);
-          if (file != null) {
-            result.add(file.getUrl());
-          }
-        }
+        String url = getDocUrl(virtualFile, relPath);
+        if (url != null) result.add(url);
       }
     }
 
     return result.isEmpty() ? null : result;
   }
+  
+  @Nullable
+  public static String getDocUrl(@NotNull VirtualFile root, String relPath) {
+    if (root.getFileSystem() instanceof HttpFileSystem) {
+      String url = root.getUrl();
+      if (url.toLowerCase(Locale.getDefault()).endsWith("/index.html")) {
+        url = url.substring(0, url.length() - 10);
+      }
+      else if (!url.endsWith("/")) {
+        url += "/";
+      }
+      return url + relPath;
+    }
+    else {
+      VirtualFile file = root.findFileByRelativePath(relPath);
+      return file == null ? null : file.getUrl();
+    }
+  } 
 
   private static String quote(String x) {
     if (ourToQuote.matcher(x).find()) {
