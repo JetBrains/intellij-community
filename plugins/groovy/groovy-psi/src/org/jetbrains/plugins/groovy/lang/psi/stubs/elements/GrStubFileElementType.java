@@ -19,17 +19,13 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
-import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.hierarchy.GrStubIndexer;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex;
@@ -105,10 +101,10 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       sink.occurrence(GrAnnotatedMemberIndex.KEY, anno);
     }
 
-    Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
-    if (fileId == null) return;
-    IndexTree.Unit unit = GrStubIndexer.translate(fileId, stub);
-    sink.occurrence(JavaStubIndexKeys.UNITS, unit);
+    //Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
+    //if (fileId == null) return;
+    //IndexTree.Unit unit = GrStubIndexer.translate(fileId, stub);
+    //sink.occurrence(JavaStubIndexKeys.UNITS, unit);
   }
 
 }
