@@ -125,6 +125,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   @NotNull private final EditorFragmentRenderer myEditorFragmentRenderer;
   private int myRowAdjuster = 0;
   private int myWheelAccumulator = 0;
+  private int myLastVisualLine = 0;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -188,6 +189,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                               e.isPopupTrigger());
 
     final int visualLine = getVisualLineByEvent(e);
+    myLastVisualLine = visualLine;
     Rectangle area = myEditor.getScrollingModel().getVisibleArea();
     int visualY = myEditor.getLineHeight() * visualLine;
     boolean isVisible = area.contains(area.x, visualY) && myWheelAccumulator == 0;
@@ -934,8 +936,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     public void mouseWheelMoved(@NotNull MouseWheelEvent e) {
       if (myEditorPreviewHint == null) return;
-      myWheelAccumulator += e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
-                            e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
+      int inc = e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
+              e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
+      // Stop accumulating when the last or the first line has been reached as 'adjusted' position to show lens.
+      if ((myLastVisualLine < myEditor.getVisibleLineCount() - 1 && inc > 0) || (myLastVisualLine > 0 && inc < 0)) {
+        myWheelAccumulator += inc;
+      }
       myRowAdjuster = myWheelAccumulator / myEditor.getLineHeight();
       showToolTipByMouseMove(e);
     }
@@ -975,6 +981,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myEditorPreviewHint = null;
         myRowAdjuster = 0;
         myWheelAccumulator = 0;
+        myLastVisualLine = 0;
       }
     }
 
