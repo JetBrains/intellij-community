@@ -12,7 +12,15 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="educational-core" />
-    <orderEntry type="library" name="twitter4j-core-4.0.4" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/twitter4j-core-4.0.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
