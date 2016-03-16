@@ -109,7 +109,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + title + "</h2></body></html>");
       JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;\">" + topic + "</h4></body></html>");
 
-      JLabel descriptionLabel = createHTMLLabel("<i>" + description + "</i>");
+      JLabel descriptionLabel = createHTMLLabel(description);
       JLabel warningLabel = null;
       if (isVIM) {
         warningLabel = createHTMLLabel("Recommended only if you are<br> familiar with Vim.");
