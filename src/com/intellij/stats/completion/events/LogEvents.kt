@@ -4,20 +4,70 @@ import com.google.gson.Gson
 import com.intellij.stats.completion.Action
 import java.util.*
 
-object Serializer {
+object JsonSerializer {
     private val gson = Gson()
     fun toJson(obj: Any) = gson.toJson(obj)
+    fun <T> fromJson(json: String, clazz: Class<T>) = gson.fromJson(json, clazz)
 }
 
-abstract class LogEvent(val userUid: String, val type: Action) {
-    @Transient val recorderId = 0
-    @Transient val timestamp = System.currentTimeMillis()
-    @Transient val sessionUid: String = UUID.randomUUID().toString()
-    @Transient val actionType: Action = type
+abstract class LogEvent(var userUid: String, type: Action) {
+    @Transient var recorderId = "completion-stats"
+    @Transient var timestamp = System.currentTimeMillis()
+    @Transient var sessionUid: String = UUID.randomUUID().toString()
+    @Transient var actionType: Action = type
+}
 
-    open fun serializeEventData() = Serializer.toJson(this)
 
-    fun toLogLine(): String = "$timestamp $recorderId $userUid $sessionUid $actionType ${serializeEventData()}"
+object LogEventSerializer {
+
+    val actionClassMap: Map<Action, Class<out LogEvent>> = mapOf(
+            Pair(Action.COMPLETION_STARTED, CompletionStartedEvent::class.java),
+            Pair(Action.TYPE, CompletionStartedEvent::class.java),
+            Pair(Action.DOWN, CompletionStartedEvent::class.java),
+            Pair(Action.UP, CompletionStartedEvent::class.java),
+            Pair(Action.BACKSPACE, CompletionStartedEvent::class.java),
+            Pair(Action.COMPLETION_CANCELED, CompletionStartedEvent::class.java),
+            Pair(Action.CUSTOM, CompletionStartedEvent::class.java),
+            Pair(Action.EXPLICIT_SELECT, CompletionStartedEvent::class.java),
+            Pair(Action.TYPED_SELECT, CompletionStartedEvent::class.java)
+    )
+
+    fun toString(event: LogEvent): String {
+        return "${event.timestamp} ${event.recorderId} ${event.userUid} ${event.sessionUid} " +
+                "${event.actionType} ${JsonSerializer.toJson(this)}"
+    }
+
+    fun fromString(line: String): LogEvent? {
+        val items = mutableListOf<String>()
+
+        var start = -1
+        for (i in 0..4) {
+            val nextSpace = line.indexOf(' ', start + 1)
+            val newItem = line.substring(start + 1, nextSpace)
+            items.add(newItem)
+            start = nextSpace
+        }
+
+        val timestamp = items[0].toLong()
+        val recorderId = items[1]
+        val userUid = items[2]
+        val sessionUid = items[3]
+        val actionType = Action.valueOf(items[4])
+
+        val clazz = actionClassMap[actionType] ?: return null
+
+        val json = line.substring(start + 1)
+        val obj = JsonSerializer.fromJson(json, clazz)
+
+        obj.userUid = userUid
+        obj.timestamp = timestamp
+        obj.recorderId = recorderId
+        obj.sessionUid = sessionUid
+        obj.actionType = actionType
+
+        return obj
+    }
+
 }
 
 
