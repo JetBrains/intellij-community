@@ -393,7 +393,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
     for (PsiElement e = startPoint; e != null; e = e.getParent()) {
       if (e instanceof PsiDocCommentOwner) {
-        return Pair.<PsiElement, PsiComment>create(e, ((PsiDocCommentOwner)e).getDocComment());
+        return Pair.create(e, ((PsiDocCommentOwner)e).getDocComment());
       }
     }
     return null;
