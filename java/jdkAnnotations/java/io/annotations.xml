@@ -206,9 +206,6 @@
   <item name='java.io.FileWriter FileWriter(java.lang.String, boolean) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.io.FilterInputStream FilterInputStream(java.io.InputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
   <item name="java.io.FilterInputStream int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
