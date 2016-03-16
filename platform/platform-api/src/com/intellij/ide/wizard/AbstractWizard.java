@@ -478,7 +478,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   public void updateWizardButtons() {
-    if (!mySteps.isEmpty())
+    if (!mySteps.isEmpty() && getRootPane() != null)
       updateButtons();
   }
 
