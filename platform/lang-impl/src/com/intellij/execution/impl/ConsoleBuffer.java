@@ -110,6 +110,8 @@ public class ConsoleBuffer {
   private final List<TokenInfo> myDeferredTokens = new ArrayList<TokenInfo>();
   private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
 
+  private boolean myKeepSlashR = true;
+
   public ConsoleBuffer() {
     this(useCycleBuffer(), getCycleBufferSize(), DEFAULT_CYCLIC_BUFFER_UNIT_SIZE);
   }
@@ -142,6 +144,10 @@ public class ConsoleBuffer {
 
   public int getCyclicBufferSize() {
     return myCyclicBufferSize;
+  }
+
+  void setKeepSlashR(boolean keep) {
+    myKeepSlashR = keep;
   }
 
   public boolean isEmpty() {
@@ -286,7 +292,7 @@ public class ConsoleBuffer {
 
     myDeferredTypes.add(contentType);
 
-    s = StringUtil.convertLineSeparators(s, true);
+    s = StringUtil.convertLineSeparators(s, myKeepSlashR);
 
     myDeferredOutputLength += s.length();
     StringBuilder bufferToUse;

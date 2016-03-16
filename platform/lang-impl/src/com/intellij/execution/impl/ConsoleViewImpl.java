@@ -454,6 +454,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myOutputPaused;
   }
 
+  public void setEmulateCarriageReturn(boolean emulate) {
+    myBuffer.setKeepSlashR(emulate);
+  }
+
   @Override
   public boolean hasDeferredOutput() {
     synchronized (LOCK) {
