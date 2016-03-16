@@ -48,7 +48,7 @@ public class StatefulEpInspection extends DevKitInspectionBase {
           String message = c == PsiElement.class
                            ? "Potential memory leak: don't hold PsiElement, use SmartPsiElementPointer instead" +
                              (isQuickFix ? "; also see LocalQuickFixOnPsiElement" : "")
-                           : "Don't use " + c.getSimpleName() + " as a field in extension";
+                           : "Don't use " + c.getSimpleName() + " as a field in " + ( isQuickFix ? "quick fix" : "extension");
           if (InheritanceUtil.isInheritor(field.getType(), c.getCanonicalName())) {
             result.add(manager.createProblemDescriptor(field, message, true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
           }
