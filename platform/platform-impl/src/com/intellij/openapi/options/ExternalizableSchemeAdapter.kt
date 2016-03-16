@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options;
+package com.intellij.openapi.options
 
-import org.jetbrains.annotations.NotNull;
+abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
+  @JvmField
+  protected var myName: String? = null
 
-public abstract class ExternalizableSchemeAdapter implements ExternalizableScheme {
-  protected String myName;
+  override fun getName() = myName!!
 
-  @Override
-  @NotNull
-  public final String getName() {
-    return myName;
+  override fun setName(value: String) {
+    myName = value
   }
 
-  @Override
-  public void setName(@NotNull String name) {
-    myName = name;
-  }
-
-  @Override
-  public String toString() {
-    return myName;
-  }
+  override fun toString() = myName!!
 }
