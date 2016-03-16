@@ -74,10 +74,13 @@
       <separator/>
       <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
       <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.Graph.Print"/>
-      <reference ref="AddToFavorites"/>
 
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="InvalidateCaches"/>
     </group>
+
+    <reference ref="AddToFavorites">
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="PrintExportGroup"/>
+    </reference>
 
     <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">
       <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
