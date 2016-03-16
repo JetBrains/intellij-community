@@ -298,7 +298,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       }
 
       if (! isUndo && list != null) {
-        SvnChangelistListener.putUnderList(vcs.getProject(), list, dst);
+        SvnChangelistListener.putUnderList(vcs, list, dst);
       }
     }
     catch(VcsException e) {

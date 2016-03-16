@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
       PsiElement range = getMethodRange(method);
       ArrowUpLineMarkerInfo upInfo = new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.ImplementingMethod, MarkerType.SIBLING_OVERRIDING_METHOD,
-                                                              Pass.UPDATE_OVERRIDEN_MARKERS);
+                                                              Pass.UPDATE_OVERRIDDEN_MARKERS);
       LineMarkerInfo info = NavigateAction.setNavigateAction(upInfo, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
       result.add(info);
     }
@@ -254,7 +254,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
       MarkerType type = MarkerType.SUBCLASSED_CLASS;
       LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
-                                                           icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(),
+                                                           icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
                                                            type.getNavigationHandler(),
                                                            GutterIconRenderer.Alignment.RIGHT);
       NavigateAction.setNavigateAction(info, aClass.isInterface() ? "Go to implementation(s)" : "Go to subclass(es)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
@@ -313,9 +313,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       final MarkerType type = MarkerType.OVERRIDDEN_METHOD;
       final Icon icon = overrides ? AllIcons.Gutter.OverridenMethod : AllIcons.Gutter.ImplementedMethod;
       LineMarkerInfo<PsiElement> info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
-                                                           icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(),
-                                                           type.getNavigationHandler(),
-                                                           GutterIconRenderer.Alignment.RIGHT);
+                                                                       icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
+                                                                       type.getNavigationHandler(),
+                                                                       GutterIconRenderer.Alignment.RIGHT);
       NavigateAction.setNavigateAction(info, overrides ? "Go to overriding methods" : "Go to implementation(s)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
       result.add(info);
     }

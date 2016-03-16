@@ -2,7 +2,6 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -103,10 +102,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   private void readFromFile(boolean showError) {
     try {
-      IpnbFile file = IpnbParser.parseIpnbFile(myDocument, myVirtualFile);
-      if (file.equals(myIpnbFile)) return;
       removeAll();
-      myIpnbFile = file;
+      myIpnbFile = IpnbParser.parseIpnbFile(myDocument, myVirtualFile);
       myIpnbPanels.clear();
       mySelectedCell = null;
       if (myIpnbFile.getCells().isEmpty()) {
@@ -415,7 +412,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   @Override
   protected void processKeyEvent(KeyEvent e) {
-    if (mySelectedCell != null && e.getID() == KeyEvent.KEY_RELEASED) {
+    if (mySelectedCell != null && e.getID() == KeyEvent.KEY_PRESSED) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         mySelectedCell.switchToEditing();
         repaint();
@@ -580,11 +577,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   @Override
   public Object getData(String dataId) {
     final IpnbEditablePanel cell = getSelectedCell();
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      if (cell instanceof IpnbCodePanel) {
-        return ((IpnbCodePanel)cell).getEditor();
-      }
-    }
     if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       if (cell instanceof IpnbCodePanel) {
         return ((IpnbCodePanel)cell).getEditor();

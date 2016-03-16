@@ -35,12 +35,10 @@ import java.nio.charset.Charset;
 
 public class LocalFilePath implements FilePath {
   @NotNull private final String myPath;
-  @NotNull private final File myIOFile;
   private final boolean myIsDirectory;
 
   public LocalFilePath(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
-    myIOFile = new File(myPath);
     myIsDirectory = isDirectory;
   }
 
@@ -112,7 +110,7 @@ public class LocalFilePath implements FilePath {
   @Override
   @NotNull
   public File getIOFile() {
-    return myIOFile;
+    return new File(myPath);
   }
 
   @NotNull

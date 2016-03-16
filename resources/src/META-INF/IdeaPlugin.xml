@@ -1023,7 +1023,6 @@
       <category>Java/Strings</category>
     </intentionAction>
 
-
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.RemoveLiteralUnderscoresAction</className>
       <category>Java/Numbers</category>
@@ -1068,6 +1067,8 @@
                              implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor"/>
     <lang.surroundDescriptor language="JAVA"
                              implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor"/>
+    <lang.surroundDescriptor language="JAVA"
+                             implementationClass="com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction$Template"/>
 
     <lang.unwrapDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.unwrap.JavaUnwrapDescriptor"/>
 

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -47,10 +48,10 @@ public class VcsLogImpl implements VcsLog {
   public List<CommitId> getSelectedCommits() {
     final int[] rows = myUi.getTable().getSelectedRows();
     return new AbstractList<CommitId>() {
-      @NotNull
+      @Nullable
       @Override
       public CommitId get(int index) {
-        return getTable().getGraphTableModel().getCommitIdAtRow(rows[index]);
+        return getTable().getModel().getCommitIdAtRow(rows[index]);
       }
 
       @Override
@@ -72,7 +73,7 @@ public class VcsLogImpl implements VcsLog {
       @NotNull
       @Override
       public VcsFullCommitDetails get(int index) {
-        return getTable().getGraphTableModel().getFullDetails(rows[index]);
+        return getTable().getModel().getFullDetails(rows[index]);
       }
 
       @Override
@@ -86,7 +87,7 @@ public class VcsLogImpl implements VcsLog {
   public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
     myDataManager.getCommitDetailsGetter()
-      .loadCommitsData(getTable().getGraphTableModel().convertToHashesAndRoots(rowsList), consumer, indicator);
+      .loadCommitsData(getTable().getModel().convertToHashesAndRoots(rowsList), consumer, indicator);
   }
 
   @Nullable
@@ -105,17 +106,18 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public Future<Boolean> jumpToReference(final String reference) {
     Collection<VcsRef> references = getAllReferences();
-    VcsRef ref = ContainerUtil.find(references, new Condition<VcsRef>() {
+    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
         return ref.getName().startsWith(reference);
       }
     });
-    if (ref != null) {
-      return myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot());
+    if (matchingRefs.isEmpty()) {
+      return myUi.jumpToCommitByPartOfHash(reference);
     }
     else {
-      return myUi.jumpToCommitByPartOfHash(reference);
+      VcsRef ref = Collections.min(matchingRefs, new VcsGoToRefComparator(myUi.getDataPack().getLogProviders()));
+      return myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot());
     }
   }
 

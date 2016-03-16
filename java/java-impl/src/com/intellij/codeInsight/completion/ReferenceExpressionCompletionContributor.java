@@ -98,7 +98,11 @@ public class ReferenceExpressionCompletionContributor {
     final int offset = parameters.getParameters().getOffset();
     final PsiJavaCodeReferenceElement reference = PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), offset, PsiJavaCodeReferenceElement.class, false);
     if (reference != null) {
-      final ElementFilter filter = getReferenceFilter(element, false);
+      ElementFilter filter = getReferenceFilter(element, false);
+      if (CheckInitialized.isInsideConstructorCall(element)) {
+        filter = new AndFilter(filter, new CheckInitialized(element));
+      }
+
       for (final LookupElement item : completeFinalReference(element, reference, filter, parameters)) {
         result.consume(item);
       }

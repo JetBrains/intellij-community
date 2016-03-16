@@ -22,7 +22,6 @@ import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
@@ -391,7 +390,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   @Override
   public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
-    return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement);
+    PsiElement docElement = getDocumentationElement(element, originalElement);
+    if (docElement != null && docElement.getUserData(NonCodeMembersHolder.DOCUMENTATION_URL) != null) return true;
+    return JavaDocumentationProvider.hasUrlFor(element);
   }
 
   @Override
@@ -467,7 +468,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
     for (PsiElement e = startPoint; e != null; e = e.getParent()) {
       if (e instanceof GrDocCommentOwner) {
-        return Pair.<PsiElement, PsiComment>create(e, ((GrDocCommentOwner)e).getDocComment());
+        return Pair.create(e, ((GrDocCommentOwner)e).getDocComment());
       }
     }
     return null;

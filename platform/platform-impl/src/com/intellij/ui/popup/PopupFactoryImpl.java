@@ -220,8 +220,23 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             final int maxRowCount,
                             final Condition<AnAction> preselectActionCondition,
                             @Nullable final String actionPlace) {
+      this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
+           maxRowCount, preselectActionCondition, actionPlace, false);
+    }
+    public ActionGroupPopup(final String title,
+                            @NotNull ActionGroup actionGroup,
+                            @NotNull DataContext dataContext,
+                            boolean showNumbers,
+                            boolean useAlphaAsNumbers,
+                            boolean showDisabledActions,
+                            boolean honorActionMnemonics,
+                            final Runnable disposeCallback,
+                            final int maxRowCount,
+                            final Condition<AnAction> preselectActionCondition,
+                            @Nullable final String actionPlace,
+                            boolean autoSelection) {
       super(createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-                       preselectActionCondition, actionPlace),
+                       preselectActionCondition, actionPlace, autoSelection),
             maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
@@ -268,7 +283,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                             boolean showDisabledActions,
                                             boolean honorActionMnemonics,
                                             Condition<AnAction> preselectActionCondition,
-                                            @Nullable String actionPlace) {
+                                            @Nullable String actionPlace, boolean autoSelection) {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
@@ -281,7 +296,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       final List<ActionItem> items = builder.getItems();
 
       return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
-                                 preselectActionCondition, false, showDisabledActions);
+                                 preselectActionCondition, autoSelection, showDisabledActions);
     }
 
     @Override
@@ -858,7 +873,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                     ActionManager.getInstance(), modifiers);
       event.setInjectedContext(action.isInInjectedContext());
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        action.actionPerformed(event);
+        ActionUtil.performActionDumbAware(action, event);
       }
     }
 

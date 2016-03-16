@@ -21,7 +21,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.util.BackgroundTaskUtil;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
@@ -46,6 +45,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -75,9 +75,6 @@ import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-/**
- * @author irengrig
- */
 public class LineStatusTrackerDrawing {
   private LineStatusTrackerDrawing() {
   }
@@ -483,7 +480,7 @@ public class LineStatusTrackerDrawing {
   }
 
   private static class PopupPanel extends JPanel {
-    private final JComponent myEditorComponent;
+    @Nullable private final JComponent myEditorComponent;
 
     public PopupPanel(@NotNull final Editor editor,
                       @NotNull ActionToolbar toolbar,
@@ -551,7 +548,7 @@ public class LineStatusTrackerDrawing {
     }
 
     public int getEditorTextOffset() {
-      return 3;
+      return 3; // myEditorComponent.getInsets().left
     }
   }
 }

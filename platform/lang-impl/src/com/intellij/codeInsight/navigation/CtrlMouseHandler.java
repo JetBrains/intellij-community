@@ -299,7 +299,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
       if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
       if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
-      if (modifiers == InputEvent.CTRL_MASK || modifiers == InputEvent.META_MASK) return BrowseMode.Declaration;
     }
     return BrowseMode.None;
   }
@@ -307,7 +306,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   @Nullable
   @TestOnly
   public static String getInfo(PsiElement element, PsiElement atPointer) {
-    return generateInfo(element, atPointer).text;
+    return generateInfo(element, atPointer, true).text;
   }
 
   @Nullable
@@ -322,22 +321,17 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @NotNull
-  private static DocInfo generateInfo(PsiElement element, PsiElement atPointer) {
+  private static DocInfo generateInfo(PsiElement element, PsiElement atPointer, boolean fallbackToBasicInfo) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
-    String result = doGenerateInfo(element, atPointer, documentationProvider);
+    String result = documentationProvider.getQuickNavigateInfo(element, atPointer);
+    if (result == null && fallbackToBasicInfo) {
+      result = doGenerateInfo(element);
+    }
     return result == null ? DocInfo.EMPTY : new DocInfo(result, documentationProvider, element);
   }
 
   @Nullable
-  private static String doGenerateInfo(@NotNull PsiElement element,
-                                       @NotNull PsiElement atPointer,
-                                       @NotNull DocumentationProvider documentationProvider)
-  {
-    String info = documentationProvider.getQuickNavigateInfo(element, atPointer);
-    if (info != null) {
-      return info;
-    }
-
+  private static String doGenerateInfo(@NotNull PsiElement element) {
     if (element instanceof PsiFile) {
       final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       if (virtualFile != null) {
@@ -345,7 +339,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
-    info = getQuickNavigateInfo(element);
+    String info = getQuickNavigateInfo(element);
     if (info != null) {
       return info;
     }
@@ -416,6 +410,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public abstract DocInfo getInfo();
 
     public abstract boolean isValid(@NotNull Document document);
+    
+    public abstract boolean isNavigatable();
 
     public abstract void showDocInfo(@NotNull DocumentationManager docManager);
 
@@ -453,7 +449,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         @Override
         public DocInfo compute() {
           try {
-            return generateInfo(myTargetElement, myElementAtPointer);
+            return generateInfo(myTargetElement, myElementAtPointer, isNavigatable());
           }
           catch (IndexNotReadyException e) {
             showDumbModeNotification(myTargetElement.getProject());
@@ -467,9 +463,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public boolean isValid(@NotNull Document document) {
       if (!myTargetElement.isValid()) return false;
       if (!myElementAtPointer.isValid()) return false;
-      if (myTargetElement == myElementAtPointer) return false;
 
       return rangesAreCorrect(document);
+    }
+
+    @Override
+    public boolean isNavigatable() {
+      return myTargetElement != myElementAtPointer && myTargetElement != myElementAtPointer.getParent();
     }
 
     @Override
@@ -497,6 +497,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     public boolean isValid(@NotNull Document document) {
       return rangesAreCorrect(document);
+    }
+
+    @Override
+    public boolean isNavigatable() {
+      return true;
     }
 
     @Override
@@ -611,6 +616,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           @Override
           public boolean isValid(@NotNull Document document) {
             return element.isValid();
+          }
+
+          @Override
+          public boolean isNavigatable() {
+            return true;
           }
         };
       }
@@ -871,12 +881,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
         else {
           // highlighter already set
-          internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          if (info.isNavigatable()) {
+            internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          }
           return;
         }
       }
 
-      if (!info.isValid(myEditor.getDocument())) {
+      if (!info.isValid(myEditor.getDocument()) || !info.isNavigatable() && docInfo.text == null) {
         return;
       }
 
@@ -960,11 +972,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     internalComponent.addKeyListener(myEditorKeyListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     final Cursor cursor = internalComponent.getCursor();
-    internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    if (info.isNavigatable()) {
+      internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    TextAttributes attributes = myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
+    TextAttributes attributes = info.isNavigatable() 
+                                ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR) 
+                                : new TextAttributes(null, HintUtil.INFORMATION_COLOR, null, null, Font.PLAIN);
     for (TextRange range : info.getRanges()) {
       TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),

@@ -9,8 +9,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;

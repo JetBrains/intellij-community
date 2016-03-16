@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;

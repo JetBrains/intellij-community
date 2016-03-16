@@ -955,7 +955,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
       super.setNameAndTooltip(name, tooltip, attributes);
       if (myProjectsNavigator.getShowVersions()) {
-        addColoredFragment(":" + myMavenProject.getMavenId().getVersion(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+        addColoredFragment(":" + myMavenProject.getMavenId().getVersion(),
+                           new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
       }
     }
 
@@ -1278,14 +1279,20 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       int validChildCount = 0;
 
       for (MavenArtifactNode each : children) {
-        if (each.getState() != MavenArtifactState.ADDED) continue;
+        if (each.getState() != MavenArtifactState.ADDED &&
+            each.getState() != MavenArtifactState.CONFLICT &&
+            each.getState() != MavenArtifactState.DUPLICATE) {
+          continue;
+        }
 
         if (newNodes == null) {
           if (validChildCount < myChildren.size()) {
             DependencyNode currentValidNode = myChildren.get(validChildCount);
 
             if (currentValidNode.myArtifact.equals(each.getArtifact())) {
-              currentValidNode.updateChildren(each.getDependencies(), mavenProject);
+              if (each.getState() == MavenArtifactState.ADDED) {
+                currentValidNode.updateChildren(each.getDependencies(), mavenProject);
+              }
               currentValidNode.updateDependency();
 
               validChildCount++;
@@ -1299,7 +1306,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
         DependencyNode newNode = findOrCreateNodeFor(each, mavenProject, validChildCount);
         newNodes.add(newNode);
-        newNode.updateChildren(each.getDependencies(), mavenProject);
+        if (each.getState() == MavenArtifactState.ADDED) {
+          newNode.updateChildren(each.getDependencies(), mavenProject);
+        }
         newNode.updateDependency();
       }
 
@@ -1369,10 +1378,39 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return myArtifact.getDisplayStringForLibraryName();
     }
 
+    private String getToolTip() {
+      final StringBuilder myToolTip = new StringBuilder("");
+      String scope = myArtifactNode.getOriginalScope();
+
+      if (StringUtil.isNotEmpty(scope) && !MavenConstants.SCOPE_COMPILE.equals(scope)) {
+        myToolTip.append(scope).append(" ");
+      }
+      if (myArtifactNode.getState() == MavenArtifactState.CONFLICT) {
+        myToolTip.append("omitted for conflict");
+        if (myArtifactNode.getRelatedArtifact() != null) {
+          myToolTip.append(" with ").append(myArtifactNode.getRelatedArtifact().getVersion());
+        }
+      }
+      if (myArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
+        myToolTip.append("omitted for duplicate");
+      }
+      return myToolTip.toString().trim();
+    }
+
     @Override
     protected void doUpdate() {
-      String scope = myArtifact.getScope();
-      setNameAndTooltip(getName(), null, MavenConstants.SCOPE_COMPILE.equals(scope) ? null : scope);
+      setNameAndTooltip(getName(), null, getToolTip());
+    }
+
+    @Override
+    protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
+      final SimpleTextAttributes mergedAttributes;
+      if (myArtifactNode.getState() == MavenArtifactState.CONFLICT || myArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
+        mergedAttributes = SimpleTextAttributes.merge(attributes, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      } else {
+        mergedAttributes = attributes;
+      }
+      super.setNameAndTooltip(name, tooltip, mergedAttributes);
     }
 
     private void updateDependency() {

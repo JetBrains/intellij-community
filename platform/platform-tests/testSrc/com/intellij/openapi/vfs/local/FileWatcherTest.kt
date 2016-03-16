@@ -536,9 +536,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private fun refresh(file: File): VirtualFile {
     val vFile = fs.refreshAndFindFileByIoFile(file)!!
     VfsUtilCore.visitChildrenRecursively(vFile, object : VirtualFileVisitor<Any>() {
-      override fun visitFile(file: VirtualFile): Boolean {
-        file.children; return true
-      }
+      override fun visitFile(file: VirtualFile): Boolean { file.children; return true }
     })
     vFile.refresh(false, true)
     return vFile

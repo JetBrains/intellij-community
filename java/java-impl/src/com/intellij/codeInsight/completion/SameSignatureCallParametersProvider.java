@@ -32,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,14 +113,19 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     } else {
       results = new JavaResolveResult[]{expression.resolveMethodGenerics()};
     }
-    
+
+    PsiMethod toExclude = ExpressionUtils.isConstructorInvocation(expression) ? PsiTreeUtil.getParentOfType(expression, PsiMethod.class)
+                                                                              : null;
+
     for (final JavaResolveResult candidate : results) {
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiMethod) {
         final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
         if (psiClass != null) {
           for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
-            candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
+            if (overload.first != toExclude) {
+              candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
+            }
           }
           break;
         }

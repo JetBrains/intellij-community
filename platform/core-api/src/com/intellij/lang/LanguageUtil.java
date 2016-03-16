@@ -28,6 +28,7 @@ import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,9 @@ public final class LanguageUtil {
 
   @Nullable
   public static Language getFileLanguage(@Nullable VirtualFile file) {
-    return file == null ? null : getFileTypeLanguage(file.getFileType());
+    if (file == null) return null;
+    Language l = file instanceof LightVirtualFile? ((LightVirtualFile)file).getLanguage() : null;
+    return l != null ? l : getFileTypeLanguage(file.getFileType());
   }
 
   @Nullable

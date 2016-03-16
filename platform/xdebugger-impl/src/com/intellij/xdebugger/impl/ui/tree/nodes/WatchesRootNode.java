@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,115 +15,113 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
-import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.xdebugger.impl.frame.XDebugView.getSession;
+
 /**
  * @author nik
  */
-public class WatchesRootNode extends XDebuggerTreeNode {
+public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   private final XWatchesView myWatchesView;
-  private List<WatchNode> myChildren;
-  private List<XDebuggerTreeNode> myLoadedChildren;
-  private XDebuggerEvaluator myCurrentEvaluator;
+  private final List<WatchNodeImpl> myChildren;
 
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
-                         @NotNull XExpression[] watchExpressions) {
-    super(tree, null, false);
+                         @NotNull XExpression[] expressions) {
+    this(tree, watchesView, expressions, null);
+  }
+
+  public WatchesRootNode(@NotNull XDebuggerTree tree,
+                         @NotNull XWatchesView watchesView,
+                         @NotNull XExpression[] expressions,
+                         @Nullable XStackFrame stackFrame) {
+    super(tree, null, new XValueContainer() {
+      @Override
+      public void computeChildren(@NotNull XCompositeNode node) {
+        if (stackFrame != null && Registry.is("debugger.watches.in.variables")) {
+          stackFrame.computeChildren(node);
+        }
+        else {
+          node.addChildren(XValueChildrenList.EMPTY, true);
+        }
+        XDebuggerEvaluator evaluator = stackFrame == null ? null : stackFrame.getEvaluator();
+        WatchesRootNode thisNode = (WatchesRootNode)node;
+        for (WatchNodeImpl child : thisNode.myChildren) {
+          MyEvaluationCallback callback = new MyEvaluationCallback(child);
+          if (evaluator != null) {
+            evaluator.evaluate(child.getExpression(), callback, stackFrame.getSourcePosition());
+          }
+          else {
+            callback.noSession();
+          }
+        }
+      }
+    });
+    setLeaf(false);
     myWatchesView = watchesView;
-    myChildren = new ArrayList<WatchNode>();
-    for (XExpression watchExpression : watchExpressions) {
-      myChildren.add(WatchMessageNode.createMessageNode(tree, this, watchExpression));
+    myChildren = ContainerUtil.newArrayList();
+    for (XExpression watchExpression : expressions) {
+      myChildren.add(createEvaluatingNode(myTree, this, watchExpression));
     }
   }
 
-  public void updateWatches(@Nullable XDebuggerEvaluator evaluator) {
-    myCurrentEvaluator = evaluator;
-    List<WatchNode> newChildren = new ArrayList<WatchNode>();
-    for (WatchNode child : myChildren) {
-      child.setObsolete();
-    }
-    if (evaluator != null) {
-      for (WatchNode child : myChildren) {
-        final XExpression expression = child.getExpression();
-        final WatchMessageNode evaluatingNode = WatchMessageNode.createEvaluatingNode(myTree, this, expression);
-        newChildren.add(evaluatingNode);
-        evaluator.evaluate(expression, new MyEvaluationCallback(evaluatingNode), null);
-      }
-    }
-    else {
-      for (WatchNode child : myChildren) {
-        final XExpression expression = child.getExpression();
-        newChildren.add(WatchMessageNode.createMessageNode(myTree, this, expression));
-      }
-    }
-    myChildren = newChildren;
-    myLoadedChildren = null;
-    fireNodeStructureChanged();
+  @NotNull
+  @Override
+  public List<? extends XValueContainerNode<?>> getLoadedChildren() {
+    return ContainerUtil.concat(myChildren, super.getLoadedChildren());
   }
 
   @NotNull
   @Override
   public List<? extends TreeNode> getChildren() {
-    return myChildren;
+    List<? extends TreeNode> children = super.getChildren();
+    return ContainerUtil.concat(myChildren, children);
   }
 
-  @Nullable
-  public List<? extends WatchNode> getAllChildren() {
+  @NotNull
+  public List<? extends WatchNode> getWatchChildren() {
     return myChildren;
-  }
-
-  @Override
-  public List<? extends XDebuggerTreeNode> getLoadedChildren() {
-    if (myLoadedChildren == null) {
-      myLoadedChildren = new ArrayList<XDebuggerTreeNode>();
-      for (WatchNode child : myChildren) {
-        if (child instanceof WatchNodeImpl) {
-          myLoadedChildren.add((WatchNodeImpl)child);
-        }
-      }
-    }
-    return myLoadedChildren;
   }
 
   @Override
   public void clearChildren() {
-    updateWatches(myCurrentEvaluator);
+    super.clearChildren();
+    myChildren.clear();
   }
 
-  private void replaceNode(final WatchNode oldNode, final WatchNode newNode) {
+  private void replaceNode(WatchNodeImpl oldNode, WatchNodeImpl newNode) {
     int[] selectedRows = getTree().getSelectionRows();
     for (int i = 0; i < myChildren.size(); i++) {
-      WatchNode child = myChildren.get(i);
+      WatchNodeImpl child = myChildren.get(i);
       if (child == oldNode) {
         myChildren.set(i, newNode);
-        if (newNode instanceof XValueContainerNode<?>) {
-          myLoadedChildren = null;
-          fireNodeStructureChanged(newNode);
-          myTree.childrenLoaded(this, Collections.<XValueContainerNode<?>>singletonList((XValueContainerNode<?>)newNode), false);
-        }
-        else {
-          fireNodeStructureChanged(newNode);
-        }
+        fireNodeStructureChanged(newNode);
+        myTree.childrenLoaded(this, Collections.singletonList((XValueContainerNode<?>)newNode), false);
         getTree().setSelectionRows(selectedRows);
         return;
       }
@@ -133,7 +131,8 @@ public class WatchesRootNode extends XDebuggerTreeNode {
   public void addWatchExpression(final @Nullable XDebuggerEvaluator evaluator,
                                  final @NotNull XExpression expression,
                                  int index, final boolean navigateToWatchNode) {
-    WatchMessageNode message = evaluator != null ? WatchMessageNode.createEvaluatingNode(myTree, this, expression) : WatchMessageNode.createMessageNode(myTree, this, expression);
+    WatchNodeImpl message = evaluator != null ? createEvaluatingNode(myTree, this, expression) :
+                            createMessageNode(myTree, this, expression);
     if (index == -1) {
       myChildren.add(message);
       index = myChildren.size() - 1;
@@ -142,6 +141,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
       myChildren.add(index, message);
     }
     fireNodeInserted(index);
+    TreeUtil.selectNode(myTree, message);
     if (navigateToWatchNode) {
       myTree.scrollPathToVisible(message.getPath());
     }
@@ -159,23 +159,20 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     int index = myChildren.indexOf(node);
     if (index != -1) {
       myChildren.remove(node);
-      myLoadedChildren = null;
       fireNodesRemoved(new int[]{index}, new TreeNode[]{node});
     }
     return index;
   }
 
   public void removeChildren(Collection<? extends XDebuggerTreeNode> nodes) {
-    final int[] indices = getNodesIndices(nodes);
-    final TreeNode[] removed = getChildNodes(indices);
+    int[] indices = getNodesIndices(nodes);
+    TreeNode[] removed = getChildNodes(indices);
     myChildren.removeAll(nodes);
-    myLoadedChildren = null;
     fireNodesRemoved(indices, removed);
   }
 
   public void removeAllChildren() {
     myChildren.clear();
-    myLoadedChildren = null;
     fireNodeStructureChanged();
   }
 
@@ -201,25 +198,28 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     editWatch(null);
   }
 
-  public void editWatch(@Nullable WatchNode node) {
-    WatchNode messageNode = WatchMessageNode.createMessageNode(myTree, this, XExpressionImpl.EMPTY_EXPRESSION);
+  public void editWatch(@Nullable WatchNodeImpl node) {
+    WatchNodeImpl messageNode;
     int index = node != null ? myChildren.indexOf(node) : -1;
     if (index == -1) {
-      myChildren.add(messageNode);
-      fireNodeInserted(myChildren.size() - 1);
+      int selectedIndex = myChildren.indexOf(ArrayUtil.getFirstElement(myTree.getSelectedNodes(WatchNodeImpl.class, null)));
+      int targetIndex = selectedIndex == - 1 ? myChildren.size() : selectedIndex + 1;
+      messageNode = createMessageNode(myTree, this, XExpressionImpl.EMPTY_EXPRESSION);
+      myChildren.add(targetIndex, messageNode);
+      fireNodeInserted(targetIndex);
+      getTree().setSelectionRows(ArrayUtil.EMPTY_INT_ARRAY);
     }
     else {
-      myChildren.set(index, messageNode);
-      fireNodeStructureChanged(messageNode);
+      messageNode = node;
     }
-    XDebugSession session = XDebugView.getSession(myTree);
+    XDebugSession session = getSession(myTree);
     new WatchInplaceEditor(this, session, myWatchesView, messageNode, "watch", node).show();
   }
 
-  private class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {
-    private final WatchNode myResultPlace;
+  private static class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {
+    private final WatchNodeImpl myResultPlace;
 
-    public MyEvaluationCallback(final @NotNull WatchNode resultPlace) {
+    public MyEvaluationCallback(@NotNull WatchNodeImpl resultPlace) {
       myResultPlace = resultPlace;
     }
 
@@ -230,22 +230,62 @@ public class WatchesRootNode extends XDebuggerTreeNode {
 
     @Override
     public void evaluated(@NotNull final XValue result) {
-      DebuggerUIUtil.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          replaceNode(myResultPlace, new WatchNodeImpl(myTree, WatchesRootNode.this, result, myResultPlace.getExpression()));
-        }
+      DebuggerUIUtil.invokeLater(() -> {
+        WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
+        root.replaceNode(myResultPlace, new WatchNodeImpl(root.myTree, root, result, myResultPlace.getExpression()));
       });
     }
 
     @Override
     public void errorOccurred(@NotNull final String errorMessage) {
-      DebuggerUIUtil.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          replaceNode(myResultPlace, WatchMessageNode.createErrorNode(myTree, WatchesRootNode.this, myResultPlace.getExpression(), errorMessage));
-        }
+      DebuggerUIUtil.invokeLater(() -> {
+        WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
+        root.replaceNode(myResultPlace, createErrorNode(root.myTree, root, myResultPlace.getExpression(), errorMessage));
       });
     }
+
+    public void noSession() {
+      DebuggerUIUtil.invokeLater(() -> {
+        WatchesRootNode root = (WatchesRootNode)myResultPlace.getParent();
+        root.replaceNode(myResultPlace, createMessageNode(root.myTree, root, myResultPlace.getExpression()));
+      });
+    }
+  }
+
+  private static WatchNodeImpl createMessageNode(XDebuggerTree tree, WatchesRootNode parent, XExpression expression) {
+    return new WatchNodeImpl(tree, parent, new XValue() {
+      @Override
+      public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+        node.setPresentation(AllIcons.Debugger.Watch, new XValuePresentation() {
+          @NotNull
+          @Override
+          public String getSeparator() {
+            return "";
+          }
+
+          @Override
+          public void renderValue(@NotNull XValueTextRenderer renderer) {
+          }
+        }, false);
+      }
+    }, expression);
+  }
+
+  private static WatchNodeImpl createEvaluatingNode(XDebuggerTree tree, WatchesRootNode parent, XExpression expression) {
+    return new WatchNodeImpl(tree, parent, new XValue() {
+      @Override
+      public void computePresentation(@NotNull XValueNode node1, @NotNull XValuePlace place) {
+      }
+    }, expression);
+  }
+
+  private static WatchNodeImpl createErrorNode(XDebuggerTree tree, WatchesRootNode parent,
+                                               @NotNull XExpression expression, @NotNull String errorMessage) {
+    return new WatchNodeImpl(tree, parent, new XValue() {
+      @Override
+      public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+        node.setPresentation(XDebuggerUIConstants.ERROR_MESSAGE_ICON, new XErrorValuePresentation(errorMessage), false);
+      }
+    }, expression);
   }
 }

@@ -95,7 +95,8 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     }
     else if (parent instanceof PsiReferenceExpression) {
       final PsiElement pparent = parent.getParent();
-      if (parent instanceof PsiMethodReferenceExpression || pparent instanceof PsiCallExpression) {
+      if (parent instanceof PsiMethodReferenceExpression ||
+          (pparent instanceof PsiCallExpression && ((PsiCallExpression)pparent).getArgumentList() != null)) { // skip arrays
         parent = pparent;
       }
       else if (pparent instanceof PsiReferenceExpression) {

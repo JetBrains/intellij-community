@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -228,8 +229,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       final boolean noProjects = projectManager.getOpenProjects().length == 0;
       final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
       Ref<Object> layoutDataRef = newEnabled() ? new Ref<Object>() : null;
-      final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef);
-      Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
+      final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef, project != null ? project : ApplicationManager.getApplication());
 
       if (notification.isExpired()) {
         return null;
@@ -295,8 +295,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                       @NotNull final Notification notification,
                                       final boolean showCallout,
                                       final boolean hideOnClickOutside,
-                                      @Nullable Ref<Object> layoutDataRef) {
-    return createBalloon(window.getComponent(), notification, showCallout, hideOnClickOutside, layoutDataRef);
+                                      @Nullable Ref<Object> layoutDataRef,
+                                      @NotNull Disposable parentDisposable) {
+    return createBalloon(window.getComponent(), notification, showCallout, hideOnClickOutside, layoutDataRef, parentDisposable);
   }
 
   @NotNull
@@ -304,9 +305,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                       @NotNull final Notification notification,
                                       final boolean showCallout,
                                       final boolean hideOnClickOutside,
-                                      @Nullable Ref<Object> layoutDataRef) {
+                                      @Nullable Ref<Object> layoutDataRef,
+                                      @NotNull Disposable parentDisposable) {
     if (layoutDataRef != null) {
-      return createNewBalloon(windowComponent, notification, showCallout, hideOnClickOutside, layoutDataRef);
+      return createNewBalloon(windowComponent, notification, showCallout, hideOnClickOutside, layoutDataRef, parentDisposable);
     }
 
     final JEditorPane text = new JEditorPane();
@@ -380,6 +382,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     final Balloon balloon = builder.createBalloon();
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
+    Disposer.register(parentDisposable, balloon);
     return balloon;
   }
 
@@ -458,9 +461,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                           @NotNull Notification notification,
                                           boolean showCallout,
                                           boolean hideOnClickOutside,
-                                          @NotNull Ref<Object> layoutDataRef) {
-    final BalloonLayoutData layoutData = new BalloonLayoutData();
+                                          @NotNull Ref<Object> layoutDataRef,
+                                          @NotNull Disposable parentDisposable) {
+    final BalloonLayoutData layoutData = layoutDataRef.isNull() ? new BalloonLayoutData() : (BalloonLayoutData)layoutDataRef.get();
     layoutDataRef.set(layoutData);
+
+    boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
 
     Color foregroundR = Gray._0;
     Color foregroundD = Gray._191;
@@ -492,6 +498,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     String fontStyle = NotificationsUtil.getFontStyle();
     int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
     String style = prefSize > BalloonLayoutConfiguration.MaxWidth ? BalloonLayoutConfiguration.MaxWidthStyle : null;
+
+    if (layoutData.showFullContent) {
+      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth ? BalloonLayoutConfiguration.MaxFullContentWidthStyle : null;
+    }
 
     String textR = NotificationsUtil.buildHtml(notification, style, true, foregroundR, fontStyle);
     String textD = NotificationsUtil.buildHtml(notification, style, true, foregroundD, fontStyle);
@@ -543,8 +553,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
     layoutData.twoLineHeight = calculateContentHeight(lines);
     layoutData.maxScrollHeight = Math.min(layoutData.fullHeight, calculateContentHeight(10));
     layoutData.configuration = BalloonLayoutConfiguration.create(notification, layoutData);
-
-    boolean showFullContent = notification instanceof NotificationActionProvider;
 
     if (!showFullContent && layoutData.maxScrollHeight != layoutData.fullHeight) {
       pane.setViewport(new GradientViewport(text, JBUI.insets(10, 0), true) {
@@ -726,10 +734,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
         new NotificationBalloonActionProvider(balloon, layout.getTitle(), layoutData, notification.getGroupId()));
     }
 
+    Disposer.register(parentDisposable, balloon);
     return balloon;
   }
 
-  private static void createActionPanel(@NotNull Notification notification, @NotNull JPanel centerPanel, int gap) {
+  private static void createActionPanel(@NotNull final Notification notification, @NotNull JPanel centerPanel, int gap) {
     JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER));
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
@@ -763,7 +772,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         new LinkLabel<AnAction>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
           public void linkSelected(LinkLabel aSource, AnAction action) {
-            Notification.fire(action);
+            Notification.fire(notification, action);
           }
         }, action));
     }
@@ -972,7 +981,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
       int actionWidth = actionSize.width + expandSize.width;
 
       int width = Math.max(centerWidth, Math.max(titleWidth, actionWidth));
-      width = Math.min(width, BalloonLayoutConfiguration.MaxWidth);
+      if (!myLayoutData.showFullContent) {
+        width = Math.min(width, BalloonLayoutConfiguration.MaxWidth);
+      }
       width = Math.max(width, BalloonLayoutConfiguration.MinWidth);
 
       return new Dimension(width, height);

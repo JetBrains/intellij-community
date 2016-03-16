@@ -77,7 +77,7 @@ public class ConvertAtomicToLongAdderIntention extends PsiElementBaseIntentionAc
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
   @NotNull

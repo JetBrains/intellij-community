@@ -200,7 +200,7 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
 
   val rootElement = Element(rootElementName)
   for (componentName in states.keys()) {
-    val element = states.getElement(componentName, newLiveStates)
+    val element = states.getElement(componentName, newLiveStates) ?: continue
     // name attribute should be first
     val elementAttributes = element.attributes
     if (elementAttributes.isEmpty()) {

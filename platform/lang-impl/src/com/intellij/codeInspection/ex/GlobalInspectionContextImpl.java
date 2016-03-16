@@ -91,9 +91,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
   private final NotNullLazyValue<ContentManager> myContentManager;
-  private InspectionResultsView myView;
+  private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
+  private volatile boolean mySingleInspectionRun;
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
@@ -125,7 +126,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
 
     myView = view;
-    myView.getTree().setPaintBusy(true);
+    myView.setUpdating(true);
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
 
     myContent.setDisposer(myView);
@@ -237,7 +238,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             try {
               InspectionToolWrapper toolWrapper = state.getTool();
               InspectionToolPresentation presentation = getPresentation(toolWrapper);
-              presentation.exportResults(element, refEntity);
+              presentation.exportResults(element, refEntity, Collections.emptySet());
             }
             catch (Throwable e) {
               LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
@@ -344,7 +345,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         } else {
           view = null;
         }
-        if (!(myView == null ? view : myView).update() && !getUIOptions().SHOW_ONLY_DIFF) {
+        if (!(myView == null ? view : myView).hasProblems() && !getUIOptions().SHOW_ONLY_DIFF) {
           NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
           close(true);
           if (view != null) {
@@ -352,10 +353,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
         }
         else if (view != null) {
+          view.update();
           addView(view);
         }
         if (myView != null) {
-          myView.getTree().setPaintBusy(false);
+          myView.setUpdating(false);
         }
       }
     });
@@ -387,7 +389,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
 
-    if (runGlobalToolsOnly) return;
+    if (runGlobalToolsOnly || (localTools.isEmpty() && globalSimpleTools.isEmpty())) return;
 
     final Set<VirtualFile> localScopeFiles = scope.toSearchScope() instanceof LocalSearchScope ? new THashSet<VirtualFile>() : null;
     for (Tools tools : globalSimpleTools) {
@@ -779,7 +781,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   public void close(boolean noSuspisiousCodeFound) {
-    if (!noSuspisiousCodeFound && (myView == null || myView.isRerun())) return;
+    if (!noSuspisiousCodeFound) {
+      if (myView.isRerun()) {
+        myViewClosed = true;
+        myView = null;
+      }
+      if (myView == null) {
+        return;
+      }
+    }
     AnalysisUIOptions.getInstance(getProject()).save(myUIOptions);
     if (myContent != null) {
       final ContentManager contentManager = getContentManager();
@@ -787,11 +797,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
     myViewClosed = true;
     myView = null;
-    super.close(noSuspisiousCodeFound);
-  }
-
-  @Override
-  public void cleanup() {
     ((InspectionManagerEx)InspectionManager.getInstance(getProject())).closeRunningContext(this);
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
@@ -799,15 +804,20 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         getPresentation(toolWrapper).finalCleanup();
       }
     }
+    super.close(noSuspisiousCodeFound);
+  }
+
+  @Override
+  public void cleanup() {
     if (myView != null) {
-      myView.getTree().setPaintBusy(false);
+      myView.setUpdating(false);
     }
     super.cleanup();
   }
 
   public void refreshViews() {
     if (myView != null) {
-      myView.updateView(false);
+      myView.getTree().queueUpdate();
     }
   }
 
@@ -979,5 +989,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public boolean isViewClosed() {
     return myViewClosed;
+  }
+
+  public void setSingleInspectionRun(boolean singleInspectionRun) {
+    mySingleInspectionRun = singleInspectionRun;
+  }
+
+  public boolean isSingleInspectionRun() {
+    return mySingleInspectionRun;
   }
 }

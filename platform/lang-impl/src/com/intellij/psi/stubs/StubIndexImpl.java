@@ -51,6 +51,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
@@ -112,17 +113,47 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
+        StubIdExternalizer externalizer = new StubIdExternalizer();
         final MapIndexStorage<K, StubIdList> storage = new MapIndexStorage<K, StubIdList>(
           IndexInfrastructure.getStorageFile(indexKey),
           extension.getKeyDescriptor(),
-          new StubIdExternalizer(),
+          externalizer,
           extension.getCacheSize(),
           false,
           extension instanceof StringStubIndexExtension && ((StringStubIndexExtension)extension).traceKeyHashToVirtualFileMapping()
         );
 
         final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<K, StubIdList>(storage);
-        myIndices.put(indexKey, new MyIndex<K>(memStorage));
+        myIndices.put(indexKey, new MyIndex<K>(new IndexExtension<K, StubIdList, Void>() {
+          @NotNull
+          @Override
+          public ID<K, StubIdList> getName() {
+            return (ID<K, StubIdList>)indexKey;
+          }
+
+          @NotNull
+          @Override
+          public DataIndexer<K, StubIdList, Void> getIndexer() {
+            return inputData -> Collections.emptyMap();
+          }
+
+          @NotNull
+          @Override
+          public KeyDescriptor<K> getKeyDescriptor() {
+            return extension.getKeyDescriptor();
+          }
+
+          @NotNull
+          @Override
+          public DataExternalizer<StubIdList> getValueExternalizer() {
+            return externalizer;
+          }
+
+          @Override
+          public int getVersion() {
+            return extension.getVersion();
+          }
+        }, memStorage));
         break;
       }
       catch (IOException e) {
@@ -512,8 +543,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static class MyIndex<K> extends MapReduceIndex<K, StubIdList, Void> {
-    public MyIndex(final IndexStorage<K, StubIdList> storage) throws IOException {
-      super(null, null, storage);
+    public MyIndex(IndexExtension<K, StubIdList, Void> extension, IndexStorage<K, StubIdList> storage) throws IOException {
+      super(extension, storage);
     }
 
     @Override

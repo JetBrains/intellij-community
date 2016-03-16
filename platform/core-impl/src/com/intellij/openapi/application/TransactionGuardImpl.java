@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,24 +35,25 @@ public class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Runnable> myQueue = new LinkedBlockingQueue<Runnable>();
   private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
-  private boolean myInsideTransaction;
+  private String myTransactionStartTrace;
 
   @Override
   @NotNull
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (kind != NO_MERGE && myMergeableKinds.contains(kind)) {
-      return AccessToken.EMPTY_ACCESS_TOKEN;
+    if (myTransactionStartTrace != null) {
+      if (myMergeableKinds.contains(kind)) {
+        return AccessToken.EMPTY_ACCESS_TOKEN;
+      }
+      // please assign exceptions that occur here to Peter
+      LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment. Kind is " + kind,
+                new Attachment("trace.txt", myTransactionStartTrace));
     }
-    if (myInsideTransaction) {
-      LOG.error("Nested transactions are not allowed");
-      //throw new IllegalStateException("Nested transactions are not allowed");
-    }
-    myInsideTransaction = true;
+    myTransactionStartTrace = DebugUtil.currentStackTrace();
     return new AccessToken() {
       @Override
       public void finish() {
-        myInsideTransaction = false;
+        myTransactionStartTrace = null;
         if (!myQueue.isEmpty()) {
           pollQueueLater();
         }
@@ -64,11 +67,11 @@ public class TransactionGuardImpl extends TransactionGuard {
     app.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myInsideTransaction) return;
+        if (isInsideTransaction()) return;
 
         Runnable next = myQueue.poll();
         if (next != null) {
-          runSyncTransaction(NO_MERGE, next);
+          runSyncTransaction(TransactionKind.ANY_CHANGE, next);
         }
       }
     }, app.getDisposed());
@@ -87,7 +90,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   public boolean isInsideTransaction() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return myInsideTransaction;
+    return myTransactionStartTrace != null;
   }
 
   @Override
@@ -95,7 +98,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (!myInsideTransaction || kind != NO_MERGE && myMergeableKinds.contains(kind)) {
+        if (canRunTransactionNow(kind)) {
           runSyncTransaction(kind, transaction);
         }
         else {
@@ -112,6 +115,10 @@ public class TransactionGuardImpl extends TransactionGuard {
       //todo add ModalityState.any() when write actions are required to run under a guard
       app.invokeLater(runnable, app.getDisposed());
     }
+  }
+
+  protected boolean canRunTransactionNow(@NotNull TransactionKind kind) {
+    return !isInsideTransaction() || myMergeableKinds.contains(kind);
   }
 
   @Override
@@ -140,9 +147,15 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   public void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Runnable transaction) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
-    assert !app.isDispatchThread() : "submitTransactionAndWait should not be invoked on dispatch thread";
-    assert !app.isReadAccessAllowed() : "submitTransactionAndWait should not be invoked from a read action";
+    if (app.isDispatchThread()) {
+      if (!canRunTransactionNow(kind)) {
+        throw new AssertionError("Cannot run submitTransactionAndWait from another transaction, kind " + kind + " is not allowed");
+      }
+      runSyncTransaction(kind, transaction);
+      return;
+    }
 
+    assert !app.isReadAccessAllowed() : "submitTransactionAndWait should not be invoked from a read action";
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};

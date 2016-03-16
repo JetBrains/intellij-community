@@ -73,13 +73,12 @@ import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
-import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -92,6 +91,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -536,122 +536,24 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final ID<K, V> indexId,
+  private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final ID<K, V> indexId,
                                                                @NotNull final FileBasedIndexExtension<K, V> extension,
                                                                @NotNull final MemoryIndexStorage<K, V> storage)
     throws StorageException, IOException {
     final MapReduceIndex<K, V, FileContent> index;
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
       final UpdatableIndex<K, V, FileContent> custom =
-        ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(indexId, this, storage);
+        ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage);
       if (!(custom instanceof MapReduceIndex)) {
         return custom;
       }
       index = (MapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      DataExternalizer<Collection<K>> externalizer =
-        extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled
-        ? createInputsIndexExternalizer(extension, indexId, extension.getKeyDescriptor())
-        : null;
-      index = new MapReduceIndex<K, V, FileContent>(
-        indexId, extension.getIndexer(), storage, externalizer, extension.getValueExternalizer(), extension instanceof PsiDependentIndex);
+      index = new MapReduceIndex<K, V, FileContent>(extension, storage);
     }
-    index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
-      @Override
-      public PersistentHashMap<Integer, Collection<K>> create() {
-        try {
-          return createIdToDataKeysIndex(extension, storage);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
 
     return index;
-  }
-
-  @NotNull
-  public static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull FileBasedIndexExtension <K, ?> extension,
-                                                                                      @NotNull MemoryIndexStorage<K, ?> storage)
-    throws IOException {
-    ID<K, ?> indexId = extension.getName();
-    KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
-    final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
-    final AtomicBoolean isBufferingMode = new AtomicBoolean();
-    final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
-
-    // Important! Update IdToDataKeysIndex depending on the sate of "buffering" flag from the MemoryStorage.
-    // If buffering is on, all changes should be done in memory (similar to the way it is done in memory storage).
-    // Otherwise data in IdToDataKeysIndex will not be in sync with the 'main' data in the index on disk and index updates will be based on the
-    // wrong sets of keys for the given file. This will lead to unpredictable results in main index because it will not be
-    // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
-
-    final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension, indexId, keyDescriptor)
-    ) {
-
-      @Override
-      protected Collection<K> doGet(Integer integer) throws IOException {
-        if (isBufferingMode.get()) {
-          final Collection<K> collection = tempMap.get(integer);
-          if (collection != null) {
-            return collection;
-          }
-        }
-        return super.doGet(integer);
-      }
-
-      @Override
-      protected void doPut(Integer integer, @Nullable Collection<K> ks) throws IOException {
-        if (isBufferingMode.get()) {
-          tempMap.put(integer, ks == null ? Collections.<K>emptySet() : ks);
-        }
-        else {
-          super.doPut(integer, ks);
-        }
-      }
-
-      @Override
-      protected void doRemove(Integer integer) throws IOException {
-        if (isBufferingMode.get()) {
-          tempMap.put(integer, Collections.<K>emptySet());
-        }
-        else {
-          super.doRemove(integer);
-        }
-      }
-    };
-
-    storage.addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
-      @Override
-      public void bufferingStateChanged(boolean newState) {
-        synchronized (map) {
-          isBufferingMode.set(newState);
-        }
-      }
-
-      @Override
-      public void memoryStorageCleared() {
-        synchronized (map) {
-          tempMap.clear();
-        }
-      }
-    });
-    return map;
-  }
-
-  private static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(FileBasedIndexExtension<K, ?> extension,
-                                                                                  ID<K, ?> indexId,
-                                                                                  KeyDescriptor<K> keyDescriptor) {
-    DataExternalizer<Collection<K>> externalizer;
-    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
-      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
-    } else {
-      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
-    }
-    return externalizer;
   }
 
   @Override
@@ -1163,7 +1065,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     ++myFilesModCount;
   }
 
-  private final Lock myCalcIndexableFilesLock = new SequenceLock();
+  private final Lock myCalcIndexableFilesLock = new ReentrantLock();
 
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
@@ -1624,7 +1526,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         // we do invoke later since we can have read lock acquired
         //noinspection SSBasedInspection
-        ApplicationManager.getApplication().invokeLater(rebuildRunnable, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> TransactionGuard.submitTransaction(rebuildRunnable), ModalityState.NON_MODAL);
       }
     }
   }
@@ -2199,9 +2101,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       // When processing roots concurrently myFiles looses the local order of local vs archive files
       // If we process the roots in 2 threads we can just separate local vs archive
+      // IMPORTANT: also remove duplicated file that can appear due to roots intersection
+      BitSet usedFileIds = new BitSet(files.size());
       List<VirtualFile> localFileSystemFiles = new ArrayList<VirtualFile>(files.size() / 2);
       List<VirtualFile> archiveFiles = new ArrayList<VirtualFile>(files.size() / 2);
+
       for(VirtualFile file:files) {
+        int fileId = ((VirtualFileWithId)file).getId();
+        if (fileId > 0) {
+          if (usedFileIds.get(fileId)) continue;
+          usedFileIds.set(fileId);
+        }
         if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
         else archiveFiles.add(file);
       }
@@ -2506,7 +2416,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                     @Override
                     public void run() {
                       if (project.isDisposed() || module.isDisposed() || !root.isValid()) return;
-                      iterateRecursively(root, processor, indicator, null, projectFileIndex);
+                      iterateRecursively(root, processor, indicator, visitedRoots, projectFileIndex);
                     }
                   });
                 }

@@ -60,8 +60,8 @@ public class PersistentHashMapValueStorage {
     }
 
     @Override
-    protected void disposeAccessor(RandomAccessFileWithLengthAndSizeTracking fileAccessor) {
-      disposeCloseable(fileAccessor);
+    protected void disposeAccessor(RandomAccessFileWithLengthAndSizeTracking fileAccessor) throws IOException {
+      fileAccessor.close();
     }
   };
 
@@ -75,8 +75,8 @@ public class PersistentHashMapValueStorage {
     }
 
     @Override
-    protected void disposeAccessor(DataOutputStream fileAccessor) {
-      disposeCloseable(fileAccessor);
+    protected void disposeAccessor(DataOutputStream fileAccessor) throws IOException {
+      fileAccessor.close();
     }
   };
 

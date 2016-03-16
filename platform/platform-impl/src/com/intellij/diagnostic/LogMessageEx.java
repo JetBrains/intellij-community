@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,6 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author ksafonov
@@ -38,7 +36,6 @@ public class LogMessageEx extends LogMessage {
   private final IdeaLoggingEvent myEvent;
   private final String myTitle;
   private final String myNotificationText;
-  private List<Attachment> myAttachments = null;
 
   /**
    * @param title            text to show in Event Log tool window entry (it comes before 'more')
@@ -63,23 +60,6 @@ public class LogMessageEx extends LogMessage {
    */
   public String getTitle() {
     return myTitle;
-  }
-
-  public void addAttachment(String path, String content) {
-    addAttachment(new Attachment(path, content));
-  }
-
-  public void addAttachment(Attachment attachment) {
-    if (myAttachments == null) {
-      myAttachments = new SmartList<Attachment>();
-    }
-    myAttachments.add(attachment);
-  }
-
-  @NotNull
-  @Override
-  public List<Attachment> getAttachments() {
-    return myAttachments != null ? myAttachments : Collections.<Attachment>emptyList();
   }
 
   public IdeaLoggingEvent toEvent() {

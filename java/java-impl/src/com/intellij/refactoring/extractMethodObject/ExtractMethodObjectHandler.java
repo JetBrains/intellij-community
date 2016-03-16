@@ -124,7 +124,12 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
 
             PsiDocumentManager.getInstance(project).commitAllDocuments();
             if (processor.isCreateInnerClass()) {
-              processor.moveUsedMethodsToInner();
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  processor.moveUsedMethodsToInner();
+                }
+              });
               PsiDocumentManager.getInstance(project).commitAllDocuments();
               if (editor != null) {
                 DuplicatesImpl.processDuplicates(extractProcessor, project, editor);

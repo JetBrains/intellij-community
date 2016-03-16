@@ -42,6 +42,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -932,11 +933,14 @@ public class ExpectedTypesProvider {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
 
+      PsiMethod toExclude = ExpressionUtils.isConstructorInvocation(argumentList.getParent())
+                            ? PsiTreeUtil.getParentOfType(argument, PsiMethod.class) : null;
+
       PsiResolveHelper helper = JavaPsiFacade.getInstance(myExpr.getProject()).getResolveHelper();
       List<CandidateInfo> methodCandidates = new ArrayList<CandidateInfo>();
       for (CandidateInfo candidate : allCandidates) {
         PsiElement element = candidate.getElement();
-        if (element instanceof PsiMethod && helper.isAccessible((PsiMember)element, argumentList, null)) {
+        if (element instanceof PsiMethod && helper.isAccessible((PsiMember)element, argumentList, null) && element != toExclude) {
           methodCandidates.add(candidate);
         }
       }

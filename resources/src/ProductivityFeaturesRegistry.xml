@@ -255,6 +255,9 @@
     <feature
       id="editing.add.carets.using.double.ctrl"
       tip-file="Multicursor.html"/>
+    <feature
+      id="move.element.left.right"
+      tip-file="ChangeSignatureAfterMovingParameters.html"/>
   </group>
 
   <group id="codeassists">

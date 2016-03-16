@@ -18,7 +18,7 @@ import java.util.Set;
 
 public class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
-  public @NotNull static final String ME = "me";
+  @NotNull public static final String ME = "me";
 
   @NotNull private final Collection<String> myUsers;
   @NotNull private final Map<VirtualFile, VcsUser> myData;

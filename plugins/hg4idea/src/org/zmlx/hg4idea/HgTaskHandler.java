@@ -58,7 +58,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
 
   @Override
   protected void checkoutAsNewBranch(@NotNull String name, @NotNull List<HgRepository> repositories) {
-    HgBookmarkCommand.createBookmark(repositories, name, true);
+    HgBookmarkCommand.createBookmarkAsynchronously(repositories, name, true);
   }
 
   @Override
@@ -87,7 +87,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
           Project project = repository.getProject();
           VirtualFile repositoryRoot = repository.getRoot();
           try {
-            new HgCommitCommand(project, repository, "Automated merge with " + branch).execute();
+            new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread();
             new HgBookmarkCommand(project, repositoryRoot, branch).deleteBookmark();
           }
           catch (HgCommandException e) {

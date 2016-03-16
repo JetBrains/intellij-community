@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,18 +39,15 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
   public boolean execute(@NotNull final AllOverridingMethodsSearch.SearchParameters p, @NotNull final Processor<Pair<PsiMethod, PsiMethod>> consumer) {
     final PsiClass psiClass = p.getPsiClass();
 
-    final MultiMap<String, PsiMethod> methods = ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<String, PsiMethod>>() {
-      @Override
-      public MultiMap<String, PsiMethod> compute() {
-        final MultiMap<String, PsiMethod> methods = MultiMap.create();
+    final MultiMap<String, PsiMethod> potentials = ApplicationManager.getApplication().runReadAction((Computable<MultiMap<String, PsiMethod>>)() -> {
+        final MultiMap<String, PsiMethod> result = MultiMap.create();
         for (PsiMethod method : psiClass.getMethods()) {
           if (PsiUtil.canBeOverriden(method)) {
-            methods.putValue(method.getName(), method);
+            result.putValue(method.getName(), method);
           }
         }
-        return methods;
-      }
-    });
+        return result;
+      });
 
 
     final SearchScope scope = p.getScope();
@@ -60,11 +57,11 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
       public boolean process(PsiClass inheritor) {
         PsiSubstitutor substitutor = null;
 
-        for (String name : methods.keySet()) {
+        for (String name : potentials.keySet()) {
           if (inheritor.findMethodsByName(name, true).length == 0) continue;
 
-          for (PsiMethod method : methods.get(name)) {
-            if (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+          for (PsiMethod superMethod : potentials.get(name)) {
+            if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
                 !JavaPsiFacade.getInstance(inheritor.getProject()).arePackagesTheSame(psiClass, inheritor)) continue;
 
             if (substitutor == null) {
@@ -73,18 +70,18 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
               if (substitutor == null) return true;
             }
 
-            MethodSignature signature = method.getSignature(substitutor);
-            PsiMethod inInheritor = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
+            MethodSignature superSignature = superMethod.getSignature(substitutor);
+            PsiMethod inInheritor = MethodSignatureUtil.findMethodBySuperSignature(inheritor, superSignature, false);
             if (inInheritor != null && !inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
-              if (!consumer.process(Pair.create(method, inInheritor))) return false;
+              if (!consumer.process(Pair.create(superMethod, inInheritor))) return false;
             }
 
             if (psiClass.isInterface() && !inheritor.isInterface()) {  //check for sibling implementation
               final PsiClass superClass = inheritor.getSuperClass();
               if (superClass != null && !superClass.isInheritor(psiClass, true)) {
-                inInheritor = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, signature, true);
+                inInheritor = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, superSignature, true);
                 if (inInheritor != null && !inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
-                  if (!consumer.process(Pair.create(method, inInheritor))) return false;
+                  if (!consumer.process(Pair.create(superMethod, inInheritor))) return false;
                 }
               }
             }

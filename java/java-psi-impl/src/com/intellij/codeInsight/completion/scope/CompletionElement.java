@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -33,11 +34,22 @@ public class CompletionElement{
   private final Object myElement;
   private final PsiSubstitutor mySubstitutor;
   private final Object myEqualityObject;
+  private final String myQualifierText;
 
   public CompletionElement(Object element, PsiSubstitutor substitutor) {
+    this(element, substitutor, "");
+  }
+
+  public CompletionElement(Object element, PsiSubstitutor substitutor, @NotNull String qualifierText) {
     myElement = element;
     mySubstitutor = substitutor;
+    myQualifierText = qualifierText;
     myEqualityObject = getUniqueId();
+  }
+
+  @NotNull
+  public String getQualifierText() {
+    return myQualifierText;
   }
 
   public PsiSubstitutor getSubstitutor(){
@@ -58,7 +70,7 @@ public class CompletionElement{
       return ((PsiPackage)myElement).getQualifiedName();
     }
     if(myElement instanceof PsiMethod){
-      return ((PsiMethod)myElement).getSignature(mySubstitutor);
+      return Pair.create(((PsiMethod)myElement).getSignature(mySubstitutor), myQualifierText);
     }
     if (myElement instanceof PsiVariable) {
       return "#" + ((PsiVariable)myElement).getName();

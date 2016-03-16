@@ -13,9 +13,12 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
@@ -55,11 +58,9 @@ import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
-import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -192,7 +193,7 @@ public abstract class HgUtil {
       if (vcsRoot == null) {
         continue;
       }
-      command.execute(new HgFile(vcsRoot, filePath));
+      command.executeInCurrentThread(new HgFile(vcsRoot, filePath));
     }
   }
 
@@ -341,7 +342,7 @@ public abstract class HgUtil {
     //get file name in target revision if it was moved/renamed
     HgStatusCommand statCommand = new HgStatusCommand.Builder(false).copySource(true).baseRevision(vcsRevisionNumber).build(project);
 
-    Set<HgChange> changes = statCommand.execute(localHgFile.getRepo(), Collections.singletonList(localHgFile.toFilePath()));
+    Set<HgChange> changes = statCommand.executeInCurrentThread(localHgFile.getRepo(), Collections.singletonList(localHgFile.toFilePath()));
 
     for (HgChange change : changes) {
       if (change.afterFile().equals(localHgFile)) {
@@ -423,12 +424,9 @@ public abstract class HgUtil {
     return sorted;
   }
 
-  public static void executeOnPooledThreadIfNeeded(Runnable runnable) {
-    if (EventQueue.isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    } else {
-      runnable.run();
-    }
+  @NotNull
+  public static ProgressIndicator executeOnPooledThread(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
+    return BackgroundTaskUtil.executeOnPooledThread(runnable, parentDisposable);
   }
 
   /**
@@ -472,7 +470,7 @@ public abstract class HgUtil {
           .build(project);
     }
 
-    Collection<HgChange> hgChanges = statusCommand.execute(root, Collections.singleton(path));
+    Collection<HgChange> hgChanges = statusCommand.executeInCurrentThread(root, Collections.singleton(path));
     List<Change> changes = new ArrayList<Change>();
     //convert output changes to standart Change class
     for (HgChange hgChange : hgChanges) {

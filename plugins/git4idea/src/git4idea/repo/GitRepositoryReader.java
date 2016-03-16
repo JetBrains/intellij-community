@@ -86,11 +86,7 @@ class GitRepositoryReader {
 
     GitLocalBranch currentBranch;
     String currentRevision;
-    if (!headInfo.isBranch) {
-      currentBranch = null;
-      currentRevision = headInfo.content;
-    }
-    else if (!localBranches.isEmpty()) {
+    if (!headInfo.isBranch || !localBranches.isEmpty()) {
       currentBranch = findCurrentBranch(headInfo, state, localBranches.keySet());
       currentRevision = getCurrentRevision(headInfo, currentBranch == null ? null : localBranches.get(currentBranch));
     }

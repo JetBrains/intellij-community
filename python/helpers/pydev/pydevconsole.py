@@ -1,7 +1,8 @@
 '''
 Entry point module to start the interactive console.
 '''
-from _pydev_imps._pydev_thread import start_new_thread
+from _pydev_imps._pydev_saved_modules import thread
+start_new_thread = thread.start_new_thread
 
 try:
     from code import InteractiveConsole
@@ -14,7 +15,7 @@ from code import InteractiveInterpreter
 import os
 import sys
 
-from _pydev_imps import _pydev_threading as threading
+from _pydev_imps._pydev_saved_modules import threading
 
 import traceback
 from _pydev_bundle import fix_getpass

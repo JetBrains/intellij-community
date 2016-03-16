@@ -175,9 +175,26 @@ public class PyTypeTest extends PyTestCase {
            "l = [1, 2, 3]; expr = l[0]");
   }
 
-  public void testSliceType() {
+  public void testListSliceType() {
     doTest("List[int]",
            "l = [1, 2, 3]; expr = l[0:1]");
+  }
+
+  public void testTupleSliceType() {
+    doTest("tuple",
+           "l = (1, 2, 3); expr = l[0:1]");
+  }
+
+  // PY-18560
+  public void testCustomSliceType() {
+    doTest(
+      "int",
+      "class RectangleFactory(object):\n" +
+      "    def __getitem__(self, item):\n" +
+      "        return 1\n" +
+      "factory = RectangleFactory()\n" +
+      "expr = factory[:]"
+    );
   }
 
   public void testExceptType() {
@@ -694,17 +711,17 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo', 'rb')\n");
   }
 

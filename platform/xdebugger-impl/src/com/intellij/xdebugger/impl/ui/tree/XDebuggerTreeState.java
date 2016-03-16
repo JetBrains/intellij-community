@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,23 +61,21 @@ public class XDebuggerTreeState {
   private void addChildren(final XDebuggerTree tree, final NodeInfo nodeInfo, final XDebuggerTreeNode treeNode) {
     if (tree.isExpanded(treeNode.getPath())) {
       List<? extends XDebuggerTreeNode> children = treeNode.getLoadedChildren();
-      if (children != null) {
-        nodeInfo.myExpanded = true;
-        for (XDebuggerTreeNode child : children) {
-          final TreePath path = child.getPath();
-          final Rectangle bounds = tree.getPathBounds(path);
-          if (bounds != null) {
-            Rectangle treeVisibleRect =
-              tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
-            if (treeVisibleRect.contains(bounds)) {
-              myLastVisibleNodeRect = bounds;
-            }
+      nodeInfo.myExpanded = true;
+      for (XDebuggerTreeNode child : children) {
+        TreePath path = child.getPath();
+        Rectangle bounds = tree.getPathBounds(path);
+        if (bounds != null) {
+          Rectangle treeVisibleRect =
+            tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
+          if (treeVisibleRect.contains(bounds)) {
+            myLastVisibleNodeRect = bounds;
           }
-          NodeInfo childInfo = createNode(child, tree.isPathSelected(path));
-          if (childInfo != null) {
-            nodeInfo.addChild(childInfo);
-            addChildren(tree, childInfo, child);
-          }
+        }
+        NodeInfo childInfo = createNode(child, tree.isPathSelected(path));
+        if (childInfo != null) {
+          nodeInfo.addChild(childInfo);
+          addChildren(tree, childInfo, child);
         }
       }
     }

@@ -137,7 +137,7 @@ public class BranchesPanel extends JPanel {
   private static class ReferenceGroupComponent extends JPanel {
     @NotNull private final RefGroup myGroup;
     @NotNull private final VcsRefPainter myReferencePainter;
-    @NotNull private final VcsLogUiImpl myUI;
+    @NotNull private final VcsLogUiImpl myUi;
     @NotNull private final VirtualFile myRoot;
 
     private ReferenceGroupComponent(@NotNull RefGroup group,
@@ -146,14 +146,14 @@ public class BranchesPanel extends JPanel {
                                     @NotNull VirtualFile root) {
       myGroup = group;
       myReferencePainter = referencePainter;
-      myUI = ui;
+      myUi = ui;
       myRoot = root;
       addMouseListener(new MyMouseAdapter());
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      Color rootIndicatorColor = VcsLogColorManagerImpl.getIndicatorColor(myUI.getColorManager().getRootColor(myRoot));
+      Color rootIndicatorColor = VcsLogColorManagerImpl.getIndicatorColor(myUi.getColorManager().getRootColor(myRoot));
       myReferencePainter
         .paint(myGroup.getName(), g, 0, (getHeight() - myReferencePainter.getHeight(this)) / 2, myGroup.getBgColor(), rootIndicatorColor);
     }
@@ -171,16 +171,16 @@ public class BranchesPanel extends JPanel {
     private class MyMouseAdapter extends MouseAdapter {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (!myUI.areGraphActionsEnabled()) {
+        if (!myUi.areGraphActionsEnabled()) {
           return;
         }
 
         if (myGroup.getRefs().size() == 1) {
           VcsRef ref = myGroup.getRefs().iterator().next();
-          myUI.jumpToCommit(ref.getCommitHash(), ref.getRoot());
+          myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot());
         }
         else {
-          ReferencePopupBuilder popupBuilder = new ReferencePopupBuilder(myGroup, myUI);
+          ReferencePopupBuilder popupBuilder = new ReferencePopupBuilder(myGroup, myUi);
           popupBuilder.getPopup().showUnderneathOf(ReferenceGroupComponent.this);
         }
       }

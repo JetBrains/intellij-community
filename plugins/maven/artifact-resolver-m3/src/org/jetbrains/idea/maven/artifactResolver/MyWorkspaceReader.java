@@ -52,13 +52,8 @@ public class MyWorkspaceReader implements WorkspaceReader {
   }
 
   public File findArtifact(Artifact artifact) {
-    String type = artifact.getExtension();
-    if ("jar".equals(type) && "tests".equals(artifact.getClassifier())) {
-      type = "test-jar";
-    }
-
-    return MavenModuleMap.getInstance().findArtifact(artifact.getGroupId(), artifact.getArtifactId(), type,
-                                                     artifact.getBaseVersion());
+    return MavenModuleMap.getInstance().findArtifact(
+      artifact.getGroupId(), artifact.getArtifactId(), artifact.getExtension(), artifact.getClassifier(), artifact.getBaseVersion());
   }
 
   public List<String> findVersions(Artifact artifact) {

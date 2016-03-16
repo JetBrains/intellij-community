@@ -5,15 +5,14 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.xml.util.XmlUtil;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -138,6 +137,17 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     assertEquals("dbchangelog-3.1.xsd", XmlNamespaceIndex
       .guessSchema(namespace, null, null, "http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd", myModule, getProject())
       .getFile().getName());
+  }
+
+  public void testNullSerialization() throws Exception {
+    DataExternalizer<XsdNamespaceBuilder> externalizer = new XmlNamespaceIndex().getValueExternalizer();
+    XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new StringReader(""));
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    externalizer.save(new DataOutputStream(out), builder);
+
+    XsdNamespaceBuilder read = externalizer.read(new DataInputStream(new ByteArrayInputStream(out.toByteArray())));
+    assertEquals(read, builder);
+    assertEquals(read.hashCode(), builder.hashCode());
   }
 
   @Override

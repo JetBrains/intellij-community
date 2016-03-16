@@ -202,7 +202,7 @@ public class FoldingModelSupport {
   }
 
   @Nullable
-  private static FoldRegion addFolding(@NotNull EditorEx editor, int start, int end, boolean expanded) {
+  public static FoldRegion addFolding(@NotNull EditorEx editor, int start, int end, boolean expanded) {
     DocumentEx document = editor.getDocument();
     final int startOffset = document.getLineStartOffset(start);
     final int endOffset = document.getLineEndOffset(end - 1);
@@ -419,10 +419,6 @@ public class FoldingModelSupport {
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {
       DiffDividerDrawUtil.paintSeparators(gg, divider.getWidth(), myEditors[myLeft], myEditors[myRight], this);
-    }
-
-    public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
-      DiffDividerDrawUtil.paintSeparatorsOnScrollbar(gg, width, myEditors[myLeft], myEditors[myRight], this);
     }
   }
 

@@ -10,16 +10,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.jetbrains.edu.courseFormat.StudyStatus;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.checker.StudyCheckTask;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
-import com.jetbrains.edu.learning.checker.StudyTestsOutputParser;
-import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
+import com.jetbrains.edu.learning.checker.StudyTestsOutputParser;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,9 +27,9 @@ import java.util.Map;
 
 public class PyStudyCheckAction extends StudyCheckAction {
   private static final Logger LOG = Logger.getInstance(PyStudyCheckAction.class);
-
-  @Override
-  protected void check(@NotNull Project project) {
+  public static final String ACTION_ID = "PyCheckAction";
+  
+  public void check(@NotNull Project project) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> {
         final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
@@ -131,5 +131,11 @@ public class PyStudyCheckAction extends StudyCheckAction {
       }
     }
     return taskVirtualFile;
+  }
+  
+  @NotNull
+  @Override
+  public String getActionId() {
+    return ACTION_ID;
   }
 }

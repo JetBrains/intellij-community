@@ -6,9 +6,18 @@
 
 :: ---------------------------------------------------------------------
 :: Locate a JDK installation directory which will be used to run the IDE.
-:: Try (in order): @@product_uc@@_JDK, ..\jre, JDK_HOME, JAVA_HOME.
+:: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jre, JDK_HOME, JAVA_HOME.
 :: ---------------------------------------------------------------------
 IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
+IF NOT "%JDK%" == "" GOTO jdk
+SET USER_JDK_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
+IF EXIST "%USER_JDK_FILE%" SET/pJDK=<%USER_JDK_FILE%
+IF "%JDK%" == "" GOTO jdk0
+IF EXIST "%JDK%" GOTO jdk
+SET JDK=%~dp0\..\%JDK%
+GOTO jdk
+
+:jdk0
 IF NOT "%JDK%" == "" GOTO jdk
 IF EXIST "%~dp0\..\jre" SET JDK=%~dp0\..\jre
 IF NOT "%JDK%" == "" GOTO jdk

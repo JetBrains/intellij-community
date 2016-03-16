@@ -65,9 +65,31 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
   public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    final SymbolCollector processor = new SymbolCollector(name, project, scope);
-    FileBasedIndex.getInstance().processValues(NAME, name, null, processor, scope);
-    return processor.getResult();
+    final Collection<NavigationItem> result = new ArrayList<NavigationItem>();
+    PsiManager psiManager = PsiManager.getInstance(project);
+
+    for(VirtualFile file:FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope)) {
+      final PsiFile psiFile = psiManager.findFile(file);
+
+      if (psiFile instanceof XmlFile) {
+        final Grammar grammar = GrammarFactory.getGrammar((XmlFile)psiFile);
+
+        if (grammar != null) {
+          grammar.acceptChildren(new CommonElement.Visitor() {
+            @Override
+            public void visitDefine(Define define) {
+              if (name.equals(define.getName())) {
+                final PsiElement psi = define.getPsiElement();
+                if (psi != null) {
+                  MyNavigationItem.add((NavigationItem)define.getPsiElement(), result);
+                }
+              }
+            }
+          });
+        }
+      }
+    }
+    return result.toArray(new NavigationItem[result.size()]);
   }
 
   @NotNull
@@ -169,48 +191,6 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @Override
   public int getVersion() {
     return 0;
-  }
-
-  private static class SymbolCollector implements FileBasedIndex.ValueProcessor<Void> {
-    private final GlobalSearchScope myScope;
-    private final PsiManager myMgr;
-    private final String myName;
-
-    private final Collection<NavigationItem> myResult = new ArrayList<NavigationItem>();
-
-    public SymbolCollector(String name, Project project, GlobalSearchScope scope) {
-      myMgr = PsiManager.getInstance(project);
-      myScope = scope;
-      myName = name;
-    }
-
-    @Override
-    public boolean process(VirtualFile file, Void kind) {
-      if (myScope.contains(file)) {
-        final PsiFile psiFile = myMgr.findFile(file);
-        if (psiFile instanceof XmlFile) {
-          final Grammar grammar = GrammarFactory.getGrammar((XmlFile)psiFile);
-          if (grammar != null) {
-            grammar.acceptChildren(new CommonElement.Visitor() {
-              @Override
-              public void visitDefine(Define define) {
-                if (myName.equals(define.getName())) {
-                  final PsiElement psi = define.getPsiElement();
-                  if (psi != null) {
-                    MyNavigationItem.add((NavigationItem)define.getPsiElement(), myResult);
-                  }
-                }
-              }
-            });
-          }
-        }
-      }
-      return true;
-    }
-
-    public NavigationItem[] getResult() {
-      return myResult.toArray(new NavigationItem[myResult.size()]);
-    }
   }
 
   private static class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {

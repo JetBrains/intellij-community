@@ -117,7 +117,7 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 1)
   }
 
-  private fun GraphCommit<Int>.toVcsCommit(map: VcsLogHashMap) = TimedVcsCommitImpl(map.getCommitId(this.id).hash, map.getHashes(this.parents), 1)
+  private fun GraphCommit<Int>.toVcsCommit(map: VcsLogHashMap) = TimedVcsCommitImpl(map.getCommitId(this.id)!!.hash, map.getHashes(this.parents), 1)
 
   fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
     assertTrue(null == (1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
@@ -135,12 +135,12 @@ class VisiblePackBuilderTest {
 
     fun build(filters: VcsLogFilterCollection): VisiblePack {
       val refs = refs.mapTo(HashSet<VcsRef>(), {
-        VcsRefImpl(hashMap.getCommitId(it.commit).hash, it.name, BRANCH_TYPE, root)
+        VcsRefImpl(hashMap.getCommitId(it.commit)!!.hash, it.name, BRANCH_TYPE, root)
       })
 
       val dataPack = DataPack.build(commits, mapOf(root to refs), providers, hashMap, true)
       val detailsCache = data.entries.map {
-        val hash = hashMap.getCommitId(it.key.id).hash
+        val hash = hashMap.getCommitId(it.key.id)!!.hash
         val metadata = if (it.value.user == null)
           null
         else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.parents), 1L, root, it.value.subject,
@@ -149,8 +149,8 @@ class VisiblePackBuilderTest {
       }.toMap()
 
       val commitDetailsGetter = object : DataGetter<VcsFullCommitDetails> {
-        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails? {
-          return null
+        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails {
+          throw UnsupportedOperationException()
         }
 
         override fun loadCommitsData(hashes: MutableList<Int>, consumer: Consumer<MutableList<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
@@ -175,7 +175,7 @@ class VisiblePackBuilderTest {
 
   }
 
-  fun VcsLogHashMap.getHashes(ids: List<Int>) = ids.map { getCommitId(it).hash }
+  fun VcsLogHashMap.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
   fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionImpl(null, null, null, null, null, null, null)
 

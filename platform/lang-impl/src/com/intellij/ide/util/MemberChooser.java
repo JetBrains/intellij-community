@@ -735,6 +735,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
           }
         }
       }
+      mySelectedNodes.sort(new OrderComparator());
       mySelectedElements = new LinkedHashSet<T>();
       for (MemberNode selectedNode : mySelectedNodes) {
         mySelectedElements.add((T)selectedNode.getDelegate());

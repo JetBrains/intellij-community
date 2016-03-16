@@ -70,6 +70,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-18422
+  public void testSlotsAndClassAttr() {
+    doTest();
+  }
+
   public void testSlotsSubclass() {  // PY-5939
     doTest();
   }
@@ -343,7 +348,12 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest("a.py");
   }
 
-  public void testBytesIORead() {
+  public void testBytesIOMethods() {
+    doTest();
+  }
+
+  // PY-18322
+  public void testFileMethods() {
     doTest();
   }
 
@@ -536,6 +546,72 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testPropertyNotListedInSlots() {
     doTest();
   }
+
+  // PY-2748
+  public void testFormatStringPackedDictCall() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringPackedDict() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringPositional() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringKeyword() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringPositional() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringKeyword() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringPackedFunctionCall() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringFunctionCall() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringPackedReference() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringReference() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringDictLiteralArgumentWithReferenceExprKeys() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringDictLiteralArgumentWithReferenceExprKeys() {
+    doTest();
+  }
+  
+  // PY-2748
+  public void testFormatStringDictLiteralArgumentWithNumericExprKeys() {
+    doTest();
+  }
+
 
   // PY-18254
   public void testVarargsAnnotatedWithFunctionComment() {

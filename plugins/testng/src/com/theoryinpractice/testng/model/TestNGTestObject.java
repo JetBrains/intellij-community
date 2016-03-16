@@ -33,10 +33,15 @@ import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testng.annotations.AfterGroups;
+import org.testng.annotations.BeforeGroups;
 
 import java.util.*;
 
 public abstract class TestNGTestObject {
+
+  public static final String[] GROUPS_CONFIGURATION = {BeforeGroups.class.getName(), AfterGroups.class.getName()};
+  
   private static final Logger LOG = Logger.getInstance("#" + TestNGTestObject.class.getName());
   protected final TestNGConfiguration myConfig;
 
@@ -93,29 +98,23 @@ public abstract class TestNGTestObject {
                                             final GlobalSearchScope searchScope,
                                             @Nullable final PsiClass... classes) {
     if (classes != null && classes.length > 0) {
-      final Set<String> groupDependencies = new LinkedHashSet<String>();
-      TestNGUtil.collectAnnotationValues(groupDependencies, "dependsOnGroups", methods, classes);
       final Set<PsiMember> membersToCheckNow = new LinkedHashSet<PsiMember>();
+
+      final Set<String> groupDependencies = new LinkedHashSet<>(), declaredGroups = new LinkedHashSet<>();
+      final HashMap<String, Collection<String>> valuesMap = new HashMap<>();
+      valuesMap.put("dependsOnGroups", groupDependencies);
+      valuesMap.put("groups", declaredGroups);
+      //find all mentioned groups and dependsOnGroup values
+      TestNGUtil.collectAnnotationValues(valuesMap, methods, classes);
+
       if (!groupDependencies.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final Project project = classes[0].getProject();
-            final PsiClass testAnnotation =
-              JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
-            LOG.assertTrue(testAnnotation != null);
-            for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope)) {
-              final PsiClass containingClass = psiMember.getContainingClass();
-              if (containingClass == null) continue;
-              if (ArrayUtil.find(classes, containingClass) < 0) continue;
-              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN);
-              if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groupDependencies)) {
-                if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
-                  membersToCheckNow.add(psiMember);
-                }
-              }
-            }
-          }
-        });
+        collectGroupsMembers(TestNGUtil.TEST_ANNOTATION_FQN, groupDependencies, true, results, alreadyMarkedToBeChecked, searchScope, membersToCheckNow, classes);
+      }
+
+      if (!declaredGroups.isEmpty()) {
+        for (String annotationFqn : GROUPS_CONFIGURATION) {
+          collectGroupsMembers(annotationFqn, declaredGroups, false, results, alreadyMarkedToBeChecked, searchScope, membersToCheckNow, classes);
+        }
       }
 
       collectDependsOnMethods(results, alreadyMarkedToBeChecked, membersToCheckNow, methods, classes);
@@ -140,6 +139,36 @@ public abstract class TestNGTestObject {
     }
   }
 
+  private static void collectGroupsMembers(final String annotationFqn,
+                                           final Set<String> groups,
+                                           final boolean skipUnrelated, 
+                                           final Map<PsiClass, Map<PsiMethod, List<String>>> results,
+                                           final Set<PsiMember> alreadyMarkedToBeChecked,
+                                           final GlobalSearchScope searchScope,
+                                           final Set<PsiMember> membersToCheckNow,
+                                           final PsiClass... classes) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final Project project = classes[0].getProject();
+        final PsiClass testAnnotation = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
+        if (testAnnotation == null) {
+          return;
+        }
+        for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope)) {
+          final PsiClass containingClass = psiMember.getContainingClass();
+          if (containingClass == null) continue;
+          if (skipUnrelated && ArrayUtil.find(classes, containingClass) < 0) continue;
+          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, annotationFqn);
+          if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groups)) {
+            if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
+              membersToCheckNow.add(psiMember);
+            }
+          }
+        }
+      }
+    });
+  }
+
   private static void collectDependsOnMethods(final Map<PsiClass, Map<PsiMethod, List<String>>> results,
                                               final Set<PsiMember> alreadyMarkedToBeChecked,
                                               final Set<PsiMember> membersToCheckNow,
@@ -162,7 +191,9 @@ public abstract class TestNGTestObject {
     }
     for (final PsiClass containingClass : psiClasses) {
       final Set<String> testMethodDependencies = new LinkedHashSet<String>();
-      TestNGUtil.collectAnnotationValues(testMethodDependencies, "dependsOnMethods", methods, containingClass);
+      final HashMap<String, Collection<String>> valuesMap = new HashMap<>();
+      valuesMap.put("dependsOnMethods", testMethodDependencies);
+      TestNGUtil.collectAnnotationValues(valuesMap, methods, containingClass);
       if (!testMethodDependencies.isEmpty()) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {

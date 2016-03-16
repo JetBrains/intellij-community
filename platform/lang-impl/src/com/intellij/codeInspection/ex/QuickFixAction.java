@@ -173,15 +173,6 @@ public class QuickFixAction extends AnAction {
       }, templatePresentationText, null);
 
       refreshViews(project, ignoredElements, myToolWrapper);
-      final InspectionTree tree = context.getView().getTree();
-      final TreePath[] selected = tree.getSelectionPaths();
-      if (selected != null) {
-        for (TreePath path : selected) {
-          path.getLastPathComponent();
-          ((DefaultTreeModel) tree.getModel()).reload((TreeNode)path.getLastPathComponent());
-        }
-      }
-      tree.restoreExpansionAndSelection();
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();

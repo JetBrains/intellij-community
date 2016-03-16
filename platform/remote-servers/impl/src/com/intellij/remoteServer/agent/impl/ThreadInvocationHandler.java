@@ -8,11 +8,9 @@ import com.intellij.remoteServer.agent.annotation.FinalCall;
 import com.intellij.remoteServer.agent.annotation.ImmediateCall;
 import com.intellij.remoteServer.agent.impl.util.FinalTask;
 import com.intellij.remoteServer.agent.impl.util.SequentialTaskExecutor;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -27,8 +25,6 @@ public class ThreadInvocationHandler implements InvocationHandler {
   private final Object myTarget;
   private final ChildWrapperCreator myPreWrapperFactory;
 
-  private Map<Object, Object> myChild2Wrapped;
-
   public ThreadInvocationHandler(SequentialTaskExecutor taskExecutor, ClassLoader callerClassLoader, Object target) {
     this(taskExecutor, callerClassLoader, target, null);
   }
@@ -39,7 +35,6 @@ public class ThreadInvocationHandler implements InvocationHandler {
     myCallerClassLoader = callerClassLoader;
     myTarget = target;
     myPreWrapperFactory = preWrapperCreator;
-    myChild2Wrapped = new HashMap<Object, Object>();
   }
 
   @Override
@@ -72,11 +67,6 @@ public class ThreadInvocationHandler implements InvocationHandler {
           return null;
         }
 
-        Object cached = myChild2Wrapped.get(child);
-        if (cached != null) {
-          return cached;
-        }
-
         Object result;
         Class<?> childClass = child.getClass();
         if (childClass.isArray()) {
@@ -91,7 +81,6 @@ public class ThreadInvocationHandler implements InvocationHandler {
           result = createChildProxy(child);
         }
 
-        myChild2Wrapped.put(child, result);
         return result;
       }
 

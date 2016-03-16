@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -16,10 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-
-public class StudyCheckAction extends DumbAwareAction {
-
-  public static final String ACTION_ID = "CheckAction";
+public abstract class StudyCheckAction extends StudyToolbarAction {
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
 
   protected Ref<Boolean> myCheckInProgress = new Ref<>(false);
@@ -28,7 +24,7 @@ public class StudyCheckAction extends DumbAwareAction {
     super("Check Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Check current task", InteractiveLearningIcons.Resolve);
   }
 
-  protected void check(@NotNull final Project project) {}
+  public abstract void check(@NotNull final Project project);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -50,5 +46,10 @@ public class StudyCheckAction extends DumbAwareAction {
     if (presentation.isEnabled()) {
       presentation.setEnabled(!myCheckInProgress.get());
     }
+  }
+
+  @Override
+  public String[] getShortcuts() {
+    return new String[] {SHORTCUT};
   }
 }

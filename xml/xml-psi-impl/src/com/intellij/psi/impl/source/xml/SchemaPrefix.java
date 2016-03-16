@@ -110,6 +110,6 @@ public class SchemaPrefix extends RenameableFakePsiElement {
   @Nullable
   protected String getNamespace() {
     XmlAttribute parent = (XmlAttribute)getParent();
-    return parent.getValue();
+    return parent == null ? null : parent.getValue();
   }
 }

@@ -319,7 +319,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
         int value = getValue();
         int maxY = myTrackBounds.y + myTrackBounds.height - height;
         int y = (value < max - extent) ? (myTrackBounds.height - height) * (value - min) / (range - extent) : maxY;
-        setThumbBounds(myTrackBounds.x, adjust(y, myTrackBounds.y, maxY), myTrackBounds.width, height);
+        y = adjust(y, myTrackBounds.y, maxY);
+        boolean moved = myThumbBounds.y != y || myThumbBounds.height != height;
+        myThumbBounds.setBounds(myTrackBounds.x, y, myTrackBounds.width, height);
+        if (moved) onThumbMove();
       }
     }
     else {
@@ -333,15 +336,11 @@ class DefaultScrollBarUI extends ScrollBarUI {
         int maxX = myTrackBounds.x + myTrackBounds.width - width;
         int x = (value < max - extent) ? (myTrackBounds.width - width) * (value - min) / (range - extent) : maxX;
         if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrackBounds.x - x + maxX;
-        setThumbBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
+        x = adjust(x, myTrackBounds.x, maxX);
+        boolean moved = myThumbBounds.x != x || myThumbBounds.width != width;
+        myThumbBounds.setBounds(x, myTrackBounds.y, width, myTrackBounds.height);
+        if (moved) onThumbMove();
       }
-    }
-  }
-
-  private void setThumbBounds(int x, int y, int width, int height) {
-    if (myThumbBounds.x != x || myThumbBounds.y != y || myThumbBounds.width != width || myThumbBounds.height != height) {
-      myThumbBounds.setBounds(x, y, width, height);
-      onThumbMove();
     }
   }
 

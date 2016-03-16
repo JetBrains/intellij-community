@@ -5,8 +5,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.Function;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 
 class CCFileDeletedListener extends VirtualFileAdapter {

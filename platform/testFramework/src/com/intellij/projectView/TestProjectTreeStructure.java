@@ -29,6 +29,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   protected boolean myShowMembers = false;
   protected boolean myHideEmptyMiddlePackages;
   protected boolean myFlattenPackages;
+  protected boolean myShowLibraryContents = true;
 
   public TestProjectTreeStructure(Project project, Disposable parentDisposable) {
     super(project);
@@ -70,7 +71,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
 
   @Override
   public boolean isShowLibraryContents() {
-    return true;
+    return myShowLibraryContents;
   }
 
   @Override
@@ -88,6 +89,10 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
 
   public void setFlattenPackages(boolean flattenPackages) {
     myFlattenPackages = flattenPackages;
+  }
+
+  public void setShowLibraryContents(boolean showLibraryContents) {
+    myShowLibraryContents = showLibraryContents;
   }
 
   @Override

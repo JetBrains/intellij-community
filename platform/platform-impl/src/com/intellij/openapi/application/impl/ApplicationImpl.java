@@ -17,7 +17,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
-import com.intellij.Patches;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
@@ -51,6 +51,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.ui.DialogEarthquakeShaker;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
@@ -61,6 +62,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
@@ -75,12 +77,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.picocontainer.MutablePicoContainer;
+import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -166,6 +168,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   };
 
+  static {
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+  }
+
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
                          boolean isHeadless,
@@ -215,7 +221,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
               final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
               JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
                              (JFrame)WindowManager.getInstance().getIdeFrame(project);
-              if (frame != null) frame.requestFocus();
+              if (frame != null) {
+                frame.toFront();
+                if (!(frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen())) {
+                  DialogEarthquakeShaker.shake(frame);
+                }
+              }
             }
           });
         }
@@ -297,12 +308,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }
     }
-    runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(ApplicationImpl.this);
-      }
-    });
+    TransactionGuard.syncTransaction(TransactionKind.ANY_CHANGE, () -> runWriteAction(() -> Disposer.dispose(this)));
 
     Disposer.assertIsEmpty();
     return true;
@@ -365,6 +371,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
     return ourThreadExecutorsService.submit(new Runnable() {
+      @Override
+      public String toString() {
+        return action.toString();
+      }
+
       @Override
       public void run() {
         assert !isReadAccessAllowed(): describe(Thread.currentThread());
@@ -853,7 +864,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private boolean doExit(boolean allowListenersToCancel, boolean restart) {
-    saveSettings();
+    TransactionGuard.syncTransaction(TransactionKind.ANY_CHANGE, this::saveSettings);
 
     if (allowListenersToCancel && !canExit()) {
       return false;
@@ -1070,15 +1081,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    try {
-      // use sun.awt.AWTAccessor.EventQueueAccessor?
-      assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
-      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
-      return (Thread)method.invoke(eventQueue);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return AWTAccessor.getEventQueueAccessor().getDispatchThread(eventQueue);
   }
 
   @Override
@@ -1227,14 +1230,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     if (!TransactionGuard.getInstance().isInsideTransaction() && Registry.is("ide.require.transaction.for.model.changes", false)) {
+      // please assign exceptions that occur here to Peter
       LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
-      //todo throw new IllegalStateException("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
     }
     boolean writeActionPending = myWriteActionPending;
-    myWriteActionPending = true;
-    if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {
+    if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
       writePauses.started();
     }
+    myWriteActionPending = true;
     try {
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);

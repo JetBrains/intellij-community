@@ -209,10 +209,7 @@ public class PyDocstringGenerator {
       statementList.accept(visitor);
       if (!isConstructor((PyFunction)myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
         // will add :return: placeholder in Sphinx/Epydoc docstrings
-        myAddedParams.add(new DocstringParam("", null, true));
-        if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-          withReturnValue("");
-        }
+        withReturnValue(null);
       }
     }
     return this;
@@ -274,7 +271,8 @@ public class PyDocstringGenerator {
         String type = paramTypes.get(paramCoordinates);
         if (type == null && PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
           if (signature != null) {
-            type = StringUtil.notNullize(param.isReturnValue() ? signature.getReturnTypeQualifiedName() :
+            type = StringUtil.notNullize(param.isReturnValue() ? 
+                                         signature.getReturnTypeQualifiedName() :
                                          signature.getArgTypeQualifiedName(param.getName()));
           }
           else {

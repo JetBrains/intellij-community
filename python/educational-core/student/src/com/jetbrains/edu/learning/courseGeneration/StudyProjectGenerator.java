@@ -22,17 +22,17 @@ import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.stepic.CourseInfo;
-import com.jetbrains.edu.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +53,7 @@ public class StudyProjectGenerator {
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
   public static final String AUTHOR_ATTRIBUTE = "authors";
+  public static final String LANGUAGE_ATTRIBUTE = "language";
 
   public void setCourses(List<CourseInfo> courses) {
     myCourses = courses;
@@ -460,9 +461,11 @@ public class StudyProjectGenerator {
         String courseName = el.getAsJsonObject().get(COURSE_NAME_ATTRIBUTE).getAsString();
         String courseDescription = el.getAsJsonObject().get(COURSE_DESCRIPTION).getAsString();
         JsonArray courseAuthors = el.getAsJsonObject().get(AUTHOR_ATTRIBUTE).getAsJsonArray();
+        String language = el.getAsJsonObject().get(LANGUAGE_ATTRIBUTE).getAsString();
         courseInfo = new CourseInfo();
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
+        courseInfo.setType("pycharm " + language);
         final ArrayList<CourseInfo.Author> authors = new ArrayList<>();
         for (JsonElement author : courseAuthors) {
           final JsonObject authorAsJsonObject = author.getAsJsonObject();

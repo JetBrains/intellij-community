@@ -224,7 +224,9 @@ public layoutEducational(String classesPath, Set usedJars) {
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("student")
+    layouts.layoutPlugin("student") {
+      fileset(dir: "$pythonCommunityHome/educational-core/student/lib")
+    }
     layouts.layoutPlugin("student-python") {
       dir("courses") {
         fileset(dir: "$pythonEduHome/student-python/resources/courses")
@@ -273,10 +275,6 @@ private layoutFull(Map args, String target, Set usedJars) {
             exclude(name: "**/tips/**")
           }
         }
-      }
-
-      jar("educational-core.jar") {
-        module("educational-core")
       }
 
       jar("pycharm-pydev.jar") {

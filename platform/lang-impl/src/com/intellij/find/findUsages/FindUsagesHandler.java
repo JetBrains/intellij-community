@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.Collections;
 
 /**
  * @author peter
- * @see com.intellij.find.findUsages.FindUsagesHandlerFactory
+ * @see FindUsagesHandlerFactory
  */
 public abstract class FindUsagesHandler {
   // return this handler if you want to cancel the search
@@ -57,8 +57,8 @@ public abstract class FindUsagesHandler {
 
   @NotNull
   public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
-    return new CommonFindUsagesDialog(myPsiElement, getProject(), getFindUsagesOptions(DataManager.getInstance().getDataContext()),
-                                      toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
+    @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
+    return new CommonFindUsagesDialog(myPsiElement, getProject(), getFindUsagesOptions(ctx), toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
   }
 
   @NotNull
@@ -102,7 +102,7 @@ public abstract class FindUsagesHandler {
   @NotNull
   public FindUsagesOptions getFindUsagesOptions(@Nullable final DataContext dataContext) {
     FindUsagesOptions options = createFindUsagesOptions(getProject(), dataContext);
-    options.isSearchForTextOccurrences &= isSearchForTextOccurencesAvailable(getPsiElement(), false);
+    options.isSearchForTextOccurrences &= isSearchForTextOccurrencesAvailable(getPsiElement(), false);
     return options;
   }
 
@@ -165,6 +165,13 @@ public abstract class FindUsagesHandler {
     return Collections.singleton(element.getText());
   }
 
+  @SuppressWarnings("deprecation")
+  protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+    return isSearchForTextOccurencesAvailable(psiElement, isSingleFile);
+  }
+
+  /** @deprecated use/override {@link #isSearchForTextOccurrencesAvailable(PsiElement, boolean)} instead (to be removed in IDEA 18) */
+  @SuppressWarnings({"SpellCheckingInspection", "UnusedParameters"})
   protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return false;
   }
@@ -236,7 +243,7 @@ public abstract class FindUsagesHandler {
     }
 
     @Override
-    protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+    protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
       throw new IncorrectOperationException();
     }
 

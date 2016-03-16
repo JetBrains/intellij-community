@@ -98,6 +98,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
         }
       }
       myConflictsPanel.revalidate();
+      myConflictsPanel.repaint();
     }
     myConflictsPanel.setVisible(0 < myConflictsContainer.getComponentCount());
   }

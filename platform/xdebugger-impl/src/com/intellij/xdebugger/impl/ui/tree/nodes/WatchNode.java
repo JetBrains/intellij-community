@@ -23,6 +23,8 @@ import javax.swing.tree.TreeNode;
 
 /**
  * @author nik
+ *
+ * @deprecated to be removed
  */
 public interface WatchNode extends TreeNode, Obsolescent {
   @NotNull

@@ -35,6 +35,7 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLineBreakpointType;
+import com.jetbrains.python.debugger.PyRunCythonExtensionsFilter;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonTracebackFilter;
@@ -140,6 +141,7 @@ public class PyEduDebugRunner extends PyDebugRunner {
     view.attachToProcess(processHandler);
     view.addMessageFilter(new PythonTracebackFilter(project));
     view.addMessageFilter(new UrlFilter());
+    view.addMessageFilter(new PyRunCythonExtensionsFilter(project));
 
     view.enableConsole(false);
 

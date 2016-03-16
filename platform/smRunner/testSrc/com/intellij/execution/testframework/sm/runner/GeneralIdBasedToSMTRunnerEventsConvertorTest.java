@@ -45,26 +45,26 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
   }
 
   public void testOnTestStarted() throws InterruptedException {
-    onTestStarted("my test", 1, 0);
-    SMTestProxy proxy = myEventsProcessor.findProxyById(1);
+    onTestStarted("my test", "1", "0");
+    SMTestProxy proxy = myEventsProcessor.findProxyById("1");
 
     assertNotNull(proxy);
     assertTrue(proxy.isInProgress());
     assertEquals(1, myRootProxy.getChildren().size());
 
-    onTestFailed(1, "", 1);
-    proxy = myEventsProcessor.findProxyById(1);
+    onTestFailed("1", "", 1);
+    proxy = myEventsProcessor.findProxyById("1");
 
     assertNotNull(proxy);
     assertTrue(proxy.isDefect());
     assertEquals(Long.valueOf(1), proxy.getDuration());
   }
 
-  private void onTestStarted(@NotNull String testName, int id, int parentId) {
+  private void onTestStarted(@NotNull String testName, String id, String parentId) {
     myEventsProcessor.onTestStarted(new TestStartedEvent(testName, id, parentId, null, null, null, true));
   }
 
-  private void onTestFailed(int id, @NotNull String errorMessage, int duration) {
+  private void onTestFailed(String id, @NotNull String errorMessage, int duration) {
     myEventsProcessor.onTestFailure(new TestFailedEvent(null, id, errorMessage, null, false, null, null, null, duration));
   }
 

@@ -9,12 +9,12 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.EduAnswerPlaceholderDeleteHandler;
-import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.EduDocumentListener;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.core.EduAnswerPlaceholderDeleteHandler;
+import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.core.EduDocumentListener;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 public class CCEditorFactoryListener implements EditorFactoryListener {

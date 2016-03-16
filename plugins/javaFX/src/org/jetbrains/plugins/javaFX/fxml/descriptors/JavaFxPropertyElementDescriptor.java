@@ -1,10 +1,8 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -18,9 +16,9 @@ import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -41,6 +39,10 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     myStatic = isStatic;
   }
 
+  public PsiClass getPsiClass() {
+    return myPsiClass;
+  }
+
   public boolean isStatic() {
     return myStatic;
   }
@@ -58,41 +60,38 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     final PsiElement declaration = getDeclaration();
-    if (declaration instanceof PsiField) {
-      final PsiType psiType = ((PsiField)declaration).getType();
+    final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myPsiClass, declaration);
+
+    if (propertyType != null) {
       final ArrayList<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
-      collectDescriptorsByCollection(psiType, declaration.getResolveScope(), descriptors, declaration.getProject());
       for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
         descriptors.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
       }
+
+      final PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(propertyType, declaration.getResolveScope());
+      if (collectionItemType != null) {
+        collectSubclassesDescriptors(collectionItemType, descriptors);
+      }
+      else if (!JavaFxPsiUtil.isPrimitiveOrBoxed(propertyType)) {
+        collectSubclassesDescriptors(propertyType, descriptors);
+      }
+
       if (!descriptors.isEmpty()) return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
-  public static void collectDescriptorsByCollection(PsiType psiType,
-                                                    GlobalSearchScope resolveScope,
-                                                    final List<XmlElementDescriptor> descriptors,
-                                                    final Project project) {
-    final PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(psiType, resolveScope);
-    if (collectionItemType != null) {
-      final PsiClass aClass = PsiUtil.resolveClassInType(collectionItemType);
-      if (aClass != null) {
-        ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass aClass) {
-            descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
-            return true;
-          }
-        });
-        descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
-      }
-    } else if (InheritanceUtil.isInheritor(psiType, JavaFxCommonNames.JAVAFX_BEANS_PROPERTY)) {
-      final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(psiType, project);
-      final PsiClass aClass = PsiUtil.resolveClassInType(propertyType);
-      if (aClass != null) {
-        descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
-      }
+  private static void collectSubclassesDescriptors(PsiType psiType, @NotNull final List<XmlElementDescriptor> descriptors) {
+    final PsiClass aClass = PsiUtil.resolveClassInType(psiType);
+    if (aClass != null) {
+      ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
+        @Override
+        public boolean process(PsiClass aClass) {
+          descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
+          return true;
+        }
+      });
+      descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
     }
   }
 
@@ -114,12 +113,10 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   @Nullable
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
-    final PsiElement element = getDeclaration();
-    if (element instanceof PsiField) {
-      final PsiType type = ((PsiField)element).getType();
-      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        return new AnyXmlAttributeDescriptor(attributeName);
-      }
+    final PsiElement declaration = getDeclaration();
+    final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myPsiClass, declaration);
+    if (InheritanceUtil.isInheritor(propertyType, CommonClassNames.JAVA_UTIL_MAP)) {
+      return new AnyXmlAttributeDescriptor(attributeName);
     }
     return null;
   }
@@ -155,11 +152,8 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   @Override
   public PsiElement getDeclaration() {
     if (myPsiClass == null) return null;
-    final PsiField field = myPsiClass.findFieldByName(myName, true);
-    if (field != null) {
-      return field;
-    }
-    return JavaFxPsiUtil.findPropertySetter(myName, myPsiClass);
+    if (myStatic) return JavaFxPsiUtil.findStaticPropertySetter(myName, myPsiClass);
+    return JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(myName);
   }
 
   @Override

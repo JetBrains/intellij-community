@@ -104,7 +104,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       else {
         newChildren = new SmartList<>();
         if (myValueChildren == null) {
-          myValueChildren = last ? Collections.emptyList() : new SmartList<>();
+          myValueChildren = new SmartList<>();
         }
       }
 
@@ -234,7 +234,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Override
-  @Nullable
+  @NotNull
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> empty = Collections.<XValueGroupNodeImpl>emptyList();
     return ContainerUtil.concat(ObjectUtils.notNull(myTopGroups, empty),

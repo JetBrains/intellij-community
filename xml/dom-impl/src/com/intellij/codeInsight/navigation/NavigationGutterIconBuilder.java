@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ public class NavigationGutterIconBuilder<T> {
     final String tooltip = renderer.getTooltipText();
     NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider,
                                                                                                  evaluateAndForget(myTargets));
-    return new RelatedItemLineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.UPDATE_OVERRIDEN_MARKERS,
+    return new RelatedItemLineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.UPDATE_OVERRIDDEN_MARKERS,
                                                      tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
                                                      renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
                                                      gotoTargets);

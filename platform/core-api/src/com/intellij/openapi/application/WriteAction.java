@@ -30,25 +30,36 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<T>(this);
 
     final Application application = ApplicationManager.getApplication();
-    if (application.isWriteAccessAllowed()) {
-      result.run();
+    boolean dispatchThread = application.isDispatchThread();
+    if (dispatchThread) {
+      AccessToken token = start(getClass());
+      try {
+        result.run();
+      } finally {
+        token.finish();
+      }
       return result;
     }
 
-    boolean dispatchThread = application.isDispatchThread();
-    if (!dispatchThread && application.isReadAccessAllowed()) {
+    if (application.isReadAccessAllowed()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
     application.invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        AccessToken token = application.acquireWriteActionLock(WriteAction.this.getClass());
+        AccessToken transaction = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE);
         try {
-          result.run();
+          AccessToken token = start(WriteAction.this.getClass());
+          try {
+            result.run();
+          }
+          finally {
+            token.finish();
+          }
         }
         finally {
-          token.finish();
+          transaction.finish();
         }
       }
     }, ModalityState.defaultModalityState());

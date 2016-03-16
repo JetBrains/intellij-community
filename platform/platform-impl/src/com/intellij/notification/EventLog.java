@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
+import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Function;
@@ -130,11 +131,11 @@ public class EventLog {
         public String fun(AnAction action) {
           return "<a href=\"" + index++ + "\">" + action.getTemplatePresentation().getText()+"</a>";
         }
-      }, actions.size() > 3 ? "<br>" : "&nbsp;") + "</p>";
+      }, isLongLine(actions) ? "<br>" : "&nbsp;") + "</p>";
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
-          Notification.fire(notification.getActions().get(Integer.parseInt(event.getDescription())));
+          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())));
         }
       });
       if (title.length() > 0 || content.length() > 0) {
@@ -167,6 +168,21 @@ public class EventLog {
     }
 
     return new LogEntry(logDoc.getText(), status, list);
+  }
+
+  private static boolean isLongLine(@NotNull List<AnAction> actions) {
+    int size = actions.size();
+    if (size > 3) {
+      return true;
+    }
+    if (size > 1) {
+      int length = 0;
+      for (AnAction action : actions) {
+        length += StringUtil.length(action.getTemplatePresentation().getText());
+      }
+      return length > 30;
+    }
+    return false;
   }
 
   @NotNull
@@ -520,14 +536,20 @@ public class EventLog {
       if (target != null) {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
         assert frame != null;
-        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, null);
-        Disposer.register(project, balloon);
+        Ref<Object> layoutDataRef = null;
+        if (NotificationsManagerImpl.newEnabled()) {
+          BalloonLayoutData layoutData = new BalloonLayoutData();
+          layoutData.showFullContent = true;
+          layoutData.showSettingButton = false;
+          layoutDataRef = new Ref<>(layoutData);
+        }
+        Balloon balloon = NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, layoutDataRef, project);
         balloon.show(target, Balloon.Position.above);
       }
     }
 
-    private static void hideBalloon(Notification notification1) {
-      Balloon balloon = notification1.getBalloon();
+    private static void hideBalloon(Notification notification) {
+      Balloon balloon = notification.getBalloon();
       if (balloon != null) {
         balloon.hide(true);
       }

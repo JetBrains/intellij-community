@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethodObject;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -26,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
@@ -168,13 +168,9 @@ public class ExtractLightMethodObjectHandler {
                                                                    controlFlow.getStartOffset(elementsCopy[0]),
                                                                    controlFlow.getEndOffset(elementsCopy[elementsCopy.length - 1]));
 
-    variables = ContainerUtil.filter(variables, new Condition<PsiVariable>() {
-      @Override
-      public boolean value(PsiVariable variable) {
-        final PsiElement variableScope = variable instanceof PsiParameter ? ((PsiParameter)variable).getDeclarationScope()
-                                                                          : PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
-        return variableScope != null && PsiTreeUtil.isAncestor(variableScope, elementsCopy[elementsCopy.length - 1], false);
-      }
+    variables = ContainerUtil.filter(variables, variable -> {
+      PsiElement variableScope = PsiUtil.getVariableCodeBlock(variable, null);
+      return variableScope != null && PsiTreeUtil.isAncestor(variableScope, elementsCopy[elementsCopy.length - 1], true);
     });
 
 

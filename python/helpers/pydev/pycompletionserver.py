@@ -32,7 +32,7 @@ else:
     from _pydev_bundle import _pydev_imports_tipper
 
 
-from _pydev_imps import _pydev_socket as socket
+from _pydev_imps._pydev_saved_modules import socket
 
 import sys
 if sys.platform == "darwin":
@@ -57,7 +57,7 @@ for name, mod in sys.modules.items():
 
 import traceback
 
-from _pydev_imps import _pydev_time as time
+from _pydev_imps._pydev_saved_modules import time
 
 try:
     import StringIO
@@ -194,7 +194,7 @@ class CompletionServer:
 
 
     def connect_to_server(self):
-        from _pydev_imps import _pydev_socket as socket
+        from _pydev_imps._pydev_saved_modules import socket
 
         self.socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:

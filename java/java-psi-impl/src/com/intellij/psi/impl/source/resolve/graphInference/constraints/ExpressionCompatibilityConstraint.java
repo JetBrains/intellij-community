@@ -41,8 +41,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
+
+      PsiType exprType = myExpression.getType();
+
       if (session.isProperType(myT)) {
-        final boolean assignmentCompatible = TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
+        final boolean assignmentCompatible = exprType == null || TypeConversionUtil.isAssignable(myT, exprType);
         if (!assignmentCompatible) {
           final PsiType type = myExpression.getType();
           session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));
@@ -50,8 +53,6 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         return assignmentCompatible;
       }
     
-      PsiType exprType = myExpression.getType();
-
       if (exprType instanceof PsiLambdaParameterType) {
         return false;
       }
@@ -134,9 +135,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
       if (method != null && !method.isConstructor()) {
         returnType = method.getReturnType();
-        if (returnType != null) {
-          typeParams = method.getTypeParameters();
-        }
+        typeParams = method.getTypeParameters();
       }
       else if (resolveResult != null) {
         final PsiClass psiClass = method != null ? method.getContainingClass() : (PsiClass)resolveResult.getElement();
@@ -162,7 +161,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             return callSession;
           }
 
-          callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
+          if (returnType != null) {
+            callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
+          }
           if (callSession.repeatInferencePhases()) {
             return callSession;
           }
@@ -175,8 +176,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             session.registerIncompatibleErrorMessage(message);
           }
         }
-        return null;
       }
+      return null;
     }
     return session;
   }

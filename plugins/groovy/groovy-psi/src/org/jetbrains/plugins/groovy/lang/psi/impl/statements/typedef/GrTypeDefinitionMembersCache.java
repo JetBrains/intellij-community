@@ -253,8 +253,13 @@ public class GrTypeDefinitionMembersCache {
           protected void processTrait(@NotNull PsiClass trait, @NotNull PsiSubstitutor substitutor) {
             if (trait instanceof GrTypeDefinition) {
               for (GrMethod method : ((GrTypeDefinition)trait).getCodeMethods()) {
-                if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
-                  addCandidate(method, substitutor);
+                GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
+                if (reflectedMethods.length == 0) {
+                  addIfNotAbstract(substitutor, method);
+                } else {
+                  for (GrReflectedMethod reflectedMethod : reflectedMethods) {
+                    addIfNotAbstract(substitutor, reflectedMethod);
+                  }
                 }
               }
 
@@ -273,6 +278,12 @@ public class GrTypeDefinitionMembersCache {
               for (PsiMethod method : GrTraitUtil.getCompiledTraitConcreteMethods((ClsClassImpl)trait)) {
                 addCandidate(method, substitutor);
               }
+            }
+          }
+
+          private void addIfNotAbstract(@NotNull PsiSubstitutor substitutor, GrMethod method) {
+            if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
+              addCandidate(method, substitutor);
             }
           }
         }.getResult();

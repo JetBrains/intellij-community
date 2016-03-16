@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,9 @@ public class LambdaProcessor {
               node_lambda.parent = node;
 
               clProcessor.getMapRootClasses().put(node_lambda.simpleName, node_lambda);
-              mapMethodsLambda.put(node_lambda.lambdaInformation.content_method_key, node_lambda.simpleName);
+              if (!node_lambda.lambdaInformation.is_method_reference) {
+                mapMethodsLambda.put(node_lambda.lambdaInformation.content_method_key, node_lambda.simpleName);
+              }
             }
           }
         }

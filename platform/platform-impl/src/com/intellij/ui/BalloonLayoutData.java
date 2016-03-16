@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Computable;
  * @author Alexander Lobas
  */
 public class BalloonLayoutData {
+  public boolean showFullContent;
+
   public int height;
   public int twoLineHeight;
   public int fullHeight;
@@ -31,6 +33,8 @@ public class BalloonLayoutData {
 
   public Runnable closeAll;
   public Runnable doLayout;
+
+  public boolean showSettingButton = true;
   public Computable<Boolean> showActions;
 
   public Project project;

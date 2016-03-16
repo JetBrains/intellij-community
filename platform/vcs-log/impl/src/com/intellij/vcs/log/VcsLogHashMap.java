@@ -27,7 +27,7 @@ public interface VcsLogHashMap {
 
   int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
 
-  @NotNull
+  @Nullable
   CommitId getCommitId(int commitIndex);
 
   /**

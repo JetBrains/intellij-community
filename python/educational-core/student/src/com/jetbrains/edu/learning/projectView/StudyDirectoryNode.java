@@ -11,12 +11,11 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import icons.EducationalIcons;
+import com.jetbrains.edu.learning.courseFormat.*;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +45,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
     if (valueName.equals(myProject.getName())) {
       data.clearText();
-      data.setIcon(EducationalIcons.Course);
+      data.setIcon(InteractiveLearningIcons.Course);
       data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
     }
     else if (valueName.contains(EduNames.TASK)) {
@@ -94,7 +93,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(lesson);
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.BLACK, EducationalIcons.Lesson);
+        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Lesson);
         break;
       }
       case Solved: {
@@ -102,7 +101,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         break;
       }
       case Failed: {
-        updatePresentation(data, additionalName, JBColor.RED, EducationalIcons.Lesson);
+        updatePresentation(data, additionalName, JBColor.RED, InteractiveLearningIcons.Lesson);
       }
     }
   }
@@ -111,7 +110,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(task);
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.BLACK, EducationalIcons.Task);
+        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Task);
         break;
       }
       case Solved: {

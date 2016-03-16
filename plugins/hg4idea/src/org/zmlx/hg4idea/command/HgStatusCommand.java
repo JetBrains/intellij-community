@@ -131,11 +131,11 @@ public class HgStatusCommand {
     myTargetRevision = builder.targetRevision;
   }
 
-  public Set<HgChange> execute(VirtualFile repo) {
-    return execute(repo, null);
+  public Set<HgChange> executeInCurrentThread(VirtualFile repo) {
+    return executeInCurrentThread(repo, null);
   }
 
-  public Set<HgChange> execute(VirtualFile repo, @Nullable Collection<FilePath> paths) {
+  public Set<HgChange> executeInCurrentThread(VirtualFile repo, @Nullable Collection<FilePath> paths) {
     if (repo == null) {
       return Collections.emptySet();
     }
@@ -240,7 +240,7 @@ public class HgStatusCommand {
   public Collection<VirtualFile> getHgUntrackedFiles(@NotNull VirtualFile repo, @NotNull List<VirtualFile> files) throws VcsException {
     Collection<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
     List<FilePath> filePaths = ObjectsConvertor.vf2fp(files);
-    Set<HgChange> change = execute(repo, filePaths);
+    Set<HgChange> change = executeInCurrentThread(repo, filePaths);
     for (HgChange hgChange : change) {
       untrackedFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
     }

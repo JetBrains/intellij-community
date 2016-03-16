@@ -21,16 +21,11 @@
 package com.intellij.refactoring.inlineSuperClass;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import com.intellij.refactoring.ui.DocCommentPanel;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.Function;
-import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,15 +35,13 @@ import java.awt.*;
 public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
   private final PsiClass mySuperClass;
   private final PsiClass myCurrentInheritor;
-  private final PsiClass[] myTargetClasses;
   private final DocCommentPanel myDocPanel;
 
-  protected InlineSuperClassRefactoringDialog(@NotNull Project project, PsiClass superClass, PsiClass currentInheritor, final PsiClass... targetClasses) {
+  protected InlineSuperClassRefactoringDialog(@NotNull Project project, PsiClass superClass, PsiClass currentInheritor) {
     super(project, false, superClass);
     mySuperClass = superClass;
     myCurrentInheritor = currentInheritor;
     myInvokedOnReference = currentInheritor != null;
-    myTargetClasses = targetClasses;
     myDocPanel = new DocCommentPanel("JavaDoc for inlined members");
     myDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     init();
@@ -60,7 +53,7 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_SUPER_CLASS_THIS = isInlineThisOnly();
     }
-    invokeRefactoring(new InlineSuperClassRefactoringProcessor(getProject(), isInlineThisOnly() ? myCurrentInheritor : null, mySuperClass, myDocPanel.getPolicy(), myTargetClasses));
+    invokeRefactoring(new InlineSuperClassRefactoringProcessor(getProject(), isInlineThisOnly() ? myCurrentInheritor : null, mySuperClass, myDocPanel.getPolicy()));
   }
 
   @Override
@@ -74,30 +67,17 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     return "Inline_Super_Class";
   }
 
+  @NotNull
   protected JComponent createCenterPanel() {
-    final JLabel label = new JLabel("<html>Super class \'" +
-                                     mySuperClass.getQualifiedName() +
-                                     "\' inheritors: " +
-                                     (myTargetClasses.length > 1 ? " <br>&nbsp;&nbsp;&nbsp;\'" : "\'") +
-                                     StringUtil.join(myTargetClasses, new Function<PsiClass, String>() {
-                                       public String fun(final PsiClass psiClass) {
-                                         return psiClass.getQualifiedName();
-                                       }
-                                     }, "\',<br>&nbsp;&nbsp;&nbsp;\'") +
-                                     "\'</html>");
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              new Insets(0, 0, 0, 0), 0, 0);
     panel.add(myDocPanel, gc);
-    JScrollPane pane = ScrollPaneFactory.createScrollPane(label);
-    pane.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
-    pane.setMinimumSize(JBDimension.create(new Dimension(-1, 100)));
-    pane.setMaximumSize(JBDimension.create(new Dimension(-1, 400)));
-    panel.add(pane, gc);
+    panel.add(super.createCenterPanel(), gc);
     gc.weighty = 1;
     gc.fill = GridBagConstraints.BOTH;
-    panel.add(super.createCenterPanel(), gc);
+    panel.add(Box.createVerticalGlue(), gc);
     return panel;
   }
 

@@ -50,7 +50,8 @@ import java.util.Locale;
  */
 public class SwitchBootJdkAction extends AnAction implements DumbAware {
   @NonNls private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
-  @NonNls private static final String productJdkConfigFileName = getExecutable() + ".jdk";
+  @NonNls private static final String productJdkConfigFileName =
+    getExecutable() + (SystemInfo.isWindows ? ((SystemInfo.is64Bit) ? "64.exe.jdk" : ".exe.jdk") : ".jdk");
   @NonNls private static final File productJdkConfigFile = new File(PathManager.getConfigPath(), productJdkConfigFileName);
   @NonNls private static final File bundledJdkFile = getBundledJDKFile();
 
@@ -67,11 +68,6 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
-    if (!(SystemInfo.isMac || SystemInfo.isLinux)) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
     e.getPresentation().setText("Switch Boot JDK");
   }
 
@@ -233,6 +229,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     "/usr/lib/jvm/", // Ubuntu
     "/usr/java/"     // Fedora
   };
+  private static final String STANDARD_JVM_X64_LOCATIONS_ON_WINDOWS = "Program Files/Java";
+
+  private static final String STANDARD_JVM_X86_LOCATIONS_ON_WINDOWS = "Program Files (x86)/Java";
 
   private static final Version JDK8_VERSION = new Version(1, 8, 0);
 
@@ -258,6 +257,16 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     else if (SystemInfo.isLinux) {
       for (String location : STANDARD_JVM_LOCATIONS_ON_LINUX) {
         jdkBundleList.addBundlesFromLocation(location, JDK8_VERSION, null);
+      }
+    }
+    else if (SystemInfo.isWindows) {
+      for (File root : File.listRoots()) {
+        if (SystemInfo.is32Bit) {
+          jdkBundleList.addBundlesFromLocation(new File(root, STANDARD_JVM_X86_LOCATIONS_ON_WINDOWS).getAbsolutePath(), JDK8_VERSION, null);
+        }
+        else {
+          jdkBundleList.addBundlesFromLocation(new File(root, STANDARD_JVM_X64_LOCATIONS_ON_WINDOWS).getAbsolutePath(), JDK8_VERSION, null);
+        }
       }
     }
 

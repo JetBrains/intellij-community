@@ -248,6 +248,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testParenthesisAroundInlinedLambda() throws Exception {
+    doTest(true);
+  }
+
   public void testArrayAccessPriority() throws Exception {
     doTest(true);
   }

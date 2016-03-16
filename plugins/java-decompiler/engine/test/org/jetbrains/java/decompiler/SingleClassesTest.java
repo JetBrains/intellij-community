@@ -79,6 +79,9 @@ public class SingleClassesTest {
   @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
+  @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
+  @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
+  @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
 
   protected void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

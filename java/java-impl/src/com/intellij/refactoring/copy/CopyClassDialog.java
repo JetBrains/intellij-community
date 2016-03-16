@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.copy;
 
+import com.intellij.openapi.application.AcceptNestedTransactions;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
+@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 class CopyClassDialog extends DialogWrapper{
   @NonNls private static final String RECENTS_KEY = "CopyClassDialog.RECENTS_KEY";
   private final JLabel myInformationLabel = new JLabel();

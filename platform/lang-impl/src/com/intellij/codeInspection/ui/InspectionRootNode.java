@@ -55,4 +55,8 @@ public class InspectionRootNode extends InspectionTreeNode {
   public Icon getIcon(boolean expanded) {
     return APP_ICON;
   }
+
+  public InspectionTreeUpdater getUpdater() {
+    return myUpdater;
+  }
 }

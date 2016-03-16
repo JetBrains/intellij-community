@@ -77,7 +77,7 @@ public class RefElementNode extends InspectionTreeNode {
     if (element == null || !element.isValid()) {
       return InspectionsBundle.message("inspection.reference.invalid");
     }
-    return element.getRefManager().getRefinedElement(element).getQualifiedName();
+    return element.getRefManager().getRefinedElement(element).getName();
   }
 
   @Override
@@ -131,5 +131,10 @@ public class RefElementNode extends InspectionTreeNode {
     return element instanceof RefElement && !(element instanceof RefDirectory)
            ? element
            : super.getContainingFileLocalEntity();
+  }
+
+  @Override
+  public int getProblemCount() {
+    return Math.max(1, super.getProblemCount());
   }
 }

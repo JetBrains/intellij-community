@@ -20,34 +20,48 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Dmitry Batkovich
  */
 public class InspectionTreeUpdater {
-  private final InspectionTree myTree;
   private final MergingUpdateQueue myUpdateQueue;
+  private final InspectionResultsView myView;
+  private final AtomicBoolean myDoUpdatePreviewPanel = new AtomicBoolean(false);
 
-  public InspectionTreeUpdater(InspectionTree tree) {
-    myTree = tree;
-    myUpdateQueue = new MergingUpdateQueue("InspectionView", 100, true, tree);
+  public InspectionTreeUpdater(InspectionResultsView view) {
+    myView = view;
+    myUpdateQueue = new MergingUpdateQueue("InspectionView", 100, true, view);
   }
 
-  public void update() {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+  public void updateWithPreviewPanel() {
+    update(false);
+    myDoUpdatePreviewPanel.compareAndSet(false, true);
+  }
+
+  public void update(boolean force) {
+    if (ApplicationManager.getApplication().isDispatchThread() && !force) {
       return;
     }
     myUpdateQueue.queue(new Update("TreeRepaint") {
       @Override
       public void run() {
+        if (myView.isDisposed()) return;
+        final InspectionTree tree = myView.getTree();
         try {
-          myTree.setQueueUpdate(true);
-          ((DefaultTreeModel)myTree.getModel()).reload();
-          myTree.revalidate();
-          myTree.repaint();
-          myTree.restoreExpansionAndSelection();
+          tree.setQueueUpdate(true);
+          ((DefaultTreeModel)tree.getModel()).reload();
+          tree.revalidate();
+          tree.repaint();
+          tree.restoreExpansionAndSelection();
+          if (myDoUpdatePreviewPanel.compareAndSet(true, false)) {
+            myView.updateRightPanelLoading();
+          }
         } finally {
-          myTree.setQueueUpdate(false);
+          tree.setQueueUpdate(false);
         }
       }
 

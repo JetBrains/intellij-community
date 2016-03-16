@@ -64,6 +64,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
@@ -246,33 +247,23 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       informationalLabel.setText("Copy property " + ContainerUtil.getFirstItem(myProperties).getName());
       informationalLabel.setFont(informationalLabel.getFont().deriveFont(Font.BOLD));
 
-      final Collection<ResourceBundle> resourceBundles = new HashSet<ResourceBundle>();
+      final Collection<PropertiesFile> propertiesFiles = new ArrayList<>();
       PropertiesReferenceManager.getInstance(myProject).processAllPropertiesFiles(new PropertiesFileProcessor() {
         @Override
         public boolean process(String baseName, PropertiesFile propertiesFile) {
-          resourceBundles.add(propertiesFile.getResourceBundle());
+          propertiesFiles.add(propertiesFile);
           return true;
         }
       });
-      List<ResourceBundle> resourceBundleList = ContainerUtil.filter(resourceBundles, new Condition<ResourceBundle>() {
-        @Override
-        public boolean value(ResourceBundle resourceBundle) {
-          return resourceBundle.getBaseDirectory() != null;
-        }
-      });
-      Collections.sort(resourceBundleList, new Comparator<ResourceBundle>() {
-        @Override
-        public int compare(ResourceBundle o1, ResourceBundle o2) {
-          return Comparing.compare(o1.getBaseName(), o2.getBaseName());
-        }
-      });
-      final List<PsiFileSystemItem> resourceBundlesAsFileSystemItems =
-        ContainerUtil.map(resourceBundleList, new Function<ResourceBundle, PsiFileSystemItem>() {
-        @Override
-        public PsiFileSystemItem fun(ResourceBundle resourceBundle) {
-          return new ResourceBundleAsFileSystemItem(resourceBundle);
-        }
-      });
+      final List<PsiFileSystemItem> resourceBundlesAsFileSystemItems = propertiesFiles
+        .stream()
+        .map(PropertiesFile::getResourceBundle)
+        .distinct()
+        .filter(b -> b.getBaseDirectory() != null)
+        .sorted((o1, o2) -> Comparing.compare(o1.getBaseName(), o2.getBaseName()))
+        .map(ResourceBundleAsFileSystemItem::new)
+        .collect(Collectors.toList());
+
       final ComboBoxWithWidePopup resourceBundleComboBox =
         new ComboBoxWithWidePopup(resourceBundlesAsFileSystemItems.toArray(new PsiFileSystemItem[resourceBundlesAsFileSystemItems.size()]));
       //noinspection GtkPreferredJComboBoxRenderer

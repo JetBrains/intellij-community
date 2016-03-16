@@ -17,7 +17,10 @@ package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
@@ -136,11 +139,9 @@ public class TypedAction {
   private class DefaultRawHandler implements TypedActionHandler {
     @Override
     public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
-      CommandProcessor.getInstance().executeCommand(
-        CommonDataKeys.PROJECT.getData(dataContext), 
-        new Runnable() {
-          @Override
-          public void run() {
+      try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
+        CommandProcessor.getInstance().executeCommand(
+          CommonDataKeys.PROJECT.getData(dataContext), () -> {
             if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
               return;
             }
@@ -160,9 +161,9 @@ public class TypedAction {
                 }
               }
             });
-          }
-        }, 
-        "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());    
+          },
+          "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+      }
     }
   }
 }

@@ -332,7 +332,7 @@ public class JavaDocInfoGenerator {
     if (fragment != null && targetElement instanceof PsiClass) {
       if (fragment.contains("-") || fragment.contains("(")) {
         for (PsiMethod method : ((PsiClass)targetElement).getMethods()) {
-          Set<String> signatures = JavaDocumentationProvider.getHtmlMethodSignatures(method, true);
+          Set<String> signatures = JavaDocumentationProvider.getHtmlMethodSignatures(method);
           if (signatures.contains(fragment)) {
             targetElement = method;
             fragment = null;

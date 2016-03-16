@@ -26,17 +26,20 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.*;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -55,6 +58,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final DataExternalizer<Value> myValueExternalizer;
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
   private final boolean myIsPsiBackedIndex;
+  private final IndexExtension<Key, Value, Input> myExtension;
 
   private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, ByteSequence> myContents;
@@ -62,8 +66,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private PersistentHashMap<Integer, String> myIndexingTrace;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-
-  private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
   private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
     @Override
@@ -77,28 +79,110 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   });
 
-  public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
-                        DataIndexer<Key, Value, Input> indexer,
+  public MapReduceIndex(IndexExtension<Key, Value, Input> extension,
                         @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    this(indexId, indexer, storage, null, null, false);
+    myIndexId = extension.getName();
+    myExtension = extension;
+    myIndexer = extension.getIndexer();
+    myStorage = storage;
+    myHasSnapshotMapping = extension instanceof FileBasedIndexExtension &&
+                           ((FileBasedIndexExtension<Key, Value>)extension).hasSnapshotMapping() &&
+                           IdIndex.ourSnapshotMappingsEnabled;
+
+    mySnapshotIndexExternalizer = createInputsIndexExternalizer(extension, myIndexId, extension.getKeyDescriptor());
+    myValueExternalizer = extension.getValueExternalizer();
+    myContents = createContentsIndex();
+    myIsPsiBackedIndex = extension instanceof PsiDependentIndex;
+
+    if (myHasSnapshotMapping) {
+      myInputsSnapshotMapping = createInputSnapshotMapping();
+    }
+    myInputsIndex = createInputsIndex();
+    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
+      myIndexingTrace = createIndexingTrace();
+    }
   }
 
-  public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
-                        DataIndexer<Key, Value, Input> indexer,
-                        @NotNull IndexStorage<Key, Value> storage,
-                        DataExternalizer<Collection<Key>> snapshotIndexExternalizer,
-                        DataExternalizer<Value> valueDataExternalizer,
-                        boolean psiBasedIndex
-                        ) throws IOException {
-    myIndexId = indexId;
-    myIndexer = indexer;
-    myStorage = storage;
-    myHasSnapshotMapping = snapshotIndexExternalizer != null;
+  private static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(IndexExtension<K, ?, ?> extension,
+                                                                           ID<K, ?> indexId,
+                                                                           KeyDescriptor<K> keyDescriptor) {
+    DataExternalizer<Collection<K>> externalizer;
+    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
+      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
+    } else {
+      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
+    }
+    return externalizer;
+  }
 
-    mySnapshotIndexExternalizer = snapshotIndexExternalizer;
-    myValueExternalizer = valueDataExternalizer;
-    myContents = createContentsIndex();
-    myIsPsiBackedIndex = psiBasedIndex;
+  @NotNull
+  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull IndexExtension <K, ?, ?> extension,
+                                                                                      @NotNull MemoryIndexStorage<K, ?> storage)
+    throws IOException {
+    ID<K, ?> indexId = extension.getName();
+    KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
+    final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
+    final AtomicBoolean isBufferingMode = new AtomicBoolean();
+    final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
+
+    // Important! Update IdToDataKeysIndex depending on the sate of "buffering" flag from the MemoryStorage.
+    // If buffering is on, all changes should be done in memory (similar to the way it is done in memory storage).
+    // Otherwise data in IdToDataKeysIndex will not be in sync with the 'main' data in the index on disk and index updates will be based on the
+    // wrong sets of keys for the given file. This will lead to unpredictable results in main index because it will not be
+    // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
+
+    final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension, indexId, keyDescriptor)
+    ) {
+
+      @Override
+      protected Collection<K> doGet(Integer integer) throws IOException {
+        if (isBufferingMode.get()) {
+          final Collection<K> collection = tempMap.get(integer);
+          if (collection != null) {
+            return collection;
+          }
+        }
+        return super.doGet(integer);
+      }
+
+      @Override
+      protected void doPut(Integer integer, @Nullable Collection<K> ks) throws IOException {
+        if (isBufferingMode.get()) {
+          tempMap.put(integer, ks == null ? Collections.<K>emptySet() : ks);
+        }
+        else {
+          super.doPut(integer, ks);
+        }
+      }
+
+      @Override
+      protected void doRemove(Integer integer) throws IOException {
+        if (isBufferingMode.get()) {
+          tempMap.put(integer, Collections.<K>emptySet());
+        }
+        else {
+          super.doRemove(integer);
+        }
+      }
+    };
+
+    storage.addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
+      @Override
+      public void bufferingStateChanged(boolean newState) {
+        synchronized (map) {
+          isBufferingMode.set(newState);
+        }
+      }
+
+      @Override
+      public void memoryStorageCleared() {
+        synchronized (map) {
+          tempMap.clear();
+        }
+      }
+    });
+    return map;
   }
 
   private PersistentHashMap<Integer, ByteSequence> createContentsIndex() throws IOException {
@@ -315,32 +399,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  public void setInputIdToDataKeysIndex(Factory<PersistentHashMap<Integer, Collection<Key>>> factory) throws IOException {
-    myInputsIndexFactory = factory;
-    if (myHasSnapshotMapping) {
-      myInputsSnapshotMapping = createInputSnapshotMapping();
-    }
-    myInputsIndex = createInputsIndex();
-    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
-      myIndexingTrace = createIndexingTrace();
-    }
-  }
-
-  @Nullable
-  private PersistentHashMap<Integer, Collection<Key>> createInputsIndex() throws IOException {
-    Factory<PersistentHashMap<Integer, Collection<Key>>> factory = myInputsIndexFactory;
-    if (factory != null) {
-      try {
-        return factory.create();
-      }
-      catch (RuntimeException e) {
-        if (e.getCause() instanceof IOException) {
-          throw (IOException)e.getCause();
-        }
-        throw e;
-      }
-    }
-    return null;
+  protected PersistentHashMap<Integer, Collection<Key>> createInputsIndex() throws IOException {
+    return createIdToDataKeysIndex(myExtension, (MemoryIndexStorage<Key, ?>)myStorage);
   }
 
   private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);

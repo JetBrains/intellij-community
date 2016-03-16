@@ -18,11 +18,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.util.Function;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.coursecreator.ui.CCMoveStudyItemDialog;
 import org.jetbrains.annotations.Nullable;
 

@@ -640,6 +640,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final Semaphore targetDone = new Semaphore();
     targetDone.down();
     final Ref<Boolean> result = Ref.create(Boolean.FALSE);
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         try {

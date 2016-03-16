@@ -58,7 +58,7 @@ public class HgPullCommand {
     this.source = source;
   }
 
-  public HgCommandExitCode execute() {
+  public HgCommandExitCode executeInCurrentThread() {
     List<String> arguments = new LinkedList<String>();
     if (update) {
       arguments.add("--update");

@@ -49,6 +49,7 @@ public class Main {
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
   public static final int UNSUPPORTED_JAVA_VERSION = 10;
+  public static final int PRIVACY_POLICY_REJECTION = 11;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";

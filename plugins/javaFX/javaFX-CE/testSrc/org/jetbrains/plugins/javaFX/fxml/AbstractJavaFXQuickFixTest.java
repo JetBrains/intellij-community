@@ -16,6 +16,9 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+
+import java.util.List;
 
 /**
  * User: anna
@@ -34,7 +37,8 @@ public abstract class AbstractJavaFXQuickFixTest extends AbstractJavaFXTestCase 
 
   protected void checkQuickFixNotAvailable(String tagName) throws Exception {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
-    final IntentionAction intention = myFixture.getAvailableIntention(getHint(tagName));
+    final List<IntentionAction> intentions = myFixture.getAvailableIntentions();
+    final IntentionAction intention = CodeInsightTestUtil.findIntentionByText(intentions, getHint(tagName));
     assertNull(intention);
   }
 }
