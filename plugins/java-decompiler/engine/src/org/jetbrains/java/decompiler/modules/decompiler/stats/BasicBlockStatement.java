@@ -68,7 +68,9 @@ public class BasicBlockStatement extends Statement {
   // *****************************************************************************
 
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-    return ExprProcessor.listToJava(varDefinitions, indent, tracer).append(ExprProcessor.listToJava(exprents, indent, tracer));
+    TextBuffer tb = ExprProcessor.listToJava(varDefinitions, indent, tracer);
+    tb.append(ExprProcessor.listToJava(exprents, indent, tracer));
+    return tb;
   }
 
   public Statement getSimpleCopy() {
