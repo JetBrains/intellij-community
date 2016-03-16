@@ -226,7 +226,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getName(tag);
 
-        if (attributeDecl.isRequired() && (tag == null || tag.getAttributeValue(attributeName) == null)) {
+        boolean shouldBeInserted = extension.shouldBeInserted(attributeDecl);
+        if (shouldBeInserted && (tag == null || tag.getAttributeValue(attributeName) == null)) {
           if (!notRequiredAttributes.contains(attributeName)) {
             if (!extension.isIndirectSyntax(attributeDecl)) {
               template.addTextSegment(" " + attributeName + "=\"");
@@ -239,7 +240,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
             }
           }
         }
-        else if (attributeDecl.isRequired() && attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
+        else if (shouldBeInserted && attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
           template.addTextSegment(" " + attributeName + "=\"" + attributeDecl.getDefaultValue() + "\"");
         }
       }
