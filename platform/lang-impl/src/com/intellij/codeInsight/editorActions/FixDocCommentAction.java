@@ -20,8 +20,12 @@ import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -56,6 +60,12 @@ public class FixDocCommentAction extends EditorAction {
   }
 
   private static final class MyHandler extends EditorActionHandler {
+
+    @Override
+    public AccessToken startTransaction(@NotNull Editor editor) {
+      return TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING);
+    }
+
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
