@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -104,7 +105,7 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (isOneOfTabsVisible()) {
+        if (canRefreshNow()) {
           myDataManager.refresh(Collections.singleton(root));
         }
         else {
@@ -120,8 +121,12 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     myDataManager.refresh(toRefresh);
   }
 
-  private boolean isOneOfTabsVisible() {
-    return isOneOfTabsVisible(myTabToFiltererMap.keySet());
+  private static boolean keepUpToDate() {
+    return Registry.is("vcs.log.keep.up.to.date");
+  }
+
+  private boolean canRefreshNow() {
+    return isOneOfTabsVisible(myTabToFiltererMap.keySet()) || keepUpToDate();
   }
 
   protected boolean isTabVisible(@NotNull String tab) {
