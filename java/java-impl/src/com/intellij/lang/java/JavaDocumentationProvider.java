@@ -621,7 +621,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   @Nullable
   public static List<String> getExternalJavaDocUrl(final PsiElement element) {
     // this method can be slow, as it can perform IO (potentially via network), so it shouldn't be invoked on EDT 
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isDispatchThread());
     
     List<String> urls = null;
 

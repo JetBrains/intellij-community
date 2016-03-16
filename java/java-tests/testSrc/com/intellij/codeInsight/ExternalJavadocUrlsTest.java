@@ -30,7 +30,12 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PsiTestUtil.setJavadocUrls(myModule, "http://doc" );
+    PsiTestUtil.setJavadocUrls(myModule, "file://" + getTestDataPath() + "/java/java-tests/testData/codeInsight/externalJavadoc/" + 
+                                         getJavadocFolder());
+  }
+
+  protected String getJavadocFolder() {
+    return "java8format";
   }
 
   public void testVarargs() {
@@ -38,7 +43,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "  void <caret>foo(Class<?>... cl) { }\n" +
            "}",
 
-           "foo-java.lang.Class...-", "foo-java.lang.Class<?>...-", "foo(java.lang.Class...)", "foo(java.lang.Class<?>...)");
+           "foo-java.lang.Class...-");
 
   }
 
@@ -48,7 +53,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "}\n" +
            "class Comparator<X>{}",
 
-           "sort-T:A-Comparator-", "sort-T:A-Comparator<? super T>-", "sort(T[], Comparator)", "sort(T[], Comparator<? super T>)");
+           "sort-T:A-Comparator-");
   }
 
   protected void doTest(String text, String... expected) {
