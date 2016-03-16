@@ -28,11 +28,12 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -182,32 +183,19 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }) : Pair.<PsiFile, Editor>create(hostFile, null);
     if (pair == null) return false;
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          action.invoke(project, pair.second, pair.first);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        if (hostEditor != null) {
-          DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(hostEditor);
-        }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      TransactionKind kind = action.getTransactionKind();
+      try (AccessToken ignore = kind == null ? null : TransactionGuard.getInstance().startSynchronousTransaction(kind);
+           AccessToken ignored = action.startInWriteAction() ? WriteAction.start() : null) {
+        action.invoke(project, pair.second, pair.first);
       }
-    };
-
-    if (action.startInWriteAction()) {
-      final Runnable _runnable = runnable;
-      runnable = new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(_runnable);
-        }
-      };
-    }
-
-    CommandProcessor.getInstance().executeCommand(project, runnable, text, null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      if (hostEditor != null) {
+        DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(hostEditor);
+      }
+    }, text, null);
     return true;
   }
 }
