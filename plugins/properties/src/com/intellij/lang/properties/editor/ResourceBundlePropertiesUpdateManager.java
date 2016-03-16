@@ -19,10 +19,13 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -110,7 +113,13 @@ public class ResourceBundlePropertiesUpdateManager {
       }
     }
     if (property != null) {
-      property.getPsiElement().delete();
+      PsiElement anElement = property.getPsiElement();
+      if (anElement instanceof PomTargetPsiElement) {
+        final PomTarget xmlProperty = ((PomTargetPsiElement)anElement).getTarget();
+        LOG.assertTrue(xmlProperty instanceof XmlProperty);
+        anElement = ((XmlProperty)xmlProperty).getNavigationElement();
+      }
+      anElement.delete();
     }
   }
 
