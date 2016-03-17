@@ -33,7 +33,7 @@ object LogEventSerializer {
     )
 
     fun toString(event: LogEvent): String {
-        return "${event.timestamp} ${event.recorderId} ${event.userUid} ${event.sessionUid} ${event.actionType} ${JsonSerializer.toJson(this)}"
+        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(this)}"
     }
 
     fun fromString(line: String): LogEvent? {
@@ -41,7 +41,7 @@ object LogEventSerializer {
 
         var start = -1
         for (i in 0..4) {
-            val nextSpace = line.indexOf(' ', start + 1)
+            val nextSpace = line.indexOf('\t', start + 1)
             val newItem = line.substring(start + 1, nextSpace)
             items.add(newItem)
             start = nextSpace
