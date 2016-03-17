@@ -203,7 +203,7 @@ public class PyAnnotateTypesIntention implements IntentionAction {
       PyParameter[] params = function.getParameterList().getParameters();
 
       for (int i = params.length - 1; i >= 0; i--) {
-        if (params[i] instanceof PyNamedParameter) {
+        if (params[i] instanceof PyNamedParameter && !params[i].isSelf()) {
           params[i] = annotateParameter(project, editor, (PyNamedParameter)params[i], false);
         }
       }
