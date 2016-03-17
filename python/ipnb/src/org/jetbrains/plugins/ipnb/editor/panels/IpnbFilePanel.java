@@ -22,6 +22,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction;
@@ -134,6 +135,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   private void layoutFile() {
+    addWarningIfNeeded();
     final List<IpnbCell> cells = myIpnbFile.getCells();
     for (IpnbCell cell : cells) {
       addCellToPanel(cell);
@@ -155,6 +157,13 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
           myParent.updateScrollPosition(mySelectedCell);
       }
     });
+  }
+
+  private void addWarningIfNeeded() {
+    if (IpnbUtils.hasFx()) return;
+    final JLabel warning = new JLabel("Switch to the bundled JDK for proper markdown cell rendering", SwingConstants.CENTER);
+    warning.setForeground(JBColor.RED);
+    add(warning);
   }
 
   private void addCellToPanel(IpnbCell cell) {
