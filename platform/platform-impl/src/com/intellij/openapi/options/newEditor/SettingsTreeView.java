@@ -291,8 +291,8 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
   
   @Nullable
   private static Project getProjectFromWrapper(@NotNull ConfigurableWrapper wrapper) {
-    UnnamedConfigurable wrapped = wrapper.getConfigurable();
-    if (wrapped instanceof Configurable.VariableProjectAppLevel && !((Configurable.VariableProjectAppLevel)wrapped).isProjectLevel()) {
+    Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, wrapper);
+    if (wrapped != null && !wrapped.isProjectLevel()) {
       return null;
     }
     return wrapper.getExtensionPoint().getProject();
