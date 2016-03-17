@@ -137,7 +137,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     @Override
     @NotNull
     public Promise<XExpression> calculateEvaluationExpression() {
-      return myValue != null ? myValue.calculateEvaluationExpression() : Promise.reject("Not evaluated yet");
+      return Promise.resolve(myExpression);
     }
 
     @Override
