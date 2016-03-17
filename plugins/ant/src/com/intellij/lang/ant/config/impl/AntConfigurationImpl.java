@@ -722,9 +722,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               try {
                 myInitThread = Thread.currentThread();
                 // first, remove existing files
-                final AntBuildFile[] currentFiles = getBuildFiles();
-                for (AntBuildFile file : currentFiles) {
-                  removeBuildFile(file);
+                for (AntBuildFile file : getBuildFiles()) {
+                  removeBuildFileImpl(file);
                 }
                 // then fill the configuration with the files configured in xml
                 List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<Pair<Element, AntBuildFileBase>>(files.size());
@@ -802,6 +801,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               }
               finally {
                 try {
+                  incModificationCount();
                   updateRegisteredActions();
                 }
                 finally {
