@@ -98,12 +98,14 @@ class ComplexTextFragment extends TextFragment {
     }
     else {
       Shape savedClip = g.getClip();
-      Rectangle2D bounds = myGlyphVector.getVisualBounds();
+      float totalWidth = myCharPositions[myCharPositions.length - 1];
       float startX = x - getX(startColumn);
-      double xMin = startColumn == 0 ? x + bounds.getMinX() - CLIP_MARGIN : x;
-      double xMax = endColumn == myCharPositions.length ? startX + bounds.getMaxX() + CLIP_MARGIN : startX + getX(endColumn);
-      double yMin = y + bounds.getMinY() - CLIP_MARGIN;
-      double yMax = y + bounds.getMaxY() + CLIP_MARGIN;
+      // We define clip region here assuming that glyphs do not extend further than CLIP_MARGIN pixels from baseline 
+      // vertically (both up and down) and horizontally (from the region defined by glyph vector's total advance)
+      double xMin = startColumn == 0 ? x - CLIP_MARGIN : x;
+      double xMax = endColumn == myCharPositions.length ? startX + totalWidth + CLIP_MARGIN : startX + getX(endColumn);
+      double yMin = y - CLIP_MARGIN;
+      double yMax = y + CLIP_MARGIN;
       g.clip(new Rectangle2D.Double(xMin, yMin, xMax - xMin, yMax - yMin));
       g.drawGlyphVector(myGlyphVector, startX, y);
       g.setClip(savedClip);
