@@ -9,7 +9,7 @@ public class UnqualifiedMethodAccess extends JPanel {
 
   void foo() {}
   void bar() {
-    foo();
+    <warning descr="Instance method call 'foo' is not qualified with 'this'">foo</warning>();
   }
 
   void foo(String s) {
