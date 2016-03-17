@@ -16,17 +16,18 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author nik
@@ -97,7 +98,7 @@ public class XDebuggerTreeState {
     private final String myValue;
     private boolean myExpanded;
     private final boolean mySelected;
-    private Map<String, NodeInfo> myChildren;
+    private MultiMap<String, NodeInfo> myChildren; // MultiMap to allow several nodes with the same name
 
     public NodeInfo(final String name, final String value, boolean selected) {
       myName = name;
@@ -107,9 +108,9 @@ public class XDebuggerTreeState {
 
     public void addChild(@NotNull NodeInfo child) {
       if (myChildren == null) {
-        myChildren = new THashMap<String, NodeInfo>();
+        myChildren = new MultiMap<>();
       }
-      myChildren.put(child.myName, child);
+      myChildren.putValue(child.myName, child);
     }
 
     public boolean isExpanded() {
@@ -126,7 +127,15 @@ public class XDebuggerTreeState {
 
     @Nullable
     public NodeInfo removeChild(String name) {
-      return myChildren != null ? myChildren.remove(name) : null;
+      if (myChildren == null) {
+        return null;
+      }
+      Collection<NodeInfo> infos = myChildren.get(name);
+      NodeInfo item = ContainerUtil.getFirstItem(infos);
+      if (item != null) {
+        infos.remove(item);
+      }
+      return item;
     }
   }
 }
