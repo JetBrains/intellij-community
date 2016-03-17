@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -396,6 +397,10 @@ public final class HttpRequests {
     for (int i = 0; i < builder.myRedirectLimit; i++) {
       if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
         url = "https:" + url.substring(5);
+      }
+
+      if (url.startsWith("https:") && ApplicationManager.getApplication() != null) {
+        CertificateManager.getInstance();
       }
 
       URLConnection connection;
