@@ -15,21 +15,22 @@ abstract class LogEvent(var userUid: String, type: Action) {
     @Transient var timestamp = System.currentTimeMillis()
     @Transient var sessionUid: String = UUID.randomUUID().toString()
     @Transient var actionType: Action = type
+    
+    abstract fun accept(visitor: LogEventVisitor)
+        
 }
-
-
+    
 object LogEventSerializer {
 
     val actionClassMap: Map<Action, Class<out LogEvent>> = mapOf(
             Pair(Action.COMPLETION_STARTED, CompletionStartedEvent::class.java),
-            Pair(Action.TYPE, CompletionStartedEvent::class.java),
-            Pair(Action.DOWN, CompletionStartedEvent::class.java),
-            Pair(Action.UP, CompletionStartedEvent::class.java),
-            Pair(Action.BACKSPACE, CompletionStartedEvent::class.java),
-            Pair(Action.COMPLETION_CANCELED, CompletionStartedEvent::class.java),
-            Pair(Action.CUSTOM, CompletionStartedEvent::class.java),
-            Pair(Action.EXPLICIT_SELECT, CompletionStartedEvent::class.java),
-            Pair(Action.TYPED_SELECT, CompletionStartedEvent::class.java)
+            Pair(Action.TYPE, TypeEvent::class.java),
+            Pair(Action.DOWN, DownPressedEvent::class.java),
+            Pair(Action.UP, UpPressedEvent::class.java),
+            Pair(Action.BACKSPACE, BackspaceEvent::class.java),
+            Pair(Action.COMPLETION_CANCELED, CompletionCancelledEvent::class.java),
+            Pair(Action.EXPLICIT_SELECT, ExplicitSelectEvent::class.java),
+            Pair(Action.TYPED_SELECT, ItemSelectedByTypingEvent::class.java)
     )
 
     fun toString(event: LogEvent): String {
@@ -80,34 +81,73 @@ class UpPressedEvent(
         userId: String, 
         completionListIds: List<Int>, 
         newCompletionListItems: List<LookupEntryInfo>, 
-        selectedPosition: Int) : LookupStateLogData(userId, Action.UP, completionListIds, newCompletionListItems, selectedPosition)
+        selectedPosition: Int) : LookupStateLogData(userId, Action.UP, completionListIds, newCompletionListItems, selectedPosition) {
+
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
+}
 
 class DownPressedEvent(
         userId: String,
         completionListIds: List<Int>,
         newCompletionListItems: List<LookupEntryInfo>,
-        selectedPosition: Int) : LookupStateLogData(userId, Action.DOWN, completionListIds, newCompletionListItems, selectedPosition)
+        selectedPosition: Int) : LookupStateLogData(userId, Action.DOWN, completionListIds, newCompletionListItems, selectedPosition) {
 
-class CompletionCancelledEvent(userId: String) : LogEvent(userId, Action.COMPLETION_CANCELED)
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
+    
+}
 
-class ItemSelectedByTypingEvent(userId: String, var selectedId: Int) : LogEvent(userId, Action.TYPED_SELECT)
+class CompletionCancelledEvent(userId: String) : LogEvent(userId, Action.COMPLETION_CANCELED) {
+    
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
+    
+}
+
+class ItemSelectedByTypingEvent(userId: String, var selectedId: Int) : LogEvent(userId, Action.TYPED_SELECT) {
+    
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
+    
+}
 
 class ExplicitSelectEvent(userId: String, 
                           completionListIds: List<Int>,
                           newCompletionListItems: List<LookupEntryInfo>,
-                          selectedPosition: Int) : LookupStateLogData(userId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition)
+                          selectedPosition: Int) : LookupStateLogData(userId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
+    
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
+    
+}
 
 class BackspaceEvent(
         userId: String,
         completionListIds: List<Int>,
         newCompletionListItems: List<LookupEntryInfo>, 
-        selectedPosition: Int) : LookupStateLogData(userId, Action.BACKSPACE, completionListIds, newCompletionListItems, selectedPosition)
+        selectedPosition: Int) : LookupStateLogData(userId, Action.BACKSPACE, completionListIds, newCompletionListItems, selectedPosition) {
+
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
+}
 
 class TypeEvent(
         userId: String,
         completionListIds: List<Int>,
         newCompletionListItems: List<LookupEntryInfo>,
-        selectedPosition: Int) : LookupStateLogData(userId, Action.TYPE, completionListIds, newCompletionListItems, selectedPosition)
+        selectedPosition: Int) : LookupStateLogData(userId, Action.TYPE, completionListIds, newCompletionListItems, selectedPosition) {
+
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
+}
 
 class CompletionStartedEvent(
         userId: String,
@@ -118,6 +158,39 @@ class CompletionStartedEvent(
 
 {
     var completionListLength: Int = completionList.size
+
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
 }
 
 class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, Any>)
+
+
+abstract class LogEventVisitor {
+
+    open fun visit(event: CompletionStartedEvent) {
+    }
+
+    open fun visit(event: TypeEvent) {
+    }
+
+    open fun visit(event: DownPressedEvent) {
+    }
+
+    open fun visit(event: UpPressedEvent) {
+    }
+
+    open fun visit(event: BackspaceEvent) {
+    }
+    
+    open fun visit(event: CompletionCancelledEvent) {
+    }
+
+    open fun visit(event: ExplicitSelectEvent) {
+    }
+    
+    open fun visit(event: ItemSelectedByTypingEvent) {
+    }
+    
+}    
