@@ -71,6 +71,7 @@ public class HTMLExportFrameMaker {
     @NonNls StringBuffer buf = new StringBuffer();
     buf.append("<HTML><HEAD><TITLE>");
     buf.append(ApplicationNamesInfo.getInstance().getFullProductName());
+    buf.append(" ");
     buf.append(InspectionsBundle.message("inspection.export.title"));
     buf.append("</TITLE></HEAD>");
     buf.append("<FRAMESET cols=\"30%,70%\"><FRAMESET rows=\"30%,70%\">");
