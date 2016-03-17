@@ -153,17 +153,15 @@ public class UiTestTask extends Task {
       ClassLoader classLoader = createRuntimeClassLoader();
       Class<?> testSuiteRunnerClass = classLoader.loadClass("com.android.tools.idea.tests.gui.framework.GuiTestSuiteRunner");
       Method getGuiTestClasses = testSuiteRunnerClass.getMethod("getGuiTestClasses", Class.class);
-      Method getGroups = testSuiteRunnerClass.getMethod("getGroups", Class.class);
+      Method getTestGroup = testSuiteRunnerClass.getMethod("getTestGroup", Class.class);
 
       Class<?>[] testClasses = (Class<?>[]) getGuiTestClasses.invoke(null, classLoader.loadClass(testSuite));
       for (Class<?> testClass : testClasses) {
-        List<?> testGroups = (List<?>) getGroups.invoke(null, testClass);
-        if (testGroups.isEmpty()) {
+        Object testGroup = getTestGroup.invoke(null, testClass);
+        if (testGroup == null) {
           addToTestGroup(result, "DEFAULT", testClass);
         } else {
-          for (Object group : testGroups) {
-            addToTestGroup(result, group.toString(), testClass);
-          }
+          addToTestGroup(result, testGroup.toString(), testClass);
         }
       }
     } catch (Exception ex) {
