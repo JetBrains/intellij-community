@@ -171,13 +171,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     decorator.setToolbarBorder(border);
     decorator.setPanelBorder(BorderFactory.createEmptyBorder());
     getPanel().removeAll();
-    getPanel().add(decorator.createPanel());
     if (Registry.is("debugger.watches.in.variables")) {
-      decorator.getActionsPanel().setVisible(false);
+      decorator.setToolbarPosition(ActionToolbarPosition.LEFT);
     }
     else {
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
+    getPanel().add(decorator.createPanel());
 
     installEditListeners();
   }
