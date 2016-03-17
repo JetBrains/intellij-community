@@ -18,7 +18,6 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.JBMenuItem;
@@ -204,9 +203,7 @@ public class SearchTextField extends JPanel {
       final ActionManager actionManager = ActionManager.getInstance();
       if (actionManager != null) {
         final AnAction clearTextAction = actionManager.getAction(IdeActions.ACTION_CLEAR_TEXT);
-        if (clearTextAction.getShortcutSet().getShortcuts().length == 0) {
-          clearTextAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
-        }
+        clearTextAction.registerCustomShortcutSet(clearTextAction.getShortcutSet(), this);
       }
     }
   }
