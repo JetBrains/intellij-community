@@ -335,6 +335,9 @@ public class JDOMUtil {
   }
 
   @Contract("null -> null; !null -> !null")
+  /**
+   * @deprecated Use com.intellij.util.loadElement
+   */
   public static Element load(Reader reader) throws JDOMException, IOException {
     return reader == null ? null : loadDocument(reader).detachRootElement();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.FileDownloader;
@@ -45,7 +45,6 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.io.File;
@@ -54,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -167,7 +167,7 @@ public class FileDownloaderImpl implements FileDownloader {
       int maxParallelDownloads = Runtime.getRuntime().availableProcessors();
       LOG.debug("Downloading " + myFileDescriptions.size() + " files using " + maxParallelDownloads + " threads");
       long start = System.currentTimeMillis();
-      BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, maxParallelDownloads);
+      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(maxParallelDownloads);
       List<Future<Void>> results = new ArrayList<Future<Void>>();
       final AtomicLong totalSize = new AtomicLong();
       for (final DownloadableFileDescription description : myFileDescriptions) {

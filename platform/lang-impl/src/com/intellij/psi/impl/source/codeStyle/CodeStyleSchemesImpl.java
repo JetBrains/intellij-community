@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.options.LazySchemeProcessor;
+import com.intellij.openapi.options.SchemeDataHolder;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.WriteExternalException;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   protected static final String DEFAULT_SCHEME_NAME = "Default";
 
@@ -35,30 +38,27 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   protected final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemeManager;
 
   public CodeStyleSchemesImpl(@NotNull SchemesManagerFactory schemesManagerFactory) {
-    mySchemeManager = schemesManagerFactory.create(CODE_STYLES_DIR_PATH, new SchemeProcessor<CodeStyleSchemeImpl>() {
+    mySchemeManager = schemesManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleSchemeImpl>() {
       @NotNull
       @Override
-      public CodeStyleSchemeImpl readScheme(@NotNull Element element) {
-        return new CodeStyleSchemeImpl(element.getAttributeValue("name"), element.getAttributeValue("parent"), element);
+      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder dataHolder, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
+        return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
       }
 
       @Override
       public Element writeScheme(@NotNull CodeStyleSchemeImpl scheme) throws WriteExternalException {
-        Element newElement = new Element("code_scheme");
-        newElement.setAttribute("name", scheme.getName());
-        scheme.writeExternal(newElement);
-        return newElement;
+        return scheme.writeScheme();
       }
 
       @NotNull
       @Override
       public State getState(@NotNull CodeStyleSchemeImpl scheme) {
-        return scheme.isDefault() ? State.NON_PERSISTENT : State.POSSIBLY_CHANGED;
-      }
-
-      @Override
-      public void initScheme(@NotNull CodeStyleSchemeImpl scheme) {
-        scheme.init(mySchemeManager);
+        if (scheme.isDefault()) {
+          return State.NON_PERSISTENT;
+        }
+        else {
+          return scheme.isInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED;
+        }
       }
     });
 

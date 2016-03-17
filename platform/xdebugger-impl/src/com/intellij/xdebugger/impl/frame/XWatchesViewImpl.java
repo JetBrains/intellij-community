@@ -49,10 +49,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +79,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     ActionManager actionManager = ActionManager.getInstance();
 
     XDebuggerTree tree = getTree();
-    tree.setRoot(buildRootNode(null), false);
+    createNewRootNode(null);
     AnAction newWatchAction = actionManager.getAction(XDebuggerActions.XNEW_WATCH);
     AnAction removeWatchAction = actionManager.getAction(XDebuggerActions.XREMOVE_WATCH);
     AnAction copyAction = actionManager.getAction(XDebuggerActions.XCOPY_WATCH);
@@ -269,17 +266,6 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     DnDManager.getInstance().unregisterTarget(this, getTree());
   }
 
-  @Override
-  protected void clear() {
-    XDebuggerTree tree = getTree();
-    XExpression[] expressions = getExpressions();
-    super.clear();
-    if (expressions.length > 0) {
-      myRootNode = new WatchesRootNode(tree, this, expressions, null);
-      tree.setRoot(myRootNode, false);
-    }
-  }
-
   private static boolean isAboveSelectedItem(MouseEvent event, XDebuggerTree watchTree) {
     Rectangle bounds = watchTree.getRowBounds(watchTree.getLeadSelectionRow());
     if (bounds != null) {
@@ -304,7 +290,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
     XDebugSession session = getSession(getTree());
-    myRootNode.addWatchExpression(session != null ? session.getDebugProcess().getEvaluator() : null, expression, index, navigateToWatchNode);
+    myRootNode.addWatchExpression(session != null ? session.getCurrentStackFrame() : null, expression, index, navigateToWatchNode);
     updateSessionData();
     if (navigateToWatchNode && session != null) {
       showWatchesTab((XDebugSessionImpl)session);
@@ -344,12 +330,19 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     super.processSessionEvent(event);
   }
 
-  @NotNull
   @Override
-  protected XDebuggerTreeNode buildRootNode(@Nullable XStackFrame stackFrame) {
+  protected XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {
     WatchesRootNode node = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame);
     myRootNode = node;
+    getTree().setRoot(node, false);
     return node;
+  }
+
+  @Override
+  protected void addEmptyMessage(XValueContainerNode root) {
+    if (Registry.is("debugger.watches.in.variables")) {
+      super.addEmptyMessage(root);
+    }
   }
 
   @NotNull

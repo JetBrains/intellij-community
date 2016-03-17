@@ -92,7 +92,6 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.io.ChannelRegistrar;
 import org.jetbrains.io.NettyKt;
 import org.jetbrains.jps.api.*;
@@ -160,7 +159,7 @@ public class BuildManager implements Disposable {
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds =
     Collections.synchronizedMap(new HashMap<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
-  private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
@@ -688,7 +687,7 @@ public class BuildManager implements Disposable {
             CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(PathManager.getOptionsPath())
               .build();
           CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
-          final SequentialTaskExecutor projectTaskQueue;
+          final ExecutorService projectTaskQueue;
           final boolean needRescan;
           synchronized (myProjectDataMap) {
             final ProjectData data = getProjectData(projectPath);
@@ -880,7 +879,7 @@ public class BuildManager implements Disposable {
     synchronized (myProjectDataMap) {
       ProjectData data = myProjectDataMap.get(projectPath);
       if (data == null) {
-        data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
+        data = new ProjectData(SequentialTaskExecutor.createSequentialApplicationPoolExecutor());
         myProjectDataMap.put(projectPath, data);
       }
       return data;
@@ -953,7 +952,7 @@ public class BuildManager implements Disposable {
     return Pair.create(projectJdk, sdkVersion);
   }
 
-  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, SequentialTaskExecutor projectTaskQueue) throws Exception {
+  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) throws Exception {
     ensureListening();
 
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
@@ -1619,13 +1618,13 @@ public class BuildManager implements Disposable {
 
   private static class ProjectData {
     @NotNull
-    final SequentialTaskExecutor taskQueue;
+    final ExecutorService taskQueue;
     private final Set<InternedPath> myChanged = new THashSet<InternedPath>();
     private final Set<InternedPath> myDeleted = new THashSet<InternedPath>();
     private long myNextEventOrdinal;
     private boolean myNeedRescan = true;
 
-    private ProjectData(@NotNull SequentialTaskExecutor taskQueue) {
+    private ProjectData(@NotNull ExecutorService taskQueue) {
       this.taskQueue = taskQueue;
     }
 

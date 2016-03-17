@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.openapi.util;
  * Throw this exception from {@link JDOMExternalizable#writeExternal(org.jdom.Element)} method if you don't want to store any settings.
  * If you simply return from the method empty '<component name=... />' tag will be written leading to unneeded modification of configuration files.
  */
-public class WriteExternalException extends Exception {
+public class WriteExternalException extends RuntimeException {
   public WriteExternalException() {
     super();
   }

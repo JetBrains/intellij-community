@@ -121,7 +121,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
-    new MyOpenInEditorWithMouseAction().register(getEditors());
+    new MyOpenInEditorWithMouseAction().install(getEditors());
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
 
@@ -596,7 +596,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         // but this will greatly increase complexity, so let's wait if it's actually required by users
         markStateIsOutOfDate();
 
-        myFoldingModel.onDocumentChanged(e);
         scheduleRediff();
 
         myDuringTwosideDocumentModification = false;
@@ -640,7 +639,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     markStateIsOutOfDate();
     markSuppressEditorTyping();
 
-    myFoldingModel.onDocumentChanged(e);
     scheduleRediff();
   }
 

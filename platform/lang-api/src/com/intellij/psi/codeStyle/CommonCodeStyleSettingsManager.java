@@ -45,7 +45,7 @@ public class CommonCodeStyleSettingsManager {
 
   @NotNull private final CodeStyleSettings myParentSettings;
 
-  @NonNls private static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
+  @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
 
   CommonCodeStyleSettingsManager(@NotNull CodeStyleSettings parentSettings) {

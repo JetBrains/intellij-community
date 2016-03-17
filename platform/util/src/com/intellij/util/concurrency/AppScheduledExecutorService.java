@@ -118,7 +118,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     protected void beforeExecute(Thread t, Runnable r) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Running " + BoundedTaskExecutor.info(r) + " in thread@" + System.identityHashCode(t));
+        LOG.trace("Running " + BoundedTaskExecutor.info(r) + " in " + t+" ("+System.identityHashCode(t)+")");
       }
     }
 

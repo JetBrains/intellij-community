@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.configurationStore.UnknownElementCollector;
+import com.intellij.configurationStore.UnknownElementWriter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -56,6 +58,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @NonNls private static final String FILETYPE = "fileType";
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
+
+  private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
   public CodeStyleSettings() {
     this(true);
@@ -490,11 +494,14 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
       }
     }
+
+    UnknownElementCollector unknownElementCollector = new UnknownElementCollector();
     for (CustomCodeStyleSettings settings : getCustomSettingsValues()) {
+      unknownElementCollector.addKnownName(settings.getTagName());
       settings.readExternal(element);
-      settings.importLegacySettings();
     }
 
+    unknownElementCollector.addKnownName(ADDITIONAL_INDENT_OPTIONS);
     List<Element> list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
     if (list != null) {
       for (Element additionalIndentElement : list) {
@@ -512,7 +519,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
     }
 
+    unknownElementCollector.addKnownName(CommonCodeStyleSettingsManager.COMMON_SETTINGS_TAG);
     myCommonSettingsManager.readExternal(element);
+
+    myUnknownElementWriter = unknownElementCollector.createWriter(element);
 
     if (USE_SAME_INDENTS) {
       IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
@@ -523,17 +533,14 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
-    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(getCustomSettingsValues());
-    
-    Collections.sort(customSettings, (o1, o2) -> o1.getTagName().compareTo(o2.getTagName()));
 
-    for (final CustomCodeStyleSettings settings : customSettings) {
-      final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
+    myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
+      CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
       if (parentCustomSettings == null) {
         throw new WriteExternalException("Custom settings are null for " + settings.getClass());
       }
       settings.writeExternal(element, parentCustomSettings);
-    }
+    });
 
     final FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
     Arrays.sort(fileTypes, (o1, o2) -> o1.getDefaultExtension().compareTo(o2.getDefaultExtension()));

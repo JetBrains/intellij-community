@@ -60,7 +60,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
-    new MyOpenInEditorWithMouseAction().register(getEditors());
+    new MyOpenInEditorWithMouseAction().install(getEditors());
   }
 
   @Override

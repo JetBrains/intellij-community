@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -98,7 +98,7 @@ class PageSizes {
 
     try {
       //noinspection ConstantConditions
-      for (Element element : JDOMUtil.load(PageSizes.class.getResourceAsStream(PAGE_SIZES_RESOURCE)).getChildren(ELEMENT_SIZE)) {
+      for (Element element : JdomKt.loadElement(PageSizes.class.getResourceAsStream(PAGE_SIZES_RESOURCE)).getChildren(ELEMENT_SIZE)) {
         String name = element.getAttributeValue(ATTRIBUTE_NAME);
         final String widthStr = element.getAttributeValue(ATTRIBUTE_WIDTH);
         final String heightStr = element.getAttributeValue(ATTRIBUTE_HEIGHT);

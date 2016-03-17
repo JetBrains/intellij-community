@@ -302,6 +302,7 @@ libraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "1.8.7", lice
 libraryLicense(name: "swingx", libraryName: "swingx", version: "1.6.2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
 libraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/", licenseUrl: "http://code.google.com/p/testng/")
 libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213 and 217", license: "BSD style (see LICENSE.txt in trilead.jar)", url: "http://www.trilead.com/SSH_Library/")
+libraryLicense(name: "Twitter4J", libraryName: "twitter4j-core-4.0.4.jar", version: "4.0.4", license: "Apache 2.0", url: "http://twitter4j.org/", licenseUrl: "http://twitter4j.org/en/index.html#license")
 libraryLicense(name: "Trove4j", version: "1.1 (with patches by JetBrains)", license: "LGPL", url: "http://trove4j.sourceforge.net/", licenseUrl: "http://trove4j.sourceforge.net/html/license.html")
 libraryLicense(name: "Velocity", version: "1.7", license: "Apache 2.0", url: "http://velocity.apache.org/", licenseUrl: "http://velocity.apache.org/index.html")
 libraryLicense(name: "winp", version: "1.23", license: "MIT", url: "http://java.net/projects/winp", licenseUrl: "http://opensource.org/licenses/mit-license.php")
