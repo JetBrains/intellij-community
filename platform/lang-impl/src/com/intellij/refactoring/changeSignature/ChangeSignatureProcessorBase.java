@@ -71,23 +71,27 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   @Override
   @NotNull
   protected UsageInfo[] findUsages() {
-    List<UsageInfo> infos = new ArrayList<UsageInfo>();
+    return findUsages(myChangeInfo);
+  }
 
+  @NotNull
+  public static UsageInfo[] findUsages(ChangeInfo changeInfo) {
+    List<UsageInfo> infos = new ArrayList<UsageInfo>();
     final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
     for (ChangeSignatureUsageProcessor processor : processors) {
-      ContainerUtil.addAll(infos, processor.findUsages(myChangeInfo));
+      ContainerUtil.addAll(infos, processor.findUsages(changeInfo));
     }
     infos = filterUsages(infos);
     return infos.toArray(new UsageInfo[infos.size()]);
   }
 
-  protected List<UsageInfo> filterUsages(List<UsageInfo> infos) {
+  protected static List<UsageInfo> filterUsages(List<UsageInfo> infos) {
     Map<PsiElement, MoveRenameUsageInfo> moveRenameInfos = new HashMap<PsiElement, MoveRenameUsageInfo>();
     Set<PsiElement> usedElements = new HashSet<PsiElement>();
 
     List<UsageInfo> result = new ArrayList<UsageInfo>(infos.size() / 2);
     for (UsageInfo info : infos) {
-      LOG.assertTrue(info != null, getClass());
+      LOG.assertTrue(info != null);
       PsiElement element = info.getElement();
       if (info instanceof MoveRenameUsageInfo) {
         if (usedElements.contains(element)) continue;
@@ -139,14 +143,15 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     RefactoringTransaction transaction = getTransaction();
-    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(myChangeInfo.getMethod());
-    final String fqn = CopyReferenceAction.elementToFqn(myChangeInfo.getMethod());
+    final ChangeInfo changeInfo = myChangeInfo;
+    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(changeInfo.getMethod());
+    final String fqn = CopyReferenceAction.elementToFqn(changeInfo.getMethod());
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
         @Override
         public void undo() {
           if (elementListener instanceof UndoRefactoringElementListener) {
-            ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(myChangeInfo.getMethod(), fqn);
+            ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(changeInfo.getMethod(), fqn);
           }
         }
 
@@ -157,49 +162,53 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
       UndoManager.getInstance(myProject).undoableActionPerformed(action);
     }
     try {
-      final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
-
-      final ResolveSnapshotProvider resolveSnapshotProvider = myChangeInfo.isParameterNamesChanged() ?
-                                                              VariableInplaceRenamer.INSTANCE.forLanguage(myChangeInfo.getMethod().getLanguage()) : null;
-      final List<ResolveSnapshotProvider.ResolveSnapshot> snapshots = new ArrayList<ResolveSnapshotProvider.ResolveSnapshot>();
-      for (ChangeSignatureUsageProcessor processor : processors) {
-        if (resolveSnapshotProvider != null) {
-          processor.registerConflictResolvers(snapshots, resolveSnapshotProvider, usages, myChangeInfo);
-        }
-      }
-
-      for (UsageInfo usage : usages) {
-        for (ChangeSignatureUsageProcessor processor : processors) {
-          if (processor.processUsage(myChangeInfo, usage, true, usages)) break;
-        }
-      }
-
-      LOG.assertTrue(myChangeInfo.getMethod().isValid());
-      for (ChangeSignatureUsageProcessor processor : processors) {
-        if (processor.processPrimaryMethod(myChangeInfo)) break;
-      }
-
-      for (UsageInfo usage : usages) {
-        for (ChangeSignatureUsageProcessor processor : processors) {
-          if (processor.processUsage(myChangeInfo, usage, false, usages)) break;
-        }
-      }
-
-      if (!snapshots.isEmpty()) {
-        for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {
-          for (ResolveSnapshotProvider.ResolveSnapshot snapshot : snapshots) {
-            snapshot.apply(parameterInfo.getName());
-          }
-        }
-      }
-      final PsiElement method = myChangeInfo.getMethod();
+      doChangeSignature(changeInfo, usages);
+      final PsiElement method = changeInfo.getMethod();
       LOG.assertTrue(method.isValid());
-      if (elementListener != null && myChangeInfo.isNameChanged()) {
+      if (elementListener != null && changeInfo.isNameChanged()) {
         elementListener.elementRenamed(method);
       }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+    }
+  }
+
+  public static void doChangeSignature(ChangeInfo changeInfo, @NotNull UsageInfo[] usages) {
+    final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
+
+    final ResolveSnapshotProvider resolveSnapshotProvider = changeInfo.isParameterNamesChanged() ?
+                                                            VariableInplaceRenamer.INSTANCE.forLanguage(changeInfo.getMethod().getLanguage()) : null;
+    final List<ResolveSnapshotProvider.ResolveSnapshot> snapshots = new ArrayList<ResolveSnapshotProvider.ResolveSnapshot>();
+    for (ChangeSignatureUsageProcessor processor : processors) {
+      if (resolveSnapshotProvider != null) {
+        processor.registerConflictResolvers(snapshots, resolveSnapshotProvider, usages, changeInfo);
+      }
+    }
+
+    for (UsageInfo usage : usages) {
+      for (ChangeSignatureUsageProcessor processor : processors) {
+        if (processor.processUsage(changeInfo, usage, true, usages)) break;
+      }
+    }
+
+    LOG.assertTrue(changeInfo.getMethod().isValid());
+    for (ChangeSignatureUsageProcessor processor : processors) {
+      if (processor.processPrimaryMethod(changeInfo)) break;
+    }
+
+    for (UsageInfo usage : usages) {
+      for (ChangeSignatureUsageProcessor processor : processors) {
+        if (processor.processUsage(changeInfo, usage, false, usages)) break;
+      }
+    }
+
+    if (!snapshots.isEmpty()) {
+      for (ParameterInfo parameterInfo : changeInfo.getNewParameters()) {
+        for (ResolveSnapshotProvider.ResolveSnapshot snapshot : snapshots) {
+          snapshot.apply(parameterInfo.getName());
+        }
+      }
     }
   }
 

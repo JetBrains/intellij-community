@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceparameterobject.usageInfo;
+package com.intellij.refactoring.introduceparameterobject;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.ChangeInfo;
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-@SuppressWarnings({"MethodWithTooManyParameters"})
-public class MergeMethodArguments extends FixableUsageInfo {
+public class MergeMethodArguments  {
   private final PsiMethod method;
   private final PsiClass myContainingClass;
-  private final boolean myChangeSignature;
   private final boolean myKeepMethodAsDelegate;
   private final List<PsiTypeParameter> typeParams;
   private final String className;
@@ -53,50 +50,45 @@ public class MergeMethodArguments extends FixableUsageInfo {
                               String parameterName,
                               int[] paramsToMerge,
                               List<PsiTypeParameter> typeParams,
-                              final boolean keepMethodAsDelegate, final PsiClass containingClass, boolean changeSignature) {
-    super(method);
+                              final boolean keepMethodAsDelegate,
+                              final PsiClass containingClass) {
     this.paramsToMerge = paramsToMerge;
     this.packageName = packageName;
     this.className = className;
     this.parameterName = parameterName;
     this.method = method;
     myContainingClass = containingClass;
-    myChangeSignature = changeSignature;
     lastParamIsVararg = method.isVarArgs() && isParameterToMerge(method.getParameterList().getParametersCount() - 1);
     myKeepMethodAsDelegate = keepMethodAsDelegate;
     this.typeParams = new ArrayList<PsiTypeParameter>(typeParams);
   }
 
-  public void fixUsage() throws IncorrectOperationException {
+  public ChangeInfo createChangeInfo() {
     final Project project = method.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
-    final PsiClass psiClass;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    String packageName;
     if (myContainingClass != null) {
-      psiClass = myContainingClass.findInnerClassByName(className, false);
-    }
-    else {
-      psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope.allScope(project));
-    }
-    assert psiClass != null;
-    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-    if (deepestSuperMethod != null) {
-      final PsiClass parentClass = deepestSuperMethod.getContainingClass();
-      final PsiSubstitutor parentSubstitutor =
-        TypeConversionUtil.getSuperClassSubstitutor(parentClass, method.getContainingClass(), PsiSubstitutor.EMPTY);
-      for (int i1 = 0; i1 < psiClass.getTypeParameters().length; i1++) {
-        final PsiTypeParameter typeParameter = psiClass.getTypeParameters()[i1];
-        for (PsiTypeParameter parameter : parentClass.getTypeParameters()) {
-          if (Comparing.strEqual(typeParameter.getName(), parameter.getName())) {
-            subst = subst.put(typeParameter, parentSubstitutor.substitute(
-              new PsiImmediateClassType(parameter, PsiSubstitutor.EMPTY)));
-            break;
-          }
-        }
+      packageName = myContainingClass.getQualifiedName();
+      if (packageName == null) {
+        packageName = myContainingClass.getName();
       }
     }
+    else {
+      packageName = this.packageName;
+    }
+
+    String text = StringUtil.getQualifiedName(packageName, className);
+    if (!typeParams.isEmpty()) {
+      text += "<" + StringUtil.join(typeParams, new Function<PsiTypeParameter, String>() {
+        @Override
+        public String fun(PsiTypeParameter parameter) {
+          return parameter.getName();
+        }
+      }, ", ") + ">";
+    }
+    final PsiType classType = factory.createTypeFromText(text, method);
     final List<ParameterInfoImpl> parametersInfo = new ArrayList<ParameterInfoImpl>();
-    final PsiClassType classType = JavaPsiFacade.getElementFactory(project).createType(psiClass, subst);
 
     final ParameterInfoImpl mergedParamInfo = new ParameterInfoImpl(-1, parameterName, classType, null) {
       @Override
@@ -117,33 +109,16 @@ public class MergeMethodArguments extends FixableUsageInfo {
     }
 
     parametersInfo.add(firstIncludedIdx == -1 ? 0 : firstIncludedIdx, mergedParamInfo);
-    final SmartPsiElementPointer<PsiMethod> meth = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(method);
-
-    final Runnable performChangeSignatureRunnable = new Runnable() {
-      @Override
-      public void run() {
-        final PsiMethod psiMethod = meth.getElement();
-        if (psiMethod == null) return;
-        if (myChangeSignature) {
-          final ChangeSignatureProcessor changeSignatureProcessor =
-            new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod,
-                                         myKeepMethodAsDelegate, null, psiMethod.getName(),
-                                         psiMethod.getReturnType(),
-                                         parametersInfo.toArray(new ParameterInfoImpl[parametersInfo.size()]));
-          changeSignatureProcessor.run();
-        }
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      performChangeSignatureRunnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().runUndoTransparentAction(performChangeSignatureRunnable);
-        }
-      });
-    }
+    PsiType returnType = method.getReturnType();
+    return new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(method.getModifierList()),
+                                  method,
+                                  method.getName(),
+                                  returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
+                                  parametersInfo.toArray(new ParameterInfoImpl[parametersInfo.size()]),
+                                  null,
+                                  myKeepMethodAsDelegate,
+                                  Collections.emptySet(),
+                                  Collections.emptySet());
   }
 
   private boolean isParameterToMerge(int index) {
