@@ -102,6 +102,11 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
 
 
 def protect_libraries_from_patching():
+    """
+    In this function we delete some modules from `sys.modules` dictionary and import them again inside
+      `_pydev_saved_modules` in order to save their original copies there. After that we can use these
+      saved modules within the debugger to protect them from patching by external libraries (e.g. gevent).
+    """
     patched = ['threading', 'thread', '_thread', 'time', 'socket', 'Queue', 'queue', 'select',
                'xmlrpclib', 'SimpleXMLRPCServer', 'BaseHTTPServer', 'SocketServer',
                'xmlrpc.client', 'xmlrpc.server', 'http.server', 'socketserver']
