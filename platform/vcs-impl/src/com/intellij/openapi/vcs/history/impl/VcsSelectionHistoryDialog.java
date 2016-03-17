@@ -245,7 +245,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     return myCachedContents.getContentOf(revision);
   }
 
-  private void loadContentsFor(final VcsFileRevision[] revisions) throws VcsException {
+  private void loadContentsFor(final VcsFileRevision... revisions) throws VcsException {
     myCachedContents.loadContentsFor(revisions);
   }
 
@@ -430,6 +430,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private void ensureBlocksCreated(int requiredIndex) throws VcsException {
+    loadContentsFor(myRevisions.get(requiredIndex));
+
     for (int i = 0; i <= requiredIndex; i++) {
       if (myBlocks.get(i) == null) {
         myBlocks.set(i, createBlock(i));
