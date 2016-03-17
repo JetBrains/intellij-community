@@ -152,16 +152,6 @@ public class InferenceVariable extends LightTypeParameter {
     }
   }
 
-  public boolean hasInstantiation(InferenceSession session) {
-    List<PsiType> bounds = getBounds(InferenceBound.EQ);
-    if (bounds != null) {
-      for (PsiType bound : bounds) {
-        if (session.isProperType(bound)) return true;
-      }
-    }
-    return false;
-  }
-
   public boolean isThrownBound() {
     return myThrownBound;
   }
