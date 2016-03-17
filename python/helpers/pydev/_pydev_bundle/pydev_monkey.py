@@ -566,12 +566,10 @@ _UseNewThreadStartup = _NewThreadStartupWithTrace
 
 def _get_threading_modules_to_patch():
     threading_modules_to_patch = []
-    try:
-        import thread as _thread
-        threading_modules_to_patch.append(_thread)
-    except:
-        import _thread  # @UnresolvedImport @Reimport
-        threading_modules_to_patch.append(_thread)
+
+    from _pydev_imps._pydev_saved_modules import thread as _thread
+    threading_modules_to_patch.append(_thread)
+
     return threading_modules_to_patch
 
 threading_modules_to_patch = _get_threading_modules_to_patch()
