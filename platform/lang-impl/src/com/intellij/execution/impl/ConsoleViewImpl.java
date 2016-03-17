@@ -1017,8 +1017,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_DELETE, new DeleteHandler());
 
-      registerActionHandler(myEditor, EOFAction.ACTION_ID, ActionManager.getInstance().getAction(EOFAction.ACTION_ID));
+      registerActionHandler(myEditor, EOFAction.ACTION_ID);
     }
+  }
+
+  private static void registerActionHandler(final Editor editor, final String actionId) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    action.registerCustomShortcutSet(action.getShortcutSet(), editor.getContentComponent());
   }
 
   private static void registerActionHandler(final Editor editor, final String actionId, final AnAction action) {
