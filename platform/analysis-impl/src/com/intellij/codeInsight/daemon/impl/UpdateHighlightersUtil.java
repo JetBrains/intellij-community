@@ -38,6 +38,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,6 +171,7 @@ public class UpdateHighlightersUtil {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
     ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
+    Set<HighlightInfo> infoSet = new THashSet<>(infos);
 
     Processor<HighlightInfo> processor = info -> {
       if (info.getGroup() == group) {
@@ -179,7 +181,7 @@ public class UpdateHighlightersUtil {
         if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd <= startOffset || hiStart >= endOffset)) {
           return true; // injections are oblivious to restricting range
         }
-        boolean toRemove = infos.contains(info) ||
+        boolean toRemove = infoSet.contains(info) ||
                            !priorityRange.containsRange(hiStart, hiEnd) &&
                            (hiEnd != document.getTextLength() || priorityRange.getEndOffset() != document.getTextLength());
         if (toRemove) {
