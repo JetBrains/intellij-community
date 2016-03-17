@@ -2,7 +2,7 @@ package pkg;
 
 import java.math.BigDecimal;
 
-public interface TestInterfaceWithObject {
+public interface TestInterfaceWithObjectField {
    BigDecimal BUGS_IN_THE_DECOMPILER = BigDecimal.ZERO;
 }
 

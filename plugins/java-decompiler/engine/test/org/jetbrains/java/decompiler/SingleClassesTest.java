@@ -83,7 +83,9 @@ public class SingleClassesTest {
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
-  @Test public void testInterfaceWithObject() { doTest("pkg/TestInterfaceWithObject"); }
+  @Test public void testInterfaceWithPrimitiveField() { doTest("pkg/TestInterfaceWithPrimitiveField"); }
+  @Test public void testInterfaceWithObjectField() { doTest("pkg/TestInterfaceWithObjectField"); }
+  @Test public void testTestMutableStaticOtherClass() { doTest("pkg/TestMutableStaticOtherClass"); }
 
   protected void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
