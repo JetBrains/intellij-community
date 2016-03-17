@@ -31,6 +31,7 @@ import java.io.*;
  */
 public final class PrivacyPolicy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.PrivacyPolicy");
+  private static final String POLICY_TEXT_PROPERTY = "jb.privacy.policy.text"; // to be used in tests to pass arbitrary policy text
   private static final String CACHED_RESOURCE_NAME = "Cached";
   private static final String RELATIVE_RESOURCE_PATH = "JetBrains/PrivacyPolicy";
   private static final String VERSION_COMMENT_START = "<!--";
@@ -98,6 +99,13 @@ public final class PrivacyPolicy {
   @NotNull
   public static Pair<Version, String> getContent() {
     try {
+      final String text = System.getProperty(POLICY_TEXT_PROPERTY, null);
+      if (text != null) {
+        final Pair<Version, String> fromProperty = loadContent(new ByteArrayInputStream(text.getBytes("utf-8")));
+        if (!fromProperty.getFirst().isUnknown()) {
+          return fromProperty;
+        }
+      }
       final Pair<Version, String> fromFile = loadContent(new FileInputStream(ourCachedPolicyFile));
       if (!fromFile.getFirst().isUnknown()) {
         return fromFile;
