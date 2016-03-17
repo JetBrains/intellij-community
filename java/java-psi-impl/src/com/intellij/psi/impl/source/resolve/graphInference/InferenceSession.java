@@ -1390,7 +1390,6 @@ public class InferenceSession {
           boolean dependsOnOutput = false;
           for (InferenceVariable inputVariable : inputVariables) {
             if (dependsOnOutput) break;
-            if (inputVariable.hasInstantiation(this)) continue;
             final Set<InferenceVariable> dependencies = inputVariable.getDependencies(this);
             dependencies.add(inputVariable);
             if (!hasCapture(inputVariable)) {
