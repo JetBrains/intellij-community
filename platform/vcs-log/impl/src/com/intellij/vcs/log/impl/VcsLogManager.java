@@ -62,7 +62,7 @@ public class VcsLogManager implements Disposable {
   private volatile VcsLogUiImpl myUi;
   private VcsLogDataManager myDataManager;
   private VcsLogColorManagerImpl myColorManager;
-  private VcsLogTabsRefresher myTabsLogRefresher;
+  private VcsLogTabsWatcher myTabsLogRefresher;
   private PostponableLogRefresher myPostponableRefresher;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
@@ -116,7 +116,7 @@ public class VcsLogManager implements Disposable {
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(getVcsRoots(), myProject);
     myDataManager = new VcsLogDataManager(myProject, logProviders, new MyFatalErrorsConsumer());
     myPostponableRefresher = new PostponableLogRefresher(myDataManager);
-    myTabsLogRefresher = new VcsLogTabsRefresher(myProject, myPostponableRefresher, myDataManager);
+    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myDataManager);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myDataManager);
 

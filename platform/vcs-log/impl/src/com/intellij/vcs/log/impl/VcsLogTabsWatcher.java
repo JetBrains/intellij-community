@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class VcsLogTabsRefresher implements Disposable {
+public class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
 
   @NotNull private final PostponableLogRefresher myRefresher;
@@ -47,7 +47,7 @@ public class VcsLogTabsRefresher implements Disposable {
   @NotNull private final ToolWindowImpl myToolWindow;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
 
-  public VcsLogTabsRefresher(@NotNull Project project, @NotNull PostponableLogRefresher refresher, @NotNull Disposable parentDisposable) {
+  public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher, @NotNull Disposable parentDisposable) {
     myRefresher = refresher;
     myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
     myToolWindow = ObjectUtils.assertNotNull((ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID));
