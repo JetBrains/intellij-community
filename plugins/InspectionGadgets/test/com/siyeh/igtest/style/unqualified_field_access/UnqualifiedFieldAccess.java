@@ -21,6 +21,16 @@ public class UnqualifiedFieldAccess {
         };
       }
     };
+    class A {
+      int i;
+      void a() {
+        new Object() {
+          void b() {
+            System.out.println(i);
+          }
+        };
+      }
+    }
   }
 
   void simpleAnonymous() {
