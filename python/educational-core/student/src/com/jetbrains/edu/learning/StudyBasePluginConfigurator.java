@@ -23,6 +23,11 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
   @NotNull
   @Override
   public DefaultActionGroup getActionGroup(Project project) {
+    return getDefaultActionGroup();
+  }
+
+  @NotNull
+  public static DefaultActionGroup getDefaultActionGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new StudyPreviousStudyTaskAction());
     group.add(new StudyNextStudyTaskAction());

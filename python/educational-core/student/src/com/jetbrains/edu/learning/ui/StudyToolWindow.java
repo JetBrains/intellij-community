@@ -27,12 +27,11 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyBasePluginConfigurator;
 import com.jetbrains.edu.learning.StudyPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -68,17 +67,22 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     setContent(mySplitPane);
 
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
-    assert configurator != null;
-    final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+    if (configurator != null) {
+      final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+    }
   }
 
   private void addAdditionalPanels(Project project) {
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
-    assert configurator != null;
-    Map<String, JPanel> panels = configurator.getAdditionalPanels(project);
-    for (Map.Entry<String, JPanel> entry: panels.entrySet()) {
-      myContentPanel.add(entry.getKey(), entry.getValue());
+    if (configurator != null) {
+      Map<String, JPanel> panels = configurator.getAdditionalPanels(project);
+      for (Map.Entry<String, JPanel> entry : panels.entrySet()) {
+        myContentPanel.add(entry.getKey(), entry.getValue());
+      }
+    }
+    else {
+      LOG.warn("No StudyPluginConfigurator is provided for the plugin");
     }
   }
 
@@ -132,9 +136,13 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       return new DefaultActionGroup();
     }
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
-    assert configurator != null;
-
-    return configurator.getActionGroup(project);
+    if (configurator != null) {
+      return configurator.getActionGroup(project);
+    }
+    else {
+      LOG.warn("No configurator is provided for plugin");
+      return StudyBasePluginConfigurator.getDefaultActionGroup();
+    }
   }
 
   public abstract void setTaskText(String text) ;
