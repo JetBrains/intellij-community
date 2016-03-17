@@ -178,14 +178,14 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
       } while (oldThrowable != newThrowable && !throwableUpdater.compareAndSet(a, oldThrowable, newThrowable));
       throwable = newThrowable;
       if (a.getPendingCount() == 0) {
-        // currently avoid using onExceptionalCompletion since it leaks exceptions via jsr166e.ForkJoinTask.exceptionTable
+        // currently avoid using onExceptionalCompletion since it leaks exceptions via ForkJoinTask.exceptionTable
         a.onCompletion(child);
         //a.onExceptionalCompletion(throwable, child);
         child = a;
         //noinspection unchecked
         a = (ApplierCompleter)a.getCompleter();
         if (a == null) {
-          // currently avoid using completeExceptionally since it leaks exceptions via jsr166e.ForkJoinTask.exceptionTable
+          // currently avoid using completeExceptionally since it leaks exceptions via ForkJoinTask.exceptionTable
           child.quietlyComplete();
           break;
         }
