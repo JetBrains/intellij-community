@@ -103,8 +103,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  @Override
-  public boolean isInsideTransaction() {
+  private boolean isInsideTransaction() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myTransactionStartTrace != null;
   }
@@ -158,6 +157,13 @@ public class TransactionGuardImpl extends TransactionGuard {
         myMergeableKinds.removeAll(toRemove);
       }
     };
+  }
+
+  @Override
+  public void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage) {
+    if (transactionRequired != isInsideTransaction()) {
+      LOG.error(errorMessage);
+    }
   }
 
   @Override
