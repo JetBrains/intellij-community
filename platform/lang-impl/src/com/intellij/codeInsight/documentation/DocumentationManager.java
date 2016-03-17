@@ -68,6 +68,7 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -459,6 +460,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (jbPopup != null) {
           final String title = getTitle(psiElement, false);
           jbPopup.setCaption(title);
+          // Set panel name so that it is announced by readers when it gets the focus
+          AccessibleContextUtil.setName(component, title);
         }
       }
     });
@@ -787,6 +790,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
             jbPopup.setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE);
             jbPopup.setCaption(getTitle(element, false));
+            // Set panel name so that it is announced by readers when it gets the focus
+            AccessibleContextUtil.setName(component, getTitle(element, false));
             callback.setDone();
           }
         });
