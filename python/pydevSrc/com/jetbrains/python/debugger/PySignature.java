@@ -120,7 +120,7 @@ public class PySignature {
         return myTypes.get(0);
       }
       else {
-        return StringUtil.join(myTypes, " or ");
+        return "Union[" + StringUtil.join(myTypes, ", ") + "]";
       }
     }
 
