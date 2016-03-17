@@ -870,9 +870,8 @@ public abstract class InplaceRefactoring {
     public void templateFinished(Template template, final boolean brokenOff) {
       boolean bind = false;
       try {
-        super.templateFinished(template, brokenOff);
         if (!brokenOff) {
-          bind = performRefactoring();
+          bind = ApplicationManager.getApplication().runWriteAction((Computable<Boolean>)InplaceRefactoring.this::performRefactoring);
         } else {
           performCleanup();
         }
