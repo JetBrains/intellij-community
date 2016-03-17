@@ -272,7 +272,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static void updateBorder(Component view) {
     if (view instanceof JTable) return; // tables are not supported yet
-    if (view instanceof JComponent) {
+    if (view instanceof JList || view instanceof JTree || view instanceof JComponent && Registry.is("ide.scroll.align.component")) {
       JComponent component = (JComponent)view;
       Border border = component.getBorder();
       if (border instanceof ViewBorder) return; // already set
