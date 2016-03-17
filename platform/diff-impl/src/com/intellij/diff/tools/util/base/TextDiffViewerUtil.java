@@ -390,7 +390,7 @@ public class TextDiffViewerUtil {
     return ContainerUtil.filter(editors, new Condition<EditorEx>() {
       @Override
       public boolean value(EditorEx editor) {
-        return editor != null && !editor.isViewer();
+        return !editor.isViewer();
       }
     });
   }
@@ -405,10 +405,8 @@ public class TextDiffViewerUtil {
     }
 
     public void install(@NotNull Disposable disposable) {
-      if (ContainerUtil.skipNulls(myEditors).size() < 2) return;
-
+      if (myEditors.size() < 2) return;
       for (EditorEx editor : myEditors) {
-        if (editor == null) continue;
         editor.addPropertyChangeListener(this, disposable);
       }
     }
@@ -422,7 +420,7 @@ public class TextDiffViewerUtil {
       int fontSize = ((Integer)evt.getNewValue()).intValue();
 
       for (EditorEx editor : myEditors) {
-        if (editor != null && evt.getSource() != editor) updateEditor(editor, fontSize);
+        if (evt.getSource() != editor) updateEditor(editor, fontSize);
       }
     }
 
@@ -446,7 +444,6 @@ public class TextDiffViewerUtil {
 
     public void install(@NotNull List<? extends EditorEx> editors) {
       for (EditorEx editor : editors) {
-        if (editor == null) continue;
         editor.addEditorMouseListener(this);
         editor.setContextMenuGroupId(null); // disabling default context menu
       }
