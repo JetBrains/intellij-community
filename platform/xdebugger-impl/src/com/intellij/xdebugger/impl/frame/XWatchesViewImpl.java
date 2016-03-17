@@ -111,59 +111,39 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }.registerCustomShortcutSet(CommonShortcuts.getPaste(), tree, myDisposables);
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(getTree()).disableUpDownActions();
-    decorator.setAddAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        executeAction(XDebuggerActions.XNEW_WATCH);
-      }
-    });
-    decorator.setRemoveAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        executeAction(XDebuggerActions.XREMOVE_WATCH);
-      }
-    });
-    decorator.setRemoveActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        removeWatchAction.update(e);
-        return e.getPresentation().isEnabled();
-      }
+
+    decorator.setAddAction(button -> executeAction(XDebuggerActions.XNEW_WATCH));
+    decorator.setAddActionName(newWatchAction.getTemplatePresentation().getText());
+
+    decorator.setRemoveAction(button -> executeAction(XDebuggerActions.XREMOVE_WATCH));
+    decorator.setRemoveActionName(removeWatchAction.getTemplatePresentation().getText());
+
+    decorator.setRemoveActionUpdater(e -> {
+      removeWatchAction.update(e);
+      return e.getPresentation().isEnabled();
     });
     decorator.addExtraAction(AnActionButton.fromAction(copyAction));
-    decorator.setMoveUpAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
-        assert nodes.size() == 1;
-        myRootNode.moveUp(nodes.get(0));
-        updateSessionData();
-      }
+    decorator.setMoveUpAction(button -> {
+      List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+      assert nodes.size() == 1;
+      myRootNode.moveUp(nodes.get(0));
+      updateSessionData();
     });
-    decorator.setMoveUpActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
-        if (nodes.size() != 1) return false;
-        return myRootNode.getIndex(nodes.get(0)) > 0;
-      }
+    decorator.setMoveUpActionUpdater(e -> {
+      List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+      if (nodes.size() != 1) return false;
+      return myRootNode.getIndex(nodes.get(0)) > 0;
     });
-    decorator.setMoveDownAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
-        assert nodes.size() == 1;
-        myRootNode.moveDown(nodes.get(0));
-        updateSessionData();
-      }
+    decorator.setMoveDownAction(button -> {
+      List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+      assert nodes.size() == 1;
+      myRootNode.moveDown(nodes.get(0));
+      updateSessionData();
     });
-    decorator.setMoveDownActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
-        if (nodes.size() != 1) return false;
-        return myRootNode.getIndex(nodes.get(0)) < myRootNode.getWatchChildren().size() - 1;
-      }
+    decorator.setMoveDownActionUpdater(e -> {
+      List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+      if (nodes.size() != 1) return false;
+      return myRootNode.getIndex(nodes.get(0)) < myRootNode.getWatchChildren().size() - 1;
     });
     CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR,
                                                    SystemInfo.isMac ? 1 : 0, 0,
