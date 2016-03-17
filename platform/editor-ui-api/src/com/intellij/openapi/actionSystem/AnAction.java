@@ -279,7 +279,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   protected void setShortcutSet(ShortcutSet shortcutSet) {
     if (myIsGlobal && myShortcutSet != shortcutSet) {
-      LOG.error("Shortcuts of global AnActions should not be changed outside of KeymapManager");
+      LOG.warn("Shortcuts of global AnActions should not be changed outside of KeymapManager", new Throwable());
     }
     myShortcutSet = shortcutSet;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,27 +156,35 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (expressionType == null) {
         return null;
       }
+      final String text = expression.getText();
       if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.LONG)) {
-        return expression.getText() + 'L';
+        return text + 'L';
       }
       if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.FLOAT)) {
-        return expression.getText() + ".0F";
+        if (!isDecimalLiteral(text)) {
+          return null;
+        }
+        return text + ".0F";
       }
       if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.DOUBLE)) {
-        return expression.getText() + ".0";
+        if (!isDecimalLiteral(text)) {
+          return null;
+        }
+        return text + ".0";
       }
       if (expressionType.equals(PsiType.LONG) && expectedType.equals(PsiType.FLOAT)) {
-        final String text = expression.getText();
-        final int length = text.length();
-        return text.substring(0, length - 1) + ".0F";
+        if (!isDecimalLiteral(text)) {
+          return null;
+        }
+        return text.substring(0, text.length() - 1) + ".0F";
       }
       if (expressionType.equals(PsiType.LONG) && expectedType.equals(PsiType.DOUBLE)) {
-        final String text = expression.getText();
-        final int length = text.length();
-        return text.substring(0, length - 1) + ".0";
+        if (!isDecimalLiteral(text)) {
+          return null;
+        }
+        return text.substring(0, text.length() - 1) + ".0";
       }
       if (expressionType.equals(PsiType.DOUBLE) && expectedType.equals(PsiType.FLOAT)) {
-        final String text = expression.getText();
         final int length = text.length();
         if (text.charAt(length - 1) == 'd' || text.charAt(length - 1) == 'D') {
           return text.substring(0, length - 1) + 'F';
@@ -186,11 +194,15 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         }
       }
       if (expressionType.equals(PsiType.FLOAT) && expectedType.equals(PsiType.DOUBLE)) {
-        final String text = expression.getText();
         final int length = text.length();
         return text.substring(0, length - 1);
       }
       return null;
+    }
+
+    private static boolean isDecimalLiteral(String text) {
+      // should not be binary, octal or hexadecimal: 0b101, 077, 0xFF
+      return text.length() > 0 && text.charAt(0) != '0';
     }
 
     private static boolean isNegatedLiteral(PsiExpression expression) {

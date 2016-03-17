@@ -117,11 +117,16 @@ public class PySignature {
 
     public String getTypeQualifiedName() {
       if (myTypes.size() == 1) {
-        return myTypes.get(0);
+        return noneTypeToNone(myTypes.get(0));
       }
       else {
-        return StringUtil.join(myTypes, " or ");
+        return "Union[" + StringUtil.join(myTypes, NamedParameter::noneTypeToNone, ", ") + "]";
       }
+    }
+
+    @Nullable
+    private static String noneTypeToNone(@Nullable String type) {
+      return "NoneType".equals(type) ? "None" : type;
     }
 
     public void addType(String type) {

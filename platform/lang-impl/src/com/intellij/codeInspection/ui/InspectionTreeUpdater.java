@@ -20,8 +20,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -34,7 +32,7 @@ public class InspectionTreeUpdater {
 
   public InspectionTreeUpdater(InspectionResultsView view) {
     myView = view;
-    myUpdateQueue = new MergingUpdateQueue("InspectionView", 100, true, view);
+    myUpdateQueue = new MergingUpdateQueue("InspectionView", 100, true, view, view);
   }
 
   public void updateWithPreviewPanel() {

@@ -18,16 +18,20 @@ package com.intellij.pom;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik
  */
 public interface PomTransaction {
+  @NotNull
   PomModelEvent getAccumulatedEvent();
 
   void run() throws IncorrectOperationException;
 
+  @NotNull
   PsiElement getChangeScope();
 
+  @NotNull
   PomModelAspect getTransactionAspect();
 }

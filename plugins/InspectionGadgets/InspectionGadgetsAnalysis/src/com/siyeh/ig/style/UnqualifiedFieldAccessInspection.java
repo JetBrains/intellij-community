@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Bas Leijdekkers
+ * Copyright 2006-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -71,10 +72,13 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection implements 
         return;
       }
       final PsiClass fieldClass = field.getContainingClass();
-      if (fieldClass instanceof PsiAnonymousClass) {
+      if (fieldClass == null) {
+        return;
+      }
+      if (PsiUtil.isLocalOrAnonymousClass(fieldClass)) {
         final PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
         if (expressionClass != null && !expressionClass.equals(fieldClass)) {
-          // qualified this expression not possible for anonymous class
+          // qualified this expression not possible for anonymous or local class
           return;
         }
       }

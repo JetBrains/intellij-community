@@ -162,11 +162,6 @@ public abstract class TransactionGuard {
   public abstract AccessToken startSynchronousTransaction(@NotNull TransactionKind kind);
 
   /**
-   * @return whether there's a transaction currently running
-   */
-  public abstract boolean isInsideTransaction();
-
-  /**
    * When on UI thread and there's no other transaction running, executes the given runnable. If there is a transaction running,
    * but the given {@code kind} is allowed via {@link #acceptNestedTransactions(TransactionKind...)}, merges two transactions
    * and executes the provided code immediately. Otherwise
@@ -190,4 +185,11 @@ public abstract class TransactionGuard {
    */
   @NotNull
   public abstract AccessToken acceptNestedTransactions(TransactionKind... kinds);
+
+  /**
+   * Asserts that a transaction is currently running, or not. Callable only on Swing thread.
+   * @param transactionRequired whether the assertion should check that the application is inside transaction or not
+   * @param errorMessage the message that will be logged if current transaction status differs from the expected one
+   */
+  public abstract void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage);
 }

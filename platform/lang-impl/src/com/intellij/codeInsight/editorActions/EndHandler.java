@@ -94,9 +94,7 @@ public class EndHandler extends EditorActionHandler {
           // here just as a boolean value holder due to requirement to declare variable used from inner class as final.
           final AtomicBoolean stopProcessing = new AtomicBoolean(true);
 
-          TransactionGuard guard = TransactionGuard.getInstance();
-          // sometimes this handler is invoked from other actions, then we're already inside a transaction
-          try (AccessToken ignore = guard.isInsideTransaction() ? null : guard.startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
+          try (AccessToken ignore = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
             PsiDocumentManager.getInstance(project).commitAllDocuments();
             ApplicationManager.getApplication().runWriteAction(() -> {
               CodeStyleManager styleManager = CodeStyleManager.getInstance(project);

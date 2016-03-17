@@ -36,24 +36,40 @@ public class TransactionGuardImpl extends TransactionGuard {
   private final Queue<Runnable> myQueue = new LinkedBlockingQueue<Runnable>();
   private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
   private String myTransactionStartTrace;
+  private ModalityState myTransactionModality;
 
   @Override
   @NotNull
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myTransactionStartTrace != null) {
-      if (!myMergeableKinds.contains(kind) && !ApplicationManager.getApplication().isUnitTestMode()) {
-        // please assign exceptions that occur here to Peter
-        LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment. Kind is " + kind,
-                  new Attachment("trace.txt", myTransactionStartTrace));
+    ModalityState modality = ModalityState.current();
+    if (isInsideTransaction()) {
+      if (myTransactionModality == modality) {
+        return AccessToken.EMPTY_ACCESS_TOKEN;
       }
+
+      if (myMergeableKinds.contains(kind)) {
+        final ModalityState prev = myTransactionModality;
+        myTransactionModality = modality;
+        return new AccessToken() {
+          @Override
+          public void finish() {
+            myTransactionModality = prev;
+          }
+        };
+      }
+
+      // please assign exceptions that occur here to Peter
+      LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment. Kind is " + kind,
+                new Attachment("trace.txt", myTransactionStartTrace));
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
+    myTransactionModality = modality;
     myTransactionStartTrace = DebugUtil.currentStackTrace();
     return new AccessToken() {
       @Override
       public void finish() {
         myTransactionStartTrace = null;
+        myTransactionModality = null;
         if (!myQueue.isEmpty()) {
           pollQueueLater();
         }
@@ -87,8 +103,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  @Override
-  public boolean isInsideTransaction() {
+  private boolean isInsideTransaction() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myTransactionStartTrace != null;
   }
@@ -145,10 +160,17 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
+  public void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage) {
+    if (transactionRequired != isInsideTransaction()) {
+      LOG.error(errorMessage);
+    }
+  }
+
+  @Override
   public void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Runnable transaction) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
-      if (!canRunTransactionNow(kind)) {
+      if (!canRunTransactionNow(kind) && myTransactionModality != ModalityState.current()) {
         throw new AssertionError("Cannot run submitTransactionAndWait from another transaction, kind " + kind + " is not allowed");
       }
       runSyncTransaction(kind, transaction);

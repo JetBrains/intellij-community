@@ -216,6 +216,10 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     popupActions.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
     PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
 
+    for (AnAction action : popupActions.getChildren(null)) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), mySplitter);
+    }
+
     setTitle(title);
     setComponent(mySplitter);
     setPreferredFocusedComponent(myList);
@@ -241,7 +245,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     return myCachedContents.getContentOf(revision);
   }
 
-  private void loadContentsFor(final VcsFileRevision[] revisions) throws VcsException {
+  private void loadContentsFor(final VcsFileRevision... revisions) throws VcsException {
     myCachedContents.loadContentsFor(revisions);
   }
 
@@ -426,6 +430,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private void ensureBlocksCreated(int requiredIndex) throws VcsException {
+    loadContentsFor(myRevisions.get(requiredIndex));
+
     for (int i = 0; i <= requiredIndex; i++) {
       if (myBlocks.get(i) == null) {
         myBlocks.set(i, createBlock(i));
@@ -460,6 +466,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   private class MyDiffAction extends DumbAwareAction {
     public MyDiffAction() {
       super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"), AllIcons.Actions.Diff);
+      setShortcutSet(CommonShortcuts.getDiff());
     }
 
     public void update(final AnActionEvent e) {
@@ -489,6 +496,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       super(VcsBundle.message("show.diff.with.local.action.text"),
             VcsBundle.message("show.diff.with.local.action.description"),
             AllIcons.Actions.DiffWithCurrent);
+      setShortcutSet(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal").getShortcutSet());
     }
 
     public void update(final AnActionEvent e) {

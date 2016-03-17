@@ -38,6 +38,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.changeSignature.ChangeInfo;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.*;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
@@ -77,6 +79,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   private final Set<PsiParameter> paramsNeedingGetters = new HashSet<PsiParameter>();
   private final PsiClass existingClass;
   private PsiMethod myExistingClassCompatibleConstructor;
+  private ChangeInfo myChangeInfo;
 
   public IntroduceParameterObjectProcessor(String className,
                                            String packageName,
@@ -164,6 +167,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
         }
       }
     }
+    List<UsageInfo> changeSignatureUsages = new ArrayList<>();
     for (UsageInfo usageInfo : refUsages.get()) {
       if (usageInfo instanceof FixableUsageInfo) {
         final String conflictMessage = ((FixableUsageInfo)usageInfo).getConflictMessage();
@@ -171,7 +175,13 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
           conflicts.putValue(usageInfo.getElement(), conflictMessage);
         }
       }
+      else {
+        changeSignatureUsages.add(usageInfo);
+      }
     }
+
+    ChangeSignatureProcessorBase.collectConflictsFromExtensions(new Ref<>(changeSignatureUsages.toArray(new UsageInfo[changeSignatureUsages.size()])), conflicts, myChangeInfo);
+
     return showConflicts(conflicts, refUsages.get());
   }
 
@@ -179,7 +189,24 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     if (myUseExistingClass && existingClass != null) {
       myExistingClassCompatibleConstructor = existingClassIsCompatible(existingClass, parameters);
     }
-    findUsagesForMethod(method, usages, true);
+
+    final PsiCodeBlock body = method.getBody();
+    final String baseParameterName = StringUtil.decapitalize(className);
+
+    final String fixedParamName =
+      body != null
+      ? JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(baseParameterName, body.getLBrace(), true)
+      : JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(baseParameterName, VariableKind.PARAMETER);
+
+    myChangeInfo =
+      new MergeMethodArguments(method, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate,
+                              myCreateInnerClass ? method.getContainingClass() : null).createChangeInfo();
+
+    for (UsageInfo info : ChangeSignatureProcessorBase.findUsages(myChangeInfo)) {
+      usages.add(new ChangeSignatureUsageWrapper(info));
+    }
+
+    findUsagesForMethod(method, usages, fixedParamName);
 
     if (myUseExistingClass && existingClass != null && !(paramsNeedingGetters.isEmpty() && paramsNeedingSetters.isEmpty())) {
       usages.add(new AppendAccessorsUsageInfo(existingClass, myGenerateAccessors, paramsNeedingGetters, paramsNeedingSetters, parameters));
@@ -187,7 +214,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
     final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod siblingMethod : overridingMethods) {
-      findUsagesForMethod(siblingMethod, usages, false);
+      findUsagesForMethod(siblingMethod, usages, fixedParamName);
     }
 
     if (myNewVisibility != null) {
@@ -195,16 +222,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
   }
 
-  private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages, boolean changeSignature) {
-    final PsiCodeBlock body = overridingMethod.getBody();
-    final String baseParameterName = StringUtil.decapitalize(className);
-    final String fixedParamName =
-      body != null
-      ? JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(baseParameterName, body.getLBrace(), true)
-      : JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(baseParameterName, VariableKind.PARAMETER);
-
-    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate, myCreateInnerClass ? method.getContainingClass() : null, changeSignature));
-
+  private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages, String fixedParamName) {
     final ParamUsageVisitor visitor = new ParamUsageVisitor(overridingMethod, paramsToMerge);
     overridingMethod.accept(visitor);
     final Set<PsiReferenceExpression> values = visitor.getParameterUsages();
@@ -261,6 +279,13 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
           }
         }
       }
+      List<UsageInfo> changeSignatureUsages = new ArrayList<>();
+      for (UsageInfo info : usageInfos) {
+        if (info instanceof ChangeSignatureUsageWrapper) {
+          changeSignatureUsages.add(((ChangeSignatureUsageWrapper)info).getInfo());
+        }
+      }
+      ChangeSignatureProcessorBase.doChangeSignature(myChangeInfo, changeSignatureUsages.toArray(new UsageInfo[changeSignatureUsages.size()]));
     }
   }
 
@@ -536,5 +561,21 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       return fieldAssigned;
     }
 
+  }
+
+  private static class ChangeSignatureUsageWrapper extends FixableUsageInfo {
+    private final UsageInfo myInfo;
+
+    public ChangeSignatureUsageWrapper(UsageInfo info) {
+      super(info.getElement());
+      myInfo = info;
+    }
+
+    public UsageInfo getInfo() {
+      return myInfo;
+    }
+
+    @Override
+    public void fixUsage() throws IncorrectOperationException {}
   }
 }

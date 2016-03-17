@@ -72,6 +72,9 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
+      if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
+        return;
+      }
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) {
         return;
