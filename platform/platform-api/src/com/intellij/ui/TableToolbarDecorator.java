@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.ListTableModel;
@@ -27,6 +28,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
@@ -149,46 +151,41 @@ class TableToolbarDecorator extends ToolbarDecorator {
       }
     };
 
-    myUpAction = new AnActionButtonRunnable() {
+    class MoveRunnable implements AnActionButtonRunnable {
+      final int delta;
+
+      MoveRunnable(int delta) {
+        this.delta = delta;
+      }
+
       @Override
-      public void run(AnActionButton button) {        
-        final int row = table.getEditingRow();
-        final int col = table.getEditingColumn();
+      public void run(AnActionButton button) {
+        int row = table.getEditingRow();
+        int col = table.getEditingColumn();
         TableUtil.stopEditing(table);
-        final int[] indexes = table.getSelectedRows();
-        for (int index : indexes) {
-          if (0 < index && index < table.getModel().getRowCount()) {
-            tableModel.exchangeRows(index, index - 1);
-            table.setRowSelectionInterval(index - 1, index - 1);
-          }
-        }        
+        int[] idx = table.getSelectedRows();
+        Arrays.sort(idx);
+        if (delta > 0) {
+          idx = ArrayUtil.reverseArray(idx);
+        }
+
+        if (idx.length == 0) return;
+        if (idx[0] + delta < 0) return;
+        if (idx[idx.length - 1] + delta > table.getModel().getRowCount()) return;
+
+        for (int i = 0; i < idx.length; i++) {
+          tableModel.exchangeRows(idx[i], idx[i] + delta);
+          idx[i] += delta;
+        }
+        TableUtil.selectRows(table, idx);
         table.requestFocus();
         if (row > 0 && col != -1) {
           table.editCellAt(row - 1, col);
         }
       }
-    };
-
-    myDownAction = new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        final int row = table.getEditingRow();
-        final int col = table.getEditingColumn();
-
-        TableUtil.stopEditing(table);
-        final int[] indexes = table.getSelectedRows();
-        for (int index : indexes) {
-          if (0 <= index && index < table.getModel().getRowCount() - 1) {
-            tableModel.exchangeRows(index, index + 1);
-            table.setRowSelectionInterval(index + 1, index + 1);
-          }
-        }
-        table.requestFocus();
-        if (row < table.getRowCount() - 1 && col != -1) {
-          table.editCellAt(row + 1, col);
-        }
-      }
-    };
+    }
+    myUpAction = new MoveRunnable(-1);
+    myDownAction = new MoveRunnable(1);
   }
 
   @Override
