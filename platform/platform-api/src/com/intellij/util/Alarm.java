@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -282,6 +283,7 @@ public class Alarm implements Disposable {
       }
       request.first.run();
     }
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @TestOnly

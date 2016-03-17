@@ -118,13 +118,16 @@ public class AlarmTest extends PlatformTestCase {
     Object modal = new Object();
     LaterInvocator.enterModal(modal);
 
-    ApplicationManager.getApplication().invokeLater(() -> TimeoutUtil.sleep(10), ModalityState.NON_MODAL);
-    alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
-    alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
-    UIUtil.dispatchAllInvocationEvents();
-    assertEquals("", sb.toString());
-
-    LaterInvocator.leaveModal(modal);
+    try {
+      ApplicationManager.getApplication().invokeLater(() -> TimeoutUtil.sleep(10), ModalityState.NON_MODAL);
+      alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
+      alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals("", sb.toString());
+    }
+    finally {
+      LaterInvocator.leaveModal(modal);
+    }
 
     while (!alarm.isEmpty()) {
       UIUtil.dispatchAllInvocationEvents();
@@ -132,4 +135,16 @@ public class AlarmTest extends PlatformTestCase {
 
     assertEquals("12", sb.toString());
   }
+
+  public void testFlushImmediately() {
+    Alarm alarm = new Alarm();
+    StringBuilder sb = new StringBuilder();
+
+    alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
+    alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
+    assertEquals("", sb.toString());
+    alarm.flush();
+    assertEquals("12", sb.toString());
+  }
+
 }
