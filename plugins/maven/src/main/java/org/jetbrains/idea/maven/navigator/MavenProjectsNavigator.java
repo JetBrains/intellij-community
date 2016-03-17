@@ -20,10 +20,7 @@ import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -281,9 +278,9 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     initTree();
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
-    AnAction removeAction = ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration");
+    AnAction removeAction = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration"));
     removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree, myProject);
-    AnAction editSource = ActionManager.getInstance().getAction("Maven.EditRunConfiguration");
+    AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, myProject);
 
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
