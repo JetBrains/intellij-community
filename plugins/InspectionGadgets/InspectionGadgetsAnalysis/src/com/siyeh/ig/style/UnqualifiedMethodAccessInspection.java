@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -70,8 +72,15 @@ public class UnqualifiedMethodAccessInspection extends BaseInspection implements
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass instanceof PsiAnonymousClass) {
+      if (containingClass == null) {
         return;
+      }
+      if (PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+        final PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+        if (expressionClass == null || !expressionClass.equals(containingClass)) {
+          // qualified this expression not possible for anonymous or local class
+          return;
+        }
       }
       registerError(expression);
     }
