@@ -280,6 +280,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+      presentation.updateContent();
       final Map<String, Set<RefEntity>> toolContent = presentation.getContent();
       content.putAll(toolContent);
     }
