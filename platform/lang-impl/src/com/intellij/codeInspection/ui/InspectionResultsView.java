@@ -474,7 +474,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myPreviewEditor, this);
+        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myPreviewEditor == null || myPreviewEditor.getUserData(PREVIEW_EDITOR_IS_REUSED_KEY) == null
+                                                               ? null
+                                                               : myPreviewEditor, this);
         myLoadingProgressPreview = fixToolbar;
         editorPanel.add(fixToolbar, BorderLayout.NORTH);
       }
