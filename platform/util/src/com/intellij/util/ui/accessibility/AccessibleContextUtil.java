@@ -19,7 +19,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
 import javax.swing.*;
+import java.awt.*;
 
 public class AccessibleContextUtil {
   //@VisibleForTesting
@@ -86,6 +88,14 @@ public class AccessibleContextUtil {
         j2.getAccessibleContext().getAccessibleDescription(),
         separator2,
         j3.getAccessibleContext().getAccessibleDescription()));
+  }
+
+  public static void setParent(@NotNull JComponent component, @Nullable Component newParent) {
+    if (newParent instanceof Accessible) {
+      component.getAccessibleContext().setAccessibleParent((Accessible)newParent);
+      return;
+    }
+    component.getAccessibleContext().setAccessibleParent(null);
   }
 
   public static @Nullable String combineAccessibleStrings(@Nullable String s1, @NotNull String separator, @Nullable String s2) {
