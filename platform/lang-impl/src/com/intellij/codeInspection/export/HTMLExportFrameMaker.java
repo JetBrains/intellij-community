@@ -80,7 +80,7 @@ public class HTMLExportFrameMaker {
     buf.append("<FRAME src=\"empty.html\" name=\"packageFrame\">");
     buf.append("</FRAMESET>");
     buf.append("<FRAME src=\"empty.html\" name=\"elementFrame\">");
-    buf.append("</FRAMESET></BODY></HTML");
+    buf.append("</FRAMESET></BODY></HTML>");
 
     HTMLExportUtil.writeFile(myRootFolder, toolWrapper.getFolderName() + "-index.html", buf, myProject);
   }
