@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,8 +163,26 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   private void addWarningIfNeeded() {
     if (IpnbUtils.hasFx()) return;
-    final JLabel warning = new JLabel("Switch to the bundled JDK for proper markdown cell rendering", SwingConstants.CENTER);
+    final String text;
+    final String href;
+    if (PlatformUtils.isPyCharm()) {
+      href = "https://www.jetbrains.com/pycharm/download/";
+      text = "<html><a href=\"https://www.jetbrains.com/pycharm/download/\">Download PyCharm</a> with bundled JDK for better " +
+             "Markdown cell rendering</html>";
+    }
+    else {
+      href = "https://confluence.jetbrains.com/display/PYH/Pycharm+2016.1+Jupyter+Notebook+rendering";
+      text = "<html>Follow instructions <a href=\"https://confluence.jetbrains.com/display/PYH/Pycharm+2016.1+Jupyter+Notebook+rendering\">" +
+             "here</a> for better Markdown cell rendering</html>";
+    }
+    final JLabel warning = new JLabel(text, SwingConstants.CENTER);
     warning.setForeground(JBColor.RED);
+    warning.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        BrowserUtil.browse(href);
+      }
+    });
     add(warning);
   }
 
