@@ -15,7 +15,7 @@
  */
 package com.android.antuitest.tasks;
 
-import com.android.tools.idea.tests.gui.framework.BelongsToTestGroups;
+import com.android.tools.idea.tests.gui.framework.RunIn;
 import com.android.tools.idea.tests.gui.framework.TestGroup;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.tools.ant.Project;
@@ -79,25 +79,25 @@ public class UiTestTaskTest {
 
 abstract class GuiTestRunner extends Runner {}
 
-@BelongsToTestGroups(TestGroup.A)
+@RunIn(TestGroup.A)
 @RunWith(GuiTestRunner.class)
 class ATest {}
 
-@BelongsToTestGroups(TestGroup.B)
+@RunIn(TestGroup.B)
 @RunWith(GuiTestRunner.class)
 class BTest {}
 
-@BelongsToTestGroups(TestGroup.B)
+@RunIn(TestGroup.B)
 @RunWith(GuiTestRunner.class)
 class CTest {}
 
 @RunWith(GuiTestRunner.class)
 class DTest {}
 
-@BelongsToTestGroups(TestGroup.INDIVIDUAL)
+@RunIn(TestGroup.INDIVIDUAL)
 @RunWith(GuiTestRunner.class)
 class SpecialATest {}
 
-@BelongsToTestGroups(TestGroup.INDIVIDUAL)
+@RunIn(TestGroup.INDIVIDUAL)
 @RunWith(GuiTestRunner.class)
 class SpecialBTest {}
