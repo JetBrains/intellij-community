@@ -137,8 +137,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myOccurenceNavigator = initOccurenceNavigator();
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
-
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT | SideBorder.RIGHT));
+    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
 
     mySplitter.addPropertyChangeListener(evt -> {
       if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
@@ -525,6 +524,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         settings.setLeadingWhitespaceShown(true);
         settings.setRightMarginShown(true);
         settings.setRightMargin(60);
+        myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
       }
 
