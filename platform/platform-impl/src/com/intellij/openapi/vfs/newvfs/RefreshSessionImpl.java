@@ -49,6 +49,8 @@ public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
   private final ModalityState myModalityState;
+  private final DumbModePermission myDumbModePermission;
+  private final Throwable myStartTrace;
   private final Semaphore mySemaphore = new Semaphore();
 
   private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
@@ -56,8 +58,6 @@ public class RefreshSessionImpl extends RefreshSession {
   private volatile boolean iHaveEventsToFire;
   private volatile RefreshWorker myWorker = null;
   private volatile boolean myCancelled = false;
-  private final DumbModePermission myDumbModePermission;
-  private final Throwable myStartTrace;
 
   public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
     this(async, recursive, finishRunnable, ModalityState.NON_MODAL);
@@ -150,7 +150,8 @@ public class RefreshSessionImpl extends RefreshSession {
           nvf.markDirty();
         }
 
-        RefreshWorker worker = myWorker = new RefreshWorker(nvf, myIsRecursive);
+        RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
+        myWorker = worker;
         worker.scan();
         List<VFileEvent> events = worker.getEvents();
         if (myEvents.addAll(events)) {
