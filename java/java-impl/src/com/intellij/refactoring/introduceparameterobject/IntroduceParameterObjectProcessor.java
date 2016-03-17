@@ -167,6 +167,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
         }
       }
     }
+    List<UsageInfo> changeSignatureUsages = new ArrayList<>();
     for (UsageInfo usageInfo : refUsages.get()) {
       if (usageInfo instanceof FixableUsageInfo) {
         final String conflictMessage = ((FixableUsageInfo)usageInfo).getConflictMessage();
@@ -174,7 +175,13 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
           conflicts.putValue(usageInfo.getElement(), conflictMessage);
         }
       }
+      else {
+        changeSignatureUsages.add(usageInfo);
+      }
     }
+
+    ChangeSignatureProcessorBase.collectConflictsFromExtensions(new Ref<>(changeSignatureUsages.toArray(new UsageInfo[changeSignatureUsages.size()])), conflicts, myChangeInfo);
+
     return showConflicts(conflicts, refUsages.get());
   }
 

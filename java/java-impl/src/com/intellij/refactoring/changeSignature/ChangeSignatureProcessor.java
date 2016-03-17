@@ -37,7 +37,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -140,15 +143,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       if (!processor.setupDefaultValues(myChangeInfo, refUsages, myProject)) return false;
     }
     MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
-    for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
-      final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(myChangeInfo, refUsages);
-      for (PsiElement key : conflicts.keySet()) {
-        Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.size() == 0) collection = new HashSet<String>();
-        collection.addAll(conflicts.get(key));
-        conflictDescriptions.put(key, collection);
-      }
-    }
+    collectConflictsFromExtensions(refUsages, conflictDescriptions, myChangeInfo);
 
     final UsageInfo[] usagesIn = refUsages.get();
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);

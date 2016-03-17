@@ -22,6 +22,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -36,15 +37,13 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -72,6 +71,20 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   @NotNull
   protected UsageInfo[] findUsages() {
     return findUsages(myChangeInfo);
+  }
+
+  public static void collectConflictsFromExtensions(@NotNull Ref<UsageInfo[]> refUsages,
+                                                    MultiMap<PsiElement, String> conflictDescriptions,
+                                                    ChangeInfo changeInfo) {
+    for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+      final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
+      for (PsiElement key : conflicts.keySet()) {
+        Collection<String> collection = conflictDescriptions.get(key);
+        if (collection.isEmpty()) collection = new com.intellij.util.containers.HashSet<String>();
+        collection.addAll(conflicts.get(key));
+        conflictDescriptions.put(key, collection);
+      }
+    }
   }
 
   @NotNull
