@@ -324,18 +324,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         removeContent(DebuggerContentInfo.VARIABLES_CONTENT);
         removeContent(DebuggerContentInfo.WATCHES_CONTENT);
         addVariablesAndWatches(mySession);
-        XDebugView variablesView = myViews.get(DebuggerContentInfo.VARIABLES_CONTENT);
-        if (variablesView != null) {
-          Disposer.register(myRunContentDescriptor, variablesView);
-        }
-        attachViewToSession(mySession, variablesView);
-        if (!myWatchesInVariables) {
-          XDebugView watchesView = myViews.get(DebuggerContentInfo.WATCHES_CONTENT);
-          if (watchesView != null) {
-            Disposer.register(myRunContentDescriptor, watchesView);
-          }
-          attachViewToSession(mySession, watchesView);
-        }
+        attachViewToSession(mySession, myViews.get(DebuggerContentInfo.VARIABLES_CONTENT));
+        attachViewToSession(mySession, myViews.get(DebuggerContentInfo.WATCHES_CONTENT));
         rebuildViews();
       }
     }
