@@ -16,7 +16,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -202,7 +201,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public final void copyShortcutFrom(@NotNull AnAction sourceAction) {
-    myShortcutSet = sourceAction.myShortcutSet;
+    setShortcutSet(sourceAction.getShortcutSet());
   }
 
 
