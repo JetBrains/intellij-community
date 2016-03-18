@@ -138,7 +138,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   @NotNull
-  public AccessToken acceptNestedTransactions(TransactionKind... kinds) {
+  public AccessToken acceptNestedTransactions(@NotNull TransactionKind... kinds) {
     //todo enable when transactions are mandatory
     /*
     if (!isInsideTransaction()) {
