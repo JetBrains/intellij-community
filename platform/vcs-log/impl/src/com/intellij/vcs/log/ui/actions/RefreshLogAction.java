@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.data.VcsLogDataManager;
-import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogProjectManager;
 
 public class RefreshLogAction extends RefreshAction {
   public RefreshLogAction() {
@@ -32,7 +32,7 @@ public class RefreshLogAction extends RefreshAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogManager.getInstance(project).getDataManager().refreshCompletely();
+    VcsLogProjectManager.getInstance(project).getDataManager().refreshCompletely();
   }
 
   @Override
@@ -42,7 +42,8 @@ public class RefreshLogAction extends RefreshAction {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      VcsLogDataManager dataManager = VcsLogManager.getInstance(project).getDataManager();
+      VcsLogProjectManager projectManager = VcsLogProjectManager.getInstance(project);
+      VcsLogDataManager dataManager = projectManager.getDataManager();
       e.getPresentation().setEnabledAndVisible(dataManager != null && e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
     }
   }

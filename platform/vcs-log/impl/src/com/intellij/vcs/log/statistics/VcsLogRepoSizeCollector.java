@@ -29,7 +29,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogProjectManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -46,7 +46,7 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
-    VcsLogManager logManager = VcsLogManager.getInstance(project);
+    VcsLogProjectManager logManager = VcsLogProjectManager.getInstance(project);
     VcsLogDataManager dataManager = logManager.getDataManager();
     if (dataManager != null) {
       DataPack dataPack = dataManager.getDataPack();

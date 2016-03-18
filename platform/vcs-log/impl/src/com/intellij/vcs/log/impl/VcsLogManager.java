@@ -50,7 +50,6 @@ import java.util.Collection;
 import java.util.Map;
 
 public class VcsLogManager implements Disposable {
-
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
@@ -60,23 +59,32 @@ public class VcsLogManager implements Disposable {
   @Nullable private Runnable myRecreateMainLogHandler;
 
   private volatile VcsLogUiImpl myUi;
-  private VcsLogDataManager myDataManager;
-  private VcsLogColorManagerImpl myColorManager;
-  private VcsLogTabsWatcher myTabsLogRefresher;
-  private PostponableLogRefresher myPostponableRefresher;
+  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogColorManagerImpl myColorManager;
+  @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
+  @NotNull private final PostponableLogRefresher myPostponableRefresher;
 
-  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
+  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
     myProject = project;
     myUiProperties = uiProperties;
-  }
 
-  public VcsLogDataManager getDataManager() {
-    return myDataManager;
+    Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
+    myDataManager = new VcsLogDataManager(myProject, logProviders, new MyFatalErrorsConsumer());
+    myPostponableRefresher = new PostponableLogRefresher(myDataManager);
+    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myDataManager);
+
+    refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myDataManager);
+
+    myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
+
+    myDataManager.refreshCompletely();
+
+    Disposer.register(project, this);
   }
 
   @NotNull
-  protected Collection<VcsRoot> getVcsRoots() {
-    return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
+  public VcsLogDataManager getDataManager() {
+    return myDataManager;
   }
 
   public void watchTab(@NotNull String contentTabName, @NotNull VcsLogUiImpl logUi) {
@@ -102,28 +110,10 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public VcsLogUiImpl createLog(@NotNull String logId) {
-    initData();
-
     VcsLogUiProperties properties = myUiProperties.createProperties(logId);
     VcsLogFiltererImpl filterer =
       new VcsLogFiltererImpl(myProject, myDataManager, PermanentGraph.SortType.values()[properties.getBekSortType()]);
     return new VcsLogUiImpl(myDataManager, myProject, myColorManager, properties, filterer);
-  }
-
-  public boolean initData() {
-    if (myDataManager != null) return true;
-
-    Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(getVcsRoots(), myProject);
-    myDataManager = new VcsLogDataManager(myProject, logProviders, new MyFatalErrorsConsumer());
-    myPostponableRefresher = new PostponableLogRefresher(myDataManager);
-    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myDataManager);
-
-    refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myDataManager);
-
-    myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
-
-    myDataManager.refreshCompletely();
-    return false;
   }
 
   private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -175,17 +165,17 @@ public class VcsLogManager implements Disposable {
   }
 
   public void disposeLog() {
-    if (myDataManager != null) Disposer.dispose(myDataManager);
-
-    myDataManager = null;
-    myTabsLogRefresher = null;
-    myPostponableRefresher = null;
-    myColorManager = null;
+    Disposer.dispose(myDataManager);
     myUi = null;
   }
 
+  /*
+  * Use VcsLogProjectManager to get main log.
+  * */
+  @Nullable
+  @Deprecated
   public static VcsLogManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsLogManager.class);
+    return ServiceManager.getService(project, VcsLogProjectManager.class).getLogManager();
   }
 
   @Override

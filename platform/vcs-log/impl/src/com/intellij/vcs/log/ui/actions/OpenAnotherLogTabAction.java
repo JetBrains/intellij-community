@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
-import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogProjectManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
@@ -34,7 +34,7 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    VcsLogUiImpl mainLogUi = VcsLogManager.getInstance(e.getProject()).getMainLogUi();
+    VcsLogUiImpl mainLogUi = VcsLogProjectManager.getInstance(e.getProject()).getMainLogUi();
     if (mainLogUi == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;

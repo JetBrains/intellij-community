@@ -50,11 +50,11 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   public static final String TAB_NAME = "Log";
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogManager myLogManager;
+  @NotNull private final VcsLogProjectManager myLogManager;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
   private MessageBusConnection myConnection;
 
-  public VcsLogContentProvider(@NotNull Project project, @NotNull VcsLogManager logManager) {
+  public VcsLogContentProvider(@NotNull Project project, @NotNull VcsLogProjectManager logManager) {
     myProject = project;
     myLogManager = logManager;
     myLogManager.setRecreateMainLogHandler(new Runnable() {
@@ -86,7 +86,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   public static void openAnotherLogTab(@NotNull Project project) {
-    VcsLogManager logManager = VcsLogManager.getInstance(project);
+    VcsLogProjectManager logManager = VcsLogProjectManager.getInstance(project);
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
 
     String shortName = generateShortName(toolWindow);
@@ -111,7 +111,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
-  private static void addLogTab(@NotNull VcsLogManager logManager,
+  private static void addLogTab(@NotNull VcsLogProjectManager logManager,
                                 @NotNull ToolWindow toolWindow,
                                 @NotNull VcsLogUiImpl logUi,
                                 @NotNull String shortName) {
