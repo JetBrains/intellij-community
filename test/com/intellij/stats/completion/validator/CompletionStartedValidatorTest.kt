@@ -6,8 +6,7 @@ import org.junit.Before
 import org.junit.Test
 
 object LogEventFixtures {
-
-
+    
     val completion_started_3_items_shown = CompletionStartedEvent("1", true, 1, Fixtures.lookupList, 0)
 
     val completion_cancelled = CompletionCancelledEvent("1")
@@ -25,16 +24,47 @@ object LogEventFixtures {
     val down_event_new_pos_2 = DownPressedEvent("1", emptyList(), emptyList(), 2)
 
     val backspace_event_pos_0_left_1_2_3 = BackspaceEvent("1", listOf(1, 2, 3), emptyList(), 0)
-    val backspace_event_pos_0_left_1_2 = BackspaceEvent("1", listOf(1, 2), emptyList(), 0)
     val backspace_event_pos_0_left_1 = BackspaceEvent("1", listOf(1), emptyList(), 0)
 
-    val explicit_select = ExplicitSelectEvent("1", emptyList(), emptyList(), 0)
+    val explicit_select_0 = ExplicitSelectEvent("1", emptyList(), emptyList(), 0)
+    val explicit_select_3 = ExplicitSelectEvent("1", emptyList(), emptyList(), 3)
 
     val selected_by_typing_0 = ItemSelectedByTypingEvent("1", 0)
     val selected_by_typing_1 = ItemSelectedByTypingEvent("1", 1)
-    val selected_by_typing_2 = ItemSelectedByTypingEvent("1", 2)
 
 }
+
+
+class SelectedItemTest {
+
+    lateinit var state: CompletionState
+
+    @Before
+    fun setUp() {
+        state = CompletionState(LogEventFixtures.completion_started_3_items_shown)
+    }
+
+    @Test
+    fun `explicit select`() {
+        state.feed(LogEventFixtures.explicit_select_0)
+        assertThat(state.isValid).isEqualTo(true)
+    }
+
+    @Test
+    fun `explicit select of incorrect item`() {
+        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.feed(LogEventFixtures.explicit_select_3)
+        assertThat(state.isValid).isEqualTo(false)
+    }
+
+    @Test
+    fun `completion cancelled`() {
+        state.feed(LogEventFixtures.completion_cancelled)
+        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isFinished).isEqualTo(true)
+    }
+}
+
 
 class TypeBackspaceValidatorTest {
 

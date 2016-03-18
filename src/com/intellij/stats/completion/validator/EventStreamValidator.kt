@@ -3,6 +3,7 @@ package com.intellij.stats.completion.validator
 import com.intellij.stats.completion.events.*
 
 class CompletionState(event: CompletionStartedEvent) {
+    
     var currentPosition    = event.currentPosition
     var completionList     = event.completionListIds
     val allCompletionItems = event.newCompletionListItems.toMutableList()
@@ -43,6 +44,22 @@ class CompletionState(event: CompletionStartedEvent) {
         updateState(event)
         
         isValid = completionList.containsAll(listBefore)
+    }
+
+    fun feed(event: ExplicitSelectEvent) {
+        updateState(event)
+        if (currentPosition >= completionList.size) {
+            isValid = false
+            return
+        }
+        
+        val selectedId = completionList[currentPosition]
+        isValid = completionList.find { it == selectedId } != null && allCompletionItems.find { it.id == selectedId } != null
+        isFinished = true
+    }
+
+    fun feed(event: CompletionCancelledEvent) {
+        isFinished = true
     }
 
     fun feed(event: ItemSelectedByTypingEvent) {
