@@ -24,6 +24,7 @@ object LogEventFixtures {
     val down_event_new_pos_1 = DownPressedEvent("1", emptyList(), emptyList(), 1)
     val down_event_new_pos_2 = DownPressedEvent("1", emptyList(), emptyList(), 2)
 
+    val backspace_event_pos_0_left_1_2_3 = BackspaceEvent("1", listOf(1, 2, 3), emptyList(), 0)
     val backspace_event_pos_0_left_1_2 = BackspaceEvent("1", listOf(1, 2), emptyList(), 0)
     val backspace_event_pos_0_left_1 = BackspaceEvent("1", listOf(1), emptyList(), 0)
 
@@ -35,7 +36,7 @@ object LogEventFixtures {
 
 }
 
-class TypeValidatorTest {
+class TypeBackspaceValidatorTest {
 
     lateinit var state: CompletionState
 
@@ -75,6 +76,19 @@ class TypeValidatorTest {
         assertThat(state.isValid).isEqualTo(true)
     }
 
+    @Test
+    fun `type and backspace`() {
+        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.feed(LogEventFixtures.backspace_event_pos_0_left_1_2_3)
+        assertThat(state.isValid).isEqualTo(true)
+    }
+    
+    @Test
+    fun `type and backspace 2`() {
+        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.feed(LogEventFixtures.backspace_event_pos_0_left_1)
+        assertThat(state.isValid).isEqualTo(false)
+    }
 }
 
 

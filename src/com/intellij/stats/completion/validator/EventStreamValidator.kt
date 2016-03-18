@@ -2,11 +2,6 @@ package com.intellij.stats.completion.validator
 
 import com.intellij.stats.completion.events.*
 
-
-interface TransitionValidator {
-    var completionState: CompletionState
-}
-
 class CompletionState(event: CompletionStartedEvent) {
     var currentPosition    = event.currentPosition
     var completionList     = event.completionListIds
@@ -32,17 +27,27 @@ class CompletionState(event: CompletionStartedEvent) {
     fun feed(event: UpPressedEvent) {
         val beforeUpPressedPosition = currentPosition
         updateState(event)
+        
         isValid = (completionList.size + beforeUpPressedPosition - 1) % completionList.size == currentPosition
     }
 
     fun feed(event: TypeEvent) {
         val listBefore = completionList 
         updateState(event)
+        
         isValid = listBefore.containsAll(completionList)
+    }
+
+    fun feed(event: BackspaceEvent) {
+        val listBefore = completionList
+        updateState(event)
+        
+        isValid = completionList.containsAll(listBefore)
     }
 
     fun feed(event: ItemSelectedByTypingEvent) {
         val id = event.selectedId
+        
         isValid = allCompletionItems.find { it.id == id } != null && completionList.find { it == id } != null
         isFinished = true
     }
