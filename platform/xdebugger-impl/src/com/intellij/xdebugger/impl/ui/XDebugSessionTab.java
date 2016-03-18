@@ -24,6 +24,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -336,6 +337,21 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
           attachViewToSession(mySession, watchesView);
         }
         rebuildViews();
+      }
+    }
+  }
+
+  public static void showWatchesView(@NotNull XDebugSessionImpl session) {
+    XDebugSessionTab tab = session.getSessionTab();
+    if (tab != null) {
+      tab.toFront(false, null);
+      // restore watches tab if minimized
+      JComponent component = tab.getUi().getComponent();
+      if (component instanceof DataProvider) {
+        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+        if (ui != null) {
+          ui.restoreContent(tab.myWatchesInVariables ? DebuggerContentInfo.VARIABLES_CONTENT : DebuggerContentInfo.WATCHES_CONTENT);
+        }
       }
     }
   }
