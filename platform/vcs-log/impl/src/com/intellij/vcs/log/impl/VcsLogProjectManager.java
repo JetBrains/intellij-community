@@ -51,20 +51,10 @@ public class VcsLogProjectManager {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
-  public void watchTab(@NotNull String contentTabName, @NotNull VcsLogUiImpl logUi) {
-    myLogManager.watchTab(contentTabName, logUi);
-  }
-
   @NotNull
   public JComponent initMainLog(@NotNull String contentTabName) {
     initData();
     return myLogManager.initMainLog(contentTabName);
-  }
-
-  @NotNull
-  public VcsLogUiImpl createLog(@NotNull String logId) {
-    initData();
-    return myLogManager.createLog(logId);
   }
 
   public boolean initData() {

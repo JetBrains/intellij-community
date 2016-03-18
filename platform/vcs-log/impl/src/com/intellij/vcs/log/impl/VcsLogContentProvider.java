@@ -33,6 +33,7 @@ import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,8 +86,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     myLogManager.disposeLog();
   }
 
-  public static void openAnotherLogTab(@NotNull Project project) {
-    VcsLogProjectManager logManager = VcsLogProjectManager.getInstance(project);
+  public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
 
     String shortName = generateShortName(toolWindow);
@@ -111,14 +111,14 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
-  private static void addLogTab(@NotNull VcsLogProjectManager logManager,
+  private static void addLogTab(@NotNull VcsLogManager logManager,
                                 @NotNull ToolWindow toolWindow,
                                 @NotNull VcsLogUiImpl logUi,
                                 @NotNull String shortName) {
     logManager.watchTab(ContentUtilEx.getFullName(TAB_NAME, shortName), logUi);
     logUi.requestFocus();
     ContentUtilEx
-      .addTabbedContent(toolWindow.getContentManager(), logUi.getMainFrame().getMainComponent(), TAB_NAME, shortName, true, logUi);
+      .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), TAB_NAME, shortName, true, logUi);
     toolWindow.activate(null);
   }
 

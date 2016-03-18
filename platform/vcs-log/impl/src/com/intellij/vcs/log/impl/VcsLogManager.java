@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,12 +39,12 @@ import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -105,7 +104,7 @@ public class VcsLogManager implements Disposable {
       watch(myUi);
     }
     myUi.requestFocus();
-    return myUi.getMainFrame().getMainComponent();
+    return new VcsLogPanel(this, myUi);
   }
 
   @NotNull
