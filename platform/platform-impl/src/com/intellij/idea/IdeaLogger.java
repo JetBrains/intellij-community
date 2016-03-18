@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class IdeaLogger extends Log4jBasedLogger {
   @Override
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     if (t instanceof ControlFlowException) {
-      myLogger.error(message, new Throwable("Control-flow exceptions should never be logged", t));
+      myLogger.error(message, new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged", t));
       if (t instanceof RuntimeException) {
         throw (RuntimeException)t;
       }
