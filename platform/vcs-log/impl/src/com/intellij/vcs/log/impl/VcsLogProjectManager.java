@@ -17,6 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
@@ -35,7 +36,8 @@ public class VcsLogProjectManager {
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
 
-  private VcsLogManager myLogManager;
+  @NotNull
+  private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   private volatile VcsLogUiImpl myUi;
   @Nullable private Runnable myRecreateMainLogHandler;
 
@@ -44,27 +46,22 @@ public class VcsLogProjectManager {
     myUiProperties = uiProperties;
   }
 
+  @Nullable
   public VcsLogDataManager getDataManager() {
-    return myLogManager.getDataManager();
+    VcsLogManager cached = myLogManager.getCached();
+    if (cached == null) return null;
+    return cached.getDataManager();
   }
 
   @NotNull
-  protected Collection<VcsRoot> getVcsRoots() {
+  private Collection<VcsRoot> getVcsRoots() {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
   @NotNull
   public JComponent initMainLog(@NotNull String contentTabName) {
-    initData();
-
-    myUi = myLogManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName);
-    return new VcsLogPanel(myLogManager, myUi);
-  }
-
-  public boolean initData() {
-    if (myLogManager != null) return true;
-    myLogManager = new VcsLogManager(myProject, myUiProperties, getVcsRoots(), myRecreateMainLogHandler);
-    return false;
+    myUi = myLogManager.getValue().createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName);
+    return new VcsLogPanel(myLogManager.getValue(), myUi);
   }
 
   public void setRecreateMainLogHandler(@Nullable Runnable recreateMainLogHandler) {
@@ -80,18 +77,36 @@ public class VcsLogProjectManager {
   }
 
 
+  @Nullable
+  public VcsLogManager getLogManager() {
+    return myLogManager.getCached();
+  }
+
   public void disposeLog() {
     myUi = null;
-    if (myLogManager != null) Disposer.dispose(myLogManager);
-
-    myLogManager = null;
+    myLogManager.drop();
   }
 
   public static VcsLogProjectManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, VcsLogProjectManager.class);
   }
 
-  public VcsLogManager getLogManager() {
-    return myLogManager;
+  private class LazyVcsLogManager extends ClearableLazyValue<VcsLogManager> {
+    @NotNull
+    @Override
+    protected VcsLogManager compute() {
+      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), myRecreateMainLogHandler);
+    }
+
+    @Override
+    public void drop() {
+      if (myValue != null) Disposer.dispose(myValue);
+      super.drop();
+    }
+
+    @Nullable
+    public VcsLogManager getCached() {
+      return myValue;
+    }
   }
 }
