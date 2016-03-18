@@ -871,7 +871,7 @@ public abstract class InplaceRefactoring {
       boolean bind = false;
       try {
         if (!brokenOff) {
-          bind = ApplicationManager.getApplication().runWriteAction((Computable<Boolean>)InplaceRefactoring.this::performRefactoring);
+          bind = performRefactoring();
         } else {
           performCleanup();
         }
