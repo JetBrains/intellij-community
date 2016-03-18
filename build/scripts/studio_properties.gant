@@ -201,6 +201,18 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
+          dir("firebase") {
+            dir("lib") {
+              jar("firebase.jar") {
+                module("firebase")
+              }
+              fileset(dir: "${home}/../vendor/google/firebase/lib") {
+                include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
+              }
+            }
+          }
+
           dir("google-login") {
             dir("lib") {
               jar("google-login.jar") {
