@@ -138,6 +138,10 @@ public class ThreadTracker {
           continue; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
         }
 
+        if (isIdleApplicationPoolThread(thread, stackTrace)) {
+          continue;
+        }
+
         @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
         String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
         for (final StackTraceElement stackTraceElement : stackTrace) {
@@ -150,6 +154,16 @@ public class ThreadTracker {
     finally {
       before.clear();
     }
+  }
+
+  // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
+  private static boolean isIdleApplicationPoolThread(Thread thread, StackTraceElement[] stackTrace) {
+    if (!thread.getName().startsWith("ApplicationImpl pooled thread ")) return false;
+    boolean insideTPEgetTask = Arrays.stream(stackTrace)
+      .anyMatch(element -> element.getMethodName().equals("getTask")
+                           && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
+
+    return insideTPEgetTask;
   }
 
   public static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup, int timeout, @NotNull TimeUnit unit) {
