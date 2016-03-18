@@ -67,13 +67,22 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         return null;
       }
 
-      if (var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)((PsiParameter)var).getDeclarationScope();
-        final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-        if (superMethod == null) {
+      if (var instanceof PsiParameter) {
+        final PsiElement declarationScope = ((PsiParameter)var).getDeclarationScope();
+        if (declarationScope instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)declarationScope;
+          final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+          if (superMethod == null) {
+            return null;
+          }
+          var = superMethod.getParameterList().getParameters()[method.getParameterList().getParameterIndex((PsiParameter)var)];
+        }
+        else if (declarationScope instanceof PsiForeachStatement) {
+          CommonRefactoringUtil.showErrorHint(project, editor,
+                                              RefactoringBundle.message("invert.boolean.foreach"),
+                                              InvertBooleanHandler.REFACTORING_NAME, InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
           return null;
         }
-        var = superMethod.getParameterList().getParameters()[method.getParameterList().getParameterIndex((PsiParameter)var)];
       }
       return var;
     }
@@ -173,7 +182,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public void invertElementInitializer(final PsiElement element) {
-    if (element instanceof PsiField && ((PsiField)element).getInitializer() == null) {
+    if (element instanceof PsiField && ((PsiField)element).getInitializer() == null && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
       ((PsiField)element).setInitializer(JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("true", element));
     } else if (element instanceof PsiVariable) {
       final PsiExpression initializer = ((PsiVariable)element).getInitializer();

@@ -81,7 +81,7 @@ public class InferenceSessionContainer {
         if (topLevelCall != null) {
 
           final InferenceSession session;
-          if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty()) {
+          if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() || LambdaUtil.isLambdaParameterCheck()) {
             session = startTopLevelInference(topLevelCall);
           }
           else {
@@ -107,6 +107,9 @@ public class InferenceSessionContainer {
               return childSession
                 .collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
             }
+          }
+          else if (topLevelCall instanceof PsiMethodCallExpression) {
+            return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent).prepareSubstitution();
           }
         }
       }

@@ -29,6 +29,14 @@ class Test {
   public static void main(String[] args) {
     <warning descr="Unchecked generics array creation for varargs parameter">asList</warning>(new ArrayList<String>());
 
+    ArrayList<String>[] arrayOfStrings = null;
+    asList(arrayOfStrings);
+    asList((ArrayList<String>[])null);
+
+    //overload should be chosen before target type is known -> inference failure
+    <error descr="Incompatible types. Found: 'java.util.List<java.util.ArrayList<java.lang.String>>', required: 'java.util.List<java.util.ArrayList<java.lang.String>[]>'">List<ArrayList<String>[]> arraysList = asList(arrayOfStrings);</error>
+    System.out.println(arraysList);
+
     asListSuppressed(new ArrayList<String>());
 
     //noinspection unchecked

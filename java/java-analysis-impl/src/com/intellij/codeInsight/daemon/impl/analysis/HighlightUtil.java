@@ -1391,7 +1391,13 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkNotAStatement(@NotNull PsiStatement statement) {
     if (!PsiUtil.isStatement(statement) && !PsiUtilCore.hasErrorElementChild(statement)) {
-      String description = JavaErrorMessages.message("not.a.statement");
+      boolean isDeclarationNotAllowed = false;
+      if (statement instanceof PsiDeclarationStatement) {
+        final PsiElement parent = statement.getParent();
+        isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
+      }
+      
+      String description = JavaErrorMessages.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
     }
     return null;

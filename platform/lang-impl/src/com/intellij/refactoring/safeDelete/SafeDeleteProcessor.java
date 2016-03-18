@@ -26,7 +26,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -188,7 +187,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     for (PsiElement element : myElements) {
       for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
         if (delegate.handlesElement(element)) {
-          Collection<String> foundConflicts = delegate.findConflicts(element, myElements);
+          Collection<String> foundConflicts = delegate instanceof SafeDeleteProcessorDelegateBase 
+                                              ? ((SafeDeleteProcessorDelegateBase)delegate).findConflicts(element, myElements, usages)
+                                              : delegate.findConflicts(element, myElements);
           if (foundConflicts != null) {
             conflicts.addAll(foundConflicts);
           }

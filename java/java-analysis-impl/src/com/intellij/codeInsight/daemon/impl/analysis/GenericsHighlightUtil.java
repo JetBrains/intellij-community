@@ -27,9 +27,11 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -498,9 +500,10 @@ public class GenericsHighlightUtil {
         final PsiMethod unrelatedMethod = astracts != null ? astracts.get(0) : defaults.get(1);
         final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
         if (unrelatedMethodContainingClass == null) continue;
-        if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && astracts != null && unrelatedMethodContainingClass.isInterface()) {
+        if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter) 
+            && astracts != null && unrelatedMethodContainingClass.isInterface()) {
           if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) && 
-              MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(PsiSubstitutor.EMPTY), 
+              MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(unrelatedMethodContainingClass, defaultMethodContainingClass, PsiSubstitutor.EMPTY)), 
                                                  defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
             continue;
           }
@@ -1489,12 +1492,22 @@ public class GenericsHighlightUtil {
                                               JavaPsiFacade factory) {
     final PsiClass aClass = PsiUtil.resolveClassInType(superType);
     if (aClass != null && classes.add(aClass)) {
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
+      if (vFile == null) {
+        return null;
+      }
+      FileIndexFacade index = FileIndexFacade.getInstance(aClass.getProject());
+      if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) {
+        return null;
+      }
+
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
         return "Cannot access " + HighlightUtil.formatClass(aClass);
       }
 
       if (checkParameters) {
+        boolean isInLibrary = !index.isInContent(vFile);
         if (superType instanceof PsiClassType) {
           for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
             final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, true, resolveScope, factory);
@@ -1505,7 +1518,7 @@ public class GenericsHighlightUtil {
         }
 
         for (PsiClassType type : aClass.getSuperTypes()) {
-          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, true, resolveScope, factory);
+          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, !isInLibrary, resolveScope, factory);
           if (notAccessibleMessage != null) {
             return notAccessibleMessage;
           }

@@ -21,9 +21,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,11 +35,7 @@ import java.util.List;
 public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection");
 
-  public RedundantTypeArgsInspection() {
-    myQuickFixAction = new MyQuickFixAction();
-  }
-
-  private final LocalQuickFix myQuickFixAction;
+  private final static LocalQuickFix ourQuickFixAction = new MyQuickFixAction();
 
   @Override
   @NotNull
@@ -101,89 +96,36 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         super.visitMethodReferenceExpression(expression);
         checkMethodReference(expression, inspectionManager, problems);
       }
-
-      private void checkCallExpression(final PsiJavaCodeReferenceElement reference,
-                                       final PsiType[] typeArguments,
-                                       PsiCallExpression expression,
-                                       final InspectionManager inspectionManager, final List<ProblemDescriptor> problems) {
-
-        PsiExpressionList argumentList = expression.getArgumentList();
-        if (argumentList == null) return;
-        final JavaResolveResult resolveResult = reference.advancedResolve(false);
-
-        final PsiElement element = resolveResult.getElement();
-        if (element instanceof PsiMethod && resolveResult.isValidResult()) {
-          PsiMethod method = (PsiMethod)element;
-          final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-          if (typeParameters.length == typeArguments.length) {
-            final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
-            if (typeByParent != null) {
-              final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
-              final PsiNewExpression newExpr =
-                (PsiNewExpression)JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(arrayInitializer, expression);
-              final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
-              LOG.assertTrue(initializer != null);
-              final PsiCallExpression copy = (PsiCallExpression)initializer.getInitializers()[0].replace(expression);
-              if (!isInferenceEquivalent(typeArguments, method, typeParameters, copy)) {
-                return;
-              }
-            }
-            else {
-              final int offset = expression.getTextRange().getStartOffset();
-              final PsiFile containingFile = expression.getContainingFile();
-              final PsiFile fileCopy = (PsiFile)containingFile.copy();
-              final PsiElement elementInCopy = fileCopy.findElementAt(offset);
-              if (method.getContainingFile() == containingFile) {
-                method = PsiTreeUtil.getParentOfType(fileCopy.findElementAt(method.getTextOffset()), PsiMethod.class);
-              }
-              if (!isInferenceEquivalent(typeArguments, method, typeParameters, elementInCopy)) {
-                return;
-              }
-            }
-            final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
-                                                                                           InspectionsBundle.message("inspection.redundant.type.problem.descriptor"),
-                                                                                           myQuickFixAction,
-                                                                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
-            problems.add(descriptor);
-          }
-        }
-      }
-
-      private boolean isInferenceEquivalent(PsiType[] typeArguments,
-                                            PsiMethod method,
-                                            PsiTypeParameter[] typeParameters,
-                                            PsiElement elementInCopy) {
-        final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(elementInCopy, PsiCallExpression.class, false);
-        if (exprCopy != null) {
-          try {
-            final PsiMethodCallExpression expr = (PsiMethodCallExpression)
-              JavaPsiFacade.getInstance(exprCopy.getProject()).getElementFactory().createExpressionFromText("foo()", null);
-            exprCopy.getTypeArgumentList().replace(expr.getTypeArgumentList());
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-            return false;
-          }
-          final JavaResolveResult copyResult = exprCopy.resolveMethodGenerics();
-          if (method != copyResult.getElement()) return false;
-          final PsiSubstitutor psiSubstitutor = copyResult.getSubstitutor();
-          for (int i = 0, length = typeParameters.length; i < length; i++) {
-            PsiTypeParameter typeParameter = typeParameters[i];
-            final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
-            if (!typeArguments[i].equals(inferredType)) {
-              return false;
-            }
-            if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferredType) != null) {
-              return false;
-            }
-          }
-        }
-        return true;
-      }
     });
 
     if (problems.isEmpty()) return null;
     return problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  private static void checkCallExpression(final PsiJavaCodeReferenceElement reference,
+                                          final PsiType[] typeArguments,
+                                          PsiCallExpression expression,
+                                          final InspectionManager inspectionManager,
+                                          final List<ProblemDescriptor> problems) {
+    PsiExpressionList argumentList = expression.getArgumentList();
+    if (argumentList == null) return;
+    final JavaResolveResult resolveResult = reference.advancedResolve(false);
+
+    final PsiElement element = resolveResult.getElement();
+    if (element instanceof PsiMethod && resolveResult.isValidResult()) {
+      PsiMethod method = (PsiMethod)element;
+      final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+      if (typeParameters.length == typeArguments.length) {
+        if (PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, method, typeParameters)) {
+          final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
+                                                                                         InspectionsBundle.message(
+                                                                                           "inspection.redundant.type.problem.descriptor"),
+                                                                                         ourQuickFixAction,
+                                                                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+          problems.add(descriptor);
+        }
+      }
+    }
   }
 
   private static void checkMethodReference(PsiMethodReferenceExpression expression,

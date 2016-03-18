@@ -140,7 +140,23 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
       final PsiExpression instanceExpression = match.getInstanceExpression();
       if (instanceExpression != null) return false;
       if (isExternal(match)) return true;
-      if (PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false) && RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass())) return true;
+
+      final PsiElement matchStart = match.getMatchStart();
+      final PsiClass containingClass = myMethod.getContainingClass();
+
+      if (PsiTreeUtil.isAncestor(containingClass, matchStart, false)) {
+        if (RefactoringUtil.isInStaticContext(matchStart, containingClass)) return true;
+      }
+      else {
+        PsiClass psiClass = PsiTreeUtil.getParentOfType(matchStart, PsiClass.class);
+        while (psiClass != null) {
+          if (InheritanceUtil.isInheritorOrSelf(psiClass, containingClass, true)) {
+            if (RefactoringUtil.isInStaticContext(matchStart, psiClass)) return true;
+            break;
+          }
+          psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
+        }
+      }
     }
     return false;
   }
