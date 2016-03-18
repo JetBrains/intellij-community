@@ -735,7 +735,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     private void adjustForVSB(Rectangle bounds, Insets insets, Rectangle vsbBounds, boolean vsbOpaque, boolean vsbOnLeft) {
-      vsbBounds.width = min(bounds.width, vsb.getPreferredSize().width);
+      vsbBounds.width = !vsb.isEnabled() ? 0 : min(bounds.width, vsb.getPreferredSize().width);
       if (vsbOnLeft) {
         vsbBounds.x = bounds.x - insets.left/* + vsbBounds.width*/;
         if (vsbOpaque) bounds.x += vsbBounds.width;
@@ -747,7 +747,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     private void adjustForHSB(Rectangle bounds, Insets insets, Rectangle hsbBounds, boolean hsbOpaque, boolean hsbOnTop) {
-      hsbBounds.height = min(bounds.height, hsb.getPreferredSize().height);
+      hsbBounds.height = !hsb.isEnabled() ? 0 : min(bounds.height, hsb.getPreferredSize().height);
       if (hsbOnTop) {
         hsbBounds.y = bounds.y - insets.top/* + hsbBounds.height*/;
         if (hsbOpaque) bounds.y += hsbBounds.height;
