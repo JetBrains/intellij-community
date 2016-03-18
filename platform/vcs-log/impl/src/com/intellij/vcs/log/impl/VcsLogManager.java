@@ -56,7 +56,6 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogTabsProperties myUiProperties;
   @Nullable private final Runnable myRecreateMainLogHandler;
 
-  private volatile VcsLogUiImpl myUi;
   @NotNull private final VcsLogDataManager myDataManager;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
   @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
@@ -93,33 +92,30 @@ public class VcsLogManager implements Disposable {
     return myDataManager;
   }
 
-  public void watchTab(@NotNull String contentTabName, @NotNull VcsLogUiImpl logUi) {
-    Disposer.register(logUi, myTabsLogRefresher.addTabToWatch(contentTabName, logUi.getFilterer()));
-  }
-
-  private void watch(@NotNull VcsLogUiImpl ui) {
-    Disposer.register(ui, myPostponableRefresher.addLogWindow(ui.getFilterer()));
+  @NotNull
+  public JComponent createLogPanel(@Nullable String contentTabName) {
+    VcsLogUiImpl ui = createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName);
+    return new VcsLogPanel(this, ui);
   }
 
   @NotNull
-  public JComponent initMainLog(@Nullable String contentTabName) {
-    myUi = createLog(VcsLogTabsProperties.MAIN_LOG_ID);
-    if (contentTabName != null) {
-      watchTab(contentTabName, myUi);
-    }
-    else {
-      watch(myUi);
-    }
-    myUi.requestFocus();
-    return new VcsLogPanel(this, myUi);
-  }
-
-  @NotNull
-  public VcsLogUiImpl createLog(@NotNull String logId) {
+  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
     VcsLogUiProperties properties = myUiProperties.createProperties(logId);
     VcsLogFiltererImpl filterer =
       new VcsLogFiltererImpl(myProject, myDataManager, PermanentGraph.SortType.values()[properties.getBekSortType()]);
-    return new VcsLogUiImpl(myDataManager, myProject, myColorManager, properties, filterer);
+    VcsLogUiImpl ui = new VcsLogUiImpl(myDataManager, myProject, myColorManager, properties, filterer);
+
+    Disposable disposable;
+    if (contentTabName != null) {
+      disposable = myTabsLogRefresher.addTabToWatch(contentTabName, ui.getFilterer());
+    }
+    else {
+      disposable = myPostponableRefresher.addLogWindow(ui.getFilterer());
+    }
+    Disposer.register(ui, disposable);
+
+    ui.requestFocus();
+    return ui;
   }
 
   private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -158,26 +154,28 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
-  /**
-   * The instance of the {@link VcsLogUiImpl} or null if the log was not initialized yet.
-   */
-  @Nullable
-  public VcsLogUiImpl getMainLogUi() {
-    return myUi;
-  }
-
   public void disposeLog() {
     Disposer.dispose(myDataManager);
-    myUi = null;
   }
 
   /*
-  * Use VcsLogProjectManager to get main log.
-  * */
+   * Use VcsLogProjectManager to get main log.
+   * Left here for upsource plugin.
+   * */
   @Nullable
   @Deprecated
   public static VcsLogManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, VcsLogProjectManager.class).getLogManager();
+  }
+
+  /*
+   * Use VcsLogProjectManager.getMainLogUi to get main log ui.
+   * Left here for upsource plugin.
+   * */
+  @Nullable
+  @Deprecated
+  public VcsLogUiImpl getMainLogUi() {
+    return ServiceManager.getService(myProject, VcsLogProjectManager.class).getMainLogUi();
   }
 
   @Override

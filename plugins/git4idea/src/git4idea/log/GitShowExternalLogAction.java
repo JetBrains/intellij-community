@@ -134,7 +134,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
                                                   return new VcsRoot(vcs, root);
                                                 }
                                               }));
-    return new MyContentComponent(manager.initMainLog(tabName), roots, new Disposable() {
+    return new MyContentComponent(manager.createLogPanel(tabName), roots, new Disposable() {
       @Override
       public void dispose() {
         for (VirtualFile root : roots) {

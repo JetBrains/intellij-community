@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogTabsProperties;
+import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ public class VcsLogProjectManager {
   @NotNull private final VcsLogTabsProperties myUiProperties;
 
   private VcsLogManager myLogManager;
+  private volatile VcsLogUiImpl myUi;
   @Nullable private Runnable myRecreateMainLogHandler;
 
   public VcsLogProjectManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
@@ -54,7 +56,9 @@ public class VcsLogProjectManager {
   @NotNull
   public JComponent initMainLog(@NotNull String contentTabName) {
     initData();
-    return myLogManager.initMainLog(contentTabName);
+
+    myUi = myLogManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName);
+    return new VcsLogPanel(myLogManager, myUi);
   }
 
   public boolean initData() {
@@ -72,10 +76,12 @@ public class VcsLogProjectManager {
    */
   @Nullable
   public VcsLogUiImpl getMainLogUi() {
-    return myLogManager.getMainLogUi();
+    return myUi;
   }
 
+
   public void disposeLog() {
+    myUi = null;
     if (myLogManager != null) Disposer.dispose(myLogManager);
 
     myLogManager = null;

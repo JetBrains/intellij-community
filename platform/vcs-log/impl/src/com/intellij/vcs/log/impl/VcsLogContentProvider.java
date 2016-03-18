@@ -90,8 +90,13 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
 
     String shortName = generateShortName(toolWindow);
-    VcsLogUiImpl logUi = logManager.createLog(ContentUtilEx.getFullName(TAB_NAME, shortName));
-    addLogTab(logManager, toolWindow, logUi, shortName);
+    String name = ContentUtilEx.getFullName(TAB_NAME, shortName);
+
+    VcsLogUiImpl logUi = logManager.createLogUi(name, name);
+
+    ContentUtilEx
+      .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), TAB_NAME, shortName, true, logUi);
+    toolWindow.activate(null);
   }
 
   @NotNull
@@ -109,17 +114,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       });
       return String.valueOf(contents.size() + 1);
     }
-  }
-
-  private static void addLogTab(@NotNull VcsLogManager logManager,
-                                @NotNull ToolWindow toolWindow,
-                                @NotNull VcsLogUiImpl logUi,
-                                @NotNull String shortName) {
-    logManager.watchTab(ContentUtilEx.getFullName(TAB_NAME, shortName), logUi);
-    logUi.requestFocus();
-    ContentUtilEx
-      .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), TAB_NAME, shortName, true, logUi);
-    toolWindow.activate(null);
   }
 
   private void closeLogTabs() {
