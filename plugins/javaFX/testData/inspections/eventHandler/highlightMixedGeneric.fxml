@@ -1,0 +1,71 @@
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="HighlightMixedGenericController">
+  <TableView fx:id="specificTable"
+             onSort="#onSort"
+             onScrollTo="#onScrollTo"
+             onScrollToColumn="#onScrollToColumn"/>
+  <TableView fx:id="specificTableHalfRawArg"
+             onSort="#onSortHalfRawArg"
+             onScrollTo="#onScrollToHalfRawArg"
+             onScrollToColumn="#onScrollToColumnHalfRawArg"/>
+  <TableView fx:id="specificTableIncompatibleArg"
+             onSort=<warning descr="Incompatible event handler argument: SortEvent<TableView<Pair<Double, String>>> is not assignable from SortEvent<TableView<Pair<Integer, String>>>">"#onSortIncompatibleArg"</warning>
+             onScrollTo=<warning descr="Incompatible event handler argument: ScrollToEvent<Double> is not assignable from ScrollToEvent<Integer>">"#onScrollToIncompatibleArg"</warning>
+             onScrollToColumn=<warning descr="Incompatible event handler argument: ScrollToEvent<TableColumn<Entry<Integer, String>, ?>> is not assignable from ScrollToEvent<TableColumn<Pair<Integer, String>, ?>>">"#onScrollToColumnIncompatibleArg"</warning>/>
+  <TableView fx:id="specificTableIncompatibleHalfRawArg"
+             onSort=<warning descr="Incompatible event handler argument: SortEvent<Pair<?, String>> is not assignable from SortEvent<TableView<Pair<Integer, String>>>">"#onSortIncompatibleHalfRawArg"</warning>
+             onScrollTo=<warning descr="Incompatible event handler argument: ScrollToEvent<? super Number> is not assignable from ScrollToEvent<Integer>">"#onScrollToIncompatibleHalfRawArg"</warning>
+             onScrollToColumn=<warning descr="Incompatible event handler argument: ScrollToEvent<TableCell<Pair, ?>> is not assignable from ScrollToEvent<TableColumn<Pair<Integer, String>, ?>>">"#onScrollToColumnIncompatibleHalfRawArg"</warning>/>
+
+  <TableView fx:id="halfRawTable"
+             onSort="#onSort"
+             onScrollTo="#onScrollTo"
+             onScrollToColumn="#onScrollToColumn"/>
+  <TableView fx:id="halfRawTableHalfRawArg"
+             onSort="#onSortHalfRawArg"
+             onScrollTo="#onScrollToHalfRawArg"
+             onScrollToColumn="#onScrollToColumnHalfRawArg"/>
+  <TableView fx:id="halfRawTableIncompatibleArg"
+             onSort="#onSortIncompatibleArg"
+             onScrollTo=<warning descr="Incompatible event handler argument: ScrollToEvent<Double> is not assignable from ScrollToEvent<Integer>">"#onScrollToIncompatibleArg"</warning>
+             onScrollToColumn=<warning descr="Incompatible event handler argument: ScrollToEvent<TableColumn<Entry<Integer, String>, ?>> is not assignable from ScrollToEvent<TableColumn<Pair, ?>>">"#onScrollToColumnIncompatibleArg"</warning>/>
+  <TableView fx:id="halfRawTableIncompatibleHalfRawArg"
+             onSort=<warning descr="Incompatible event handler argument: SortEvent<Pair<?, String>> is not assignable from SortEvent<TableView<Pair>>">"#onSortIncompatibleHalfRawArg"</warning>
+             onScrollTo=<warning descr="Incompatible event handler argument: ScrollToEvent<? super Number> is not assignable from ScrollToEvent<Integer>">"#onScrollToIncompatibleHalfRawArg"</warning>
+             onScrollToColumn=<warning descr="Incompatible event handler argument: ScrollToEvent<TableCell<Pair, ?>> is not assignable from ScrollToEvent<TableColumn<Pair, ?>>">"#onScrollToColumnIncompatibleHalfRawArg"</warning>/>
+
+  <TableView fx:id="rawTable"
+             onSort="#onSort"
+             onScrollTo="#onScrollTo"
+             onScrollToColumn="#onScrollToColumn"/>
+  <TableView fx:id="rawTableHalfRawArg"
+             onSort="#onSortHalfRawArg"
+             onScrollTo="#onScrollToHalfRawArg"
+             onScrollToColumn="#onScrollToColumnHalfRawArg"/>
+  <TableView fx:id="rawTableIncompatibleArg"
+             onSort="#onSortIncompatibleArg"
+             onScrollTo=<warning descr="Incompatible event handler argument: ScrollToEvent<Double> is not assignable from ScrollToEvent<Integer>">"#onScrollToIncompatibleArg"</warning>
+             onScrollToColumn="#onScrollToColumnIncompatibleArg"/>
+  <TableView fx:id="rawTableIncompatibleHalfRawArg"
+             onSort=<warning descr="Incompatible event handler argument: SortEvent<Pair<?, String>> is not assignable from SortEvent<TableView>">"#onSortIncompatibleHalfRawArg"</warning>
+             onScrollTo=<warning descr="Incompatible event handler argument: ScrollToEvent<? super Number> is not assignable from ScrollToEvent<Integer>">"#onScrollToIncompatibleHalfRawArg"</warning>
+             onScrollToColumn=<warning descr="Incompatible event handler argument: ScrollToEvent<TableCell<Pair, ?>> is not assignable from ScrollToEvent<TableColumn>">"#onScrollToColumnIncompatibleHalfRawArg"</warning>/>
+
+  <TableView
+             onSort="#onSort"
+             onScrollTo="#onScrollTo"
+             onScrollToColumn="#onScrollToColumn"/>
+  <TableView
+             onSort="#onSortHalfRawArg"
+             onScrollTo="#onScrollToHalfRawArg"
+             onScrollToColumn="#onScrollToColumnHalfRawArg"/>
+  <TableView
+             onSort="#onSortIncompatibleArg"
+             onScrollTo=<warning descr="Incompatible event handler argument: ScrollToEvent<Double> is not assignable from ScrollToEvent<Integer>">"#onScrollToIncompatibleArg"</warning>
+             onScrollToColumn="#onScrollToColumnIncompatibleArg"/>
+  <TableView
+             onSort=<warning descr="Incompatible event handler argument: SortEvent<Pair<?, String>> is not assignable from SortEvent<TableView<S>>">"#onSortIncompatibleHalfRawArg"</warning>
+             onScrollTo=<warning descr="Incompatible event handler argument: ScrollToEvent<? super Number> is not assignable from ScrollToEvent<Integer>">"#onScrollToIncompatibleHalfRawArg"</warning>
+             onScrollToColumn=<warning descr="Incompatible event handler argument: ScrollToEvent<TableCell<Pair, ?>> is not assignable from ScrollToEvent<TableColumn<S, ?>>">"#onScrollToColumnIncompatibleHalfRawArg"</warning>/>
+</VBox>
