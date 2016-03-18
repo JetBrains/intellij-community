@@ -164,15 +164,15 @@ public abstract class AnAction implements PossiblyDumbAware {
       if (!actionList.contains(this)){
         actionList.add(this);
       }
-    }
 
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          unregisterCustomShortcutSet(component);
-        }
-      });
+      if (parentDisposable != null) {
+        Disposer.register(parentDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            unregisterCustomShortcutSet(component);
+          }
+        });
+      }
     }
   }
 
