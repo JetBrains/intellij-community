@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
@@ -29,7 +30,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
@@ -72,9 +72,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private boolean myRebuildNeeded;
+  private final boolean myWatchesInVariables;
 
-  public XWatchesViewImpl(@NotNull XDebugSessionImpl session) {
+  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
     super(session);
+    myWatchesInVariables = watchesInVariables;
 
     ActionManager actionManager = ActionManager.getInstance();
 
@@ -123,6 +125,22 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       return e.getPresentation().isEnabled();
     });
     decorator.addExtraAction(AnActionButton.fromAction(copyAction));
+    decorator.addExtraAction(
+      new ToggleActionButton(XDebuggerBundle.message("debugger.session.tab.show.watches.in.variables"), AllIcons.Debugger.Watches) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          XDebugSessionTab tab = session.getSessionTab();
+          return tab == null || tab.isWatchesInVariables();
+        }
+
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          XDebugSessionTab tab = session.getSessionTab();
+          if (tab != null) {
+            tab.setWatchesInVariables(!tab.isWatchesInVariables());
+          }
+        }
+      });
     decorator.setMoveUpAction(button -> {
       List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
       assert nodes.size() == 1;
@@ -151,7 +169,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     decorator.setToolbarBorder(border);
     decorator.setPanelBorder(BorderFactory.createEmptyBorder());
     getPanel().removeAll();
-    if (Registry.is("debugger.watches.in.variables")) {
+    if (myWatchesInVariables) {
       decorator.setToolbarPosition(ActionToolbarPosition.LEFT);
     }
     else {
@@ -244,6 +262,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   public void dispose() {
     Disposer.dispose(myDisposables);
     DnDManager.getInstance().unregisterTarget(this, getTree());
+    super.dispose();
   }
 
   private static boolean isAboveSelectedItem(MouseEvent event, XDebuggerTree watchTree) {
@@ -298,7 +317,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void processSessionEvent(@NotNull final SessionEvent event) {
-    if (Registry.is("debugger.watches.in.variables") ||
+    if (myWatchesInVariables ||
         getPanel().isShowing() ||
         ApplicationManager.getApplication().isUnitTestMode()) {
       myRebuildNeeded = false;
@@ -312,7 +331,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   protected XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {
-    WatchesRootNode node = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame);
+    WatchesRootNode node = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame, myWatchesInVariables);
     myRootNode = node;
     getTree().setRoot(node, false);
     return node;
@@ -320,7 +339,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   protected void addEmptyMessage(XValueContainerNode root) {
-    if (Registry.is("debugger.watches.in.variables")) {
+    if (myWatchesInVariables) {
       super.addEmptyMessage(root);
     }
   }

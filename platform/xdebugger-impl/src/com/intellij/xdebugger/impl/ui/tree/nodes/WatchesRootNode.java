@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -49,17 +48,18 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
                          @NotNull XExpression[] expressions) {
-    this(tree, watchesView, expressions, null);
+    this(tree, watchesView, expressions, null, false);
   }
 
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
                          @NotNull XExpression[] expressions,
-                         @Nullable XStackFrame stackFrame) {
+                         @Nullable XStackFrame stackFrame,
+                         boolean watchesInVariables) {
     super(tree, null, new XValueContainer() {
       @Override
       public void computeChildren(@NotNull XCompositeNode node) {
-        if (stackFrame != null && Registry.is("debugger.watches.in.variables")) {
+        if (stackFrame != null && watchesInVariables) {
           stackFrame.computeChildren(node);
         }
         else {
