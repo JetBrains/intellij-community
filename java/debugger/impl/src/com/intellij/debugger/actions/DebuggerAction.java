@@ -30,12 +30,16 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.frame.XDebugView;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -133,15 +137,10 @@ public abstract class DebuggerAction extends AnAction {
     };
     listener.installOn(tree);
 
-    final AnAction action = ActionManager.getInstance().getAction(actionName);
-    action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), tree);
+    Disposable disposable = () -> listener.uninstall(tree);
+    DebuggerUIUtil.registerActionOnComponent(actionName, tree, disposable);
 
-    return new Disposable() {
-      public void dispose() {
-        listener.uninstall(tree);
-        action.unregisterCustomShortcutSet(tree);
-      }
-    };
+    return disposable;
   }
 
   public static boolean isFirstStart(final AnActionEvent event) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,6 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
@@ -108,15 +105,5 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
 
   public void dispose() {
     Disposer.dispose(myDisposables);
-  }
-
-  protected void overrideShortcut(final JComponent forComponent, final String actionId, final ShortcutSet shortcutSet) {
-    final AnAction action = ActionManager.getInstance().getAction(actionId);
-    action.registerCustomShortcutSet(shortcutSet, forComponent);
-    registerDisposable(new Disposable() {
-      public void dispose() {
-        action.unregisterCustomShortcutSet(forComponent);
-      }
-    });
   }
 }
