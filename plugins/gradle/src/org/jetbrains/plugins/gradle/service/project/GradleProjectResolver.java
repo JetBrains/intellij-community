@@ -445,6 +445,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           libraryNodeParent, ProjectKeys.MODULE_DEPENDENCY, new BooleanFunction<DataNode<ModuleDependencyData>>() {
             @Override
             public boolean fun(DataNode<ModuleDependencyData> node) {
+              if (moduleDependencyData.getInternalName().equals(node.getData().getInternalName())) {
+                moduleDependencyData.setModuleDependencyArtifacts(node.getData().getModuleDependencyArtifacts());
+              }
               return moduleDependencyData.equals(node.getData());
             }
           });
