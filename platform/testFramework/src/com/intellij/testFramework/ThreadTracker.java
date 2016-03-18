@@ -68,13 +68,9 @@ public class ThreadTracker {
 
   private static final Set<String> wellKnownOffenders = new THashSet<String>();
   static {
-        wellKnownOffenders.add("Action Updater"); // todo remove
-        wellKnownOffenders.add("Alarm pool(own)");
-        wellKnownOffenders.add("Alarm pool(shared)");
     wellKnownOffenders.add("AWT-EventQueue-");
     wellKnownOffenders.add("AWT-Shutdown");
     wellKnownOffenders.add("AWT-Windows");
-        wellKnownOffenders.add("Change List Updater"); //todo remove
     wellKnownOffenders.add("CompilerThread0");
     wellKnownOffenders.add("Finalizer");
     wellKnownOffenders.add("IDEA Test Case Thread");
@@ -83,14 +79,12 @@ public class ThreadTracker {
     wellKnownOffenders.add("JobScheduler FJ pool ");
     wellKnownOffenders.add("JPS thread pool");
     wellKnownOffenders.add("Keep-Alive-Timer");
-        wellKnownOffenders.add("Low Memory Detector");
     wellKnownOffenders.add("main");
     wellKnownOffenders.add("Monitor Ctrl-Break");
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
     wellKnownOffenders.add("Signal Dispatcher");
     wellKnownOffenders.add("Netty ");
-        wellKnownOffenders.add("timed reference disposer");
     wellKnownOffenders.add("timer-int"); //serverImpl
     wellKnownOffenders.add("timer-sys"); //clientimpl
     wellKnownOffenders.add("TimerQueue");
