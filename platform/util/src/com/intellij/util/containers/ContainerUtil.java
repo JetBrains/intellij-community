@@ -2498,6 +2498,12 @@ public class ContainerUtil extends ContainerUtilRt {
     //noinspection deprecation
     return new ConcurrentLongObjectHashMap<V>();
   }
+  @NotNull
+  @Contract(pure=true)
+  public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap(int initialCapacity) {
+    //noinspection deprecation
+    return new ConcurrentLongObjectHashMap<V>(initialCapacity);
+  }
 
   @NotNull
   @Contract(pure=true)
