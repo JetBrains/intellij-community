@@ -16,7 +16,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -165,15 +164,15 @@ public abstract class AnAction implements PossiblyDumbAware {
       if (!actionList.contains(this)){
         actionList.add(this);
       }
-    }
 
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          unregisterCustomShortcutSet(component);
-        }
-      });
+      if (parentDisposable != null) {
+        Disposer.register(parentDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            unregisterCustomShortcutSet(component);
+          }
+        });
+      }
     }
   }
 
@@ -202,7 +201,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public final void copyShortcutFrom(@NotNull AnAction sourceAction) {
-    myShortcutSet = sourceAction.myShortcutSet;
+    setShortcutSet(sourceAction.getShortcutSet());
   }
 
 

@@ -18,7 +18,6 @@ package com.intellij.ide.projectWizard;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.Step;
@@ -30,7 +29,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -148,8 +146,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected T createWizard(Project project, File directory) {
-    //noinspection unchecked
-    return (T)new AddModuleWizard(project, DefaultModulesProvider.createForProject(project), directory.getPath());
+    throw new RuntimeException();
   }
 
   @Override

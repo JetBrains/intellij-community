@@ -24,6 +24,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -120,8 +121,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       @Override
       public void selectionChanged(ContentManagerEvent event) {
         Content content = event.getContent();
-        XDebugSessionImpl session = mySession;
-        if (session != null && content.isSelected() && DebuggerContentInfo.WATCHES_CONTENT.equals(ViewImpl.ID.get(content))) {
+        if (mySession != null && content.isSelected() && getWatchesContentId().equals(ViewImpl.ID.get(content))) {
           myRebuildWatchesRunnable.run();
         }
       }
@@ -323,21 +323,31 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         removeContent(DebuggerContentInfo.VARIABLES_CONTENT);
         removeContent(DebuggerContentInfo.WATCHES_CONTENT);
         addVariablesAndWatches(mySession);
-        XDebugView variablesView = myViews.get(DebuggerContentInfo.VARIABLES_CONTENT);
-        if (variablesView != null) {
-          Disposer.register(myRunContentDescriptor, variablesView);
-        }
-        attachViewToSession(mySession, variablesView);
-        if (!myWatchesInVariables) {
-          XDebugView watchesView = myViews.get(DebuggerContentInfo.WATCHES_CONTENT);
-          if (watchesView != null) {
-            Disposer.register(myRunContentDescriptor, watchesView);
-          }
-          attachViewToSession(mySession, watchesView);
-        }
+        attachViewToSession(mySession, myViews.get(DebuggerContentInfo.VARIABLES_CONTENT));
+        attachViewToSession(mySession, myViews.get(DebuggerContentInfo.WATCHES_CONTENT));
         rebuildViews();
       }
     }
+  }
+
+  public static void showWatchesView(@NotNull XDebugSessionImpl session) {
+    XDebugSessionTab tab = session.getSessionTab();
+    if (tab != null) {
+      tab.toFront(false, null);
+      // restore watches tab if minimized
+      JComponent component = tab.getUi().getComponent();
+      if (component instanceof DataProvider) {
+        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+        if (ui != null) {
+          ui.restoreContent(tab.getWatchesContentId());
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private String getWatchesContentId() {
+    return myWatchesInVariables ? DebuggerContentInfo.VARIABLES_CONTENT : DebuggerContentInfo.WATCHES_CONTENT;
   }
 
   private void registerView(String contentId, @NotNull XDebugView view) {

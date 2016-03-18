@@ -15,8 +15,6 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
@@ -292,22 +290,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     myRootNode.addWatchExpression(session != null ? session.getCurrentStackFrame() : null, expression, index, navigateToWatchNode);
     updateSessionData();
     if (navigateToWatchNode && session != null) {
-      showWatchesTab((XDebugSessionImpl)session);
-    }
-  }
-
-  private static void showWatchesTab(@NotNull XDebugSessionImpl session) {
-    XDebugSessionTab tab = session.getSessionTab();
-    if (tab != null) {
-      tab.toFront(false, null);
-      // restore watches tab if minimized
-      JComponent component = tab.getUi().getComponent();
-      if (component instanceof DataProvider) {
-        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
-        if (ui != null) {
-          ui.restoreContent(DebuggerContentInfo.WATCHES_CONTENT);
-        }
-      }
+      XDebugSessionTab.showWatchesView((XDebugSessionImpl)session);
     }
   }
 
@@ -317,14 +300,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void processSessionEvent(@NotNull final SessionEvent event) {
-    if (myWatchesInVariables ||
-        getPanel().isShowing() ||
-        ApplicationManager.getApplication().isUnitTestMode()) {
+    if (getPanel().isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       myRebuildNeeded = false;
     }
     else {
       myRebuildNeeded = true;
-      return;
     }
     super.processSessionEvent(event);
   }

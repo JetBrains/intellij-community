@@ -271,18 +271,16 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
 
   protected DefaultActionGroup createActionGroup() {
-    registerFileChooserShortcut(IdeActions.ACTION_DELETE, "FileChooser.Delete");
-    registerFileChooserShortcut(IdeActions.ACTION_SYNCHRONIZE, "FileChooser.Refresh");
+    registerTreeActionShortcut("FileChooser.Delete");
+    registerTreeActionShortcut("FileChooser.Refresh");
 
     return (DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar");
   }
 
-  private void registerFileChooserShortcut(@NonNls final String baseActionId, @NonNls final String fileChooserActionId) {
+  private void registerTreeActionShortcut(@NonNls final String actionId) {
     final JTree tree = myFileSystemTree.getTree();
-    final AnAction syncAction = ActionManager.getInstance().getAction(fileChooserActionId);
-
-    AnAction original = ActionManager.getInstance().getAction(baseActionId);
-    syncAction.registerCustomShortcutSet(original.getShortcutSet(), tree, myDisposable);
+    final AnAction action = ActionManager.getInstance().getAction(actionId);
+    action.registerCustomShortcutSet(action.getShortcutSet(), tree, myDisposable);
   }
 
   @Nullable

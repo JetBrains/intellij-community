@@ -42,7 +42,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
                        @NotNull WatchesRootNode parent,
                        @NotNull XExpression expression,
                        @Nullable XStackFrame stackFrame) {
-    super(tree, parent, expression.getExpression(), new XWatchValue(expression, stackFrame));
+    super(tree, parent, expression.getExpression(), new XWatchValue(expression, tree.isShowing() ? stackFrame : null));
     myExpression = expression;
   }
 

@@ -43,7 +43,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
     ModalityState modality = ModalityState.current();
     if (isInsideTransaction()) {
-      if (myTransactionModality == modality) {
+      if (modality.equals(myTransactionModality)) {
         return AccessToken.EMPTY_ACCESS_TOKEN;
       }
 
@@ -133,7 +133,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   protected boolean canRunTransactionNow(@NotNull TransactionKind kind) {
-    return !isInsideTransaction() || myMergeableKinds.contains(kind);
+    return !isInsideTransaction() || myMergeableKinds.contains(kind) || ModalityState.current().equals(myTransactionModality);
   }
 
   @Override
@@ -170,7 +170,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   public void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Runnable transaction) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
-      if (!canRunTransactionNow(kind) && myTransactionModality != ModalityState.current()) {
+      if (!canRunTransactionNow(kind)) {
         throw new AssertionError("Cannot run submitTransactionAndWait from another transaction, kind " + kind + " is not allowed");
       }
       runSyncTransaction(kind, transaction);
