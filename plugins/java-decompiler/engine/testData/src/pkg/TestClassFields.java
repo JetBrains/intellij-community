@@ -17,6 +17,7 @@ package pkg;
 
 public class TestClassFields {
 
+  static int staticMutable;
   private static int[] sizes;
   private static String[] names;
 

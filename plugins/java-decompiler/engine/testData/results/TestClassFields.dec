@@ -1,25 +1,26 @@
 package pkg;
 
 public class TestClassFields {
+   static int staticMutable;
    private static int[] sizes;
    private static String[] names = new String[]{"name1", "name2"};
 
    static {
-      sizes = new int[names.length];// 26
-   }// 27
+      sizes = new int[names.length];// 27
+   }// 28
 }
 
 class 'pkg/TestClassFields' {
    method '<clinit> ()V' {
-      11      7
-      14      7
-      17      7
-      1a      8
+      11      8
+      14      8
+      17      8
+      1a      9
    }
 }
 
 Lines mapping:
-26 <-> 8
 27 <-> 9
+28 <-> 10
 Not mapped:
-25
+26
