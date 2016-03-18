@@ -38,6 +38,7 @@
       <module name="blaze-api-aswb" target="1.8" />
       <module name="blaze-cpp-aswb" target="1.8" />
       <module name="blaze-impl-aswb" target="1.8" />
+      <module name="blaze-java-aswb" target="1.8" />
       <module name="blaze-plugin-dev-aswb" target="1.8" />
       <module name="community-tests" target="1.8" />
       <module name="configuration-store-tests" target="1.8" />
@@ -45,6 +46,7 @@
       <module name="gradle-jps-plugin" target="1.6" />
       <module name="groovy-rt-constants" target="1.5" />
       <module name="groovy_rt" target="1.5" />
+      <module name="ijwb-aswb" target="1.8" />
       <module name="intellilang-jps-plugin" target="1.6" />
       <module name="IntelliLang-tests" target="1.8" />
       <module name="java-runtime" target="1.1" />
