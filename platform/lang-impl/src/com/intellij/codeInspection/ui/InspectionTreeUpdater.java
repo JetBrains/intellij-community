@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
@@ -60,6 +61,10 @@ public class InspectionTreeUpdater {
           }
         } finally {
           tree.setQueueUpdate(false);
+          if (tree.getSelectionModel().getMinSelectionRow() == -1) {
+            TreeUtil.selectFirstNode(tree);
+            tree.expandRow(0);
+          }
         }
       }
 

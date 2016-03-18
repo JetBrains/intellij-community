@@ -145,11 +145,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     });
     add(mySplitter, BorderLayout.CENTER);
-
     createActionsToolbar();
-    TreeUtil.selectFirstNode(myTree);
   }
-
 
   private void initTreeListeners() {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -571,12 +568,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void registerActionShortcuts(@NotNull InspectionToolPresentation presentation) {
-    final QuickFixAction[] fixes = presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY, null);
-    if (fixes != null) {
-      for (QuickFixAction fix : fixes) {
-        fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final QuickFixAction[] fixes = presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY, null);
+      if (fixes != null) {
+        for (QuickFixAction fix : fixes) {
+          fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
+        }
       }
-    }
+    });
   }
 
   @Nullable
