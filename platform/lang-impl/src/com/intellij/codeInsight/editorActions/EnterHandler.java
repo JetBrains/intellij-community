@@ -282,7 +282,7 @@ public class EnterHandler extends BaseEnterHandler {
         return true;
       }
     }
-    return false;
+    return base.getPrevSibling() instanceof PsiErrorElement;
   }
   
   private static boolean isDocComment(final PsiElement element, final CodeDocumentationAwareCommenter commenter) {
