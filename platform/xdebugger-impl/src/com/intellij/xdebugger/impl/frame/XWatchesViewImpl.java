@@ -43,6 +43,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -80,19 +81,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
     XDebuggerTree tree = getTree();
     createNewRootNode(null);
-    AnAction newWatchAction = actionManager.getAction(XDebuggerActions.XNEW_WATCH);
-    AnAction removeWatchAction = actionManager.getAction(XDebuggerActions.XREMOVE_WATCH);
-    AnAction copyAction = actionManager.getAction(XDebuggerActions.XCOPY_WATCH);
-    AnAction editWatchAction = actionManager.getAction(XDebuggerActions.XEDIT_WATCH);
 
-    newWatchAction.registerCustomShortcutSet(CommonShortcuts.INSERT, tree, myDisposables);
-    removeWatchAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), tree, myDisposables);
-
-    CustomShortcutSet f2Shortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
-    editWatchAction.registerCustomShortcutSet(f2Shortcut, tree, myDisposables);
-
-    copyAction.registerCustomShortcutSet(
-      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE).getShortcutSet(), tree, myDisposables);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XNEW_WATCH, tree, myDisposables);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XREMOVE_WATCH, tree, myDisposables);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XCOPY_WATCH, tree, myDisposables);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XEDIT_WATCH, tree, myDisposables);
 
     DnDManager.getInstance().registerTarget(this, tree);
 
@@ -113,8 +106,9 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(getTree()).disableUpDownActions();
 
     decorator.setAddAction(button -> executeAction(XDebuggerActions.XNEW_WATCH));
-    decorator.setAddActionName(newWatchAction.getTemplatePresentation().getText());
+    decorator.setAddActionName(actionManager.getAction(XDebuggerActions.XNEW_WATCH).getTemplatePresentation().getText());
 
+    AnAction removeWatchAction = actionManager.getAction(XDebuggerActions.XREMOVE_WATCH);
     decorator.setRemoveAction(button -> executeAction(XDebuggerActions.XREMOVE_WATCH));
     decorator.setRemoveActionName(removeWatchAction.getTemplatePresentation().getText());
 
@@ -122,7 +116,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       removeWatchAction.update(e);
       return e.getPresentation().isEnabled();
     });
-    decorator.addExtraAction(AnActionButton.fromAction(copyAction));
+    decorator.addExtraAction(AnActionButton.fromAction(actionManager.getAction(XDebuggerActions.XCOPY_WATCH)));
     decorator.addExtraAction(
       new ToggleActionButton(XDebuggerBundle.message("debugger.session.tab.show.watches.in.variables"), AllIcons.Debugger.Watches) {
         @Override
