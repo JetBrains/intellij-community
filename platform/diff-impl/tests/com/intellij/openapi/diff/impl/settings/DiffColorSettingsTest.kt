@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff
+package com.intellij.openapi.diff.impl.settings
 
+import com.intellij.diff.DiffTestCase
 import com.intellij.diff.tools.simple.SimpleThreesideDiffViewer
 import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel
@@ -39,9 +40,9 @@ class DiffColorSettingsTest : DiffTestCase() {
   }
 
   fun testChanges() {
-    val disposable = Disposer.newDisposable()
+    var panel : DiffPreviewPanel? = null;
     try {
-      val panel = DiffPreviewPanel(disposable)
+      panel = DiffPreviewPanel()
       val viewer = panel.testGetViewer()
 
       assertEquals(viewer.changes.size, 6)
@@ -66,7 +67,7 @@ class DiffColorSettingsTest : DiffTestCase() {
       assertContainsMarkerColor(viewer, TextDiffType.CONFLICT)
     }
     finally {
-      Disposer.dispose(disposable)
+      panel?.disposeUIResources()
     }
   }
 
