@@ -86,14 +86,6 @@ public class ProjectDataManager {
     };
   }
 
-  @Deprecated // to be removed in 15.1
-  @Nullable
-  public ProjectDataService<?, ?> getDataService(Key<?> key) {
-    final List<ProjectDataService<?, ?>> dataServices = myServices.getValue().get(key);
-    assert dataServices == null || dataServices.isEmpty() || dataServices.size() == 1;
-    return ContainerUtil.getFirstItem(dataServices);
-  }
-
   @SuppressWarnings("unchecked")
   public void importData(@NotNull Collection<DataNode<?>> nodes,
                          @NotNull Project project,
