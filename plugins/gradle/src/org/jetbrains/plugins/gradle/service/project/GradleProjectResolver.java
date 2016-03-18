@@ -200,6 +200,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     ProjectImportAction.AllModels allModels;
     final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
+    final long startTime = System.currentTimeMillis();
     try {
       resolverCtx.setCancellationTokenSource(cancellationTokenSource);
       buildActionExecutor.withCancellationToken(cancellationTokenSource.token());
@@ -232,14 +233,18 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       allModels = new ProjectImportAction.AllModels(ideaProject);
     }
     finally {
+      final long timeInMs = (System.currentTimeMillis() - startTime);
       synchronized (myCancellationMap) {
         myCancellationMap.remove(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
       }
+      LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
     }
 
     resolverCtx.checkCancelled();
 
     allModels.setBuildEnvironment(buildEnvironment);
+
+    final long startDataConversionTime = System.currentTimeMillis();
     extractExternalProjectModels(allModels, resolverCtx.isPreviewMode());
     resolverCtx.setModels(allModels);
 
@@ -352,6 +357,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Collection<DataNode<LibraryData>> libraries = ExternalSystemApiUtil.getChildren(projectDataNode, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
 
+    final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
+    LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
     return projectDataNode;
   }
 
