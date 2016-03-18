@@ -15,22 +15,28 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogProjectManager {
   @NotNull private final Project myProject;
@@ -44,6 +50,10 @@ public class VcsLogProjectManager {
   public VcsLogProjectManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
     myUiProperties = uiProperties;
+  }
+
+  public void init() {
+    myLogManager.getValue();
   }
 
   @Nullable
@@ -76,7 +86,6 @@ public class VcsLogProjectManager {
     return myUi;
   }
 
-
   @Nullable
   public VcsLogManager getLogManager() {
     return myLogManager.getCached();
@@ -93,11 +102,13 @@ public class VcsLogProjectManager {
 
   private class LazyVcsLogManager extends ClearableLazyValue<VcsLogManager> {
     @NotNull
+    @CalledInAwt
     @Override
     protected VcsLogManager compute() {
       return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), myRecreateMainLogHandler);
     }
 
+    @CalledInAwt
     @Override
     public void drop() {
       if (myValue != null) Disposer.dispose(myValue);
@@ -105,8 +116,42 @@ public class VcsLogProjectManager {
     }
 
     @Nullable
+    @CalledInAwt
     public VcsLogManager getCached() {
       return myValue;
+    }
+  }
+
+  public static class InitLogStartupActivity implements StartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (!PostponableLogRefresher.keepUpToDate()) return;
+
+      VcsLogProjectManager logManager = getInstance(project);
+      AtomicBoolean isInitialized = new AtomicBoolean(false);
+      MessageBusConnection connection = project.getMessageBus().connect();
+      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
+        @Override
+        public void directoryMappingChanged() {
+          init(logManager, connection, isInitialized);
+        }
+      });
+
+      if (!logManager.getVcsRoots().isEmpty()) {
+        init(logManager, connection, isInitialized);
+      }
+    }
+
+    private static void init(@NotNull VcsLogProjectManager logManager, @NotNull MessageBusConnection connection, @NotNull AtomicBoolean isInitialized) {
+      if (isInitialized.compareAndSet(false, true)) {
+        connection.disconnect();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            logManager.init();
+          }
+        });
+      }
     }
   }
 }

@@ -27,6 +27,8 @@
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MergeCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.CurrentBranchHighlighter$Factory"/>
+
+    <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsLogProjectManager$InitLogStartupActivity"/>
   </extensions>
 
   <actions>

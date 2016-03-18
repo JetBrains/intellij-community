@@ -66,7 +66,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
     return addLogWindow(new VcsLogWindow(filterer));
   }
 
-  private static boolean keepUpToDate() {
+  public static boolean keepUpToDate() {
     return Registry.is("vcs.log.keep.up.to.date");
   }
 
