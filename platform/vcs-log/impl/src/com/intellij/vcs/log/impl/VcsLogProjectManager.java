@@ -59,8 +59,7 @@ public class VcsLogProjectManager {
 
   public boolean initData() {
     if (myLogManager != null) return true;
-    myLogManager = new VcsLogManager(myProject, myUiProperties, getVcsRoots());
-    myLogManager.setRecreateMainLogHandler(myRecreateMainLogHandler);
+    myLogManager = new VcsLogManager(myProject, myUiProperties, getVcsRoots(), myRecreateMainLogHandler);
     return false;
   }
 

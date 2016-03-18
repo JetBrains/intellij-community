@@ -54,8 +54,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
-
-  @Nullable private Runnable myRecreateMainLogHandler;
+  @Nullable private final Runnable myRecreateMainLogHandler;
 
   private volatile VcsLogUiImpl myUi;
   @NotNull private final VcsLogDataManager myDataManager;
@@ -64,8 +63,16 @@ public class VcsLogManager implements Disposable {
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
+    this(project, uiProperties, roots, null);
+  }
+
+  public VcsLogManager(@NotNull Project project,
+                       @NotNull VcsLogTabsProperties uiProperties,
+                       @NotNull Collection<VcsRoot> roots,
+                       @Nullable Runnable recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
+    myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
     myDataManager = new VcsLogDataManager(myProject, logProviders, new MyFatalErrorsConsumer());
@@ -149,10 +156,6 @@ public class VcsLogManager implements Disposable {
       }
     }
     return logProviders;
-  }
-
-  public void setRecreateMainLogHandler(@Nullable Runnable recreateMainLogHandler) {
-    myRecreateMainLogHandler = recreateMainLogHandler;
   }
 
   /**
