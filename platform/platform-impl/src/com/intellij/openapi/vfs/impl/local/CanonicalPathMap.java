@@ -121,7 +121,7 @@ class CanonicalPathMap {
    * of the recursive root because if the root itself was changed, we need to know about it.
    */
   @NotNull
-  public Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact, boolean fastPath) {
+  public Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact) {
     if (myFlatWatchRoots.isEmpty() && myRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
     Collection<String> affectedPaths = applyMapping(reportedPath);
@@ -129,8 +129,6 @@ class CanonicalPathMap {
 
     ext:
     for (String path : affectedPaths) {
-      if (fastPath && !changedPaths.isEmpty()) break;
-
       for (String root : myFlatWatchRoots) {
         if (FileUtil.namesEqual(path, root)) {
           changedPaths.add(path);
@@ -160,7 +158,7 @@ class CanonicalPathMap {
       }
     }
 
-    if (!fastPath && changedPaths.isEmpty() && LOG.isDebugEnabled()) {
+    if (changedPaths.isEmpty() && LOG.isDebugEnabled()) {
       LOG.debug("Not watchable, filtered: " + reportedPath);
     }
 
