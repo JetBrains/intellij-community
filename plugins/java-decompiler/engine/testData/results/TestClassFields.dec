@@ -1,26 +1,37 @@
 package pkg;
 
 public class TestClassFields {
-   static int staticMutable;
    private static int[] sizes;
    private static String[] names = new String[]{"name1", "name2"};
+   private static final int SIZE;
 
    static {
-      sizes = new int[names.length];// 27
-   }// 28
+      sizes = new int[names.length];// 15
+      TestClassFields.Inner.staticMutable = 3;// 17
+      SIZE = TestClassFields.Inner.staticMutable;// 14 18
+   }// 19
+
+   private static class Inner {
+      private static int staticMutable;
+   }
 }
 
 class 'pkg/TestClassFields' {
    method '<clinit> ()V' {
+      0      10
+      2      9
       11      8
       14      8
       17      8
       1a      9
+      22      10
+      25      11
    }
 }
 
 Lines mapping:
-27 <-> 9
-28 <-> 10
-Not mapped:
-26
+14 <-> 11
+15 <-> 9
+17 <-> 10
+18 <-> 11
+19 <-> 12

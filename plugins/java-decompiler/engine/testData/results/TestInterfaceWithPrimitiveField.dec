@@ -1,6 +1,0 @@
-package pkg;
-
-public interface TestInterfaceWithPrimitiveField {
-   int MAX_BYTE_VALUE = 127;
-}
-
