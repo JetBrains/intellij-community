@@ -659,7 +659,9 @@
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
     </action>
 
-    <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"/>
+    <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type"
+            class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"
+            use-shortcut-of="TypeHierarchy"/>
     <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
     <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
