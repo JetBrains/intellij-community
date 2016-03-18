@@ -121,8 +121,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       @Override
       public void selectionChanged(ContentManagerEvent event) {
         Content content = event.getContent();
-        XDebugSessionImpl session = mySession;
-        if (session != null && content.isSelected() && DebuggerContentInfo.WATCHES_CONTENT.equals(ViewImpl.ID.get(content))) {
+        if (mySession != null && content.isSelected() && getWatchesContentId().equals(ViewImpl.ID.get(content))) {
           myRebuildWatchesRunnable.run();
         }
       }
@@ -340,10 +339,15 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       if (component instanceof DataProvider) {
         RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
         if (ui != null) {
-          ui.restoreContent(tab.myWatchesInVariables ? DebuggerContentInfo.VARIABLES_CONTENT : DebuggerContentInfo.WATCHES_CONTENT);
+          ui.restoreContent(tab.getWatchesContentId());
         }
       }
     }
+  }
+
+  @NotNull
+  private String getWatchesContentId() {
+    return myWatchesInVariables ? DebuggerContentInfo.VARIABLES_CONTENT : DebuggerContentInfo.WATCHES_CONTENT;
   }
 
   private void registerView(String contentId, @NotNull XDebugView view) {

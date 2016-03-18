@@ -300,14 +300,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void processSessionEvent(@NotNull final SessionEvent event) {
-    if (myWatchesInVariables ||
-        getPanel().isShowing() ||
-        ApplicationManager.getApplication().isUnitTestMode()) {
+    if (getPanel().isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       myRebuildNeeded = false;
     }
     else {
       myRebuildNeeded = true;
-      return;
     }
     super.processSessionEvent(event);
   }
