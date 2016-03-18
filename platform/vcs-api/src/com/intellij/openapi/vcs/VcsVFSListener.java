@@ -490,15 +490,6 @@ public abstract class VcsVFSListener implements Disposable {
       if (myCommandLevel == 0) {
         if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty() ||
             ! myDirtyFiles.isEmpty()) {
-          // avoid reentering commandFinished handler - saving the documents may cause a "before file deletion" event firing,
-          // which will cause closing the text editor, which will itself run a command that will be caught by this listener
-          myCommandLevel++;
-          try {
-            FileDocumentManager.getInstance().saveAllDocuments();
-          }
-          finally {
-            myCommandLevel--;
-          }
           doNotDeleteAddedCopiedOrMovedFiles();
           checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {
