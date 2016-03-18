@@ -133,6 +133,10 @@ class BackspaceEvent(
         newCompletionListItems: List<LookupEntryInfo>, 
         selectedPosition: Int) : LookupStateLogData(userId, Action.BACKSPACE, completionListIds, newCompletionListItems, selectedPosition) {
 
+    init {
+        assert(completionListIds.isNotEmpty())
+    }
+    
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
@@ -143,6 +147,10 @@ class TypeEvent(
         completionListIds: List<Int>,
         newCompletionListItems: List<LookupEntryInfo>,
         selectedPosition: Int) : LookupStateLogData(userId, Action.TYPE, completionListIds, newCompletionListItems, selectedPosition) {
+
+    init {
+        assert(completionListIds.isNotEmpty())
+    }
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
