@@ -92,7 +92,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     Set<Thread> usedThreads = new HashSet<>(Arrays.asList(log.get(1).currentThread, log.get(2).currentThread, log.get(3).currentThread));
     assertEquals(3, usedThreads.size()); // must be executed in parallel
 
-    service.doShutdown();
+    service.shutdownAppScheduledExecutorService();
     assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
   }
 
@@ -110,7 +110,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
     catch (Exception ignored) {
     }
-    service.doShutdown();
+    finally {
+      service.shutdownAppScheduledExecutorService();
+    }
   }
 
   public void testMustNotBeAbleToShutdownGlobalPool() {
@@ -175,7 +177,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
     assertEquals(usedThreads.toString(), 1, usedThreads.size()); // must be executed in same thread
 
-    service.doShutdown();
+    service.shutdownAppScheduledExecutorService();
     assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
   }
 
@@ -201,7 +203,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     Set<Thread> usedThreads = ContainerUtil.map2Set(log, logInfo -> logInfo.currentThread);
 
     assertEquals(N, usedThreads.size());
-    service.doShutdown();
+    service.shutdownAppScheduledExecutorService();
     assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
   }
 }
