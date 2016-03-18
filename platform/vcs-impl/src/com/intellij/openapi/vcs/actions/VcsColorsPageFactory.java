@@ -70,7 +70,6 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.border.lines"), EditorColors.BORDER_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));
 
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.annotations"), EditorColors.ANNOTATIONS_COLOR, ColorDescriptor.Kind.FOREGROUND));
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.annotations.merged"), EditorColors.ANNOTATIONS_MERGED_COLOR, ColorDescriptor.Kind.FOREGROUND));
 
     List<ColorKey> colorKeys = AnnotationsSettings.ANCHOR_COLOR_KEYS;
     for (int i = 0; i < colorKeys.size(); i++) {

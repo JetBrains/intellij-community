@@ -148,11 +148,8 @@ class VcsPreviewPanel implements PreviewPanel {
     @Nullable
     @Override
     public String getLineText(int line, Editor editor) {
-      if (line == 0) return "Merged commit (SVN)";
-
-      int colorNumber = line - 1;
-      if (colorNumber < myBackgroundColors.size()) {
-        return "Annotation background #" + (colorNumber + 1);
+      if (line < myBackgroundColors.size()) {
+        return "Annotation background #" + (line + 1);
       }
       return null;
     }
@@ -171,18 +168,14 @@ class VcsPreviewPanel implements PreviewPanel {
     @Nullable
     @Override
     public ColorKey getColor(int line, Editor editor) {
-      if (line == 0) return EditorColors.ANNOTATIONS_MERGED_COLOR;
       return EditorColors.ANNOTATIONS_COLOR;
     }
 
     @Nullable
     @Override
     public Color getBgColor(int line, Editor editor) {
-      if (line == 0) return myBackgroundColors.get(0);
-
-      int colorNumber = line - 1;
-      if (colorNumber < myBackgroundColors.size()) {
-        return myBackgroundColors.get(colorNumber);
+      if (line < myBackgroundColors.size()) {
+        return myBackgroundColors.get(line);
       }
 
       return null;
