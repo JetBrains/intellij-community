@@ -1,9 +1,9 @@
 package de.plushnikov.intellij.plugin.settings;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
 import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +28,13 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   private JCheckBox myEnableDelegateSupport;
   private JCheckBox myEnableParcelableSupport;
 
-  private Project myProject;
+  private PropertiesComponent myPropertiesComponent;
+  private LombokProcessorProvider myLombokProcessorProvider;
 
-  public ProjectSettingsPage(Project project) {
-    myProject = project;
+  public ProjectSettingsPage(PropertiesComponent propertiesComponent,
+                             LombokProcessorProvider lombokProcessorProvider) {
+    myPropertiesComponent = propertiesComponent;
+    myLombokProcessorProvider = lombokProcessorProvider;
   }
 
   @Nls
@@ -77,42 +80,42 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
   private void initFromSettings() {
 
-    myEnableLombokInProject.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT));
-    myEnableValSupport.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_VAL_ENABLED));
-    myEnableBuilderSupport.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_BUILDER_ENABLED));
-    myEnableDelegateSupport.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_DELEGATE_ENABLED));
+    myEnableLombokInProject.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT));
+    myEnableValSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_VAL_ENABLED));
+    myEnableBuilderSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_BUILDER_ENABLED));
+    myEnableDelegateSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_DELEGATE_ENABLED));
 
-    myEnableLogSupport.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOG_ENABLED));
-    myEnableConstructorSupport.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_CONSTRUCTOR_ENABLED));
+    myEnableLogSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED));
+    myEnableConstructorSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED));
 
-    myEnableParcelableSupport.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_THIRD_PARTY_ENABLED));
+    myEnableParcelableSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED));
   }
 
   @Override
   public boolean isModified() {
-    return myEnableLombokInProject.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT) ||
-        myEnableValSupport.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_VAL_ENABLED) ||
-        myEnableBuilderSupport.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_BUILDER_ENABLED) ||
-        myEnableDelegateSupport.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_DELEGATE_ENABLED) ||
-        myEnableLogSupport.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOG_ENABLED) ||
-        myEnableConstructorSupport.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_CONSTRUCTOR_ENABLED) ||
-        myEnableParcelableSupport.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_THIRD_PARTY_ENABLED);
+    return myEnableLombokInProject.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT) ||
+        myEnableValSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_VAL_ENABLED) ||
+        myEnableBuilderSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_BUILDER_ENABLED) ||
+        myEnableDelegateSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_DELEGATE_ENABLED) ||
+        myEnableLogSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED) ||
+        myEnableConstructorSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED) ||
+        myEnableParcelableSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    ProjectSettings.setEnabled(myProject, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT, myEnableLombokInProject.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT, myEnableLombokInProject.isSelected());
 
-    ProjectSettings.setEnabled(myProject, ProjectSettings.IS_VAL_ENABLED, myEnableValSupport.isSelected());
-    ProjectSettings.setEnabled(myProject, ProjectSettings.IS_BUILDER_ENABLED, myEnableBuilderSupport.isSelected());
-    ProjectSettings.setEnabled(myProject, ProjectSettings.IS_DELEGATE_ENABLED, myEnableDelegateSupport.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_VAL_ENABLED, myEnableValSupport.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_BUILDER_ENABLED, myEnableBuilderSupport.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_DELEGATE_ENABLED, myEnableDelegateSupport.isSelected());
 
-    ProjectSettings.setEnabled(myProject, ProjectSettings.IS_LOG_ENABLED, myEnableLogSupport.isSelected());
-    ProjectSettings.setEnabled(myProject, ProjectSettings.IS_CONSTRUCTOR_ENABLED, myEnableConstructorSupport.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED, myEnableLogSupport.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED, myEnableConstructorSupport.isSelected());
 
-    ProjectSettings.setEnabled(myProject, ProjectSettings.IS_THIRD_PARTY_ENABLED, myEnableParcelableSupport.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED, myEnableParcelableSupport.isSelected());
 
-    LombokProcessorProvider.getInstance().initProcessors(myProject);
+    myLombokProcessorProvider.initProcessors();
   }
 
   @Override
@@ -122,7 +125,6 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
   @Override
   public void disposeUIResources() {
-
   }
 
   @NotNull

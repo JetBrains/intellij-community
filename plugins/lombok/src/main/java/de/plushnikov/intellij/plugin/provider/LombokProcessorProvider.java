@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.provider;
 
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -13,7 +15,6 @@ import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -24,31 +25,34 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class LombokProcessorProvider {
-  private static LombokProcessorProvider ourInstance = new LombokProcessorProvider();
 
-  public static LombokProcessorProvider getInstance() {
-    return ourInstance;
+  public static LombokProcessorProvider getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, LombokProcessorProvider.class);
   }
 
   private final Map<Class, Collection<Processor>> lombokTypeProcessors;
   private final Map<String, Collection<Processor>> lombokProcessors;
   private final Collection<String> registeredAnnotationNames;
 
-  private LombokProcessorProvider() {
+  private PropertiesComponent myPropertiesComponent;
+
+  private LombokProcessorProvider(@NotNull PropertiesComponent propertiesComponent) {
+    myPropertiesComponent = propertiesComponent;
+
     lombokProcessors = new HashMap<String, Collection<Processor>>();
     lombokTypeProcessors = new HashMap<Class, Collection<Processor>>();
     registeredAnnotationNames = new HashSet<String>();
 
-    initProcessors(null);
+    initProcessors();
   }
 
-  public void initProcessors(@Nullable Project project) {
+  public void initProcessors() {
     lombokProcessors.clear();
     lombokTypeProcessors.clear();
     registeredAnnotationNames.clear();
 
     for (Processor processor : getLombokProcessors()) {
-      if (null == project || processor.isEnabled(project)) {
+      if (processor.isEnabled(myPropertiesComponent)) {
 
         Class<? extends Annotation> annotationClass = processor.getSupportedAnnotationClass();
 

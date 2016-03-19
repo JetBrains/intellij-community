@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,8 +35,8 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
+  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
+    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_BUILDER_ENABLED);
   }
 
   @Override

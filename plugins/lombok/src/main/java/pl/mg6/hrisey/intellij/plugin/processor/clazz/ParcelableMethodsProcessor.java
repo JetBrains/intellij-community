@@ -1,6 +1,6 @@
 package pl.mg6.hrisey.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -27,8 +27,8 @@ public class ParcelableMethodsProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_THIRD_PARTY_ENABLED);
+  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
+    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED);
   }
 
   @Override

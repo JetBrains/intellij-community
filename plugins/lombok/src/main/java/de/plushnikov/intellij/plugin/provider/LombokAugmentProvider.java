@@ -86,19 +86,19 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   private static class FieldLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {
-    public FieldLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
+    FieldLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
       super(type, psiClass);
     }
   }
 
   private static class MethodLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {
-    public MethodLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
+    MethodLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
       super(type, psiClass);
     }
   }
 
   private static class ClassLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {
-    public ClassLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
+    ClassLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
       super(type, psiClass);
     }
   }
@@ -107,7 +107,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     private final Class<Psi> type;
     private final PsiClass psiClass;
 
-    public LombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
+    LombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
       this.type = type;
       this.psiClass = psiClass;
     }
@@ -120,7 +120,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       }
 
       final List<Psi> result = new ArrayList<Psi>();
-      final Collection<Processor> lombokProcessors = LombokProcessorProvider.getInstance().getLombokProcessors(type);
+      final Collection<Processor> lombokProcessors = LombokProcessorProvider.getInstance(psiClass.getProject()).getLombokProcessors(type);
       for (Processor processor : lombokProcessors) {
         result.addAll((Collection<Psi>) processor.process(psiClass));
       }

@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -85,7 +85,7 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project) {
+  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
     return true;
   }
 

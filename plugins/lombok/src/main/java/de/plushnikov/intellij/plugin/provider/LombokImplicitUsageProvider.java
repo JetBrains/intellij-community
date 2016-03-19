@@ -12,12 +12,6 @@ import java.util.Collection;
  */
 public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
 
-  private final LombokProcessorProvider processorProvider;
-
-  public LombokImplicitUsageProvider() {
-    processorProvider = LombokProcessorProvider.getInstance();
-  }
-
   @Override
   public boolean isImplicitUsage(PsiElement element) {
     return isImplicitWrite(element) || isImplicitRead(element);
@@ -36,6 +30,7 @@ public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
   private boolean checkUsage(PsiElement element, LombokPsiElementUsage elementUsage) {
     boolean result = false;
     if (element instanceof PsiField) {
+      final LombokProcessorProvider processorProvider = LombokProcessorProvider.getInstance(element.getProject());
       final Collection<LombokProcessorData> applicableProcessors = processorProvider.getApplicableProcessors((PsiField) element);
 
       for (LombokProcessorData processorData : applicableProcessors) {

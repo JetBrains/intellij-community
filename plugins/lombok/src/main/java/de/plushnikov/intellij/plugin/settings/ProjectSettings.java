@@ -25,12 +25,18 @@ public class ProjectSettings {
   }
 
   public static boolean isEnabled(@NotNull Project project, final String propertyName) {
-    PropertiesComponent properties = PropertiesComponent.getInstance(project);
+    return isEnabled(PropertiesComponent.getInstance(project), propertyName);
+  }
+
+  public static boolean isEnabled(PropertiesComponent properties, String propertyName) {
     return properties.getBoolean(propertyName, true);
   }
 
   public static void setEnabled(@NotNull Project project, final String propertyName, boolean value) {
-    PropertiesComponent properties = PropertiesComponent.getInstance(project);
+    setEnabled(PropertiesComponent.getInstance(project), propertyName, value);
+  }
+
+  public static void setEnabled(PropertiesComponent properties, String propertyName, boolean value) {
     properties.setValue(propertyName, String.valueOf(value), String.valueOf(true));
   }
 

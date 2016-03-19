@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -31,7 +31,7 @@ public interface Processor {
   @NotNull
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
 
-  boolean isEnabled(@NotNull Project project);
+  boolean isEnabled(@NotNull PropertiesComponent propertiesComponent);
 
   boolean isShouldGenerateFullBodyBlock();
 
