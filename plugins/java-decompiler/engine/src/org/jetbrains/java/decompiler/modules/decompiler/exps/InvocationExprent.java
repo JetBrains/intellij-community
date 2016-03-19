@@ -334,7 +334,7 @@ public class InvocationExprent extends Exprent {
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
-      if (sigFields == null) {
+      if (sigFields == null || null == sigFields.get(i)) {
         if (!firstParameter) {
           buf.append(", ");
         }
