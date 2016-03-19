@@ -44,4 +44,8 @@ abstract class WeightFilter extends RGBImageFilter {
     srcB = (int)dstB;
     return (srcR << 16) | (srcG << 8) | srcB;
   }
+
+  static double fix(double value) {
+    return Double.isNaN(value) || value < 0 ? 0 : value > 255 ? 255 : value;
+  }
 }
