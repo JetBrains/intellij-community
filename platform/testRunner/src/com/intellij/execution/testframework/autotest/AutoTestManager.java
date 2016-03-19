@@ -36,7 +36,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
@@ -66,7 +65,7 @@ public class AutoTestManager {
 
   public AutoTestManager(@NotNull Project project) {
     myProject = project;
-    myDelayMillis = StringUtilRt.parseInt(PropertiesComponent.getInstance(project).getValue(AUTO_TEST_MANAGER_DELAY), AUTO_TEST_MANAGER_DELAY_DEFAULT);
+    myDelayMillis = PropertiesComponent.getInstance(project).getInt(AUTO_TEST_MANAGER_DELAY, AUTO_TEST_MANAGER_DELAY_DEFAULT);
     myDocumentWatcher = createWatcher();
   }
 
