@@ -130,6 +130,9 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
       if (substituted != null) {
         lst.add(substituted);
       }
+      else {
+        return PsiType.EMPTY_ARRAY;
+      }
     }
     return lst.toArray(createArray(lst.size()));
   }
