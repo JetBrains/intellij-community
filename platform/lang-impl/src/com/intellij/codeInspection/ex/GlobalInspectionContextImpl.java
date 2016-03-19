@@ -141,7 +141,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   public void addView(@NotNull InspectionResultsView view) {
     addView(view, view.getCurrentProfileName() == null
                   ? InspectionsBundle.message("inspection.results.title")
-                  : InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
+                  : InspectionsBundle.message(mySingleInspectionRun ?
+                                              "inspection.results.for.inspection.toolwindow.title" :
+                                              "inspection.results.for.profile.toolwindow.title",
+                                              view.getCurrentProfileName()));
 
   }
 
