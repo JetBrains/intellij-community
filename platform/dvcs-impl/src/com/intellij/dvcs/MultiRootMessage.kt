@@ -28,11 +28,11 @@ class MultiRootMessage(private val myProject: Project, private val myAllRoots: C
 
   fun append(root: VirtualFile, message: String): MultiRootMessage {
     if (!myAllRoots.contains(root)) {
-      LOG.error("The root " + root.path + " is unexpected: " + myAllRoots)
+      LOG.error("The root ${root.path} is unexpected: $myAllRoots")
       return this
     }
     if (myMessages.containsKey(root)) {
-      LOG.error("Duplicate root " + root.path + " reporting message [" + message + "]")
+      LOG.error("Duplicate root ${root.path} reporting message [$message]")
     }
     myMessages.put(root, message)
     return this
