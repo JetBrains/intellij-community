@@ -24,6 +24,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
+import java.io.File
 
 class MultiRootMessageTest {
 
@@ -101,7 +102,7 @@ class MultiRootMessageTest {
     assertEquals(
         """
         Pruned obsolete remote references: origin/fix1, origin/fix2 in idea
-        Pruned obsolete remote references: origin/fix3 in community, contrib and community/android
+        Pruned obsolete remote references: origin/fix3 in community, contrib and community${File.separator}android
         """.trimIndent(), multiRootMessage.asString())
   }
 
