@@ -1,10 +1,11 @@
 package de.plushnikov.intellij.plugin.util;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassObjectAccessExpression;
@@ -20,7 +21,6 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,11 +59,47 @@ public class PsiAnnotationUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull final PsiModifierListOwner psiModifierListOwner, @NotNull final String qualifiedName) {
-    return PsiImplUtil.findAnnotation(psiModifierListOwner.getModifierList(), qualifiedName);
+    return findAnnotationQuick(psiModifierListOwner.getModifierList(), qualifiedName);
+  }
+
+  private static final Key<String> lombokFqnAnnotation = Key.create("LOMBOK_ANNOTATION_FQN");
+
+  @Nullable
+  private static PsiAnnotation findAnnotationQuick(@Nullable PsiAnnotationOwner annotationOwner, @NotNull String qualifiedName) {
+    if (annotationOwner == null) {
+      return null;
+    }
+
+    PsiAnnotation[] annotations = annotationOwner.getAnnotations();
+    if (annotations.length == 0) {
+      return null;
+    }
+
+    final String shortName = StringUtil.getShortName(qualifiedName);
+    for (PsiAnnotation annotation : annotations) {
+      PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+      if (referenceElement != null && shortName.equals(referenceElement.getReferenceName())) {
+
+        String annotationQualifiedName = annotation.getCopyableUserData(lombokFqnAnnotation);
+        if (null == annotationQualifiedName) {
+          annotationQualifiedName = annotation.getQualifiedName();
+
+          if (null != annotationQualifiedName && annotationQualifiedName.indexOf('.') > 0) {
+            annotation.putCopyableUserData(lombokFqnAnnotation, annotationQualifiedName);
+          }
+        }
+
+        if (qualifiedName.equals(annotationQualifiedName)) {
+          return annotation;
+        }
+      }
+    }
+
+    return null;
   }
 
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
-    return isAnnotatedWith(psiModifierListOwner, annotationType.getName());
+    return null != findAnnotation(psiModifierListOwner, annotationType);
   }
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
@@ -81,10 +117,6 @@ public class PsiAnnotationUtil {
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
-  }
-
-  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String qualifiedName) {
-    return AnnotationUtil.isAnnotated(psiModifierListOwner, qualifiedName, false, true);
   }
 
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Pattern annotationPattern) {
