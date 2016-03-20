@@ -25,6 +25,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
@@ -164,7 +165,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   @SuppressWarnings("deprecation")
   protected Collection<PsiField> getAllNotInitializedAndNotStaticFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> allNotInitializedNotStaticFields = new ArrayList<PsiField>();
-    final boolean classAnnotatedWithValue = PsiAnnotationUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class);
+    final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class);
     for (PsiField psiField : psiClass.getFields()) {
       // skip fields named $
       boolean addField = !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
@@ -190,13 +191,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   @SuppressWarnings("deprecation")
   public Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> result = new ArrayList<PsiField>();
-    final boolean classAnnotatedWithValue = PsiAnnotationUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class);
+    final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class);
 
     for (PsiField psiField : getAllNotInitializedAndNotStaticFields(psiClass)) {
       final PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {
         final boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
-        final boolean isNonNull = PsiAnnotationUtil.isAnnotatedWith(psiField, LombokUtils.NON_NULL_PATTERN);
+        final boolean isNonNull = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokUtils.NON_NULL_PATTERN);
         // accept initialized final or nonnull fields
         if ((isFinal || isNonNull) && null == psiField.getInitializer()) {
           result.add(psiField);
@@ -209,7 +210,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   private boolean isFieldFinal(@NotNull PsiField psiField, @NotNull PsiModifierList modifierList, boolean classAnnotatedWithValue) {
     boolean isFinal = modifierList.hasModifierProperty(PsiModifier.FINAL);
     if (!isFinal && classAnnotatedWithValue) {
-      isFinal = PsiAnnotationUtil.isNotAnnotatedWith(psiField, NonFinal.class);
+      isFinal = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, NonFinal.class);
     }
     return isFinal;
   }

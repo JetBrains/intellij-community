@@ -7,12 +7,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.Getter;
 
 public class LazyGetterHandler {
-
-  private static final String GETTERN_FQN = Getter.class.getName();
 
   public static boolean isLazyGetterHandled(HighlightInfo highlightInfo, PsiFile file) {
     PsiElement element = file.findElementAt(highlightInfo.getStartOffset());
@@ -24,7 +23,7 @@ public class LazyGetterHandler {
       return false;
     }
 
-    final PsiAnnotation getterAnnotation = PsiAnnotationUtil.findAnnotation(field, GETTERN_FQN);
+    final PsiAnnotation getterAnnotation = PsiAnnotationSearchUtil.findAnnotation(field, Getter.class);
     return null != getterAnnotation && PsiAnnotationUtil.getBooleanAnnotationValue(getterAnnotation, "lazy", false);
   }
 }

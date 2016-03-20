@@ -15,6 +15,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -43,7 +44,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = Collections.emptyList();
 
-    PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotationClass());
+    PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClass());
     if (null != psiAnnotation) {
       if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
         result = new ArrayList<PsiElement>();
@@ -56,7 +57,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   @NotNull
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     Collection<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
-    PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotationClass());
+    PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClass());
     if (null != psiAnnotation) {
       result.add(psiAnnotation);
     }

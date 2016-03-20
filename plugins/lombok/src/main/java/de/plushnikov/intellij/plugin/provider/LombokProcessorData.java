@@ -7,7 +7,7 @@ public class LombokProcessorData {
   private final Processor processor;
   private final PsiAnnotation psiAnnotation;
 
-  public LombokProcessorData(Processor processor, PsiAnnotation psiAnnotation) {
+  LombokProcessorData(Processor processor, PsiAnnotation psiAnnotation) {
     this.processor = processor;
     this.psiAnnotation = psiAnnotation;
   }

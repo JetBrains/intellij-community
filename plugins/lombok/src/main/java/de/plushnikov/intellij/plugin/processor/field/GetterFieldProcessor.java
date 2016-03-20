@@ -15,6 +15,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -136,7 +137,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     PsiModifierList modifierList = method.getModifierList();
     copyAnnotations(psiField, modifierList,
         LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
-    addOnXAnnotations(PsiAnnotationUtil.findAnnotation(psiField, Getter.class), modifierList, "onMethod");
+    addOnXAnnotations(PsiAnnotationSearchUtil.findAnnotation(psiField, Getter.class), modifierList, "onMethod");
     return method;
   }
 

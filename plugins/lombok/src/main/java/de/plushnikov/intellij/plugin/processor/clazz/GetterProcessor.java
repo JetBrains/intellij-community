@@ -14,6 +14,7 @@ import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -95,7 +96,7 @@ public class GetterProcessor extends AbstractClassProcessor {
         //Skip static fields.
         createGetter = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip fields having Getter annotation already
-        createGetter &= PsiAnnotationUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClass());
+        createGetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClass());
         //Skip fields that start with $
         createGetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name and arguments count already exists

@@ -13,6 +13,7 @@ import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.experimental.Tolerate;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ public abstract class AbstractProcessor implements Processor {
     final Iterator<? extends PsiModifierListOwner> methodIterator = definedMethods.iterator();
     while (methodIterator.hasNext()) {
       PsiModifierListOwner definedMethod = methodIterator.next();
-      if (PsiAnnotationUtil.isAnnotatedWith(definedMethod, Tolerate.class)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, Tolerate.class)) {
         methodIterator.remove();
       }
     }

@@ -11,6 +11,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotationClass());
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClass());
       if (null != psiAnnotation) {
         if (validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
           generatePsiElements(psiField, psiAnnotation, result);
@@ -52,7 +53,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotationClass());
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClass());
       if (null != psiAnnotation) {
         result.add(psiAnnotation);
       }

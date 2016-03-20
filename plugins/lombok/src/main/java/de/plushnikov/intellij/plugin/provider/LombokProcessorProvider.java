@@ -12,7 +12,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.processor.Processor;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,19 +93,19 @@ public class LombokProcessorProvider {
     return result == null ? Collections.<Processor>emptySet() : result;
   }
 
-  public boolean verifyLombokAnnotationPresent(@NotNull PsiClass psiClass) {
-    if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiClass, registeredAnnotationNames)) {
+  private boolean verifyLombokAnnotationPresent(@NotNull PsiClass psiClass) {
+    if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(psiClass, registeredAnnotationNames)) {
       return true;
     }
     Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
     for (PsiField psiField : psiFields) {
-      if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiField, registeredAnnotationNames)) {
+      if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(psiField, registeredAnnotationNames)) {
         return true;
       }
     }
     Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     for (PsiMethod psiMethod : psiMethods) {
-      if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiMethod, registeredAnnotationNames)) {
+      if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(psiMethod, registeredAnnotationNames)) {
         return true;
       }
     }
@@ -117,8 +117,8 @@ public class LombokProcessorProvider {
     return false;
   }
 
-  public boolean verifyLombokAnnotationPresent(@NotNull PsiMember psiMember) {
-    if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiMember, registeredAnnotationNames)) {
+  private boolean verifyLombokAnnotationPresent(@NotNull PsiMember psiMember) {
+    if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(psiMember, registeredAnnotationNames)) {
       return true;
     }
 

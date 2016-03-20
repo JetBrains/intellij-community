@@ -19,7 +19,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.AllArgsConstructor;
@@ -120,13 +120,13 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   @SuppressWarnings("deprecation")
   public boolean validConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    if (PsiAnnotationUtil.isAnnotatedWith(psiClass, AllArgsConstructor.class, Value.class, lombok.experimental.Value.class)) {
+    if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, AllArgsConstructor.class, Value.class, lombok.experimental.Value.class)) {
       return true;
     }
 
     final Collection<PsiField> constructorParameters = filterFields(psiClass);
 
-    if (PsiAnnotationUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class, Data.class)) {
+    if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class, Data.class)) {
       final Collection<PsiField> requiredConstructorParameters = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
       if (constructorParameters.size() == requiredConstructorParameters.size()) {
         return true;
@@ -185,7 +185,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
           .withNavigationElement(psiField)
           .withModifier(methodModifier);
 
-      PsiAnnotation witherAnnotation = PsiAnnotationUtil.findAnnotation(psiField, Wither.class);
+      PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Wither.class);
       addOnXAnnotations(witherAnnotation, result.getModifierList(), "onMethod");
 
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, result, JavaLanguage.INSTANCE);

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +40,12 @@ public class LombokElementFinder extends PsiElementFinder {
     if (null != javaFileManager) {
       final PsiClass parentClass = javaFileManager.findClass(parentName, scope);
       if (null != parentClass) {
-        if (PsiAnnotationUtil.isAnnotatedWith(parentClass, Builder.class, lombok.experimental.Builder.class)) {
+        if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, Builder.class, lombok.experimental.Builder.class)) {
           return parentClass.findInnerClassByName(shortName, false);
         } else {
           final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(parentClass);
           for (PsiMethod psiMethod : psiMethods) {
-            if (PsiAnnotationUtil.isAnnotatedWith(psiMethod, Builder.class, lombok.experimental.Builder.class)) {
+            if (PsiAnnotationSearchUtil.isAnnotatedWith(psiMethod, Builder.class, lombok.experimental.Builder.class)) {
               return parentClass.findInnerClassByName(shortName, false);
             }
           }

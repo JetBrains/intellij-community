@@ -12,7 +12,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +49,11 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       result = new ArrayList<PsiElement>();
 
       final PsiClass psiParentClass = (PsiClass) parentElement;
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiParentClass, getSupportedAnnotationClass());
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClass());
       if (null == psiAnnotation) {
         final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(psiParentClass);
         for (PsiMethod psiMethod : psiMethods) {
-          psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotationClass());
+          psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClass());
           if (null != psiAnnotation) {
             processMethodAnnotation(result, psiMethod, psiAnnotation, psiClass, psiParentClass);
           }

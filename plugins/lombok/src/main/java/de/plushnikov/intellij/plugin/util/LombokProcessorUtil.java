@@ -23,6 +23,13 @@ import java.util.Map;
  */
 public class LombokProcessorUtil {
 
+  private static final Map<String, AccessLevel> ACCESS_LEVEL_MAP = new HashMap<String, AccessLevel>() {{
+    put(PsiModifier.PUBLIC, AccessLevel.PUBLIC);
+    put(PsiModifier.PACKAGE_LOCAL, AccessLevel.PACKAGE);
+    put(PsiModifier.PROTECTED, AccessLevel.PROTECTED);
+    put(PsiModifier.PRIVATE, AccessLevel.PRIVATE);
+  }};
+
   @Nullable
   public static String getMethodModifier(@NotNull PsiAnnotation psiAnnotation) {
     return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "value"));
@@ -32,7 +39,7 @@ public class LombokProcessorUtil {
   public static String getAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
     return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "access"));
   }
-  
+
   @NotNull
   public static Collection<String> getOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
     PsiAnnotationMemberValue onXValue = psiAnnotation.findAttributeValue(parameterName);
@@ -43,14 +50,18 @@ public class LombokProcessorUtil {
     Collection<String> annotationStrings = new ArrayList<String>();
     for (PsiAnnotation annotation : annotations) {
       PsiAnnotationParameterList params = annotation.getParameterList();
-      annotationStrings.add(PsiAnnotationUtil.getSimpleNameOf(annotation) + params.getText());
+      annotationStrings.add(PsiAnnotationSearchUtil.getSimpleNameOf(annotation) + params.getText());
     }
     return annotationStrings;
   }
 
   @Nullable
   private static String convertAccessLevelToJavaModifier(String value) {
-    if (null == value || value.isEmpty() || "PUBLIC".equals(value)) {
+    if (null == value || value.isEmpty()) {
+      return PsiModifier.PUBLIC;
+    }
+
+    if ("PUBLIC".equals(value)) {
       return PsiModifier.PUBLIC;
     }
     if ("MODULE".equals(value)) {
@@ -67,9 +78,8 @@ public class LombokProcessorUtil {
     }
     if ("NONE".equals(value)) {
       return null;
-    } else {
-      return null;
     }
+    return null;
   }
 
   @NotNull
@@ -79,7 +89,7 @@ public class LombokProcessorUtil {
     if (null != modifierList) {
       final String accessModifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(modifierList));
       if (null != accessModifier) {
-        final AccessLevel accessLevel = convertModifierToAccessLevel(accessModifier);
+        final AccessLevel accessLevel = ACCESS_LEVEL_MAP.get(accessModifier);
         if (null != accessLevel && !AccessLevel.PUBLIC.equals(accessLevel)) {
           value = AccessLevel.class.getName() + "." + accessLevel;
         }
@@ -87,15 +97,5 @@ public class LombokProcessorUtil {
     }
 
     return PsiAnnotationUtil.createPsiAnnotation(psiModifierListOwner, annotationClass, value);
-  }
-
-  @Nullable
-  public static AccessLevel convertModifierToAccessLevel(String psiModifier) {
-    Map<String, AccessLevel> map = new HashMap<String, AccessLevel>();
-    map.put(PsiModifier.PUBLIC, AccessLevel.PUBLIC);
-    map.put(PsiModifier.PACKAGE_LOCAL, AccessLevel.PACKAGE);
-    map.put(PsiModifier.PROTECTED, AccessLevel.PROTECTED);
-    map.put(PsiModifier.PRIVATE, AccessLevel.PRIVATE);
-    return map.get(psiModifier);
   }
 }

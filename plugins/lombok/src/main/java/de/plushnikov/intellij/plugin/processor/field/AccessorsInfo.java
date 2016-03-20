@@ -6,6 +6,7 @@ import com.intellij.psi.PsiField;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,6 @@ import java.util.Collection;
  * @author Plushnikov Michail
  */
 public class AccessorsInfo {
-  private static final String ACCESSORS_ANNOTATION_NAME = Accessors.class.getName();
   public static final AccessorsInfo EMPTY = new AccessorsInfo(false, false, false);
 
   private final boolean fluent;
@@ -37,7 +37,7 @@ public class AccessorsInfo {
   }
 
   public static AccessorsInfo build(@NotNull PsiField psiField) {
-    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationUtil.findAnnotation(psiField, ACCESSORS_ANNOTATION_NAME);
+    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Accessors.class);
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation, containingClass);
@@ -49,7 +49,7 @@ public class AccessorsInfo {
   public static AccessorsInfo build(@Nullable PsiClass psiClass) {
     PsiClass containingClass = psiClass;
     while (null != containingClass) {
-      final PsiAnnotation accessorsClassAnnotation = PsiAnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
+      final PsiAnnotation accessorsClassAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, Accessors.class);
       if (null != accessorsClassAnnotation) {
         return buildFromAnnotation(accessorsClassAnnotation, containingClass);
       }

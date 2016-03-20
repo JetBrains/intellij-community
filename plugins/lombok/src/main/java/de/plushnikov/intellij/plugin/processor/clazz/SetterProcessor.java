@@ -13,7 +13,7 @@ import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.Setter;
@@ -90,7 +90,7 @@ public class SetterProcessor extends AbstractClassProcessor {
         //Skip static fields.
         createSetter &= !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip fields having Setter annotation already
-        createSetter &= PsiAnnotationUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClass());
+        createSetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClass());
         //Skip fields that start with $
         createSetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists

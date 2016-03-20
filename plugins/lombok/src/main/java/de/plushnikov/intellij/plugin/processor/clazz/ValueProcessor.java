@@ -11,6 +11,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.AllArgsConstructor;
@@ -59,7 +60,7 @@ public class ValueProcessor extends AbstractClassProcessor {
   }
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
-    if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
       if (PsiClassUtil.hasSuperClass(psiClass)) {
         builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
                 "even though this class does not extend java.lang.Object." +
@@ -87,17 +88,17 @@ public class ValueProcessor extends AbstractClassProcessor {
     }
     */
 
-    if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
       target.addAll(getterProcessor.createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
-    if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
       target.addAll(equalsAndHashCodeProcessor.createEqualAndHashCode(psiClass, psiAnnotation));
     }
-    if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
       target.addAll(toStringProcessor.createToStringMethod(psiClass, psiAnnotation));
     }
     // create required constructor only if there are no other constructor annotations
-    if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
         lombok.experimental.Builder.class, lombok.Builder.class)) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);

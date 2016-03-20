@@ -17,6 +17,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -124,7 +125,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   public PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
-    final PsiAnnotation setterAnnotation = PsiAnnotationUtil.findAnnotation(psiField, Setter.class);
+    final PsiAnnotation setterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Setter.class);
 
     final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
 

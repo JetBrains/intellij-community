@@ -10,6 +10,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
-  private static final String ANNOTATION_FQN = SneakyThrows.class.getName();
 
   private static final String JAVA_LANG_THROWABLE = "java.lang.Throwable";
 
@@ -31,8 +31,8 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
     return false;
   }
 
-  public boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, PsiClassType exceptionClassType) {
-    final PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiModifierListOwner, ANNOTATION_FQN);
+  private boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, PsiClassType exceptionClassType) {
+    final PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiModifierListOwner, SneakyThrows.class);
     if (psiAnnotation == null) {
       return false;
     }

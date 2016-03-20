@@ -30,6 +30,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -109,7 +110,7 @@ public class BuilderHandler {
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
     final Collection<PsiField> builderFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet(), accessorsInfo);
     for (PsiVariable builderVariable : builderFields) {
-      final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(builderVariable, Singular.class);
+      final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(builderVariable, Singular.class);
       if (null != singularAnnotation) {
         final String qualifiedName = PsiTypeUtil.getQualifiedName(builderVariable.getType());
         if (SingularHandlerFactory.isInvalidSingularType(qualifiedName)) {
@@ -140,7 +141,7 @@ public class BuilderHandler {
   private boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     for (PsiClass psiInnerClass : PsiClassUtil.collectInnerClassesIntern(psiClass)) {
       if (builderClassName.equals(psiInnerClass.getName())) {
-        if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiInnerClass, INVALID_ON_BUILDERS)) {
+        if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(psiInnerClass, INVALID_ON_BUILDERS)) {
           builder.addError("Lombok annotations are not allowed on builder class.");
           return false;
         }
@@ -337,7 +338,7 @@ public class BuilderHandler {
     for (PsiVariable psiVariable : psiVariables) {
       final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
 
-      final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
+      final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, Singular.class);
       final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation, isShouldGenerateFullBodyBlock());
 
       // skip methods already defined in builder class
@@ -434,7 +435,7 @@ public class BuilderHandler {
   public Collection<PsiField> generateFields(@NotNull Collection<? extends PsiVariable> psiVariables, @NotNull PsiClass psiBuilderClass, @NotNull AccessorsInfo accessorsInfo) {
     List<PsiField> fields = new ArrayList<PsiField>();
     for (PsiVariable psiVariable : psiVariables) {
-      final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
+      final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, Singular.class);
       BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation, isShouldGenerateFullBodyBlock());
       handler.addBuilderField(fields, psiVariable, psiBuilderClass, accessorsInfo);
     }

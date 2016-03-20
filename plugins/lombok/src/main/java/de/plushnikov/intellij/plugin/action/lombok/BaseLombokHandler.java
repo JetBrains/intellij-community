@@ -21,6 +21,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +81,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
   }
 
   private boolean isNotAnnotatedWithOrSameAccessLevelAs(PsiClass psiClass, PsiMethod firstPropertyMethod, Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation presentAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, annotationClass);
+    final PsiAnnotation presentAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, annotationClass);
     if (null != presentAnnotation) {
 
       final String presentAccessModifier = LombokProcessorUtil.getMethodModifier(presentAnnotation);
@@ -115,7 +116,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
 
   private void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull PsiAnnotation newPsiAnnotation,
                              @NotNull Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation presentAnnotation = PsiAnnotationUtil.findAnnotation(targetElement, annotationClass);
+    final PsiAnnotation presentAnnotation = PsiAnnotationSearchUtil.findAnnotation(targetElement, annotationClass);
 
     final Project project = targetElement.getProject();
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
@@ -133,7 +134,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
   }
 
   protected void removeDefaultAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(targetElement, annotationClass);
+    final PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(targetElement, annotationClass);
     if (null != psiAnnotation) {
       boolean hasOnlyDefaultValues = true;
 

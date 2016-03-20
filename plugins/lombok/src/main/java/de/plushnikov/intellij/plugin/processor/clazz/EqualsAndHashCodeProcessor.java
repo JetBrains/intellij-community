@@ -20,6 +20,7 @@ import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -129,7 +130,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
 
     final boolean isFinal = psiClass.hasModifierProperty(PsiModifier.FINAL) ||
-        (PsiAnnotationUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class) && PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NonFinal.class));
+        (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class) && PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NonFinal.class));
     return !isFinal;
   }
 
