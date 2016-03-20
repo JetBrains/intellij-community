@@ -17,7 +17,7 @@ import java.util.List;
  */
 public interface Processor {
   @NotNull
-  Class<? extends Annotation> getSupportedAnnotationClass();
+  Class<? extends Annotation>[] getSupportedAnnotationClasses();
 
   @NotNull
   Class<? extends PsiElement> getSupportedClass();

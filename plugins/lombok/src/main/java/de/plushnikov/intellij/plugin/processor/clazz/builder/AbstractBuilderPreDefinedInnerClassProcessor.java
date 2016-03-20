@@ -27,10 +27,10 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
 
   protected final BuilderHandler builderHandler;
 
-  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass,
-                                               @NotNull Class<? extends PsiElement> supportedClass,
-                                               @NotNull BuilderHandler builderHandler) {
-    super(supportedAnnotationClass, supportedClass);
+  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull BuilderHandler builderHandler, @NotNull Class<? extends PsiElement> supportedClass,
+                                               @NotNull Class<? extends Annotation> supportedAnnotationClass,
+                                               @NotNull Class<? extends Annotation>... equivalentAnnotationClasses) {
+    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
     this.builderHandler = builderHandler;
   }
 
@@ -49,11 +49,11 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       result = new ArrayList<PsiElement>();
 
       final PsiClass psiParentClass = (PsiClass) parentElement;
-      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClass());
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClasses());
       if (null == psiAnnotation) {
         final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(psiParentClass);
         for (PsiMethod psiMethod : psiMethods) {
-          psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClass());
+          psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClasses());
           if (null != psiAnnotation) {
             processMethodAnnotation(result, psiMethod, psiAnnotation, psiClass, psiParentClass);
           }

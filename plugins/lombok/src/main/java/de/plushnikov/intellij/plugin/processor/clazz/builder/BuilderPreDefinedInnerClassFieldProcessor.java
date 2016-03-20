@@ -13,7 +13,6 @@ import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,12 +23,9 @@ import java.util.List;
  */
 public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
+  @SuppressWarnings({"deprecation", "unchecked"})
   public BuilderPreDefinedInnerClassFieldProcessor(@NotNull BuilderHandler builderHandler) {
-    this(Builder.class, builderHandler);
-  }
-
-  protected BuilderPreDefinedInnerClassFieldProcessor(@NotNull Class<? extends Annotation> builderClass, @NotNull BuilderHandler builderHandler) {
-    super(builderClass, PsiField.class, builderHandler);
+    super(builderHandler, PsiField.class, Builder.class, lombok.experimental.Builder.class);
   }
 
   @Override

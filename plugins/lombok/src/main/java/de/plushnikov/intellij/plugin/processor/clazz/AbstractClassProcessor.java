@@ -35,8 +35,10 @@ import java.util.List;
  */
 public abstract class AbstractClassProcessor extends AbstractProcessor implements ClassProcessor {
 
-  protected AbstractClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
+  protected AbstractClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
+                                   @NotNull Class<? extends Annotation> supportedAnnotationClass,
+                                   @NotNull Class<? extends Annotation>... equivalentAnnotationClasses) {
+    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
   }
 
   @NotNull
@@ -44,7 +46,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = Collections.emptyList();
 
-    PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClass());
+    PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation) {
       if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
         result = new ArrayList<PsiElement>();
@@ -57,7 +59,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   @NotNull
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     Collection<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
-    PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClass());
+    PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation) {
       result.add(psiAnnotation);
     }

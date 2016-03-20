@@ -23,7 +23,6 @@ import lombok.ToString;
 import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -37,15 +36,11 @@ public class ValueProcessor extends AbstractClassProcessor {
   private final ToStringProcessor toStringProcessor;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
 
+  @SuppressWarnings({"deprecation", "unchecked"})
   public ValueProcessor(GetterProcessor getterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
                         ToStringProcessor toStringProcessor, AllArgsConstructorProcessor allArgsConstructorProcessor) {
-    this(Value.class, getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor);
-  }
+    super(PsiMethod.class, Value.class, lombok.experimental.Value.class);
 
-  ValueProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass,
-                 GetterProcessor getterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
-                 ToStringProcessor toStringProcessor, AllArgsConstructorProcessor allArgsConstructorProcessor) {
-    super(supportedAnnotationClass, PsiMethod.class);
     this.getterProcessor = getterProcessor;
     this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
     this.toStringProcessor = toStringProcessor;

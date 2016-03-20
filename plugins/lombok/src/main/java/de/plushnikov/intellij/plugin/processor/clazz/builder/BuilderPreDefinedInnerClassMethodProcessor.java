@@ -13,7 +13,6 @@ import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -25,12 +24,9 @@ import java.util.List;
  */
 public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
+  @SuppressWarnings({"deprecation", "unchecked"})
   public BuilderPreDefinedInnerClassMethodProcessor(@NotNull BuilderHandler builderHandler) {
-    this(Builder.class, builderHandler);
-  }
-
-  BuilderPreDefinedInnerClassMethodProcessor(@NotNull Class<? extends Annotation> builderClass, @NotNull BuilderHandler builderHandler) {
-    super(builderClass, PsiMethod.class, builderHandler);
+    super(builderHandler, PsiMethod.class, Builder.class, lombok.experimental.Builder.class);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

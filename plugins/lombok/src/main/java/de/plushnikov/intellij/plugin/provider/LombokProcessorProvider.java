@@ -54,10 +54,11 @@ public class LombokProcessorProvider {
     for (Processor processor : getLombokProcessors()) {
       if (processor.isEnabled(myPropertiesComponent)) {
 
-        Class<? extends Annotation> annotationClass = processor.getSupportedAnnotationClass();
-
-        putProcessor(lombokProcessors, annotationClass.getName(), processor);
-        putProcessor(lombokProcessors, annotationClass.getSimpleName(), processor);
+        Class<? extends Annotation>[] annotationClasses = processor.getSupportedAnnotationClasses();
+        for (Class<? extends Annotation> annotationClass : annotationClasses) {
+          putProcessor(lombokProcessors, annotationClass.getName(), processor);
+          putProcessor(lombokProcessors, annotationClass.getSimpleName(), processor);
+        }
 
         putProcessor(lombokTypeProcessors, processor.getSupportedClass(), processor);
       }
@@ -74,7 +75,7 @@ public class LombokProcessorProvider {
   private <K, V> void putProcessor(final Map<K, Collection<V>> map, final K key, final V value) {
     Collection<V> valueList = map.get(key);
     if (null == valueList) {
-      valueList = new ArrayList<V>();
+      valueList = new HashSet<V>();
       map.put(key, valueList);
     }
     valueList.add(value);

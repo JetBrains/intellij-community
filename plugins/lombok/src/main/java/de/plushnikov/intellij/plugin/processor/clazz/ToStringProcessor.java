@@ -39,7 +39,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   public static final String METHOD_NAME = "toString";
 
   public ToStringProcessor() {
-    super(ToString.class, PsiMethod.class);
+    super(PsiMethod.class, ToString.class);
   }
 
   @Override

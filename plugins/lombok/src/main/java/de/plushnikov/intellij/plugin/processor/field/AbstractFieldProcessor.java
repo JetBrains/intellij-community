@@ -30,8 +30,8 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractFieldProcessor extends AbstractProcessor implements FieldProcessor {
 
-  AbstractFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
+  AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation>... equivalentAnnotationClasses) {
+    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
   }
 
   @NotNull
@@ -39,7 +39,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClass());
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
       if (null != psiAnnotation) {
         if (validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
           generatePsiElements(psiField, psiAnnotation, result);
@@ -53,7 +53,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClass());
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
       if (null != psiAnnotation) {
         result.add(psiAnnotation);
       }

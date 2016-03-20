@@ -50,7 +50,7 @@ import java.util.List;
 public abstract class AbstractConstructorClassProcessor extends AbstractClassProcessor {
 
   AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
+    super(supportedClass, supportedAnnotationClass);
   }
 
   @Override

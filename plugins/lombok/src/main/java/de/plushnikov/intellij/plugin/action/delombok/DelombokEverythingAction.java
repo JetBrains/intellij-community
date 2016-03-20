@@ -8,10 +8,6 @@ import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderClassProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalClassProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassFieldProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassMethodProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor;
@@ -31,8 +27,6 @@ import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor;
-import de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalClassMethodProcessor;
-import de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 
@@ -73,13 +67,8 @@ public class DelombokEverythingAction extends BaseDelombokAction {
 
         new BuilderPreDefinedInnerClassFieldProcessor(builderHandler),
         new BuilderPreDefinedInnerClassMethodProcessor(builderHandler),
-        new BuilderExperimentalPreDefinedInnerClassFieldProcessor(builderHandler),
-        new BuilderExperimentalPreDefinedInnerClassMethodProcessor(builderHandler),
         new BuilderClassProcessor(builderHandler), new BuilderClassMethodProcessor(builderHandler),
-        new BuilderMethodProcessor(builderHandler), new BuilderProcessor(allArgsConstructorProcessor, builderHandler),
-        new BuilderExperimentalClassProcessor(builderHandler), new BuilderExperimentalClassMethodProcessor(builderHandler),
-        new BuilderExperimentalMethodProcessor(builderHandler), new BuilderExperimentalProcessor(allArgsConstructorProcessor, builderHandler)
-    );
+        new BuilderMethodProcessor(builderHandler), new BuilderProcessor(allArgsConstructorProcessor, builderHandler));
   }
 
 }

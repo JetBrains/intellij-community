@@ -36,7 +36,7 @@ public class GetterProcessor extends AbstractClassProcessor {
   private final GetterFieldProcessor fieldProcessor;
 
   public GetterProcessor(GetterFieldProcessor fieldProcessor) {
-    super(Getter.class, PsiMethod.class);
+    super(PsiMethod.class, Getter.class);
     this.fieldProcessor = fieldProcessor;
   }
 
@@ -96,7 +96,7 @@ public class GetterProcessor extends AbstractClassProcessor {
         //Skip static fields.
         createGetter = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip fields having Getter annotation already
-        createGetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClass());
+        createGetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
         //Skip fields that start with $
         createGetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name and arguments count already exists

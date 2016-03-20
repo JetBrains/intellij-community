@@ -8,6 +8,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ArrayUtil;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
@@ -32,9 +33,9 @@ import java.util.List;
  */
 public abstract class AbstractProcessor implements Processor {
   /**
-   * Anntotation class this processor supports
+   * Anntotation classes this processor supports
    */
-  private final Class<? extends Annotation> supportedAnnotationClass;
+  private final Class<? extends Annotation>[] supportedAnnotationClasses;
   /**
    * Kind of output elements this processor supports
    */
@@ -43,18 +44,20 @@ public abstract class AbstractProcessor implements Processor {
   /**
    * Constructor for all Lombok-Processors
    *
-   * @param supportedAnnotationClass annotation this processor supports
-   * @param supportedClass           kind of output elements this processor supports
+   * @param supportedClass              kind of output elements this processor supports
+   * @param supportedAnnotationClass    annotation this processor supports
+   * @param equivalentAnnotationClasses any other aquivalent annotations
    */
-  protected AbstractProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    this.supportedAnnotationClass = supportedAnnotationClass;
+  protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
+                              @NotNull Class<? extends Annotation> supportedAnnotationClass,
+                              @NotNull Class<? extends Annotation>... equivalentAnnotationClasses) {
     this.supportedClass = supportedClass;
+    this.supportedAnnotationClasses = ArrayUtil.prepend(supportedAnnotationClass, equivalentAnnotationClasses);
   }
 
   @NotNull
-  @Override
-  public final Class<? extends Annotation> getSupportedAnnotationClass() {
-    return supportedAnnotationClass;
+  public final Class<? extends Annotation>[] getSupportedAnnotationClasses() {
+    return supportedAnnotationClasses;
   }
 
   @NotNull

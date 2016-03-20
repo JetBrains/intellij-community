@@ -47,7 +47,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
 
   public EqualsAndHashCodeProcessor() {
-    super(EqualsAndHashCode.class, PsiMethod.class);
+    super(PsiMethod.class, EqualsAndHashCode.class);
   }
 
   @Override

@@ -5,5 +5,5 @@ import de.plushnikov.intellij.plugin.processor.Processor;
 /**
  * @author Plushnikov Michail
  */
-public interface FieldProcessor extends Processor {
+interface FieldProcessor extends Processor {
 }

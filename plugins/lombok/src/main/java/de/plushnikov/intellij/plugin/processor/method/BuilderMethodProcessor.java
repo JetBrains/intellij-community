@@ -13,7 +13,6 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.List;
 
 /**
@@ -27,12 +26,9 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   private final BuilderHandler builderHandler;
 
+  @SuppressWarnings({"deprecation", "unchecked"})
   public BuilderMethodProcessor(@NotNull BuilderHandler builderHandler) {
-    this(Builder.class, builderHandler);
-  }
-
-  BuilderMethodProcessor(@NotNull Class<? extends Annotation> builderClass, @NotNull BuilderHandler builderHandler) {
-    super(builderClass, PsiMethod.class);
+    super(PsiMethod.class, Builder.class, lombok.experimental.Builder.class);
     this.builderHandler = builderHandler;
   }
 

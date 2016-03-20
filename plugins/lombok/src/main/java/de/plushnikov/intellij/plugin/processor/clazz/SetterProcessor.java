@@ -34,7 +34,7 @@ public class SetterProcessor extends AbstractClassProcessor {
   private final SetterFieldProcessor fieldProcessor;
 
   public SetterProcessor(SetterFieldProcessor fieldProcessor) {
-    super(Setter.class, PsiMethod.class);
+    super(PsiMethod.class, Setter.class);
     this.fieldProcessor = fieldProcessor;
   }
 
@@ -90,7 +90,7 @@ public class SetterProcessor extends AbstractClassProcessor {
         //Skip static fields.
         createSetter &= !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip fields having Setter annotation already
-        createSetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClass());
+        createSetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
         //Skip fields that start with $
         createSetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists

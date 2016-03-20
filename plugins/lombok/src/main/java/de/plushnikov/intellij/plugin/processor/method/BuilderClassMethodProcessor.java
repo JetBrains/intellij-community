@@ -11,7 +11,6 @@ import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.List;
 
 /**
@@ -25,12 +24,9 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   private final BuilderHandler builderHandler;
 
+  @SuppressWarnings({"deprecation", "unchecked"})
   public BuilderClassMethodProcessor(@NotNull BuilderHandler builderHandler) {
-    this(Builder.class, builderHandler);
-  }
-
-  protected BuilderClassMethodProcessor(@NotNull Class<? extends Annotation> builderClass, @NotNull BuilderHandler builderHandler) {
-    super(builderClass, PsiClass.class);
+    super(PsiClass.class, Builder.class, lombok.experimental.Builder.class);
     this.builderHandler = builderHandler;
   }
 

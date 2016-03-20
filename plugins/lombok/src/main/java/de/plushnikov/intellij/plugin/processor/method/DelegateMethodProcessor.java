@@ -10,20 +10,15 @@ import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.List;
 
 public class DelegateMethodProcessor extends AbstractMethodProcessor {
 
   private final DelegateHandler handler;
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "unchecked"})
   public DelegateMethodProcessor(@NotNull DelegateHandler delegateHandler) {
-    this(lombok.Delegate.class, delegateHandler);
-  }
-
-  DelegateMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull DelegateHandler delegateHandler) {
-    super(supportedAnnotationClass, PsiMethod.class);
+    super(PsiMethod.class, lombok.Delegate.class, lombok.experimental.Delegate.class);
     handler = delegateHandler;
   }
 

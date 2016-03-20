@@ -49,7 +49,7 @@ public class ValProcessor extends AbstractProcessor {
   };
 
   public ValProcessor() {
-    super(val.class, PsiElement.class);
+    super(PsiElement.class, val.class);
   }
 
   public boolean isEnabled(@NotNull Project project) {

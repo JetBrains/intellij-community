@@ -39,7 +39,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
 
   public WitherFieldProcessor(RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
-    super(Wither.class, PsiMethod.class);
+    super(PsiMethod.class, Wither.class);
     this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
   }
 

@@ -36,7 +36,7 @@ import java.util.List;
 public class SetterFieldProcessor extends AbstractFieldProcessor {
 
   public SetterFieldProcessor() {
-    super(Setter.class, PsiMethod.class);
+    super(PsiMethod.class, Setter.class);
   }
 
   @Override

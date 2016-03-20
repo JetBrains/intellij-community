@@ -20,7 +20,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -36,14 +35,9 @@ public class BuilderProcessor extends AbstractClassProcessor {
   private final BuilderHandler builderHandler;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
 
+  @SuppressWarnings({"deprecation", "unchecked"})
   public BuilderProcessor(@NotNull AllArgsConstructorProcessor allArgsConstructorProcessor, @NotNull BuilderHandler builderHandler) {
-    this(Builder.class, allArgsConstructorProcessor, builderHandler);
-  }
-
-  BuilderProcessor(@NotNull Class<? extends Annotation> builderClass,
-                   @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
-                   @NotNull BuilderHandler builderHandler) {
-    super(builderClass, PsiMethod.class);
+    super(PsiMethod.class, Builder.class, lombok.experimental.Builder.class);
     this.builderHandler = builderHandler;
     this.allArgsConstructorProcessor = allArgsConstructorProcessor;
   }

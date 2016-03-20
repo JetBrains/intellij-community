@@ -43,7 +43,7 @@ public class LombokLoggerHandler extends BaseLombokHandler {
       processor.doRun();
     }
 
-    addAnnotation(psiClass, logProcessor.getSupportedAnnotationClass());
+    addAnnotation(psiClass, logProcessor.getSupportedAnnotationClasses()[0]);
 
     psiField.delete();
   }

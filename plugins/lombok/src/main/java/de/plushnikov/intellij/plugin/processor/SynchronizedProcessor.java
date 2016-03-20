@@ -29,7 +29,7 @@ import java.util.Collections;
 public class SynchronizedProcessor extends AbstractProcessor {
 
   public SynchronizedProcessor() {
-    super(Synchronized.class, PsiElement.class);
+    super(PsiElement.class, Synchronized.class);
   }
 
   @NotNull

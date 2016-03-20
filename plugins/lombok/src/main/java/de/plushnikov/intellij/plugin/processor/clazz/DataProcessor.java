@@ -40,7 +40,7 @@ public class DataProcessor extends AbstractClassProcessor {
 
   public DataProcessor(GetterProcessor getterProcessor, SetterProcessor setterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
                        ToStringProcessor toStringProcessor, RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
-    super(Data.class, PsiMethod.class);
+    super(PsiMethod.class, Data.class);
     this.getterProcessor = getterProcessor;
     this.setterProcessor = setterProcessor;
     this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
