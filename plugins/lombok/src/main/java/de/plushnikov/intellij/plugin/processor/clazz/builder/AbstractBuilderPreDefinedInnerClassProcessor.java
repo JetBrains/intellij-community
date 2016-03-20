@@ -27,9 +27,11 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
 
   protected final BuilderHandler builderHandler;
 
-  public AbstractBuilderPreDefinedInnerClassProcessor(Class<? extends Annotation> supportedAnnotationClass, Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass, true);
-    builderHandler = new BuilderHandler(true);
+  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass,
+                                               @NotNull Class<? extends PsiElement> supportedClass,
+                                               @NotNull BuilderHandler builderHandler) {
+    super(supportedAnnotationClass, supportedClass);
+    this.builderHandler = builderHandler;
   }
 
   @Override
@@ -47,11 +49,11 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       result = new ArrayList<PsiElement>();
 
       final PsiClass psiParentClass = (PsiClass) parentElement;
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiParentClass, getSupportedAnnotation());
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiParentClass, getSupportedAnnotationClass());
       if (null == psiAnnotation) {
         final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(psiParentClass);
         for (PsiMethod psiMethod : psiMethods) {
-          psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotation());
+          psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotationClass());
           if (null != psiAnnotation) {
             processMethodAnnotation(result, psiMethod, psiAnnotation, psiClass, psiParentClass);
           }
@@ -64,7 +66,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     return result;
   }
 
-  protected void processMethodAnnotation(List<? super PsiElement> result, PsiMethod psiParentMethod, PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, PsiClass psiParentClass) {
+  private void processMethodAnnotation(List<? super PsiElement> result, PsiMethod psiParentMethod, PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, PsiClass psiParentClass) {
     final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentClass, psiParentMethod);
     final String builderClassName;
 

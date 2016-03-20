@@ -21,7 +21,6 @@ import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,11 +33,7 @@ import java.util.List;
 public class GetterFieldProcessor extends AbstractFieldProcessor {
 
   public GetterFieldProcessor() {
-    super(Getter.class, PsiMethod.class, true);
-  }
-
-  protected GetterFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass, true);
+    super(Getter.class, PsiMethod.class);
   }
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -85,11 +80,11 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  protected boolean isLazyGetter(@NotNull PsiAnnotation psiAnnotation) {
+  private boolean isLazyGetter(@NotNull PsiAnnotation psiAnnotation) {
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "lazy", false);
   }
 
-  protected boolean validateExistingMethods(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  private boolean validateExistingMethods(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
@@ -111,7 +106,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  protected boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  private boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (!AccessorsInfo.build(psiField).prefixDefinedAndStartsWith(psiField.getName())) {
       builder.addWarning("Not generating getter for this field: It does not fit your @Accessors prefix list.");

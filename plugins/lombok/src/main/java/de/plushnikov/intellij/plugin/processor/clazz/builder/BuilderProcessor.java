@@ -36,14 +36,16 @@ public class BuilderProcessor extends AbstractClassProcessor {
   private final BuilderHandler builderHandler;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
 
-  public BuilderProcessor() {
-    this(Builder.class);
+  public BuilderProcessor(@NotNull AllArgsConstructorProcessor allArgsConstructorProcessor, @NotNull BuilderHandler builderHandler) {
+    this(Builder.class, allArgsConstructorProcessor, builderHandler);
   }
 
-  protected BuilderProcessor(@NotNull Class<? extends Annotation> builderClass) {
-    super(builderClass, PsiMethod.class, true);
-    builderHandler = new BuilderHandler(true);
-    allArgsConstructorProcessor = new AllArgsConstructorProcessor();
+  BuilderProcessor(@NotNull Class<? extends Annotation> builderClass,
+                   @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
+                   @NotNull BuilderHandler builderHandler) {
+    super(builderClass, PsiMethod.class);
+    this.builderHandler = builderHandler;
+    this.allArgsConstructorProcessor = allArgsConstructorProcessor;
   }
 
   @Override

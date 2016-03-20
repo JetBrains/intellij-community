@@ -19,7 +19,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -35,8 +34,8 @@ import java.util.List;
  */
 public abstract class AbstractClassProcessor extends AbstractProcessor implements ClassProcessor {
 
-  protected AbstractClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass, boolean shouldGenerateFullBodyBlock) {
-    super(supportedAnnotationClass, supportedClass, shouldGenerateFullBodyBlock);
+  protected AbstractClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   @NotNull
@@ -44,7 +43,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = Collections.emptyList();
 
-    PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotation());
+    PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotationClass());
     if (null != psiAnnotation) {
       if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
         result = new ArrayList<PsiElement>();
@@ -57,7 +56,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   @NotNull
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     Collection<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
-    PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotation());
+    PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotationClass());
     if (null != psiAnnotation) {
       result.add(psiAnnotation);
     }
@@ -187,8 +186,8 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
   }
 
-  protected Collection<String> makeSet(@Nullable Collection<String> exclude) {
-    if (null == exclude || exclude.isEmpty()) {
+  private Collection<String> makeSet(@NotNull Collection<String> exclude) {
+    if (exclude.isEmpty()) {
       return Collections.emptySet();
     }
     return new HashSet<String>(exclude);

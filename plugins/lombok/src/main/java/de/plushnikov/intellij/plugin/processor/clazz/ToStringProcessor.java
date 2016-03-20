@@ -39,7 +39,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   public static final String METHOD_NAME = "toString";
 
   public ToStringProcessor() {
-    super(ToString.class, PsiMethod.class, true);
+    super(ToString.class, PsiMethod.class);
   }
 
   @Override
@@ -63,7 +63,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError("@ToString is only supported on a class or enum type");
@@ -72,7 +72,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
 
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
@@ -89,7 +89,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   }
 
   @NotNull
-  public Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
       return Collections.emptyList();

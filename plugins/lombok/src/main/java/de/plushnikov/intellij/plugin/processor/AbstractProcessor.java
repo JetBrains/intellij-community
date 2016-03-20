@@ -1,12 +1,10 @@
 package de.plushnikov.intellij.plugin.processor;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
@@ -33,10 +31,6 @@ import java.util.List;
  */
 public abstract class AbstractProcessor implements Processor {
   /**
-   * Anntotation qualified name this processor supports
-   */
-  private final String supportedAnnotation;
-  /**
    * Anntotation class this processor supports
    */
   private final Class<? extends Annotation> supportedAnnotationClass;
@@ -45,26 +39,15 @@ public abstract class AbstractProcessor implements Processor {
    */
   private final Class<? extends PsiElement> supportedClass;
 
-  private final boolean shouldGenerateFullBodyBlock;
-
   /**
    * Constructor for all Lombok-Processors
    *
-   * @param supportedAnnotationClass    annotation this processor supports
-   * @param supportedClass              kind of output elements this processor supports
-   * @param shouldGenerateFullBodyBlock should full code block be generated for all generated methods
+   * @param supportedAnnotationClass annotation this processor supports
+   * @param supportedClass           kind of output elements this processor supports
    */
-  protected AbstractProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass, boolean shouldGenerateFullBodyBlock) {
+  protected AbstractProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
     this.supportedAnnotationClass = supportedAnnotationClass;
-    this.supportedAnnotation = supportedAnnotationClass.getName();
     this.supportedClass = supportedClass;
-    this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
-  }
-
-  @NotNull
-  @Override
-  public final String getSupportedAnnotation() {
-    return supportedAnnotation;
   }
 
   @NotNull
@@ -79,11 +62,6 @@ public abstract class AbstractProcessor implements Processor {
     return supportedClass;
   }
 
-  public boolean acceptAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull Class<? extends PsiElement> type) {
-    final String annotationName = StringUtil.notNullize(psiAnnotation.getQualifiedName()).trim();
-    return supportedAnnotation.equals(annotationName) && canProduce(type);
-  }
-
   @Override
   public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
     return true;
@@ -91,12 +69,7 @@ public abstract class AbstractProcessor implements Processor {
 
   @Override
   public boolean isShouldGenerateFullBodyBlock() {
-    return shouldGenerateFullBodyBlock;
-  }
-
-  @Override
-  public boolean canProduce(@NotNull Class<? extends PsiElement> type) {
-    return type.isAssignableFrom(supportedClass);
+    return ShouldGenerateFullCodeBlock.getInstance().isStateActive();
   }
 
   @NotNull
@@ -155,7 +128,4 @@ public abstract class AbstractProcessor implements Processor {
     return LombokPsiElementUsage.NONE;
   }
 
-  public LombokPsiElementUsage checkMethodUsage(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
-    return LombokPsiElementUsage.NONE;
-  }
 }

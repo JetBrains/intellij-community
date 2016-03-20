@@ -23,13 +23,13 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   private final DelegateHandler handler;
 
   @SuppressWarnings("deprecation")
-  public DelegateFieldProcessor() {
-    this(lombok.Delegate.class);
+  public DelegateFieldProcessor(DelegateHandler delegateHandler) {
+    this(lombok.Delegate.class, delegateHandler);
   }
 
-  protected DelegateFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedAnnotationClass, PsiMethod.class, true);
-    handler = new DelegateHandler(true);
+  DelegateFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, DelegateHandler delegateHandler) {
+    super(supportedAnnotationClass, PsiMethod.class);
+    handler = delegateHandler;
   }
 
   @Override

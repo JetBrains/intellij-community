@@ -23,6 +23,7 @@ import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
+import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,10 +80,17 @@ public class BaseDelombokHandler {
     UndoUtil.markPsiFileForUndo(psiFile);
   }
 
-  protected Collection<PsiAnnotation> processClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AbstractProcessor lombokProcessor) {
+  private Collection<PsiAnnotation> processClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AbstractProcessor lombokProcessor) {
     Collection<PsiAnnotation> psiAnnotations = lombokProcessor.collectProcessedAnnotations(psiClass);
 
-    List<? super PsiElement> psiElements = lombokProcessor.process(psiClass);
+    final List<? super PsiElement> psiElements;
+
+    ShouldGenerateFullCodeBlock.getInstance().activate();
+    try {
+      psiElements = lombokProcessor.process(psiClass);
+    } finally {
+      ShouldGenerateFullCodeBlock.getInstance().deactivate();
+    }
 
     ProjectSettings.setLombokEnabledInProject(project, false);
     try {

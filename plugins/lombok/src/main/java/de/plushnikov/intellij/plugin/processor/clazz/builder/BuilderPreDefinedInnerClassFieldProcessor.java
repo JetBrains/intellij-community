@@ -24,15 +24,12 @@ import java.util.List;
  */
 public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
-  private final BuilderHandler builderHandler;
-
-  public BuilderPreDefinedInnerClassFieldProcessor() {
-    this(Builder.class);
+  public BuilderPreDefinedInnerClassFieldProcessor(@NotNull BuilderHandler builderHandler) {
+    this(Builder.class, builderHandler);
   }
 
-  protected BuilderPreDefinedInnerClassFieldProcessor(@NotNull Class<? extends Annotation> builderClass) {
-    super(builderClass, PsiField.class);
-    builderHandler = new BuilderHandler(true);
+  protected BuilderPreDefinedInnerClassFieldProcessor(@NotNull Class<? extends Annotation> builderClass, @NotNull BuilderHandler builderHandler) {
+    super(builderClass, PsiField.class, builderHandler);
   }
 
   @Override

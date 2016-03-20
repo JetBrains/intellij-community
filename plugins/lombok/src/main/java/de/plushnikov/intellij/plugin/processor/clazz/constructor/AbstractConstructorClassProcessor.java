@@ -48,8 +48,8 @@ import java.util.List;
  */
 public abstract class AbstractConstructorClassProcessor extends AbstractClassProcessor {
 
-  protected AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass, true);
+  AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   @Override
@@ -73,12 +73,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return result;
   }
 
-  protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String visibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     return null != visibility;
   }
 
-  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError("Annotation is only supported on a class or enum type");
@@ -87,7 +87,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return result;
   }
 
-  protected boolean validateBaseClassConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateBaseClassConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (psiClass instanceof PsiAnonymousClass || psiClass.isEnum()) {
       return true;
     }
@@ -206,7 +206,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return result;
   }
 
-  protected boolean isFieldFinal(@NotNull PsiField psiField, @NotNull PsiModifierList modifierList, boolean classAnnotatedWithValue) {
+  private boolean isFieldFinal(@NotNull PsiField psiField, @NotNull PsiModifierList modifierList, boolean classAnnotatedWithValue) {
     boolean isFinal = modifierList.hasModifierProperty(PsiModifier.FINAL);
     if (!isFinal && classAnnotatedWithValue) {
       isFinal = PsiAnnotationUtil.isNotAnnotatedWith(psiField, NonFinal.class);
@@ -225,7 +225,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticName");
   }
 
-  protected boolean isStaticConstructor(@Nullable String staticName) {
+  private boolean isStaticConstructor(@Nullable String staticName) {
     return !StringUtil.isEmptyOrSpaces(staticName);
   }
 

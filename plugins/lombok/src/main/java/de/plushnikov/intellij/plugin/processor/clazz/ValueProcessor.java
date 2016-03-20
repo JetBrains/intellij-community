@@ -31,12 +31,24 @@ import java.util.List;
  */
 public class ValueProcessor extends AbstractClassProcessor {
 
-  public ValueProcessor() {
-    this(Value.class);
+  private final GetterProcessor getterProcessor;
+  private final EqualsAndHashCodeProcessor equalsAndHashCodeProcessor;
+  private final ToStringProcessor toStringProcessor;
+  private final AllArgsConstructorProcessor allArgsConstructorProcessor;
+
+  public ValueProcessor(GetterProcessor getterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
+                        ToStringProcessor toStringProcessor, AllArgsConstructorProcessor allArgsConstructorProcessor) {
+    this(Value.class, getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor);
   }
 
-  protected ValueProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedAnnotationClass, PsiMethod.class, true);
+  ValueProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass,
+                 GetterProcessor getterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
+                 ToStringProcessor toStringProcessor, AllArgsConstructorProcessor allArgsConstructorProcessor) {
+    super(supportedAnnotationClass, PsiMethod.class);
+    this.getterProcessor = getterProcessor;
+    this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
+    this.toStringProcessor = toStringProcessor;
+    this.allArgsConstructorProcessor = allArgsConstructorProcessor;
   }
 
   @Override
@@ -57,7 +69,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     }
   }
 
-  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError("'@Value' is only supported on a class type");
@@ -76,13 +88,13 @@ public class ValueProcessor extends AbstractClassProcessor {
     */
 
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
-      target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(getterProcessor.createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
-      target.addAll(new EqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
+      target.addAll(equalsAndHashCodeProcessor.createEqualAndHashCode(psiClass, psiAnnotation));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
-      target.addAll(new ToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
+      target.addAll(toStringProcessor.createToStringMethod(psiClass, psiAnnotation));
     }
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
@@ -91,8 +103,6 @@ public class ValueProcessor extends AbstractClassProcessor {
       filterToleratedElements(definedConstructors);
       // and only if there are no any other constructors!
       if (definedConstructors.isEmpty()) {
-        final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
-
         final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
         final Collection<PsiField> requiredFields = allArgsConstructorProcessor.getAllFields(psiClass);
 

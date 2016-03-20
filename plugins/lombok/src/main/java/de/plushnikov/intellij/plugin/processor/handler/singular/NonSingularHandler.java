@@ -19,7 +19,7 @@ import java.text.MessageFormat;
 import java.util.List;
 
 public class NonSingularHandler implements BuilderElementHandler {
-  public static final String SETTER_PREFIX = "set";
+  private static final String SETTER_PREFIX = "set";
 
   private final boolean shouldGenerateFullBodyBlock;
 

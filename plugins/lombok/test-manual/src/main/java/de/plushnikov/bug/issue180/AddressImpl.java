@@ -1,10 +1,11 @@
 package de.plushnikov.bug.issue180;
 
-import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.Builder;
 import lombok.val;
 
 import javax.annotation.Generated;
@@ -14,6 +15,7 @@ import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlEnumValue;
 
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
 @ToString
@@ -48,7 +50,9 @@ public class AddressImpl extends AddressBase {
         super(addressLine1, addressLine2, addressLine3, city, postalCode);
 
         val x = countryCode12;
-        x.getCountryCode();
+        if (null != x) {
+            x.getCountryCode();
+        }
 
         val y = countryCode11;
         y.setCountryCode12(x);

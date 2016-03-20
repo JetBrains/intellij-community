@@ -25,13 +25,13 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
 
   private final BuilderHandler builderHandler;
 
-  public BuilderClassProcessor() {
-    this(Builder.class);
+  public BuilderClassProcessor(@NotNull BuilderHandler builderHandler) {
+    this(Builder.class, builderHandler);
   }
 
-  protected BuilderClassProcessor(@NotNull Class<? extends Annotation> builderClass) {
-    super(builderClass, PsiClass.class, true);
-    builderHandler = new BuilderHandler(true);
+  protected BuilderClassProcessor(@NotNull Class<? extends Annotation> builderClass, @NotNull BuilderHandler builderHandler) {
+    super(builderClass, PsiClass.class);
+    this.builderHandler = builderHandler;
   }
 
   @Override

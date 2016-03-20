@@ -21,7 +21,7 @@ import java.util.List;
 public class ParcelableFieldsProcessor extends AbstractClassProcessor {
 
   public ParcelableFieldsProcessor() {
-    super(Parcelable.class, PsiField.class, true);
+    super(Parcelable.class, PsiField.class);
   }
 
   @Override

@@ -29,8 +29,8 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractFieldProcessor extends AbstractProcessor implements FieldProcessor {
 
-  protected AbstractFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass, boolean shouldGenerateFullBodyBlock) {
-    super(supportedAnnotationClass, supportedClass, shouldGenerateFullBodyBlock);
+  AbstractFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   @NotNull
@@ -38,7 +38,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotation());
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotationClass());
       if (null != psiAnnotation) {
         if (validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
           generatePsiElements(psiField, psiAnnotation, result);
@@ -52,7 +52,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotation());
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotationClass());
       if (null != psiAnnotation) {
         result.add(psiAnnotation);
       }

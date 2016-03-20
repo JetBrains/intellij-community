@@ -5,6 +5,6 @@ import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 
 public class DelombokSetterAction extends BaseDelombokAction {
   public DelombokSetterAction() {
-    super(new BaseDelombokHandler(new SetterProcessor(), new SetterFieldProcessor()));
+    super(new BaseDelombokHandler(new SetterProcessor(new SetterFieldProcessor()), new SetterFieldProcessor()));
   }
 }

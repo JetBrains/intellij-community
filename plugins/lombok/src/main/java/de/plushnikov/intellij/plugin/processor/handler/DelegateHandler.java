@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
@@ -42,10 +43,7 @@ import java.util.List;
  */
 public class DelegateHandler {
 
-  private final boolean shouldGenerateFullBodyBlock;
-
-  public DelegateHandler(boolean shouldGenerateFullBodyBlock) {
-    this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
+  public DelegateHandler() {
   }
 
   public boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull PsiType psiType, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
@@ -228,7 +226,7 @@ public class DelegateHandler {
   @NotNull
   private <T extends PsiModifierListOwner & PsiNamedElement> PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull T psiElement, @NotNull PsiMethod psiMethod, @NotNull PsiType returnType, @NotNull PsiParameter[] psiParameters) {
     final String blockText;
-    if (shouldGenerateFullBodyBlock) {
+    if (isShouldGenerateFullBodyBlock()) {
       final StringBuilder paramString = new StringBuilder();
 
       for (int parameterIndex = 0; parameterIndex < psiParameters.length; parameterIndex++) {
@@ -252,5 +250,9 @@ public class DelegateHandler {
       blockText = "return " + PsiTypeUtil.getReturnValueOfType(returnType) + ";";
     }
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
+  }
+
+  private boolean isShouldGenerateFullBodyBlock() {
+    return ShouldGenerateFullCodeBlock.getInstance().isStateActive();
   }
 }

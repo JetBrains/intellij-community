@@ -23,7 +23,7 @@ import java.util.List;
 public class ParcelableMethodsProcessor extends AbstractClassProcessor {
 
   public ParcelableMethodsProcessor() {
-    super(Parcelable.class, PsiMethod.class, true);
+    super(Parcelable.class, PsiMethod.class);
   }
 
   @Override
@@ -38,12 +38,12 @@ public class ParcelableMethodsProcessor extends AbstractClassProcessor {
 
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    target.add(generateDecribeContents(psiClass, psiAnnotation));
+    target.add(generateDescribeContents(psiClass, psiAnnotation));
     target.add(generateWriteToParcel(psiClass, psiAnnotation));
     target.add(generateParcelConstructor(psiClass, psiAnnotation));
   }
 
-  private PsiElement generateDecribeContents(PsiClass psiClass, PsiAnnotation psiAnnotation) {
+  private PsiElement generateDescribeContents(PsiClass psiClass, PsiAnnotation psiAnnotation) {
     return new LombokLightMethodBuilder(psiClass.getManager(), "describeContents")
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(PsiType.INT)

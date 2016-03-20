@@ -38,8 +38,8 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   private final String loggerInitializer;
   private final String loggerCategory;
 
-  protected AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull String loggerType, @NotNull String loggerInitializer, @NotNull String loggerCategory) {
-    super(supportedAnnotationClass, PsiField.class, true);
+  AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull String loggerType, @NotNull String loggerInitializer, @NotNull String loggerCategory) {
+    super(supportedAnnotationClass, PsiField.class);
     this.loggerType = loggerType;
     this.loggerInitializer = loggerInitializer;
     this.loggerCategory = loggerCategory;
@@ -118,11 +118,11 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return loggerInitializerParameter;
   }
 
-  protected boolean hasFieldByName(@NotNull PsiClass psiClass, String... fieldNames) {
+  private boolean hasFieldByName(@NotNull PsiClass psiClass, String... fieldNames) {
     final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
     for (PsiField psiField : psiFields) {
       for (String fieldName : fieldNames) {
-        if (psiField.getName().equals(fieldName)) {
+        if (fieldName.equals(psiField.getName())) {
           return true;
         }
       }

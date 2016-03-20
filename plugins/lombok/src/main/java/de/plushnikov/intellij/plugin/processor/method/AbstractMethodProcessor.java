@@ -27,8 +27,8 @@ import java.util.List;
  */
 public abstract class AbstractMethodProcessor extends AbstractProcessor implements MethodProcessor {
 
-  protected AbstractMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass, boolean shouldGenerateFullBodyBlock) {
-    super(supportedAnnotationClass, supportedClass, shouldGenerateFullBodyBlock);
+  AbstractMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   @NotNull
@@ -36,7 +36,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiMethod psiMethod : PsiClassUtil.collectClassMethodsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotation());
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotationClass());
       if (null != psiAnnotation) {
         if (validate(psiAnnotation, psiMethod, ProblemEmptyBuilder.getInstance())) {
           processIntern(psiMethod, psiAnnotation, result);
@@ -50,7 +50,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
     for (PsiMethod psiMethod : PsiClassUtil.collectClassMethodsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotation());
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotationClass());
       if (null != psiAnnotation) {
         result.add(psiAnnotation);
       }

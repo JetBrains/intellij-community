@@ -18,13 +18,13 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   private final DelegateHandler handler;
 
   @SuppressWarnings("deprecation")
-  public DelegateMethodProcessor() {
-    this(lombok.Delegate.class);
+  public DelegateMethodProcessor(@NotNull DelegateHandler delegateHandler) {
+    this(lombok.Delegate.class, delegateHandler);
   }
 
-  protected DelegateMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedAnnotationClass, PsiMethod.class, true);
-    handler = new DelegateHandler(true);
+  DelegateMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull DelegateHandler delegateHandler) {
+    super(supportedAnnotationClass, PsiMethod.class);
+    handler = delegateHandler;
   }
 
   @Override

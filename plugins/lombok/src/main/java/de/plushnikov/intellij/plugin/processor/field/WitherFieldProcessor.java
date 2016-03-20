@@ -36,10 +36,11 @@ import java.util.List;
 
 public class WitherFieldProcessor extends AbstractFieldProcessor {
 
-  private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
+  private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
 
-  public WitherFieldProcessor() {
-    super(Wither.class, PsiMethod.class, true);
+  public WitherFieldProcessor(RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
+    super(Wither.class, PsiMethod.class);
+    this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
   }
 
   @Override
@@ -56,7 +57,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     return valid;
   }
 
-  protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
   }

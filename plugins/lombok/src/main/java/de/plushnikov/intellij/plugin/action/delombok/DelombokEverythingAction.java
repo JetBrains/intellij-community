@@ -28,6 +28,8 @@ import de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
+import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalClassMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalMethodProcessor;
@@ -41,19 +43,42 @@ public class DelombokEverythingAction extends BaseDelombokAction {
   }
 
   private static BaseDelombokHandler createHandler() {
-    return new BaseDelombokHandler(true,
-        new RequiredArgsConstructorProcessor(), new AllArgsConstructorProcessor(), new NoArgsConstructorProcessor(),
-        new DataProcessor(), new GetterProcessor(), new ValueProcessor(), new WitherProcessor(),
-        new SetterProcessor(), new EqualsAndHashCodeProcessor(), new ToStringProcessor(),
-        new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(),
-        new GetterFieldProcessor(), new SetterFieldProcessor(), new WitherFieldProcessor(), new DelegateFieldProcessor(),
-        new DelegateMethodProcessor(),
+    final GetterFieldProcessor getterFieldProcessor = new GetterFieldProcessor();
+    final GetterProcessor getterProcessor = new GetterProcessor(getterFieldProcessor);
 
-        new BuilderPreDefinedInnerClassFieldProcessor(), new BuilderPreDefinedInnerClassMethodProcessor(),
-        new BuilderExperimentalPreDefinedInnerClassFieldProcessor(), new BuilderExperimentalPreDefinedInnerClassMethodProcessor(),
-        new BuilderClassProcessor(), new BuilderClassMethodProcessor(), new BuilderMethodProcessor(), new BuilderProcessor(),
-        new BuilderExperimentalClassProcessor(), new BuilderExperimentalClassMethodProcessor(),
-        new BuilderExperimentalMethodProcessor(), new BuilderExperimentalProcessor()
+    final SetterFieldProcessor setterFieldProcessor = new SetterFieldProcessor();
+    final SetterProcessor setterProcessor = new SetterProcessor(setterFieldProcessor);
+
+    final EqualsAndHashCodeProcessor equalsAndHashCodeProcessor = new EqualsAndHashCodeProcessor();
+    final ToStringProcessor toStringProcessor = new ToStringProcessor();
+
+    final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
+    final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
+    final NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
+
+    final DelegateHandler delegateHandler = new DelegateHandler();
+    final BuilderHandler builderHandler = new BuilderHandler(toStringProcessor, noArgsConstructorProcessor);
+
+    return new BaseDelombokHandler(true,
+        requiredArgsConstructorProcessor, allArgsConstructorProcessor, noArgsConstructorProcessor,
+        new DataProcessor(getterProcessor, setterProcessor, equalsAndHashCodeProcessor, toStringProcessor, requiredArgsConstructorProcessor),
+        getterProcessor, new ValueProcessor(getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor),
+        new WitherProcessor(new WitherFieldProcessor(requiredArgsConstructorProcessor)),
+        setterProcessor, equalsAndHashCodeProcessor, toStringProcessor,
+        new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(),
+        getterFieldProcessor, setterFieldProcessor,
+        new WitherFieldProcessor(requiredArgsConstructorProcessor),
+        new DelegateFieldProcessor(delegateHandler),
+        new DelegateMethodProcessor(delegateHandler),
+
+        new BuilderPreDefinedInnerClassFieldProcessor(builderHandler),
+        new BuilderPreDefinedInnerClassMethodProcessor(builderHandler),
+        new BuilderExperimentalPreDefinedInnerClassFieldProcessor(builderHandler),
+        new BuilderExperimentalPreDefinedInnerClassMethodProcessor(builderHandler),
+        new BuilderClassProcessor(builderHandler), new BuilderClassMethodProcessor(builderHandler),
+        new BuilderMethodProcessor(builderHandler), new BuilderProcessor(allArgsConstructorProcessor, builderHandler),
+        new BuilderExperimentalClassProcessor(builderHandler), new BuilderExperimentalClassMethodProcessor(builderHandler),
+        new BuilderExperimentalMethodProcessor(builderHandler), new BuilderExperimentalProcessor(allArgsConstructorProcessor, builderHandler)
     );
   }
 

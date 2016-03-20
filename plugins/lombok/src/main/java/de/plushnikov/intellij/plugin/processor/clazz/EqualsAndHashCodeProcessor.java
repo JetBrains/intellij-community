@@ -41,12 +41,12 @@ import java.util.List;
  */
 public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
-  public static final String EQUALS_METHOD_NAME = "equals";
-  public static final String HASH_CODE_METHOD_NAME = "hashCode";
-  public static final String CAN_EQUAL_METHOD_NAME = "canEqual";
+  private static final String EQUALS_METHOD_NAME = "equals";
+  private static final String HASH_CODE_METHOD_NAME = "hashCode";
+  private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
 
   public EqualsAndHashCodeProcessor() {
-    super(EqualsAndHashCode.class, PsiMethod.class, true);
+    super(EqualsAndHashCode.class, PsiMethod.class);
   }
 
   @Override
@@ -72,7 +72,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected void validateCallSuperParamForObject(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder) {
+  private void validateCallSuperParamForObject(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder) {
     boolean callSuperProperty = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
     if (callSuperProperty && !PsiClassUtil.hasSuperClass(psiClass)) {
       builder.addError("Generating equals/hashCode with a supercall to java.lang.Object is pointless.",
@@ -81,7 +81,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
   }
 
-  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError("@EqualsAndHashCode is only supported on a class type");
@@ -90,7 +90,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME)) {
       builder.addWarning("Not generating equals and hashCode: A method with one of those names already exists. (Either both or none of these methods will be generated).");

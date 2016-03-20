@@ -49,7 +49,7 @@ public class ValProcessor extends AbstractProcessor {
   };
 
   public ValProcessor() {
-    super(val.class, PsiElement.class, true);
+    super(val.class, PsiElement.class);
   }
 
   public boolean isEnabled(@NotNull Project project) {
@@ -115,7 +115,7 @@ public class ValProcessor extends AbstractProcessor {
     return false;
   }
 
-  protected static boolean isSameName(String className) {
+  private static boolean isSameName(String className) {
     return LOMBOK_VAL_SHORT_NAME.equals(className) || LOMBOK_VAL_FQN.equals(className);
   }
 
@@ -140,7 +140,7 @@ public class ValProcessor extends AbstractProcessor {
     return psiType;
   }
 
-  protected PsiType processLocalVariableInitializer(PsiExpression psiExpression) {
+  private PsiType processLocalVariableInitializer(PsiExpression psiExpression) {
     PsiType result = null;
     if (null != psiExpression && !(psiExpression instanceof PsiArrayInitializerExpression)) {
       if (!recursionBreaker.get().contains(psiExpression)) {
@@ -168,7 +168,7 @@ public class ValProcessor extends AbstractProcessor {
     return result;
   }
 
-  protected PsiType processParameterDeclaration(PsiElement parentDeclarationScope) {
+  private PsiType processParameterDeclaration(PsiElement parentDeclarationScope) {
     PsiType result = null;
     if (parentDeclarationScope instanceof PsiForeachStatement) {
       final PsiForeachStatement foreachStatement = (PsiForeachStatement) parentDeclarationScope;

@@ -1,8 +1,7 @@
 package de.plushnikov.bug.issue180;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.WillNotClose;
@@ -10,9 +9,8 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
+@Data
 @NoArgsConstructor
-@Getter
-@Setter
 public abstract class AddressBase {
 
     @Nonnegative

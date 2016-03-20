@@ -32,10 +32,11 @@ import java.util.List;
  */
 public class GetterProcessor extends AbstractClassProcessor {
 
-  private final GetterFieldProcessor fieldProcessor = new GetterFieldProcessor();
+  private final GetterFieldProcessor fieldProcessor;
 
-  public GetterProcessor() {
-    super(Getter.class, PsiMethod.class, true);
+  public GetterProcessor(GetterFieldProcessor fieldProcessor) {
+    super(Getter.class, PsiMethod.class);
+    this.fieldProcessor = fieldProcessor;
   }
 
   @Override
@@ -49,7 +50,7 @@ public class GetterProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError("'@Getter' is only supported on a class, enum or field type");
@@ -58,7 +59,7 @@ public class GetterProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
   }
@@ -81,7 +82,7 @@ public class GetterProcessor extends AbstractClassProcessor {
   }
 
   @NotNull
-  protected Collection<PsiField> filterGetterFields(@NotNull PsiClass psiClass) {
+  private Collection<PsiField> filterGetterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiField> getterFields = new ArrayList<PsiField>();
 
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
@@ -94,7 +95,7 @@ public class GetterProcessor extends AbstractClassProcessor {
         //Skip static fields.
         createGetter = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip fields having Getter annotation already
-        createGetter &= !hasFieldProcessorAnnotation(modifierList);
+        createGetter &= PsiAnnotationUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClass());
         //Skip fields that start with $
         createGetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name and arguments count already exists
@@ -110,14 +111,6 @@ public class GetterProcessor extends AbstractClassProcessor {
       }
     }
     return getterFields;
-  }
-
-  private boolean hasFieldProcessorAnnotation(PsiModifierList modifierList) {
-    boolean hasSetterAnnotation = false;
-    for (PsiAnnotation fieldAnnotation : modifierList.getAnnotations()) {
-      hasSetterAnnotation |= fieldProcessor.acceptAnnotation(fieldAnnotation, PsiMethod.class);
-    }
-    return hasSetterAnnotation;
   }
 
   @Override

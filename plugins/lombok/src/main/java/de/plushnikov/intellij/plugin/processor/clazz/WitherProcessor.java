@@ -23,10 +23,11 @@ import java.util.Collection;
 import java.util.List;
 
 public class WitherProcessor extends AbstractClassProcessor {
-  private final WitherFieldProcessor fieldProcessor = new WitherFieldProcessor();
+  private final WitherFieldProcessor fieldProcessor;
 
-  public WitherProcessor() {
-    super(Wither.class, PsiMethod.class, true);
+  public WitherProcessor(WitherFieldProcessor fieldProcessor) {
+    super(Wither.class, PsiMethod.class);
+    this.fieldProcessor = fieldProcessor;
   }
 
   @Override
@@ -34,7 +35,7 @@ public class WitherProcessor extends AbstractClassProcessor {
     return validateAnnotationOnRightType(psiClass, builder) && validateVisibility(psiAnnotation) && fieldProcessor.validConstructor(psiClass, builder);
   }
 
-  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError("@Wither is only supported on a class or a field.");
@@ -43,7 +44,7 @@ public class WitherProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
   }
@@ -57,7 +58,7 @@ public class WitherProcessor extends AbstractClassProcessor {
   }
 
   @NotNull
-  public Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull String methodModifier, @NotNull AccessorsInfo accessors) {
+  private Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull String methodModifier, @NotNull AccessorsInfo accessors) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
 
     final Collection<PsiField> witherFields = getWitherFields(psiClass);
@@ -73,7 +74,7 @@ public class WitherProcessor extends AbstractClassProcessor {
   }
 
   @NotNull
-  protected Collection<PsiField> getWitherFields(@NotNull PsiClass psiClass) {
+  private Collection<PsiField> getWitherFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> witherFields = new ArrayList<PsiField>();
     for (PsiField psiField : psiClass.getFields()) {
       boolean createWither = true;

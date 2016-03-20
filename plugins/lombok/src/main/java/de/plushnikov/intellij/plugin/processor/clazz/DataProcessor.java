@@ -31,8 +31,20 @@ import java.util.List;
  */
 public class DataProcessor extends AbstractClassProcessor {
 
-  public DataProcessor() {
-    super(Data.class, PsiMethod.class, true);
+  private final GetterProcessor getterProcessor;
+  private final SetterProcessor setterProcessor;
+  private final EqualsAndHashCodeProcessor equalsAndHashCodeProcessor;
+  private final ToStringProcessor toStringProcessor;
+  private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
+
+  public DataProcessor(GetterProcessor getterProcessor, SetterProcessor setterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
+                       ToStringProcessor toStringProcessor, RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
+    super(Data.class, PsiMethod.class);
+    this.getterProcessor = getterProcessor;
+    this.setterProcessor = setterProcessor;
+    this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
+    this.toStringProcessor = toStringProcessor;
+    this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
   }
 
   @Override
@@ -52,7 +64,7 @@ public class DataProcessor extends AbstractClassProcessor {
     }
   }
 
-  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError("'@Data' is only supported on a class type");
@@ -63,16 +75,16 @@ public class DataProcessor extends AbstractClassProcessor {
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
-      target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(getterProcessor.createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Setter.class)) {
-      target.addAll(new SetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(setterProcessor.createFieldSetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
-      target.addAll(new EqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
+      target.addAll(equalsAndHashCodeProcessor.createEqualAndHashCode(psiClass, psiAnnotation));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
-      target.addAll(new ToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
+      target.addAll(toStringProcessor.createToStringMethod(psiClass, psiAnnotation));
     }
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class)) {
@@ -81,8 +93,6 @@ public class DataProcessor extends AbstractClassProcessor {
 
       // and only if there are no any other constructors!
       if (definedConstructors.isEmpty()) {
-        final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
-
         final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
         final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
 

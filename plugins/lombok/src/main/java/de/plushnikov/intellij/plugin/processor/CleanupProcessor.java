@@ -26,7 +26,7 @@ import java.util.Collections;
 public class CleanupProcessor extends AbstractProcessor {
 
   public CleanupProcessor() {
-    super(Cleanup.class, PsiElement.class, true);
+    super(Cleanup.class, PsiElement.class);
   }
 
   @NotNull
