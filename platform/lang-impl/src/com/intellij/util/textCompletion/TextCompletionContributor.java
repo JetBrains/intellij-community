@@ -41,7 +41,7 @@ public class TextCompletionContributor extends CompletionContributor implements 
     if (provider == null) return;
 
     if (parameters.getInvocationCount() == 0 &&
-        !Boolean.FALSE.equals(file.getUserData(TextCompletionUtil.AUTO_POPUP_KEY))) {
+        !Boolean.TRUE.equals(file.getUserData(TextCompletionUtil.AUTO_POPUP_KEY))) {
       return;
     }
 
