@@ -229,7 +229,7 @@ public class PsiSuperMethodImplUtil {
       if (superClass == null) continue;
       if (!visited.add(superClass)) continue; // cyclic inheritance
       final PsiSubstitutor superSubstitutor = superTypeResolveResult.getSubstitutor();
-      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superSubstitutor, substitutor, isInRawContext);
+      PsiSubstitutor finalSubstitutor = PsiSuperMethodUtil.obtainFinalSubstitutor(superClass, superSubstitutor, substitutor, isInRawContext);
 
       final boolean isInRawContextSuper = (isInRawContext || PsiUtil.isRawSubstitutor(superClass, superSubstitutor)) && superClass.getTypeParameters().length != 0;
       Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, nameHint, finalSubstitutor, false, visited, isInRawContextSuper, resolveScope);
@@ -371,29 +371,6 @@ public class PsiSuperMethodImplUtil {
       hierarchicalMethodSignature.addSuperSignature(copy(his));
     }
     return hierarchicalMethodSignature;
-  }
-
-  @NotNull
-  public static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass superClass,
-                                                      @NotNull PsiSubstitutor superSubstitutor,
-                                                      @NotNull PsiSubstitutor derivedSubstitutor,
-                                                      boolean inRawContext) {
-    if (inRawContext) {
-      Set<PsiTypeParameter> typeParams = superSubstitutor.getSubstitutionMap().keySet();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(superClass.getProject());
-      superSubstitutor = factory.createRawSubstitutor(derivedSubstitutor, typeParams.toArray(new PsiTypeParameter[typeParams.size()]));
-    }
-    Map<PsiTypeParameter, PsiType> map = null;
-    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(superClass)) {
-      PsiType type = superSubstitutor.substitute(typeParameter);
-      final PsiType t = derivedSubstitutor.substitute(type);
-      if (map == null) {
-        map = new THashMap<PsiTypeParameter, PsiType>();
-      }
-      map.put(typeParameter, t);
-    }
-
-    return map == null ? PsiSubstitutor.EMPTY : JavaPsiFacade.getInstance(superClass.getProject()).getElementFactory().createSubstitutor(map);
   }
 
   @NotNull

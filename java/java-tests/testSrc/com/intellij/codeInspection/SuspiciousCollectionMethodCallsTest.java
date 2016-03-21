@@ -29,6 +29,10 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
     doTest();
   }
 
+  public void testNonClassArgTypes() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

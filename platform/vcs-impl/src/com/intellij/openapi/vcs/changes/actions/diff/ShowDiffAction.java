@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.actions.diff;
 
-import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
@@ -33,7 +32,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,17 +216,5 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, context.getActions());
 
     DiffManager.getInstance().showDiff(project, chain, context.getDialogHints());
-  }
-
-  //
-  // Compatibility
-  //
-
-  @NotNull
-  public static ShowDiffContext convertContext(@NotNull ShowDiffUIContext uiContext) {
-    if (uiContext.getActionsFactory() != null) LOG.warn("DiffExtendUIFactory ignored");
-    if (uiContext.getDiffNavigationContext() != null) LOG.warn("DiffNavigationContext ignored");
-
-    return new ShowDiffContext(uiContext.isShowFrame() ? DiffDialogHints.FRAME : DiffDialogHints.MODAL);
   }
 }

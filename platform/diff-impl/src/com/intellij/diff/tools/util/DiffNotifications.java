@@ -26,13 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class DiffNotifications {
-  @Deprecated @NotNull public static final JPanel INSERTED_CONTENT = createInsertedContent();
-  @Deprecated @NotNull public static final JPanel REMOVED_CONTENT = createRemovedContent();
-  @Deprecated @NotNull public static final JPanel EQUAL_CONTENTS = createEqualContents();
-  @Deprecated @NotNull public static final JPanel ERROR = createError();
-  @Deprecated @NotNull public static final JPanel OPERATION_CANCELED = createOperationCanceled();
-  @Deprecated @NotNull public static final JPanel DIFF_TOO_BIG = createDiffTooBig();
-
   @NotNull
   public static JPanel createInsertedContent() {
     return createNotification("Content added", TextDiffType.INSERTED.getColor(null));
@@ -45,6 +38,20 @@ public class DiffNotifications {
 
   @NotNull
   public static JPanel createEqualContents() {
+    return createEqualContents(true, true);
+  }
+
+  @NotNull
+  public static JPanel createEqualContents(boolean equalCharsets, boolean equalSeparators) {
+    if (!equalCharsets && !equalSeparators) {
+      return createNotification(DiffBundle.message("diff.contents.have.differences.only.in.charset.and.line.separators.message.text"));
+    }
+    if (!equalSeparators) {
+      return createNotification(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"));
+    }
+    if (!equalCharsets) {
+      return createNotification(DiffBundle.message("diff.contents.have.differences.only.in.charset.message.text"));
+    }
     return createNotification(DiffBundle.message("diff.contents.are.identical.message.text"));
   }
 
