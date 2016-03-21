@@ -22,9 +22,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsImplUtil.getShortVcsRootName
 
-class MultiRootMessage(private val myProject: Project, private val myAllRoots: Collection<VirtualFile>) {
+class MultiRootMessage(private val myProject: Project, private val myAllRoots: Collection<VirtualFile>, html: Boolean) {
   private val LOG = Logger.getInstance(MultiRootMessage::class.java)
   private val myMessages = ContainerUtil.newLinkedHashMap<VirtualFile, String>()
+  private val myLineSeparator = if (html) "<br/>\n" else "\n"
 
   fun append(root: VirtualFile, message: String): MultiRootMessage {
     if (!myAllRoots.contains(root)) {
@@ -47,7 +48,7 @@ class MultiRootMessage(private val myProject: Project, private val myAllRoots: C
     }
     val grouped = myMessages.keys.groupBy { myMessages[it]!!.trim() }
     if (grouped.size == 1 && myAllRoots.size == myMessages.size) return myMessages.values.first()
-    return grouped.keys.joinToString("\n") {
+    return grouped.keys.joinToString(myLineSeparator) {
       val shortRootNames = grouped[it]!!.map { getShortVcsRootName(myProject, it) }
       "$it in ${joinWithAnd(shortRootNames, 5)}" }
   }
