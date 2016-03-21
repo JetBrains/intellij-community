@@ -30,7 +30,8 @@ object LogEventSerializer {
             Pair(Action.BACKSPACE, BackspaceEvent::class.java),
             Pair(Action.COMPLETION_CANCELED, CompletionCancelledEvent::class.java),
             Pair(Action.EXPLICIT_SELECT, ExplicitSelectEvent::class.java),
-            Pair(Action.TYPED_SELECT, TypedSelectEvent::class.java)
+            Pair(Action.TYPED_SELECT, TypedSelectEvent::class.java),
+            Pair(Action.CUSTOM, CustomMessageEvent::class.java)
     )
 
     fun toString(event: LogEvent): String {
@@ -172,6 +173,15 @@ class CompletionStartedEvent(
     }
 }
 
+class CustomMessageEvent(userId: String): LogEvent(userId, Action.CUSTOM) {
+    
+    var text: String = ""
+    
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
+    }
+}
+
 class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, Any>)
 
 
@@ -199,6 +209,9 @@ abstract class LogEventVisitor {
     }
     
     open fun visit(event: TypedSelectEvent) {
+    }
+
+    open fun visit(custom: CustomMessageEvent) {
     }
     
 }    
