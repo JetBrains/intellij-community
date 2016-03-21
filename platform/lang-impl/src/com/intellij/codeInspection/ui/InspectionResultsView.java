@@ -40,6 +40,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -138,6 +139,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
+    mySplitter.setHonorComponentsMinimumSize(false);
 
     mySplitter.addPropertyChangeListener(evt -> {
       if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
@@ -396,7 +398,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         mySplitter.setSecondComponent(getNothingToShowTextLabel());
       }
       else {
-        showInRightPanel(myTree.getCommonSelectedElement());
+        showInRightPanel(myTree.getCommonSelectedElement(), oldEditor == null);
       }
     }
     else {
@@ -405,12 +407,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
         if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-          showInRightPanel(problemNode.getElement());
+          showInRightPanel(problemNode.getElement(), oldEditor == null);
         }
         else if (node instanceof InspectionPackageNode ||
                  node instanceof InspectionModuleNode ||
                  node instanceof RefElementNode) {
-          showInRightPanel(node.getContainingFileLocalEntity());
+          showInRightPanel(node.getContainingFileLocalEntity(), oldEditor == null);
         }
         else if (node instanceof InspectionNode) {
           final String shortName = ((InspectionNode)node).getToolWrapper().getShortName();
@@ -418,7 +420,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             mySplitter.setSecondComponent(getNothingToShowTextLabel());
           }
           else {
-            showInRightPanel(null);
+            showInRightPanel(null, oldEditor == null);
           }
         }
         else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
@@ -452,7 +454,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return multipleSelectionLabel;
   }
 
-  private void showInRightPanel(@Nullable final RefEntity refEntity) {
+  private void showInRightPanel(@Nullable final RefEntity refEntity, boolean hasNoEditorToReuse) {
     Cursor currentCursor = getCursor();
     try {
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -470,7 +472,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myPreviewEditor == null || myPreviewEditor.getUserData(PREVIEW_EDITOR_IS_REUSED_KEY) == null
+        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myPreviewEditor == null || (!hasNoEditorToReuse && myPreviewEditor.getUserData(PREVIEW_EDITOR_IS_REUSED_KEY) == null)
                                                                ? null
                                                                : myPreviewEditor, this);
         myLoadingProgressPreview = fixToolbar;
@@ -521,9 +523,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         settings.setLeadingWhitespaceShown(true);
         settings.setRightMarginShown(true);
         settings.setRightMargin(60);
+        myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
         myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
       }
+      myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
 
       if (problemCount == 1) {
         final PsiElement finalSelectedElement = selectedElement;

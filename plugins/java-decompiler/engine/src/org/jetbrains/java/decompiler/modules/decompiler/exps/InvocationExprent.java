@@ -224,20 +224,20 @@ public class InvocationExprent extends Exprent {
     else {
 
       if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
-        VarExprent instvar = (VarExprent)instance;
-        VarVersionPair varpaar = new VarVersionPair(instvar);
+        VarExprent instVar = (VarExprent)instance;
+        VarVersionPair varPair = new VarVersionPair(instVar);
 
-        VarProcessor vproc = instvar.getProcessor();
-        if (vproc == null) {
-          MethodWrapper current_meth = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-          if (current_meth != null) {
-            vproc = current_meth.varproc;
+        VarProcessor varProc = instVar.getProcessor();
+        if (varProc == null) {
+          MethodWrapper currentMethod = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+          if (currentMethod != null) {
+            varProc = currentMethod.varproc;
           }
         }
 
         String this_classname = null;
-        if (vproc != null) {
-          this_classname = vproc.getThisVars().get(varpaar);
+        if (varProc != null) {
+          this_classname = varProc.getThisVars().get(varPair);
         }
 
         if (this_classname != null) {
@@ -334,7 +334,7 @@ public class InvocationExprent extends Exprent {
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
-      if (sigFields == null) {
+      if (sigFields == null || sigFields.get(i) == null) {
         if (!firstParameter) {
           buf.append(", ");
         }
@@ -512,43 +512,35 @@ public class InvocationExprent extends Exprent {
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
-  
-  public boolean match(MatchNode matchNode, MatchEngine engine) {
 
-    if(!super.match(matchNode, engine)) {
+  @Override
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
-    
-    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+
+    for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
       RuleValue value = rule.getValue();
-      
-      switch(rule.getKey()) {
-      case EXPRENT_INVOCATION_PARAMETER:
-        if(value.isVariable()) {
-          if(value.parameter < lstParameters.size()) {
-            if(!engine.checkAndSetVariableValue(value.value.toString(), lstParameters.get(value.parameter))) {
-              return false;
-            }
-          } else {
-            return false;
-          }
-        }
-        break;
-      case EXPRENT_INVOCATION_CLASS:
-        if(!value.value.equals(this.classname)) {
+
+      MatchProperties key = rule.getKey();
+      if (key == MatchProperties.EXPRENT_INVOCATION_PARAMETER) {
+        if (value.isVariable() && (value.parameter >= lstParameters.size() ||
+                                   !engine.checkAndSetVariableValue(value.value.toString(), lstParameters.get(value.parameter)))) {
           return false;
         }
-        break;
-      case EXPRENT_INVOCATION_SIGNATURE:
-        if(!value.value.equals(this.name + this.stringDescriptor)) {
-          return false;
-        }
-        break;
       }
-      
+      else if (key == MatchProperties.EXPRENT_INVOCATION_CLASS) {
+        if (!value.value.equals(this.classname)) {
+          return false;
+        }
+      }
+      else if (key == MatchProperties.EXPRENT_INVOCATION_SIGNATURE) {
+        if (!value.value.equals(this.name + this.stringDescriptor)) {
+          return false;
+        }
+      }
     }
-    
+
     return true;
   }
-
 }

@@ -692,9 +692,6 @@
   <action id="XDebugger.SetValue">
     <keyboard-shortcut first-keystroke="F2"/>
   </action>
-  <action id="XDebugger.EditWatch">
-    <keyboard-shortcut first-keystroke="F2"/>
-  </action>
   <action id="XDebugger.NewWatch">
     <keyboard-shortcut first-keystroke="INSERT"/>
   </action>

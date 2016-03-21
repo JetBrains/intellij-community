@@ -24,7 +24,7 @@ import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.TextFieldWithAutoCompletionContributor;
+import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
@@ -47,7 +47,7 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     final TaskAutoCompletionListProvider completionProvider =
       new TaskAutoCompletionListProvider(myProject);
 
-    TextFieldWithAutoCompletionContributor.installCompletion(document, myProject, completionProvider, false);
+    TextFieldWithAutoCompletion.installCompletion(document, myProject, completionProvider, false);
   }
 
   public Consumer<LocalChangeList> addControls(JPanel bottomPanel, final LocalChangeList initial) {

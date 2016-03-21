@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
@@ -53,9 +54,16 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
     @Override
     public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      SelectionModel selectionModel = editor.getSelectionModel();
+      Document document = editor.getDocument();
+
+      if (EditorUtil.isPasswordEditor(editor)) {
+        selectionModel.setSelection(0, document.getTextLength());
+        return;
+      }
+
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       int caretOffset = editor.getCaretModel().getOffset();
-      Document document = editor.getDocument();
       if (lineNumber >= document.getLineCount()) {
         return;
       }
@@ -72,10 +80,9 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
       if (ranges.isEmpty()) return;
 
-      SelectionModel selectionModel = editor.getSelectionModel();
       final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
 
-      TextRange minimumRange = new TextRange(0, editor.getDocument().getTextLength());
+      TextRange minimumRange = new TextRange(0, document.getTextLength());
       for (TextRange range : ranges) {
         if (range.contains(selectionRange) && !range.equals(selectionRange)) {
           if (minimumRange.contains(range)) {

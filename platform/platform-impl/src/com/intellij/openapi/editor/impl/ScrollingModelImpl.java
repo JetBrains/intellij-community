@@ -148,9 +148,13 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   private void scrollTo(@NotNull VisualPosition pos, @NotNull ScrollType scrollType) {
+    Point targetLocation = myEditor.visualPositionToXY(pos);
+    scrollTo(targetLocation, scrollType);
+  }
+
+  private void scrollTo(@NotNull Point targetLocation, @NotNull ScrollType scrollType) {
     AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
     Rectangle viewRect = canceledThread != null ? canceledThread.getTargetVisibleArea() : getVisibleArea();
-    Point targetLocation = myEditor.visualPositionToXY(pos);
     Point p = calcOffsetsToScroll(targetLocation, scrollType, viewRect);
     scrollToOffsets(p.x, p.y);
   }
@@ -159,11 +163,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
 
-    AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
-    Rectangle viewRect = canceledThread != null ? canceledThread.getTargetVisibleArea() : getVisibleArea();
     Point targetLocation = myEditor.logicalPositionToXY(pos);
-    Point p = calcOffsetsToScroll(targetLocation, scrollType, viewRect);
-    scrollToOffsets(p.x, p.y);
+    scrollTo(targetLocation, scrollType);
   }
 
   private static void assertIsDispatchThread() {

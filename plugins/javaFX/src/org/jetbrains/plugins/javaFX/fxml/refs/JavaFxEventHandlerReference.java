@@ -18,15 +18,11 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,35 +104,21 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
       final XmlAttributeValue element = ref.getElement();
       String canonicalText = JavaFxCommonNames.JAVAFX_EVENT;
       final PsiElement parent = element.getParent();
-      if (parent instanceof XmlAttribute) {
+      if (parent instanceof XmlAttribute && ref.myCurrentTagClass != null) {
         final XmlAttribute xmlAttribute = (XmlAttribute)parent;
-        final PsiField handlerField = ref.myCurrentTagClass.findFieldByName(xmlAttribute.getName(), true);
-        if (handlerField != null) {
-          final XmlTag xmlTag = xmlAttribute.getParent();
-          final PsiSubstitutor currentTagClassSubstitutor =
-            JavaFxPsiUtil.getTagClassSubstitutor(xmlTag, ref.myCurrentTagClass, ref.myController);
-          PsiType handlerType = JavaFxPsiUtil.getPropertyClassType(handlerField);
-          if (currentTagClassSubstitutor != null) {
-            handlerType = currentTagClassSubstitutor.substitute(handlerType);
-          }
+        final PsiType eventHandlerPropertyType = JavaFxPsiUtil.getEventHandlerPropertyType(ref.myCurrentTagClass, xmlAttribute.getName());
+        if (eventHandlerPropertyType != null) {
+          final PsiSubstitutor tagClassSubstitutor = JavaFxPsiUtil.getTagClassSubstitutor(xmlAttribute, ref.myController);
+          final PsiType handlerType =
+            tagClassSubstitutor != null ? tagClassSubstitutor.substitute(eventHandlerPropertyType) : eventHandlerPropertyType;
           if (handlerType instanceof PsiClassType) {
-            final Project project = element.getProject();
-            final PsiClass eventHandlerClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER, GlobalSearchScope.allScope(project));
-            if (eventHandlerClass != null) {
-              final PsiTypeParameter[] typeParameters = eventHandlerClass.getTypeParameters();
-              if (typeParameters.length == 1) {
-                final PsiTypeParameter typeParameter = typeParameters[0];
-                final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(eventHandlerClass,
-                                                                                               (PsiClassType)handlerType);
-                final PsiType eventType = substitutor.substitute(typeParameter);
-                if (eventType != null) {
-                  if (eventType instanceof PsiClassType && JavaFxPsiUtil.isNotFullyResolvedGeneric((PsiClassType)eventType)) {
-                    canonicalText = ((PsiClassType)eventType).rawType().getCanonicalText();
-                  }
-                  else {
-                    canonicalText = eventType.getCanonicalText();
-                  }
-                }
+            final PsiType eventType = JavaFxPsiUtil.substituteEventType((PsiClassType)handlerType, element.getProject());
+            if (eventType != null) {
+              if (eventType instanceof PsiClassType && JavaFxPsiUtil.isNotFullyResolvedGeneric((PsiClassType)eventType)) {
+                canonicalText = ((PsiClassType)eventType).rawType().getCanonicalText();
+              }
+              else {
+                canonicalText = eventType.getCanonicalText();
               }
             }
           }

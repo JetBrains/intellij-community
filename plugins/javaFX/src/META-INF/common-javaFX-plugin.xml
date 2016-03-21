@@ -26,7 +26,7 @@
                          enabledByDefault="true" level="WARNING" displayName="JavaFX redundant property values" groupName="JavaFX"/>
     <localInspection language="XML" shortName="JavaFxColorRgb" displayName="Color component is out of range" groupName="JavaFX"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxColorRgbInspection"/>
-    <localInspection language="XML" shortName="JavaFxEventHandler" displayName="Event handler method signature problem" groupName="JavaFX"
+    <localInspection language="XML" shortName="JavaFxEventHandler" displayName="Event handler method signature problems" groupName="JavaFX"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection"/>
 
     <applicationService serviceInterface="org.jetbrains.plugins.javaFX.JavaFxSettings" serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>

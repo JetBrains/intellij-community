@@ -1,8 +1,10 @@
+import sys
+
+
 def __getfilesystemencoding():
     '''
     Note: there's a copy of this method in interpreterInfo.py
     '''
-    import sys
     try:
         ret = sys.getfilesystemencoding()
         if not ret:

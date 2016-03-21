@@ -1,7 +1,7 @@
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
-public class HighlightSimpleGenericController {
+public class HighlightGeneric {
     @FXML ListView<String> list;
 
     public void onEditStart(ListView.EditEvent<?> e) {}

@@ -65,6 +65,10 @@ public final class EditorUtil {
     return editor != null && TextEditorProvider.getInstance().getTextEditor(editor) instanceof TextEditorImpl;
   }
 
+  public static boolean isPasswordEditor(@Nullable Editor editor) {
+    return editor != null && editor.getContentComponent() instanceof JPasswordField;
+  }
+
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
     if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
       LogicalPosition lineEndPosition = editor.visualToLogicalPosition(new VisualPosition(line, Integer.MAX_VALUE));

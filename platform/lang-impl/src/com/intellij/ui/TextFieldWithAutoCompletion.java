@@ -16,20 +16,15 @@
 
 package com.intellij.ui;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.textCompletion.TextCompletionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,42 +41,39 @@ import java.util.Collection;
  * @author Roman Chernyatchik
  */
 public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
-
   public static final TextFieldWithAutoCompletionListProvider EMPTY_COMPLETION = new StringsCompletionProvider(null, null);
-  private final boolean myShowAutocompletionIsAvailableHint;
-  private final TextFieldWithAutoCompletionListProvider<T> myProvider;
+  @NotNull private final TextFieldWithAutoCompletionListProvider<T> myProvider;
+  private final boolean myShowCompletionHint;
 
-  @SuppressWarnings("unchecked")
-  public TextFieldWithAutoCompletion() {
-    this(null, EMPTY_COMPLETION, false, null);
-  }
-
-
-  public TextFieldWithAutoCompletion(final Project project,
-                                     @NotNull final TextFieldWithAutoCompletionListProvider<T> provider,
-                                     final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
+  public TextFieldWithAutoCompletion(@Nullable Project project,
+                                     @NotNull TextFieldWithAutoCompletionListProvider<T> provider,
+                                     boolean showCompletionHint,
+                                     @Nullable String text) {
     super(project == null ? null : PlainTextLanguage.INSTANCE, project, text == null ? "" : text);
 
-    myShowAutocompletionIsAvailableHint = showAutocompletionIsAvailableHint;
+    myShowCompletionHint = showCompletionHint;
     myProvider = provider;
 
-    TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), project, provider, true);
+    if (project != null) {
+      installCompletion(getDocument(), project, provider, true);
+    }
   }
 
-  public static TextFieldWithAutoCompletion<String> create(final Project project,
-                                                           @NotNull final Collection<String> items,
-                                                           final boolean showAutocompletionIsAvailableHint,
-                                                           @Nullable final String text) {
-    return create(project, items, null, showAutocompletionIsAvailableHint, text);
+  @NotNull
+  public static TextFieldWithAutoCompletion<String> create(@Nullable Project project,
+                                                           @NotNull Collection<String> items,
+                                                           boolean showCompletionHint,
+                                                           @Nullable String text) {
+    return create(project, items, null, showCompletionHint, text);
   }
 
-  public static TextFieldWithAutoCompletion<String> create(final Project project,
-                                                           @NotNull final Collection<String> items,
-                                                           @Nullable final Icon icon,
-                                                           final boolean showAutocompletionIsAvailableHint,
-                                                           @Nullable final String text) {
-    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showAutocompletionIsAvailableHint,
-                                                   text);
+  @NotNull
+  public static TextFieldWithAutoCompletion<String> create(@Nullable Project project,
+                                                           @NotNull Collection<String> items,
+                                                           @Nullable Icon icon,
+                                                           boolean showCompletionHint,
+                                                           @Nullable String text) {
+    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showCompletionHint, text);
   }
 
   public void setVariants(@NotNull Collection<T> variants) {
@@ -89,85 +81,52 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
   }
 
   public <T> void installProvider(@NotNull TextFieldWithAutoCompletionListProvider<T> provider) {
-    TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), getProject(), provider, true);
+    installCompletion(getDocument(), getProject(), provider, true);
+  }
+
+  public static void installCompletion(@NotNull Document document,
+                                       @NotNull Project project,
+                                       @NotNull TextFieldWithAutoCompletionListProvider provider,
+                                       boolean autoPopup) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile != null) {
+      TextCompletionUtil.installProvider(psiFile, provider, autoPopup);
+    }
   }
 
   @Override
   protected EditorEx createEditor() {
-    final EditorEx editor = super.createEditor();
+    EditorEx editor = super.createEditor();
 
-    if (!myShowAutocompletionIsAvailableHint) {
-      return editor;
+    if (myShowCompletionHint) {
+      TextCompletionUtil.installCompletionHint(editor);
     }
 
-    final String completionShortcutText =
-      KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-    if (StringUtil.isEmpty(completionShortcutText)) {
-      return editor;
-    }
-
-    final Ref<Boolean> toShowHintRef = new Ref<Boolean>(true);
-    editor.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        toShowHintRef.set(false);
-      }
-    });
-
-    editor.addFocusListener(new FocusChangeListener() {
-      @Override
-      public void focusGained(final Editor editor) {
-        if (toShowHintRef.get() && getText().length() == 0) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              HintManager.getInstance().showInformationHint(editor, "Code completion available ( " + completionShortcutText + " )");
-            }
-          });
-        }
-      }
-
-      @Override
-      public void focusLost(Editor editor) {
-        // Do nothing
-      }
-    });
     return editor;
   }
 
   public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> implements DumbAware {
     @Nullable private final Icon myIcon;
 
-    public StringsCompletionProvider(@Nullable final Collection<String> variants,
-                                     @Nullable final Icon icon) {
+    public StringsCompletionProvider(@Nullable Collection<String> variants, @Nullable Icon icon) {
       super(variants);
       myIcon = icon;
     }
 
     @Override
-    public int compare(final String item1, final String item2) {
+    public int compare(String item1, String item2) {
       return StringUtil.compare(item1, item2, false);
     }
 
     @Override
-    protected Icon getIcon(@NotNull final String item) {
+    protected Icon getIcon(@NotNull String item) {
       return myIcon;
     }
 
     @NotNull
     @Override
-    protected String getLookupString(@NotNull final String item) {
+    protected String getLookupString(@NotNull String item) {
       return item;
-    }
-
-    @Override
-    protected String getTailText(@NotNull final String item) {
-      return null;
-    }
-
-    @Override
-    protected String getTypeText(@NotNull final String item) {
-      return null;
     }
   }
 }

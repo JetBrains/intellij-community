@@ -24,48 +24,49 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
+import java.io.File
 
 class MultiRootMessageTest {
 
-  private lateinit var myProject : Project
+  private lateinit var project: Project
 
   @Before
   fun setUp() {
-    myProject = mock(Project::class.java)
-    Mockito.`when`(myProject.baseDir).thenReturn(MockVirtualFile(true, "idea"))
+    project = mock(Project::class.java)
+    Mockito.`when`(project.baseDir).thenReturn(MockVirtualFile(true, "idea"))
   }
 
   @Test
   fun `test empty message`() {
-    val root = myProject.baseDir
-    val multiRootMessage = MultiRootMessage(myProject, setOf(root))
+    val root = project.baseDir
+    val multiRootMessage = multiRootMessage(root)
     assertTrue(multiRootMessage.asString().isEmpty())
   }
 
   @Test
   fun `test single repository`() {
-    val root = myProject.baseDir
-    val multiRootMessage = MultiRootMessage(myProject, setOf(root))
+    val root = project.baseDir
+    val multiRootMessage = multiRootMessage(root)
     multiRootMessage.append(root, "Pruned obsolete remote references: origin/fix1, origin/fix2")
     assertEquals("Pruned obsolete remote references: origin/fix1, origin/fix2", multiRootMessage.asString())
   }
 
   @Test
   fun `test single root message in multi-root project`() {
-    val idea = myProject.baseDir
+    val idea = project.baseDir
     val community = createSubDir(idea, "community")
 
-    val multiRootMessage = MultiRootMessage(myProject, setOf(idea, community))
+    val multiRootMessage = multiRootMessage(idea, community)
     multiRootMessage.append(idea, "Pruned obsolete remote references: origin/fix1, origin/fix2")
     assertEquals("Pruned obsolete remote references: origin/fix1, origin/fix2 in idea", multiRootMessage.asString())
   }
 
   @Test
   fun `test two roots with same messages`() {
-    val idea = myProject.baseDir
+    val idea = project.baseDir
     val community = createSubDir(idea, "community")
 
-    val multiRootMessage = MultiRootMessage(myProject, setOf(idea, community))
+    val multiRootMessage = multiRootMessage(idea, community)
     multiRootMessage.append(idea, "Pruned obsolete remote references: origin/fix1, origin/fix2")
     multiRootMessage.append(community, "Pruned obsolete remote references: origin/fix1, origin/fix2")
     assertEquals("Pruned obsolete remote references: origin/fix1, origin/fix2", multiRootMessage.asString())
@@ -73,10 +74,10 @@ class MultiRootMessageTest {
 
   @Test
   fun `test two roots with different messages`() {
-    val idea = myProject.baseDir
+    val idea = project.baseDir
     val community = createSubDir(idea, "community")
 
-    val multiRootMessage = MultiRootMessage(myProject, setOf(idea, community))
+    val multiRootMessage = multiRootMessage(idea, community)
     multiRootMessage.append(idea, "Pruned obsolete remote references: origin/fix1, origin/fix2")
     multiRootMessage.append(community, "Pruned obsolete remote references: origin/fix3")
     assertEquals(
@@ -87,23 +88,25 @@ class MultiRootMessageTest {
   }
 
   @Test
-  fun `test three roots with same message, and one root with another`() {
-    val idea = myProject.baseDir
+  fun `test html message for three roots with same message, and one root with another`() {
+    val idea = project.baseDir
     val community = createSubDir(idea, "community")
     val contrib = createSubDir(idea, "contrib")
     val android = createSubDir(community, "android")
 
-    val multiRootMessage = MultiRootMessage(myProject, setOf(idea, community, contrib, android))
+    val multiRootMessage = MultiRootMessage(project, setOf(idea, community, contrib, android), true)
     multiRootMessage.append(idea, "Pruned obsolete remote references: origin/fix1, origin/fix2")
     multiRootMessage.append(community, "Pruned obsolete remote references: origin/fix3")
     multiRootMessage.append(contrib, "Pruned obsolete remote references: origin/fix3")
     multiRootMessage.append(android, "Pruned obsolete remote references: origin/fix3")
     assertEquals(
         """
-        Pruned obsolete remote references: origin/fix1, origin/fix2 in idea
-        Pruned obsolete remote references: origin/fix3 in community, contrib and community/android
+        Pruned obsolete remote references: origin/fix1, origin/fix2 in idea<br/>
+        Pruned obsolete remote references: origin/fix3 in community, contrib and community${File.separator}android
         """.trimIndent(), multiRootMessage.asString())
   }
+
+  private fun multiRootMessage(vararg roots : VirtualFile) = MultiRootMessage(project, roots.asList(), false)
 
   private fun createSubDir(parent: VirtualFile, name: String): VirtualFile {
     val vf = MockVirtualFile(true, name)

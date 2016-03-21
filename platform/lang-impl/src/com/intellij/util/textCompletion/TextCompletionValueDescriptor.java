@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util.text;
+package com.intellij.util.textCompletion;
 
-import com.intellij.util.text.EditDistance;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import org.jetbrains.annotations.NotNull;
 
-/** @deprecated use {@link EditDistance} (to be removed in IDEA 17) */
-@SuppressWarnings("unused")
-public class LevenshteinDistance {
-  public int calculateMetrics(CharSequence str1, CharSequence str2) {
-    return EditDistance.levenshtein(str1, str2, true);
-  }
+import java.util.Comparator;
+
+public interface TextCompletionValueDescriptor<T> extends Comparator<T> {
+  @NotNull
+  LookupElementBuilder createLookupBuilder(@NotNull T item);
 }

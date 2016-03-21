@@ -385,7 +385,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
         clearDiffPresentation();
-        if (isContentsEqual) myPanel.addNotification(DiffNotifications.createEqualContents());
+        if (isContentsEqual) {
+          boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
+          boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
+          myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
+        }
 
         TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
         myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),

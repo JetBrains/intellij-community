@@ -79,7 +79,7 @@ public abstract class SettingsConnectionService {
           LOG.error(e);
         }
         return settings;
-      }, Collections.emptyMap(), LOG);
+      }, Collections.<String, String>emptyMap(), LOG);
   }
 
   @Nullable

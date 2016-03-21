@@ -4,7 +4,7 @@ import javafx.scene.control.SortEvent;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 
-public class HighlightWildcardController {
+public class HighlightWildcard {
     @FXML private void onSameArg(MouseEvent e) {}
     @FXML private void onSuperArg(Event e) {}
     @FXML private void onNoArg() {}
