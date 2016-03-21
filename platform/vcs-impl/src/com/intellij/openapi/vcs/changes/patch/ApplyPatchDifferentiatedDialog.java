@@ -214,7 +214,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final int inapplicable = myInfoCalculator.getInapplicable();
         if (inapplicable > 0) {
           appendSpace();
-          appendText(inapplicable, myInfoCalculator.getIncludedInapplicable(), FileStatus.MERGED_WITH_CONFLICTS, "Inapplicable:");
+          appendText(inapplicable, inapplicable, FileStatus.MERGED_WITH_CONFLICTS, "Missing Base:");
         }
       }
     };
@@ -318,8 +318,19 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     final LocalChangeList selected = getSelectedChangeList();
     FilePresentation presentation = myRecentPathFileChange.get();
     VirtualFile vf = presentation != null ? presentation.getVf() : null;
-    executor.apply(patchGroups, selected, vf == null ? null : vf.getName(),
+    executor.apply(getOriginalRemaining(), patchGroups, selected, vf == null ? null : vf.getName(),
                    myReader == null ? null : myReader.getAdditionalInfo(ApplyPatchDefaultExecutor.pathsFromGroups(patchGroups)));
+  }
+
+  @NotNull
+  private List<FilePatch> getOriginalRemaining() {
+    Collection<AbstractFilePatchInProgress> notIncluded = ContainerUtil.subtract(myPatches, getIncluded());
+    List<FilePatch> remainingOriginal = ContainerUtil.newArrayList();
+    for (AbstractFilePatchInProgress progress : notIncluded) {
+      progress.reset();
+      remainingOriginal.add(progress.getPatch());
+    }
+    return remainingOriginal;
   }
 
   @Override
@@ -793,7 +804,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       return myDeleted;
     }
 
-     public int getInapplicable() {
+    public int getInapplicable() {
       return myInapplicable;
     }
   }
@@ -851,10 +862,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     public int getIncludedUnversioned() {
       return 0;
-    }
-
-    public int getIncludedInapplicable() {
-      return myIncluded.getInapplicable();
     }
   }
 
