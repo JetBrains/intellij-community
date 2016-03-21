@@ -11,7 +11,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="educational-core" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module-library">
       <library>
