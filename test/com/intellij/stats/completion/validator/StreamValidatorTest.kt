@@ -34,15 +34,26 @@ class StreamValidatorTest {
         )
         validate(list, list.join(), expectedErr = "")
     }
-    
-    
 
+    @Test
+    fun up_down_actions_wrong() {
+        var list = listOf(
+                LogEventFixtures.completion_started_3_items_shown,
+                LogEventFixtures.down_event_new_pos_1,
+                LogEventFixtures.up_pressed_new_pos_0,
+                LogEventFixtures.up_pressed_new_pos_2,
+                LogEventFixtures.up_pressed_new_pos_1,
+                LogEventFixtures.explicit_select_position_0
+        )
+        validate(list, expectedOut = "", expectedErr = list.join())
+    }
+    
     private fun validate(list: List<LookupStateLogData>, expectedOut: String, expectedErr: String) {
         val output = ByteArrayOutputStream()
         val err = ByteArrayOutputStream()
 
-        val validator = UserSessionsValidator(ByteArrayInputStream(list.join().toByteArray()), output, err)
-        validator.validate()
+        val separator = SessionsInputSeparator(ByteArrayInputStream(list.join().toByteArray()), output, err)
+        separator.processInput()
 
         assertThat(err.toString().trim()).isEqualTo(expectedErr)
         assertThat(output.toString().trim()).isEqualTo(expectedOut)

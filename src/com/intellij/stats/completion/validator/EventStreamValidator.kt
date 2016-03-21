@@ -5,9 +5,9 @@ import java.io.*
 
 data class EventLine(val event: LogEvent, val line: String)
 
-class UserSessionsValidator(input: InputStream,
-                            output: OutputStream,
-                            error: OutputStream) {
+class SessionsInputSeparator(input: InputStream,
+                             output: OutputStream,
+                             error: OutputStream) {
     
     private val inputReader = BufferedReader(InputStreamReader(input))
     private val outputWriter = BufferedWriter(OutputStreamWriter(output))
@@ -16,7 +16,7 @@ class UserSessionsValidator(input: InputStream,
     var session = mutableListOf<EventLine>()
     var currentSessionUid = ""
 
-    fun validate() {
+    fun processInput() {
         var line: String? = inputReader.readLine()
         
         while (line != null) {
