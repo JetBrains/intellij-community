@@ -21,9 +21,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -385,6 +383,7 @@ public class IdeEventQueue extends EventQueue {
     }
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
+    AccessToken token = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(myIsInInputEvent);
 
     try {
       _dispatchEvent(e, false);
@@ -393,6 +392,7 @@ public class IdeEventQueue extends EventQueue {
       processException(t);
     }
     finally {
+      token.finish();
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
 
