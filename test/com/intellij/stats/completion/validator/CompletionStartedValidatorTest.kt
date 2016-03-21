@@ -28,8 +28,9 @@ object LogEventFixtures {
     val backspace_event_pos_0_left_1_2_3 = BackspaceEvent("1", sessionId, listOf(1, 2, 3), emptyList(), 0)
     val backspace_event_pos_0_left_1 = BackspaceEvent("1", sessionId, listOf(1), emptyList(), 0)
 
-    val explicit_select_0 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 0)
-    val explicit_select_3 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 3)
+    val explicit_select_position_0 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 0)
+    val explicit_select_position_2 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 2)
+    val explicit_select_position_1 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 1)
 
     val selected_by_typing_0 = TypedSelectEvent("1", sessionId, 0)
     val selected_by_typing_1 = TypedSelectEvent("1", sessionId, 1)
@@ -48,14 +49,14 @@ class SelectedItemTest {
 
     @Test
     fun `explicit select`() {
-        state.accept(LogEventFixtures.explicit_select_0)
+        state.accept(LogEventFixtures.explicit_select_position_0)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `explicit select of incorrect item`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.accept(LogEventFixtures.explicit_select_3)
+        state.accept(LogEventFixtures.explicit_select_position_1)
         assertThat(state.isValid).isEqualTo(false)
     }
 

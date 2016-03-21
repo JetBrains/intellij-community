@@ -12,15 +12,30 @@ class StreamValidatorTest {
     
     @Test
     fun simple_sequence_of_actions() {
-        val list = listOf(LogEventFixtures.completion_started_3_items_shown, LogEventFixtures.explicit_select_0)
+        val list = listOf(LogEventFixtures.completion_started_3_items_shown, LogEventFixtures.explicit_select_position_0)
         validate(list, list.join(), "")
     }
 
     @Test
     fun sample_error_sequence_of_actions() {
-        val list = listOf(LogEventFixtures.completion_started_3_items_shown, LogEventFixtures.explicit_select_3)
-        validate(list, "", list.join())
+        val list = listOf(LogEventFixtures.completion_started_3_items_shown, LogEventFixtures.explicit_select_position_1)
+        validate(list, expectedOut = "", expectedErr = list.join())
     }
+    
+    @Test
+    fun up_down_actions() {
+        var list = listOf(
+                LogEventFixtures.completion_started_3_items_shown,
+                LogEventFixtures.down_event_new_pos_1,
+                LogEventFixtures.up_pressed_new_pos_0,
+                LogEventFixtures.up_pressed_new_pos_2,
+                LogEventFixtures.up_pressed_new_pos_1,
+                LogEventFixtures.explicit_select_position_1
+        )
+        validate(list, list.join(), expectedErr = "")
+    }
+    
+    
 
     private fun validate(list: List<LookupStateLogData>, expectedOut: String, expectedErr: String) {
         val output = ByteArrayOutputStream()
