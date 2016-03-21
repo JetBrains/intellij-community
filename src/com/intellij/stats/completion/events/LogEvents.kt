@@ -2,7 +2,6 @@ package com.intellij.stats.completion.events
 
 import com.google.gson.Gson
 import com.intellij.stats.completion.Action
-import java.util.*
 
 object JsonSerializer {
     private val gson = Gson()
@@ -10,14 +9,13 @@ object JsonSerializer {
     fun <T> fromJson(json: String, clazz: Class<T>) = gson.fromJson(json, clazz)
 }
 
-abstract class LogEvent(var userUid: String, type: Action) {
+abstract class LogEvent(var userUid: String, sessionId: String, type: Action) {
     @Transient var recorderId = "completion-stats"
     @Transient var timestamp = System.currentTimeMillis()
-    @Transient var sessionUid: String = UUID.randomUUID().toString()
+    @Transient var sessionUid: String = sessionId
     @Transient var actionType: Action = type
     
     abstract fun accept(visitor: LogEventVisitor)
-        
 }
     
 object LogEventSerializer {
@@ -35,7 +33,7 @@ object LogEventSerializer {
     )
 
     fun toString(event: LogEvent): String {
-        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(this)}"
+        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(event)}"
     }
 
     fun fromString(line: String): LogEvent? {
@@ -73,16 +71,18 @@ object LogEventSerializer {
 
 
 abstract class LookupStateLogData(userId: String,
+                                  sessionId: String,
                                   action: Action,
                                   var completionListIds: List<Int>,
                                   var newCompletionListItems: List<LookupEntryInfo>,
-                                  var currentPosition: Int): LogEvent(userId, action)
+                                  var currentPosition: Int): LogEvent(userId, sessionId, action)
 
 class UpPressedEvent(
         userId: String, 
+        sessionId: String,
         completionListIds: List<Int>, 
         newCompletionListItems: List<LookupEntryInfo>, 
-        selectedPosition: Int) : LookupStateLogData(userId, Action.UP, completionListIds, newCompletionListItems, selectedPosition) {
+        selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.UP, completionListIds, newCompletionListItems, selectedPosition) {
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
@@ -91,9 +91,10 @@ class UpPressedEvent(
 
 class DownPressedEvent(
         userId: String,
+        sessionId: String,
         completionListIds: List<Int>,
         newCompletionListItems: List<LookupEntryInfo>,
-        selectedPosition: Int) : LookupStateLogData(userId, Action.DOWN, completionListIds, newCompletionListItems, selectedPosition) {
+        selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.DOWN, completionListIds, newCompletionListItems, selectedPosition) {
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
@@ -101,7 +102,7 @@ class DownPressedEvent(
     
 }
 
-class CompletionCancelledEvent(userId: String) : LogEvent(userId, Action.COMPLETION_CANCELED) {
+class CompletionCancelledEvent(userId: String, sessionId: String) : LogEvent(userId, sessionId, Action.COMPLETION_CANCELED) {
     
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
@@ -109,7 +110,7 @@ class CompletionCancelledEvent(userId: String) : LogEvent(userId, Action.COMPLET
     
 }
 
-class TypedSelectEvent(userId: String, var selectedId: Int) : LogEvent(userId, Action.TYPED_SELECT) {
+class TypedSelectEvent(userId: String, sessionId: String, var selectedId: Int) : LogEvent(userId, sessionId, Action.TYPED_SELECT) {
     
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
@@ -118,9 +119,10 @@ class TypedSelectEvent(userId: String, var selectedId: Int) : LogEvent(userId, A
 }
 
 class ExplicitSelectEvent(userId: String, 
+                          sessionId: String,
                           completionListIds: List<Int>,
                           newCompletionListItems: List<LookupEntryInfo>,
-                          selectedPosition: Int) : LookupStateLogData(userId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
+                          selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
     
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
@@ -130,9 +132,10 @@ class ExplicitSelectEvent(userId: String,
 
 class BackspaceEvent(
         userId: String,
+        sessionId: String,
         completionListIds: List<Int>,
         newCompletionListItems: List<LookupEntryInfo>, 
-        selectedPosition: Int) : LookupStateLogData(userId, Action.BACKSPACE, completionListIds, newCompletionListItems, selectedPosition) {
+        selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.BACKSPACE, completionListIds, newCompletionListItems, selectedPosition) {
 
     init {
         assert(completionListIds.isNotEmpty())
@@ -145,9 +148,10 @@ class BackspaceEvent(
 
 class TypeEvent(
         userId: String,
+        sessionId: String,
         completionListIds: List<Int>,
         newCompletionListItems: List<LookupEntryInfo>,
-        selectedPosition: Int) : LookupStateLogData(userId, Action.TYPE, completionListIds, newCompletionListItems, selectedPosition) {
+        selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.TYPE, completionListIds, newCompletionListItems, selectedPosition) {
 
     init {
         assert(completionListIds.isNotEmpty())
@@ -160,10 +164,11 @@ class TypeEvent(
 
 class CompletionStartedEvent(
         userId: String,
+        sessionId: String,
         var performExperiment: Boolean,
         var experimentVersion: Int,
         completionList: List<LookupEntryInfo>,
-        selectedPosition: Int) : LookupStateLogData(userId, Action.COMPLETION_STARTED, completionList.map { it.id }, completionList, selectedPosition) 
+        selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.COMPLETION_STARTED, completionList.map { it.id }, completionList, selectedPosition) 
 
 {
     var completionListLength: Int = completionList.size
@@ -173,7 +178,7 @@ class CompletionStartedEvent(
     }
 }
 
-class CustomMessageEvent(userId: String): LogEvent(userId, Action.CUSTOM) {
+class CustomMessageEvent(userId: String, sessionId: String): LogEvent(userId, sessionId, Action.CUSTOM) {
     
     var text: String = ""
     

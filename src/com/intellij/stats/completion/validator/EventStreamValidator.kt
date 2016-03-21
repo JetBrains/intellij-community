@@ -26,16 +26,19 @@ class UserSessionsValidator(input: InputStream,
                 continue
             }
 
-            if (currentSessionUid == event.sessionUid) {
-                session.add(EventLine(event, line))
-            }
-            else {
+            if (currentSessionUid != event.sessionUid) {
                 processCompletionSession(session)
                 reset()
             }
+            
+            session.add(EventLine(event, line))
+            line = inputReader.readLine()
         }
         
         processCompletionSession(session)
+        
+        outputWriter.flush()
+        errorWriter.flush()
     }
 
     private fun processCompletionSession(session: List<EventLine>) {

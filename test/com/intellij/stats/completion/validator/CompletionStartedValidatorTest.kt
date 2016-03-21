@@ -7,30 +7,32 @@ import org.junit.Test
 
 object LogEventFixtures {
     
-    val completion_started_3_items_shown = CompletionStartedEvent("1", true, 1, Fixtures.lookupList, 0)
+    val sessionId = "session-id-xxx"
+    
+    val completion_started_3_items_shown = CompletionStartedEvent("1", sessionId, true, 1, Fixtures.lookupList, 0)
 
-    val completion_cancelled = CompletionCancelledEvent("1")
+    val completion_cancelled = CompletionCancelledEvent("1", sessionId)
 
-    val type_event_current_pos_0_left_1_3 = TypeEvent("1", listOf(1, 3), emptyList(), 0)
-    val type_event_current_pos_0_left_1_2 = TypeEvent("1", listOf(1, 2), emptyList(), 0)
-    val type_event_current_pos_0_left_1 = TypeEvent("1", listOf(1), emptyList(), 0)
+    val type_event_current_pos_0_left_1_3 = TypeEvent("1", sessionId, listOf(1, 3), emptyList(), 0)
+    val type_event_current_pos_0_left_1_2 = TypeEvent("1", sessionId, listOf(1, 2), emptyList(), 0)
+    val type_event_current_pos_0_left_1 = TypeEvent("1", sessionId, listOf(1), emptyList(), 0)
 
-    val up_pressed_new_pos_0 = UpPressedEvent("1", emptyList(), emptyList(), 0)
-    val up_pressed_new_pos_1 = UpPressedEvent("1", emptyList(), emptyList(), 1)
-    val up_pressed_new_pos_2 = UpPressedEvent("1", emptyList(), emptyList(), 2)
+    val up_pressed_new_pos_0 = UpPressedEvent("1", sessionId, emptyList(), emptyList(), 0)
+    val up_pressed_new_pos_1 = UpPressedEvent("1", sessionId, emptyList(), emptyList(), 1)
+    val up_pressed_new_pos_2 = UpPressedEvent("1", sessionId, emptyList(), emptyList(), 2)
 
-    val down_event_new_pos_0 = DownPressedEvent("1", emptyList(), emptyList(), 0)
-    val down_event_new_pos_1 = DownPressedEvent("1", emptyList(), emptyList(), 1)
-    val down_event_new_pos_2 = DownPressedEvent("1", emptyList(), emptyList(), 2)
+    val down_event_new_pos_0 = DownPressedEvent("1", sessionId, emptyList(), emptyList(), 0)
+    val down_event_new_pos_1 = DownPressedEvent("1", sessionId, emptyList(), emptyList(), 1)
+    val down_event_new_pos_2 = DownPressedEvent("1", sessionId, emptyList(), emptyList(), 2)
 
-    val backspace_event_pos_0_left_1_2_3 = BackspaceEvent("1", listOf(1, 2, 3), emptyList(), 0)
-    val backspace_event_pos_0_left_1 = BackspaceEvent("1", listOf(1), emptyList(), 0)
+    val backspace_event_pos_0_left_1_2_3 = BackspaceEvent("1", sessionId, listOf(1, 2, 3), emptyList(), 0)
+    val backspace_event_pos_0_left_1 = BackspaceEvent("1", sessionId, listOf(1), emptyList(), 0)
 
-    val explicit_select_0 = ExplicitSelectEvent("1", emptyList(), emptyList(), 0)
-    val explicit_select_3 = ExplicitSelectEvent("1", emptyList(), emptyList(), 3)
+    val explicit_select_0 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 0)
+    val explicit_select_3 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 3)
 
-    val selected_by_typing_0 = TypedSelectEvent("1", 0)
-    val selected_by_typing_1 = TypedSelectEvent("1", 1)
+    val selected_by_typing_0 = TypedSelectEvent("1", sessionId, 0)
+    val selected_by_typing_1 = TypedSelectEvent("1", sessionId, 1)
 
 }
 
