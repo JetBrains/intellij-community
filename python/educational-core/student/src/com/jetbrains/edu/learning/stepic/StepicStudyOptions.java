@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.edu.learning.settings;
+package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.UIUtil;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StudySettings;
+import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +29,7 @@ import javax.swing.text.PlainDocument;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
-public class StudyBaseSettingsPanel implements ModifiableSettingsPanel{
+public class StepicStudyOptions implements StudyOptionsProvider {
   private static final String DEFAULT_PASSWORD_TEXT = "************";
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
@@ -39,7 +37,7 @@ public class StudyBaseSettingsPanel implements ModifiableSettingsPanel{
 
   private boolean myCredentialsModified;
 
-  public StudyBaseSettingsPanel() {
+  public StepicStudyOptions() {
     myPasswordField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -69,7 +67,6 @@ public class StudyBaseSettingsPanel implements ModifiableSettingsPanel{
       public void focusLost(FocusEvent e) {
       }
     });
-    myPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtil.getBoundsColor()));
     reset();
   }
 
@@ -79,7 +76,6 @@ public class StudyBaseSettingsPanel implements ModifiableSettingsPanel{
   }
 
   @NotNull
-  @Override
   public JComponent getPanel() {
     return myPane;
   }
@@ -102,7 +98,7 @@ public class StudyBaseSettingsPanel implements ModifiableSettingsPanel{
     myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
   }
 
-  @Override
+  
   public void reset() {
     final StudySettings studySettings = StudySettings.getInstance();
     setLogin(studySettings.getLogin());
@@ -112,6 +108,10 @@ public class StudyBaseSettingsPanel implements ModifiableSettingsPanel{
   }
 
   @Override
+  public void disposeUIResources() {
+
+  }
+
   public void apply() {
     if (myCredentialsModified) {
       final StudySettings studySettings = StudySettings.getInstance();
@@ -124,12 +124,16 @@ public class StudyBaseSettingsPanel implements ModifiableSettingsPanel{
     resetCredentialsModification();
   }
 
+  @Nullable
   @Override
+  public JComponent createComponent() {
+    return myPane;
+  }
+
   public boolean isModified() {
     return myCredentialsModified;
   }
-
-  @Override
+  
   public void resetCredentialsModification() {
     myCredentialsModified = false;
   }

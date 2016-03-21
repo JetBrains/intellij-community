@@ -37,6 +37,9 @@
     </extensionPoint>
     <extensionPoint qualifiedName="Edu.studyPluginConfigurator" interface="com.jetbrains.edu.learning.StudyPluginConfigurator"/>
     <extensionPoint qualifiedName="Edu.studyTwitterPluginConfigurator" interface="com.jetbrains.edu.learning.StudyTwitterPluginConfigurator"/>
+    <extensionPoint qualifiedName="Edu.optionsProvider" beanClass="com.jetbrains.edu.learning.settings.StudyOptionsProviderEP">>
+      <with attribute="instance" implements="com.jetbrains.edu.learning.settings.StudyOptionsProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <actions>
@@ -92,5 +95,8 @@
     <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
     <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
+  </extensions>
+  <extensions defaultExtensionNs="Edu">
+    <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicOptionsProvider"/>
   </extensions>
 </idea-plugin>

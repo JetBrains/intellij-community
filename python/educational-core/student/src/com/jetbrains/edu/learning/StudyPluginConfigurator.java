@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
-import com.jetbrains.edu.learning.settings.ModifiableSettingsPanel;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +40,6 @@ public interface StudyPluginConfigurator {
   StudyAfterCheckAction[] getAfterCheckActions();
   
   @NotNull String getLanguageScriptUrl();
-
-  @Nullable
-  ModifiableSettingsPanel getSettingsPanel();
   
   boolean accept(@NotNull final Project project);
 }
