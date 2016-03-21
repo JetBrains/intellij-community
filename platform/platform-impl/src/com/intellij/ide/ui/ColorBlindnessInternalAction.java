@@ -24,6 +24,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,6 +44,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
 
   private static final class ColorDialog extends DialogWrapper {
     private final ColorView myView = new ColorView();
+    private final JComboBox myCombo = new ComboBox<>(FilterItem.ALL);
 
     private ColorDialog(AnActionEvent event) {
       super(event.getProject());
@@ -50,17 +52,23 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       setTitle("ColorBlindness");
     }
 
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myCombo;
+    }
+
     @Override
     protected JComponent createCenterPanel() {
+      myView.setBorder(BorderFactory.createEtchedBorder());
       myView.setMinimumSize(new JBDimension(360, 200));
       myView.setPreferredSize(new JBDimension(720, 400));
 
-      JComboBox combo = new ComboBox<>(FilterItem.ALL);
-      combo.addItemListener(myView);
+      myCombo.addItemListener(myView);
 
       JPanel panel = new JPanel(new BorderLayout(10, 10));
       panel.add(BorderLayout.CENTER, myView);
-      panel.add(BorderLayout.SOUTH, combo);
+      panel.add(BorderLayout.SOUTH, myCombo);
       return panel;
     }
 
@@ -86,19 +94,18 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
     private static final FilterItem[] ALL = new FilterItem[]{
       new FilterItem(null),
       new FilterItem(DaltonizationFilter.protanopia),
-      new FilterItem(DaltonizationFilter.forProtanopia(.5)),
+      new FilterItem(MatrixFilter.protanopia),
       new FilterItem(DaltonizationFilter.deuteranopia),
-      new FilterItem(DaltonizationFilter.forDeuteranopia(.5)),
+      new FilterItem(MatrixFilter.deuteranopia),
       new FilterItem(DaltonizationFilter.tritanopia),
-      new FilterItem(DaltonizationFilter.forTritanopia(.5)),
+      new FilterItem(MatrixFilter.tritanopia),
       new FilterItem(SimulationFilter.protanopia),
-      new FilterItem(SimulationFilter.forProtanopia(.5)),
+      new FilterItem(MatrixFilter.forProtanopia(null, false)),
       new FilterItem(SimulationFilter.deuteranopia),
-      new FilterItem(SimulationFilter.forDeuteranopia(.5)),
+      new FilterItem(MatrixFilter.forDeuteranopia(null, false)),
       new FilterItem(SimulationFilter.tritanopia),
-      new FilterItem(SimulationFilter.forTritanopia(.5)),
+      new FilterItem(MatrixFilter.forTritanopia(null, false)),
       new FilterItem(SimulationFilter.achromatopsia),
-      new FilterItem(SimulationFilter.forAchromatopsia(.5)),
     };
   }
 
