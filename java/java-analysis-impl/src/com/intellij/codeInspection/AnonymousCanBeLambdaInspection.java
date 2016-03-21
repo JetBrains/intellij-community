@@ -508,7 +508,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
             final PsiExpression initializer = ((PsiField)resolved).getInitializer();
             if (initializer == null ||
                 resolved == member ||
-                initializer.getTextOffset() > myAnonymClass.getTextOffset() && !((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+                initializer.getTextOffset() > myAnonymClass.getTextOffset() && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC) == member.hasModifierProperty(PsiModifier.STATIC)) {
               myBodyContainsForbiddenRefs = true;
               return;
             }
