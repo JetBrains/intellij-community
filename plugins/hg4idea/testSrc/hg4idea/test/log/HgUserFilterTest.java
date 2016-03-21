@@ -78,8 +78,8 @@ public class HgUserFilterTest extends HgPlatformTest {
     myVcsLogUserFilterTest.testWeirdCharacters();
   }
 
-  public void testYoutrackIssuesWithWeirdNames() throws Exception {
-    myVcsLogUserFilterTest.testYoutrackIssuesWithWeirdNames();
+  public void testWeirdNames() throws Exception {
+    myVcsLogUserFilterTest.testWeirdNames();
   }
 
   public void testJeka() throws Exception {

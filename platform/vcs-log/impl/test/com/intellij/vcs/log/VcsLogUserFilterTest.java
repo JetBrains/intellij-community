@@ -47,7 +47,10 @@ public abstract class VcsLogUserFilterTest {
     myObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
   }
 
-  public void testYoutrackIssuesWithWeirdNames() throws Exception {
+  /*
+  Test for IDEA-141382, IDEA-121827, IDEA-141158
+   */
+  public void testWeirdNames() throws Exception {
     MultiMap<VcsUser, String> commits =
       generateHistory("User [company]", "user@company.com", "Userovich, User", "userovich@company.com", "User (user)",
                       "useruser@company.com");
@@ -127,6 +130,9 @@ public abstract class VcsLogUserFilterTest {
     assertFilteredCorrectly(builder);
   }
 
+  /*
+  Test for IDEA-152545
+   */
   public void testJeka() throws Exception {
     VcsUser jeka = myObjectsFactory.createUser("User Userovich", "jeka@company.com");
     List<VcsUser> users = Arrays.asList(jeka,
