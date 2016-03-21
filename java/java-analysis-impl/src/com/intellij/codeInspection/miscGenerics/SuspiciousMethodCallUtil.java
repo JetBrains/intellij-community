@@ -115,7 +115,7 @@ public class SuspiciousMethodCallUtil {
       argType = ((PsiPrimitiveType)argType).getBoxedType(methodCall);
     }
 
-    if (!(argType instanceof PsiClassType)) return null;
+    if (argType == null) return null;
 
     final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
     PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();
