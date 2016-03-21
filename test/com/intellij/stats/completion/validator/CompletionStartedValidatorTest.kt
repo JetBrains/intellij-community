@@ -29,8 +29,8 @@ object LogEventFixtures {
     val explicit_select_0 = ExplicitSelectEvent("1", emptyList(), emptyList(), 0)
     val explicit_select_3 = ExplicitSelectEvent("1", emptyList(), emptyList(), 3)
 
-    val selected_by_typing_0 = ItemSelectedByTypingEvent("1", 0)
-    val selected_by_typing_1 = ItemSelectedByTypingEvent("1", 1)
+    val selected_by_typing_0 = TypedSelectEvent("1", 0)
+    val selected_by_typing_1 = TypedSelectEvent("1", 1)
 
 }
 

@@ -59,7 +59,7 @@ class EventSerializeDeserializeTest {
     
     @Test
     fun `item selected by typing event`() {
-        val event = ItemSelectedByTypingEvent(Fixtures.userId, 5)
+        val event = TypedSelectEvent(Fixtures.userId, 5)
         serializeDeserializeAndCheck(event)
     }
     
