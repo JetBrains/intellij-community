@@ -1,7 +1,7 @@
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 
-public class HighlightAmbiguousController {
+public class HighlightAmbiguous {
   public void onArgType(ActionEvent e) {}
   public void onArgType(Event e) {}
   public void onNoArg(ActionEvent e) {}
