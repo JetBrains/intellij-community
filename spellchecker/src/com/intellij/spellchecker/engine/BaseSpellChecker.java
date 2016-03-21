@@ -223,7 +223,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
     List<Suggestion> suggestions = new ArrayList<Suggestion>(rawSuggestions.size());
     for (String rawSuggestion : rawSuggestions) {
-      int distance = EditDistance.levenshtein(transformed, rawSuggestion, true);
+      int distance = EditDistance.optimalAlignment(transformed, rawSuggestion, true);
       suggestions.add(new Suggestion(rawSuggestion, distance));
     }
 

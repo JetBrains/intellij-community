@@ -40,6 +40,7 @@ public class EditDistanceTest {
 
   @Test
   public void optimalAlignment() {
+    assertEquals(0, EditDistance.optimalAlignment("", "", true));
     assertEquals(1, EditDistance.optimalAlignment("ab", "ba", true));
     assertEquals(2, EditDistance.optimalAlignment("AB", "ba", true));
     assertEquals(3, EditDistance.optimalAlignment("ca", "abc", true));
@@ -48,6 +49,7 @@ public class EditDistanceTest {
 
   @Test
   public void optimalAlignmentCaseInsensitive() {
+    assertEquals(0, EditDistance.optimalAlignment("", "", false));
     assertEquals(1, EditDistance.optimalAlignment("ab", "ba", false));
     assertEquals(1, EditDistance.optimalAlignment("AB", "ba", false));
     assertEquals(3, EditDistance.optimalAlignment("ca", "abc", false));
