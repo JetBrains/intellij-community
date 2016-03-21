@@ -390,7 +390,7 @@ public class LineStatusTracker {
         FileDocumentManager.getInstance().saveDocument(myDocument);
         boolean stillEmpty;
         synchronized (myLock) {
-          stillEmpty = myRanges.isEmpty();
+          stillEmpty = !isValid() || myRanges.isEmpty();
         }
         if (stillEmpty) {
           // file was modified, and now it's not -> dirty local change
