@@ -521,8 +521,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         settings.setAdditionalColumnsCount(0);
         settings.setAdditionalLinesCount(0);
         settings.setLeadingWhitespaceShown(true);
-        settings.setRightMarginShown(true);
-        settings.setRightMargin(60);
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
         myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
