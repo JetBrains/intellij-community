@@ -52,6 +52,10 @@ public class GitUserFilterTest extends GitSingleRepoTest {
     myVcsLogUserFilterTest.testSynonyms(ContainerUtil.newHashSet('<', '>'));
   }
 
+  public void testTurkishLocale() throws Exception {
+    myVcsLogUserFilterTest.testTurkishLocale();
+  }
+
   public void testWeirdCharacters() throws Exception {
     myVcsLogUserFilterTest.testWeirdCharacters();
   }

@@ -130,6 +130,57 @@ public abstract class VcsLogUserFilterTest {
     assertFilteredCorrectly(builder);
   }
 
+
+  /*
+  Turkish character İ corresponds to lower case i, while I is ı.
+  But since we ca not find locale by username, this test it incorrect.
+  Currently we do not lower-case non-ascii letters at all (works incorrectly for them without the locale), so we do not find synonyms for names with İ and ı.
+  And for I and i incorrect synonyms are found (since we assume that I is upper-case for i).
+   */
+  public void testTurkishLocale() throws Exception {
+    VcsUser upperCaseDotUser = myObjectsFactory.createUser("\u0130name", "uppercase.dot@company.com");
+    VcsUser lowerCaseDotUser = myObjectsFactory.createUser("\u0069name", "lowercase.dot@company.com");
+    VcsUser upperCaseDotlessUser = myObjectsFactory.createUser("\u0049name", "uppercase.dotless@company.com");
+    VcsUser lowerCaseDotlessUser = myObjectsFactory.createUser("\u0131name", "lowercase.dotless@company.com");
+
+    List<VcsUser> users = Arrays.asList(upperCaseDotUser, lowerCaseDotUser, upperCaseDotlessUser, lowerCaseDotlessUser);
+
+    MultiMap<VcsUser, String> commits = generateHistory(users);
+    List<VcsCommitMetadata> metadata = generateMetadata(commits);
+
+    StringBuilder builder = new StringBuilder();
+
+    checkTurkishAndEnglishLocales(upperCaseDotUser, Collections.emptySet(), commits, metadata, builder);
+    checkTurkishAndEnglishLocales(lowerCaseDotlessUser, Collections.emptySet(), commits, metadata, builder);
+    checkTurkishAndEnglishLocales(lowerCaseDotUser, Collections.singleton(upperCaseDotlessUser), commits, metadata, builder);
+    checkTurkishAndEnglishLocales(upperCaseDotlessUser, Collections.singleton(lowerCaseDotUser), commits, metadata, builder);
+
+    assertFilteredCorrectly(builder);
+  }
+
+  private void checkTurkishAndEnglishLocales(@NotNull VcsUser user,
+                                             @NotNull Collection<VcsUser> synonymUsers,
+                                             @NotNull MultiMap<VcsUser, String> commits,
+                                             @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder builder) throws VcsException {
+    Set<String> expectedCommits = ContainerUtil.newHashSet(commits.get(user));
+    for (VcsUser synonym : synonymUsers) {
+      expectedCommits.addAll(commits.get(synonym));
+    }
+
+    Locale oldLocale = Locale.getDefault();
+    Locale.setDefault(new Locale("tr"));
+    StringBuilder turkishBuilder = new StringBuilder();
+    checkFilterForUser(user, commits.keySet(), expectedCommits, metadata, turkishBuilder);
+
+    Locale.setDefault(Locale.ENGLISH);
+    StringBuilder defaultBuilder = new StringBuilder();
+    checkFilterForUser(user, commits.keySet(), expectedCommits, metadata, defaultBuilder);
+    Locale.setDefault(oldLocale);
+
+    if (!turkishBuilder.toString().isEmpty()) builder.append("Turkish Locale:\n").append(turkishBuilder);
+    if (!defaultBuilder.toString().isEmpty()) builder.append("English Locale:\n").append(defaultBuilder);
+  }
+
   /*
   Test for IDEA-152545
    */
