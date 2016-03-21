@@ -95,6 +95,13 @@ final class MatrixFilter extends WeightFilter {
     TRITANOPIA_CORRECTION = Matrix.create(3, 1, 0, 0, 0, 1, 0, .7, .7, 1);
   }
 
+  public static ImageFilter get(ColorBlindness blindness) {
+    if (blindness == ColorBlindness.protanopia) return protanopia;
+    if (blindness == ColorBlindness.deuteranopia) return deuteranopia;
+    if (blindness == ColorBlindness.tritanopia) return tritanopia;
+    return null;
+  }
+
   public static final ImageFilter protanopia = forProtanopia(null, true);
   public static final ImageFilter deuteranopia = forDeuteranopia(null, true);
   public static final ImageFilter tritanopia = forTritanopia(null, true);

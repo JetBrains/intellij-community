@@ -3,6 +3,14 @@ package com.intellij.ide.ui;
 import java.awt.image.ImageFilter;
 
 final class SimulationFilter extends WeightFilter {
+  public static ImageFilter get(ColorBlindness blindness) {
+    if (blindness == ColorBlindness.protanopia) return protanopia;
+    if (blindness == ColorBlindness.deuteranopia) return deuteranopia;
+    if (blindness == ColorBlindness.tritanopia) return tritanopia;
+    if (blindness == ColorBlindness.achromatopsia) return achromatopsia;
+    return null;
+  }
+
   public static final ImageFilter protanopia = forProtanopia(null);
   public static final ImageFilter deuteranopia = forDeuteranopia(null);
   public static final ImageFilter tritanopia = forTritanopia(null);

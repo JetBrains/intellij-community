@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 
 import static com.intellij.util.ui.UIUtil.isValidFont;
 
@@ -171,13 +171,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     incModificationCount();
     myDispatcher.getMulticaster().uiSettingsChanged(this);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
-    IconLoader.setFilter(COLOR_BLINDNESS == ColorBlindness.protanopia
-                         ? DaltonizationFilter.protanopia
-                         : COLOR_BLINDNESS == ColorBlindness.deuteranopia
-                           ? DaltonizationFilter.deuteranopia
-                           : COLOR_BLINDNESS == ColorBlindness.tritanopia
-                             ? DaltonizationFilter.tritanopia
-                             : null);
+    IconLoader.setFilter(Registry.is("color.blindness.daltonization")
+                         ? DaltonizationFilter.get(COLOR_BLINDNESS)
+                         : MatrixFilter.get(COLOR_BLINDNESS));
   }
 
   public void removeUISettingsListener(UISettingsListener listener) {
