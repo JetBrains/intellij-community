@@ -221,6 +221,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testSpecificFunctionalInterfaces() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
