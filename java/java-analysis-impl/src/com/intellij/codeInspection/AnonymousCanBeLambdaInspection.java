@@ -500,8 +500,10 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         final PsiMember member = PsiTreeUtil.getParentOfType(myAnonymClass, PsiMember.class);
         if (member instanceof PsiField || member instanceof PsiClassInitializer) {
           final PsiElement resolved = expression.resolve();
+          final PsiClass memberContainingClass = member.getContainingClass();
           if (resolved instanceof PsiField &&
-              ((PsiField)resolved).getContainingClass() == member.getContainingClass() &&
+              memberContainingClass != null &&
+              PsiTreeUtil.isAncestor(((PsiField)resolved).getContainingClass(), memberContainingClass, false) &&
               expression.getQualifierExpression() == null) {
             final PsiExpression initializer = ((PsiField)resolved).getInitializer();
             if (initializer == null ||
