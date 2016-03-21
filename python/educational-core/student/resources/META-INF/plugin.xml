@@ -37,6 +37,7 @@
     </extensionPoint>
     <extensionPoint qualifiedName="Edu.studyPluginConfigurator" interface="com.jetbrains.edu.learning.StudyPluginConfigurator"/>
     <extensionPoint qualifiedName="Edu.studyActionsProvider" interface="com.jetbrains.edu.learning.StudyActionsProvider"/>
+    <extensionPoint qualifiedName="Edu.studyTwitterPluginConfigurator" interface="com.jetbrains.edu.learning.StudyTwitterPluginConfigurator"/>
   </extensionPoints>
 
   <actions>

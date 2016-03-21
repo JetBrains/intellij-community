@@ -7,10 +7,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.actions.*;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.twitter.StudyTwitterUtils;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,46 +93,6 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
   @Nullable
   @Override
   public StudyAfterCheckAction[] getAfterCheckActions() {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public String getConsumerKey(@NotNull Project project) {
-    return "";
-  }
-
-  @NotNull
-  @Override
-  public String getConsumerSecret(@NotNull Project project) {
-    return "";
-  }
-
-  @Override
-  public void storeTwitterTokens(@NotNull Project project, @NotNull String accessToken, @NotNull String tokenSecret) {
-    // do nothing
-  }
-  
-  @NotNull
-  @Override
-  public String getTwitterTokenSecret(@NotNull Project project) {
-    return "";
-  }
-
-  @NotNull
-  @Override
-  public String getTwitterAccessToken(@NotNull Project project) {
-    return "";
-  }
-
-  @Override
-  public boolean askToTweet(@NotNull Project project, Task solvedTask, StudyStatus statusBeforeCheck) {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public StudyTwitterUtils.TwitterDialogPanel getTweetDialogPanel(@NotNull Task solvedTask) {
     return null;
   }
 }
