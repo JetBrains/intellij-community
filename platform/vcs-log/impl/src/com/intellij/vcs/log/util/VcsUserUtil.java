@@ -20,11 +20,13 @@ import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VcsUserUtil {
-  @NotNull private static final Pattern NAME_PATTERN = Pattern.compile("(\\w*)[\\W_](\\w*)");
+  @NotNull private static final Pattern NAME_PATTERN = Pattern.compile("(\\w+)[\\W_](\\w+)");
+  @NotNull private static final Pattern PRINTABLE_ASCII_PATTERN = Pattern.compile("[ -~]*");
 
   @NotNull
   public static String toExactString(@NotNull VcsUser user) {
@@ -69,9 +71,9 @@ public class VcsUserUtil {
   public static String getNameInStandardForm(@NotNull String name) {
     Couple<String> firstAndLastName = getFirstAndLastName(name);
     if (firstAndLastName != null) {
-      return firstAndLastName.first.toLowerCase() + " " + firstAndLastName.second.toLowerCase();
+      return firstAndLastName.first.toLowerCase(Locale.ENGLISH) + " " + firstAndLastName.second.toLowerCase(Locale.ENGLISH); // synonyms detection is currently english-only
     }
-    return name.toLowerCase();
+    return nameToLowerCase(name);
   }
 
   @Nullable
@@ -81,5 +83,23 @@ public class VcsUserUtil {
       return Couple.of(matcher.group(1), matcher.group(2));
     }
     return null;
+  }
+
+  @NotNull
+  public static String nameToLowerCase(@NotNull String name) {
+    if (!PRINTABLE_ASCII_PATTERN.matcher(name).matches()) return name;
+    return name.toLowerCase(Locale.ENGLISH);
+  }
+
+  @NotNull
+  public static String capitalizeName(@NotNull String name) {
+    if (name.isEmpty()) return name;
+    if (!PRINTABLE_ASCII_PATTERN.matcher(name).matches()) return name;
+    return name.substring(0, 1).toUpperCase(Locale.ENGLISH) + name.substring(1);
+  }
+
+  @NotNull
+  public static String emailToLowerCase(@NotNull String email) {
+    return email.toLowerCase(Locale.ENGLISH);
   }
 }

@@ -31,7 +31,7 @@ public class VcsUserImpl implements VcsUser {
 
   public VcsUserImpl(@NotNull String name, @NotNull String email) {
     myName = name;
-    myEmail = email.toLowerCase();
+    myEmail = VcsUserUtil.emailToLowerCase(email);
   }
 
   @NotNull

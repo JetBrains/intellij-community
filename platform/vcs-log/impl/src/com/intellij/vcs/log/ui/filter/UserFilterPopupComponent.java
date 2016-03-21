@@ -100,7 +100,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
         String shortPresentation = VcsUserUtil.getShortPresentation(user);
         Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
         if (firstAndLastName == null) return shortPresentation;
-        return StringUtil.capitalize(firstAndLastName.first) + " " + StringUtil.capitalize(firstAndLastName.second);
+        return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
       }
     });
   }

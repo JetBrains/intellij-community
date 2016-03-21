@@ -91,7 +91,6 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @Override
   public boolean matches(@NotNull final VcsCommitMetadata commit) {
     return ContainerUtil.exists(myUsers, new Condition<String>() {
-      @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
       @Override
       public boolean value(String name) {
         Set<VcsUser> users = getUsers(commit.getRoot(), name);
@@ -99,9 +98,9 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
           return users.contains(commit.getAuthor());
         }
         else if (!name.equals(ME)) {
-          String lowerUser = name.toLowerCase();
-          return commit.getAuthor().getName().toLowerCase().equals(lowerUser) ||
-                 commit.getAuthor().getEmail().toLowerCase().startsWith(lowerUser + "@");
+          String lowerUser = VcsUserUtil.nameToLowerCase(name);
+          return VcsUserUtil.nameToLowerCase(commit.getAuthor().getName()).equals(lowerUser) ||
+                 VcsUserUtil.emailToLowerCase(commit.getAuthor().getEmail()).startsWith(lowerUser + "@");
         }
         return false;
       }
