@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return myClass;
     }
 
-    @NotNull public Condition<String> getNameCondition() {
+    @NotNull
+    public Condition<String> getNameCondition() {
       return myNameCondition;
     }
 
@@ -73,6 +74,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return myCheckDeep;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -83,6 +85,16 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
     public boolean isIncludeAnonymous() {
       return myIncludeAnonymous;
+    }
+
+    @Override
+    public String toString() {
+      return "'"+myClass.getQualifiedName()+
+             "' scope="+myScope+
+             (myCheckDeep ? " (deep)" : "") +
+             (myCheckInheritance ? " (check inheritance)":"") +
+             (myIncludeAnonymous ? " (anonymous)":"")+
+             (myNameCondition == Conditions.<String>alwaysTrue() ? "" : " condition: "+myNameCondition);
     }
   }
 

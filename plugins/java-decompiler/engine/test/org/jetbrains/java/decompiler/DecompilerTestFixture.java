@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -104,13 +105,14 @@ public class DecompilerTestFixture {
 
   public static void assertFilesEqual(File expected, File actual) {
     if (expected.isDirectory()) {
-      assertThat(actual.list(), Matchers.arrayContainingInAnyOrder(expected.list()));
-      for (String name : expected.list()) {
+      String[] children = Objects.requireNonNull(expected.list());
+      assertThat(actual.list(), Matchers.arrayContainingInAnyOrder(children));
+      for (String name : children) {
         assertFilesEqual(new File(expected, name), new File(actual, name));
       }
     }
     else {
-      assertThat(getContent(actual), Matchers.equalTo(getContent(expected)));
+      assertEquals(getContent(expected), getContent(actual));
     }
   }
 

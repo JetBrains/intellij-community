@@ -228,21 +228,26 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @Override
   public void loadState(final Element element) {
     myInjections.clear();
-    final Map<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
-    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-      supports.put(support.getId(), support);
-    }
-    for (Element child : element.getChildren("injection")){
-      final String key = child.getAttributeValue("injector-id");
-      final LanguageInjectionSupport support = supports.get(key);
-      final BaseInjection injection = support == null ? new BaseInjection(key) : support.createInjection(child);
-      injection.loadState(child);
-      InjectionPlace[] places = dropKnownInvalidPlaces(injection.getInjectionPlaces());
-      if (places != null) { // not all places were removed
-        injection.setInjectionPlaces(places);
-        myInjections.get(key).add(injection);
+
+    List<Element> injectionElements = element.getChildren("injection");
+    if (!injectionElements.isEmpty()) {
+      final Map<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
+      for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
+        supports.put(support.getId(), support);
+      }
+      for (Element child : injectionElements) {
+        final String key = child.getAttributeValue("injector-id");
+        final LanguageInjectionSupport support = supports.get(key);
+        final BaseInjection injection = support == null ? new BaseInjection(key) : support.createInjection(child);
+        injection.loadState(child);
+        InjectionPlace[] places = dropKnownInvalidPlaces(injection.getInjectionPlaces());
+        if (places != null) { // not all places were removed
+          injection.setInjectionPlaces(places);
+          myInjections.get(key).add(injection);
+        }
       }
     }
+
     importPlaces(getDefaultInjections());
   }
 

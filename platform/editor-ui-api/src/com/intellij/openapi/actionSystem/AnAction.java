@@ -16,7 +16,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -165,15 +164,15 @@ public abstract class AnAction implements PossiblyDumbAware {
       if (!actionList.contains(this)){
         actionList.add(this);
       }
-    }
 
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          unregisterCustomShortcutSet(component);
-        }
-      });
+      if (parentDisposable != null) {
+        Disposer.register(parentDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            unregisterCustomShortcutSet(component);
+          }
+        });
+      }
     }
   }
 
@@ -202,7 +201,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public final void copyShortcutFrom(@NotNull AnAction sourceAction) {
-    myShortcutSet = sourceAction.myShortcutSet;
+    setShortcutSet(sourceAction.getShortcutSet());
   }
 
 
@@ -279,7 +278,9 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   protected void setShortcutSet(ShortcutSet shortcutSet) {
     if (myIsGlobal && myShortcutSet != shortcutSet) {
-      LOG.warn("Shortcuts of global AnActions should not be changed outside of KeymapManager", new Throwable());
+      LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
+               "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
+               "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
     }
     myShortcutSet = shortcutSet;
   }

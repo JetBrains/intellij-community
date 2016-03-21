@@ -15,14 +15,10 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TextFieldWithAutoCompletion;
-import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
+import com.intellij.util.textCompletion.TextCompletionProvider;
+import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,32 +26,21 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public abstract class TextFieldWithProgress<T> extends JPanel {
-  @NotNull private final TextFieldWithAutoCompletion<T> myTextField;
+public abstract class TextFieldWithProgress extends JPanel {
+  @NotNull private final TextFieldWithCompletion myTextField;
   @NotNull private final AsyncProcessIcon myProgressIcon;
 
   public TextFieldWithProgress(@NotNull Project project,
-                               @NotNull TextFieldWithAutoCompletionListProvider<T> completionProvider) {
+                               @NotNull TextCompletionProvider completionProvider) {
     super(new BorderLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(3));
 
     myProgressIcon = new AsyncProcessIcon("Loading commits");
-    myTextField = new TextFieldWithAutoCompletion<T>(project, completionProvider, false, null) {
+    myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true, false) {
       @Override
       public void setBackground(Color bg) {
         super.setBackground(bg);
         myProgressIcon.setBackground(bg);
-      }
-
-      @Override
-      protected EditorEx createEditor() {
-        EditorEx editor = super.createEditor();
-        editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, true);
-        EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-        if (customization != null) {
-          customization.customize(editor);
-        }
-        return editor;
       }
 
       @Override

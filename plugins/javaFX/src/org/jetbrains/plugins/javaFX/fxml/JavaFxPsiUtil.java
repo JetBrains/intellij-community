@@ -820,6 +820,40 @@ public class JavaFxPsiUtil {
            InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_MAP);
   }
 
+  public static boolean isNotFullyResolvedGeneric(@NotNull PsiClassType classType) {
+    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+    final PsiClass psiClass = resolveResult.getElement();
+    if (psiClass == null || psiClass instanceof PsiTypeParameter) return true;
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+      final PsiType substitute = substitutor.substitute(parameter);
+      if (substitute == null || substitute instanceof PsiClassType && isNotFullyResolvedGeneric((PsiClassType)substitute)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  public static PsiSubstitutor getTagClassSubstitutor(@NotNull XmlTag xmlTag,
+                                                      @Nullable PsiClass fieldClass,
+                                                      @Nullable PsiClass controllerClass) {
+    if (fieldClass != null && controllerClass != null) {
+      final String tagFieldName = xmlTag.getAttributeValue(FxmlConstants.FX_ID);
+      if (tagFieldName != null) {
+        final PsiField tagField = controllerClass.findFieldByName(tagFieldName, true);
+        if (tagField != null && !tagField.hasModifierProperty(PsiModifier.STATIC) && isVisibleInFxml(tagField)) {
+          final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(tagField.getType());
+          final PsiClass resolvedClass = resolveResult.getElement();
+          if (resolvedClass != null) {
+            return TypeConversionUtil.getClassSubstitutor(fieldClass, resolvedClass, resolveResult.getSubstitutor());
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
     private final Project myProject;
     private final PsiFile myContainingFile;

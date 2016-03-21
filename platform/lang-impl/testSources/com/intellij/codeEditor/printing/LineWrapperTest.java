@@ -68,7 +68,7 @@ public class LineWrapperTest {
   }
 
   private void doTest(String text, boolean atLineStart, double clipWidth, int... expectedBreaks) {
-    IntArrayList actualBreaks = LineWrapper.calcBreakOffsets(text.toCharArray(), 0, text.length(), atLineStart ? 0 : 1, 0, clipWidth, myWidthProvider);
+    IntArrayList actualBreaks = LineWrapper.calcBreakOffsets(text.toCharArray(), 0, text.length(), atLineStart, 0, clipWidth, myWidthProvider);
     assertArrayEquals(expectedBreaks, actualBreaks.toArray());
   }
 }

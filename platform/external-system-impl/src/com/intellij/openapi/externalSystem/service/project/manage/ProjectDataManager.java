@@ -86,14 +86,6 @@ public class ProjectDataManager {
     };
   }
 
-  @Deprecated // to be removed in 15.1
-  @Nullable
-  public ProjectDataService<?, ?> getDataService(Key<?> key) {
-    final List<ProjectDataService<?, ?>> dataServices = myServices.getValue().get(key);
-    assert dataServices == null || dataServices.isEmpty() || dataServices.size() == 1;
-    return ContainerUtil.getFirstItem(dataServices);
-  }
-
   @SuppressWarnings("unchecked")
   public void importData(@NotNull Collection<DataNode<?>> nodes,
                          @NotNull Project project,
@@ -252,8 +244,10 @@ public class ProjectDataManager {
       for (ProjectDataService<?, ?> service : services) {
         final long importStartTime = System.currentTimeMillis();
         ((ProjectDataService)service).importData(toImport, projectData, project, modelsProvider);
-        final long importTimeInMs = (System.currentTimeMillis() - importStartTime);
-        LOG.debug(String.format("Service %s imported data in %d ms", service.getClass().getSimpleName(), importTimeInMs));
+        if(LOG.isDebugEnabled()) {
+          final long importTimeInMs = (System.currentTimeMillis() - importStartTime);
+          LOG.debug(String.format("Service %s imported data in %d ms", service.getClass().getSimpleName(), importTimeInMs));
+        }
 
         if(projectData != null) {
           ensureTheDataIsReadyToUse((Collection)toIgnore);
@@ -261,8 +255,10 @@ public class ProjectDataManager {
           final Computable<Collection<?>> orphanIdeDataComputable =
             ((ProjectDataService)service).computeOrphanData(toImport, projectData, project, modelsProvider);
           ((ProjectDataService)service).removeData(orphanIdeDataComputable, toIgnore, projectData, project, modelsProvider);
-          final long removeTimeInMs = (System.currentTimeMillis() - removeStartTime);
-          LOG.debug(String.format("Service %s computed and removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
+          if(LOG.isDebugEnabled()) {
+            final long removeTimeInMs = (System.currentTimeMillis() - removeStartTime);
+            LOG.debug(String.format("Service %s computed and removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
+          }
         }
       }
     }
@@ -275,8 +271,10 @@ public class ProjectDataManager {
             if (service instanceof AbstractProjectDataService) {
               final long taskStartTime = System.currentTimeMillis();
               ((AbstractProjectDataService)service).postProcess(toImport, projectData, project, modelsProvider);
-              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
-              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+              if(LOG.isDebugEnabled()) {
+                final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+                LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+              }
             }
           }
         }
@@ -288,8 +286,10 @@ public class ProjectDataManager {
             if (service instanceof AbstractProjectDataService) {
               final long taskStartTime = System.currentTimeMillis();
               ((AbstractProjectDataService)service).onSuccessImport(project);
-              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
-              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+              if(LOG.isDebugEnabled()) {
+                final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+                LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+              }
             }
           }
         }
@@ -323,8 +323,10 @@ public class ProjectDataManager {
       for (ProjectDataService service : services) {
         final long removeStartTime = System.currentTimeMillis();
         service.removeData(new Computable.PredefinedValueComputable<Collection>(toRemove), toIgnore, projectData, project, modelsProvider);
-        final long removeTimeInMs = System.currentTimeMillis() - removeStartTime;
-        LOG.debug(String.format("Service %s removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
+        if(LOG.isDebugEnabled()) {
+          final long removeTimeInMs = System.currentTimeMillis() - removeStartTime;
+          LOG.debug(String.format("Service %s removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
+        }
       }
 
       commit(modelsProvider, project, synchronous, "Removed data");

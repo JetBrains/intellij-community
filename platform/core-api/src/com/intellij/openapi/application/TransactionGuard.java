@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * A service managing model transactions.<p/>
  *
  * A transaction ensures that IntelliJ model (PSI, documents, VFS, project roots etc.) isn't modified in an unexpected way
- * while working with it, with either read or write access. The main property of transactions is isolation: at most one transaction
+ * while working with it, with either read or write access. The main property of transactions is mutual exclusion: at most one transaction
  * can be running at any given time. The code inside transaction can perform read or write actions and, more importantly, show dialogs
  * and process UI events in other ways: it's guaranteed that no one will be able to sneak in with an unexpected model change using
  * {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or analogs.<p/>
@@ -51,7 +51,7 @@ import org.jetbrains.annotations.NotNull;
  * Actions inside the dialog should care of transactions themselves.<p/>
  *
  * The most complicated case is when the action both displays modal dialogs and performs modifications. The only case when those dialogs
- * should be shown under a transaction is when the mere reason of their showing lies somewhere in PSI/VFS/project model, and the are not
+ * should be shown under a transaction is when the mere reason of their showing lies somewhere in PSI/VFS/project model, and they are not
  * prepared to foreign code affecting the state of things at the moment of showing. For example, dialogs asking for making files writable
  * are shown only because VFS indicates the file is read-only. So they wouldn't make sense if they allowed modifications to that file
  * while they're shown. Their clients are not prepared to such changes either. So such dialogs should be shown under the same transaction,
@@ -184,7 +184,7 @@ public abstract class TransactionGuard {
    * nested transactions anymore.
    */
   @NotNull
-  public abstract AccessToken acceptNestedTransactions(TransactionKind... kinds);
+  public abstract AccessToken acceptNestedTransactions(@NotNull TransactionKind... kinds);
 
   /**
    * Asserts that a transaction is currently running, or not. Callable only on Swing thread.

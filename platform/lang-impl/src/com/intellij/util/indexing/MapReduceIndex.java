@@ -59,10 +59,12 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
   private final boolean myIsPsiBackedIndex;
   private final IndexExtension<Key, Value, Input> myExtension;
+  private final AtomicBoolean myIsBufferingMode = new AtomicBoolean();
+  private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<Collection<Key>>();
 
-  private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, ByteSequence> myContents;
   private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
+  private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, String> myIndexingTrace;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -97,9 +99,25 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     if (myHasSnapshotMapping) {
       myInputsSnapshotMapping = createInputSnapshotMapping();
     }
-    myInputsIndex = createInputsIndex();
+    myInputsIndex = /*myHasSnapshotMapping ? null :*/ createInputsIndex();
     if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
       myIndexingTrace = createIndexingTrace();
+    }
+
+    if (storage instanceof MemoryIndexStorage) {
+      ((MemoryIndexStorage)storage).addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
+        @Override
+        public void bufferingStateChanged(boolean newState) {
+          myIsBufferingMode.set(newState);
+        }
+
+        @Override
+        public void memoryStorageCleared() {
+          synchronized (myInMemoryKeys) {
+            myInMemoryKeys.clear();
+          }
+        }
+      });
     }
   }
 
@@ -550,7 +568,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             @Override
             public Collection<Key> compute() {
               try {
-                Collection<Key> oldKeys = myInputsIndex.get(inputId);
+                Collection<Key> oldKeys = readInputKeys(inputId);
                 if (oldKeys == null) {
                   return keysForGivenInputId.compute();
                 }
@@ -572,7 +590,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         @Override
         public Collection<Key> compute() {
           try {
-            Collection<Key> oldKeys = myInputsIndex.get(inputId);
+            Collection<Key> oldKeys = readInputKeys(inputId);
             return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
           }
           catch (IOException e) {
@@ -611,6 +629,38 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         return Boolean.TRUE;
       }
     };
+  }
+
+  private Collection<Key> readInputKeys(int inputId) throws IOException {
+    boolean inMemory = myStorage instanceof MemoryIndexStorage && ((MemoryIndexStorage)myStorage).isBufferingEnabled();
+
+    if (DebugAssertions.DEBUG) {
+      DebugAssertions.assertTrue(inMemory == myIsBufferingMode.get());
+    }
+    if (inMemory) {
+      synchronized (myInMemoryKeys) {
+        Collection<Key> keys = myInMemoryKeys.get(inputId);
+        if (keys != null) {
+          if (myInputsIndex != null && DebugAssertions.DEBUG) {
+            DebugAssertions.assertTrue(equals(keys, myInputsIndex.get(inputId)));
+          }
+          return keys;
+        }
+      }
+    }
+    if (myHasSnapshotMapping) {
+      if (myInputsIndex != null && DebugAssertions.DEBUG) {
+        DebugAssertions.assertTrue(equals(null, myInputsIndex.get(inputId)));
+      }
+      return null;
+    }
+    return myInputsIndex.get(inputId);
+  }
+
+  private static <Key> boolean equals(Collection<Key> keys, Collection<Key> keys2) {
+    if (keys == null && keys2 == null) return true;
+    if (keys == null || keys2 == null || keys.size() != keys2.size()) return false;
+    return new HashSet<Key>(keys).equals(new HashSet<>(keys2));
   }
 
   private void checkValuesHaveProperEqualsAndHashCode(Map<Key, Value> data) {
@@ -797,10 +847,21 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     @Override
     public void save(int inputId) throws IOException {
-      if (myHasSnapshotMapping && !((MemoryIndexStorage)getStorage()).isBufferingEnabled()) {
+      boolean physical = !(myStorage instanceof MemoryIndexStorage) || !((MemoryIndexStorage)myStorage).isBufferingEnabled();
+      Set<Key> newKeys = newData.keySet();
+
+      if (DebugAssertions.DEBUG) {
+        DebugAssertions.assertTrue(!physical == myIsBufferingMode.get());
+      }
+      if (myIsBufferingMode.get()) {
+        synchronized (myInMemoryKeys) {
+          myInMemoryKeys.put(inputId, newKeys);
+        }
+      }
+
+      if (myHasSnapshotMapping && physical) {
         myInputsSnapshotMapping.put(inputId, savedInputId);
       } else if (myInputsIndex != null) {
-        final Set<Key> newKeys = newData.keySet();
         if (newKeys.size() > 0) {
           myInputsIndex.put(inputId, newKeys);
         }

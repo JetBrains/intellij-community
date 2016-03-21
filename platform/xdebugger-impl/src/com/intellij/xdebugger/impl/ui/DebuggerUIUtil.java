@@ -16,7 +16,9 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -368,6 +370,11 @@ public class DebuggerUIUtil {
       return ((Getter)promise).get() != null;
     }
     return true;
+  }
+
+  public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {
+    AnAction action = ActionManager.getInstance().getAction(name);
+    action.registerCustomShortcutSet(action.getShortcutSet(), component, parentDisposable);
   }
 
   public static void registerExtraHandleShortcuts(final ListPopupImpl popup, String... actionNames) {

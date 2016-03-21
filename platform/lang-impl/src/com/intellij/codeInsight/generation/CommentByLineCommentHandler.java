@@ -561,6 +561,12 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
 
       int charsToDelete = matchesTrimmed ? prefix.trim().length() : prefix.length();
       document.deleteString(startOffset, startOffset + charsToDelete);
+
+      // delete whitespace on line if that's all that left after uncommenting
+      int lineStartOffset = document.getLineStartOffset(line);
+      int lineEndOffset = document.getLineEndOffset(line);
+      if (CharArrayUtil.isEmptyOrSpaces(chars, lineStartOffset, lineEndOffset)) document.deleteString(lineStartOffset, lineEndOffset);
+
       return true;
     }
     String text = document.getCharsSequence().subSequence(startOffset, endOffset).toString();

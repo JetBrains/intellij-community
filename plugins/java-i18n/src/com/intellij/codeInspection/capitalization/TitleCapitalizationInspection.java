@@ -184,7 +184,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
   private static boolean checkSentenceCapitalization(@NotNull String value) {
     String[] words = value.split(" ");
     if (words.length == 0) return true;
-    if (!isCapitalizedWord(words[0])) return false;
+    if (Character.isLetter(words[0].charAt(0)) && !isCapitalizedWord(words[0])) return false;
     for (int i = 1; i < words.length; i++) {
       String word = words[i];
       if (isCapitalizedWord(word)) {
@@ -197,8 +197,8 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     return true;
   }
 
-  private static boolean isCapitalizedWord(@Nullable String word) {
-    return StringUtil.isNotEmpty(word) && (!Character.isLetter(word.charAt(0)) || StringUtil.isCapitalized(word));
+  private static boolean isCapitalizedWord(String word) {
+    return Character.isLetter(word.charAt(0)) && Character.isUpperCase(word.charAt(0));
   }
 
   private static class TitleCapitalizationFix implements LocalQuickFix {

@@ -41,6 +41,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,7 +293,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
     public MyRenameProcessor(PsiElement element, String newName, RenamePsiElementProcessor elementProcessor) {
       super(MemberInplaceRenamer.this.myProject, element, newName, elementProcessor.isToSearchInComments(element),
-            elementProcessor.isToSearchForTextOccurrences(element));
+            elementProcessor.isToSearchForTextOccurrences(element) && TextOccurrencesUtil.isSearchTextOccurencesEnabled(element));
     }
 
     @Nullable

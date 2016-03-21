@@ -60,6 +60,14 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     doTest("Create method 'void bar(ActionEvent)'", ".groovy");
   }
 
+  public void testCreateControllerMethodGeneric() throws Exception {
+    doTest("Create method 'void onSort(SortEvent)'", ".java");
+  }
+
+  public void testCreateControllerMethodHalfRaw() throws Exception {
+    doTest("Create method 'void onSort(SortEvent)'", ".java");
+  }
+
   public void testCreateFieldPublicVisibility() throws Exception {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", PsiModifier.PUBLIC, ".java");
   }

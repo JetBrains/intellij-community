@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -29,6 +30,8 @@ import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+
+import java.util.Arrays;
 
 /**
  * User: anna
@@ -49,23 +52,30 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
     if (!JavaFxPsiUtil.checkIfAttributeHandler(attribute)) return PsiReference.EMPTY_ARRAY;
     final XmlElementDescriptor descriptor = attribute.getParent().getDescriptor();
     if (descriptor == null) return PsiReference.EMPTY_ARRAY;
-    final PsiElement currentTagClass = descriptor.getDeclaration();
+    final PsiElement declaration = descriptor.getDeclaration();
+    if (!(declaration instanceof PsiClass)) return PsiReference.EMPTY_ARRAY;
+    final PsiClass currentTagClass = ((PsiClass)declaration);
     final String eventHandlerName = attValueString.substring(1);
     final PsiMethod[] methods = controllerClass.findMethodsByName(eventHandlerName, true);
 
-    PsiMethod handlerMethod = null;
-    for (PsiMethod psiMethod : methods) {
-      if (JavaFxEventHandlerReference.isHandlerMethod(psiMethod)) {
-        handlerMethod = psiMethod;
-        break;
-      }
+    final PsiReference[] references = Arrays.stream(methods)
+      .filter(JavaFxEventHandlerReference::isHandlerMethod)
+      .map(handlerMethod -> new JavaFxEventHandlerReference(xmlAttributeValue, currentTagClass, handlerMethod, controllerClass))
+      .toArray(PsiReference.ARRAY_FACTORY::create);
+
+    if (references.length == 1) {
+      return references;
     }
-    if (handlerMethod == null) {
+    if (references.length > 1) {
+      return new PsiReference[]{new PsiMultiReference(references, xmlAttributeValue)};
+    }
+
+    if (references.length == 0) {
       final XmlTag rootTag = ((XmlFile)xmlAttributeValue.getContainingFile()).getRootTag();
       if (rootTag == null || FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
         return PsiReference.EMPTY_ARRAY;
       }
     }
-    return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, (PsiClass)currentTagClass, handlerMethod, controllerClass)};
+    return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, currentTagClass, null, controllerClass)};
   }
 }

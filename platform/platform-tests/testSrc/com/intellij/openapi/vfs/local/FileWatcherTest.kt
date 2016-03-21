@@ -36,6 +36,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -48,6 +49,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class FileWatcherTest : BareTestFixtureTestCase() {
+  //<editor-fold desc="Set up / tear down">
+
   private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
 
   private val START_STOP_DELAY = 10000L      // time to wait for the watcher spin up/down
@@ -102,7 +105,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
   }
 
-  // test cases
+  //</editor-fold>
 
   @Test fun testWatchRequestConvention() {
     val dir = tempDir.newFolder("dir")
@@ -511,7 +514,14 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertTrue(vFile.isWritable)
   }
 
-  // helpers
+  @Test fun testSyncRefreshNonWatchedFile() {
+    val file = tempDir.newFile("test.txt")
+    val vFile = refresh(file)
+    file.writeText("new content")
+    assertThat(VfsTestUtil.print(VfsTestUtil.getEvents { vFile.refresh(false, false) })).containsOnly("U : ${vFile.path}")
+  }
+
+  //<editor-fold desc="Helpers">
 
   private fun wait(timeout: Long = START_STOP_DELAY, condition: () -> Boolean) {
     val stopAt = System.currentTimeMillis() + timeout
@@ -557,4 +567,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val actual = VfsTestUtil.print(events).sorted()
     assertEquals(expected, actual)
   }
+
+  //</editor-fold>
 }

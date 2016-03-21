@@ -26,9 +26,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
-import static com.intellij.tasks.generic.GenericRepositoryUtil.createPlaceholdersList;
-import static com.intellij.tasks.generic.GenericRepositoryUtil.prettifyVariableName;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.*;
 import static com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 
 /**
@@ -258,17 +256,16 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
 
   private TextFieldWithAutoCompletion<String> createTextFieldWithCompletion(String text, final List<String> variants) {
     final StringsCompletionProvider provider = new StringsCompletionProvider(variants, null) {
-        @Nullable
-        @Override
-        public String getPrefix(@NotNull CompletionParameters parameters) {
-          final String text = parameters.getOriginalFile().getText();
-          final int i = text.lastIndexOf('{', parameters.getOffset() - 1);
-          if (i < 0) {
-            return "";
-          }
-          return text.substring(i, parameters.getOffset());
+      @Nullable
+      @Override
+      public String getPrefix(@NotNull String text, int offset) {
+        final int i = text.lastIndexOf('{', offset - 1);
+        if (i < 0) {
+          return "";
         }
-      };
+        return text.substring(i, offset);
+      }
+    };
     return new TextFieldWithAutoCompletion<String>(myProject, provider, true, text);
   }
 

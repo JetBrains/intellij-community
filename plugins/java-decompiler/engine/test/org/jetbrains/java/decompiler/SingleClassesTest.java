@@ -46,6 +46,7 @@ public class SingleClassesTest {
   }
 
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
+  @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
   @Test public void testClassLoop() { doTest("pkg/TestClassLoop"); }
   @Test public void testClassSwitch() { doTest("pkg/TestClassSwitch"); }

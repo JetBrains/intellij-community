@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
@@ -39,12 +40,23 @@ public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
   }
 
   @Override
+  protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    if (templateState != null && !templateState.isFinished()) {
+      TextRange range = templateState.getCurrentVariableRange();
+      int caretOffset = editor.getCaretModel().getOffset();
+      if (range != null && range.containsOffset(caretOffset)) return true;
+    }
+    return myOriginalHandler.isEnabled(editor, caret, dataContext);
+  }
+
+  @Override
   protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null && !templateState.isFinished()) {
       final TextRange range = templateState.getCurrentVariableRange();
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (range != null && range.getStartOffset() <= caretOffset && caretOffset <= range.getEndOffset()) {
+      if (range != null && range.containsOffset(caretOffset)) {
         int selectionOffset = editor.getSelectionModel().getLeadSelectionOffset();
         int offsetToMove = myIsHomeHandler ? range.getStartOffset() : range.getEndOffset();
         editor.getCaretModel().moveToOffset(offsetToMove);

@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -164,7 +163,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
-    final ExistingModuleLoader loader = ImportImlMode.setUpLoader(getModuleFilePath());
+    final ExistingModuleLoader loader = ExistingModuleLoader.setUpLoader(getModuleFilePath());
     unzip(loader.getName(), path, true);
     Module module = loader.createModule(moduleModel);
     if (myProjectMode) {

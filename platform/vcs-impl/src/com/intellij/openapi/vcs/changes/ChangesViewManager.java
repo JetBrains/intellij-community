@@ -108,7 +108,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
   }
 
-  public ChangesViewManager(Project project, ChangesViewContentManager contentManager, final VcsChangeDetailsManager vcsChangeDetailsManager) {
+  public ChangesViewManager(Project project, ChangesViewContentManager contentManager) {
     myProject = project;
     myContentManager = contentManager;
     myView = new ChangesListView(project);

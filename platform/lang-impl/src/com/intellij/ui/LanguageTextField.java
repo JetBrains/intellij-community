@@ -83,8 +83,8 @@ public class LanguageTextField extends EditorTextField {
     }
   }
 
-  private static Document createDocument(String value, @Nullable Language language, Project project,
-                                         @NotNull SimpleDocumentCreator documentCreator) {
+  public static Document createDocument(String value, @Nullable Language language, Project project,
+                                        @NotNull SimpleDocumentCreator documentCreator) {
     if (language != null) {
       final PsiFileFactory factory = PsiFileFactory.getInstance(project);
       final FileType fileType = language.getAssociatedFileType();

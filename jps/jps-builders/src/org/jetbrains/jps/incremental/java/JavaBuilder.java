@@ -384,13 +384,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       final boolean rc;
-      if (!shouldForkCompilerProcess(context, chunkSdkVersion)) {
+      if (!shouldForkCompilerProcess(context, chunkSdkVersion, convertToNumber(getLanguageLevel(chunk.getModules().iterator().next())))) {
         rc = JavacMain.compile(
           options, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), compilingTool
         );
       }
       else {
-        // fork external javac
+        // fork external javac, compilers from SDK 1.6+ are supported
+        // todo: If chunkSDK is older than 1.6, we have to ask the user to specify a path to javac6+ to be used for compilation.
+        // todo: Add setting in compiler configuration for this.
         final String sdkHome = getChunkSdkHome(chunk);
         if (sdkHome == null) {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Cannot start javac process for " + chunk.getName() + ": unknown JDK home path.\nPlease check project configuration."));
@@ -449,7 +451,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  private static boolean shouldForkCompilerProcess(CompileContext context, final int chunkSdkVersion) {
+  private static boolean shouldForkCompilerProcess(CompileContext context, final int chunkSdkVersion, int chunkLanguageLevel) {
     final int compilerSdkVersion = getCompilerSdkVersion(context);
     if (compilerSdkVersion < 9 || chunkSdkVersion < 0) {
       // javac up to version 9 supports all previous releases
@@ -461,10 +463,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
       // there is no way to specify full platform classpath for cross-compilation purposes.
       // We have for fork compiler process with corresponding SDK runtime to ensure that compiler resolves platform classes 
       // against the SDK version specified for the given chunk.
+      // todo: if chunkSdkVersion complies to "one plus three back" rule, and "-release" option is supported, return false
       return true;
     }
-    // according to JEP 182: Retiring javac "one plus three back" policy
-    return Math.abs(compilerSdkVersion - chunkSdkVersion) > 3; 
+
+    // compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
+    final int requestedTargetPlatformVersion = chunkLanguageLevel > 0 ? chunkLanguageLevel : Math.min(chunkLanguageLevel, chunkSdkVersion);
+    return Math.abs(compilerSdkVersion - requestedTargetPlatformVersion) > 3;
   }
 
   // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly

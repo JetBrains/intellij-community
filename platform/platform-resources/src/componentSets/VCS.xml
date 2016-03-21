@@ -20,11 +20,6 @@
       <option name="workspace" value="true"/>
       <loadForDefaultProject/>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.vcs.changes.VcsChangeDetailsManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsChangeDetailsManager</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
     <!-- <component>
       <implementation-class>com.intellij.openapi.vcs.changes.dbCommitted.HistoryCacheManager</implementation-class>
       <option name="workspace" value="true"/>

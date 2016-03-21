@@ -280,7 +280,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
     if (myWatcher.isOperational()) {
       for (String root : myWatcher.getManualWatchRoots()) {
-        final VirtualFile suspiciousRoot = findFileByPathIfCached(root);
+        VirtualFile suspiciousRoot = findFileByPathIfCached(root);
         if (suspiciousRoot != null) {
           ((NewVirtualFile)suspiciousRoot).markDirtyRecursively();
         }
