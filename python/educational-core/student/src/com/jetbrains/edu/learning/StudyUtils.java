@@ -36,12 +36,12 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.edu.learning.checker.StudyExecutor;
+import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderDeleteHandler;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.checker.StudyExecutor;
-import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
@@ -459,6 +459,18 @@ public class StudyUtils {
     }
     return null;
   }
+
+  @Nullable
+  public static StudyTwitterPluginConfigurator getTwitterConfigurator(@NotNull final Project project) {
+    StudyTwitterPluginConfigurator[] extensions = StudyTwitterPluginConfigurator.EP_NAME.getExtensions();
+    for (StudyTwitterPluginConfigurator extension: extensions) {
+      if (extension.accept(project)) {
+        return extension;
+      }
+    }
+    return null;
+  }
+
 
   public static String getTaskText(@NotNull final Project project) {
     VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
