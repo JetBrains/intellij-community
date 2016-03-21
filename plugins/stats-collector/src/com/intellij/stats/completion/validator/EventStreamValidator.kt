@@ -29,6 +29,7 @@ class UserSessionsValidator(input: InputStream,
             if (currentSessionUid != event.sessionUid) {
                 processCompletionSession(session)
                 reset()
+                currentSessionUid = event.sessionUid
             }
             
             session.add(EventLine(event, line))
