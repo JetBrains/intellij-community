@@ -118,9 +118,10 @@ public class StackTraceLine {
     if (project == null) return null;
     final PsiManager psiManager = PsiManager.getInstance(project);
     PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className, GlobalSearchScope.allScope(project));
-    if (psiClass == null || (psiClass.getNavigationElement() instanceof PsiCompiledElement)) return null;
-    psiClass = (PsiClass)psiClass.getNavigationElement();
-    final PsiFile psiFile = psiClass.getContainingFile();
+    PsiElement navElement = psiClass == null ? null : psiClass.getNavigationElement();
+    if (psiClass == null || navElement instanceof PsiCompiledElement) return null;
+
+    final PsiFile psiFile = navElement.getContainingFile();
     return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offsetOfLine(psiFile, lineNumber)), PsiClass.class, false);
   }
 
