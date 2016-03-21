@@ -5,9 +5,9 @@ import java.io.*
 
 data class EventLine(val event: LogEvent, val line: String)
 
-class StreamValidator(input: InputStream,
-                      output: OutputStream,
-                      error: OutputStream) {
+class UserSessionsValidator(input: InputStream,
+                            output: OutputStream,
+                            error: OutputStream) {
     
     private val inputReader = BufferedReader(InputStreamReader(input))
     private val outputWriter = BufferedWriter(OutputStreamWriter(output))
