@@ -2398,7 +2398,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return emptyList();
