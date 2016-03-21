@@ -64,6 +64,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -407,7 +408,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(createRerunAction());
-    
+
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
                                                                                         actionGroup, false);
 
@@ -421,16 +422,16 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     if (messages.length == 0) {
       messages = new String[]{"Unknown error"};
     }
-    
+
     errorViewPanel.addMessage(MessageCategory.ERROR, messages, null, -1, -1, null);
     panel.add(errorViewPanel, BorderLayout.CENTER);
 
 
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(null, myProcessHandler, panel, "Error running console");
-    
+
     actionGroup.add(createCloseAction(defaultExecutor, contentDescriptor));
-    
+
     showConsole(defaultExecutor, contentDescriptor);
   }
 
@@ -466,7 +467,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     GeneralCommandLine cmd =
       PythonCommandLineState.createPythonCommandLine(getProject(), new PythonConsoleRunParams(settings, workingDir, sdk,
                                                                                               environmentVariables), false,
-                                                     PtyCommandLine.isEnabled());
+                                                     PtyCommandLine.isEnabled() && !SystemInfo.isWindows);
     cmd.withWorkDirectory(getWorkingDir());
 
     ParamsGroup group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
@@ -527,7 +528,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     GeneralCommandLine commandLine = new GeneralCommandLine();
 
     commandLine.setWorkDirectory(workDirectory);
-    
+
     commandLine.withParameters(command);
 
     commandLine.getEnvironment().putAll(env);
@@ -543,7 +544,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     try {
       PyRemotePathMapper pathMapper = getPathMapper(getProject(), mySdk);
-      
+
       assert pathMapper != null;
 
       commandLine.putUserData(PyRemoteProcessStarter.OPEN_FOR_INCOMING_CONNECTION, true);
