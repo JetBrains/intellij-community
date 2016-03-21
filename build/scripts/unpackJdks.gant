@@ -26,7 +26,7 @@ target(default: "Unpack JDKs") {
 }
 
 def unpackJdks() {
-  def osDirName = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac/custom" : "linux/custom"
+  def osDirName = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux"
   String basePath
   if (new File(home).getName().equals("community")) {
     basePath = new File(home).getParent()
@@ -65,7 +65,7 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
   if (jdkFile.name.endsWith(".zip")) {
     ant.unzip(src: jdkFile, dest: destDir)
   }
-  else if (jdkFile.name.startsWith("openjdk") && jdkFile.name.endsWith(".tar")) {
+  else if (jdkFile.name.endsWith(".tar")) {
     projectBuilder.info("Extracting $jdkFile to $destDir")
     ant.mkdir(dir: destDir)
     //'tar' and 'mv' commands are used instead of Ant tasks to ensure that executable flag and symlink will be preserved
