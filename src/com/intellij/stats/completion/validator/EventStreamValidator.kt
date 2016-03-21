@@ -91,7 +91,10 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
     }
 
     fun accept(nextEvent: LogEvent) {
-        if (isValid) {
+        if (isFinished) {
+            isValid = false            
+        }
+        else if (isValid) {
             nextEvent.accept(this)
         }
     }
