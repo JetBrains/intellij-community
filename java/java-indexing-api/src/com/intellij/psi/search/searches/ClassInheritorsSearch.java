@@ -25,7 +25,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.Function;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +46,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final Condition<String> myNameCondition;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
-      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.<String>alwaysTrue());
+      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.alwaysTrue());
     }
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
@@ -105,17 +104,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   }
 
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
-    return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.<SmartPsiElementPointer<PsiClass>>canonicalStrategy(), new Function<PsiClass, SmartPsiElementPointer<PsiClass>>() {
-      @Override
-      public SmartPsiElementPointer<PsiClass> fun(final PsiClass psiClass) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<SmartPsiElementPointer<PsiClass>>() {
-          @Override
-          public SmartPsiElementPointer<PsiClass> compute() {
-            return SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass);
-          }
-        });
-      }
-    });
+    return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
+                                             psiClass -> ApplicationManager.getApplication().runReadAction((Computable<SmartPsiElementPointer<PsiClass>>)() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
 
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
@@ -127,14 +117,11 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   }
 
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
-    return search(aClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        if (!aClass.isValid()) {
-          throw new ProcessCanceledException();
-        }
-        return aClass.getUseScope();
+    return search(aClass, ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)() -> {
+      if (!aClass.isValid()) {
+        throw new ProcessCanceledException();
       }
+      return aClass.getUseScope();
     }), checkDeep);
   }
 
