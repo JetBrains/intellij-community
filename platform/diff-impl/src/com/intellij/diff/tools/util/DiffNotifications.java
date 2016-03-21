@@ -26,13 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class DiffNotifications {
-  @Deprecated @NotNull public static final JPanel INSERTED_CONTENT = createInsertedContent();
-  @Deprecated @NotNull public static final JPanel REMOVED_CONTENT = createRemovedContent();
-  @Deprecated @NotNull public static final JPanel EQUAL_CONTENTS = createEqualContents();
-  @Deprecated @NotNull public static final JPanel ERROR = createError();
-  @Deprecated @NotNull public static final JPanel OPERATION_CANCELED = createOperationCanceled();
-  @Deprecated @NotNull public static final JPanel DIFF_TOO_BIG = createDiffTooBig();
-
   @NotNull
   public static JPanel createInsertedContent() {
     return createNotification("Content added", TextDiffType.INSERTED.getColor(null));
