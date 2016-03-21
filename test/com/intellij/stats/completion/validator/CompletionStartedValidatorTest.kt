@@ -46,20 +46,20 @@ class SelectedItemTest {
 
     @Test
     fun `explicit select`() {
-        state.feed(LogEventFixtures.explicit_select_0)
+        state.accept(LogEventFixtures.explicit_select_0)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `explicit select of incorrect item`() {
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.feed(LogEventFixtures.explicit_select_3)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.explicit_select_3)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `completion cancelled`() {
-        state.feed(LogEventFixtures.completion_cancelled)
+        state.accept(LogEventFixtures.completion_cancelled)
         assertThat(state.isValid).isEqualTo(true)
         assertThat(state.isFinished).isEqualTo(true)
     }
@@ -77,46 +77,46 @@ class TypeBackspaceValidatorTest {
 
     @Test
     fun `type test`() {
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
         assertThat(state.isValid).isEqualTo(true)
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `type completion list only narrows on typing`() {
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_3)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_3)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `can select by typing item presented in completion list`() {
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1)
-        state.feed(LogEventFixtures.selected_by_typing_0)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1)
+        state.accept(LogEventFixtures.selected_by_typing_0)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `selected by typing`() {
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1)
-        state.feed(LogEventFixtures.selected_by_typing_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1)
+        state.accept(LogEventFixtures.selected_by_typing_1)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `type and backspace`() {
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.feed(LogEventFixtures.backspace_event_pos_0_left_1_2_3)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.backspace_event_pos_0_left_1_2_3)
         assertThat(state.isValid).isEqualTo(true)
     }
     
     @Test
     fun `type and backspace 2`() {
-        state.feed(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.feed(LogEventFixtures.backspace_event_pos_0_left_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.backspace_event_pos_0_left_1)
         assertThat(state.isValid).isEqualTo(false)
     }
 }
@@ -133,66 +133,66 @@ class UpDownValidationTest {
 
     @Test
     fun `down pressed, new position 1, state is valid`() {
-        state.feed(LogEventFixtures.down_event_new_pos_1)
+        state.accept(LogEventFixtures.down_event_new_pos_1)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `down pressed, new pos 2, invalid`() {
-        state.feed(LogEventFixtures.down_event_new_pos_2)
+        state.accept(LogEventFixtures.down_event_new_pos_2)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `down pressed, new pos 0, invalid`() {
-        state.feed(LogEventFixtures.down_event_new_pos_0)
+        state.accept(LogEventFixtures.down_event_new_pos_0)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `down pressed, new position 0, state is not valid`() {
-        state.feed(LogEventFixtures.down_event_new_pos_0)
+        state.accept(LogEventFixtures.down_event_new_pos_0)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `sequence of downs cycles back to start`() {
-        state.feed(LogEventFixtures.down_event_new_pos_1)
-        state.feed(LogEventFixtures.down_event_new_pos_2)
-        state.feed(LogEventFixtures.down_event_new_pos_0)
+        state.accept(LogEventFixtures.down_event_new_pos_1)
+        state.accept(LogEventFixtures.down_event_new_pos_2)
+        state.accept(LogEventFixtures.down_event_new_pos_0)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `up pressed, new position is 2, state is valid`() {
-        state.feed(LogEventFixtures.up_pressed_new_pos_2)
+        state.accept(LogEventFixtures.up_pressed_new_pos_2)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `up pressed twice, new position 1, state is valid`() {
-        state.feed(LogEventFixtures.up_pressed_new_pos_2)
-        state.feed(LogEventFixtures.up_pressed_new_pos_1)
+        state.accept(LogEventFixtures.up_pressed_new_pos_2)
+        state.accept(LogEventFixtures.up_pressed_new_pos_1)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `up cycles back to 0, state is valid`() {
-        state.feed(LogEventFixtures.up_pressed_new_pos_2)
-        state.feed(LogEventFixtures.up_pressed_new_pos_1)
-        state.feed(LogEventFixtures.up_pressed_new_pos_0)
+        state.accept(LogEventFixtures.up_pressed_new_pos_2)
+        state.accept(LogEventFixtures.up_pressed_new_pos_1)
+        state.accept(LogEventFixtures.up_pressed_new_pos_0)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `up pressed, new pos 1, invalid`() {
-        state.feed(LogEventFixtures.up_pressed_new_pos_1)
+        state.accept(LogEventFixtures.up_pressed_new_pos_1)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `up pressed, new pos 0, invalid`() {
-        state.feed(LogEventFixtures.up_pressed_new_pos_0)
+        state.accept(LogEventFixtures.up_pressed_new_pos_0)
         assertThat(state.isValid).isEqualTo(false)
     }
     
