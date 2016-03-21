@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
@@ -73,7 +75,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private XStandaloneVariablesView mySplitView;
 
   public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
-    super(project, title, PythonLanguage.getInstance());
+    super(new MyHelper(project, title, PythonLanguage.getInstance()));
 
     getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
     // Mark editor as console one, to prevent autopopup completion
@@ -308,5 +310,17 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     add(pane.getFirstComponent(), BorderLayout.CENTER);
     validate();
     repaint();
+  }
+
+  private static class MyHelper extends Helper {
+    public MyHelper(@NotNull Project project, String title, PythonLanguage language) {
+      super(project, new LightVirtualFile(title, language, ""));
+    }
+
+    @Override
+    public void setupEditor(@NotNull EditorEx editor) {
+      super.setupEditor(editor);
+      editor.setHorizontalScrollbarVisible(false);
+    }
   }
 }
