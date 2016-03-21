@@ -68,7 +68,7 @@ public class JBScrollPane extends JScrollPane {
   public static final RegionPainter<Float> MAC_THUMB_PAINTER = new RoundThumbPainter(2, .2f, .3f, Gray.x00);
 
   @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .15f, .25f, Gray.x80);
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .10f, .05f, Gray.xFF);
 
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
