@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -45,7 +42,6 @@ import java.util.List;
 public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProgressAware {
   private static final Logger LOG = Logger.getInstance(QuickFixToolbar.class);
   private static final int MAX_FIX_COUNT = 3;
-  @Nullable private final String myTargetName;
   @NotNull private final InspectionResultsView myView;
   private final InspectionToolWrapper myWrapper;
   private final ProblemPreviewEditorFoldings myFoldings;
@@ -62,13 +58,12 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     int problemCount = descriptors.length;
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    myTargetName = getTargetName();
 
     if (view.isUpdating() && !areDescriptorNodesSelected()) {
       setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
-      myWaitingLabel = getLabel(null, problemCount);
+      myWaitingLabel = getLabel(problemCount);
       add(myWaitingLabel);
       add(waitingIcon);
     }
@@ -98,7 +93,7 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     if (myWaitingLabel != null) {
       myWaitingLabel.clear();
       final InspectionTree tree = myView.getTree();
-      appendTextToLabel(myWaitingLabel, tree.getSelectedProblemCount(), null);
+      appendTextToLabel(myWaitingLabel, tree.getSelectedProblemCount());
     }
   }
 
@@ -112,27 +107,18 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     boolean multipleDescriptors = problemCount > 1;
     setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
     if (multipleDescriptors) {
-      add(getLabel(fixes, problemCount));
+      add(getLabel(problemCount));
     }
 
     final DefaultActionGroup actions = new DefaultActionGroup();
     if (hasFixes) {
       actions.addAll(createFixActions(fixes, multipleDescriptors));
     }
-    actions.add(createSuppressionCombo(myWrapper, tree.getSelectionPaths(), project, multipleDescriptors));
+    actions.add(createSuppressionCombo(myWrapper, tree.getSelectionPaths(), project));
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
     final JComponent component = toolbar.getComponent();
     toolbar.setTargetComponent(this);
     add(component);
-  }
-
-  @Nullable
-  private String getTargetName() {
-    if (myView.getTree().getSelectionCount() == 1) {
-      final Object node = myView.getTree().getSelectionPath().getLastPathComponent();
-      return node instanceof RefElementNode ? ((RefElementNode)node).getElement().getName() : null;
-    }
-    return null;
   }
 
   private boolean areDescriptorNodesSelected() {
@@ -146,34 +132,25 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
   }
 
   @NotNull
-  private SimpleColoredComponent getLabel(QuickFixAction[] fixes, int problemsCount) {
+  private static SimpleColoredComponent getLabel(int problemsCount) {
     SimpleColoredComponent label = new SimpleColoredComponent();
-    appendTextToLabel(label, problemsCount, fixes);
+    appendTextToLabel(label, problemsCount);
     label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
     return label;
   }
 
-  private void appendTextToLabel(SimpleColoredComponent label,
-                                 int problemsCount,
-                                 QuickFixAction[] fixes) {
-    boolean hasFixesNonIntersectedFixes = fixes != null && fixes.length == 0;
-    label.append(problemsCount + " problems" +
-                 (myTargetName == null ? "" : (" in " + myTargetName)) +
-                 (problemsCount > 1 && (fixes != null && fixes.length >= MAX_FIX_COUNT) ? "    Fix all:" : "") +
-                 (!hasFixesNonIntersectedFixes ? ":" : ""));
-    if (hasFixesNonIntersectedFixes) {
-      label.append(" select a single problem to see its quick fixes");
-    }
+  private static void appendTextToLabel(SimpleColoredComponent label,
+                                        int problemsCount) {
+    label.append(problemsCount + " problems:");
   }
 
   private static AnAction createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
-                                                   @NotNull final TreePath[] paths,
-                                                   @NotNull final Project project,
-                                                   boolean multipleDescriptors) {
+                                                 @NotNull final TreePath[] paths,
+                                                 @NotNull final Project project) {
     final AnAction[] suppressors = new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null);
     final ComboBoxAction action = new ComboBoxAction() {
       {
-        getTemplatePresentation().setText(multipleDescriptors ? "Suppress All" : "Suppress");
+        getTemplatePresentation().setText("Suppress");
         getTemplatePresentation().setEnabledAndVisible(suppressors.length != 0);
       }
 
@@ -190,7 +167,7 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
   }
 
   @NotNull
-  private static List<AnAction> createFixActions(QuickFixAction[] fixes, boolean multipleDescriptors) {
+  private static AnAction[] createFixActions(QuickFixAction[] fixes, boolean multipleDescriptors) {
     if (fixes.length > MAX_FIX_COUNT) {
       final ComboBoxAction fixComboBox = new ComboBoxAction() {
         {
@@ -209,24 +186,8 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
           return actionGroup;
         }
       };
-      return Collections.singletonList(fixComboBox);
+      return new AnAction[] {fixComboBox};
     }
-    else {
-      final DefaultActionGroup group = new DefaultActionGroup();
-      final boolean multipleFixes = fixes.length > 1;
-      for (QuickFixAction fix : fixes) {
-        final AnAction quickFixButtonCustonPresentation = createQuickFixButton(fix, multipleDescriptors && !multipleFixes);
-        //group.addAll(fixes);
-        group.add(quickFixButtonCustonPresentation);
-      }
-      return ContainerUtil.list(fixes);
-    }
-  }
-
-  private static AnAction createQuickFixButton(@NotNull QuickFixAction fix, boolean multipleFixes) {
-    if (multipleFixes) {
-      fix.getTemplatePresentation().setText("Fix all '" + fix.getText() + "'");
-    }
-    return fix;
+    return fixes;
   }
 }

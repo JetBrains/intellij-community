@@ -76,8 +76,8 @@ public class InspectionNodeInfo extends JPanel {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
 
     add(pane,
-        new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                               new JBInsets(0, 10, 0, 0), 0, 0));
+        new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.VERTICAL,
+                               new JBInsets(0, 10, 0, 0), getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width, 0));
     add(myButton,
         new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                new JBInsets(15, 9, 9, 0), 0, 0));
