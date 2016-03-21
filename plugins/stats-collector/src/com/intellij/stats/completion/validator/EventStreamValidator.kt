@@ -51,7 +51,7 @@ class UserSessionsValidator(input: InputStream,
         if (initial.event is CompletionStartedEvent) {
             val state = CompletionState(initial.event)
             session.drop(1).forEach { state.accept(it.event) }
-            isValidSession = state.isFinished
+            isValidSession = state.isFinished && state.isValid
         }
         
         val writer = if (isValidSession) outputWriter else errorWriter
@@ -80,6 +80,7 @@ class UserSessionsValidator(input: InputStream,
 
 class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
     var currentPosition    = event.currentPosition
+    var currentId          = event.completionListIds[currentPosition]
     var completionList     = event.completionListIds
     val allCompletionItems = event.newCompletionListItems.toMutableList()
 
@@ -92,6 +93,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
         if (nextEvent.completionListIds.isNotEmpty()) {
             completionList = nextEvent.completionListIds
         }
+        currentId = completionList[currentPosition]
     }
 
     fun accept(nextEvent: LogEvent) {
@@ -131,14 +133,10 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
     }
 
     override fun visit(event: ExplicitSelectEvent) {
+        val selectedIdBefore = currentId
         updateState(event)
-        if (currentPosition >= completionList.size) {
-            isValid = false
-            return
-        }
-        
-        val selectedId = completionList[currentPosition]
-        isValid = completionList.find { it == selectedId } != null && allCompletionItems.find { it.id == selectedId } != null
+
+        isValid = selectedIdBefore == currentId && allCompletionItems.find { it.id == currentId } != null
         isFinished = true
     }
 
