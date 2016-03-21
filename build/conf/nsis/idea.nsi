@@ -1014,7 +1014,7 @@ remove_previous_installation:
 remove_dialog:
   MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL cancel
 cancel:
-  StrCpy $R0 "cancel"
+  Abort
 done:
 FunctionEnd
 
@@ -1022,7 +1022,6 @@ FunctionEnd
 Section "Uninstall"
   ;check if the uninstalled application is running
   Call un.checkIfIDEInUse
-  StrCmp $R0 "cancel" end_of_uninstall 0
   ; Uninstaller is in the \bin directory, we need upper level dir
   StrCpy $productDir $INSTDIR
   StrCpy $INSTDIR $INSTDIR\..
