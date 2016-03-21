@@ -45,6 +45,20 @@ public class DiffNotifications {
 
   @NotNull
   public static JPanel createEqualContents() {
+    return createEqualContents(true, true);
+  }
+
+  @NotNull
+  public static JPanel createEqualContents(boolean equalCharsets, boolean equalSeparators) {
+    if (!equalCharsets && !equalSeparators) {
+      return createNotification(DiffBundle.message("diff.contents.have.differences.only.in.charset.and.line.separators.message.text"));
+    }
+    if (!equalSeparators) {
+      return createNotification(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"));
+    }
+    if (!equalCharsets) {
+      return createNotification(DiffBundle.message("diff.contents.have.differences.only.in.charset.message.text"));
+    }
     return createNotification(DiffBundle.message("diff.contents.are.identical.message.text"));
   }
 
