@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LicensingFacade;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.Date;
 
 /**
  * @author anna
@@ -79,6 +81,16 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     if (facade != null) {
       if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
         myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
+      }
+      else {
+        Date buildDate = build.getReleaseDate();
+        Date expiration = facade.getLicenseExpirationDate();
+        if (buildDate != null && facade.isPerpetualForProduct(buildDate)) {
+          myLicenseInfo = IdeBundle.message("updates.fallback.build");
+        }
+        else if (expiration != null && expiration.after(new Date())) {
+          myLicenseInfo = IdeBundle.message("updates.subscription.active.till", DateFormatUtil.formatAboutDialogDate(expiration));
+        }
       }
     }
   }

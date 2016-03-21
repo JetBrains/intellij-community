@@ -15,8 +15,10 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -35,4 +37,9 @@ public abstract class LicensingFacade {
   public abstract List<String> getLicenseRestrictionsMessages();
 
   public abstract boolean isEvaluationLicense();
+
+  public abstract boolean isPerpetualForProduct(@NotNull Date productBuildDate);
+
+  @Nullable
+  public abstract Date getLicenseExpirationDate();
 }
