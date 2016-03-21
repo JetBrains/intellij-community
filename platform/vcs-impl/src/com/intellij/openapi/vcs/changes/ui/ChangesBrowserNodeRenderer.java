@@ -57,7 +57,6 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
   }
 
-
   protected void appendFileName(final VirtualFile vFile, final String fileName, final Color color) {
     if (myProject.isDefault()) {
       append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));

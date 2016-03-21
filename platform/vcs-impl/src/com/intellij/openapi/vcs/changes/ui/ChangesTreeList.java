@@ -505,7 +505,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     myTree.repaint();
   }
 
-  private void toggleChanges(final Collection<T> changes) {
+  protected void toggleChanges(final Collection<T> changes) {
     boolean hasExcluded = false;
     for (T value : changes) {
       if (!myIncludedChanges.contains(value)) {
@@ -604,12 +604,14 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
       myTextRenderer.setOpaque(false);
       myTextRenderer.setTransparentIconBackground(true);
+      myTextRenderer.setToolTipText(null);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
         @SuppressWarnings("unchecked")
         CheckboxTree.NodeState state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setSelected(state != CheckboxTree.NodeState.CLEAR);
-        myCheckBox.setEnabled(state != CheckboxTree.NodeState.PARTIAL && tree.isEnabled());
+        //noinspection unchecked
+        myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
         revalidate();
 
         return this;
@@ -617,6 +619,11 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       else {
         return myTextRenderer;
       }
+    }
+
+    @Override
+    public String getToolTipText() {
+      return myTextRenderer.getToolTipText();
     }
   }
 
@@ -637,6 +644,10 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     if (hasIncluded && hasExcluded) return CheckboxTree.NodeState.PARTIAL;
     if (hasIncluded) return CheckboxTree.NodeState.FULL;
     return CheckboxTree.NodeState.CLEAR;
+  }
+
+   protected boolean isNodeEnabled(ChangesBrowserNode<T> node) {
+    return getNodeStatus(node) != CheckboxTree.NodeState.PARTIAL;
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
