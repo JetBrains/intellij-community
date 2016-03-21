@@ -112,7 +112,10 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
           final PsiType handlerType =
             tagClassSubstitutor != null ? tagClassSubstitutor.substitute(eventHandlerPropertyType) : eventHandlerPropertyType;
           if (handlerType instanceof PsiClassType) {
-            final PsiType eventType = JavaFxPsiUtil.substituteEventType((PsiClassType)handlerType, element.getProject());
+            PsiType eventType = JavaFxPsiUtil.substituteEventType((PsiClassType)handlerType, element.getProject());
+            if (eventType instanceof PsiWildcardType && ((PsiWildcardType)eventType).isSuper()) {
+              eventType = ((PsiWildcardType)eventType).getBound();
+            }
             if (eventType != null) {
               if (eventType instanceof PsiClassType && JavaFxPsiUtil.isNotFullyResolvedGeneric((PsiClassType)eventType)) {
                 canonicalText = ((PsiClassType)eventType).rawType().getCanonicalText();

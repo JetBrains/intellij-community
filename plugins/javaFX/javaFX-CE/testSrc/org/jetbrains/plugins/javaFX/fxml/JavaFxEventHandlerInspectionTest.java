@@ -64,6 +64,10 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
     doQuickfixTest("Create method 'void onSort(SortEvent)'");
   }
 
+  public void testQuickfixSuper() throws Exception {
+    doQuickfixTest("Create method 'void click(MouseEvent)'");
+  }
+
   private void doHighlightingTest() throws Exception {
     myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
     myFixture.checkHighlighting();
