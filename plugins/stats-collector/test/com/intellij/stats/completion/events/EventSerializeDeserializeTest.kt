@@ -76,18 +76,12 @@ class EventSerializeDeserializeTest {
     fun `backspace event`() {
         var event: LogEvent = BackspaceEvent(Fixtures.userId, listOf(1, 2, 3), Fixtures.lookupList, 3)
         serializeDeserializeAndCheck(event)
-        
-        event = BackspaceEvent(Fixtures.userId, emptyList(), emptyList(), 3)
-        serializeDeserializeAndCheck(event)
     }
     
     
     @Test
     fun `type event`() {
         var event = TypeEvent(Fixtures.userId, listOf(1,2,3), Fixtures.lookupList, 1)
-        serializeDeserializeAndCheck(event)
-        
-        event = TypeEvent(Fixtures.userId, emptyList(), emptyList(), 1)
         serializeDeserializeAndCheck(event)
     }
     
