@@ -102,9 +102,6 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
                               @Nullable FileEditorProvider fallbackProvider)
   {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    //if(ApplicationManager.getApplication().isOnAir()) {
-    //  return;
-    //}
     // don't add files that cannot be found via VFM (light & etc.)
     if (VirtualFileManager.getInstance().findFileByUrl(file.getUrl()) == null) return;
 
