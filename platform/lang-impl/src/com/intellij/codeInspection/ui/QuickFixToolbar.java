@@ -20,28 +20,24 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.function.Supplier;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -114,9 +110,20 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     boolean hasFixes = fixes != null && fixes.length != 0;
     int problemCount = descriptors.length;
     boolean multipleDescriptors = problemCount > 1;
-    fill(multipleDescriptors, () -> getLabel(fixes, problemCount), this);
-    fill(hasFixes, () -> createFixPanel(fixes, multipleDescriptors), this);
-    fill(true, () -> createSuppressionCombo(myWrapper, tree.getSelectionPaths(), project, multipleDescriptors), this);
+    setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+    if (multipleDescriptors) {
+      add(getLabel(fixes, problemCount));
+    }
+
+    final DefaultActionGroup actions = new DefaultActionGroup();
+    if (hasFixes) {
+      actions.addAll(createFixActions(fixes, multipleDescriptors));
+    }
+    actions.add(createSuppressionCombo(myWrapper, tree.getSelectionPaths(), project, multipleDescriptors));
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    final JComponent component = toolbar.getComponent();
+    toolbar.setTargetComponent(this);
+    add(component);
   }
 
   @Nullable
@@ -159,7 +166,7 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
     }
   }
 
-  private static JComponent createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
+  private static AnAction createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
                                                    @NotNull final TreePath[] paths,
                                                    @NotNull final Project project,
                                                    boolean multipleDescriptors) {
@@ -179,26 +186,11 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
       }
     };
     action.setSmallVariant(false);
-    return fixComboBoxActionComponent(action.createCustomComponent(action.getTemplatePresentation()));
-  }
-
-  private static JComponent fixComboBoxActionComponent(JComponent component) {
-    JPanel containingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    containingPanel.add(component);
-    containingPanel.setBorder(IdeBorderFactory.createEmptyBorder(7, 0, 8, 0));
-    return containingPanel;
-  }
-
-  private static void fill(boolean add,
-                           @NotNull Supplier<JComponent> componentSupplier,
-                           @NotNull JPanel parent) {
-    if (add) {
-      parent.add(componentSupplier.get());
-    }
+    return action;
   }
 
   @NotNull
-  private static JComponent createFixPanel(QuickFixAction[] fixes, boolean multipleDescriptors) {
+  private static List<AnAction> createFixActions(QuickFixAction[] fixes, boolean multipleDescriptors) {
     if (fixes.length > MAX_FIX_COUNT) {
       final ComboBoxAction fixComboBox = new ComboBoxAction() {
         {
@@ -217,71 +209,24 @@ public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProg
           return actionGroup;
         }
       };
-      return fixComboBoxActionComponent(fixComboBox.createCustomComponent(fixComboBox.getTemplatePresentation()));
+      return Collections.singletonList(fixComboBox);
     }
     else {
-      JPanel fixPanel = new JPanel();
-      fixPanel.setLayout(new BoxLayout(fixPanel, BoxLayout.LINE_AXIS));
-      fixPanel.setBorder(IdeBorderFactory.createEmptyBorder(7, 0, 8, 0));
+      final DefaultActionGroup group = new DefaultActionGroup();
       final boolean multipleFixes = fixes.length > 1;
       for (QuickFixAction fix : fixes) {
-        fixPanel.add(createQuickFixButton(fix, multipleDescriptors && !multipleFixes));
-        if (fix != fixes[fixes.length - 1]) {
-          fixPanel.add(Box.createHorizontalStrut(3));
-        }
+        final AnAction quickFixButtonCustonPresentation = createQuickFixButton(fix, multipleDescriptors && !multipleFixes);
+        //group.addAll(fixes);
+        group.add(quickFixButtonCustonPresentation);
       }
-      return fixPanel;
+      return ContainerUtil.list(fixes);
     }
   }
 
-  private static JComponent createQuickFixButton(@NotNull QuickFixAction fix, boolean multipleFixes) {
-    final MyCustomComponentLocalQuickFixWrapper action = new MyCustomComponentLocalQuickFixWrapper(fix);
+  private static AnAction createQuickFixButton(@NotNull QuickFixAction fix, boolean multipleFixes) {
     if (multipleFixes) {
-      action.getTemplatePresentation().setText("Fix all '" + fix.getText() + "'");
+      fix.getTemplatePresentation().setText("Fix all '" + fix.getText() + "'");
     }
-    return action.createCustomComponent(action.getTemplatePresentation());
-  }
-
-  private static class MyCustomComponentLocalQuickFixWrapper extends AnAction implements CustomComponentAction {
-    private QuickFixAction myUnderlying;
-
-    public MyCustomComponentLocalQuickFixWrapper(@NotNull QuickFixAction underlying) {
-      myUnderlying = underlying;
-      copyFrom(underlying);
-    }
-
-
-    @Override
-    public JComponent createCustomComponent(Presentation presentation) {
-      final JButton button = new JButton(presentation.getText());
-      Icon icon = presentation.getIcon();
-      if (icon == null) {
-        icon = AllIcons.Actions.CreateFromUsage;
-      }
-      button.setEnabled(presentation.isEnabled());
-      button.setIcon(IconLoader.getTransparentIcon(icon, 0.75f));
-      new ClickListener() {
-        @Override
-        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-          actionPerformed(AnActionEvent.createFromAnAction(MyCustomComponentLocalQuickFixWrapper.this,
-                                                           event,
-                                                           "LOCAL_QUICK_FIX_WRAPPER_PANEL",
-                                                           DataManager.getInstance().getDataContext(button)));
-          return true;
-        }
-      }.installOn(button);
-      return button;
-    }
-
-
-    @Override
-    public void update(AnActionEvent e) {
-      myUnderlying.update(e);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      myUnderlying.actionPerformed(e);
-    }
+    return fix;
   }
 }
