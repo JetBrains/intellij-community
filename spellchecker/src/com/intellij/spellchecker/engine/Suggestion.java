@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.intellij.spellchecker.engine;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
-public class Suggestion implements Comparable{
+public class Suggestion implements Comparable<Suggestion> {
   private final String word;
   private final int metrics;
 
@@ -29,7 +30,6 @@ public class Suggestion implements Comparable{
   public String getWord() {
     return word;
   }
-
 
   public int getMetrics() {
     return metrics;
@@ -55,14 +55,10 @@ public class Suggestion implements Comparable{
     return result;
   }
 
-
   @Override
-  public int compareTo(Object o) {
-    if (!(o instanceof Suggestion)) throw new IllegalArgumentException();
-    Suggestion r = (Suggestion)o;
-    int c = new Integer(getMetrics()).compareTo(r.getMetrics());
-    if (c !=0) return c;
-    return StringUtil.compare(word, r.word, true);
+  public int compareTo(@NotNull Suggestion o) {
+    int c = new Integer(getMetrics()).compareTo(o.getMetrics());
+    return c != 0 ? c : StringUtil.compare(word, o.word, true);
   }
 
   @Override
@@ -70,6 +66,3 @@ public class Suggestion implements Comparable{
     return word + " : " + metrics;
   }
 }
-
-
-
