@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -1392,7 +1393,7 @@ public class AbstractPopup implements JBPopup {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             if (ModalityState.current().equals(modalityState)) {
-              finalRunnable.run();
+              TransactionGuard.getInstance().performUserActivity(finalRunnable::run);
             }
             // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
             // And we don't want finalRunnable to perform potentially destructive actions

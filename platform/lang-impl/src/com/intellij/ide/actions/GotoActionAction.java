@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -250,10 +251,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   public static void performAction(Object element, @Nullable final Component component, @Nullable final AnActionEvent e) {
     // element could be AnAction (SearchEverywhere)
     final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (component == null) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (component == null) return;
+      TransactionGuard.getInstance().performUserActivity(() -> {
         DataManager instance = DataManager.getInstance();
         DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
         InputEvent inputEvent = e == null ? null : e.getInputEvent();
@@ -270,12 +270,12 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             else {
               popup.showInFocusCenter();
             }
-          } 
+          }
           else {
             ActionUtil.performActionDumbAware(action, event);
           }
         }
-      }
+      });
     }, ModalityState.NON_MODAL);
   }
 

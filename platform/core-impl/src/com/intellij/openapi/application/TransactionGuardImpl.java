@@ -18,7 +18,9 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,13 +39,14 @@ public class TransactionGuardImpl extends TransactionGuard {
   private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
   private String myTransactionStartTrace;
   private ModalityState myTransactionModality;
+  private boolean myUserActivity;
 
   @Override
   @NotNull
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
     ModalityState modality = ModalityState.current();
     if (isInsideTransaction()) {
-      if (modality.equals(myTransactionModality)) {
+      if (modality.equals(myTransactionModality) || myUserActivity) {
         return AccessToken.EMPTY_ACCESS_TOKEN;
       }
 
@@ -199,5 +202,40 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (exception[0] != null) {
       throw new RuntimeException(exception[0]);
     }
+  }
+
+  @Override
+  public <T extends Throwable> void performUserActivity(ThrowableRunnable<T> activity) throws T {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    AccessToken token = startActivity(true);
+    try {
+      activity.run();
+    }
+    finally {
+      token.finish();
+    }
+  }
+
+  /**
+   * An absolutely guru method, only intended to be used from Swing event processing. Please consult Peter if you think you need to invoke this.
+   */
+  @NotNull
+  public AccessToken startActivity(boolean userActivity) {
+    if (myUserActivity == userActivity) {
+      return AccessToken.EMPTY_ACCESS_TOKEN;
+    }
+
+    final boolean prev = myUserActivity;
+    myUserActivity = userActivity;
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        myUserActivity = prev;
+      }
+    };
+  }
+
+  public boolean isWriteActionAllowed() {
+    return !Registry.is("ide.require.transaction.for.model.changes", false) || isInsideTransaction() || myUserActivity;
   }
 }

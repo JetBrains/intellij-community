@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +31,9 @@ import org.jetbrains.annotations.NotNull;
  * and process UI events in other ways: it's guaranteed that no one will be able to sneak in with an unexpected model change using
  * {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or analogs.<p/>
  *
- * Transactions are run on UI thread. They have read access by default. All write actions should be performed inside a transaction.<p/>
+ * Transactions are run on UI thread. They have read access by default. All write actions that don't happen as the result of direct user input
+ * should be performed inside a transaction. No write action should be performed from within an {@code invokeLater}-like call
+ * unless wrapped into a transaction.<p/>
  *
  * The recommended way to perform a transaction is to invoke {@link #submitTransaction(Runnable)}. It either runs the transaction immediately
  * (if on UI thread and there's no other transaction running) or queues it to invoke at some later moment, when it becomes possible.<p/>
@@ -192,4 +195,13 @@ public abstract class TransactionGuard {
    * @param errorMessage the message that will be logged if current transaction status differs from the expected one
    */
   public abstract void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage);
+
+  /**
+   * Executes the given code and marks it as a user activity, to allow write actions to be run without requiring transactions.
+   * Please note that only direct keyboard/mouse event processing can be wrapped in such calls. If you wish to invoke some actionPerformed,
+   * please consider using {@code ActionManager.tryToExecute()} instead, or ensure in some other way that the action is enabled
+   * and can be invoked in the current modality state.
+   */
+  public abstract <T extends Throwable> void performUserActivity(ThrowableRunnable<T> activity) throws T;
+
 }
