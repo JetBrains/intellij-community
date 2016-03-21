@@ -138,6 +138,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
+    mySplitter.setHonorComponentsMinimumSize(false);
 
     mySplitter.addPropertyChangeListener(evt -> {
       if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {

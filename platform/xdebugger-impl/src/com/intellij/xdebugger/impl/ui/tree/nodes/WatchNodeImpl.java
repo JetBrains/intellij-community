@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XExpression;
@@ -42,7 +43,8 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
                        @NotNull WatchesRootNode parent,
                        @NotNull XExpression expression,
                        @Nullable XStackFrame stackFrame) {
-    super(tree, parent, expression.getExpression(), new XWatchValue(expression, tree.isShowing() ? stackFrame : null));
+    super(tree, parent, expression.getExpression(),
+          new XWatchValue(expression, tree.isShowing() || ApplicationManager.getApplication().isUnitTestMode() ? stackFrame : null));
     myExpression = expression;
   }
 
