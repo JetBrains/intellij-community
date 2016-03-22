@@ -1350,7 +1350,7 @@ public class GenericsHighlightUtil {
       final JavaResolveResult resolveResult = ((PsiMethodCallExpression)parent).resolveMethodGenerics();
       final PsiMethod method = (PsiMethod)resolveResult.getElement();
       if (method != null) {
-        final HashSet<PsiClass> classes = new HashSet<>();
+        final HashSet<PsiClass> classes = new HashSet<PsiClass>();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(aClass.getProject());
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         
@@ -1369,7 +1369,7 @@ public class GenericsHighlightUtil {
     else {
       final PsiElement resolve = ref.resolve();
       if (resolve instanceof PsiField) {
-        message = isSuperTypeAccessible(((PsiField)resolve).getType(), new HashSet<>(), false, resolveScope, JavaPsiFacade.getInstance(aClass.getProject()));
+        message = isSuperTypeAccessible(((PsiField)resolve).getType(), new HashSet<PsiClass>(), false, resolveScope, JavaPsiFacade.getInstance(aClass.getProject()));
       }
     }
 
