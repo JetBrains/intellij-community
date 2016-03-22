@@ -13,9 +13,9 @@ object LogEventFixtures {
 
     val completion_cancelled = CompletionCancelledEvent("1", sessionId)
 
-    val type_event_current_pos_0_left_1_3 = TypeEvent("1", sessionId, listOf(1, 3), emptyList(), 0)
-    val type_event_current_pos_0_left_1_2 = TypeEvent("1", sessionId, listOf(1, 2), emptyList(), 0)
-    val type_event_current_pos_0_left_1 = TypeEvent("1", sessionId, listOf(1), emptyList(), 0)
+    val type_event_current_pos_0_left_ids_1_2 = TypeEvent("1", sessionId, listOf(1, 2), emptyList(), 0)
+    val type_event_current_pos_0_left_ids_0_1 = TypeEvent("1", sessionId, listOf(0, 1), emptyList(), 0)
+    val type_event_current_pos_0_left_id_0 = TypeEvent("1", sessionId, listOf(0), emptyList(), 0)
 
     val up_pressed_new_pos_0 = UpPressedEvent("1", sessionId, emptyList(), emptyList(), 0)
     val up_pressed_new_pos_1 = UpPressedEvent("1", sessionId, emptyList(), emptyList(), 1)
@@ -55,7 +55,7 @@ class SelectedItemTest {
 
     @Test
     fun `explicit select of incorrect item`() {
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.explicit_select_position_1)
         assertThat(state.isValid).isEqualTo(false)
     }
@@ -80,45 +80,45 @@ class TypeBackspaceValidatorTest {
 
     @Test
     fun `type test`() {
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         assertThat(state.isValid).isEqualTo(true)
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_id_0)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `type completion list only narrows on typing`() {
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_3)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `can select by typing item presented in completion list`() {
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_id_0)
         state.accept(LogEventFixtures.selected_by_typing_0)
         assertThat(state.isValid).isEqualTo(false)
     }
 
     @Test
     fun `selected by typing`() {
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_id_0)
         state.accept(LogEventFixtures.selected_by_typing_1)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `type and backspace`() {
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.backspace_event_pos_0_left_1_2_3)
         assertThat(state.isValid).isEqualTo(true)
     }
     
     @Test
     fun `type and backspace 2`() {
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_1_2)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.backspace_event_pos_0_left_1)
         assertThat(state.isValid).isEqualTo(false)
     }
