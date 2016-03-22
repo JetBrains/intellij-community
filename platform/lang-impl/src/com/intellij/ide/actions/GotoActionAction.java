@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -253,7 +254,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
     ApplicationManager.getApplication().invokeLater(() -> {
       if (component == null) return;
-      TransactionGuard.getInstance().performUserActivity(() -> {
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
         DataManager instance = DataManager.getInstance();
         DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
         InputEvent inputEvent = e == null ? null : e.getInputEvent();

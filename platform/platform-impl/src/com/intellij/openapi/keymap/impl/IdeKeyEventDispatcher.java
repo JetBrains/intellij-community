@@ -869,7 +869,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
       ApplicationManager.getApplication().invokeLater(
-        () -> TransactionGuard.getInstance().performUserActivity(() -> {
+        () -> ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
           final AnActionEvent event =
             new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                               ActionManager.getInstance(), 0);

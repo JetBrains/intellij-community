@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -195,13 +194,5 @@ public abstract class TransactionGuard {
    * @param errorMessage the message that will be logged if current transaction status differs from the expected one
    */
   public abstract void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage);
-
-  /**
-   * Executes the given code and marks it as a user activity, to allow write actions to be run without requiring transactions.
-   * Please note that only direct keyboard/mouse event processing can be wrapped in such calls. If you wish to invoke some actionPerformed,
-   * please consider using {@code ActionManager.tryToExecute()} instead, or ensure in some other way that the action is enabled
-   * and can be invoked in the current modality state.
-   */
-  public abstract <T extends Throwable> void performUserActivity(ThrowableRunnable<T> activity) throws T;
 
 }
