@@ -126,8 +126,7 @@ class StudyBrowserWindow extends JFrame {
 
   public void loadContent(@NotNull final String content, @Nullable StudyPluginConfigurator configurator) {
     if (configurator == null) {
-      Platform.runLater(() -> myEngine.loadContent("Seems like desired plugin doesn't installed"));
-      LOG.warn("No StudyPluginConfigurator is provided for the plugin");
+      Platform.runLater(() -> myEngine.loadContent(content));
     }
     else {
       String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
