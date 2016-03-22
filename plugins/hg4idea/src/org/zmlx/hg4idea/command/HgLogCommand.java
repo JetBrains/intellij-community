@@ -77,6 +77,11 @@ public class HgLogCommand {
     return execute(hgFile, limit, includeFiles, null);
   }
 
+  @NotNull
+  public HgVersion getVersion() {
+    return myVersion;
+  }
+
   /**
    * @param limit Pass -1 to set no limits on history
    */

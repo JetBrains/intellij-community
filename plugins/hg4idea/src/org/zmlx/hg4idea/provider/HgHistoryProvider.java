@@ -20,8 +20,10 @@ import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,13 @@ import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.log.HgBaseLogParser;
+import org.zmlx.hg4idea.log.HgFileRevisionLogParser;
+import org.zmlx.hg4idea.log.HgHistoryUtil;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -118,15 +126,46 @@ public class HgHistoryProvider implements VcsHistoryProvider {
                                                 @NotNull VirtualFile vcsRoot,
                                                 @NotNull Project project,
                                                 @Nullable HgRevisionNumber revisionNumber, int limit) {
+    final HgFile hgFile = new HgFile(vcsRoot, filePath);
+    FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
+    HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
+    if (revisionNumber == null && !filePath.isDirectory() && !originalHgFile.toFilePath().equals(hgFile.toFilePath())) {
+      // uncommitted renames detected
+      return getHistoryForUncommittedRenamed(originalHgFile, vcsRoot, project, limit);
+    }
     final HgLogCommand logCommand = new HgLogCommand(project);
     logCommand.setFollowCopies(!filePath.isDirectory());
     logCommand.setIncludeRemoved(true);
     List<String> args = new ArrayList<String>();
-    String revNumberAsArg = revisionNumber == null ? "." : revisionNumber.getChangeset();
-    args.add("--rev");
-    args.add("reverse(0::" + revNumberAsArg + ")"); // without --follow was 0:tip by default without --rev;
-    // reverse needed because of mercurial default order problem -r revset with and without -f option
-    return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false, args);
+    if (revisionNumber != null) {
+      args.add("--rev");
+      args.add("reverse(0::" + revisionNumber.getChangeset() + ")");// hg ignors --follow if --rev presented
+      // reverse needed because of mercurial default order problem -r rev set with and without -f option
+    }
+    return logCommand.execute(hgFile, limit, false, args);
+  }
+
+
+  /**
+   * Workaround for getting follow file history in case of uncommitted move/rename change
+   */
+  private static List<HgFileRevision> getHistoryForUncommittedRenamed(@NotNull HgFile originalHgFile,
+                                                                      @NotNull VirtualFile vcsRoot,
+                                                                      @NotNull Project project, int limit) {
+    //mercurial can't follow custom revision;
+    // the only way to do it if you have working dir file name then use python follow function for it,
+    // but we have to use local(last committed) name as a parameter
+    final HgLogCommand logCommand = new HgLogCommand(project);
+    logCommand.setIncludeRemoved(true);
+    final HgVersion version = logCommand.getVersion();
+    String[] templates = HgBaseLogParser.constructFullTemplateArgument(false, version);
+    String template = HgChangesetUtil.makeTemplate(templates);
+    List<String> argsForCmd = ContainerUtil.newArrayList();
+    String relativePath = originalHgFile.getRelativePath();
+    argsForCmd.add("--rev");
+    argsForCmd.add("reverse(follow(" + relativePath + "))");
+    HgCommandResult result = logCommand.execute(vcsRoot, template, limit, relativePath != null ? null : originalHgFile, argsForCmd);
+    return HgHistoryUtil.getCommitRecords(project, result, new HgFileRevisionLogParser(project, originalHgFile, version));
   }
 
   public boolean supportsHistoryForDirectories() {
