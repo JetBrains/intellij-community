@@ -66,6 +66,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
   public boolean checkVariables = true;
   public boolean checkChains = true;
   public boolean checkReturnTypes = true;
+  public boolean ignoreJavaxNullable = true;
 
   @SuppressWarnings("Duplicates")
   @Override
@@ -74,6 +75,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     panel.addCheckbox("Report variables", "checkVariables");
     panel.addCheckbox("Report method chains", "checkChains");
     panel.addCheckbox("Report return types", "checkReturnTypes");
+    panel.addCheckbox("Erase @javax.annotations.Nullable from converted functions", "ignoreJavaxNullable");
     return panel;
   }
 
@@ -278,7 +280,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
-  public static class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<ProblemDescriptor> {
+  public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<ProblemDescriptor> {
     private final PsiType myTargetType;
 
     private MigrateGuavaTypeFix(@NotNull PsiElement element, PsiType targetType) {
@@ -346,7 +348,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if (!elementsToFix.isEmpty()) performTypeMigration(elementsToFix, migrationTypes);
     }
 
-    private static MigrateGuavaTypeFix getFix(ProblemDescriptor descriptor) {
+    private MigrateGuavaTypeFix getFix(ProblemDescriptor descriptor) {
       final QuickFix[] fixes = descriptor.getFixes();
       LOG.assertTrue(fixes != null);
       for (QuickFix fix : fixes) {
@@ -357,7 +359,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       throw new AssertionError();
     }
 
-    private static boolean performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
+    private boolean performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
       PsiFile containingFile = null;
       for (PsiElement element : elements) {
         final PsiFile currentContainingFile = element.getContainingFile();
@@ -374,6 +376,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setBoundScope(GlobalSearchScopesCore.projectProductionScope(containingFile.getProject())
                               .union(GlobalSearchScopesCore.projectTestScope(containingFile.getProject())));
+        rules.addConversionRuleSettings(new GuavaConversionSettings(ignoreJavaxNullable));
         TypeMigrationProcessor.runHighlightingTypeMigration(containingFile.getProject(),
                                                             null,
                                                             rules,
@@ -388,7 +391,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       return true;
     }
 
-    private static Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<PsiElement> elements,
+    private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<PsiElement> elements,
                                                                              @NotNull final List<PsiType> types) {
       LOG.assertTrue(elements.size() == types.size());
       final Map<PsiElement, PsiType> mappings = new HashMap<PsiElement, PsiType>();

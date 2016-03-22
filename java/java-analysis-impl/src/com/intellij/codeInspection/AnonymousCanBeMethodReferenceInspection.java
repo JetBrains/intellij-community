@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 
 /**
  * User: anna
@@ -76,7 +77,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
       @Override
       public void visitAnonymousClass(PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
-        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true, reportNotAnnotatedInterfaces)) {
+        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true, reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
           final PsiCallExpression callExpression =

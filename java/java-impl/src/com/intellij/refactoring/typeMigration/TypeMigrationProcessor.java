@@ -35,10 +35,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewManager;
-import com.intellij.usages.Usage;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -242,13 +240,14 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         ((PsiVariable)element).normalizeDeclaration();
       }
     }
-    change(myLabeler, usages);
+    change(usages, myLabeler, myProject);
   }
 
-  public static void change(TypeMigrationLabeler labeler, UsageInfo[] usages) {
-    final List<PsiNewExpression> newExpressionsToCheckDiamonds = new SmartList<PsiNewExpression>();
+  public static void change(UsageInfo[] usages, TypeMigrationLabeler labeler, Project project) {
+    final List<SmartPsiElementPointer<PsiNewExpression>> newExpressionsToCheckDiamonds = new SmartList<>();
     final TypeMigrationLabeler.MigrationProducer producer = labeler.createMigratorFor(usages);
 
+    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
       if (((TypeMigrationUsageInfo)usage).isExcluded()) continue;
@@ -260,7 +259,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         producer.change((TypeMigrationUsageInfo)usage, new Consumer<PsiNewExpression>() {
           @Override
           public void consume(@NotNull PsiNewExpression expression) {
-            newExpressionsToCheckDiamonds.add(expression);
+            newExpressionsToCheckDiamonds.add(smartPointerManager.createSmartPsiElementPointer(expression));
           }
         });
       }
@@ -269,8 +268,11 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    for (PsiNewExpression newExpression : newExpressionsToCheckDiamonds) {
-      labeler.postProcessNewExpression(newExpression);
+    for (SmartPsiElementPointer<PsiNewExpression> newExpressionPointer : newExpressionsToCheckDiamonds) {
+      final PsiNewExpression newExpression = newExpressionPointer.getElement();
+      if (newExpression != null) {
+        labeler.postProcessNewExpression(newExpression);
+      }
     }
 
     for (UsageInfo usageInfo : nonCodeUsages) {
