@@ -83,6 +83,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -372,7 +373,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
-          myPassExecutorService.waitFor(50);
+          waitInOtherThread(50);
           UIUtil.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException(progress);
           if (savedException != null) throw savedException;
@@ -385,7 +386,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       final HighlightingSessionImpl session =
         (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, textEditors.get(0).getEditor(), progress, null);
       wrap(() -> {
-        if (!myPassExecutorService.waitFor(60000)) {
+        if (!waitInOtherThread(60000)) {
           throw new TimeoutException("Unable to complete in 60s");
         }
         session.waitForHighlightInfosApplied();
@@ -407,6 +408,18 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         LOG.error(log, e);
       }
     }
+  }
+
+  private boolean waitInOtherThread(int millis) throws Throwable {
+    Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        return myPassExecutorService.waitFor(millis);
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
+    });
+    return future.get();
   }
 
   @TestOnly
