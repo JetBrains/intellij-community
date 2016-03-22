@@ -52,8 +52,8 @@ class StreamValidatorTest {
     fun selected_by_typing() {
         var list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
-                LogEventFixtures.type_event_current_pos_0_left_1_3,
-                LogEventFixtures.type_event_current_pos_0_left_1,
+                LogEventFixtures.type_event_current_pos_0_left_ids_1_2,
+                LogEventFixtures.type_event_current_pos_0_left_id_0,
                 LogEventFixtures.selected_by_typing_0
         )
         validate(list, expectedOut = "", expectedErr = list.join())
@@ -63,7 +63,7 @@ class StreamValidatorTest {
     fun selected_by_typing_error() {
         var list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
-                LogEventFixtures.type_event_current_pos_0_left_1_3,
+                LogEventFixtures.type_event_current_pos_0_left_ids_0_1,
                 LogEventFixtures.down_event_new_pos_1,
                 LogEventFixtures.explicit_select_position_1
         )
