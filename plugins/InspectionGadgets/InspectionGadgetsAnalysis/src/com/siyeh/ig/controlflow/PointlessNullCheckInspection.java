@@ -54,7 +54,9 @@ public class PointlessNullCheckInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("pointless.nullcheck.problem.descriptor");
+    final Boolean before = (Boolean)infos[1];
+    return InspectionGadgetsBundle.message(
+      before.booleanValue() ? "pointless.nullcheck.problem.descriptor" : "pointless.nullcheck.after.problem.descriptor");
   }
 
   @Override
@@ -169,7 +171,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (variable == null || checkRef && isVariableUsed(operands, i, j, variable)) {
         return false;
       }
-      registerError(binaryExpression, binaryExpression);
+      registerError(binaryExpression, binaryExpression, Boolean.valueOf(checkRef));
       return true;
     }
 
@@ -200,7 +202,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (variable == null || checkRef && isVariableUsed(operands, i, j, variable)) {
         return false;
       }
-      registerError(binaryExpression, binaryExpression);
+      registerError(binaryExpression, binaryExpression, Boolean.valueOf(checkRef));
       return true;
     }
 
