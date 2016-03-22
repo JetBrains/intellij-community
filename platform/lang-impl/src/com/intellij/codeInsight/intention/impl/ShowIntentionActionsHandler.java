@@ -32,7 +32,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -184,8 +183,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (pair == null) return false;
 
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      try (AccessToken ignored = action.startInWriteAction() ? WriteAction.start() : null) {
-        action.invoke(project, pair.second, pair.first);
+      Runnable r = () -> action.invoke(project, pair.second, pair.first);
+      try {
+        if (action.startInWriteAction()) {
+          WriteAction.runWriteAction(r::run);
+        } else {
+          r.run();
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
