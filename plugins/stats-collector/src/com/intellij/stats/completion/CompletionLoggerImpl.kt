@@ -129,16 +129,18 @@ class CompletionFileLogger(private val installationUID: String,
     }
 
     override fun itemSelectedByTyping(lookup: LookupImpl) {
-        val item = lookup.currentItem
-        //todo check it
-        val event = TypedSelectEvent(installationUID, completionUID, getElementId(item!!)!!)
+        val item = lookup.currentItem!!
+        val id = getElementId(item)!!
+        //todo think about id/index ?
+        val event = TypedSelectEvent(installationUID, completionUID, id)
+        logEvent(event)
     }
 
-
     override fun itemSelectedCompletionFinished(lookup: LookupImpl) {
-        val item = lookup.currentItem
-        //todo check it
-        println()
+        val item = lookup.currentItem!!
+        val index = lookup.items.indexOf(item)
+        val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index)
+        logEvent(event)
     }
     
     override fun afterBackspacePressed(lookup: LookupImpl) {
@@ -162,20 +164,4 @@ enum class Action {
     EXPLICIT_SELECT,
     TYPED_SELECT,
     CUSTOM
-}
-
-class LogLineBuilder(val installationUID: String, val completionUID: String, val action: Action) {
-    private val timestamp = System.currentTimeMillis()
-    private val builder = StringBuilder()
-
-    init {
-        builder.append("$installationUID $completionUID $timestamp $action")
-    }
-
-    fun addText(any: Any) = builder.append(" $any")
-
-    fun addPair(name: String, value: Any) = builder.append(" $name=$value")
-
-    fun text() = builder.toString()
-
 }
