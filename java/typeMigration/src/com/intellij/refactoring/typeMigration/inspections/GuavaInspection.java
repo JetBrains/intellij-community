@@ -25,9 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -309,7 +307,13 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if (!myTargetType.isValid() || !element.isValid()) {
         return getFamilyName();
       }
-      final String presentation = TypeMigrationProcessor.getPresentation(element);
+      final String presentation;
+      if (element instanceof PsiMethodCallExpression) {
+        presentation = "method chain";
+      }
+      else {
+        presentation = TypeMigrationProcessor.getPresentation(element);
+      }
       return "Migrate " + presentation + " type to '" + myTargetType.getCanonicalText(false) + "'";
     }
 
