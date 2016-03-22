@@ -23,7 +23,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -278,12 +277,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     final String newPath = newParentPath + "/" + newName;
-    MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, new Condition<MovedFileInfo>() {
-      @Override
-      public boolean value(MovedFileInfo info) {
-        return Comparing.equal(info.myFile, file);
-      }
-    });
+    MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, (info) -> Comparing.equal(info.myFile, file));
     if (existingMovedFile != null) {
       LOG.debug("Reusing existing moved file " + file);
       existingMovedFile.myNewPath = newPath;
