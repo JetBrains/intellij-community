@@ -47,24 +47,18 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
-    application.invokeAndWait(new Runnable() {
+    TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, new Runnable() {
       @Override
       public void run() {
-        AccessToken transaction = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE);
+        AccessToken token = start(WriteAction.this.getClass());
         try {
-          AccessToken token = start(WriteAction.this.getClass());
-          try {
-            result.run();
-          }
-          finally {
-            token.finish();
-          }
+          result.run();
         }
         finally {
-          transaction.finish();
+          token.finish();
         }
       }
-    }, ModalityState.defaultModalityState());
+    });
 
     result.throwException();
     return result;

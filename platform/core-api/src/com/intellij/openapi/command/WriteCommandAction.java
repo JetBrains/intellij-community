@@ -83,18 +83,12 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       performWriteCommandAction(result);
     } else {
       try {
-        application.invokeAndWait(new Runnable() {
+        TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, new Runnable() {
           @Override
           public void run() {
-            AccessToken token = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE);
-            try {
-              performWriteCommandAction(result);
-            }
-            finally {
-              token.finish();
-            }
+            performWriteCommandAction(result);
           }
-        }, ModalityState.defaultModalityState());
+        });
       }
       catch (ProcessCanceledException ignored) { }
     }
