@@ -9,7 +9,7 @@ object Fixtures {
 
     val userId = UUID.randomUUID().toString()
 
-    val relevance = mapOf(Pair("sort", 1.0), Pair("proximity", 2.0))
+    val relevance = mapOf(Pair("sort", 1.0.toString()), Pair("proximity", 2.0.toString()))
     
     val lookupList = listOf(
             LookupEntryInfo(0, 5, relevance), 

@@ -178,16 +178,13 @@ class CompletionStartedEvent(
     }
 }
 
-class CustomMessageEvent(userId: String, sessionId: String): LogEvent(userId, sessionId, Action.CUSTOM) {
-    
-    var text: String = ""
-    
+class CustomMessageEvent(userId: String, sessionId: String, var text: String): LogEvent(userId, sessionId, Action.CUSTOM) {
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
 }
 
-class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, Any>)
+class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, String?>?)
 
 
 abstract class LogEventVisitor {
