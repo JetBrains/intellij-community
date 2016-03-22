@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
-import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.textCompletion.TextCompletionValueDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +44,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Extend this provider for:
+ * <ol><li> caching (implement {@link #getItems(String, boolean, CompletionParameters)}, see {@link #fillCompletionVariants(CompletionParameters, String, CompletionResultSet)});
+ * <li> changing completion variants (see {@link #setItems(Collection)}).</ol>
+ * <p>
+ * Otherwise, use {@link com.intellij.util.textCompletion.ValuesCompletionProvider} for completion from a fixed set of elements
+ * or {@link com.intellij.util.TextFieldCompletionProvider} in other cases.
+ *
  * @author Roman.Chernyatchik
  */
 public abstract class TextFieldWithAutoCompletionListProvider<T> extends DefaultTextCompletionValueDescriptor<T> implements
