@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
@@ -399,10 +398,7 @@ class RunConfigurable extends BaseConfigurable {
     mySelectedConfigurable = configurable;
 
     JComponent configurableComponent = configurable.createComponent();
-    final JBScrollPane scrollPane = new JBScrollPane(configurableComponent);
-    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-    scrollPane.setBorder(null);
-    myRightPanel.add(scrollPane, BorderLayout.CENTER);
+    myRightPanel.add(BorderLayout.CENTER, configurableComponent);
     if (configurable instanceof SingleConfigurationConfigurable) {
       myRightPanel.add(((SingleConfigurationConfigurable)configurable).getValidationComponent(), BorderLayout.SOUTH);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
