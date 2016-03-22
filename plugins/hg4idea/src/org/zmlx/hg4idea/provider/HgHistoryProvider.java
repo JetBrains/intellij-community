@@ -88,7 +88,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     final List<HgFileRevision> history = getHistory(filePath, vcsRoot, myProject);
     if (history.size() == 0) return;
 
-    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot, Collections.<VcsFileRevision>emptyList(), null);
+    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot, Collections.emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
 
     for (HgFileRevision hgFileRevision : history) {
@@ -126,12 +126,21 @@ public class HgHistoryProvider implements VcsHistoryProvider {
                                                 @NotNull VirtualFile vcsRoot,
                                                 @NotNull Project project,
                                                 @Nullable HgRevisionNumber revisionNumber, int limit) {
-    final HgFile hgFile = new HgFile(vcsRoot, filePath);
-    FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
-    HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
-    if (revisionNumber == null && !filePath.isDirectory() && !originalHgFile.toFilePath().equals(hgFile.toFilePath())) {
+ /*  The standard way to get history following renames is to call hg log --follow. However:
+  1. It is broken in case of uncommitted rename (i.e. if the file is currently renamed in the working dir):
+    in this case we use a special python template "follow(path)" which handles this case.
+  2. We don't use this python "follow(path)" function for all cases, because it is fully supported only since hg 2.6,
+   and it is a bit slower and possibly less reliable than plain --follow parameter.
+  3. It doesn't work with "-r": in this case --follow is simply ignored (hg commit 24208:8b4b9ee6001a).
+   As a workaround we could use the same follow(path) python, but this function requires current name of the file,
+    which is unknown in case of "-r", and identifying it would be very slow.
+
+    As a result we don't follow renames in annotate called from diff or from an old revision, which we can survive.
+*/
+    FilePath originalFilePath = HgUtil.getOriginalFileName(filePath, ChangeListManager.getInstance(project));
+    if (revisionNumber == null && !filePath.isDirectory() && !filePath.equals(originalFilePath)) {
       // uncommitted renames detected
-      return getHistoryForUncommittedRenamed(originalHgFile, vcsRoot, project, limit);
+      return getHistoryForUncommittedRenamed(originalFilePath, vcsRoot, project, limit);
     }
     final HgLogCommand logCommand = new HgLogCommand(project);
     logCommand.setFollowCopies(!filePath.isDirectory());
@@ -139,22 +148,18 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     List<String> args = new ArrayList<String>();
     if (revisionNumber != null) {
       args.add("--rev");
-      args.add("reverse(0::" + revisionNumber.getChangeset() + ")");// hg ignors --follow if --rev presented
-      // reverse needed because of mercurial default order problem -r rev set with and without -f option
+      args.add("reverse(0::" + revisionNumber.getChangeset() + ")");
     }
-    return logCommand.execute(hgFile, limit, false, args);
+    return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false, args);
   }
-
 
   /**
    * Workaround for getting follow file history in case of uncommitted move/rename change
    */
-  private static List<HgFileRevision> getHistoryForUncommittedRenamed(@NotNull HgFile originalHgFile,
+  private static List<HgFileRevision> getHistoryForUncommittedRenamed(@NotNull FilePath originalHgFilePath,
                                                                       @NotNull VirtualFile vcsRoot,
                                                                       @NotNull Project project, int limit) {
-    //mercurial can't follow custom revision;
-    // the only way to do it if you have working dir file name then use python follow function for it,
-    // but we have to use local(last committed) name as a parameter
+    HgFile originalHgFile = new HgFile(vcsRoot, originalHgFilePath);
     final HgLogCommand logCommand = new HgLogCommand(project);
     logCommand.setIncludeRemoved(true);
     final HgVersion version = logCommand.getVersion();
