@@ -94,6 +94,9 @@ object UpdateChecker {
   private val patchesUrl: String
     get() = System.getProperty("idea.patches.url") ?: PATCHES_URL
 
+  @JvmStatic
+  private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+  
   /**
    * For scheduled update checks.
    */
@@ -516,8 +519,8 @@ object UpdateChecker {
 
     return null
   }
-
-  private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+  
+  @JvmStatic
   private fun skipUtf8BOM(bytes: ByteArray): Int {
     if (bytes.size < UTF8_BOM.size) {
       return 0
