@@ -240,8 +240,9 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       for (String file : revision.getDeletedFiles()) {
         changes.add(createChange(root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
       }
-      for (Map.Entry<String, String> copiedFile : revision.getCopiedFiles().entrySet()) {
-        changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
+      for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
+        changes
+          .add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.RENAMED));
       }
 
       result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getBranchName(), revision.getCommitMessage(),
@@ -352,8 +353,8 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     for (String file : localRevision.getDeletedFiles()) {
       changes.add(createChange(root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
     }
-    for (Map.Entry<String, String> copiedFile : localRevision.getCopiedFiles().entrySet()) {
-      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.COPIED));
+    for (Map.Entry<String, String> copiedFile : localRevision.getMovedFiles().entrySet()) {
+      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.RENAMED));
     }
 
     return new HgCommittedChangeList(myVcs, vcsRevisionNumber, localRevision.getBranchName(), localRevision.getCommitMessage(),
