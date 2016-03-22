@@ -388,7 +388,7 @@ public class IdeEventQueue extends EventQueue {
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    try (AccessToken ignored = ourTransactionGuard.startActivity(myIsInInputEvent)) {
+    try (AccessToken ignored = ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(myIsInInputEvent)) {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {
