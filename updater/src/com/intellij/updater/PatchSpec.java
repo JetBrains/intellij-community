@@ -155,7 +155,9 @@ public class PatchSpec {
   }
 
   public PatchSpec setHashAlgorithm(String hashAlgorithm) {
-    myHashAlgorithm = hashAlgorithm;
+    if (hashAlgorithm != null) {
+      myHashAlgorithm = hashAlgorithm;
+    }
     return this;
   }
 
