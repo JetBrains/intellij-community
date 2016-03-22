@@ -41,6 +41,8 @@ public class Notification {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.Notification");
   private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
+  public final String id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(hashCode());
+
   private final String myGroupId;
   private Icon myIcon;
   private final NotificationType myType;
