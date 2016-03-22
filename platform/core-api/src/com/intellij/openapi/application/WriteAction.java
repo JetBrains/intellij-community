@@ -16,8 +16,10 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
@@ -78,5 +80,18 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @NotNull
   public static AccessToken start(@NotNull Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
+  }
+
+  public static <E extends Throwable> void runWriteAction(@NotNull ThrowableRunnable<E> action) throws E {
+    AccessToken token = start();
+    try {
+      action.run();
+    } finally {
+      token.finish();
+    }
+  }
+
+  public static <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> action) throws E {
+    return ApplicationManager.getApplication().runWriteAction(action);
   }
 }
