@@ -501,7 +501,7 @@
     <moduleService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                    serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"/>
-    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"/>
+    <!--<psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"/>-->
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyFunctionTypeCommentReferenceContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>
