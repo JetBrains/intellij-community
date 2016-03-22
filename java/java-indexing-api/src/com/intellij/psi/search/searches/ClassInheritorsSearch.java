@@ -99,23 +99,28 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   private ClassInheritorsSearch() {}
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
     return search(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
                                              psiClass -> ApplicationManager.getApplication().runReadAction((Computable<SmartPsiElementPointer<PsiClass>>)() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep) {
     return search(aClass, scope, checkDeep, true);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
     return search(aClass, ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)() -> {
       if (!aClass.isValid()) {
@@ -125,8 +130,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     }), checkDeep);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull PsiClass aClass) {
     return search(aClass, true);
   }
-
 }
