@@ -16,14 +16,12 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-@WrapInTransaction
 public class LocalQuickFixOnPsiElementAsIntentionAdapter implements IntentionAction {
   private final LocalQuickFixOnPsiElement myFix;
 

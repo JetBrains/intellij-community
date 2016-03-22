@@ -16,17 +16,17 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.TransactionKind;
-import com.intellij.openapi.application.WrapInTransaction;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
-@WrapInTransaction(TransactionKind.Common.ANY_CHANGE)
 public abstract class CompileActionBase extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();

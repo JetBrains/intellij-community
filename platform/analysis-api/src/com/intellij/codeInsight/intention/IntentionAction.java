@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.TransactionKind;
-import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for intention actions. Intention actions are invoked by pressing
@@ -99,16 +96,4 @@ public interface IntentionAction extends WriteActionAware {
    * @return true if the intention requires a write action, false otherwise.
    */
   boolean startInWriteAction();
-
-  /**
-   * @return the transaction kind that this intention should be executed inside, or null if no transaction is required.
-   * By default, the kind is taken from {@link WrapInTransaction} annotation on the intention class. If it's not present
-   * but the intention is to be invoked inside a write action (startInWriteAction), {@link TransactionKind#ANY_CHANGE} is used.
-   * @see com.intellij.openapi.application.TransactionGuard
-   */
-  @Nullable
-  default TransactionKind getTransactionKind() {
-    WrapInTransaction annotation = getClass().getAnnotation(WrapInTransaction.class);
-    return annotation != null ? annotation.value() : startInWriteAction() ? TransactionKind.ANY_CHANGE : null;
-  }
 }
