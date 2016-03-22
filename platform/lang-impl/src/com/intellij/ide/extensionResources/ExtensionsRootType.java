@@ -42,7 +42,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
@@ -206,27 +205,15 @@ public class ExtensionsRootType extends RootType {
   private static List<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
     String resourcesPath = EXTENSIONS_PATH + "/" + path;
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    ClassLoader cl = plugin != null ? plugin.getPluginClassLoader() : null;
-    Enumeration<URL> urlEnumeration = plugin != null ? cl.getResources(resourcesPath) : null;
-    if (urlEnumeration == null) return ContainerUtil.emptyList();
+    ClassLoader pluginClassLoader = plugin != null ? plugin.getPluginClassLoader() : null;
+    Set<URL> urls = plugin == null ? null : ContainerUtil.newLinkedHashSet(ContainerUtil.toList(pluginClassLoader.getResources(resourcesPath)));
+    if (urls == null) return ContainerUtil.emptyList();
 
     PluginId corePluginId = PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID);
-    Set<URL> excludedUrls = ContainerUtil.newHashSet();
-    if (!plugin.getUseIdeaClassLoader() && !pluginId.equals(corePluginId)) {
-      IdeaPluginDescriptor corePlugin = PluginManager.getPlugin(corePluginId);
-      ClassLoader ideaClassLoader = ObjectUtils.assertNotNull(corePlugin).getPluginClassLoader();
-      Enumeration<URL> resources = ideaClassLoader.getResources(resourcesPath);
-      while (resources.hasMoreElements()) {
-        excludedUrls.add(resources.nextElement());
-      }
-    }
-
-    Set<URL> urls = ContainerUtil.newLinkedHashSet();
-    while (urlEnumeration.hasMoreElements()) {
-      URL url = urlEnumeration.nextElement();
-      if (!excludedUrls.contains(url)) {
-        urls.add(url);
-      }
+    IdeaPluginDescriptor corePlugin = ObjectUtils.notNull(PluginManager.getPlugin(corePluginId));
+    ClassLoader coreClassLoader = corePlugin.getPluginClassLoader();
+    if (coreClassLoader != pluginClassLoader && !plugin.getUseIdeaClassLoader() && !pluginId.equals(corePluginId)) {
+      urls.removeAll(ContainerUtil.toList(coreClassLoader.getResources(resourcesPath)));
     }
 
     return ContainerUtil.newArrayList(urls);
