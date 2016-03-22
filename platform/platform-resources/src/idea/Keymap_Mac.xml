@@ -279,8 +279,12 @@
     <action id="Refresh">
       <keyboard-shortcut first-keystroke="meta R"/>
     </action>
+    <!--
+     Android Studio: We've changed the default from Cmd-R to Option-R such that it
+     doesn't conflict with Replace when the editor has focus. (See issue b.android.com/196158).
+    -->
     <action id="Rerun">
-      <keyboard-shortcut first-keystroke="meta R"/>
+      <keyboard-shortcut first-keystroke="alt R"/>
     </action>
     <action id="RerunTests">
       <keyboard-shortcut first-keystroke="control meta R"/>
