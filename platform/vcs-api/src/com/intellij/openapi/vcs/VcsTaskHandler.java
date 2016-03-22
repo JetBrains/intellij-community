@@ -44,15 +44,23 @@ public abstract class VcsTaskHandler {
 
     private final String myBranch;
     private final Collection<String> myRepositories;
+    private final boolean myRemote;
 
     public TaskInfo(String branch, Collection<String> repositories) {
+      this(branch, repositories, false);
+    }
+
+    public TaskInfo(String branch, Collection<String> repositories, boolean remote) {
       myBranch = branch;
       myRepositories = repositories;
+      myRemote = remote;
     }
 
     public String getName() {
       return myBranch;
     }
+
+    public boolean isRemote() { return myRemote; }
 
     public Collection<String> getRepositories() {
       return myRepositories;
