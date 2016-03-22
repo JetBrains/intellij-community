@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class StudyCheckAction extends StudyToolbarAction {
+public abstract class StudyCheckAction extends StudyActionWithShortcut {
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
 
   protected Ref<Boolean> myCheckInProgress = new Ref<>(false);

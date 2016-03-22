@@ -15,6 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.learning.StudyProjectComponent;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
@@ -62,6 +64,9 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
     course.setDescription(description);
     course.setLanguage("Python");
     service.setCourse(course);
+
+    StudyTaskManager.getInstance(project).setCourse(course);
+    StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
 
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
     if (projectDir == null) return;

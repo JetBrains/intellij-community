@@ -115,10 +115,12 @@ public class StudyProjectComponent implements ProjectComponent {
       List<AnAction> actionsOnToolbar = window.getActions(true);
       if (actionsOnToolbar != null) {
         for (AnAction action : actionsOnToolbar) {
-          if (action instanceof StudyToolbarAction) {
-            String id = ((StudyToolbarAction)action).getActionId();
-            String[] shortcuts = ((StudyToolbarAction)action).getShortcuts();
-            addShortcut(id, shortcuts);
+          if (action instanceof StudyActionWithShortcut) {
+            String id = ((StudyActionWithShortcut)action).getActionId();
+            String[] shortcuts = ((StudyActionWithShortcut)action).getShortcuts();
+            if (shortcuts != null) {
+              addShortcut(id, shortcuts);
+            }
           }
         }
       }

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class StudyRefreshTaskFileAction extends StudyToolbarAction {
+public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "RefreshTaskAction";
   public static final String SHORTCUT = "ctrl shift pressed X";
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());

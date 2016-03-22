@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,9 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<>();
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
+  private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
+  private boolean myTurnEditingMode = false;
+
 
   private StudyTaskManager() {
   }
@@ -249,5 +253,21 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public boolean isInvisibleFile(String path) {
     return myInvisibleFiles.contains(path);
+  }
+
+  public StudyToolWindow.StudyToolWindowMode getToolWindowMode() {
+    return myToolWindowMode;
+  }
+
+  public void setToolWindowMode(StudyToolWindow.StudyToolWindowMode toolWindowMode) {
+    myToolWindowMode = toolWindowMode;
+  }
+
+  public boolean isTurnEditingMode() {
+    return myTurnEditingMode;
+  }
+
+  public void setTurnEditingMode(boolean turnEditingMode) {
+    myTurnEditingMode = turnEditingMode;
   }
 }

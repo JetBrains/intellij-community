@@ -35,7 +35,7 @@ public class StudySwingToolWindow extends StudyToolWindow {
   }
 
   @Override
-  public JComponent createTaskInfoPanel(String taskText, Project project) {
+  public JComponent createTaskInfoPanel(Project project) {
     myTaskTextPane = new JTextPane();
     myTaskTextPane.setContentType(new HTMLEditorKit().getContentType());
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -54,12 +54,11 @@ public class StudySwingToolWindow extends StudyToolWindow {
       myTaskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     }
     myTaskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
-    myTaskTextPane.setText(taskText);
     myTaskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     return myTaskTextPane;
   }
 
-  public void setTaskText(String text) {
+  public void setText(String text) {
     myTaskTextPane.setText(text);
   }
 }

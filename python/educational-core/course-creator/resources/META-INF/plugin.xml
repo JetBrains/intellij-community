@@ -24,6 +24,9 @@
     <renameHandler implementation="com.jetbrains.edu.coursecreator.CCTaskRenameHandler" order="first"/>
     <renameHandler implementation="com.jetbrains.edu.coursecreator.CCLessonRenameHandler" order="first"/>
   </extensions>
+  <extensions defaultExtensionNs="Edu">
+    <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
+  </extensions>
 
   <application-components>
     <!-- Add your application components here -->

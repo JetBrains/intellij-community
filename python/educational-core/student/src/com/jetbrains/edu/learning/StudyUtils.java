@@ -128,7 +128,7 @@ public class StudyUtils {
   }
 
   public static void updateToolWindows(@NotNull final Project project) {
-    update(project);
+    updateStudyToolWindow(project);
 
     final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     createProgressToolWindowContent(project, windowManager);
@@ -461,14 +461,7 @@ public class StudyUtils {
   }
 
   public static String getTaskText(@NotNull final Project project) {
-    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-    TaskFile taskFile = null;
-    for (VirtualFile file : files) {
-      taskFile = getTaskFile(project, file);
-      if (taskFile != null) {
-        break;
-      }
-    }
+    TaskFile taskFile = getSelectedTaskFile(project);
     if (taskFile == null) {
       return EMPTY_TASK_TEXT;
     }
@@ -479,11 +472,24 @@ public class StudyUtils {
     return null;
   }
 
-  public static void update(Project project) {
+  @Nullable
+  public static TaskFile getSelectedTaskFile(@NotNull Project project) {
+    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+    TaskFile taskFile = null;
+    for (VirtualFile file : files) {
+      taskFile = getTaskFile(project, file);
+      if (taskFile != null) {
+        break;
+      }
+    }
+    return taskFile;
+  }
+
+  public static void updateStudyToolWindow(Project project) {
     final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
     if (studyToolWindow != null) {
       String taskText = getTaskText(project);
-      studyToolWindow.setTaskText(taskText);
+      studyToolWindow.setTaskText(taskText, null, project);
     }
   }
 }
