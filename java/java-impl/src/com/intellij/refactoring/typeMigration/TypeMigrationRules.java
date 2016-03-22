@@ -41,14 +41,13 @@ public class TypeMigrationRules {
   private final Map<Class, Object> myConversionCustomSettings = new HashMap<>();
   private SearchScope mySearchScope;
 
-  private final MigrateGetterNameSetting myMigrateGetterNameSetting = new MigrateGetterNameSetting();
-
   public TypeMigrationRules() {
     final TypeConversionRule[] extensions = Extensions.getExtensions(TypeConversionRule.EP_NAME);
     myConversionRules = new ArrayList<>(extensions.length + 2);
     myConversionRules.add(new RootTypeConversionRule());
     myConversionRules.add(new DisjunctionTypeConversionRule());
     ContainerUtil.addAll(myConversionRules, extensions);
+    addConversionRuleSettings(new MigrateGetterNameSetting());
   }
 
   public void addConversionDescriptor(TypeConversionRule rule) {
@@ -96,10 +95,6 @@ public class TypeMigrationRules {
 
   public SearchScope getSearchScope() {
     return mySearchScope;
-  }
-
-  public MigrateGetterNameSetting getMigrateGetterNameSetting() {
-    return myMigrateGetterNameSetting;
   }
 
   @Nullable
