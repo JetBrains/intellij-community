@@ -25,6 +25,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,6 +71,7 @@ public class MethodListDlg extends DialogWrapper {
     }.installOn(myList);
 
     ScrollingUtil.ensureSelectionExists(myList);
+    TreeUIHelper.getInstance().installListSpeedSearch(myList);
     setTitle(ExecutionBundle.message("choose.test.method.dialog.title"));
     init();
   }
@@ -83,6 +85,12 @@ public class MethodListDlg extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     return myWholePanel;
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myList;
   }
 
   public PsiMethod getSelected() {
