@@ -65,10 +65,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
-import com.intellij.util.Alarm;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -398,17 +395,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
       if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
-        List<ClassFilter> activeFilters = getActiveFilters();
-
-        if (!activeFilters.isEmpty()) {
-          final String currentClassName = getCurrentClassName(stepThread);
-          if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName, activeFilters)) {
-            // add class filters
-            for (ClassFilter filter : activeFilters) {
-              stepRequest.addClassExclusionFilter(filter.getPattern());
-            }
-          }
-        }
+        checkPositionNotFiltered(stepThread, filters -> filters.forEach(f -> stepRequest.addClassExclusionFilter(f.getPattern())));
       }
 
       // suspend policy to match the suspend policy of the context:
@@ -429,8 +416,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  public void checkPositionNotFiltered(ThreadReferenceProxyImpl thread, Consumer<List<ClassFilter>> action) {
+    List<ClassFilter> activeFilters = getActiveFilters();
+    if (!activeFilters.isEmpty()) {
+      String currentClassName = getCurrentClassName(thread);
+      if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName, activeFilters)) {
+        action.consume(activeFilters);
+      }
+    }
+  }
+
   @NotNull
-  static List<ClassFilter> getActiveFilters() {
+  private static List<ClassFilter> getActiveFilters() {
     List<ClassFilter> activeFilters = new ArrayList<>();
     DebuggerSettings settings = DebuggerSettings.getInstance();
     if (settings.TRACING_FILTERS_ENABLED) {
@@ -1588,6 +1585,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myBreakpoint != null) {
         myBreakpoint.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
         myBreakpoint.createRequest(suspendContext.getDebugProcess());
+        myBreakpoint.setRequestHint(hint);
         setRunToCursorBreakpoint(myBreakpoint);
       }
       doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint);
