@@ -125,14 +125,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                       boolean addAll = isAddAllCall(statement, body);
                       holder.registerProblem(iteratedValue, "Can be replaced with " + (addAll ? "addAll call" : "collect call"),
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, 
-                                             new ReplaceWithCollectCallFix("Replace with " + (addAll ? "addAll" : "collect")));
+                                             addAll ? new ReplaceWithAddAllFix() : new ReplaceWithCollectFix());
                     }
                     else if (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement.getIterationParameter())) {
                       final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
-                      fixes.add(new ReplaceWithForeachCallFix("forEach"));
+                      fixes.add(new ReplaceWithForeachFix());
                       if (extractIfStatement(body) != null) {
                         //for .stream() 
-                        fixes.add(new ReplaceWithForeachCallFix("forEachOrdered"));
+                        fixes.add(new ReplaceWithForeachOrderedFix());
                       }
                       holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -290,12 +290,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == parameter;
   }
 
-  private static class ReplaceWithForeachCallFix implements LocalQuickFix {
-    private final String myForEachMethodName;
-
-    private ReplaceWithForeachCallFix(String forEachMethodName) {
-      myForEachMethodName = forEachMethodName;
+  private static class ReplaceWithForeachFix extends ReplaceWithForeachCallFix {
+    @Override
+    protected String getForEachMethodName() {
+      return "forEach";
     }
+  }
+
+  private static class ReplaceWithForeachOrderedFix extends ReplaceWithForeachCallFix {
+    @Override
+    protected String getForEachMethodName() {
+      return "forEachOrdered";
+    }
+  }
+
+  private static abstract class ReplaceWithForeachCallFix implements LocalQuickFix {
+    protected abstract String getForEachMethodName();
 
     @NotNull
     @Override
@@ -306,7 +316,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with " + myForEachMethodName;
+      return "Replace with " + getForEachMethodName();
     }
 
     @Override
@@ -331,7 +341,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             body = thenBranch;
           }
 
-          buffer.append("." + myForEachMethodName + "(");
+          buffer.append(".").append(getForEachMethodName()).append("(");
 
           final String functionalExpressionText = createForEachFunctionalExpressionText(project, body, parameter);
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
@@ -389,14 +399,23 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, parameter.getType()) : null;
   }
 
-  private static class ReplaceWithCollectCallFix implements LocalQuickFix {
-
-    private final String myName;
-
-    public ReplaceWithCollectCallFix(String name) {
-      myName = name;
+  private static class ReplaceWithCollectFix extends ReplaceWithCollectAbstractFix {
+    @Override
+    protected String getMethodName() {
+      return "collect";
     }
+  }
 
+  private static class ReplaceWithAddAllFix extends ReplaceWithCollectAbstractFix {
+    @Override
+    protected String getMethodName() {
+      return "addAll";
+    }
+  }
+
+  private abstract static class ReplaceWithCollectAbstractFix implements LocalQuickFix {
+
+    protected abstract String getMethodName();
     @NotNull
     @Override
     public String getName() {
@@ -406,7 +425,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return myName;
+      return "Replace with " + getMethodName();
     }
 
     @Override
