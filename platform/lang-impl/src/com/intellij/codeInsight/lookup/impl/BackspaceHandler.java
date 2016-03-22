@@ -20,24 +20,15 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import org.jetbrains.annotations.NotNull;
 
 public class BackspaceHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler){
     myOriginalHandler = originalHandler;
-  }
-
-  @Override
-  public AccessToken startTransaction(@NotNull Editor editor) {
-    return TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING);
   }
 
   @Override

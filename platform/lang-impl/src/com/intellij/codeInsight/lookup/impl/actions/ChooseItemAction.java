@@ -26,9 +26,6 @@ import com.intellij.codeInsight.template.impl.*;
 import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateCustomAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -51,11 +48,6 @@ public abstract class ChooseItemAction extends EditorAction {
     protected Handler(boolean focusedOnly, char finishingChar) {
       this.focusedOnly = focusedOnly;
       this.finishingChar = finishingChar;
-    }
-
-    @Override
-    public AccessToken startTransaction(@NotNull Editor editor) {
-      return TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING);
     }
 
     @Override

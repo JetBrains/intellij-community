@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
@@ -180,15 +178,6 @@ public abstract class EditorActionHandler {
 
   public boolean executeInCommand(Editor editor, DataContext dataContext) {
     return true;
-  }
-
-  /**
-   * @return the transaction access token that this action should be executed inside, or null if no transaction is required.
-   * @see com.intellij.openapi.application.TransactionGuard#startSynchronousTransaction(TransactionKind)
-   */
-  @Nullable
-  public AccessToken startTransaction(@NotNull Editor editor) {
-    return null;
   }
 
   public boolean runForAllCarets() {
