@@ -248,7 +248,7 @@ class DependencyResolverImpl implements DependencyResolver {
       if (dependency instanceof ExternalProjectDependency) {
         ExternalProjectDependency projectDependency = dependency
         def project = rootProject.findProject(projectDependency.projectPath)
-        def configuration = project?.configurations?.getByName("default")
+        def configuration = project?.configurations?.findByName("default")
         configuration?.allArtifacts?.files?.files?.each {
           resolvedDependenciesMap.put(scope, it)
           def classpathOrderMap = scope == compileScope ? compileClasspathOrder :
