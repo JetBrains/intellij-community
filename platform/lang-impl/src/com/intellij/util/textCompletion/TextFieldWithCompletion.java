@@ -23,28 +23,30 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.LanguageTextField;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TextFieldWithCompletion extends LanguageTextField {
   private final boolean myForceAutoPopup;
   private final boolean myShowHint;
 
   public TextFieldWithCompletion(@NotNull Project project,
-                                   @NotNull TextCompletionProvider provider,
-                                   @NotNull String value,
-                                   boolean oneLineMode,
-                                   boolean forceAutoPopup,
-                                   boolean showHint) {
+                                 @NotNull TextCompletionProvider provider,
+                                 @NotNull String value,
+                                 boolean oneLineMode,
+                                 boolean forceAutoPopup,
+                                 boolean showHint) {
     this(project, provider, value, oneLineMode, true, forceAutoPopup, showHint);
   }
 
-  public TextFieldWithCompletion(@NotNull Project project,
+  public TextFieldWithCompletion(@Nullable Project project,
                                  @NotNull TextCompletionProvider provider,
                                  @NotNull String value,
                                  boolean oneLineMode,
                                  boolean autoPopup,
                                  boolean forceAutoPopup,
                                  boolean showHint) {
-    super(PlainTextLanguage.INSTANCE, project, value, new TextCompletionUtil.DocumentWithCompletionCreator(provider, autoPopup), oneLineMode);
+    super(PlainTextLanguage.INSTANCE, project, value, new TextCompletionUtil.DocumentWithCompletionCreator(provider, autoPopup),
+          oneLineMode);
     myForceAutoPopup = forceAutoPopup;
     myShowHint = showHint;
   }
