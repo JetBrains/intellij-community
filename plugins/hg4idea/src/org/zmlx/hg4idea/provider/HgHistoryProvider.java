@@ -29,11 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -129,13 +126,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     args.add("--rev");
     args.add("reverse(0::" + revNumberAsArg + ")"); // without --follow was 0:tip by default without --rev;
     // reverse needed because of mercurial default order problem -r revset with and without -f option
-    try {
-      return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false, args);
-    }
-    catch (HgCommandException e) {
-      new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
-      return Collections.emptyList();
-    }
+    return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false, args);
   }
 
   public boolean supportsHistoryForDirectories() {

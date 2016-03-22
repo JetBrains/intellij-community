@@ -80,8 +80,7 @@ public class HgLogCommand {
   /**
    * @param limit Pass -1 to set no limits on history
    */
-  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd)
-    throws HgCommandException {
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd) {
     if ((limit <= 0 && limit != -1) || hgFile == null) {
       return Collections.emptyList();
     }

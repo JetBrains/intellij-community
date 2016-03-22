@@ -38,9 +38,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
-import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.ui.HgVersionFilterComponent;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -223,13 +221,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       }
     }
     final List<HgFileRevision> localRevisions;
-    try {
-      localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args);
-    }
-    catch (HgCommandException e) {
-      new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
-      return result;
-    }
+    localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args);
     Collections.reverse(localRevisions);
 
     for (HgFileRevision revision : localRevisions) {
@@ -342,13 +334,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     args.add("--rev");
     args.add(revision);
     final List<HgFileRevision> revisions;
-    try {
-      revisions = hgLogCommand.execute(hgFile, 1, true, args);
-    }
-    catch (HgCommandException e) {
-      new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
-      return null;
-    }
+    revisions = hgLogCommand.execute(hgFile, 1, true, args);
     if (ContainerUtil.isEmpty(revisions)) {
       return null;
     }
