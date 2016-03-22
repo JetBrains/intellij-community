@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.stats.completion.experiment.ABTesterHelper
 import java.beans.PropertyChangeListener
 
@@ -116,42 +115,6 @@ class LookupActionsListener : AnActionListener.Adapter() {
     }
 }
 
-class LookupStringWithRelevance(val item: String, val relevance: List<Pair<String, Any>>) {
-
-    fun toData(): String {
-        val builder = StringBuilder()
-        with(builder, {
-            append("LEN=${item.length} ")
-            if (relevance.isNotEmpty()) {
-                append("RELEVANCE=[")
-                var first = true
-                relevance.forEach {
-                    if (!first) {
-                        append(", ")
-                    }
-                    first = false
-                    append("${it.first}=${it.second}")
-                }
-                append("]")
-            }
-        })
-        return builder.toString()
-    }
-
-}
-
-
-fun LookupImpl.toRelevanceDataList(): List<LookupStringWithRelevance> {
-    val items = items
-    val relevanceMap = getRelevanceObjects(items, false)
-    return items.map {
-        val relevance: List<Pair<String, Any>>? = relevanceMap[it]
-        LookupStringWithRelevance(it.lookupString, relevance ?: emptyList())
-    }
-}
-
-
-
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val logger: CompletionLogger, 
                                private val experimentHelper: ABTesterHelper) 
@@ -183,7 +146,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         val prefix = lookup.itemPattern(lookup.currentItem!!)
         val wasTyped = items.firstOrNull()?.lookupString?.equals(prefix) ?: false
         if (wasTyped || selectedByDotTyping) {
-            logger.itemSelectedByTyping(prefix)
+            logger.itemSelectedByTyping(lookup)
         }
         else {
             logger.completionCancelled()
@@ -210,18 +173,15 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
             //real approach would be to somehow detect if completion list is reordered 
             val isPerformExperiment = experimentHelper.isPerformExperiment()
             val experimentVersion = experimentHelper.getExperimentVersion()
-            logger.completionStarted(lookup.toRelevanceDataList(), isPerformExperiment, experimentVersion)
+            logger.completionStarted(lookup, isPerformExperiment, experimentVersion)
         }
     }
 
     override fun itemSelected(event: LookupEvent) {
         if (!completionStarted) return
-
+        
         logLastAction()
-
-        val currentItem = lookup.currentItem
-        val index = lookup.items.indexOf(currentItem)
-        logger.itemSelectedCompletionFinished(index, currentItem?.lookupString ?: "NULL", lookup.toRelevanceDataList())
+        logger.itemSelectedCompletionFinished(lookup)
     }
 
     override fun beforeDownPressed() {
@@ -233,9 +193,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         logLastAction()
         setLastAction {
-            val current = lookup.currentItem
-            val index = lookup.items.indexOf(current)
-            logger.downPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
+            logger.downPressed(lookup)
         }
     }
 
@@ -248,9 +206,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         logLastAction()
         setLastAction {
-            val current = lookup.currentItem
-            val index = lookup.items.indexOf(current)
-            logger.upPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
+            logger.upPressed(lookup)
         }
     }
 
@@ -264,9 +220,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         logLastAction()
         setLastAction {
-            val current = lookup.currentItem
-            val index = lookup.items.indexOf(current)
-            logger.afterBackspacePressed(index, current?.lookupString ?: "NULL", lookup.toRelevanceDataList())
+            logger.afterBackspacePressed(lookup)
         }
     }
 
@@ -294,7 +248,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         logLastAction()
         setLastAction {
-            logger.afterCharTyped(c, lookup.toRelevanceDataList())
+            logger.afterCharTyped(c, lookup)
         }
     }
 }
