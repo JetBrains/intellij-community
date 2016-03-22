@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -57,6 +58,8 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -467,6 +470,23 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       valueColumn.setMinWidth(JBUI.scale(200));
       valueColumn.setResizable(false);
       valueColumn.setCellRenderer(new ValueCellRenderer());
+      valueColumn.setCellEditor(new DefaultCellEditor(new JBTextField()) {
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+          Component comp = table.getCellRenderer(row, column).getTableCellRendererComponent(table, value, false, false, row, column);
+          if (comp instanceof JLabel) {
+            value = ((JLabel)comp).getText();
+          }
+          Component result = super.getTableCellEditorComponent(table, value, isSelected, row, column);
+          ((JComponent)result).setBorder(BorderFactory.createLineBorder(JBColor.GRAY, 1));
+          return result;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+          return super.getCellEditorValue();
+        }
+      });
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
@@ -679,14 +699,17 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class ColorRenderer extends JLabel implements Renderer<Color> {
     public JComponent setValue(@NotNull final Color value) {
       StringBuilder sb = new StringBuilder();
+      sb.append(" r:").append(value.getRed());
+      sb.append(" g:").append(value.getGreen());
+      sb.append(" b:").append(value.getBlue());
+      sb.append(" a:").append(value.getAlpha());
+
+      sb.append(" argb:0x");
       String hex = Integer.toHexString(value.getRGB());
       for (int i = hex.length(); i < 8; i++) sb.append('0');
       sb.append(hex.toUpperCase(ENGLISH));
-      sb.append(", r:").append(value.getRed());
-      sb.append(", g:").append(value.getGreen());
-      sb.append(", b:").append(value.getBlue());
-      sb.append(", a:").append(value.getAlpha());
-      if (value instanceof UIResource) sb.append(" [UI]");
+
+      if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
       setIcon(new ColorIcon(13, 11, value, true));
       return this;
@@ -699,7 +722,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       sb.append(value.getFontName()).append(" (").append(value.getFamily()).append("), ").append(value.getSize()).append("px");
       if (Font.BOLD == (Font.BOLD & value.getStyle())) sb.append(" bold");
       if (Font.ITALIC == (Font.ITALIC & value.getStyle())) sb.append(" italic");
-      if (value instanceof UIResource) sb.append(" [UI]");
+      if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
       return this;
     }
@@ -744,14 +767,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     final List<String> PROPERTIES = Arrays.asList(
       "ui", "getLocation", "getLocationOnScreen",
       "getSize", "isOpaque", "getBorder",
-      "getForeground", "isForegroundSet",
-      "getBackground", "isBackgroundSet",
-      "getFont", "isFontSet",
+      "getForeground", "getBackground", "getFont",
       "getMinimumSize", "getMaximumSize", "getPreferredSize",
-      "getAlignmentX", "getAlignmentY",
+      "isForegroundSet", "isBackgroundSet", "isFontSet",
+      "isMinimumSizeSet", "isMaximumSizeSet", "isPreferredSizeSet",
       "getText", "isEditable", "getIcon",
-      "getTooltipText", "getToolTipText",
       "getVisibleRect", "getLayout",
+      "getAlignmentX", "getAlignmentY",
+      "getTooltipText", "getToolTipText",
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
       "isValid", "isDisplayable", "isLightweight"
@@ -826,6 +849,41 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
 
       return null;
+    }
+
+    @Override
+    public boolean isCellEditable(int row, int col) {
+      return col == 1;
+    }
+
+    @Override
+    public void setValueAt(Object value, int row, int col) {
+      PropertyBean bean = myProperties.get(row);
+      PropertyBean next;
+      String name = bean.propertyName.trim();
+      try {
+        try {
+          Method getter;
+          try {
+            getter = myComponent.getClass().getMethod("get" + StringUtil.capitalize(name));
+          }
+          catch (Exception e) {
+            getter = myComponent.getClass().getMethod("is" + StringUtil.capitalize(name));
+          }
+          Method setter = myComponent.getClass().getMethod("set" + StringUtil.capitalize(name), getter.getReturnType());
+          setter.setAccessible(true);
+          setter.invoke(myComponent, fromObject(value, getter.getReturnType()));
+          next = new PropertyBean(name, getter.invoke(myComponent));
+        }
+        catch (Exception e) {
+          Field field = ReflectionUtil.findField(myComponent.getClass(), null, name);
+          field.set(myComponent, fromObject(value, field.getType()));
+          next = new PropertyBean(name, field.get(myComponent));
+        }
+        myProperties.set(row, next);
+      }
+      catch (Exception ignored) {
+      }
     }
 
     public int getColumnCount() {
@@ -932,5 +990,41 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         ((JComponent)child).putClientProperty("uiInspector.addedAt", val);
       }
     }
+  }
+
+  /** @noinspection UseJBColor*/
+  private static Object fromObject(Object o, Class<?> type) {
+    if (o == null) return null;
+    if (type.isAssignableFrom(o.getClass())) return o;
+    if ("null".equals(o)) return null;
+
+    String value = String.valueOf(o).trim();
+    if (type == int.class) return Integer.parseInt(value);
+    if (type == boolean.class) return "yes".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
+    if (type == byte.class) return Byte.parseByte(value);
+    if (type == short.class) return Short.parseShort(value);
+    if (type == double.class) return Double.parseDouble(value);
+    if (type == float.class) return Float.parseFloat(value);
+
+    String[] s = value.split("\\s*(?:[x@]|\\w+:)\\s*", 6);
+    if (type == Dimension.class) {
+      if (s.length == 2) return new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
+    }
+    else if (type == Point.class) {
+      if (s.length == 2) return new Point(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
+    }
+    else if (type == Rectangle.class) {
+      if (s.length >= 5) return new Rectangle(Integer.parseInt(s[3]), Integer.parseInt(s[4]),
+                                              Integer.parseInt(s[1]), Integer.parseInt(s[2]));
+    }
+    else if (type == Insets.class) {
+      if (s.length >= 5) return new Insets(Integer.parseInt(s[1]), Integer.parseInt(s[2]),
+                                           Integer.parseInt(s[4]), Integer.parseInt(s[4]));
+    }
+    else if (type == Color.class) {
+      if (s.length >= 5) return new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]),
+                                          Integer.parseInt(s[3]), Integer.parseInt(s[4]));
+    }
+    throw new UnsupportedOperationException(type.toString());
   }
 }
