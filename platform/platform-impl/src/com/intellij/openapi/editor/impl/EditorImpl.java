@@ -344,7 +344,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
-    if (shouldSoftWrapsBeForced()) {
+    if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
       mySettings.setUseSoftWrapsQuiet();
       putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
     }
@@ -583,10 +583,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
   }
 
-  private boolean shouldSoftWrapsBeForced() {
-    if (mySettings.isUseSoftWraps() ||
-        // Disable checking for files in intermediate states - e.g. for files during refactoring.
-        myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument)) {
+  public boolean shouldSoftWrapsBeForced() {
+    if (myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument)) {
+      // Disable checking for files in intermediate states - e.g. for files during refactoring.
       return false;
     }
     int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
