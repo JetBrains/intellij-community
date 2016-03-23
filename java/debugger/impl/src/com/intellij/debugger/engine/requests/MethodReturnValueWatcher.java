@@ -64,9 +64,7 @@ public class MethodReturnValueWatcher  {
     }
     try {
       if (Registry.is("debugger.watch.return.speedup") && Comparing.equal(myEntryMethod, event.method())) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Now watching all");
-        }
+        LOG.debug("Now watching all");
         enableEntryWatching(true);
         createExitRequest().enable();
       }

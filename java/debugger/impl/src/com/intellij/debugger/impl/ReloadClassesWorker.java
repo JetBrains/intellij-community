@@ -151,7 +151,8 @@ class ReloadClassesWorker {
       final int partiallyRedefinedClassesCount = redefineProcessor.getPartiallyRedefinedClassesCount();
       if (partiallyRedefinedClassesCount == 0) {
         myProgress.addMessage(
-          myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
+          myDebuggerSession, MessageCategory.INFORMATION,
+          DebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
         );
       }
       else {
@@ -161,9 +162,7 @@ class ReloadClassesWorker {
         myProgress.addMessage(myDebuggerSession, MessageCategory.WARNING, message);
       }
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("classes reloaded");
-      }
+      LOG.debug("classes reloaded");
     }
     catch (Throwable e) {
       processException(e);

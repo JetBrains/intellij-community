@@ -468,9 +468,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
     @Override
     public void paused(final SuspendContextImpl suspendContext) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("paused");
-      }
+      LOG.debug("paused");
 
       ThreadReferenceProxyImpl currentThread = suspendContext.getThread();
 
@@ -534,7 +532,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
           currentThread = oldContext.getThread();
         }
 
-        if(currentThread == null) {
+        if (currentThread == null) {
           final Collection<ThreadReferenceProxyImpl> allThreads = getProcess().getVirtualMachineProxy().allThreads();
           // heuristics: try to pre-select EventDispatchThread
           for (final ThreadReferenceProxyImpl thread : allThreads) {
@@ -593,7 +591,9 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
       SourcePosition position = PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(new Computable<SourcePosition>() {
         @Override
-        public @Nullable SourcePosition compute() {
+        public
+        @Nullable
+        SourcePosition compute() {
           return ContextUtil.getSourcePosition(positionContext);
         }
       });
@@ -618,7 +618,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
               final StackFrameProxy frameProxy = positionContext.getFrameProxy();
               String className;
               try {
-                className = frameProxy != null? frameProxy.location().declaringType().name() : "";
+                className = frameProxy != null ? frameProxy.location().declaringType().name() : "";
               }
               catch (EvaluateException ignored) {
                 className = "";
@@ -630,7 +630,8 @@ public class DebuggerSession implements AbstractDebuggerSession {
         }
       }
 
-      final DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, suspendContext, currentThread, null);
+      final DebuggerContextImpl debuggerContext =
+        DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, suspendContext, currentThread, null);
       debuggerContext.setPositionCache(position);
 
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {

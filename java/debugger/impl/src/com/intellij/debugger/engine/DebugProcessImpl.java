@@ -275,9 +275,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager = createPositionManager();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("*******************VM attached******************");
-    }
+    LOG.debug("*******************VM attached******************");
     checkVirtualMachineVersion(vm);
 
     myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
@@ -340,15 +338,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
       }
     }
-    catch (IOException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
-    }
-    catch (IllegalConnectorArgumentsException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+    catch (IOException | IllegalConnectorArgumentsException e) {
+      LOG.debug(e);
     }
     catch (ExecutionException e) {
       LOG.error(e);
@@ -845,9 +836,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       IllegalConnectorArgumentsException e1 = (IllegalConnectorArgumentsException)e;
       final List<String> invalidArgumentNames = e1.argumentNames();
       message = formatMessage(DebuggerBundle.message("error.invalid.argument", invalidArgumentNames.size()) + ": "+ e1.getLocalizedMessage()) + invalidArgumentNames;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e1);
-      }
+      LOG.debug(e1);
     }
     else if (e instanceof CantRunException) {
       message = e.getLocalizedMessage();
@@ -861,11 +850,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     else if (e instanceof ExecutionException) {
       message = e.getLocalizedMessage();
     }
-    else  {
+    else {
       message = DebuggerBundle.message("error.exception.while.connecting", e.getClass().getName(), e.getLocalizedMessage());
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+      LOG.debug(e);
     }
     return message;
   }
@@ -891,9 +878,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         buf.append(localizedMessage);
         buf.append('"');
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+      LOG.debug(e);
       message = buf.toString();
     }
     finally {
@@ -1044,14 +1029,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
         }
         for (SuspendContextImpl suspendingContext : mySuspendManager.getEventContexts()) {
-          if (suspendingContexts.contains(suspendingContext) && !suspendingContext.isEvaluating() && !suspendingContext.suspends(invokeThread)) {
+          if (suspendingContexts.contains(suspendingContext) &&
+              !suspendingContext.isEvaluating() &&
+              !suspendingContext.suspends(invokeThread)) {
             mySuspendManager.suspendThread(suspendingContext, invokeThread);
           }
         }
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("getVirtualMachine().clearCaches()");
-        }
+        LOG.debug("getVirtualMachine().clearCaches()");
         getVirtualMachineProxy().clearCaches();
         afterMethodInvocation(suspendContext, internalEvaluate);
 

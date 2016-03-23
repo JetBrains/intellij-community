@@ -208,15 +208,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     clearCaches();
   }
 
-  public void resume() {    
+  public void resume() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myPausePressedCount > 0) {
       myPausePressedCount--;
     }
     clearCaches();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("before resume VM");
-    }
+    LOG.debug("before resume VM");
     try {
       myVirtualMachine.resume();
     }
@@ -225,9 +223,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       // sometimes this leads to com.sun.jdi.InternalException: Unexpected JDWP Error: 13 (THREAD_NOT_SUSPENDED)
       LOG.info(e);
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("VM resumed");
-    }
+    LOG.debug("VM resumed");
     //logThreads();
   }
 
@@ -628,9 +624,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void clearCaches() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("VM cleared");
-    }
+    LOG.debug("VM cleared");
 
     myAllClasses = null;
     if (!myNestedClassesCache.isEmpty()) {

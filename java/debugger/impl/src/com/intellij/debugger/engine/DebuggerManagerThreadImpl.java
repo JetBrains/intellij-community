@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,9 +211,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
         @Override
         protected void commandCancelled() {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Event queue was closed, killing request");
-          }
+          LOG.debug("Event queue was closed, killing request");
           request.requestStop();
         }
       });

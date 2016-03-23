@@ -306,9 +306,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   private void processVMStartEvent(final SuspendContextImpl suspendContext, VMStartEvent event) {
     preprocessEvent(suspendContext, event.thread());
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: processVMStartEvent()");
-    }
+    LOG.debug("enter: processVMStartEvent()");
 
     showStatusText(this, event);
 
@@ -349,9 +347,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
       final String transportName = DebuggerBundle.getTransportName(getConnection());
       showStatusText(DebuggerBundle.message("status.connected", addressDisplayName, transportName));
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("leave: processVMStartEvent()");
-      }
+      LOG.debug("leave: processVMStartEvent()");
     }
   }
 
