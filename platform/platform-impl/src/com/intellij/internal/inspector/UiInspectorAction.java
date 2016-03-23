@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,6 +61,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -672,7 +674,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(String.valueOf(value.width) + " x " + value.height);
+      setText(String.valueOf(value.width) + "x" + value.height);
       return this;
     }
   }
@@ -692,7 +694,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     @NotNull
     static String toString(@NotNull Rectangle r) {
-      return r.width + "x" + r.height + "@" + r.x + ":" + r.y;
+      return r.width + "x" + r.height + " @ " + r.x + ":" + r.y;
     }
   }
 
@@ -853,13 +855,21 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     @Override
     public boolean isCellEditable(int row, int col) {
-      return col == 1;
+      return col == 1 && updater(myProperties.get(row)) != null;
     }
 
     @Override
     public void setValueAt(Object value, int row, int col) {
       PropertyBean bean = myProperties.get(row);
-      PropertyBean next;
+      try {
+        myProperties.set(row, new PropertyBean(bean.propertyName, ObjectUtils.notNull(updater(bean)).fun(value)));
+      }
+      catch (Exception ignored) {
+      }
+    }
+
+    @Nullable
+    public Function<Object, Object> updater(PropertyBean bean) {
       String name = bean.propertyName.trim();
       try {
         try {
@@ -870,20 +880,44 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           catch (Exception e) {
             getter = myComponent.getClass().getMethod("is" + StringUtil.capitalize(name));
           }
-          Method setter = myComponent.getClass().getMethod("set" + StringUtil.capitalize(name), getter.getReturnType());
+          final Method finalGetter = getter;
+          final Method setter = myComponent.getClass().getMethod("set" + StringUtil.capitalize(name), getter.getReturnType());
           setter.setAccessible(true);
-          setter.invoke(myComponent, fromObject(value, getter.getReturnType()));
-          next = new PropertyBean(name, getter.invoke(myComponent));
+          return new Function<Object, Object>() {
+            @Override
+            public Object fun(Object o) {
+              try {
+                setter.invoke(myComponent, fromObject(o, finalGetter.getReturnType()));
+                return finalGetter.invoke(myComponent);
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+          };
         }
         catch (Exception e) {
-          Field field = ReflectionUtil.findField(myComponent.getClass(), null, name);
-          field.set(myComponent, fromObject(value, field.getType()));
-          next = new PropertyBean(name, field.get(myComponent));
+          final Field field = ReflectionUtil.findField(myComponent.getClass(), null, name);
+          if (Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers())) {
+            return null;
+          }
+          return new Function<Object, Object>() {
+            @Override
+            public Object fun(Object o) {
+              try {
+                field.set(myComponent, fromObject(o, field.getType()));
+                return field.get(myComponent);
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+          };
         }
-        myProperties.set(row, next);
       }
       catch (Exception ignored) {
       }
+      return null;
     }
 
     public int getColumnCount() {
@@ -1006,7 +1040,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     if (type == double.class) return Double.parseDouble(value);
     if (type == float.class) return Float.parseFloat(value);
 
-    String[] s = value.split("\\s*(?:[x@]|\\w+:)\\s*", 6);
+    String[] s = value.split("(?i)\\s*(?:[x@:]|[a-z]+:)\\s*", 6);
     if (type == Dimension.class) {
       if (s.length == 2) return new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
     }
