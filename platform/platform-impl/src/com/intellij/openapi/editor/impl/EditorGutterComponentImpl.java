@@ -658,27 +658,28 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     updateSize();
   }
 
-  public void updateSize() {
-    updateSize(false);
+  void updateSizeOnShowNotify() {
+    updateSize(false, true);
   }
 
-  void updateSize(boolean onLayout) {
+  public void updateSize() {
+    updateSize(false, false);
+  }
+
+  void updateSize(boolean onLayout, boolean canShrink) {
     int prevHash = sizeHash();
-    updateSizeInner(onLayout);
+
+    if (!onLayout) {
+      calcLineNumberAreaWidth();
+      calcLineMarkerAreaWidth(canShrink);
+      calcAnnotationsSize();
+    }
+    calcAnnotationExtraSize();
 
     if (prevHash != sizeHash()) {
       fireResized();
     }
     repaint();
-  }
-
-  private void updateSizeInner(boolean onLayout) {
-    if (!onLayout) {
-      calcLineNumberAreaWidth();
-      calcLineMarkerAreaWidth();
-      calcAnnotationsSize();
-    }
-    calcAnnotationExtraSize();
   }
 
   private int sizeHash() {
@@ -736,7 +737,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
 
-  private void calcLineMarkerAreaWidth() {
+  private void calcLineMarkerAreaWidth(boolean canShrink) {
     myLineToGutterRenderers = new TIntObjectHashMap<>();
     myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
     myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
@@ -772,7 +773,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    myIconsAreaWidth = myEditor.getLineHeight();
+    if (canShrink) {
+      myIconsAreaWidth = myEditor.getLineHeight();
+    } else {
+      myIconsAreaWidth = Math.max(myIconsAreaWidth, myEditor.getLineHeight());
+    }
 
     myLineToGutterRenderers.forEachValue(new TObjectProcedure<List<GutterMark>>() {
       @Override

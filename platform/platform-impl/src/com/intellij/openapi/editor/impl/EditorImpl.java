@@ -1032,7 +1032,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable.Adapter() {
       @Override
       public void showNotify() {
-        myGutterComponent.updateSize();
+        myGutterComponent.updateSizeOnShowNotify();
       }
     });
     Disposer.register(getDisposable(), connector);
@@ -7127,7 +7127,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (isInDistractionFreeMode()) {
         // re-calc gutter extra size after editor size is set
         // & layout once again to avoid blinking
-        myGutterComponent.updateSize(true);
+        myGutterComponent.updateSize(true, true);
       }
       super.layout();
     }
