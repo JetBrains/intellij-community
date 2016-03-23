@@ -17,8 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
@@ -26,8 +25,7 @@ import java.util.List;
 public class BalloonLayoutData {
   public String groupId;
   public String id;
-  public String status;
-  public List<MergeInfo> mergeData;
+  public MergeInfo mergeData;
 
   public boolean showFullContent;
 
@@ -50,17 +48,18 @@ public class BalloonLayoutData {
 
   public Runnable lafHandler;
 
-  public MergeInfo getMergeInfo() {
-    MergeInfo info = new MergeInfo();
-    info.groupId = groupId;
-    info.id = id;
-    info.status = status;
-    return info;
+  @NotNull
+  public MergeInfo merge() {
+    return mergeData == null ? new MergeInfo(id, 1) : new MergeInfo(mergeData.linkId, mergeData.count + 1);
   }
 
   public static class MergeInfo {
-    public String groupId;
-    public String id;
-    public String status;
+    public String linkId;
+    public int count;
+
+    public MergeInfo(@NotNull String linkId, int count) {
+      this.linkId = linkId;
+      this.count = count;
+    }
   }
 }

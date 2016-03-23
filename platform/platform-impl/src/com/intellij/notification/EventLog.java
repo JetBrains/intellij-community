@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
@@ -49,9 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -93,14 +90,8 @@ public class EventLog {
     }
   }
 
-  public static void showNotification(@NotNull String groupId, @NotNull String id) {
-    Window frame = IdeFrameImpl.getActiveFrame();
-    if (frame instanceof IdeFrame) {
-      Project project = ((IdeFrame)frame).getProject();
-      if (project != null) {
-        getProjectComponent(project).showNotification(groupId, id);
-      }
-    }
+  public static void showNotification(@NotNull Project project, @NotNull String groupId, @NotNull String id) {
+    getProjectComponent(project).showNotification(groupId, id);
   }
 
   private static EventLog getApplicationComponent() {
@@ -478,7 +469,7 @@ public class EventLog {
       });
     }
 
-    void showNotification(@NotNull final String groupId, @NotNull final String id) {
+    private void showNotification(@NotNull final String groupId, @NotNull final String id) {
       ToolWindow eventLog = getEventLog(myProject);
       if (eventLog != null) {
         activate(eventLog, groupId, new Runnable() {

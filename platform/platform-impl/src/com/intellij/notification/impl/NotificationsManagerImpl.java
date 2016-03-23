@@ -50,8 +50,10 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.FontUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -68,6 +70,7 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -249,7 +252,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
           layoutDataRef.set(layoutData);
         }
         else {
-          List<BalloonLayoutData.MergeInfo> mergeData = ((BalloonLayoutImpl)layout).preMerge(notification);
+          BalloonLayoutData.MergeInfo mergeData = ((BalloonLayoutImpl)layout).preMerge(notification);
           if (mergeData != null) {
             BalloonLayoutData layoutData = new BalloonLayoutData();
             layoutData.mergeData = mergeData;
@@ -494,7 +497,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
       if (NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
         layoutData.groupId = notification.getGroupId();
         layoutData.id = notification.id;
-        layoutData.status = EventLog.formatForLog(notification, "").status;
       }
     }
     else {
@@ -502,7 +504,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     layoutDataRef.set(layoutData);
 
-    boolean actions = !notification.getActions().isEmpty() || layoutData.mergeData != null;
+    boolean actions = !notification.getActions().isEmpty();
     boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
 
     Color foregroundR = Gray._0;
@@ -732,7 +734,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (buttons == null && actions) {
-      createActionPanel(notification, layoutData.mergeData, centerPanel, layoutData.configuration.actionGap);
+      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap);
+    }
+
+    if (layoutData.mergeData != null) {
+      createMergeAction(layoutData, content);
     }
 
     text.setSize(text.getPreferredSize());
@@ -775,10 +781,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     return balloon;
   }
 
-  private static void createActionPanel(@NotNull final Notification notification,
-                                        @Nullable final List<BalloonLayoutData.MergeInfo> mergeData,
-                                        @NotNull JPanel centerPanel,
-                                        int gap) {
+  private static void createActionPanel(@NotNull final Notification notification, @NotNull JPanel centerPanel, int gap) {
     JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER));
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
@@ -815,45 +818,61 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         }, action));
     }
+  }
 
-    if (mergeData != null) {
-      final int size = mergeData.size();
-      if (size == 1) {
-        actionPanel.add(
-          HorizontalLayout.RIGHT,
-          new LinkLabel<BalloonLayoutData.MergeInfo>("History", null, new LinkListener<BalloonLayoutData.MergeInfo>() {
-            @Override
-            public void linkSelected(LinkLabel aSource, BalloonLayoutData.MergeInfo info) {
-              EventLog.showNotification(info.groupId, info.id);
-            }
-          }, mergeData.get(0)) {
-            @Override
-            protected String getStatusBarText() {
-              return getLinkData().status;
-            }
-          });
-      }
-      else {
-        actionPanel.add(
-          HorizontalLayout.RIGHT,
-          new DropDownAction("History", new LinkListener<Void>() {
-            @Override
-            public void linkSelected(LinkLabel link, Void aLinkData) {
-              DefaultActionGroup group = new DefaultActionGroup();
-              for (int i = 0; i < size; i++) {
-                BalloonLayoutData.MergeInfo info = mergeData.get(i);
-                group.add(new AnAction(String.valueOf(i + 1), info.status, null) {
-                  @Override
-                  public void actionPerformed(AnActionEvent e) {
-                    EventLog.showNotification(info.groupId, info.id);
-                  }
-                });
-              }
-              showPopup(link, group);
-            }
-          }));
-      }
+  private static void createMergeAction(@NotNull final BalloonLayoutData layoutData, @NotNull JPanel panel) {
+    StringBuilder title = new StringBuilder().append(layoutData.mergeData.count).append(" more");
+    String shortTitle = NotificationParentGroup.getShortTitle(layoutData.groupId);
+    if (shortTitle != null) {
+      title.append(" from ").append(shortTitle);
     }
+
+    LinkLabel<BalloonLayoutData> action = new LinkLabel<BalloonLayoutData>(
+      title.toString(), null,
+      new LinkListener<BalloonLayoutData>() {
+        @Override
+        public void linkSelected(LinkLabel aSource, BalloonLayoutData layoutData) {
+          EventLog.showNotification(layoutData.project, layoutData.groupId, layoutData.mergeData.linkId);
+        }
+      }, layoutData) {
+      @Override
+      protected boolean isInClickableArea(Point pt) {
+        return true;
+      }
+
+      @Override
+      protected Color getTextColor() {
+        return new JBColor(0x666666, 0x8C8C8C);
+      }
+    };
+
+    action.setFont(FontUtil.minusOne(action.getFont()));
+    action.setHorizontalAlignment(SwingConstants.CENTER);
+    action.setPaintUnderline(false);
+
+    AbstractLayoutManager layout = new AbstractLayoutManager() {
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        return new Dimension(parent.getWidth(), JBUI.scale(20) + 2);
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        parent.getComponent(0).setBounds(2, 1, parent.getWidth() - 4, JBUI.scale(20));
+      }
+    };
+    JPanel mergePanel = new NonOpaquePanel(layout) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.setColor(new JBColor(0xE3E3E3, 0x3A3C3D));
+        ((Graphics2D)g).fill(new Rectangle2D.Double(1.5, 1, getWidth() - 2.5, getHeight() - 2));
+        g.setColor(new JBColor(0xDBDBDB, 0x353738));
+        ((Graphics2D)g).draw(new Rectangle2D.Double(2, 0, getWidth() - 3.5, 0.5));
+      }
+    };
+    mergePanel.add(action);
+    panel.add(BorderLayout.SOUTH, mergePanel);
   }
 
   public static int calculateContentHeight(int lines) {

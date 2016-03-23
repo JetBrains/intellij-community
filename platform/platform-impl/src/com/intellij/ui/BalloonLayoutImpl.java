@@ -109,6 +109,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
     Balloon merge = merge(layoutData);
     if (merge == null) {
       if (NotificationsManagerImpl.newEnabled() &&
+          getVisibleCount() > 0 &&
           layoutData instanceof BalloonLayoutData &&
           ((BalloonLayoutData)layoutData).groupId != null) {
         int index = -1;
@@ -123,7 +124,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
           }
         }
 
-        if (count == getVisibleCount()) {
+        if (count > 0 && count == getVisibleCount()) {
           remove(myBalloons.get(index));
         }
       }
@@ -186,17 +187,12 @@ public class BalloonLayoutImpl implements BalloonLayout {
   }
 
   @Nullable
-  public List<BalloonLayoutData.MergeInfo> preMerge(@NotNull Notification notification) {
+  public BalloonLayoutData.MergeInfo preMerge(@NotNull Notification notification) {
     Balloon balloon = merge(notification.getGroupId());
     if (balloon != null) {
       BalloonLayoutData layoutData = myLayoutData.get(balloon);
       if (layoutData != null) {
-        List<BalloonLayoutData.MergeInfo> mergeData = new ArrayList<>();
-        if (layoutData.mergeData != null) {
-          mergeData.addAll(layoutData.mergeData);
-        }
-        mergeData.add(layoutData.getMergeInfo());
-        return mergeData;
+        return layoutData.merge();
       }
     }
     return null;
@@ -218,9 +214,8 @@ public class BalloonLayoutImpl implements BalloonLayout {
     myBalloons.remove(balloon);
     BalloonLayoutData layoutData = myLayoutData.remove(balloon);
     if (layoutData != null) {
-      layoutData.id = null;
       layoutData.groupId = null;
-      layoutData.status = null;
+      layoutData.id = null;
       layoutData.mergeData = null;
     }
     if (hide) {

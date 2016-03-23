@@ -188,7 +188,7 @@ public class LinkLabel<T> extends JLabel {
   private final JBRectangle textR = new JBRectangle();
   private final JBRectangle viewR = new JBRectangle();
 
-  private boolean isInClickableArea(Point pt) {
+  protected boolean isInClickableArea(Point pt) {
     iconR.clear();
     textR.clear();
     final Insets insets = getInsets(null);
