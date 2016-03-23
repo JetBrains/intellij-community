@@ -98,6 +98,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
+import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -7112,6 +7113,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private MyScrollPane() {
       super(0);
       setupCorners();
+    }
+
+    @Override
+    public void setUI(ScrollPaneUI ui) {
+      super.setUI(ui);
+      // disable standard Swing keybindings
+      setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
     }
 
     @Override
