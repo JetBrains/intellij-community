@@ -110,6 +110,9 @@ class CompletionCancelledEvent(userId: String, sessionId: String) : LogEvent(use
     
 }
 
+/**
+ * selectedId here, because position is 0 here
+ */
 class TypedSelectEvent(userId: String, sessionId: String, var selectedId: Int) : LogEvent(userId, sessionId, Action.TYPED_SELECT) {
     
     override fun accept(visitor: LogEventVisitor) {
