@@ -131,7 +131,6 @@ class CompletionFileLogger(private val installationUID: String,
     override fun itemSelectedByTyping(lookup: LookupImpl) {
         val item = lookup.currentItem!!
         val id = getElementId(item)!!
-        //todo think about id/index ?
         val event = TypedSelectEvent(installationUID, completionUID, id)
         logEvent(event)
     }
