@@ -83,16 +83,13 @@ object UpdateChecker {
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
   private val ourShownNotificationTypes = Collections.synchronizedSet(EnumSet.noneOf(NotificationUniqueType::class.java))
 
-  private val UPDATE_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl }
-  private val PATCHES_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl }
-
   val excludedFromUpdateCheckPlugins = hashSetOf<String>()
 
   private val updateUrl: String
-    get() = System.getProperty("idea.updates.url") ?: UPDATE_URL
+    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl
 
   private val patchesUrl: String
-    get() = System.getProperty("idea.patches.url") ?: PATCHES_URL
+    get() = System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl
 
   @JvmStatic
   private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
@@ -562,7 +559,10 @@ object UpdateChecker {
 
     val fileName = "$productCode-$fromBuildNumber-$toBuildNumber-patch$bundledJdk$osSuffix.jar"
 
-    val url = URL(URL(patchesUrl), fileName).toString()
+    var baseUrl = patchesUrl
+    if (!baseUrl.endsWith('/')) baseUrl += '/'
+
+    val url = URL(URL(baseUrl), fileName).toString()
     val tempFile = HttpRequests.request(url)
         .gzip(false)
         .forceHttps(forceHttps)
