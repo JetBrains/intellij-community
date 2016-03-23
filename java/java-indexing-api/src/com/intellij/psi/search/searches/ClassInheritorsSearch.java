@@ -25,6 +25,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.AbstractQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -106,6 +107,10 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   @NotNull
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
+    if (!parameters.isCheckDeep()) {
+      return AbstractQuery.wrapInReadAction(DirectClassInheritorsSearch.search(parameters.getClassToProcess(), parameters.getScope(), parameters.isIncludeAnonymous(),
+                                                parameters.isCheckInheritance()));
+    }
     return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
                                              psiClass -> ApplicationManager.getApplication().runReadAction((Computable<SmartPsiElementPointer<PsiClass>>)() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
