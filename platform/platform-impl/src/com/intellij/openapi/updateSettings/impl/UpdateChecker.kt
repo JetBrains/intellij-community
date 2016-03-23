@@ -45,6 +45,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.HttpRequests
@@ -59,7 +60,6 @@ import java.io.File
 import java.io.IOException
 import java.net.URISyntaxException
 import java.net.URL
-import java.nio.charset.Charset
 import java.util.*
 
 /**
@@ -91,9 +91,6 @@ object UpdateChecker {
   private val patchesUrl: String
     get() = System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl
 
-  @JvmStatic
-  private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
-  
   /**
    * For scheduled update checks.
    */
@@ -492,42 +489,26 @@ object UpdateChecker {
     val appdata = System.getenv("APPDATA")
     if (appdata != null) {
       val jetBrainsDir = File(appdata, "JetBrains")
-      if (jetBrainsDir.exists() || jetBrainsDir.mkdirs()) {
+      if (jetBrainsDir.isDirectory || jetBrainsDir.mkdirs()) {
         val permanentIdFile = File(jetBrainsDir, "PermanentUserId")
         try {
           if (permanentIdFile.exists()) {
-            val bytes = FileUtil.loadFileBytes(permanentIdFile);
-            val offset = skipUtf8BOM(bytes)
-            return String(bytes, offset, bytes.size - offset, Charset.forName("utf-8"))
+            val bytes = permanentIdFile.readBytes()
+            val offset = if (CharsetToolkit.hasUTF8Bom(bytes)) CharsetToolkit.UTF8_BOM.size else 0
+            return String(bytes, offset, bytes.size - offset, Charsets.UTF_8)
           }
 
-          var uuid = propertiesComponent.getValue(INSTALLATION_UID)
-          if (uuid == null) {
-            uuid = generateUUID()
-          }
-          FileUtil.writeToFile(permanentIdFile, uuid)
+          val uuid = propertiesComponent.getValue(INSTALLATION_UID) ?: generateUUID()
+          permanentIdFile.writeText(uuid, Charsets.UTF_8)
           return uuid
         }
-        catch (ignored: IOException) {
+        catch (e: IOException) {
+          LOG.debug(e)
         }
-
       }
     }
 
     return null
-  }
-  
-  @JvmStatic
-  private fun skipUtf8BOM(bytes: ByteArray): Int {
-    if (bytes.size < UTF8_BOM.size) {
-      return 0
-    }
-    for (idx in UTF8_BOM.indices) {
-      if (bytes[idx] != UTF8_BOM[idx]) {
-        return 0
-      }
-    }
-    return UTF8_BOM.size
   }
 
   private fun generateUUID(): String =
