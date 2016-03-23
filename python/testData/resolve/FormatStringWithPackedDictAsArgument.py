@@ -1,1 +1,1 @@
-v = "first is" <ref>"{fst}, second is {snd}".format(**{"fst": "f", "snd": "s"})
+v = "first is {<ref>fst}, second is {snd}".format(**{"fst": "f", "snd": "s"})

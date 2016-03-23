@@ -1,1 +1,1 @@
-v = "first is {}, second is"<ref>"{}".format(("fst", ) + ("snd", ))
+v = "first is {}, second is {<ref>}".format(("fst", ) + ("snd", ))
