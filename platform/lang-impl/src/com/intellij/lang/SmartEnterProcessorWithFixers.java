@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -46,6 +47,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
   protected static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
   protected int myFirstErrorOffset = Integer.MAX_VALUE;
+  protected int myAttempt = 0;
 
   private final List<Fixer<? extends SmartEnterProcessorWithFixers>> myFixers = new ArrayList<Fixer<? extends SmartEnterProcessorWithFixers>>();
   protected final List<FixEnterProcessor> myEnterProcessors = new ArrayList<FixEnterProcessor>();
@@ -108,6 +110,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     boolean afterCompletion) throws TooManyAttemptsException {
 
     if (attempt > MAX_ATTEMPTS) throw new TooManyAttemptsException();
+    myAttempt = attempt;
 
     try {
       commit(editor);
@@ -174,14 +177,21 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
       return;
     }
 
+    final RangeMarker rangeMarker = createRangeMarker(atCaret);
     if (reformatBeforeEnter(atCaret)) {
       reformat(atCaret);
     }
     commit(editor);
 
-    for (FixEnterProcessor enterProcessor : myEnterProcessors) {
-      if (enterProcessor.doEnter(atCaret, psiFile, editor, isModified(editor))) {
-        return;
+    PsiElement actualAtCaret = atCaret.isValid()
+      ? atCaret
+      : restoreInvalidElementFromRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
+
+    if (actualAtCaret != null) {
+      for (FixEnterProcessor enterProcessor : myEnterProcessors) {
+        if (enterProcessor.doEnter(actualAtCaret, psiFile, editor, isModified(editor))) {
+          return;
+        }
       }
     }
 
@@ -190,9 +200,19 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     }
     else {
       editor.getCaretModel().moveToOffset(myFirstErrorOffset == Integer.MAX_VALUE
-                                          ? atCaret.getTextRange().getEndOffset()
+                                          ? (actualAtCaret != null
+                                             ? actualAtCaret.getTextRange().getEndOffset()
+                                             : rangeMarker.getEndOffset())
                                           : myFirstErrorOffset);
     }
+  }
+
+  protected PsiElement restoreInvalidElementFromRange(@NotNull PsiFile file,
+                                                      int startOffset,
+                                                      int endOffset,
+                                                      @NotNull Class<? extends PsiElement> klass) {
+    LOG.warn("Please, override com.intellij.lang.SmartEnterProcessorWithFixers.restoreInvalidElementFromRange for your language!");
+    return null;
   }
 
   protected boolean reformatBeforeEnter(@NotNull PsiElement atCaret) {return true;}
