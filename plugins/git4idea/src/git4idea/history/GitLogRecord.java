@@ -102,7 +102,7 @@ class GitLogRecord {
   }
 
   String getAuthorName() {
-    return lookup(AUTHOR_NAME);
+    return decode(lookup(AUTHOR_NAME));
   }
 
   String getAuthorEmail() {
@@ -110,7 +110,7 @@ class GitLogRecord {
   }
 
   String getCommitterName() {
-    return lookup(COMMITTER_NAME);
+    return decode(lookup(COMMITTER_NAME));
   }
 
   String getCommitterEmail() {
@@ -167,7 +167,7 @@ class GitLogRecord {
   @NotNull
   String decode(@NotNull String input) {
     String encoding = getEncoding();
-    if (encoding.isEmpty() || UTF_8.equals(encoding)) {
+    if (encoding.isEmpty() || UTF_8.equalsIgnoreCase(encoding)) {
       return input;
     }
     try {

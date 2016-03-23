@@ -516,7 +516,7 @@ public class GitHistoryUtils {
     final int COMMIT_BUFFER = 1000;
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
-                                                 AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
+                                                 AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES, ENCODING);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters("--decorate=full");
