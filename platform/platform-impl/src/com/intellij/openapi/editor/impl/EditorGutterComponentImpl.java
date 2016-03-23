@@ -960,7 +960,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     final int leftSize = x - getIconAreaOffset();
 
-    x = getIconAreaOffset() + myIconsAreaWidth - 2; // because of 2px LineMarkerRenderers
+    x = getIconAreaOffset() + myIconsAreaWidth;
     for (GutterMark r : row) {
       if (!checkDumbAware(r)) continue;
       if (((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.RIGHT) {
