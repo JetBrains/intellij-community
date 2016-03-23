@@ -45,6 +45,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -486,6 +487,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         @Override
         public void run() {
           myOriginalFocusOwner = myFocusManager.getFocusOwner();
+
+          // Set the accessible parent so that screen readers don't announce
+          // a window context change -- the tooltip is "logically" hosted
+          // inside the component (e.g. editor) it appears on top of.
+          AccessibleContextUtil.setParent(myContent, myOriginalFocusOwner);
 
           // Set the focus to "myContent"
           myFocusManager.requestFocus(getContentToFocus(), true);
