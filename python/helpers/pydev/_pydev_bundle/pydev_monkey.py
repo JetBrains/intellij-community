@@ -19,7 +19,7 @@ def log_error_once(msg):
     from _pydev_bundle import pydev_log
     pydev_log.error_once(msg)
 
-pydev_src_dir = os.path.dirname(__file__)
+pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
 
 def _get_python_c_args(host, port, indC, args):
     return ("import sys; sys.path.append(r'%s'); import pydevd; "
