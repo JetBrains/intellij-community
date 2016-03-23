@@ -387,15 +387,9 @@
     <action id="ChooseDebugConfiguration">
       <keyboard-shortcut first-keystroke="control alt D"/>
     </action>
-    <!-- In Android Studio, used for Activity restart instead
     <action id="RunClass">
       <keyboard-shortcut first-keystroke="control shift R"/>
     </action>
-    -->
-    <action id="Android.RestartActivity">
-      <keyboard-shortcut first-keystroke="control shift R"/>
-    </action>
-
     <action id="DebugClass">
       <keyboard-shortcut first-keystroke="control shift D"/>
     </action>

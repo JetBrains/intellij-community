@@ -291,15 +291,9 @@
       <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
     </action>
 
-    <!-- In Android Studio, used for Activity restart instead
     <action id="ReplaceInPath">
       <keyboard-shortcut first-keystroke="control shift R"/>
     </action>
-    -->
-    <action id="Android.RestartActivity">
-      <keyboard-shortcut first-keystroke="control shift R"/>
-    </action>
-
     <action id="FindInPath">
       <keyboard-shortcut first-keystroke="control shift F"/>
     </action>
