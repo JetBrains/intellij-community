@@ -407,7 +407,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void resume() {
+  public void resume(@Nullable XSuspendContext context) {
     passToAllThreads(ResumeOrStepCommand.Mode.RESUME);
   }
 
