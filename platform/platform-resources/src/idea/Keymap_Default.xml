@@ -822,16 +822,9 @@
   <action id="SmartTypeCompletion">
     <keyboard-shortcut first-keystroke="control shift SPACE"/>
   </action>
-
-  <!-- In Android Studio, used for Activity restart instead
   <action id="ReplaceInPath">
     <keyboard-shortcut first-keystroke="control shift R"/>
   </action>
-  -->
-  <action id="Android.RestartActivity">
-    <keyboard-shortcut first-keystroke="control shift R"/>
-  </action>
-
   <action id="SurroundWith">
     <keyboard-shortcut first-keystroke="control alt T"/>
   </action>
