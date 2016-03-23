@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 06-Apr-2007
- */
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
