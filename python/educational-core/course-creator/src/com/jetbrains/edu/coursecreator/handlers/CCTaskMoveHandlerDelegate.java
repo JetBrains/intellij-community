@@ -1,4 +1,4 @@
-package com.jetbrains.edu.coursecreator;
+package com.jetbrains.edu.coursecreator.handlers;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -18,13 +18,15 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.util.Function;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.ui.CCMoveStudyItemDialog;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.coursecreator.ui.CCMoveStudyItemDialog;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -59,9 +61,9 @@ public class CCTaskMoveHandlerDelegate extends MoveHandlerDelegate {
     if (sourceDirectory == null) {
       return false;
     }
-    CCProjectService service = CCProjectService.getInstance(sourceDirectory.getProject());
-    Course course = service.getCourse();
-    if (course == null) {
+    Project project = sourceDirectory.getProject();
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null || !CCUtils.isCourseCreator(project)) {
       return false;
     }
     return EduUtils.getTask(sourceDirectory, course) != null;
@@ -86,7 +88,7 @@ public class CCTaskMoveHandlerDelegate extends MoveHandlerDelegate {
       Messages.showInfoMessage("Tasks can be moved only to other lessons or inside lesson", "Incorrect Target For Move");
       return;
     }
-    final Course course = CCProjectService.getInstance(project).getCourse();
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
     final PsiDirectory sourceDirectory = (PsiDirectory)elements[0];
 
     final Task taskToMove = EduUtils.getTask(sourceDirectory, course);

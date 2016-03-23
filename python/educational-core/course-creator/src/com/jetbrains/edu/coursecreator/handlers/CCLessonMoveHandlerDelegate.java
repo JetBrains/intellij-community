@@ -1,4 +1,4 @@
-package com.jetbrains.edu.coursecreator;
+package com.jetbrains.edu.coursecreator.handlers;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -18,12 +18,14 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.util.Function;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.ui.CCMoveStudyItemDialog;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
-import com.jetbrains.edu.coursecreator.ui.CCMoveStudyItemDialog;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -67,7 +69,10 @@ public class CCLessonMoveHandlerDelegate extends MoveHandlerDelegate {
     if (targetContainer == null || !(targetContainer instanceof PsiDirectory)) {
       return;
     }
-    final Course course = CCProjectService.getInstance(project).getCourse();
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
     final PsiDirectory sourceDirectory = (PsiDirectory)elements[0];
     final Lesson sourceLesson = course.getLesson(sourceDirectory.getName());
     final Lesson targetLesson = course.getLesson(((PsiDirectory)targetContainer).getName());

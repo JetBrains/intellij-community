@@ -1,4 +1,4 @@
-package com.jetbrains.edu.coursecreator;
+package com.jetbrains.edu.coursecreator.handlers;
 
 import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.project.Project;
