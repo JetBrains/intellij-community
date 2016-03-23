@@ -271,6 +271,7 @@ public class ImplementationViewComponent extends JPanel {
     update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
       @Override
       public Boolean fun(PsiElement[] psiElements, List<FileDescriptor> fileDescriptors) {
+        if (myEditor.isDisposed()) return false;
         if (psiElements.length == 0) return false;
 
         final Project project = psiElements[0].getProject();
