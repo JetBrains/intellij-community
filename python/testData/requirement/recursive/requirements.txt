@@ -1,2 +1,3 @@
 -r requirements.a.txt
 -rrequirements.b.txt
+--requirement requirements.c.txt
