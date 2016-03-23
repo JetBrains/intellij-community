@@ -130,7 +130,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
         @Override
         public void applyDefaults(@NotNull List<? extends Editor> editors) {
           for (Editor editor : editors) {
-            if (editor != null && editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS) != null) myForcedSoftWrap = true;
+            if (editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS) != null) myForcedSoftWrap = true;
           }
           super.applyDefaults(editors);
         }
@@ -169,7 +169,6 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     public void setSelected(AnActionEvent e, boolean state) {
       setSelected(state);
       for (Editor editor : myEditors) {
-        if (editor == null) continue;
         apply(editor, state);
       }
     }
@@ -182,7 +181,6 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     public void applyDefaults(@NotNull List<? extends Editor> editors) {
       for (Editor editor : editors) {
-        if (editor == null) continue;
         apply(editor, isSelected());
       }
     }
@@ -214,7 +212,6 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     private void apply(@NotNull HighlightingLevel layer) {
       for (Editor editor : myEditors) {
-        if (editor == null) continue;
         ((EditorImpl)editor).setHighlightingFilter(layer.getCondition());
       }
     }
