@@ -288,12 +288,27 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myMainText = null;
       }
       else {
-        String header = commit.getId().toShortString() + " " + getAuthorText(commit) +
-                        (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : "");
+        String header = getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit) +
+                                         (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : ""));
         String body = getMessageText(commit);
         myMainText = header + "<br/>" + body;
       }
       update();
+    }
+
+    @NotNull
+    private static String getHtmlWithFonts(@NotNull String input) {
+      return getHtmlWithFonts(input, getBaseFont().getStyle());
+    }
+
+    @NotNull
+    private static String getHtmlWithFonts(@NotNull String input, int style) {
+      return FontUtil.getHtmlWithFonts(input, style, getBaseFont());
+    }
+
+    @NotNull
+    private static Font getBaseFont() {
+      return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
     }
 
     void setBranches(@Nullable List<String> branches) {
@@ -313,7 +328,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       else {
         setText("<html><head>" +
-                UIUtil.getCssFontDeclaration(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN)) +
+                UIUtil.getCssFontDeclaration(getBaseFont()) +
                 "</head><body>" +
                 myMainText +
                 "<br/>" +
@@ -413,8 +428,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       int separator = fullMessage.indexOf("\n\n");
       String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
       String description = fullMessage.substring(subject.length());
-      return "<b>" + escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)) + "</b>" +
-             escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description));
+      return "<b>" + getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)), Font.BOLD) + "</b>" +
+             getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description)));
     }
 
     @NotNull
