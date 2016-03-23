@@ -40,6 +40,7 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * One record (commit information) returned by git log output.
  * The access methods try heavily to return some default value if real is unavailable, for example, blank string is better than null.
  * BUT if one tries to get an option which was not specified to the GitLogParser, one will get null.
+ *
  * @see git4idea.history.GitLogParser
  */
 class GitLogRecord {
@@ -54,7 +55,10 @@ class GitLogRecord {
 
   private GitHandler myHandler;
 
-  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options, @NotNull List<String> paths, @NotNull List<GitLogStatusInfo> statusInfo, boolean supportsRawBody) {
+  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
+               @NotNull List<String> paths,
+               @NotNull List<GitLogStatusInfo> statusInfo,
+               boolean supportsRawBody) {
     myOptions = options;
     myPaths = paths;
     myStatusInfo = statusInfo;
@@ -93,16 +97,45 @@ class GitLogRecord {
   }
 
   // trivial access methods
-  String getHash() { return lookup(HASH); }
-  String getAuthorName() { return lookup(AUTHOR_NAME); }
-  String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
-  String getCommitterName() { return lookup(COMMITTER_NAME); }
-  String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
-  String getSubject() { return decode(lookup(SUBJECT)); }
-  String getBody() { return decode(lookup(BODY)); }
-  String getRawBody() { return decode(lookup(RAW_BODY)); }
-  String getEncoding() { return lookup(ENCODING); }
-  String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
+  String getHash() {
+    return lookup(HASH);
+  }
+
+  String getAuthorName() {
+    return lookup(AUTHOR_NAME);
+  }
+
+  String getAuthorEmail() {
+    return lookup(AUTHOR_EMAIL);
+  }
+
+  String getCommitterName() {
+    return lookup(COMMITTER_NAME);
+  }
+
+  String getCommitterEmail() {
+    return lookup(COMMITTER_EMAIL);
+  }
+
+  String getSubject() {
+    return decode(lookup(SUBJECT));
+  }
+
+  String getBody() {
+    return decode(lookup(BODY));
+  }
+
+  String getRawBody() {
+    return decode(lookup(RAW_BODY));
+  }
+
+  String getEncoding() {
+    return lookup(ENCODING);
+  }
+
+  String getShortenedRefLog() {
+    return lookup(SHORT_REF_LOG_SELECTOR);
+  }
 
   // access methods with some formatting or conversion
 
@@ -165,11 +198,13 @@ class GitLogRecord {
     final String decorate = myOptions.get(REF_NAMES);
     return parseRefNames(decorate);
   }
+
   /**
    * Returns the list of tags and the list of branches.
    * A single method is used to return both, because they are returned together by Git and we don't want to parse them twice.
-   * @return
+   *
    * @param allBranchesSet
+   * @return
    */
   /*Pair<List<String>, List<String>> getTagsAndBranches(SymbolicRefs refs) {
     final String decorate = myOptions.get(REF_NAMES);
@@ -190,7 +225,6 @@ class GitLogRecord {
     }
     return Pair.create(tags, branches);
   }*/
-
   @NotNull
   private static List<String> parseRefNames(@Nullable final String decoration) {
     if (decoration == null) {
