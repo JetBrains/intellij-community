@@ -146,8 +146,7 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
 
     override fun visit(event: TypedSelectEvent) {
         val id = event.selectedId
-        
-        isValid = allCompletionItems.find { it.id == id } != null && completionList.find { it == id } != null
+        isValid = completionList.size == 1 && completionList[0] == id
         isFinished = true
     }
     
