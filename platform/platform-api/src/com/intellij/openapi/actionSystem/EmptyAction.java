@@ -73,11 +73,22 @@ public final class EmptyAction extends AnAction {
     }
   }
 
+  /**
+   * Registers global action on a component with a custom shortcut set.
+   * <p>
+   * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) shouldn't be used directly,
+   * because it will erase shortcuts, assigned to this action in keymap.
+   */
   public static void registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
     AnAction newAction = wrap(ActionManager.getInstance().getAction(id));
     newAction.registerCustomShortcutSet(shortcutSet, component);
   }
 
+  /**
+   * Creates proxy action
+   * <p>
+   * It allows to alter template presentation and shortcut set without affecting original action,
+   */
   public static AnAction wrap(final AnAction action) {
     return action instanceof ActionGroup ?
            new MyDelegatingActionGroup(((ActionGroup)action)) :
