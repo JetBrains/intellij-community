@@ -21,25 +21,10 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+public interface CustomScopesFilter {
+  ExtensionPointName<CustomScopesFilter> EP_NAME = ExtensionPointName.create("com.intellij.customScopesFilter");
 
-public interface CustomScopesProvider {
-  ExtensionPointName<CustomScopesProvider> CUSTOM_SCOPES_PROVIDER = ExtensionPointName.create("com.intellij.customScopesProvider");
-
-  @NotNull
-  List<NamedScope> getCustomScopes();
-
-  @NotNull
-  default List<NamedScope> getFilteredScopes() {
-    CustomScopesFilter[] filters = CustomScopesFilter.EP_NAME.getExtensions();
-    return ContainerUtil.filter(getCustomScopes(), scope -> {
-      for (CustomScopesFilter filter : filters) {
-        if (filter.excludeScope(scope)) return false;
-      }
-      return true;
-    });
-  }
+  boolean excludeScope(@Nullable NamedScope scope);
 }
