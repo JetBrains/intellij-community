@@ -1417,7 +1417,7 @@ public class SoftWrapApplianceManager implements Dumpable {
      * @return    <code>true</code> if given <code>'x'</code> coordinate exceeds visual area's right edge; <code>false</code> otherwise
      */
     public boolean exceedsVisualEdge(int x) {
-      return x >= myVisibleAreaWidth;
+      return x > myVisibleAreaWidth || x == myVisibleAreaWidth && !myEditor.myUseNewRendering;
     }
   }
 
