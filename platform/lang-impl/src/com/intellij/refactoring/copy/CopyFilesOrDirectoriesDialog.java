@@ -26,6 +26,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -91,7 +93,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   private PsiDirectory myTargetDirectory;
   private boolean myFileCopy = false;
 
-  public CopyFilesOrDirectoriesDialog(PsiElement[] elements, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
+  public CopyFilesOrDirectoriesDialog(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
     myElements = elements;
     myProject = project;
@@ -122,6 +124,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
           myNewNameField.select(0, dotIdx);
           myNewNameField.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
         }
+        myTargetDirectory = file.getContainingDirectory();
         myFileCopy = true;
       }
       else {
@@ -263,6 +266,10 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
 
       if (myFileCopy && !PathUtilRt.isValidFileName(newName, false)) {
         Messages.showErrorDialog(myNewNameField, "Name is not a valid file name");
+        return;
+      }
+
+      if (myFileCopy && FileTypeChooser.getKnownFileTypeOrAssociate(myTargetDirectory.getVirtualFile(), newName, myProject) == null) {
         return;
       }
     }
