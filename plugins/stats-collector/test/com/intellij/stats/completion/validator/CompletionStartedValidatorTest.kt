@@ -25,7 +25,7 @@ object LogEventFixtures {
     val down_event_new_pos_1 = DownPressedEvent("1", sessionId, emptyList(), emptyList(), 1)
     val down_event_new_pos_2 = DownPressedEvent("1", sessionId, emptyList(), emptyList(), 2)
 
-    val backspace_event_pos_0_left_1_2_3 = BackspaceEvent("1", sessionId, listOf(1, 2, 3), emptyList(), 0)
+    val backspace_event_pos_0_left_0_1_2 = BackspaceEvent("1", sessionId, listOf(0, 1, 2), emptyList(), 0)
     val backspace_event_pos_0_left_1 = BackspaceEvent("1", sessionId, listOf(1), emptyList(), 0)
 
     val explicit_select_position_0 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 0)
@@ -89,7 +89,7 @@ class TypeBackspaceValidatorTest {
     @Test
     fun `type completion list only narrows on typing`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
+        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_1_2)
         assertThat(state.isValid).isEqualTo(false)
     }
 
@@ -97,7 +97,7 @@ class TypeBackspaceValidatorTest {
     fun `can select by typing item presented in completion list`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.type_event_current_pos_0_left_id_0)
-        state.accept(LogEventFixtures.selected_by_typing_0)
+        state.accept(LogEventFixtures.selected_by_typing_1)
         assertThat(state.isValid).isEqualTo(false)
     }
 
@@ -105,14 +105,14 @@ class TypeBackspaceValidatorTest {
     fun `selected by typing`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.type_event_current_pos_0_left_id_0)
-        state.accept(LogEventFixtures.selected_by_typing_1)
+        state.accept(LogEventFixtures.selected_by_typing_0)
         assertThat(state.isValid).isEqualTo(true)
     }
 
     @Test
     fun `type and backspace`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
-        state.accept(LogEventFixtures.backspace_event_pos_0_left_1_2_3)
+        state.accept(LogEventFixtures.backspace_event_pos_0_left_0_1_2)
         assertThat(state.isValid).isEqualTo(true)
     }
     
