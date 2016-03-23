@@ -19,18 +19,18 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class SynchronizedMethodInspectionTest extends LightInspectionTestCase {
+/**
+ * @author Bas Leijdekkers
+ */
+public class SynchronizationOnGetClassInspectionTest extends LightInspectionTestCase {
 
-  public void testSynchronizedMethod() throws Exception {
-    doTest();
+  public void testSimple() {
+    doStatementTest("synchronized(/*Synchronization on 'getClass()'*/getClass/**/()) {}");
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    final SynchronizedMethodInspection inspection = new SynchronizedMethodInspection();
-    inspection.m_includeNativeMethods = false;
-    inspection.ignoreSynchronizedSuperMethods = true;
-    return inspection;
+    return new SynchronizationOnGetClassInspection();
   }
 }

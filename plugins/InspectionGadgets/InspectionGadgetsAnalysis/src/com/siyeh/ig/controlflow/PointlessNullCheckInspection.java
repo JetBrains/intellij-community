@@ -54,7 +54,9 @@ public class PointlessNullCheckInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("pointless.nullcheck.problem.descriptor");
+    final Boolean before = (Boolean)infos[1];
+    return InspectionGadgetsBundle.message(
+      before.booleanValue() ? "pointless.nullcheck.problem.descriptor" : "pointless.nullcheck.after.problem.descriptor");
   }
 
   @Override
@@ -91,21 +93,41 @@ public class PointlessNullCheckInspection extends BaseInspection {
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PsiBinaryExpression.class);
-      if (binaryExpression == null) {
+      final PsiPolyadicExpression polyadicExpression = PsiTreeUtil.getParentOfType(element, PsiPolyadicExpression.class);
+      if (polyadicExpression == null) {
         return;
       }
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (rhs == null) {
+      final StringBuilder replacement = new StringBuilder();
+      PsiElement anchor = polyadicExpression.getFirstChild();
+      if (!(anchor instanceof PsiExpression)) {
         return;
       }
-      if (PsiTreeUtil.isAncestor(rhs, element, false)) {
-        PsiReplacementUtil.replaceExpression(binaryExpression, lhs.getText());
+      PsiExpression expression = (PsiExpression)anchor;
+      boolean hasText = false;
+      while (expression != null) {
+        if (PsiTreeUtil.isAncestor(expression, element, false)) {
+          while (anchor != expression) {
+            if (hasText && anchor instanceof PsiComment) {
+              replacement.append(anchor.getText());
+            }
+            anchor = anchor.getNextSibling();
+          }
+          anchor = expression.getNextSibling();
+        }
+        else {
+          while (anchor != expression) {
+            if (hasText) {
+              replacement.append(anchor.getText());
+            }
+            anchor = anchor.getNextSibling();
+          }
+          replacement.append(expression.getText());
+          hasText = true;
+          anchor = expression.getNextSibling();
+        }
+        expression = PsiTreeUtil.getNextSiblingOfType(anchor, PsiExpression.class);
       }
-      else if (PsiTreeUtil.isAncestor(lhs, element, false)) {
-        PsiReplacementUtil.replaceExpression(binaryExpression, rhs.getText());
-      }
+      PsiReplacementUtil.replaceExpression(polyadicExpression, replacement.toString());
     }
   }
 
@@ -169,7 +191,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (variable == null || checkRef && isVariableUsed(operands, i, j, variable)) {
         return false;
       }
-      registerError(binaryExpression, binaryExpression);
+      registerError(binaryExpression, binaryExpression, Boolean.valueOf(checkRef));
       return true;
     }
 
@@ -200,7 +222,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (variable == null || checkRef && isVariableUsed(operands, i, j, variable)) {
         return false;
       }
-      registerError(binaryExpression, binaryExpression);
+      registerError(binaryExpression, binaryExpression, Boolean.valueOf(checkRef));
       return true;
     }
 
