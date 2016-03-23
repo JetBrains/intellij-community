@@ -63,14 +63,8 @@ public final class EmptyAction extends AnAction {
 
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
     final AnAction emptyAction = ActionManager.getInstance().getAction(id);
-    final Presentation copyFrom = emptyAction.getTemplatePresentation();
-    final Presentation copyTo = action.getTemplatePresentation();
-    if (copyTo.getIcon() == null) {
-      copyTo.setIcon(copyFrom.getIcon());
-    }
-    copyTo.setText(copyFrom.getText());
-    copyTo.setDescription(copyFrom.getDescription());
-    action.registerCustomShortcutSet(emptyAction.getShortcutSet(), component);
+    action.copyFrom(emptyAction);
+    action.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
   public static void registerActionShortcuts(JComponent component, final JComponent fromComponent) {
