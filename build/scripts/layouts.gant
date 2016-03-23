@@ -799,6 +799,7 @@ def reorder(String home, String targetDirectory) {
 def layoutAndroid(String androidHome, String androidToolsBaseHome) {
   dir("plugins") {
     layoutPlugin("android") {
+      fileset(file: "${home}/../../prebuilts/studio/layoutlib/data/layoutlib.jar")
       fileset(dir: "${androidHome}/android/lib") {
         include(name: "**/*.jar")
         include(name: "licenses/*")
@@ -867,6 +868,13 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       }
       dir("templates") {
         fileset(dir: "$androidToolsBaseHome/templates")
+      }
+
+      dir("layoutlib") {
+        fileset(dir: "${home}/../../prebuilts/studio/layoutlib") {
+          exclude(name: "PREBUILT")
+          exclude(name: "**/layoutlib.jar")
+        }
       }
     }
   }
