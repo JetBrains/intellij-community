@@ -563,9 +563,23 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         Tunnelable tunnelableProcess = (Tunnelable)remoteProcess;
         tunnelableProcess.addLocalTunnel(myPorts[0], remotePorts.first);
         tunnelableProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("Using tunneled communication for Python console: port %d (=> %d) on IDE side, " +
+                                  "port %d (=> %d) on PyDev side", myPorts[1], remotePorts.second, myPorts[0], remotePorts.first));
+        }
+
+        myPydevConsoleCommunication = new PydevRemoteConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
+      }
+      else {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("Using direct communication for Python console: port %d on IDE side, port %d on PyDev side",
+                                  remotePorts.second, remotePorts.first));
+        }
+
+        myPydevConsoleCommunication = new PydevRemoteConsoleCommunication(getProject(), remotePorts.first, remoteProcess, remotePorts.second);
       }
 
-      myPydevConsoleCommunication = new PydevRemoteConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
       return remoteProcess;
     }
     catch (Exception e) {
