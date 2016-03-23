@@ -31,6 +31,7 @@ import git4idea.commands.GitHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -44,6 +45,7 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
 class GitLogRecord {
 
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
+  private static final String UTF_8 = "UTF-8";
 
   private final Map<GitLogParser.GitLogOption, String> myOptions;
   private final List<String> myPaths;
@@ -80,8 +82,14 @@ class GitLogRecord {
     return res;
   }
 
-  private String lookup(GitLogParser.GitLogOption key) {
-    return shortBuffer(myOptions.get(key));
+  @NotNull
+  private String lookup(@NotNull GitLogParser.GitLogOption key) {
+    String value = myOptions.get(key);
+    if (value == null) {
+      LOG.error("Missing value for option " + key);
+      return "";
+    }
+    return shortBuffer(value);
   }
 
   // trivial access methods
@@ -90,9 +98,10 @@ class GitLogRecord {
   String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
   String getCommitterName() { return lookup(COMMITTER_NAME); }
   String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
-  String getSubject() { return lookup(SUBJECT); }
-  String getBody() { return lookup(BODY); }
-  String getRawBody() { return lookup(RAW_BODY); }
+  String getSubject() { return decode(lookup(SUBJECT)); }
+  String getBody() { return decode(lookup(BODY)); }
+  String getRawBody() { return decode(lookup(RAW_BODY)); }
+  String getEncoding() { return lookup(ENCODING); }
   String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
 
   // access methods with some formatting or conversion
@@ -122,8 +131,28 @@ class GitLogRecord {
     }
   }
 
+  @NotNull
+  String decode(@NotNull String input) {
+    String encoding = getEncoding();
+    if (encoding.isEmpty() || UTF_8.equals(encoding)) {
+      return input;
+    }
+    try {
+      return new String(input.getBytes(encoding), UTF_8);
+    }
+    catch (UnsupportedEncodingException e) {
+      LOG.error("Could not convert \"" + input + "\" from " + encoding + " to " + UTF_8, e);
+      return input;
+    }
+  }
+
+  @NotNull
   String getFullMessage() {
-    return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
+    if (mySupportsRawBody) {
+      return getRawBody().trim();
+    }
+
+    return ((getSubject() + "\n\n" + getBody()).trim());
   }
 
   String[] getParentsHashes() {
@@ -192,7 +221,8 @@ class GitLogRecord {
     return result;
   }
 
-  private static String shortBuffer(String raw) {
+  @NotNull
+  private static String shortBuffer(@NotNull String raw) {
     return new String(raw);
   }
 
