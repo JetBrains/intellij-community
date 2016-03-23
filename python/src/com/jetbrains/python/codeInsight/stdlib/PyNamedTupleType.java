@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -110,6 +111,15 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Override
   public String toString() {
     return "PyNamedTupleType: " + myName;
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> result = super.getMemberNames(inherited, context);
+    result.addAll(myFields);
+
+    return result;
   }
 
   public int getElementCount() {
