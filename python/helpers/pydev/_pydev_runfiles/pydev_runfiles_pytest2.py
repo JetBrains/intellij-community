@@ -143,7 +143,7 @@ def pytest_runtest_makereport(item, call):
         handled = False
 
         if not (call.excinfo and
-            call.excinfo.errisinstance(pytest.xfail.Exception)):
+                    call.excinfo.errisinstance(pytest.xfail.Exception)):
             evalxfail = getattr(item, '_evalxfail', None)
             # Something which had an xfail failed: this is expected.
             if evalxfail and (not hasattr(evalxfail, 'expr') or evalxfail.expr):
@@ -154,11 +154,7 @@ def pytest_runtest_makereport(item, call):
         if handled:
             pass
 
-        elif not isinstance(excinfo, py.code.ExceptionInfo):  # @UndefinedVariable
-            report_outcome = "failed"
-            report_longrepr = excinfo
-
-        elif excinfo.errisinstance(pytest.xfail.Exception):
+        if excinfo.errisinstance(pytest.xfail.Exception):
             # Case where an explicit xfail is raised (i.e.: pytest.xfail("reason") is called
             # programatically).
             report_outcome = "passed"
@@ -168,6 +164,10 @@ def pytest_runtest_makereport(item, call):
             report_outcome = "skipped"
             r = excinfo._getreprcrash()
             report_longrepr = None #(str(r.path), r.lineno, r.message)
+
+        elif not isinstance(excinfo, py.code.ExceptionInfo):  # @UndefinedVariable
+            report_outcome = "failed"
+            report_longrepr = excinfo
 
         else:
             report_outcome = "failed"
