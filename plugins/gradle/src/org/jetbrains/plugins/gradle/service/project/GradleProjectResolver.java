@@ -601,7 +601,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final File buildDir = externalProject.getBuildDir();
 
       for (DataNode<GradleSourceSetData> sourceSetNode : ExternalSystemApiUtil.findAll(moduleNode, GradleSourceSetData.KEY)) {
-        final Map<String, DataNode<ContentRootData>> sourceSetRoots = ContainerUtil.newLinkedHashMap();
+        final MultiMap<String, ContentRootData> sourceSetRoots = MultiMap.create();
         for (DataNode<ContentRootData> contentRootNode : ExternalSystemApiUtil.findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
           File root = new File(contentRootNode.getData().getRootPath());
           if (FileUtil.isAncestor(buildDir, root, true)) continue;
@@ -609,19 +609,56 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           while (weightMap.containsKey(root.getParent()) && weightMap.get(root.getParent()).count <= 1) {
             root = root.getParentFile();
           }
-          DataNode<ContentRootData> mergedContentRootNode = sourceSetRoots.get(root.getPath());
-          if (mergedContentRootNode == null) {
-            ContentRootData mergedContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, root.getAbsolutePath());
-            mergedContentRootNode = sourceSetNode.createChild(ProjectKeys.CONTENT_ROOT, mergedContentRoot);
-            sourceSetRoots.put(root.getPath(), mergedContentRootNode);
+          final Collection<ContentRootData> mergedContentRoots = sourceSetRoots.get(root.getPath());
+          final ContentRootData mergedContentRoot;
+          if (mergedContentRoots.isEmpty()) {
+            mergedContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, root.getAbsolutePath());
+            sourceSetRoots.putValue(mergedContentRoot.getRootPath(), mergedContentRoot);
+          } else {
+            mergedContentRoot = mergedContentRoots.iterator().next();
           }
 
           for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
             for (ContentRootData.SourceRoot sourceRoot : contentRootNode.getData().getPaths(sourceType)) {
-              mergedContentRootNode.getData().storePath(sourceType, sourceRoot.getPath(), sourceRoot.getPackagePrefix());
+              mergedContentRoot.storePath(sourceType, sourceRoot.getPath(), sourceRoot.getPackagePrefix());
             }
           }
+
+          final String rootPath = mergedContentRoot.getRootPath();
+          for (String path : sourceSetRoots.keySet()) {
+            if (FileUtil.isAncestor(rootPath, path, true)) {
+              Collection<ContentRootData> values = sourceSetRoots.remove(path);
+              if (values != null) {
+                sourceSetRoots.putValues(rootPath, values);
+              }
+              break;
+            }
+            else if (FileUtil.isAncestor(path, rootPath, true)) {
+              Collection<ContentRootData> values = sourceSetRoots.remove(rootPath);
+              if (values != null) {
+                sourceSetRoots.putValues(path, values);
+              }
+              break;
+            }
+          }
+
           contentRootNode.clear(true);
+        }
+
+        for (Map.Entry<String, Collection<ContentRootData>> entry : sourceSetRoots.entrySet()) {
+          final String rootPath = entry.getKey();
+          final ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, rootPath);
+
+          for (ContentRootData rootData : entry.getValue()) {
+            for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
+              Collection<ContentRootData.SourceRoot> roots = rootData.getPaths(sourceType);
+              for (ContentRootData.SourceRoot sourceRoot : roots) {
+                ideContentRoot.storePath(sourceType, sourceRoot.getPath(), sourceRoot.getPackagePrefix());
+              }
+            }
+          }
+
+          sourceSetNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
         }
       }
     }
