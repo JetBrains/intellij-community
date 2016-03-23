@@ -37,21 +37,20 @@ def unpackJdks() {
 
   def jdkDir = new File(basePath, "build/jdk")
   def osDir = new File(jdkDir, osDirName)
-  def customDir = new File(jdkDir, "${osDirName}/custom")
-  if (!osDir.isDirectory() || !customDir.isDirectory()) {
-    projectBuilder.info("Cannot unpack JDK: $osDir or $customDir not found")
+  if (!osDir.isDirectory()) {
+    projectBuilder.info("Cannot unpack JDK: $osDir not found")
     return
   }
 
   unpackJdk(osDir, jdkDir, "1.6")
-  unpackJdk(customDir, jdkDir, "1.8")
+  unpackJdk(osDir, jdkDir, "1.8")
 }
 
 private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
-  def jdkFiles = osDir.listFiles().findAll { it.name.contains("jdk.$majorVersion") }
+  def jdkFiles = osDir.listFiles().findAll { it.name.startsWith("jdk$majorVersion") }
   if (SystemInfo.isWindows) {
     def arch = System.getenv("ProgramFiles(x86)") != null ? "x64" : "x32"
-    jdkFiles = jdkFiles.findAll { it.name.contains("_${arch}.") }
+    jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.zip") }
   }
   if (jdkFiles.empty) {
     projectBuilder.error("Cannot unpack JDK: jdk$majorVersion* not found in $osDir")
@@ -66,38 +65,21 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
   if (jdkFile.name.endsWith(".zip")) {
     ant.unzip(src: jdkFile, dest: destDir)
   }
-  else if (jdkFile.name.endsWith(".gz")) {
+  else if (jdkFile.name.endsWith(".tar")) {
     projectBuilder.info("Extracting $jdkFile to $destDir")
     ant.mkdir(dir: destDir)
-    if (SystemInfo.isWindows) {
-      ant.untar(src: jdkFile, dest: destDir, compression: 'gzip')
-      if (new File("${destDir}/jre/jre").exists()){
-        ant.move(file: new File("${destDir}/jre"), tofile: new File("${destDir}"))
-      }
+    //'tar' and 'mv' commands are used instead of Ant tasks to ensure that executable flag and symlink will be preserved
+    ant.exec(executable: "tar", dir: jdkFile.getParent()) {
+      arg(value: "-xf")
+      arg(value: jdkFile.name)
+      arg(value: "--directory")
+      arg(value: destDir)
     }
-    else {
-      //'tar' and 'mv' commands are used instead of Ant tasks to ensure that executable flag and symlink will be preserved
-      ant.exec(executable: "tar", dir: jdkFile.getParent()) {
-        arg(value: "-zxf")
-        arg(value: jdkFile.name)
-        arg(value: "--directory")
-        arg(value: destDir)
-
-        if (SystemInfo.isMac && !jdkFile.name.contains("apple")) {
-          new File(destDir, "jre/jdk/Contents").listFiles().each { file ->
-            ant.exec(executable: "mv", dir: destDir) {
-              arg(value: file.absolutePath)
-              arg(value: destDir)
-            }
-          }
-        }
-        if (new File("${destDir}/jre/jre").exists()){
-          new File(destDir, "jre").listFiles().each { file ->
-            ant.exec(executable: "mv", dir: destDir) {
-              arg(value: file.absolutePath)
-              arg(value: destDir)
-            }
-          }
+    if (SystemInfo.isMac && !jdkFile.name.contains("apple")) {
+      new File(destDir, "jre/jdk/Contents").listFiles().each { file ->
+        ant.exec(executable: "mv", dir: destDir) {
+          arg(value: file.absolutePath)
+          arg(value: destDir)
         }
       }
     }
