@@ -37,13 +37,11 @@ import java.util.List;
  * Date: 1/16/13
  */
 public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeValue> {
-  private final PsiClass myCurrentTagClass;
   private final PsiMethod myEventHandler;
   private final PsiClass myController;
 
-  public JavaFxEventHandlerReference(XmlAttributeValue element, PsiClass currentTagClass, final PsiMethod method, PsiClass controller) {
+  public JavaFxEventHandlerReference(XmlAttributeValue element, final PsiMethod method, PsiClass controller) {
     super(element);
-    myCurrentTagClass = currentTagClass;
     myEventHandler = method;
     myController = controller;
   }
@@ -104,27 +102,10 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
       final XmlAttributeValue element = ref.getElement();
       String canonicalText = JavaFxCommonNames.JAVAFX_EVENT;
       final PsiElement parent = element.getParent();
-      if (parent instanceof XmlAttribute && ref.myCurrentTagClass != null) {
-        final XmlAttribute xmlAttribute = (XmlAttribute)parent;
-        final PsiType eventHandlerPropertyType = JavaFxPsiUtil.getEventHandlerPropertyType(ref.myCurrentTagClass, xmlAttribute.getName());
-        if (eventHandlerPropertyType != null) {
-          final PsiSubstitutor tagClassSubstitutor = JavaFxPsiUtil.getTagClassSubstitutor(xmlAttribute, ref.myController);
-          final PsiType handlerType =
-            tagClassSubstitutor != null ? tagClassSubstitutor.substitute(eventHandlerPropertyType) : eventHandlerPropertyType;
-          if (handlerType instanceof PsiClassType) {
-            PsiType eventType = JavaFxPsiUtil.substituteEventType((PsiClassType)handlerType, element.getProject());
-            if (eventType instanceof PsiWildcardType && ((PsiWildcardType)eventType).isSuper()) {
-              eventType = ((PsiWildcardType)eventType).getBound();
-            }
-            if (eventType != null) {
-              if (eventType instanceof PsiClassType && JavaFxPsiUtil.isNotFullyResolvedGeneric((PsiClassType)eventType)) {
-                canonicalText = ((PsiClassType)eventType).rawType().getCanonicalText();
-              }
-              else {
-                canonicalText = eventType.getCanonicalText();
-              }
-            }
-          }
+      if (parent instanceof XmlAttribute) {
+        final PsiClassType eventType = JavaFxPsiUtil.getDeclaredEventType((XmlAttribute)parent);
+        if (eventType != null) {
+          canonicalText = eventType.getCanonicalText();
         }
       }
       return "public void " + element.getValue().substring(1) + "(" + canonicalText + " e)";

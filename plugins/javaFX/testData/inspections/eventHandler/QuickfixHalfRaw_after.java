@@ -6,7 +6,7 @@ import javafx.util.Pair;
 public class QuickfixHalfRaw {
   @FXML TableView<Pair> table;
 
-    public void onSort(SortEvent sortEvent) {
+    public void onSort(SortEvent<TableView<Pair>> tableViewSortEvent) {
 
     }
 }

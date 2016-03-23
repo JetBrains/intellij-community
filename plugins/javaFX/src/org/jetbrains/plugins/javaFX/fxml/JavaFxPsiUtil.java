@@ -121,7 +121,7 @@ public class JavaFxPsiUtil {
         }
       }
     }
-    return psiClass;
+    return null;
   }
 
   public static void insertImportWhenNeeded(XmlFile xmlFile,
@@ -825,22 +825,8 @@ public class JavaFxPsiUtil {
            InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_MAP);
   }
 
-  public static boolean isNotFullyResolvedGeneric(@NotNull PsiClassType classType) {
-    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-    final PsiClass psiClass = resolveResult.getElement();
-    if (psiClass == null || psiClass instanceof PsiTypeParameter) return true;
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
-      final PsiType substitute = substitutor.substitute(parameter);
-      if (substitute == null || substitute instanceof PsiClassType && isNotFullyResolvedGeneric((PsiClassType)substitute)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Nullable
-  public static PsiSubstitutor getTagClassSubstitutor(@NotNull XmlAttribute xmlAttribute, @NotNull PsiClass controllerClass) {
+  private static PsiSubstitutor getTagClassSubstitutor(@NotNull XmlAttribute xmlAttribute, @NotNull PsiClass controllerClass) {
     final XmlTag xmlTag = xmlAttribute.getParent();
     final PsiClass tagClass = getTagClass(xmlTag);
     if (tagClass != null) {
@@ -860,7 +846,26 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiType getEventHandlerPropertyType(@NotNull PsiClass tagClass, @NotNull String eventName) {
+  public static PsiClassType getDeclaredEventType(@NotNull XmlAttribute xmlAttribute) {
+    final PsiClass tagClass = getTagClass(xmlAttribute.getParent());
+    if (tagClass != null) {
+      final PsiType eventHandlerPropertyType = getEventHandlerPropertyType(tagClass, xmlAttribute.getName());
+      if (eventHandlerPropertyType != null) {
+        final PsiClass controllerClass = getControllerClass(xmlAttribute.getContainingFile());
+        if (controllerClass != null) {
+          final PsiSubstitutor tagClassSubstitutor = getTagClassSubstitutor(xmlAttribute, controllerClass);
+
+          final PsiType handlerType = tagClassSubstitutor != null ?
+                                      tagClassSubstitutor.substitute(eventHandlerPropertyType) : eventHandlerPropertyType;
+          return substituteEventType(handlerType, xmlAttribute.getProject());
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getEventHandlerPropertyType(@NotNull PsiClass tagClass, @NotNull String eventName) {
     final PsiMethod[] handlerSetterCandidates = tagClass.findMethodsByName(PropertyUtil.suggestSetterName(eventName), true);
     for (PsiMethod handlerSetter : handlerSetterCandidates) {
       if (!handlerSetter.hasModifierProperty(PsiModifier.STATIC) &&
@@ -880,15 +885,33 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiType substituteEventType(@NotNull PsiClassType eventHandlerClass, @NotNull Project project) {
+  private static PsiClassType substituteEventType(@Nullable PsiType eventHandlerType, @NotNull Project project) {
+    if (!(eventHandlerType instanceof PsiClassType)) return null;
+    final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)eventHandlerType).resolveGenerics();
+    final PsiClass eventHandlerClass = resolveResult.getElement();
+    if (eventHandlerClass == null) return null;
+    final PsiSubstitutor eventHandlerClassSubstitutor = resolveResult.getSubstitutor();
+
     final PsiClass eventHandlerInterface =
       JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER, GlobalSearchScope.allScope(project));
     if (eventHandlerInterface == null) return null;
+    if (!InheritanceUtil.isInheritorOrSelf(eventHandlerClass, eventHandlerInterface, true)) return null;
     final PsiTypeParameter[] typeParameters = eventHandlerInterface.getTypeParameters();
     if (typeParameters.length != 1) return null;
-    final PsiTypeParameter typeParameter = typeParameters[0];
-    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(eventHandlerInterface, eventHandlerClass);
-    return substitutor.substitute(typeParameter);
+    final PsiTypeParameter eventTypeParameter = typeParameters[0];
+    final PsiSubstitutor substitutor =
+      TypeConversionUtil.getSuperClassSubstitutor(eventHandlerInterface, eventHandlerClass, eventHandlerClassSubstitutor);
+    final PsiType eventType = substitutor.substitute(eventTypeParameter);
+    if (eventType instanceof PsiClassType) {
+      return (PsiClassType)eventType;
+    }
+    if (eventType instanceof PsiWildcardType) {
+      final PsiType boundType = ((PsiWildcardType)eventType).getBound();
+      if (boundType instanceof PsiClassType) {
+        return (PsiClassType)boundType;
+      }
+    }
+    return null;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {

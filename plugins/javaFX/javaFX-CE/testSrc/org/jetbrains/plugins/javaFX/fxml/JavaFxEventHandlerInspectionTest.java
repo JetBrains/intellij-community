@@ -48,6 +48,10 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
     doHighlightingTest();
   }
 
+  public void testHighlightSuper() throws Exception {
+    doHighlightingTest();
+  }
+
   public void testHighlightWildcard() throws Exception {
     doHighlightingTest();
   }

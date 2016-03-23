@@ -1,13 +1,8 @@
 import javafx.event.Event;
 import javafx.fxml.FXML;
-import javafx.scene.control.SortEvent;
-import javafx.scene.input.MouseDragEvent;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.control.*;
 
 public class HighlightWildcard {
-    @FXML private void onSameArg(MouseEvent e) {}
-    @FXML private void onSuperArg(Event e) {}
-    @FXML private void onNoArg() {}
-    @FXML private void onNotSuper(MouseDragEvent e) {}
-    @FXML private void onNotRelated(SortEvent e) {}
+    @FXML private void scrollPositive(ScrollToEvent<? extends Number> e) {}
+    @FXML private void scrollNegative(ScrollToEvent<? super Number> e) {}
 }

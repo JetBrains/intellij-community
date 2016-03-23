@@ -5,7 +5,7 @@ import javafx.scene.control.TableView;
 public class QuickfixRaw {
   @FXML TableView table;
 
-    public void onSort(SortEvent sortEvent) {
+    public void onSort(SortEvent<TableView> tableViewSortEvent) {
 
     }
 }

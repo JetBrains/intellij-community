@@ -1,9 +1,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.HBox?>
 <HBox xmlns:fx="http://javafx.com/fxml" fx:controller="HighlightWildcard">
-    <Label text=" SameArg " onMouseClicked="#onSameArg"/>
-    <Label text=" SuperArg " onMouseClicked="#onSuperArg"/>
-    <Label text=" NoArg " onMouseClicked="#onNoArg"/>
-    <Label text=" NotSuper " onMouseClicked=<warning descr="Incompatible event handler argument: javafx.scene.input.MouseDragEvent is not assignable from javafx.scene.input.MouseEvent">"#onNotSuper"</warning>/>
-    <Label text=" NotRelated " onMouseClicked=<warning descr="Incompatible event handler argument: javafx.scene.control.SortEvent is not assignable from javafx.scene.input.MouseEvent">"#onNotRelated"</warning>/>
+    <TableView onScrollTo="#scrollPositive"/>
+    <TableView onScrollTo=<warning descr="Incompatible generic parameter of event handler argument: javafx.scene.control.ScrollToEvent<? super java.lang.Number> is not assignable from javafx.scene.control.ScrollToEvent<java.lang.Integer>">"#scrollNegative"</warning>/>
 </HBox>

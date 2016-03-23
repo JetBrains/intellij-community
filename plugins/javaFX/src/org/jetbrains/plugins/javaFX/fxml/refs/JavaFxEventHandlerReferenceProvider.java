@@ -50,17 +50,12 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
     final XmlAttribute attribute = (XmlAttribute)xmlAttributeValue.getContext();
     if (attribute == null) return PsiReference.EMPTY_ARRAY;
     if (!JavaFxPsiUtil.checkIfAttributeHandler(attribute)) return PsiReference.EMPTY_ARRAY;
-    final XmlElementDescriptor descriptor = attribute.getParent().getDescriptor();
-    if (descriptor == null) return PsiReference.EMPTY_ARRAY;
-    final PsiElement declaration = descriptor.getDeclaration();
-    if (!(declaration instanceof PsiClass)) return PsiReference.EMPTY_ARRAY;
-    final PsiClass currentTagClass = ((PsiClass)declaration);
     final String eventHandlerName = attValueString.substring(1);
     final PsiMethod[] methods = controllerClass.findMethodsByName(eventHandlerName, true);
 
     final PsiReference[] references = Arrays.stream(methods)
       .filter(JavaFxEventHandlerReference::isHandlerMethod)
-      .map(handlerMethod -> new JavaFxEventHandlerReference(xmlAttributeValue, currentTagClass, handlerMethod, controllerClass))
+      .map(handlerMethod -> new JavaFxEventHandlerReference(xmlAttributeValue, handlerMethod, controllerClass))
       .toArray(PsiReference.ARRAY_FACTORY::create);
 
     if (references.length == 1) {
@@ -76,6 +71,6 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
         return PsiReference.EMPTY_ARRAY;
       }
     }
-    return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, currentTagClass, null, controllerClass)};
+    return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, null, controllerClass)};
   }
 }

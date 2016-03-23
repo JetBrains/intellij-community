@@ -8,7 +8,7 @@ public class CreateControllerMethodHalfRaw {
     @FXML
     TableView<Map> table;
 
-    public void onSort(SortEvent sortEvent) {
+    public void onSort(SortEvent<TableView<Map>> tableViewSortEvent) {
 
     }
 }

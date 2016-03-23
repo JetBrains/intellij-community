@@ -1,17 +1,23 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.IntentionWrapper;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
@@ -19,12 +25,10 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil.getTagClass;
 
 /**
  * @author Pavel.Dolgov
@@ -73,8 +77,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
             .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, "Return type of event handler should be void"));
         }
 
-        final PsiSubstitutor tagClassSubstitutor = JavaFxPsiUtil.getTagClassSubstitutor(attribute, controllerClass);
-        final PsiClassType declaredType = getDeclaredEventType(attribute, tagClassSubstitutor);
+        final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
         if (declaredType == null) return;
 
         for (PsiMethod method : eventHandlerMethods) {
@@ -83,7 +86,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
             final PsiType actualType = parameters[0].getType();
             if (actualType instanceof PsiClassType) {
               if (!actualType.isAssignableFrom(declaredType)) {
-                final LocalQuickFix quickFix = createChangeArgumentTypeQuickFix(controllerClass, declaredType, method, tagClassSubstitutor);
+                final LocalQuickFix quickFix = new ChangeParameterTypeQuickFix(method, declaredType);
 
                 final PsiClassType actualRawType = ((PsiClassType)actualType).rawType();
                 final PsiClassType expectedRawType = declaredType.rawType();
@@ -107,46 +110,6 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     };
   }
 
-  @NotNull
-  private static LocalQuickFix createChangeArgumentTypeQuickFix(@NotNull PsiClass controllerClass,
-                                                                @NotNull PsiClassType declaredType,
-                                                                @NotNull PsiMethod method,
-                                                                @Nullable PsiSubstitutor tagClassSubstitutor) {
-    final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(controllerClass.getProject());
-    final PsiExpression expression = psiElementFactory.createExpressionFromText("new " + declaredType.getCanonicalText() + "(){}", method);
-    final IntentionAction intentionAction = QuickFixFactory.getInstance()
-      .createChangeMethodSignatureFromUsageFix(method, new PsiExpression[]{expression},
-                                               tagClassSubstitutor != null ? tagClassSubstitutor : PsiSubstitutor.EMPTY,
-                                               controllerClass, false, 2);
-    return new IntentionWrapper(intentionAction, method.getContainingFile());
-  }
-
-  @Nullable
-  private static PsiClassType getDeclaredEventType(@NotNull XmlAttribute attribute, @Nullable PsiSubstitutor tagClassSubstitutor) {
-    final PsiClass tagClass = getTagClass(attribute.getParent());
-    if (tagClass == null) return null;
-
-    final PsiType eventHandlerPropertyType = JavaFxPsiUtil.getEventHandlerPropertyType(tagClass, attribute.getName());
-    if (eventHandlerPropertyType == null) return null;
-
-    final PsiType handlerType =
-      tagClassSubstitutor != null ? tagClassSubstitutor.substitute(eventHandlerPropertyType) : eventHandlerPropertyType;
-    if (handlerType instanceof PsiClassType) {
-      final PsiType eventType = JavaFxPsiUtil.substituteEventType((PsiClassType)handlerType, tagClass.getProject());
-      if (eventType instanceof PsiClassType) {
-        return (PsiClassType)eventType;
-      }
-      if (eventType instanceof PsiWildcardType) {
-        PsiWildcardType wildcardType = (PsiWildcardType)eventType;
-        if (wildcardType.isSuper()) {
-          final PsiType bound = wildcardType.getBound();
-          if (bound instanceof PsiClassType) return (PsiClassType)bound;
-        }
-      }
-    }
-    return null;
-  }
-
   private static boolean hasEventArgument(@NotNull PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     return parameters.length == 0 ||
@@ -157,5 +120,69 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel("Detect event handler method having non-void return type", this, "myDetectNonVoidReturnType");
+  }
+
+  private static class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
+    final PsiType mySuggestedParameterType;
+    final String myText;
+
+    public ChangeParameterTypeQuickFix(@NotNull PsiMethod method,
+                                       @NotNull PsiType suggestedParameterType) {
+      super(method);
+      mySuggestedParameterType = suggestedParameterType;
+      myText = "Change parameter type of '" + JavaHighlightUtil.formatMethod(method) +
+               "' to " + mySuggestedParameterType.getPresentableText();
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return myText;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Change parameter type of event handler method";
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project,
+                               @NotNull PsiFile file,
+                               @NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement) {
+      return startElement instanceof PsiMethod &&
+             mySuggestedParameterType.isValid();
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      if (!(startElement instanceof PsiMethod)) return;
+      final PsiMethod method = (PsiMethod)startElement;
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final String parameterName = parameters.length >= 1 ? parameters[0].getName() : "e";
+
+      final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(0, parameterName, mySuggestedParameterType);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final ChangeSignatureProcessor processor =
+          new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(),
+                                       new ParameterInfoImpl[]{parameterInfo});
+        processor.run();
+      }
+      else {
+        final List<ParameterInfoImpl> parameterInfos = Collections.singletonList(parameterInfo);
+        final JavaChangeSignatureDialog dialog =
+          JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, false, null);
+        dialog.setParameterInfos(parameterInfos);
+        dialog.show();
+      }
+    }
   }
 }
