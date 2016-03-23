@@ -71,6 +71,9 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
     ant.mkdir(dir: destDir)
     if (SystemInfo.isWindows) {
       ant.untar(src: jdkFile, dest: destDir, compression: 'gzip')
+      if (new File("${destDir}/jre/jre").exists()){
+        ant.move(file: new File("${destDir}/jre"), tofile: new File("${destDir}"))
+      }
     }
     else {
       //'tar' and 'mv' commands are used instead of Ant tasks to ensure that executable flag and symlink will be preserved
@@ -88,11 +91,14 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
             }
           }
         }
-      }
-    }
-    if (new File("${destDir}/jre/jre").exists()){
-      new File("${destDir}/jre").listFiles().each { file ->
-        ant.move(file: file.absolutePath, todir: destDir)
+        if (new File("${destDir}/jre/jre").exists()){
+          new File(destDir, "jre").listFiles().each { file ->
+            ant.exec(executable: "mv", dir: destDir) {
+              arg(value: file.absolutePath)
+              arg(value: destDir)
+            }
+          }
+        }
       }
     }
   }
