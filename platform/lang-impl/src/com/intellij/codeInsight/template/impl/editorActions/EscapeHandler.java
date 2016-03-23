@@ -20,8 +20,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -39,7 +37,7 @@ public class EscapeHandler extends EditorActionHandler {
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       if (templateState != null && !templateState.isFinished()) {
         CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("finish.template.command"));
-        TransactionGuard.syncTransaction(TransactionKind.TEXT_EDITING, () -> templateState.gotoEnd(true));
+        templateState.gotoEnd(true);
         return;
       }
     }

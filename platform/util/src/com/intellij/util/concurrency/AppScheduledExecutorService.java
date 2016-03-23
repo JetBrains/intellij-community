@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class AppScheduledExecutorService extends SchedulingWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
+  static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   private Consumer<Thread> newThreadListener;
 
   private static class Holder {
@@ -50,7 +51,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       @NotNull
       @Override
       public Thread newThread(@NotNull final Runnable r) {
-        Thread thread = new Thread(r, "ApplicationImpl pooled thread " + counter.incrementAndGet());
+        Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
         thread.setPriority(Thread.NORM_PRIORITY - 1);
 

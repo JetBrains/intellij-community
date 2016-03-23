@@ -3,9 +3,7 @@ package com.jetbrains.edu.learning;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.settings.ModifiableSettingsPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PyStudyPluginConfigurator extends StudyBasePluginConfigurator {
   
@@ -37,11 +35,5 @@ public class PyStudyPluginConfigurator extends StudyBasePluginConfigurator {
     if (taskManager == null) return false;
     Course course = taskManager.getCourse();
     return course != null && "Python".equals(course.getLanguage()) && "PyCharm".equals(course.getCourseType());
-  }
-
-  @Nullable
-  @Override
-  public ModifiableSettingsPanel getSettingsPanel() {
-    return null;
   }
 }

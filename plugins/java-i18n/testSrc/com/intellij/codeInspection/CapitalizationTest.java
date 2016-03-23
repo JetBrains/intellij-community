@@ -27,5 +27,6 @@ public class CapitalizationTest extends TestCase {
     assertTrue(TitleCapitalizationInspection.checkCapitalization("Fix C issues", Nls.Capitalization.Sentence));
     assertTrue(TitleCapitalizationInspection.checkCapitalization("@charset is invalid", Nls.Capitalization.Sentence));
     assertTrue(TitleCapitalizationInspection.checkCapitalization("Add 'this' qualifier", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.checkCapitalization("Add    'this'    qualifier", Nls.Capitalization.Sentence));
   }
 }

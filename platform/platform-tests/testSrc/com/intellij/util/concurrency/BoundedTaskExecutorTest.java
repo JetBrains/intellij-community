@@ -15,23 +15,54 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class BoundedTaskExecutorTest extends TestCase {
+  @Override
+  protected void tearDown() throws Exception {
+    awaitAppPoolQuiescence();
+    super.tearDown();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    awaitAppPoolQuiescence();
+  }
+
+  private static void awaitAppPoolQuiescence() {
+    long start = System.currentTimeMillis();
+    while (true) {
+      List<Thread> alive = Thread.getAllStackTraces().keySet().stream()
+        .filter(thread -> thread.getName().startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX))
+        .filter(thread -> thread.getState() == Thread.State.RUNNABLE)
+        .collect(Collectors.toList());
+
+      long finish = System.currentTimeMillis();
+      if (alive.isEmpty()) break;
+      if (finish-start > 10000) {
+        System.err.println(ThreadDumper.dumpThreadsToString());
+        throw new RuntimeException();
+      }
+    }
+  }
+
   public void testReallyBound() throws InterruptedException, ExecutionException {
     for (int maxTasks=1; maxTasks<5;maxTasks++) {
       System.out.println("maxTasks = " + maxTasks);
@@ -176,8 +207,8 @@ public class BoundedTaskExecutorTest extends TestCase {
 
     Future[] futures = new Future[N];
     for (int i = 0; i < N; i++) {
-      final int finalI = i;
-      futures[i] = executor.submit(() -> log.append(finalI+" "));
+      String text = i + " ";
+      futures[i] = executor.submit(() -> log.append(text));
     }
     for (int i = 0; i < N; i++) {
       expected.append(i).append(" ");
@@ -243,7 +274,7 @@ public class BoundedTaskExecutorTest extends TestCase {
             maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
             try {
-              //TimeoutUtil.sleep(1);
+              Thread.yield();
             }
             finally {
               running.decrementAndGet();
@@ -262,7 +293,7 @@ public class BoundedTaskExecutorTest extends TestCase {
             maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
             try {
-              //TimeoutUtil.sleep(1);
+              Thread.yield();
             }
             finally {
               running.decrementAndGet();
@@ -369,5 +400,71 @@ public class BoundedTaskExecutorTest extends TestCase {
     String logs = log.toString();
     assertEquals(StringUtil.repeat(" ",N), logs);
     assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+  }
+
+  public void testNoExtraThreadsAreEverCreated() throws ExecutionException, InterruptedException {
+    for (int nMaxThreads=1; nMaxThreads<10; nMaxThreads++) {
+      System.out.println("nMaxThreads = " + nMaxThreads);
+      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(nMaxThreads);
+      int N = 1000000;
+      Set<Thread> workers = ContainerUtil.newConcurrentSet();
+
+      CountDownLatch allStarted = new CountDownLatch(1);
+      List<Future> saturate = ContainerUtil.map(Collections.nCopies(nMaxThreads, null), o -> {
+        return executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              allStarted.await();
+            }
+            catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          }
+
+          @Override
+          public String toString() {
+            return "warmup";
+          }
+        });
+      });
+
+
+      List<Future> futures = new ArrayList<>(N);
+      for (int i = 0; i < N; i++) {
+        final int finalI = i;
+        futures.add(executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            workers.add(Thread.currentThread());
+          }
+
+          @Override
+          public String toString() {
+            return "Runnable test "+finalI;
+          }
+        }));
+        //System.out.println("i = " + i+" submitted");
+      }
+
+      allStarted.countDown();
+      saturate.forEach(BoundedTaskExecutorTest::doGet);
+      futures.forEach(BoundedTaskExecutorTest::doGet);
+
+      //System.out.println("workers.size() = " + workers.size());
+      assertTrue("Must create no more than "+nMaxThreads+" workers but got: "+workers,
+                 workers.size() <= nMaxThreads);
+      executor.shutdownNow();
+      assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    }
+  }
+
+  private static Object doGet(Future future) {
+    try {
+      return future.get();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

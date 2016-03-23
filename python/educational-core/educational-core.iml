@@ -8,11 +8,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="core-impl" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>

@@ -18,10 +18,17 @@ package com.intellij.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 
+import java.util.List;
+
 /**
  * @author Alexander Lobas
  */
 public class BalloonLayoutData {
+  public String groupId;
+  public String id;
+  public String status;
+  public List<MergeInfo> mergeData;
+
   public boolean showFullContent;
 
   public int height;
@@ -42,4 +49,18 @@ public class BalloonLayoutData {
   public BalloonLayoutConfiguration configuration;
 
   public Runnable lafHandler;
+
+  public MergeInfo getMergeInfo() {
+    MergeInfo info = new MergeInfo();
+    info.groupId = groupId;
+    info.id = id;
+    info.status = status;
+    return info;
+  }
+
+  public static class MergeInfo {
+    public String groupId;
+    public String id;
+    public String status;
+  }
 }

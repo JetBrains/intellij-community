@@ -29,13 +29,11 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandler {
 
@@ -153,16 +151,22 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   @Override
   public TaskInfo[] getAllExistingTasks() {
     List<R> repositories = myRepositoryManager.getRepositories();
-    MultiMap<String, String> tasks = new MultiMap<String, String>();
+    MultiMap<String, TaskInfo> tasks = new MultiMap<String, TaskInfo>();
     for (R repository : repositories) {
-      for (String branch : getAllBranches(repository)) {
-        tasks.putValue(branch, repository.getPresentableUrl());
+      for (TaskInfo branch : getAllBranches(repository)) {
+        tasks.putValue(branch.getName(), branch);
       }
     }
-    return ContainerUtil.map2Array(tasks.entrySet(), TaskInfo.class, new Function<Map.Entry<String, Collection<String>>, TaskInfo>() {
+    return ContainerUtil.map2Array(tasks.entrySet(), TaskInfo.class, new Function<Map.Entry<String, Collection<TaskInfo>>, TaskInfo>() {
       @Override
-      public TaskInfo fun(Map.Entry<String, Collection<String>> entry) {
-        return new TaskInfo(entry.getKey(), entry.getValue());
+      public TaskInfo fun(Map.Entry<String, Collection<TaskInfo>> entry) {
+        Set<String> repositories = new HashSet<String>();
+        boolean remote = false;
+        for (TaskInfo info : entry.getValue()) {
+          remote |= info.isRemote();
+          repositories.addAll(info.getRepositories());
+        }
+        return new TaskInfo(entry.getKey(), repositories, remote);
       }
     });
   }
@@ -193,7 +197,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   protected abstract String getActiveBranch(R repository);
 
   @NotNull
-  protected abstract Iterable<String> getAllBranches(@NotNull R repository);
+  protected abstract Iterable<TaskInfo> getAllBranches(@NotNull R repository);
 
   protected abstract void mergeAndClose(@NotNull String branch, @NotNull List<R> repositories);
 

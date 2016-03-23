@@ -75,20 +75,24 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
 
   private DirectClassInheritorsSearch() {}
 
-  public static Query<PsiClass> search(final PsiClass aClass) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass) {
     return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
   }
 
-  public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+    return search(aClass, scope, true);
   }
 
-  public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope, boolean includeAnonymous) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous) {
     return search(aClass, scope, includeAnonymous, true);
   }
 
-  public static Query<PsiClass> search(final PsiClass aClass,
-                                       SearchScope scope,
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass,
+                                       @NotNull SearchScope scope,
                                        boolean includeAnonymous,
                                        final boolean checkInheritance) {
     final Query<PsiClass> raw = INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, includeAnonymous, checkInheritance));

@@ -28,9 +28,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -46,11 +43,6 @@ public class PreviousVariableAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
-
-    @Override
-    public AccessToken startTransaction(@NotNull Editor editor) {
-      return TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING);
-    }
 
     @Override
     protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {

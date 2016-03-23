@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.textCompletion.TextCompletionUtil;
+import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,31 +33,26 @@ import javax.swing.*;
 import java.util.Collection;
 
 /**
- * <p/>
- * It is text field with autocompletion from list of values.
- * <p/>
- * Autocompletion is implemented via {@code TextFieldWithAutoCompletionContributor}.
- * Use {@code setVariants} set list of values for autocompletion.
+ * Text field with completion from a list of values.
+ *
+ * Differs from {@link TextFieldWithCompletion} in 2 aspects:
+ * 1. only accepts instances of {@link TextFieldWithAutoCompletionListProvider} (and not other implementations of {@link com.intellij.util.textCompletion.TextCompletionProvider});
+ * 2. allows to change completion variants {@link #setVariants(Collection)}.
+ *
+ * Completion is implemented via {@link com.intellij.util.textCompletion.TextCompletionContributor}.
  *
  * @author Roman Chernyatchik
  */
-public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
+public class TextFieldWithAutoCompletion<T> extends TextFieldWithCompletion {
   public static final TextFieldWithAutoCompletionListProvider EMPTY_COMPLETION = new StringsCompletionProvider(null, null);
   @NotNull private final TextFieldWithAutoCompletionListProvider<T> myProvider;
-  private final boolean myShowCompletionHint;
 
   public TextFieldWithAutoCompletion(@Nullable Project project,
                                      @NotNull TextFieldWithAutoCompletionListProvider<T> provider,
                                      boolean showCompletionHint,
                                      @Nullable String text) {
-    super(project == null ? null : PlainTextLanguage.INSTANCE, project, text == null ? "" : text);
-
-    myShowCompletionHint = showCompletionHint;
+    super(project, provider, text == null ? "" : text, true, true, false, showCompletionHint);
     myProvider = provider;
-
-    if (project != null) {
-      installCompletion(getDocument(), project, provider, true);
-    }
   }
 
   @NotNull
@@ -92,17 +88,6 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
     if (psiFile != null) {
       TextCompletionUtil.installProvider(psiFile, provider, autoPopup);
     }
-  }
-
-  @Override
-  protected EditorEx createEditor() {
-    EditorEx editor = super.createEditor();
-
-    if (myShowCompletionHint) {
-      TextCompletionUtil.installCompletionHint(editor);
-    }
-
-    return editor;
   }
 
   public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> implements DumbAware {

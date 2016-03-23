@@ -18,10 +18,18 @@ package com.intellij.util.textCompletion;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Base interface for text completion.
+ * Default implementations are: {@link ValuesCompletionProvider} for completion from a fixed set of elements
+ * and {@link com.intellij.util.TextFieldCompletionProvider} for other cases.
+ * <p>
+ * Use {@link TextFieldWithCompletion} to create a text field component with completion.
+ * <p>
+ * See {@link TextCompletionContributor} and {@link TextCompletionCharFilter}.
+ */
 public interface TextCompletionProvider {
   @Nullable
   String getAdvertisement();

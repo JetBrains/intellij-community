@@ -205,7 +205,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public void flush() throws StorageException {
     if (!myInitialized) {
-      System.out.println("No flushing, stub index isn't initialized");
       return;
     }
     AsyncState state = getAsyncState();
@@ -375,11 +374,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
-
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey);
+    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
     try {
+      myAccessValidator.startedProcessingActivityForIndex(indexKey);
       return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
@@ -391,6 +391,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         forceRebuild(e);
       }
       throw e;
+    } finally {
+      myAccessValidator.stoppedProcessingActivityForIndex(indexKey);
     }
     return true;
   }

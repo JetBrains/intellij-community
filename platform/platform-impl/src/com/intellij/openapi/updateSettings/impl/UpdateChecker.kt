@@ -59,6 +59,7 @@ import java.io.File
 import java.io.IOException
 import java.net.URISyntaxException
 import java.net.URL
+import java.nio.charset.Charset
 import java.util.*
 
 /**
@@ -93,6 +94,9 @@ object UpdateChecker {
   private val patchesUrl: String
     get() = System.getProperty("idea.patches.url") ?: PATCHES_URL
 
+  @JvmStatic
+  private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+  
   /**
    * For scheduled update checks.
    */
@@ -495,7 +499,9 @@ object UpdateChecker {
         val permanentIdFile = File(jetBrainsDir, "PermanentUserId")
         try {
           if (permanentIdFile.exists()) {
-            return FileUtil.loadFile(permanentIdFile).trim { it <= ' ' }
+            val bytes = FileUtil.loadFileBytes(permanentIdFile);
+            val offset = skipUtf8BOM(bytes)
+            return String(bytes, offset, bytes.size - offset, Charset.forName("utf-8"))
           }
 
           var uuid = propertiesComponent.getValue(INSTALLATION_UID)
@@ -512,6 +518,19 @@ object UpdateChecker {
     }
 
     return null
+  }
+  
+  @JvmStatic
+  private fun skipUtf8BOM(bytes: ByteArray): Int {
+    if (bytes.size < UTF8_BOM.size) {
+      return 0
+    }
+    for (idx in UTF8_BOM.indices) {
+      if (bytes[idx] != UTF8_BOM[idx]) {
+        return 0
+      }
+    }
+    return UTF8_BOM.size
   }
 
   private fun generateUUID(): String =

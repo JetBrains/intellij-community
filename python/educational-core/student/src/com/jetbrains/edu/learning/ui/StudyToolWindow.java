@@ -81,9 +81,6 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
         myContentPanel.add(entry.getKey(), entry.getValue());
       }
     }
-    else {
-      LOG.warn("No StudyPluginConfigurator is provided for the plugin");
-    }
   }
 
   public void dispose() {

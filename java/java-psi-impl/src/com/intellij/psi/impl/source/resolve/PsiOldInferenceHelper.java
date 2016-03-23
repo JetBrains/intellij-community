@@ -755,24 +755,28 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       }
     }
 
+    PsiType[] superTypes = typeParameter.getSuperTypes();
+    final PsiType[] types = PsiType.createArray(superTypes.length);
+    for (int i = 0; i < superTypes.length; i++) {
+      PsiType superType = substitutor.substitute(superTypes[i]);
+      if (superType instanceof PsiClassType && ((PsiClassType)superType).isRaw()) {
+        superType = TypeConversionUtil.erasure(superType);
+      }
+      if (superType == null) superType = PsiType.getJavaLangObject(myManager, scope);
+      types[i] = superType;
+    }
+
     if (constraint == null) {
       if (methodCall instanceof PsiCallExpression) {
-        PsiType[] superTypes = typeParameter.getSuperTypes();
-        if (superTypes.length == 0) return null;
-        final PsiType[] types = PsiType.createArray(superTypes.length);
-        for (int i = 0; i < superTypes.length; i++) {
-          PsiType superType = substitutor.substitute(superTypes[i]);
-          if (superType instanceof PsiClassType && ((PsiClassType)superType).isRaw()) {
-            superType = TypeConversionUtil.erasure(superType);
-          }
-          if (superType == null) superType = PsiType.getJavaLangObject(myManager, scope);
-          types[i] = superType;
-        }
+        if (types.length == 0) return null;
         return policy.getInferredTypeWithNoConstraint(myManager, PsiIntersectionType.createIntersection(types));
       }
       return null;
     }
     PsiType guess = constraint.getFirst();
+    if (guess != null && types.length > 0) {
+      guess = GenericsUtil.getGreatestLowerBound(guess, PsiIntersectionType.createIntersection(types));
+    }
     guess = policy.adjustInferredType(myManager, guess, constraint.getSecond());
 
     //The following code is the result of deep thought, do not shit it out before discussing with [ven]

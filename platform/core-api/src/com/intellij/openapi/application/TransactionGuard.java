@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,10 +47,10 @@ import org.jetbrains.annotations.NotNull;
  *
  * Q: How large/long should transactions be?
  * A: As short as possible, but not shorter. Take them for minimal period of time that you need the model you're working with
- * to be consistent. If your action doesn't require any user interaction, the whole action can be wrapped inside
- * a transaction (see {@link WrapInTransaction}). If the action only displays a dialog (e.g. Settings) and does nothing else,
- * it probably shouldn't take a transaction for all the dialog showing time.
- * Actions inside the dialog should care of transactions themselves.<p/>
+ * to be consistent. If your action doesn't display any modal progresses or dialogs, transaction can be omitted.
+ * If the action only displays a dialog (e.g. Settings) and does nothing else, and that dialog is ready to possible PSI/VFS events,
+ * there should also be no transaction for all the dialog showing time. Actions inside the dialog should care of transactions themselves.
+ * If the dialog isn't prepared to any model changes from outside, a transaction around showing the dialog is advised.<p/>
  *
  * The most complicated case is when the action both displays modal dialogs and performs modifications. The only case when those dialogs
  * should be shown under a transaction is when the mere reason of their showing lies somewhere in PSI/VFS/project model, and they are not
@@ -61,7 +60,8 @@ import org.jetbrains.annotations.NotNull;
  * as the following meaningful modifications performed by the action. Most refactoring dialogs are similar and refactoring actions should
  * take transactions for the whole refactoring process, with all the dialogs inside.<p/>
  *
- * Having said all that, it's still advisable that the transactions be as short as possible and preferably exclude any modal dialogs
+ * But note that some background processes may need occasional transactions, and will therefore be paused until the dialog is closed.
+ * Therefore, it's still advisable that the transactions be as short as possible and preferably exclude any modal dialogs
  * for which transaction-ness is not critical. So a better overall strategy would be to either make the dialogs non-modal,
  * or at least make them and the code that shows them prepared for possible model changes while the dialog is shown.<p/>
  *
@@ -69,15 +69,9 @@ import org.jetbrains.annotations.NotNull;
  * project: they'd be blocked by the running transaction.
  *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
- * A: Add a transaction somewhere into the call stack, to the outermost callee where having read/write model consistency is needed.
- * If it's a user action, transaction should be synchronous (see {@link #startSynchronousTransaction(TransactionKind)}. For AnAction
- * inheritors, {@link WrapInTransaction} annotation might be handy. Note that not all actions need to be wrapped into transactions, only
- * those that require the model to be consistent. For example, actions that display settings dialogs or VCS actions are most likely exempt.
+ * A: You're likely inside an "invokeLater"-like call. Please consider replacing it with {@link #submitTransaction(Runnable)} or
+ * {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
  * <p/>
- *
- * If the exception occurs not inside a user action, it's probably from some kind of "invokeLater".
- * Then, replace "invokeLater" with {@link #submitTransaction(Runnable)} or
- * {@link #submitMergeableTransaction(TransactionKind, Runnable)} call.<p/>
  *
  * Q: I've got <b>"Nested transactions are not allowed"</b> exception, what do I do?<br/>
  * A: First, identify the place in the stack where the outer transaction is started (the exception attachment should contain it).
@@ -195,13 +189,5 @@ public abstract class TransactionGuard {
    * @param errorMessage the message that will be logged if current transaction status differs from the expected one
    */
   public abstract void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage);
-
-  /**
-   * Executes the given code and marks it as a user activity, to allow write actions to be run without requiring transactions.
-   * Please note that only direct keyboard/mouse event processing can be wrapped in such calls. If you wish to invoke some actionPerformed,
-   * please consider using {@code ActionManager.tryToExecute()} instead, or ensure in some other way that the action is enabled
-   * and can be invoked in the current modality state.
-   */
-  public abstract <T extends Throwable> void performUserActivity(ThrowableRunnable<T> activity) throws T;
 
 }

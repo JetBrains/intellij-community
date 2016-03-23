@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.inspections.GuavaConversionSettings;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.IncorrectOperationException;
@@ -98,20 +99,28 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
       return findConversionForMethod(from, to, method, methodName, context, labeler);
     } else if (context instanceof PsiNewExpression) {
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)context).getAnonymousClass();
-      if (anonymousClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, false)) {
-        return new TypeConversionDescriptorBase() {
-          @Override
-          public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
-            return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, false, true);
-          };
-        };
-      }
+      return anonymousClass == null ? null : findConversionForAnonymous(anonymousClass, labeler.getSettings(GuavaConversionSettings.class));
     }
     else if (context instanceof PsiReferenceExpression) {
       final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
       if (resolvedElement instanceof PsiVariable) {
         return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  protected TypeConversionDescriptorBase findConversionForAnonymous(@NotNull PsiAnonymousClass anonymousClass,
+                                                                    @Nullable GuavaConversionSettings settings) {
+    final Set<String> ignoredAnnotations = settings != null ? settings.getIgnoredAnnotations() : Collections.emptySet();
+    if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, false, ignoredAnnotations)) {
+      return new TypeConversionDescriptorBase() {
+        @Override
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+          return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, false, true);
+        }
+      };
     }
     return null;
   }

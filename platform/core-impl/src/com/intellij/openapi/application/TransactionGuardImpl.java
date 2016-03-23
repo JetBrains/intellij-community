@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -204,8 +203,18 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  @Override
-  public <T extends Throwable> void performUserActivity(ThrowableRunnable<T> activity) throws T {
+  /**
+   * An absolutely guru method!<p/>
+   *
+   * Executes the given code and marks it as a user activity, to allow write actions to be run without requiring transactions.
+   * This is only to be called from UI infrastructure, during InputEvent processing and wrap the point where the control
+   * goes to custom input event handlers for the first time.<p/>
+   *
+   * If you wish to invoke some actionPerformed,
+   * please consider using {@code ActionManager.tryToExecute()} instead, or ensure in some other way that the action is enabled
+   * and can be invoked in the current modality state.
+   */
+  public <T extends Throwable> void performUserActivity(Runnable activity) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     AccessToken token = startActivity(true);
     try {

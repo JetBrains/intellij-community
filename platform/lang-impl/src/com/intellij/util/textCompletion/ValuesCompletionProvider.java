@@ -28,6 +28,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Completion provider for a fixed collection of elements. See {@link ValuesCompletionProviderDumbAware} for dumb aware version.
+ * <p>
+ * Completion elements and their presentation (represented with {@link TextCompletionValueDescriptor}) are provided in constructor.
+ * Use {@link TextFieldWithCompletion} to create a text field component with completion.
+ * <p>
+ * Completion is done via {@link com.intellij.util.TextFieldCompletionProvider}.
+ *
+ * @param <T> completion element type.
+ */
 public class ValuesCompletionProvider<T> implements TextCompletionProvider {
   @NotNull protected final TextCompletionValueDescriptor<T> myDescriptor;
   @NotNull private final List<Character> mySeparators;

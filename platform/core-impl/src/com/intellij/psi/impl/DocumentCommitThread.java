@@ -73,6 +73,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -669,14 +670,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   }
 
   @TestOnly
-  public void waitForAllCommits() throws ExecutionException, InterruptedException {
+  public void waitForAllCommits() throws ExecutionException, InterruptedException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
     ((BoundedTaskExecutor)executor).waitAllTasksExecuted(100, TimeUnit.SECONDS);
     UIUtil.dispatchAllInvocationEvents();
   }
-
 
   private static class CommitTask {
     static final Key<Object> CANCEL_REASON = Key.create("CANCEL_REASON");

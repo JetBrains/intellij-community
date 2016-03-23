@@ -18,13 +18,11 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
@@ -61,12 +59,6 @@ public abstract class PriorityIntentionActionWrapper implements IntentionAction 
   @Override
   public boolean startInWriteAction() {
     return action.startInWriteAction();
-  }
-
-  @Nullable
-  @Override
-  public TransactionKind getTransactionKind() {
-    return action.getTransactionKind();
   }
 
   private static class HighPriorityIntentionActionWrapper extends PriorityIntentionActionWrapper implements HighPriorityAction {

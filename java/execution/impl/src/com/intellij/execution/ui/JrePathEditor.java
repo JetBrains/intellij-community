@@ -103,7 +103,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
         myComboBoxModel.add(new CustomJreItem(homePath));
       }
     }
-    ComboBox comboBox = new ComboBox(myComboBoxModel);
+    ComboBox comboBox = new ComboBox(myComboBoxModel, 100);
     comboBox.setEditable(true);
     comboBox.setRenderer(new ColoredListCellRendererWrapper<JreComboBoxItem>() {
       @Override

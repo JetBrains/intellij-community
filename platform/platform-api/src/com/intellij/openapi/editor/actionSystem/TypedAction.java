@@ -17,10 +17,7 @@ package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
@@ -139,31 +136,29 @@ public class TypedAction {
   private class DefaultRawHandler implements TypedActionHandler {
     @Override
     public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
-      try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
-        CommandProcessor.getInstance().executeCommand(
-          CommonDataKeys.PROJECT.getData(dataContext), () -> {
-            if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
-              return;
-            }
-            ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(), editor.getProject()) {
-              @Override
-              public void run() {
-                Document doc = editor.getDocument();
-                doc.startGuardedBlockChecking();
-                try {
-                  getHandler().execute(editor, charTyped, dataContext);
-                }
-                catch (ReadOnlyFragmentModificationException e) {
-                  EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-                }
-                finally {
-                  doc.stopGuardedBlockChecking();
-                }
+      CommandProcessor.getInstance().executeCommand(
+        CommonDataKeys.PROJECT.getData(dataContext), () -> {
+          if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
+            return;
+          }
+          ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(), editor.getProject()) {
+            @Override
+            public void run() {
+              Document doc = editor.getDocument();
+              doc.startGuardedBlockChecking();
+              try {
+                getHandler().execute(editor, charTyped, dataContext);
               }
-            });
-          },
-          "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
-      }
+              catch (ReadOnlyFragmentModificationException e) {
+                EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+              }
+              finally {
+                doc.stopGuardedBlockChecking();
+              }
+            }
+          });
+        },
+        "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
     }
   }
 }

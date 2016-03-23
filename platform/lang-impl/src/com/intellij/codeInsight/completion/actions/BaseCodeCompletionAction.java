@@ -22,8 +22,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionKind;
-import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -35,7 +33,6 @@ import java.awt.event.InputEvent;
 /**
  * @author peter
  */
-@WrapInTransaction(TransactionKind.Common.TEXT_EDITING)
 public abstract class BaseCodeCompletionAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
 
   protected BaseCodeCompletionAction() {

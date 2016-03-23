@@ -1296,7 +1296,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     final Presentation presentation = action.getTemplatePresentation().clone();
 
     IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
-      () -> TransactionGuard.getInstance().performUserActivity(() -> {
+      () -> ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
         final DataContext context = getContextBy(contextComponent);
 
         AnActionEvent event = new AnActionEvent(

@@ -70,6 +70,7 @@ import java.util.Set;
  */
 public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
+  private static TransactionGuardImpl ourTransactionGuard;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -354,7 +355,10 @@ public class IdeEventQueue extends EventQueue {
   private static boolean appIsLoaded() {
     if (ourAppIsLoaded) return true;
     boolean loaded = IdeaApplication.isLoaded();
-    if (loaded) ourAppIsLoaded = true;
+    if (loaded) {
+      ourAppIsLoaded = true;
+      ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+    }
     return loaded;
   }
 
@@ -383,16 +387,14 @@ public class IdeEventQueue extends EventQueue {
     }
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
-    AccessToken token = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(myIsInInputEvent);
 
-    try {
+    try (AccessToken ignored = ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(myIsInInputEvent)) {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {
       processException(t);
     }
     finally {
-      token.finish();
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
 

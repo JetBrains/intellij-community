@@ -176,6 +176,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myUseKeyPair = useKeyPair;
   }
 
+  @NotNull
   public String getSerializedUserName() {
     if (myAnonymous || myUserName == null) return "";
     return myUserName;
@@ -268,7 +269,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   public void save(Element rootElement) {
     rootElement.setAttribute(HOST, StringUtil.notNullize(getHost()));
-    rootElement.setAttribute(PORT, getLiteralPort());
+    rootElement.setAttribute(PORT, StringUtil.notNullize(getLiteralPort()));
     rootElement.setAttribute(ANONYMOUS, Boolean.toString(isAnonymous()));
     rootElement.setAttribute(USERNAME, getSerializedUserName());
     rootElement.setAttribute(PASSWORD, getSerializedPassword());

@@ -28,7 +28,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -46,7 +45,7 @@ import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +54,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * @author db
@@ -296,6 +293,11 @@ public class TypeMigrationLabeler {
     return new MigrationProducer(conversions);
   }
 
+  @Nullable
+  public <T> T getSettings(Class<T> aClass) {
+    return myRules.getConversionSettings(aClass);
+  }
+
   class MigrationProducer {
     private final Map<UsageInfo, Object> myRemainConversions;
 
@@ -352,10 +354,6 @@ public class TypeMigrationLabeler {
 
     Object getConversion(UsageInfo info) {
       return myRemainConversions.remove(info);
-    }
-
-    boolean allOfConversionsUsed() {
-      return myRemainConversions.isEmpty();
     }
   }
 
@@ -619,7 +617,8 @@ public class TypeMigrationLabeler {
           m = overridenUsageInfo;
           final String newMethodName = isMethodNameCanBeChanged(method);
           if (newMethodName != null) {
-            myRules.getMigrateGetterNameSetting().askUserIfNeed(overridenUsageInfo, newMethodName, myTypeEvaluator.getType(myCurrentRoot));
+            final MigrateGetterNameSetting migrateGetterNameSetting = myRules.getConversionSettings(MigrateGetterNameSetting.class);
+            migrateGetterNameSetting.askUserIfNeed(overridenUsageInfo, newMethodName, myTypeEvaluator.getType(myCurrentRoot));
           }
         }
         else {

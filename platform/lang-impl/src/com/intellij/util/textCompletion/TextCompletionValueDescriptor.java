@@ -20,6 +20,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
+/**
+ * Completion value descriptor for {@link ValuesCompletionProvider}.
+ * Determines how to compare completion elements and how to present them.
+ * <p>
+ * Use {@link DefaultTextCompletionValueDescriptor} as default implementation.
+ *
+ * @param <T> completion element type.
+ */
 public interface TextCompletionValueDescriptor<T> extends Comparator<T> {
   @NotNull
   LookupElementBuilder createLookupBuilder(@NotNull T item);

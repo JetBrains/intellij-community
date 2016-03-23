@@ -178,6 +178,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         else if (line.startsWith("Sticky:")) {
           notification.setSticky("true".equals(StringUtil.substringAfter(line, ":")));
         }
+        else if (line.startsWith("Listener:")) {
+          notification.setAddListener("true".equals(StringUtil.substringAfter(line, ":")));
+        }
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -198,6 +201,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     private List<String> myContent;
     private List<String> myActions;
     private boolean mySticky;
+    private boolean myAddListener;
 
     private Notification myNotification;
 
@@ -208,15 +212,16 @@ public class NotificationTestAction extends AnAction implements DumbAware {
           icon = IconLoader.findIcon(myGroupId);
         }
         if ("!!!St!!!".equals(myTitle)) {
-          return myNotification = new StatisticsNotification(StatisticsNotificationManager.GROUP_DISPLAY_ID, this).setIcon(icon);
+          return myNotification = new StatisticsNotification(StatisticsNotificationManager.GROUP_DISPLAY_ID, getListener()).setIcon(icon);
         }
         String displayId = mySticky ? TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
         String content = myContent == null ? "" : StringUtil.join(myContent, "\n");
         if (icon == null) {
-          myNotification = new Notification(displayId, StringUtil.notNullize(myTitle), content, NotificationType.INFORMATION, this);
+          myNotification =
+            new Notification(displayId, StringUtil.notNullize(myTitle), content, NotificationType.INFORMATION, getListener());
         }
         else {
-          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, NotificationType.INFORMATION, this);
+          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, NotificationType.INFORMATION, getListener());
           if (myActions != null) {
             for (String action : myActions) {
               myNotification.addAction(new MyAnAction(action));
@@ -225,6 +230,11 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         }
       }
       return myNotification;
+    }
+
+    @Nullable
+    private NotificationListener getListener() {
+      return myAddListener ? this : null;
     }
 
     public void setGroupId(@Nullable String groupId) {
@@ -237,6 +247,10 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     public void setSubtitle(@Nullable String subtitle) {
       mySubtitle = subtitle;
+    }
+
+    public void setAddListener(boolean addListener) {
+      myAddListener = addListener;
     }
 
     public void addContent(@NotNull String content) {

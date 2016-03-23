@@ -114,6 +114,7 @@ public class GroovycRunner {
 
     ClassLoader loader = optimize ? buildMainLoader(argPath) : GroovycRunner.class.getClassLoader();
     if (loader == null) {
+      System.err.println("Cannot find class loader for groovyc; optimized=" + optimize + "; " + GroovycRunner.class.getClassLoader());
       return 1;
     }
     if (optimize) {

@@ -212,6 +212,16 @@ public class NotificationsManagerImpl extends NotificationsManager {
           msg += notification.getContent();
         }
 
+        if (newEnabled()) {
+          Window window = findWindowForBalloon(project);
+          if (window instanceof IdeFrame) {
+            BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
+            if (layout != null) {
+              ((BalloonLayoutImpl)layout).remove(notification);
+            }
+          }
+        }
+
         //noinspection SSBasedInspection
         ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, msg, notification.getIcon(), listener);
     }
@@ -225,19 +235,35 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     Window window = findWindowForBalloon(project);
     if (window instanceof IdeFrame) {
+      BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
+      if (layout == null) return null;
+
       final ProjectManager projectManager = ProjectManager.getInstance();
       final boolean noProjects = projectManager.getOpenProjects().length == 0;
       final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
       Ref<Object> layoutDataRef = newEnabled() ? new Ref<Object>() : null;
-      final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef, project != null ? project : ApplicationManager.getApplication());
+      if (layoutDataRef != null) {
+        if (project == null || project.isDefault()) {
+          BalloonLayoutData layoutData = new BalloonLayoutData();
+          layoutData.groupId = "";
+          layoutDataRef.set(layoutData);
+        }
+        else {
+          List<BalloonLayoutData.MergeInfo> mergeData = ((BalloonLayoutImpl)layout).preMerge(notification);
+          if (mergeData != null) {
+            BalloonLayoutData layoutData = new BalloonLayoutData();
+            layoutData.mergeData = mergeData;
+            layoutDataRef.set(layoutData);
+          }
+        }
+      }
+      final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef,
+                                            project != null ? project : ApplicationManager.getApplication());
 
       if (notification.isExpired()) {
         return null;
       }
 
-      BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
-
-      if (layout == null) return null;
       layout.add(balloon, layoutDataRef == null ? null : layoutDataRef.get());
       if (layoutDataRef != null && layoutDataRef.get() instanceof BalloonLayoutData) {
         ((BalloonLayoutData)layoutDataRef.get()).project = project;
@@ -464,8 +490,19 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                           @NotNull Ref<Object> layoutDataRef,
                                           @NotNull Disposable parentDisposable) {
     final BalloonLayoutData layoutData = layoutDataRef.isNull() ? new BalloonLayoutData() : (BalloonLayoutData)layoutDataRef.get();
+    if (layoutData.groupId == null) {
+      if (NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
+        layoutData.groupId = notification.getGroupId();
+        layoutData.id = notification.id;
+        layoutData.status = EventLog.formatForLog(notification, "").status;
+      }
+    }
+    else {
+      layoutData.groupId = null;
+    }
     layoutDataRef.set(layoutData);
 
+    boolean actions = !notification.getActions().isEmpty() || layoutData.mergeData != null;
     boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
 
     Color foregroundR = Gray._0;
@@ -538,21 +575,20 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
     });
 
-    List<AnAction> actions = notification.getActions();
     LinkLabel<Void> expandAction = null;
 
     int lines = 3;
     if (notification.isTitle()) {
       lines--;
     }
-    if (!actions.isEmpty()) {
+    if (actions) {
       lines--;
     }
 
     layoutData.fullHeight = text.getPreferredSize().height;
     layoutData.twoLineHeight = calculateContentHeight(lines);
     layoutData.maxScrollHeight = Math.min(layoutData.fullHeight, calculateContentHeight(10));
-    layoutData.configuration = BalloonLayoutConfiguration.create(notification, layoutData);
+    layoutData.configuration = BalloonLayoutConfiguration.create(notification, layoutData, actions);
 
     if (!showFullContent && layoutData.maxScrollHeight != layoutData.fullHeight) {
       pane.setViewport(new GradientViewport(text, JBUI.insets(10, 0), true) {
@@ -691,11 +727,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     JPanel buttons = createButtons(notification, content, listener);
     if (buttons != null) {
+      layoutData.groupId = null;
       buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
     }
 
-    if (buttons == null && !actions.isEmpty()) {
-      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap);
+    if (buttons == null && actions) {
+      createActionPanel(notification, layoutData.mergeData, centerPanel, layoutData.configuration.actionGap);
     }
 
     text.setSize(text.getPreferredSize());
@@ -738,7 +775,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     return balloon;
   }
 
-  private static void createActionPanel(@NotNull final Notification notification, @NotNull JPanel centerPanel, int gap) {
+  private static void createActionPanel(@NotNull final Notification notification,
+                                        @Nullable final List<BalloonLayoutData.MergeInfo> mergeData,
+                                        @NotNull JPanel centerPanel,
+                                        int gap) {
     JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER));
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
@@ -757,8 +797,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
               group.add(((LinkLabel<AnAction>)component).getLinkData());
             }
           }
-          ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-          menu.getComponent().show(link, JBUI.scale(-10), link.getHeight() + JBUI.scale(2));
+          showPopup(link, group);
         }
       });
       action.setVisible(false);
@@ -775,6 +814,45 @@ public class NotificationsManagerImpl extends NotificationsManager {
             Notification.fire(notification, action);
           }
         }, action));
+    }
+
+    if (mergeData != null) {
+      final int size = mergeData.size();
+      if (size == 1) {
+        actionPanel.add(
+          HorizontalLayout.RIGHT,
+          new LinkLabel<BalloonLayoutData.MergeInfo>("History", null, new LinkListener<BalloonLayoutData.MergeInfo>() {
+            @Override
+            public void linkSelected(LinkLabel aSource, BalloonLayoutData.MergeInfo info) {
+              EventLog.showNotification(info.groupId, info.id);
+            }
+          }, mergeData.get(0)) {
+            @Override
+            protected String getStatusBarText() {
+              return getLinkData().status;
+            }
+          });
+      }
+      else {
+        actionPanel.add(
+          HorizontalLayout.RIGHT,
+          new DropDownAction("History", new LinkListener<Void>() {
+            @Override
+            public void linkSelected(LinkLabel link, Void aLinkData) {
+              DefaultActionGroup group = new DefaultActionGroup();
+              for (int i = 0; i < size; i++) {
+                BalloonLayoutData.MergeInfo info = mergeData.get(i);
+                group.add(new AnAction(String.valueOf(i + 1), info.status, null) {
+                  @Override
+                  public void actionPerformed(AnActionEvent e) {
+                    EventLog.showNotification(info.groupId, info.id);
+                  }
+                });
+              }
+              showPopup(link, group);
+            }
+          }));
+      }
     }
   }
 
@@ -841,6 +919,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
       bounds.width += 8;
       return bounds;
     }
+  }
+
+  private static void showPopup(@NotNull LinkLabel link, @NotNull DefaultActionGroup group) {
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    menu.getComponent().show(link, JBUI.scale(-10), link.getHeight() + JBUI.scale(2));
   }
 
   private static class MyNotificationListener extends NotificationsAdapter {
@@ -1036,6 +1119,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
         width -= myLayoutData.configuration.actionGap + expandWidth;
 
         int components = myActionPanel.getComponentCount();
+        if (myActionPanel.getComponent(components - 1) instanceof DropDownAction) {
+          components--;
+        }
         if (components > 2) {
           myActionPanel.getComponent(0).setVisible(false);
           for (int i = 1; i < components; i++) {
