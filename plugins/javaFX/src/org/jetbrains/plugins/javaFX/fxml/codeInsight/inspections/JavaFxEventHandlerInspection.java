@@ -52,18 +52,8 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
         final PsiElement valueParent = xmlAttributeValue.getParent();
         if (!(valueParent instanceof XmlAttribute)) return;
         final XmlAttribute attribute = (XmlAttribute)valueParent;
-        final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(attribute.getContainingFile());
-        if (controllerClass == null) return;
 
-        final String valueText = attribute.getValue();
-        if (valueText == null || !valueText.startsWith("#")) return;
-        final String eventHandlerMethodName = valueText.substring(1);
-
-        List<PsiMethod> eventHandlerMethods =
-          Arrays.stream(controllerClass.findMethodsByName(eventHandlerMethodName, true))
-            .filter(method -> !method.hasModifierProperty(PsiModifier.STATIC) && JavaFxPsiUtil.isVisibleInFxml(method))
-            .filter(JavaFxEventHandlerInspection::hasEventArgument)
-            .collect(Collectors.toList());
+        final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
         if (eventHandlerMethods.size() == 0) return;
         if (eventHandlerMethods.size() != 1) {
           holder.registerProblem(xmlAttributeValue, "Ambiguous event handler name: more than one matching method found");
@@ -86,7 +76,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
             final PsiType actualType = parameters[0].getType();
             if (actualType instanceof PsiClassType) {
               if (!actualType.isAssignableFrom(declaredType)) {
-                final LocalQuickFix quickFix = new ChangeParameterTypeQuickFix(method, declaredType);
+                final LocalQuickFix quickFix = new ChangeParameterTypeQuickFix(attribute, method, declaredType);
 
                 final PsiClassType actualRawType = ((PsiClassType)actualType).rawType();
                 final PsiClassType expectedRawType = declaredType.rawType();
@@ -110,6 +100,21 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     };
   }
 
+  @NotNull
+  private static List<PsiMethod> getEventHandlerMethods(@NotNull XmlAttribute attribute) {
+    final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(attribute.getContainingFile());
+    if (controllerClass == null) return Collections.emptyList();
+
+    final String valueText = attribute.getValue();
+    if (valueText == null || !valueText.startsWith("#")) return Collections.emptyList();
+    final String eventHandlerMethodName = valueText.substring(1);
+
+    return Arrays.stream(controllerClass.findMethodsByName(eventHandlerMethodName, true))
+      .filter(method -> !method.hasModifierProperty(PsiModifier.STATIC) && JavaFxPsiUtil.isVisibleInFxml(method))
+      .filter(JavaFxEventHandlerInspection::hasEventArgument)
+      .collect(Collectors.toList());
+  }
+
   private static boolean hasEventArgument(@NotNull PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     return parameters.length == 0 ||
@@ -123,15 +128,13 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   }
 
   private static class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
-    final PsiType mySuggestedParameterType;
     final String myText;
 
-    public ChangeParameterTypeQuickFix(@NotNull PsiMethod method,
+    public ChangeParameterTypeQuickFix(@NotNull XmlAttribute attribute, @NotNull PsiMethod method,
                                        @NotNull PsiType suggestedParameterType) {
-      super(method);
-      mySuggestedParameterType = suggestedParameterType;
+      super(attribute);
       myText = "Change parameter type of '" + JavaHighlightUtil.formatMethod(method) +
-               "' to " + mySuggestedParameterType.getPresentableText();
+               "' to " + suggestedParameterType.getPresentableText();
     }
 
     @Override
@@ -157,19 +160,25 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
                                @NotNull PsiFile file,
                                @NotNull PsiElement startElement,
                                @NotNull PsiElement endElement) {
-      return startElement instanceof PsiMethod &&
-             mySuggestedParameterType.isValid();
+      return startElement instanceof XmlAttribute;
     }
 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      if (!(startElement instanceof PsiMethod)) return;
-      final PsiMethod method = (PsiMethod)startElement;
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      final String parameterName = parameters.length >= 1 ? parameters[0].getName() : "e";
+      if (!(startElement instanceof XmlAttribute)) return;
+      final XmlAttribute attribute = (XmlAttribute)startElement;
 
-      final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(0, parameterName, mySuggestedParameterType);
+      final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
+      if (eventHandlerMethods.size() != 1) return;
+      final PsiMethod method = eventHandlerMethods.get(0);
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length != 1) return;
+      final String parameterName = parameters[0].getName();
+      final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
+      if (declaredType == null) return;
+
+      final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(0, parameterName, declaredType);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         final ChangeSignatureProcessor processor =
           new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(),
