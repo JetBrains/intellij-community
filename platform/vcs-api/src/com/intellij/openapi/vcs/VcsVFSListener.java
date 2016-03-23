@@ -21,6 +21,7 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
