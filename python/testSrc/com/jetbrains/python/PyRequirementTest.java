@@ -19,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -1047,11 +1049,11 @@ public class PyRequirementTest extends PyTestCase {
   public void testRequirementWithVersion() {
     assertEquals(new PyRequirement("Django", "1.3.1"), PyRequirement.fromString("Django==1.3.1"));
 
-    assertEquals(new PyRequirement("Django", Collections.singletonList(new PyRequirement.VersionSpec(PyRequirement.Relation.LT, "1.4"))),
+    assertEquals(new PyRequirement("Django", Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.LT, "1.4"))),
                  PyRequirement.fromString("   Django       <   1.4   "));
 
-    assertEquals(new PyRequirement("Django", Arrays.asList(new PyRequirement.VersionSpec(PyRequirement.Relation.LT, "1.4"),
-                                                           new PyRequirement.VersionSpec(PyRequirement.Relation.GTE, "1.3.1"))),
+    assertEquals(new PyRequirement("Django", Arrays.asList(new PyRequirementVersionSpec(PyRequirementRelation.LT, "1.4"),
+                                                           new PyRequirementVersionSpec(PyRequirementRelation.GTE, "1.3.1"))),
                  PyRequirement.fromString("   Django       <   1.4 ,     >= 1.3.1   "));
   }
 

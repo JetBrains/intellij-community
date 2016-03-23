@@ -23,6 +23,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.webcore.packaging.PackageVersionComparator;
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,111 +45,20 @@ public class PyRequirement {
   private static final Pattern RECURSIVE_REQUIREMENT = Pattern.compile("^-r\\s*(.*)");
   private static final Pattern VCS_PATH = Pattern.compile(".*/([^/]+)/?");
 
-  public enum Relation {
-    LT("<"),
-    LTE("<="),
-    GT(">"),
-    GTE(">="),
-    EQ("=="),
-    NE("!=");
-
-    @NotNull private final String myValue;
-
-    Relation(@NotNull String value) {
-      myValue = value;
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-      return myValue;
-    }
-
-    @Nullable
-    public static Relation fromString(@NotNull String value) {
-      for (Relation relation : Relation.values()) {
-        if (relation.myValue.equals(value)) {
-          return relation;
-        }
-      }
-      return null;
-    }
-
-    public boolean isSuccessful(int comparisonResult) {
-      switch (this) {
-        case LT:
-          return comparisonResult < 0;
-        case LTE:
-          return comparisonResult <= 0;
-        case GT:
-          return comparisonResult > 0;
-        case GTE:
-          return comparisonResult >= 0;
-        case EQ:
-          return comparisonResult == 0;
-        case NE:
-          return comparisonResult != 0;
-      }
-      return false;
-    }
-  }
-
-  public static class VersionSpec {
-    @NotNull private final Relation myRelation;
-    @NotNull private final String myVersion;
-
-    public VersionSpec(@NotNull Relation relation, @NotNull String version) {
-      myRelation = relation;
-      myVersion = version;
-    }
-
-    @Override
-    public String toString() {
-      return myRelation + myVersion;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      VersionSpec spec = (VersionSpec)o;
-      if (myRelation != spec.myRelation) return false;
-      if (!myVersion.equals(spec.myVersion)) return false;
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myRelation.hashCode();
-      result = 31 * result + myVersion.hashCode();
-      return result;
-    }
-
-    @NotNull
-    public Relation getRelation() {
-      return myRelation;
-    }
-
-    @NotNull
-    public String getVersion() {
-      return myVersion;
-    }
-  }
-
   @NotNull private final String myName;
-  @NotNull private final List<VersionSpec> myVersionSpecs;
+  @NotNull private final List<PyRequirementVersionSpec> myVersionSpecs;
   @Nullable private final String myURL;
   private final boolean myEditable;
 
   public PyRequirement(@NotNull String name) {
-    this(name, Collections.<VersionSpec>emptyList());
+    this(name, Collections.<PyRequirementVersionSpec>emptyList());
   }
 
   public PyRequirement(@NotNull String name, @NotNull String version) {
-    this(name, Collections.singletonList(new VersionSpec(Relation.EQ, version)));
+    this(name, Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.EQ, version)));
   }
 
-  public PyRequirement(@NotNull String name, @NotNull List<VersionSpec> versionSpecs) {
+  public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs) {
     myName = name;
     myVersionSpecs = versionSpecs;
     myURL = null;
@@ -157,7 +68,7 @@ public class PyRequirement {
   public PyRequirement(@NotNull String name, @Nullable String version, @NotNull String url, boolean editable) {
     myName = name;
     if (version != null) {
-      myVersionSpecs = Collections.singletonList(new VersionSpec(Relation.EQ, version));
+      myVersionSpecs = Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.EQ, version));
     }
     else {
       myVersionSpecs = Collections.emptyList();
@@ -170,7 +81,12 @@ public class PyRequirement {
   @Override
   public String toString() {
     return myName + StringUtil.join(myVersionSpecs,
-                                    spec -> spec.toString(),
+                                    new Function<PyRequirementVersionSpec, String>() {
+                                      @Override
+                                      public String fun(PyRequirementVersionSpec spec) {
+                                        return spec.toString();
+                                      }
+                                    },
                                     ","
     );
   }
@@ -189,8 +105,8 @@ public class PyRequirement {
         results.add(urlAndName);
       }
       else {
-        final VersionSpec versionSpec = myVersionSpecs.get(0);
-        assert versionSpec.getRelation() == Relation.EQ;
+        final PyRequirementVersionSpec versionSpec = myVersionSpecs.get(0);
+        assert versionSpec.getRelation() == PyRequirementRelation.EQ;
         results.add(urlAndName + "-" + versionSpec.getVersion());
       }
       return results;
@@ -229,9 +145,9 @@ public class PyRequirement {
   public PyPackage match(@NotNull List<PyPackage> packages) {
     for (PyPackage pkg : packages) {
       if (normalizeName(myName).equalsIgnoreCase(pkg.getName())) {
-        for (VersionSpec spec : myVersionSpecs) {
+        for (PyRequirementVersionSpec spec : myVersionSpecs) {
           final int cmp = PackageVersionComparator.VERSION_COMPARATOR.compare(pkg.getVersion(), spec.getVersion());
-          final Relation relation = spec.getRelation();
+          final PyRequirementRelation relation = spec.getRelation();
           if (!relation.isSuccessful(cmp)) {
             return null;
           }
@@ -272,17 +188,17 @@ public class PyRequirement {
     }
     final String name = nameMatcher.group(1);
     final String rest = nameMatcher.group(3);
-    final List<VersionSpec> versionSpecs = new ArrayList<VersionSpec>();
+    final List<PyRequirementVersionSpec> versionSpecs = new ArrayList<PyRequirementVersionSpec>();
     if (!rest.trim().isEmpty()) {
       final Matcher versionSpecMatcher = VERSION_SPEC.matcher(rest);
       while (versionSpecMatcher.find()) {
         final String rel = versionSpecMatcher.group(1);
         final String version = versionSpecMatcher.group(2);
-        final Relation relation = Relation.fromString(rel);
+        final PyRequirementRelation relation = PyRequirementRelation.fromString(rel);
         if (relation == null) {
           return null;
         }
-        versionSpecs.add(new VersionSpec(relation, version));
+        versionSpecs.add(new PyRequirementVersionSpec(relation, version));
       }
     }
     return new PyRequirement(name, versionSpecs);
