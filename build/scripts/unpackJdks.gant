@@ -90,6 +90,11 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
         }
       }
     }
+    if (new File("${destDir}/jre/jre").exists()){
+      new File("${destDir}/jre").listFiles().each { file ->
+        ant.move(file: file.absolutePath, todir: destDir)
+      }
+    }
   }
   else {
     projectBuilder.error("Cannot unpack JDK: unknown extension of file '${jdkFile.name}'")
