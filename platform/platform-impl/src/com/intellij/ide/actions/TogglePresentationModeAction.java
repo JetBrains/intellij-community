@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,7 +148,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
           }
         }
       }
-      float scaleFactor =  settings.PRESENTATION_MODE_FONT_SIZE / 12f;
+      float scaleFactor = settings.PRESENTATION_MODE_FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE;
       ourSavedScaleFactor = JBUI.scale(1f);
       JBUI.setScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {

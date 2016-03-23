@@ -323,6 +323,8 @@ public class UIUtil {
 
   private static volatile Pair<String, Integer> ourSystemFontData = null;
 
+  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
+
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
   private static final Ref<Boolean> ourRetina = Ref.create(SystemInfo.isMac ? null : false);
@@ -2542,9 +2544,16 @@ public class UIUtil {
     }
   }
 
+  public static String getSystemLookAndFeelClassName() {
+    // Force GTK LaF on Linux to let it retrieve system font settings
+    // with proper font scale based on Xft.dpi
+    return SystemInfo.isLinux ? "com.sun.java.swing.plaf.gtk.GTKLookAndFeel" :
+           UIManager.getSystemLookAndFeelClassName();
+  }
+
   public static void initDefaultLAF() {
     try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
       initSystemFontData();
     }
     catch (Exception ignore) {}
@@ -2553,16 +2562,36 @@ public class UIUtil {
   public static void initSystemFontData() {
     if (ourSystemFontData != null) return;
 
+    // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
-    if (SystemInfo.isWindows) {
+
+    Float forcedScale = null;
+    if (Registry.is("ide.ui.scale.override")) {
+      forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
+    }
+    else if (SystemInfo.isLinux && !SystemInfo.isJetbrainsJvm) {
+      // With Oracle JDK: derive scale from X server DPI
+      float scale = getScreenScale();
+      if (scale > 1f) {
+        forcedScale = Float.valueOf(scale);
+      }
+      // Or otherwise leave the detected font. It's undetermined if it's scaled or not.
+      // If it is (likely with GTK DE), then the UI scale will be derived from it,
+      // if it's not, then IDEA will start unscaled. This lets the users of GTK DEs
+      // not to bother about X server DPI settings. Users of other DEs (like KDE)
+      // will have to set X server DPI to meet their display.
+    }
+    else if (SystemInfo.isWindows) {
       //noinspection HardCodedStringLiteral
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-      if (winFont != null) font = winFont;
+      if (winFont != null) {
+        font = winFont; // comes scaled
+      }
     }
-    else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
-      // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
-      // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
-      font = JBFont.create(font);
+    if (forcedScale != null) {
+      // With forced scale, we derive font from a hard-coded value as we cannot be sure
+      // the system font comes unscaled.
+      font = font.deriveFont(DEF_SYSTEM_FONT_SIZE * forcedScale.floatValue());
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
   }
@@ -2570,6 +2599,22 @@ public class UIUtil {
   @Nullable
   public static Pair<String, Integer> getSystemFontData() {
     return ourSystemFontData;
+  }
+
+  private static float getScreenScale() {
+    int dpi = 96;
+    try {
+      dpi = Toolkit.getDefaultToolkit().getScreenResolution();
+    } catch (HeadlessException e) {
+    }
+    float scale = 1f;
+    if (dpi < 120) scale = 1f;
+    else if (dpi < 144) scale = 1.25f;
+    else if (dpi < 168) scale = 1.5f;
+    else if (dpi < 192) scale = 1.75f;
+    else scale = 2f;
+
+    return scale;
   }
 
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {

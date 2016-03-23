@@ -53,8 +53,15 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   /** Not tabbed pane. */
   public static final int TABS_NONE = 0;
 
+  private String lafID;
+
   public static UISettings getInstance() {
-    return ServiceManager.getService(UISettings.class);
+    UISettings instance = ServiceManager.getService(UISettings.class);
+    if (!instance.lafID.equals(UIManager.getLookAndFeel().getID())) {
+      // Re-init if LaF changed.
+      instance.init();
+    }
+    return instance;
   }
 
   /**
@@ -135,6 +142,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
+    init();
+  }
+
+  private void init() {
     tweakPlatformDefaults();
     setSystemFontFaceAndSize();
 
@@ -142,6 +153,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     if (scrollToSource != null) {
       DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
     }
+    lafID = UIManager.getLookAndFeel().getID();
   }
 
   private void tweakPlatformDefaults() {
@@ -181,11 +193,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   private void setSystemFontFaceAndSize() {
-    if (FONT_FACE == null || FONT_SIZE <= 0) {
-      final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
-      FONT_FACE = fontData.first;
-      FONT_SIZE = fontData.second;
-    }
+    final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
+    FONT_FACE = fontData.first;
+    FONT_SIZE = fontData.second;
   }
 
   private static Pair<String, Integer> getSystemFontFaceAndSize() {
