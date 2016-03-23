@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.concurrencyAnnotations;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -80,6 +81,20 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
       if ("this".equals(guard)) {
         if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
           return;
+        }
+
+        final PsiSynchronizedStatement synchronizedStatement = PsiTreeUtil.getParentOfType(expression, PsiSynchronizedStatement.class);
+        if (synchronizedStatement != null) {
+          final PsiExpression lockExpression = synchronizedStatement.getLockExpression();
+          final PsiExpression qualifierExpression = expression.getQualifierExpression();
+          if (lockExpression instanceof PsiThisExpression && qualifierExpression == null) {
+            return;
+          }
+          if (lockExpression instanceof PsiReferenceExpression &&
+              qualifierExpression != null &&
+              PsiEquivalenceUtil.areElementsEquivalent(lockExpression, qualifierExpression)) {
+            return;
+          }
         }
       }
 
