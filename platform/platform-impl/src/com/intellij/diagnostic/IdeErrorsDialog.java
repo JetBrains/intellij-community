@@ -591,7 +591,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
               .setHyperlinkText(
                 DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " " + vendor + " (",
                 contactInfo, ").");
-            myForeignPluginWarningLabel.setHyperlinkTarget("mailto:" + contactInfo);
+            final String target = (StringUtil.equals(contactInfo, plugin.getVendorEmail()) ? "mailto:" : "") + contactInfo;
+            myForeignPluginWarningLabel.setHyperlinkTarget(target);
           }
         }
         myForeignPluginWarningPanel.setVisible(true);
