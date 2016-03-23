@@ -905,7 +905,7 @@ public class JavaFxPsiUtil {
     if (eventType instanceof PsiClassType) {
       return (PsiClassType)eventType;
     }
-    if (eventType instanceof PsiWildcardType) {
+    if (eventType instanceof PsiWildcardType) { // TODO Handle wildcards more accurately
       final PsiType boundType = ((PsiWildcardType)eventType).getBound();
       if (boundType instanceof PsiClassType) {
         return (PsiClassType)boundType;

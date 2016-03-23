@@ -729,7 +729,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
-      JBUI.setScaleFactor(uiSettings.FONT_SIZE/12f);
+      JBUI.setScaleFactor(uiSettings.FONT_SIZE/UIUtil.DEF_SYSTEM_FONT_SIZE);
       initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
     }
     else {
@@ -745,7 +745,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/12f);
+    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/UIUtil.DEF_SYSTEM_FONT_SIZE);
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {

@@ -87,6 +87,13 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
       collectContextElements(dataContext, true, false, classes, new PsiElementProcessor.CollectElements<PsiElement>());
     }
     if (Comparing.equal(classes, patterns)) {
+      if (patterns.size() == 1) {
+        final String pattern = patterns.iterator().next();
+        if (!pattern.contains(",")) {
+          final PsiMethod method = PsiTreeUtil.getParentOfType(CommonDataKeys.PSI_ELEMENT.getData(dataContext), PsiMethod.class);
+          return method != null && isTestMethod(false, method);
+        }
+      }
       return true;
     }
     return false;
