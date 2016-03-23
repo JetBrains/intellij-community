@@ -411,9 +411,10 @@ public class StudyUtils {
       return false;
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
+    if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
       return false;
     }
+
     if (!isRenameableOrMoveable(project, course, element)) {
       return true;
     }
@@ -491,5 +492,9 @@ public class StudyUtils {
       String taskText = getTaskText(project);
       studyToolWindow.setTaskText(taskText, null, project);
     }
+  }
+
+  public static boolean isStudyProject(Project project) {
+    return StudyTaskManager.getInstance(project).getCourse() != null;
   }
 }

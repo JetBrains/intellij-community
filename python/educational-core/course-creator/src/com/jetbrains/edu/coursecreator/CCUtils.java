@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
@@ -33,8 +34,7 @@ import java.util.Comparator;
 public class CCUtils {
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
-  public static final String TESTS = "coursecreatortests";
-  public static final String RESOURCES = "coursecreatorresources";
+  public static final String COURSE_MODE = "Course Creator";
 
   @Nullable
   public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
@@ -100,9 +100,9 @@ public class CCUtils {
     if (sourceDirectory == null) {
       return false;
     }
-    CCProjectService service = CCProjectService.getInstance(sourceDirectory.getProject());
-    Course course = service.getCourse();
-    if (course != null && course.getLesson(sourceDirectory.getName()) != null) {
+    Project project = sourceDirectory.getProject();
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course != null && isCourseCreator(project) && course.getLesson(sourceDirectory.getName()) != null) {
       return true;
     }
     return false;
@@ -168,5 +168,14 @@ public class CCUtils {
       }
     });
     return folder.get();
+  }
+
+  public static boolean isCourseCreator(@NotNull Project project) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+
+    return COURSE_MODE.equals(course.getCourseMode());
   }
 }

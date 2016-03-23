@@ -38,8 +38,9 @@ public class EduNames {
 
   public static final String SANDBOX_DIR = "Sandbox";
   public static final String COURSE_META_FILE = "course.json";
+  public static final String STUDY = "Study";
   public static String PYCHARM_ADDITIONAL = "PyCharm additional materials";
-
+  public static final String PYCHARM = "PyCharm";
   private EduNames() {
   }
 

@@ -232,7 +232,7 @@ public class StudyProjectComponent implements ProjectComponent {
             keymap.addShortcut(actionShortcut.first, new KeyboardShortcut(KeyStroke.getKeyStroke(actionShortcut.second), null));
           }
         }
-       }
+      }
     }
     myListener = null;
   }
@@ -296,30 +296,30 @@ public class StudyProjectComponent implements ProjectComponent {
       final VirtualFile createdFile = event.getFile();
       final VirtualFile taskDir = createdFile.getParent();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+      if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
+        return;
+      }
       if (taskDir != null && taskDir.getName().contains(EduNames.TASK)) {
         int taskIndex = EduUtils.getIndex(taskDir.getName(), EduNames.TASK);
         final VirtualFile lessonDir = taskDir.getParent();
         if (lessonDir != null && lessonDir.getName().contains(EduNames.LESSON)) {
           int lessonIndex = EduUtils.getIndex(lessonDir.getName(), EduNames.LESSON);
-          if (course != null) {
-            List<Lesson> lessons = course.getLessons();
-            if (StudyUtils.indexIsValid(lessonIndex, lessons)) {
-              final Lesson lesson = lessons.get(lessonIndex);
-              final List<Task> tasks = lesson.getTaskList();
-              if (StudyUtils.indexIsValid(taskIndex, tasks)) {
-                final Task task = tasks.get(taskIndex);
-                final TaskFile taskFile = new TaskFile();
-                taskFile.initTaskFile(task, false);
-                taskFile.setUserCreated(true);
-                final String name = createdFile.getName();
-                taskFile.name = name;
-                task.getTaskFiles().put(name, taskFile);
-              }
+          List<Lesson> lessons = course.getLessons();
+          if (StudyUtils.indexIsValid(lessonIndex, lessons)) {
+            final Lesson lesson = lessons.get(lessonIndex);
+            final List<Task> tasks = lesson.getTaskList();
+            if (StudyUtils.indexIsValid(taskIndex, tasks)) {
+              final Task task = tasks.get(taskIndex);
+              final TaskFile taskFile = new TaskFile();
+              taskFile.initTaskFile(task, false);
+              taskFile.setUserCreated(true);
+              final String name = createdFile.getName();
+              taskFile.name = name;
+              task.getTaskFiles().put(name, taskFile);
             }
           }
         }
       }
     }
   }
-
 }
