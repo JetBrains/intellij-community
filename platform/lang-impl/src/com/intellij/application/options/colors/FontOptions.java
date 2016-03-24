@@ -229,13 +229,13 @@ public class FontOptions extends JPanel implements OptionsPanel{
       if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
         fontPreferences.addFontFamily(primaryFontFamily);
       }
-      fontPreferences.register(primaryFontFamily, JBUI.scale(fontSize));
+      fontPreferences.register(primaryFontFamily, fontSize);
     }
     if (secondaryFontFamily != null) {
       if (!FontPreferences.DEFAULT_FONT_NAME.equals(secondaryFontFamily)){
         fontPreferences.addFontFamily(secondaryFontFamily);
       }
-      fontPreferences.register(secondaryFontFamily, JBUI.scale(fontSize));
+      fontPreferences.register(secondaryFontFamily, fontSize);
     }
     updateDescription(true);
   }
