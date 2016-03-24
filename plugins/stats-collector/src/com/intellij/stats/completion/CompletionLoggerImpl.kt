@@ -70,7 +70,7 @@ class CompletionFileLogger(private val installationUID: String,
         val relevanceObjects = lookup.getRelevanceObjects(newElements, false)
         val newInfos = newElements.map {
             val id = getElementId(it)!!
-            val relevanceMap = relevanceObjects[it]?.map { Pair(it.first, it.second.toString()) }?.toMap()
+            val relevanceMap = relevanceObjects[it]?.map { Pair(it.first, it.second?.toString()) }?.toMap()
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
         }
 
