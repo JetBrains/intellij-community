@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -1171,7 +1172,8 @@ public class PsiUtil {
         parent instanceof GrAssertStatement ||
         parent instanceof GrThrowStatement ||
         parent instanceof GrSwitchStatement ||
-        parent instanceof GrVariable) {
+        parent instanceof GrVariable ||
+        parent instanceof GrWhileStatement) {
       return true;
     }
 
@@ -1188,6 +1190,12 @@ public class PsiUtil {
       }
       return true;
     }
+
+    if (parent instanceof GrTraditionalForClause) {
+      GrTraditionalForClause forClause = (GrTraditionalForClause)parent;
+      return expr == forClause.getCondition();
+    }
+
     return isReturnStatement(expr);
   }
 
