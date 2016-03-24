@@ -45,6 +45,14 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
   private final boolean myCaseSensitive;
   @NotNull private final InsertHandler<LookupElement> myInsertHandler = new CompletionCharInsertHandler();
 
+  /**
+   * Create a completion provider.
+   *
+   * @param descriptor descriptor for completion values (text, icons, etc).
+   * @param separators characters that separate values in the editor (like new line or space). If user is supposed to choose only one value this list should be empty.
+   * @param values values to show in completion.
+   * @param caseSensitive is completion case-sensitive.
+   */
   public ValuesCompletionProvider(@NotNull TextCompletionValueDescriptor<T> descriptor,
                                   @NotNull List<Character> separators,
                                   @NotNull Collection<? extends T> values, boolean caseSensitive) {
@@ -54,8 +62,10 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
     myCaseSensitive = caseSensitive;
   }
 
-  /*
-  Single-line single-value case-insensitive completion.
+  /**
+   * Creates a completion provider for selecting single value from a list of values. Completion is case-insensitive.
+   * @param presentation descriptor for completion values.
+   * @param values list of values.
    */
   public ValuesCompletionProvider(@NotNull TextCompletionValueDescriptor<T> presentation,
                                   @NotNull Collection<? extends T> values) {
