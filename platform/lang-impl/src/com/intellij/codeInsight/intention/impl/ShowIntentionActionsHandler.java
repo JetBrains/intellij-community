@@ -186,7 +186,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       Runnable r = () -> action.invoke(project, pair.second, pair.first);
       try {
         if (action.startInWriteAction()) {
-          WriteAction.runWriteAction(r::run);
+          WriteAction.run(r::run);
         } else {
           r.run();
         }

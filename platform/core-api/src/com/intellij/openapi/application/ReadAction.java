@@ -37,7 +37,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
     return ApplicationManager.getApplication().acquireReadActionLock();
   }
 
-  public static <E extends Throwable> void runReadAction(@NotNull ThrowableRunnable<E> action) throws E {
+  public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     AccessToken token = start();
     try {
       action.run();
@@ -46,8 +46,13 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
     }
   }
 
-  public static <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> action) throws E {
-    return ApplicationManager.getApplication().runReadAction(action);
+  public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
+    AccessToken token = start();
+    try {
+      return action.compute();
+    } finally {
+      token.finish();
+    }
   }
 
 }
