@@ -1158,7 +1158,7 @@ public class PsiUtil {
   public static boolean isExpressionUsed(PsiElement expr) {
     while (expr.getParent() instanceof GrParenthesizedExpression) expr = expr.getParent();
 
-    final PsiElement parent = expr.getParent();
+    PsiElement parent = expr.getParent();
     if (parent instanceof GrBinaryExpression ||
         parent instanceof GrUnaryExpression ||
         parent instanceof GrConditionalExpression ||
@@ -1172,6 +1172,20 @@ public class PsiUtil {
         parent instanceof GrThrowStatement ||
         parent instanceof GrSwitchStatement ||
         parent instanceof GrVariable) {
+      return true;
+    }
+
+    if (parent instanceof GrReferenceExpression) {
+      if (ResolveUtil.isClassReference(parent)) {
+        parent = parent.getParent();
+      }
+      if (parent instanceof GrReferenceExpression) {
+        PsiElement resolved = ((GrReferenceExpression)parent).resolve();
+        if (resolved instanceof PsiMember) {
+          PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
+          return containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName());
+        }
+      }
       return true;
     }
     return isReturnStatement(expr);
