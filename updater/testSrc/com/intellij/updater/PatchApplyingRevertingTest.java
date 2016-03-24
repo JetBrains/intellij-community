@@ -207,12 +207,14 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myPatchSpec.setStrict(true);
     createPatch();
 
-    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
+    File annotations = new File(myOlderDir, "lib/annotations.jar");
+    FileUtil.delete(annotations);
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
+                           annotations,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.ABSENT_MESSAGE,
                            ValidationResult.Option.NONE));
@@ -330,12 +332,14 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myPatchSpec.setStrict(true);
     createPatch();
 
-    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/boot.jar"));
+    File toFile = new File(myOlderDir, "lib/boot.jar");
+    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), toFile);
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/boot.jar",
+                           toFile,
                            ValidationResult.Action.VALIDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.NONE));
@@ -359,13 +363,15 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     createPatch();
 
-    FileUtil.writeToFile(new File(myOlderDir, "new_file.txt"), "hello");
+    File toFile = new File(myOlderDir, "new_file.txt");
+    FileUtil.writeToFile(toFile, "hello");
     FileUtil.writeToFile(new File(myOlderDir, "lib/java_pid1234.hprof"), "bye!");
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "new_file.txt",
+                           toFile,
                            ValidationResult.Action.VALIDATE,
                            "Unexpected file",
                            ValidationResult.Option.DELETE));
@@ -393,24 +399,31 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     createPatch();
 
-    FileUtil.writeToFile(new File(myOlderDir, "unexpected_new_dir/unexpected.txt"), "bye!");
+    File unexpectedDir = new File(myOlderDir, "unexpected_new_dir");
+    unexpectedDir.mkdirs();
+    File unexpected = new File(myOlderDir, "unexpected_new_dir/unexpected.txt");
+    FileUtil.writeToFile(unexpected, "bye!");
 
-    FileUtil.createDirectory(new File(myOlderDir, "newDir"));
+    File newDir = new File(myOlderDir, "newDir");
+    FileUtil.createDirectory(newDir);
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "unexpected_new_dir/unexpected.txt",
+                           unexpected,
                            ValidationResult.Action.VALIDATE,
                            "Unexpected file",
                            ValidationResult.Option.DELETE),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "unexpected_new_dir/",
+                           unexpectedDir,
                            ValidationResult.Action.VALIDATE,
                            "Unexpected file",
                            ValidationResult.Option.DELETE),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/",
+                           newDir,
                            ValidationResult.Action.CREATE,
                            ValidationResult.ALREADY_EXISTS_MESSAGE,
                            ValidationResult.Option.REPLACE));

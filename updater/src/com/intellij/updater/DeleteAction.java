@@ -38,7 +38,7 @@ public class DeleteAction extends PatchAction {
       boolean invalid = getChecksum() == Digester.INVALID;
       ValidationResult.Action action = invalid ? ValidationResult.Action.VALIDATE : ValidationResult.Action.DELETE;
       String message = invalid ? "Unexpected file" : "Modified";
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, message, options);
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), toFile, action, message, options);
     }
 
     return null;

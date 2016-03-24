@@ -55,7 +55,7 @@ public class CreateAction extends PatchAction {
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
       return new ValidationResult(
-        ValidationResult.Kind.CONFLICT, getPath(), ValidationResult.Action.CREATE, ValidationResult.ALREADY_EXISTS_MESSAGE, options);
+        ValidationResult.Kind.CONFLICT, getPath(), toFile, ValidationResult.Action.CREATE, ValidationResult.ALREADY_EXISTS_MESSAGE, options);
     }
     return null;
   }

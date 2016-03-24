@@ -134,7 +134,7 @@ public abstract class PatchAction {
     if (result != null) return result;
     if (!checkWriteable || isWritable(toFile.toPath())) return null;
     ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-    return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ACCESS_DENIED_MESSAGE, options);
+    return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), toFile, action, ValidationResult.ACCESS_DENIED_MESSAGE, options);
   }
 
   private static boolean isWritable(Path path) {
@@ -163,7 +163,7 @@ public abstract class PatchAction {
     List<NativeFileManager.Process> processes = NativeFileManager.getProcessesUsing(toFile);
     if (processes.isEmpty()) return null;
     String message = "Locked by: " + processes.stream().map(p -> p.name).collect(Collectors.joining(", "));
-    return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, message, ValidationResult.Option.KILL_PROCESS);
+    return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), toFile, action, message, ValidationResult.Option.KILL_PROCESS);
   }
 
   protected ValidationResult doValidateNotChanged(File toFile, ValidationResult.Action action) throws IOException {
@@ -186,12 +186,12 @@ public abstract class PatchAction {
             options = new ValidationResult.Option[]{ValidationResult.Option.IGNORE};
           }
         }
-        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, options);
+        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), toFile, action, ValidationResult.MODIFIED_MESSAGE, options);
       }
     }
     else if (!isOptional()) {
       ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-      return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
+      return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), toFile, action, ValidationResult.ABSENT_MESSAGE, options);
     }
 
     return null;
