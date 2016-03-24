@@ -1185,6 +1185,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       myWorkingDir = workingDir;
       mySdk = sdk;
       myEnvironmentVariables = envs;
+      myEnvironmentVariables.putAll(consoleSettings.getEnvs());
     }
 
     @Override
