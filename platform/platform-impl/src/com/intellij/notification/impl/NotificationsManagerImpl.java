@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -868,7 +869,15 @@ public class NotificationsManagerImpl extends NotificationsManager {
         g.setColor(new JBColor(0xE3E3E3, 0x3A3C3D));
         ((Graphics2D)g).fill(new Rectangle2D.Double(1.5, 1, getWidth() - 2.5, getHeight() - 2));
         g.setColor(new JBColor(0xDBDBDB, 0x353738));
-        ((Graphics2D)g).draw(new Rectangle2D.Double(2, 0, getWidth() - 3.5, 0.5));
+        if (SystemInfo.isMac) {
+          ((Graphics2D)g).draw(new Rectangle2D.Double(2, 0, getWidth() - 3.5, 0.5));
+        }
+        else if (SystemInfo.isWindows) {
+          ((Graphics2D)g).draw(new Rectangle2D.Double(1.5, 0, getWidth() - 3, 0.5));
+        }
+        else {
+          ((Graphics2D)g).draw(new Rectangle2D.Double(1.5, 0, getWidth() - 2.5, 0.5));
+        }
       }
     };
     mergePanel.add(action);
