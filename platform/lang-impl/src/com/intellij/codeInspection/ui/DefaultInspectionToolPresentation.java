@@ -228,43 +228,40 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }
-    if (myToolWrapper instanceof LocalInspectionToolWrapper) {
-      InspectionResultsView view = context.getView();
-      if (view == null) {
-        view = UIUtil.invokeAndWaitIfNeeded(() -> {
-          InspectionResultsView newView = context.getView();
-          if (newView != null) {
-            return newView;
-          }
-          newView = new InspectionResultsView(context, new InspectionRVContentProviderImpl(context.getProject()));
-          context.addView(newView);
+    InspectionResultsView view = context.getView();
+    if (view == null) {
+      view = UIUtil.invokeAndWaitIfNeeded(() -> {
+        InspectionResultsView newView = context.getView();
+        if (newView != null) {
           return newView;
-        });
-      }
-      if (!isDisposed()) {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
-        synchronized (view.getTreeStructureUpdateLock()) {
-          final InspectionNode toolNode;
-          toolNode = myToolNode == null ?
-                     view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
-                                  context.getUIOptions().GROUP_BY_SEVERITY, context.isSingleInspectionRun()) : myToolNode;
-
-          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
-          problems.put(refElement, descriptors);
-          final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
-          final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
-          Set<RefEntity> content = contents.get(groupName);
-          if (content == null) {
-            content = new HashSet<RefEntity>();
-            contents.put(groupName, content);
-          }
-          content.add(refElement);
-
-          view.getProvider().appendToolNodeContent(context, toolNode,
-                                                   (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
-                                                   contents, problems);
-
         }
+        newView = new InspectionResultsView(context, new InspectionRVContentProviderImpl(context.getProject()));
+        context.addView(newView);
+        return newView;
+      });
+    }
+    if (!isDisposed()) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+      synchronized (view.getTreeStructureUpdateLock()) {
+        final InspectionNode toolNode;
+        toolNode = myToolNode == null ?
+                   view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
+                                context.getUIOptions().GROUP_BY_SEVERITY, context.isSingleInspectionRun()) : myToolNode;
+
+        final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+        problems.put(refElement, descriptors);
+        final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
+        final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
+        Set<RefEntity> content = contents.get(groupName);
+        if (content == null) {
+          content = new HashSet<RefEntity>();
+          contents.put(groupName, content);
+        }
+        content.add(refElement);
+
+        view.getProvider().appendToolNodeContent(context, toolNode,
+                                                 (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
+                                                 contents, problems);
       }
     }
   }
