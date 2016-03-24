@@ -561,9 +561,15 @@ public class PyStubsTest extends PyTestCase {
     final PyTargetExpression attribute = file.findTopLevelAttribute("nt");
     assertNotNull(attribute);
 
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
+    assertNull(typeFromStub);
+    assertNotParsed(file);
 
-    assertNull(context.getType(attribute));
+    final FileASTNode astNode = file.getNode();
+    assertNotNull(astNode);
+
+    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
+    assertNull(typeFromAst);
   }
 
   private static void doTestNamedTuple(@NotNull String expectedName,
