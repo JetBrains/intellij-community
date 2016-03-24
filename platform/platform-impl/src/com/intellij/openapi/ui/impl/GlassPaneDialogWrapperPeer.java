@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RemoteDesktopDetector;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
@@ -403,6 +404,9 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     private MyDialog(IdeGlassPaneEx pane, DialogWrapper wrapper, Project project) {
       setLayout(new BorderLayout());
       setOpaque(false);
+      setBorder(BorderFactory.createEmptyBorder(AllIcons.Ide.Shadow.Top.getIconHeight(), AllIcons.Ide.Shadow.Left.getIconWidth(),
+                                                AllIcons.Ide.Shadow.Bottom.getIconHeight(), AllIcons.Ide.Shadow.Right.getIconWidth()));
+
       myPane = pane;
       myDialogWrapper = new WeakReference<DialogWrapper>(wrapper);
 //      myProject = new WeakReference<Project>(project);
