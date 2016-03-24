@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,9 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * @return editor's internal state. Method should never return <code>null</code>.
    */
   @NotNull
-  FileEditorState getState(@NotNull FileEditorStateLevel level);
+  default FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    return FileEditorState.INSTANCE;
+  }
 
   /**
    * Applies given state to the editor.
@@ -128,5 +130,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
   FileEditorLocation getCurrentLocation();
 
   @Nullable
-  StructureViewBuilder getStructureViewBuilder();
+  default StructureViewBuilder getStructureViewBuilder() {
+    return null;
+  }
 }
