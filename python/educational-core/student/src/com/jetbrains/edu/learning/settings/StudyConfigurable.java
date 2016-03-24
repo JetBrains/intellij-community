@@ -36,7 +36,7 @@ public class StudyConfigurable extends CompositeConfigurable<StudyOptionsProvide
   @Nls
   @Override
   public String getDisplayName() {
-    return "Educational";
+    return "Education";
   }
 
   @NotNull

@@ -81,7 +81,7 @@
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              id="com.jetbrains.edu.learning.settings.StudyConfigurable"
-                             displayName="Educational"/>
+                             displayName="Education"/>
     <applicationService serviceInterface="com.jetbrains.edu.learning.stepic.StudySettings"
                         serviceImplementation="com.jetbrains.edu.learning.stepic.StudySettings"/>
 

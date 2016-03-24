@@ -1,6 +1,5 @@
 package com.jetbrains.edu.learning.twitter;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.StudyTwitterPluginConfigurator;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
  * methods in StudyPluginConfigurator instance of your plugin.
  */
 public class StudyTwitterAction extends StudyAfterCheckAction {
-  Logger LOG = Logger.getInstance(StudyTwitterAction.class);
   private StudyTwitterPluginConfigurator myConfigurator;
 
   public StudyTwitterAction(@NotNull final StudyTwitterPluginConfigurator configurator) {
