@@ -1,4 +1,4 @@
-# $Id: __init__.py 5952 2009-05-19 08:45:27Z milde $
+# $Id: __init__.py 7621 2013-03-04 13:20:49Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,15 +8,20 @@ This package contains directive implementation modules.
 
 __docformat__ = 'reStructuredText'
 
-import codecs
 import re
+import codecs
+import sys
 
 from docutils import nodes
 from docutils.parsers.rst.languages import en as _fallback_language_module
+if sys.version_info < (2,5):
+    from docutils._compat import __import__
+
 
 _directive_registry = {
       'attention': ('admonitions', 'Attention'),
       'caution': ('admonitions', 'Caution'),
+      'code': ('body', 'CodeBlock'),
       'danger': ('admonitions', 'Danger'),
       'error': ('admonitions', 'Error'),
       'important': ('admonitions', 'Important'),
@@ -29,6 +34,7 @@ _directive_registry = {
       'topic': ('body', 'Topic'),
       'line-block': ('body', 'LineBlock'),
       'parsed-literal': ('body', 'ParsedLiteral'),
+      'math': ('body', 'MathBlock'),
       'rubric': ('body', 'Rubric'),
       'epigraph': ('body', 'Epigraph'),
       'highlights': ('body', 'Highlights'),
@@ -107,7 +113,7 @@ def directive(directive_name, language_module, document):
         # Error handling done by caller.
         return None, messages
     try:
-        module = __import__(modulename, globals(), locals())
+        module = __import__(modulename, globals(), locals(), level=1)
     except ImportError, detail:
         messages.append(document.reporter.error(
             'Error importing directive module "%s" (directive "%s"):\n%s'
@@ -221,14 +227,13 @@ def get_measure(argument, units):
     Check for a positive argument of one of the units and return a
     normalized string of the form "<value><unit>" (without space in
     between).
-    
+
     To be called from directive option conversion functions.
     """
     match = re.match(r'^([0-9.]+) *(%s)$' % '|'.join(units), argument)
     try:
-        assert match is not None
         float(match.group(1))
-    except (AssertionError, ValueError):
+    except (AttributeError, ValueError):
         raise ValueError(
             'not a positive measure of one of the following units:\n%s'
             % ' '.join(['"%s"' % i for i in units]))
@@ -256,7 +261,11 @@ def length_or_percentage_or_unitless(argument, default=''):
     try:
         return get_measure(argument, length_units + ['%'])
     except ValueError:
-        return get_measure(argument, ['']) + default
+        try:
+            return get_measure(argument, ['']) + default
+        except ValueError:
+            # raise ValueError with list of valid units:
+            return get_measure(argument, length_units + ['%'])
 
 def class_option(argument):
     """

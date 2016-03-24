@@ -1,4 +1,4 @@
-# $Id: __init__.py 6111 2009-09-02 21:36:05Z milde $
+# $Id: __init__.py 7648 2013-04-18 07:36:22Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,9 +8,14 @@ This package contains Docutils Writer modules.
 
 __docformat__ = 'reStructuredText'
 
+import os.path
+import sys
+
 import docutils
 from docutils import languages, Component
 from docutils.transforms import universal
+if sys.version_info < (2,5):
+    from docutils._compat import __import__
 
 
 class Writer(Component):
@@ -50,7 +55,7 @@ class Writer(Component):
 
     def __init__(self):
 
-        # Used by HTML and LaTex writer for output fragments:
+        # Used by HTML and LaTeX writer for output fragments:
         self.parts = {}
         """Mapping of document part names to fragments of `self.output`.
         Values are Unicode strings; encoding is up to the client.  The 'whole'
@@ -69,7 +74,8 @@ class Writer(Component):
         """
         self.document = document
         self.language = languages.get_language(
-            document.settings.language_code)
+            document.settings.language_code,
+            document.reporter)
         self.destination = destination
         self.translate()
         output = self.destination.write(self.output)
@@ -127,5 +133,8 @@ def get_writer_class(writer_name):
     writer_name = writer_name.lower()
     if writer_name in _writer_aliases:
         writer_name = _writer_aliases[writer_name]
-    module = __import__(writer_name, globals(), locals())
+    try:
+        module = __import__(writer_name, globals(), locals(), level=1)
+    except ImportError:
+        module = __import__(writer_name, globals(), locals(), level=0)
     return module.Writer

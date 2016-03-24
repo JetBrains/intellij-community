@@ -1,5 +1,6 @@
-# $Id: nodes.py 6351 2010-07-03 14:19:09Z gbrandl $
+# $Id: nodes.py 7595 2013-01-21 17:33:56Z milde $
 # Author: David Goodger <goodger@python.org>
+# Maintainer: docutils-develop@lists.sourceforge.net
 # Copyright: This module has been placed in the public domain.
 
 """
@@ -21,12 +22,12 @@ hierarchy.
 
 __docformat__ = 'reStructuredText'
 
-import re
 import sys
+import os
+import re
+import warnings
 import types
 import unicodedata
-import warnings
-
 
 # ==============================
 #  Functional Node Base Classes
@@ -120,7 +121,7 @@ class Node(object):
 
         Return true if we should stop the traversal.
         """
-        stop = 0
+        stop = False
         visitor.document.reporter.debug(
             'docutils.nodes.Node.walk calling dispatch_visit for %s'
             % self.__class__.__name__)
@@ -135,12 +136,12 @@ class Node(object):
             try:
                 for child in children[:]:
                     if child.walk(visitor):
-                        stop = 1
+                        stop = True
                         break
             except SkipSiblings:
                 pass
         except StopTraversal:
-            stop = 1
+            stop = True
         return stop
 
     def walkabout(self, visitor):
@@ -155,8 +156,8 @@ class Node(object):
 
         Return true if we should stop the traversal.
         """
-        call_depart = 1
-        stop = 0
+        call_depart = True
+        stop = False
         visitor.document.reporter.debug(
             'docutils.nodes.Node.walkabout calling dispatch_visit for %s'
             % self.__class__.__name__)
@@ -166,19 +167,19 @@ class Node(object):
             except SkipNode:
                 return stop
             except SkipDeparture:
-                call_depart = 0
+                call_depart = False
             children = self.children
             try:
                 for child in children[:]:
                     if child.walkabout(visitor):
-                        stop = 1
+                        stop = True
                         break
             except SkipSiblings:
                 pass
         except SkipChildren:
             pass
         except StopTraversal:
-            stop = 1
+            stop = True
         if call_depart:
             visitor.document.reporter.debug(
                 'docutils.nodes.Node.walkabout calling dispatch_departure '
@@ -203,8 +204,8 @@ class Node(object):
             result.extend(child._all_traverse())
         return result
 
-    def traverse(self, condition=None,
-                 include_self=1, descend=1, siblings=0, ascend=0):
+    def traverse(self, condition=None, include_self=True, descend=True,
+                 siblings=False, ascend=False):
         """
         Return an iterable containing
 
@@ -236,12 +237,12 @@ class Node(object):
 
             [<emphasis>, <strong>, <#text: Foo>, <#text: Bar>]
 
-        and list(strong.traverse(ascend=1)) equals ::
+        and list(strong.traverse(ascend=True)) equals ::
 
             [<strong>, <#text: Foo>, <#text: Bar>, <reference>, <#text: Baz>]
         """
         if ascend:
-            siblings=1
+            siblings=True
         # Check for special argument combinations that allow using an
         # optimized version of traverse()
         if include_self and descend and not siblings:
@@ -260,16 +261,17 @@ class Node(object):
             r.append(self)
         if descend and len(self.children):
             for child in self:
-                r.extend(child.traverse(
-                    include_self=1, descend=1, siblings=0, ascend=0,
-                    condition=condition))
+                r.extend(child.traverse(include_self=True, descend=True,
+                                        siblings=False, ascend=False,
+                                        condition=condition))
         if siblings or ascend:
             node = self
             while node.parent:
                 index = node.parent.index(node)
                 for sibling in node.parent[index+1:]:
-                    r.extend(sibling.traverse(include_self=1, descend=descend,
-                                              siblings=0, ascend=0,
+                    r.extend(sibling.traverse(include_self=True,
+                                              descend=descend,
+                                              siblings=False, ascend=False,
                                               condition=condition))
                 if not ascend:
                     break
@@ -277,8 +279,8 @@ class Node(object):
                     node = node.parent
         return r
 
-    def next_node(self, condition=None,
-                  include_self=0, descend=1, siblings=0, ascend=0):
+    def next_node(self, condition=None, include_self=False, descend=True,
+                  siblings=False, ascend=False):
         """
         Return the first node in the iterable returned by traverse(),
         or None if the iterable is empty.
@@ -297,13 +299,24 @@ class Node(object):
 if sys.version_info < (3,):
     class reprunicode(unicode):
         """
-        A class that removes the initial u from unicode's repr.
+        A unicode sub-class that removes the initial u from unicode's repr.
         """
 
         def __repr__(self):
             return unicode.__repr__(self)[1:]
+
+
 else:
     reprunicode = unicode
+
+
+def ensure_str(s):
+    """
+    Failsave conversion of `unicode` to `str`.
+    """
+    if sys.version_info < (3,) and isinstance(s, unicode):
+        return s.encode('ascii', 'backslashreplace')
+    return s
 
 
 class Text(Node, reprunicode):
@@ -339,7 +352,7 @@ class Text(Node, reprunicode):
         data = self
         if len(data) > maxlen:
             data = data[:maxlen-4] + ' ...'
-        return '<%s: %s>' % (self.tagname, repr(reprunicode(data)))
+        return '<%s: %r>' % (self.tagname, reprunicode(data))
 
     def __repr__(self):
         return self.shortrepr(maxlen=68)
@@ -419,9 +432,23 @@ class Element(Node):
     This is equivalent to ``element.extend([node1, node2])``.
     """
 
-    list_attributes = ('ids', 'classes', 'names', 'dupnames', 'backrefs')
+    basic_attributes = ('ids', 'classes', 'names', 'dupnames')
+    """List attributes which are defined for every Element-derived class
+    instance and can be safely transferred to a different node."""
+
+    local_attributes = ('backrefs',)
+    """A list of class-specific attributes that should not be copied with the
+    standard attributes when replacing a node.
+
+    NOTE: Derived classes should override this value to prevent any of its
+    attributes being copied by adding to the value in its parent class."""
+
+    list_attributes = basic_attributes + local_attributes
     """List attributes, automatically initialized to empty lists for
     all nodes."""
+
+    known_attributes = list_attributes + ('source',)
+    """List attributes that are known to the Element base class."""
 
     tagname = None
     """The element generic identifier. If None, it is set as an instance
@@ -461,7 +488,7 @@ class Element(Node):
         element = domroot.createElement(self.tagname)
         for attribute, value in self.attlist():
             if isinstance(value, list):
-                value = ' '.join([serial_escape('%s' % v) for v in value])
+                value = ' '.join([serial_escape('%s' % (v,)) for v in value])
             element.setAttribute(attribute, '%s' % value)
         for child in self.children:
             element.appendChild(child._dom_node(domroot))
@@ -476,14 +503,14 @@ class Element(Node):
                 break
         if self['names']:
             return '<%s "%s": %s>' % (self.__class__.__name__,
-                                      '; '.join(self['names']), data)
+                '; '.join([ensure_str(n) for n in self['names']]), data)
         else:
             return '<%s: %s>' % (self.__class__.__name__, data)
 
     def shortrepr(self):
         if self['names']:
             return '<%s "%s"...>' % (self.__class__.__name__,
-                                     '; '.join(self['names']))
+                '; '.join([ensure_str(n) for n in self['names']]))
         else:
             return '<%s...>' % self.tagname
 
@@ -499,23 +526,29 @@ class Element(Node):
         # 2to3 doesn't convert __unicode__ to __str__
         __str__ = __unicode__
 
-    def starttag(self):
+    def starttag(self, quoteattr=None):
+        # the optional arg is used by the docutils_xml writer
+        if quoteattr is None:
+            quoteattr = pseudo_quoteattr
         parts = [self.tagname]
         for name, value in self.attlist():
             if value is None:           # boolean attribute
                 parts.append(name)
-            elif isinstance(value, list):
-                values = [serial_escape('%s' % v) for v in value]
-                parts.append('%s="%s"' % (name, ' '.join(values)))
+                continue
+            if isinstance(value, list):
+                values = [serial_escape('%s' % (v,)) for v in value]
+                value = ' '.join(values)
             else:
-                parts.append('%s="%s"' % (name, value))
-        return '<%s>' % ' '.join(parts)
+                value = unicode(value)
+            value = quoteattr(value)
+            parts.append(u'%s=%s' % (name, value))
+        return u'<%s>' % u' '.join(parts)
 
     def endtag(self):
         return '</%s>' % self.tagname
 
     def emptytag(self):
-        return u'<%s/>' % ' '.join([self.tagname] +
+        return u'<%s/>' % u' '.join([self.tagname] +
                                     ['%s="%s"' % (n, v)
                                      for n, v in self.attlist()])
 
@@ -613,8 +646,23 @@ class Element(Node):
 
     has_key = hasattr
 
-    # support operator in
+    # support operator ``in``
     __contains__ = hasattr
+
+    def get_language_code(self, fallback=''):
+        """Return node's language tag.
+
+        Look iteratively in self and parents for a class argument
+        starting with ``language-`` and return the remainder of it
+        (which should be a `BCP49` language tag) or the `fallback`.
+        """
+        for cls in self.get('classes', []):
+            if cls.startswith('language-'):
+                return cls[9:]
+        try:
+            return self.parent.get_language(fallback)
+        except AttributeError:
+            return fallback
 
     def append(self, item):
         self.setup_child(item)
@@ -646,17 +694,231 @@ class Element(Node):
         else:
             return 1
 
-    def update_basic_atts(self, dict):
+    def update_basic_atts(self, dict_):
         """
         Update basic attributes ('ids', 'names', 'classes',
-        'dupnames', but not 'source') from node or dictionary `dict`.
+        'dupnames', but not 'source') from node or dictionary `dict_`.
         """
-        if isinstance(dict, Node):
-            dict = dict.attributes
-        for att in ('ids', 'classes', 'names', 'dupnames'):
-            for value in dict.get(att, []):
-                if not value in self[att]:
-                    self[att].append(value)
+        if isinstance(dict_, Node):
+            dict_ = dict_.attributes
+        for att in self.basic_attributes:
+            self.append_attr_list(att, dict_.get(att, []))
+
+    def append_attr_list(self, attr, values):
+        """
+        For each element in values, if it does not exist in self[attr], append
+        it.
+
+        NOTE: Requires self[attr] and values to be sequence type and the
+        former should specifically be a list.
+        """
+        # List Concatenation
+        for value in values:
+            if not value in self[attr]:
+                self[attr].append(value)
+
+    def coerce_append_attr_list(self, attr, value):
+        """
+        First, convert both self[attr] and value to a non-string sequence
+        type; if either is not already a sequence, convert it to a list of one
+        element.  Then call append_attr_list.
+
+        NOTE: self[attr] and value both must not be None.
+        """
+        # List Concatenation
+        if not isinstance(self.get(attr), list):
+            self[attr] = [self[attr]]
+        if not isinstance(value, list):
+            value = [value]
+        self.append_attr_list(attr, value)
+
+    def replace_attr(self, attr, value, force = True):
+        """
+        If self[attr] does not exist or force is True or omitted, set
+        self[attr] to value, otherwise do nothing.
+        """
+        # One or the other
+        if force or self.get(attr) is None:
+            self[attr] = value
+
+    def copy_attr_convert(self, attr, value, replace = True):
+        """
+        If attr is an attribute of self, set self[attr] to
+        [self[attr], value], otherwise set self[attr] to value.
+
+        NOTE: replace is not used by this function and is kept only for
+              compatibility with the other copy functions.
+        """
+        if self.get(attr) is not value:
+            self.coerce_append_attr_list(attr, value)
+
+    def copy_attr_coerce(self, attr, value, replace):
+        """
+        If attr is an attribute of self and either self[attr] or value is a
+        list, convert all non-sequence values to a sequence of 1 element and
+        then concatenate the two sequence, setting the result to self[attr].
+        If both self[attr] and value are non-sequences and replace is True or
+        self[attr] is None, replace self[attr] with value. Otherwise, do
+        nothing.
+        """
+        if self.get(attr) is not value:
+            if isinstance(self.get(attr), list) or \
+               isinstance(value, list):
+                self.coerce_append_attr_list(attr, value)
+            else:
+                self.replace_attr(attr, value, replace)
+
+    def copy_attr_concatenate(self, attr, value, replace):
+        """
+        If attr is an attribute of self and both self[attr] and value are
+        lists, concatenate the two sequences, setting the result to
+        self[attr].  If either self[attr] or value are non-sequences and
+        replace is True or self[attr] is None, replace self[attr] with value.
+        Otherwise, do nothing.
+        """
+        if self.get(attr) is not value:
+            if isinstance(self.get(attr), list) and \
+               isinstance(value, list):
+                self.append_attr_list(attr, value)
+            else:
+                self.replace_attr(attr, value, replace)
+
+    def copy_attr_consistent(self, attr, value, replace):
+        """
+        If replace is True or selfpattr] is None, replace self[attr] with
+        value.  Otherwise, do nothing.
+        """
+        if self.get(attr) is not value:
+            self.replace_attr(attr, value, replace)
+
+    def update_all_atts(self, dict_, update_fun = copy_attr_consistent,
+                        replace = True, and_source = False):
+        """
+        Updates all attributes from node or dictionary `dict_`.
+
+        Appends the basic attributes ('ids', 'names', 'classes',
+        'dupnames', but not 'source') and then, for all other attributes in
+        dict_, updates the same attribute in self.  When attributes with the
+        same identifier appear in both self and dict_, the two values are
+        merged based on the value of update_fun.  Generally, when replace is
+        True, the values in self are replaced or merged with the values in
+        dict_; otherwise, the values in self may be preserved or merged.  When
+        and_source is True, the 'source' attribute is included in the copy.
+
+        NOTE: When replace is False, and self contains a 'source' attribute,
+              'source' is not replaced even when dict_ has a 'source'
+              attribute, though it may still be merged into a list depending
+              on the value of update_fun.
+        NOTE: It is easier to call the update-specific methods then to pass
+              the update_fun method to this function.
+        """
+        if isinstance(dict_, Node):
+            dict_ = dict_.attributes
+
+        # Include the source attribute when copying?
+        if and_source:
+            filter_fun = self.is_not_list_attribute
+        else:
+            filter_fun = self.is_not_known_attribute
+
+        # Copy the basic attributes
+        self.update_basic_atts(dict_)
+
+        # Grab other attributes in dict_ not in self except the
+        # (All basic attributes should be copied already)
+        for att in filter(filter_fun, dict_):
+            update_fun(self, att, dict_[att], replace)
+
+    def update_all_atts_consistantly(self, dict_, replace = True,
+                                     and_source = False):
+        """
+        Updates all attributes from node or dictionary `dict_`.
+
+        Appends the basic attributes ('ids', 'names', 'classes',
+        'dupnames', but not 'source') and then, for all other attributes in
+        dict_, updates the same attribute in self.  When attributes with the
+        same identifier appear in both self and dict_ and replace is True, the
+        values in self are replaced with the values in dict_; otherwise, the
+        values in self are preserved.  When and_source is True, the 'source'
+        attribute is included in the copy.
+
+        NOTE: When replace is False, and self contains a 'source' attribute,
+              'source' is not replaced even when dict_ has a 'source'
+              attribute, though it may still be merged into a list depending
+              on the value of update_fun.
+        """
+        self.update_all_atts(dict_, Element.copy_attr_consistent, replace,
+                             and_source)
+
+    def update_all_atts_concatenating(self, dict_, replace = True,
+                                      and_source = False):
+        """
+        Updates all attributes from node or dictionary `dict_`.
+
+        Appends the basic attributes ('ids', 'names', 'classes',
+        'dupnames', but not 'source') and then, for all other attributes in
+        dict_, updates the same attribute in self.  When attributes with the
+        same identifier appear in both self and dict_ whose values aren't each
+        lists and replace is True, the values in self are replaced with the
+        values in dict_; if the values from self and dict_ for the given
+        identifier are both of list type, then the two lists are concatenated
+        and the result stored in self; otherwise, the values in self are
+        preserved.  When and_source is True, the 'source' attribute is
+        included in the copy.
+
+        NOTE: When replace is False, and self contains a 'source' attribute,
+              'source' is not replaced even when dict_ has a 'source'
+              attribute, though it may still be merged into a list depending
+              on the value of update_fun.
+        """
+        self.update_all_atts(dict_, Element.copy_attr_concatenate, replace,
+                             and_source)
+
+    def update_all_atts_coercion(self, dict_, replace = True,
+                                 and_source = False):
+        """
+        Updates all attributes from node or dictionary `dict_`.
+
+        Appends the basic attributes ('ids', 'names', 'classes',
+        'dupnames', but not 'source') and then, for all other attributes in
+        dict_, updates the same attribute in self.  When attributes with the
+        same identifier appear in both self and dict_ whose values are both
+        not lists and replace is True, the values in self are replaced with
+        the values in dict_; if either of the values from self and dict_ for
+        the given identifier are of list type, then first any non-lists are
+        converted to 1-element lists and then the two lists are concatenated
+        and the result stored in self; otherwise, the values in self are
+        preserved.  When and_source is True, the 'source' attribute is
+        included in the copy.
+
+        NOTE: When replace is False, and self contains a 'source' attribute,
+              'source' is not replaced even when dict_ has a 'source'
+              attribute, though it may still be merged into a list depending
+              on the value of update_fun.
+        """
+        self.update_all_atts(dict_, Element.copy_attr_coerce, replace,
+                             and_source)
+
+    def update_all_atts_convert(self, dict_, and_source = False):
+        """
+        Updates all attributes from node or dictionary `dict_`.
+
+        Appends the basic attributes ('ids', 'names', 'classes',
+        'dupnames', but not 'source') and then, for all other attributes in
+        dict_, updates the same attribute in self.  When attributes with the
+        same identifier appear in both self and dict_ then first any non-lists
+        are converted to 1-element lists and then the two lists are
+        concatenated and the result stored in self; otherwise, the values in
+        self are preserved.  When and_source is True, the 'source' attribute
+        is included in the copy.
+
+        NOTE: When replace is False, and self contains a 'source' attribute,
+              'source' is not replaced even when dict_ has a 'source'
+              attribute, though it may still be merged into a list depending
+              on the value of update_fun.
+        """
+        self.update_all_atts(dict_, Element.copy_attr_convert,
+                             and_source = and_source)
 
     def clear(self):
         self.children = []
@@ -687,7 +949,7 @@ class Element(Node):
         else:
             # `update` is a Text node or `new` is an empty list.
             # Assert that we aren't losing any attributes.
-            for att in ('ids', 'names', 'classes', 'dupnames'):
+            for att in self.basic_attributes:
                 assert not self[att], \
                        'Losing "%s" attribute: %s' % (att, self[att])
         self.parent.replace(self, new)
@@ -770,6 +1032,22 @@ class Element(Node):
         if by_id:
             assert id is not None
             by_id.referenced = 1
+
+    @classmethod
+    def is_not_list_attribute(cls, attr):
+        """
+        Returns True if and only if the given attribute is NOT one of the
+        basic list attributes defined for all Elements.
+        """
+        return attr not in cls.list_attributes
+
+    @classmethod
+    def is_not_known_attribute(cls, attr):
+        """
+        Returns True if and only if the given attribute is NOT recognized by
+        this class.
+        """
+        return attr not in cls.known_attributes
 
 
 class TextElement(Element):
@@ -1106,7 +1384,7 @@ class document(Root, Structural, Element):
 
     def note_explicit_target(self, target, msgnode=None):
         id = self.set_id(target, msgnode)
-        self.set_name_id_map(target, id, msgnode, explicit=1)
+        self.set_name_id_map(target, id, msgnode, explicit=True)
 
     def note_refname(self, node):
         self.refnames.setdefault(node['refname'], []).append(node)
@@ -1341,6 +1619,7 @@ class option_string(Part, TextElement): pass
 class description(Part, Element): pass
 class literal_block(General, FixedTextElement): pass
 class doctest_block(General, FixedTextElement): pass
+class math_block(General, FixedTextElement): pass
 class line_block(General, Element): pass
 
 
@@ -1498,6 +1777,7 @@ class abbreviation(Inline, TextElement): pass
 class acronym(Inline, TextElement): pass
 class superscript(Inline, TextElement): pass
 class subscript(Inline, TextElement): pass
+class math(Inline, TextElement): pass
 
 
 class image(General, Inline, Element):
@@ -1531,6 +1811,7 @@ node_class_names = """
     header hint
     image important inline
     label legend line line_block list_item literal literal_block
+    math math_block
     note
     option option_argument option_group option_list option_list_item
         option_string organization
@@ -1909,6 +2190,10 @@ def whitespace_normalize_name(name):
 def serial_escape(value):
     """Escape string values that are elements of a list, for serialization."""
     return value.replace('\\', r'\\').replace(' ', r'\ ')
+
+def pseudo_quoteattr(value):
+    """Quote attributes for pseudo-xml"""
+    return '"%s"' % value
 
 # 
 #

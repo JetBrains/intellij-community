@@ -1,4 +1,5 @@
-# $Id: utils.py 6394 2010-08-20 11:26:58Z milde $
+# coding: utf-8
+# $Id: __init__.py 7668 2013-06-04 12:46:30Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,15 +9,16 @@ Miscellaneous utilities for the documentation utilities.
 
 __docformat__ = 'reStructuredText'
 
+import sys
 import os
 import os.path
-import sys
-import unicodedata
+import re
 import warnings
-
+import unicodedata
 from docutils import ApplicationError, DataError
 from docutils import nodes
-from docutils._compat import bytes
+import docutils.io
+from docutils.utils.error_reporting import ErrorOutput, SafeString
 
 
 class SystemMessage(ApplicationError):
@@ -45,7 +47,7 @@ class Reporter:
 
     When a system message is generated, its level is compared to the stored
     thresholds, and a warning or error is generated as appropriate.  Debug
-    messages are produced iff the stored debug switch is on, independently of
+    messages are produced if the stored debug switch is on, independently of
     other thresholds.  Message output is sent to the stored warning stream if
     not set to ''.
 
@@ -71,7 +73,7 @@ class Reporter:
      SEVERE_LEVEL) = range(5)
 
     def __init__(self, source, report_level, halt_level, stream=None,
-                 debug=0, encoding=None, error_handler='backslashreplace'):
+                 debug=False, encoding=None, error_handler='backslashreplace'):
         """
         :Parameters:
             - `source`: The path to or description of the source data.
@@ -82,8 +84,8 @@ class Reporter:
             - `debug`: Show debug (level=0) system messages?
             - `stream`: Where warning output is sent.  Can be file-like (has a
               ``.write`` method), a string (file name, opened for writing),
-              '' (empty string, for discarding all stream messages) or
-              `None` (implies `sys.stderr`; default).
+              '' (empty string) or `False` (for discarding all stream messages)
+              or `None` (implies `sys.stderr`; default).
             - `encoding`: The output encoding.
             - `error_handler`: The error handler for stderr output encoding.
         """
@@ -105,25 +107,13 @@ class Reporter:
         """The level at or above which `SystemMessage` exceptions
         will be raised, halting execution."""
 
-        if stream is None:
-            stream = sys.stderr
-        elif stream and type(stream) in (unicode, bytes):
-            # if `stream` is a file name, open it
-            if type(stream) is bytes:
-                stream = open(stream, 'w')
-            else:
-                stream = open(stream.encode(), 'w')
+        if not isinstance(stream, ErrorOutput):
+            stream = ErrorOutput(stream, encoding, error_handler)
 
         self.stream = stream
         """Where warning output is sent."""
 
-        if encoding is None:
-            try:
-                encoding = stream.encoding
-            except AttributeError:
-                pass
-
-        self.encoding = encoding or 'ascii'
+        self.encoding = encoding or getattr(stream, 'encoding', 'ascii')
         """The output character encoding."""
 
         self.observers = []
@@ -134,14 +124,14 @@ class Reporter:
         """The highest level system message generated so far."""
 
     def set_conditions(self, category, report_level, halt_level,
-                       stream=None, debug=0):
+                       stream=None, debug=False):
         warnings.warn('docutils.utils.Reporter.set_conditions deprecated; '
                       'set attributes via configuration settings or directly',
                       DeprecationWarning, stacklevel=2)
         self.report_level = report_level
         self.halt_level = halt_level
-        if stream is None:
-            stream = sys.stderr
+        if not isinstance(stream, ErrorOutput):
+            stream = ErrorOutput(stream, self.encoding, self.error_handler)
         self.stream = stream
         self.debug_flag = debug
 
@@ -165,6 +155,10 @@ class Reporter:
 
         Raise an exception or generate a warning if appropriate.
         """
+        # `message` can be a `string`, `unicode`, or `Exception` instance.
+        if isinstance(message, Exception):
+            message = SafeString(message)
+
         attributes = kwargs.copy()
         if 'base_node' in kwargs:
             source, line = get_source_line(kwargs['base_node'])
@@ -176,7 +170,7 @@ class Reporter:
                 # assert source is not None, "node has line- but no source-argument"
         if not 'source' in attributes: # 'line' is absolute line number
             try: # look up (source, line-in-source)
-                source, line = self.locator(attributes.get('line'))
+                source, line = self.get_source_and_line(attributes.get('line'))
                 # print "locator lookup", kwargs.get('line'), "->", source, line
             except AttributeError:
                 source, line = None, None
@@ -194,12 +188,7 @@ class Reporter:
         if self.stream and (level >= self.report_level
                             or self.debug_flag and level == self.DEBUG_LEVEL
                             or level >= self.halt_level):
-            msgtext = msg.astext() + '\n'
-            try:
-                self.stream.write(msgtext)
-            except UnicodeEncodeError:
-                self.stream.write(msgtext.encode(self.encoding,
-                                                 self.error_handler))
+            self.stream.write(msg.astext() + '\n')
         if level >= self.halt_level:
             raise SystemMessage(msg, level)
         if level > self.DEBUG_LEVEL or self.debug_flag:
@@ -347,12 +336,13 @@ class NameValueError(DataError): pass
 
 def decode_path(path):
     """
-    Decode file/path string. Return `nodes.reprunicode` object.
+    Ensure `path` is Unicode. Return `nodes.reprunicode` object.
 
-    Convert to Unicode without the UnicodeDecode error of the
-    implicit 'ascii:strict' decoding.
+    Decode file/path string in a failsave manner if not already done.
     """
     # see also http://article.gmane.org/gmane.text.docutils.user/2905
+    if isinstance(path, unicode):
+        return path
     try:
         path = path.decode(sys.getfilesystemencoding(), 'strict')
     except AttributeError: # default value None has no decode method
@@ -468,7 +458,8 @@ def relative_path(source, target):
 
     If there is no common prefix, return the absolute path to `target`.
     """
-    source_parts = os.path.abspath(source or 'dummy_file').split(os.sep)
+    source_parts = os.path.abspath(source or type(target)('dummy_file')
+                                  ).split(os.sep)
     target_parts = os.path.abspath(target).split(os.sep)
     # Check first 2 parts because '/dir'.split('/') == ['', 'dir']:
     if source_parts[:2] != target_parts[:2]:
@@ -490,7 +481,7 @@ def get_stylesheet_reference(settings, relative_to=None):
     """
     Retrieve a stylesheet reference from the settings object.
 
-    Deprecated. Use get_stylesheet_reference_list() instead to
+    Deprecated. Use get_stylesheet_list() instead to
     enable specification of multiple stylesheets as a comma-separated
     list.
     """
@@ -519,14 +510,31 @@ def get_stylesheet_list(settings):
     """
     assert not (settings.stylesheet and settings.stylesheet_path), (
             'stylesheet and stylesheet_path are mutually exclusive.')
-    if settings.stylesheet_path:
-        sheets = settings.stylesheet_path.split(",")
-    elif settings.stylesheet:
-        sheets = settings.stylesheet.split(",")
-    else:
-        sheets = []
-    # strip whitespace (frequently occuring in config files)
-    return [sheet.strip(u' \t\n\r') for sheet in sheets]
+    stylesheets = settings.stylesheet_path or settings.stylesheet or []
+    # programmatically set default can be string or unicode:
+    if not isinstance(stylesheets, list):
+        stylesheets = [path.strip() for path in stylesheets.split(',')]
+    # expand relative paths if found in stylesheet-dirs:
+    return [find_file_in_dirs(path, settings.stylesheet_dirs)
+            for path in stylesheets]
+
+def find_file_in_dirs(path, dirs):
+    """
+    Search for `path` in the list of directories `dirs`.
+
+    Return the first expansion that matches an existing file.
+    """
+    if os.path.isabs(path):
+        return path
+    for d in dirs:
+        if d == '.':
+            f = path
+        else:
+            d = os.path.expanduser(d)
+            f = os.path.join(d, path)
+        if os.path.exists(f):
+            return f
+    return path
 
 def get_trim_footnote_ref_space(settings):
     """
@@ -558,7 +566,7 @@ def escape2null(text):
     """Return a string with escape-backslashes converted to nulls."""
     parts = []
     start = 0
-    while 1:
+    while True:
         found = text.find('\\', start)
         if found == -1:
             parts.append(text[start:])
@@ -567,7 +575,7 @@ def escape2null(text):
         parts.append('\x00' + text[found+1:found+2])
         start = found + 2               # skip character after escape
 
-def unescape(text, restore_backslashes=0):
+def unescape(text, restore_backslashes=False):
     """
     Return a string with nulls removed or restored to backslashes.
     Backslash-escaped spaces are also removed.
@@ -579,6 +587,34 @@ def unescape(text, restore_backslashes=0):
             text = ''.join(text.split(sep))
         return text
 
+def strip_combining_chars(text):
+    if isinstance(text, str) and sys.version_info < (3,0):
+        return text
+    return u''.join([c for c in text if not unicodedata.combining(c)])
+
+def find_combining_chars(text):
+    """Return indices of all combining chars in  Unicode string `text`.
+
+    >>> find_combining_chars(u'A t̆ab̆lĕ')
+    [3, 6, 9]
+    """
+    if isinstance(text, str) and sys.version_info < (3,0):
+        return []
+    return [i for i,c in enumerate(text) if unicodedata.combining(c)]
+
+def column_indices(text):
+    """Indices of Unicode string `text` when skipping combining characters.
+
+    >>> column_indices(u'A t̆ab̆lĕ')
+    [0, 1, 2, 4, 5, 7, 8]
+    """
+    # TODO: account for asian wide chars here instead of using dummy
+    # replacements in the tableparser?
+    string_indices = range(len(text))
+    for index in find_combining_chars(text):
+        string_indices[index] = None
+    return [i for i in string_indices if i is not None]
+
 east_asian_widths = {'W': 2,   # Wide
                      'F': 2,   # Full-width (wide)
                      'Na': 1,  # Narrow
@@ -586,22 +622,24 @@ east_asian_widths = {'W': 2,   # Wide
                      'N': 1,   # Neutral (not East Asian, treated as narrow)
                      'A': 1}   # Ambiguous (s/b wide in East Asian context,
                                # narrow otherwise, but that doesn't work)
-"""Mapping of result codes from `unicodedata.east_asian_width()` to character
+"""Mapping of result codes from `unicodedata.east_asian_widt()` to character
 column widths."""
 
-def east_asian_column_width(text):
-    if isinstance(text, unicode):
-        total = 0
-        for c in text:
-            total += east_asian_widths[unicodedata.east_asian_width(c)]
-        return total
-    else:
-        return len(text)
+def column_width(text):
+    """Return the column width of text.
 
-if hasattr(unicodedata, 'east_asian_width'):
-    column_width = east_asian_column_width
-else:
-    column_width = len
+    Correct ``len(text)`` for wide East Asian and combining Unicode chars.
+    """
+    if isinstance(text, str) and sys.version_info < (3,0):
+        return len(text)
+    try:
+        width = sum([east_asian_widths[unicodedata.east_asian_width(c)]
+                     for c in text])
+    except AttributeError:  # east_asian_width() New in version 2.4.
+        width = len(text)
+    # correction for combining chars:
+    width -= len(find_combining_chars(text))
+    return width
 
 def uniq(L):
      r = []
@@ -610,8 +648,40 @@ def uniq(L):
              r.append(item)
      return r
 
+# by Li Daobing http://code.activestate.com/recipes/190465/
+# since Python 2.6 there is also itertools.combinations()
+def unique_combinations(items, n):
+    """Return n-length tuples, in sorted order, no repeated elements"""
+    if n==0: yield []
+    else:
+        for i in xrange(len(items)-n+1):
+            for cc in unique_combinations(items[i+1:],n-1):
+                yield [items[i]]+cc
 
-class DependencyList:
+def normalize_language_tag(tag):
+    """Return a list of normalized combinations for a `BCP 47` language tag.
+
+    Example:
+
+    >>> normalize_language_tag('de_AT-1901')
+    ['de-at-1901', 'de-at', 'de-1901', 'de']
+    """
+    # normalize:
+    tag = tag.lower().replace('_','-')
+    # split (except singletons, which mark the following tag as non-standard):
+    tag = re.sub(r'-([a-zA-Z0-9])-', r'-\1_', tag)
+    taglist = []
+    subtags = [subtag.replace('_', '-') for subtag in tag.split('-')]
+    base_tag = [subtags.pop(0)]
+    # find all combinations of subtags
+    for n in range(len(subtags), 0, -1):
+        for tags in unique_combinations(subtags, n):
+            taglist.append('-'.join(base_tag+tags))
+    taglist += base_tag
+    return taglist
+
+
+class DependencyList(object):
 
     """
     List of dependencies, with file recording support.
@@ -642,10 +712,13 @@ class DependencyList:
         If it is None, no file output is done when calling add().
         """
         self.list = []
-        if output_file == '-':
-            self.file = sys.stdout
-        elif output_file:
-            self.file = open(output_file, 'w')
+        if output_file:
+            if output_file == '-':
+                of = None
+            else:
+                of = output_file
+            self.file = docutils.io.FileOutput(destination_path=of,
+                                   encoding='utf8', autoclose=False)
         else:
             self.file = None
 
@@ -659,7 +732,7 @@ class DependencyList:
             if not filename in self.list:
                 self.list.append(filename)
                 if self.file is not None:
-                    print >>self.file, filename
+                    self.file.write(filename+'\n')
 
     def close(self):
         """
@@ -669,8 +742,8 @@ class DependencyList:
         self.file = None
 
     def __repr__(self):
-        if self.file:
+        try:
             output_file = self.file.name
-        else:
+        except AttributeError:
             output_file = None
         return '%s(%r, %s)' % (self.__class__.__name__, output_file, self.list)

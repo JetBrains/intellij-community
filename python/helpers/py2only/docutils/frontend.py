@@ -1,4 +1,4 @@
-# $Id: frontend.py 6205 2009-11-30 08:11:08Z milde $
+# $Id: frontend.py 7584 2013-01-01 20:00:21Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -18,8 +18,10 @@ Also exports the following functions:
 * Option callbacks: `store_multiple`, `read_config_file`.
 * Setting validators: `validate_encoding`,
   `validate_encoding_error_handler`,
-  `validate_encoding_and_error_handler`, `validate_boolean`,
-  `validate_threshold`, `validate_colon_separated_string_list`,
+  `validate_encoding_and_error_handler`,
+  `validate_boolean`, `validate_ternary`, `validate_threshold`,
+  `validate_colon_separated_string_list`,
+  `validate_comma_separated_string_list`,
   `validate_dependency_file`.
 * `make_paths_absolute`.
 * SettingSpec manipulation: `filter_settings_spec`.
@@ -27,18 +29,18 @@ Also exports the following functions:
 
 __docformat__ = 'reStructuredText'
 
-import ConfigParser as CP
-import codecs
-import optparse
 import os
 import os.path
 import sys
 import warnings
+import ConfigParser as CP
+import codecs
+import optparse
 from optparse import SUPPRESS_HELP
-
 import docutils
-import docutils.nodes
 import docutils.utils
+import docutils.nodes
+from docutils.utils.error_reporting import locale_encoding, ErrorOutput, ErrorString
 
 
 def store_multiple(option, opt, value, parser, *args, **kwargs):
@@ -77,12 +79,6 @@ def validate_encoding_error_handler(setting, value, option_parser,
                                     config_parser=None, config_section=None):
     try:
         codecs.lookup_error(value)
-    except AttributeError:    # TODO: remove (only needed prior to Python 2.3)
-        if value not in ('strict', 'ignore', 'replace', 'xmlcharrefreplace'):
-            raise (LookupError(
-                'unknown encoding error handler: "%s" (choices: '
-                '"strict", "ignore", "replace", or "xmlcharrefreplace")' % value),
-                   None, sys.exc_info()[2])
     except LookupError:
         raise (LookupError(
             'unknown encoding error handler: "%s" (choices: '
@@ -116,13 +112,31 @@ def validate_encoding_and_error_handler(
 
 def validate_boolean(setting, value, option_parser,
                      config_parser=None, config_section=None):
-    if isinstance(value, unicode):
-        try:
-            return option_parser.booleans[value.strip().lower()]
-        except KeyError:
-            raise (LookupError('unknown boolean value: "%s"' % value),
-                   None, sys.exc_info()[2])
-    return value
+    """Check/normalize boolean settings:
+         True:  '1', 'on', 'yes', 'true'
+         False: '0', 'off', 'no','false', ''
+    """
+    if isinstance(value, bool):
+        return value
+    try:
+        return option_parser.booleans[value.strip().lower()]
+    except KeyError:
+        raise (LookupError('unknown boolean value: "%s"' % value),
+               None, sys.exc_info()[2])
+
+def validate_ternary(setting, value, option_parser,
+                     config_parser=None, config_section=None):
+    """Check/normalize three-value settings:
+         True:  '1', 'on', 'yes', 'true'
+         False: '0', 'off', 'no','false', ''
+         any other value: returned as-is.
+    """
+    if isinstance(value, bool) or value is None:
+        return value
+    try:
+        return option_parser.booleans[value.strip().lower()]
+    except KeyError:
+        return value
 
 def validate_nonnegative_int(setting, value, option_parser,
                              config_parser=None, config_section=None):
@@ -144,11 +158,26 @@ def validate_threshold(setting, value, option_parser,
 
 def validate_colon_separated_string_list(
     setting, value, option_parser, config_parser=None, config_section=None):
-    if isinstance(value, unicode):
+    if not isinstance(value, list):
         value = value.split(':')
     else:
         last = value.pop()
         value.extend(last.split(':'))
+    return value
+
+def validate_comma_separated_list(setting, value, option_parser,
+                                    config_parser=None, config_section=None):
+    """Check/normalize list arguments (split at "," and strip whitespace).
+    """
+    # `value` is already a ``list`` when  given as command line option
+    # and "action" is "append" and ``unicode`` or ``str`` else.
+    if not isinstance(value, list):
+        value = [value]
+    # this function is called for every option added to `value`
+    # -> split the last item and append the result:
+    last = value.pop()
+    items = [i.strip(u' \t\n') for i in last.split(u',') if i.strip(u' \t\n')]
+    value.extend(items)
     return value
 
 def validate_url_trailing_slash(
@@ -169,15 +198,15 @@ def validate_dependency_file(setting, value, option_parser,
 
 def validate_strip_class(setting, value, option_parser,
                          config_parser=None, config_section=None):
-    if config_parser:                   # validate all values
-        class_values = value
-    else:                               # just validate the latest value
-        class_values = [value[-1]]
-    for class_value in class_values:
-        normalized = docutils.nodes.make_id(class_value)
-        if class_value != normalized:
+    # value is a comma separated string list:
+    value = validate_comma_separated_list(setting, value, option_parser,
+                                          config_parser, config_section)
+    # validate list elements:
+    for cls in value:
+        normalized = docutils.nodes.make_id(cls)
+        if cls != normalized:
             raise ValueError('invalid class value %r (perhaps %r?)'
-                             % (class_value, normalized))
+                             % (cls, normalized))
     return value
 
 def make_paths_absolute(pathdict, keys, base_path=None):
@@ -188,7 +217,8 @@ def make_paths_absolute(pathdict, keys, base_path=None):
     `OptionParser.relative_path_settings`.
     """
     if base_path is None:
-        base_path = os.getcwd()
+        base_path = os.getcwdu() # type(base_path) == unicode
+        # to allow combining non-ASCII cwd with unicode values in `pathdict`
     for key in keys:
         if key in pathdict:
             value = pathdict[key]
@@ -282,8 +312,8 @@ class Option(optparse.Option):
                     new_value = self.validator(setting, value, parser)
                 except Exception, error:
                     raise (optparse.OptionValueError(
-                        'Error in option "%s":\n    %s: %s'
-                        % (opt, error.__class__.__name__, error)),
+                        'Error in option "%s":\n    %s'
+                        % (opt, ErrorString(error))),
                            None, sys.exc_info()[2])
                 setattr(values, setting, new_value)
             if self.overrides:
@@ -316,14 +346,12 @@ class OptionParser(optparse.OptionParser, docutils.SettingsSpec):
     thresholds = {'info': 1, 'warning': 2, 'error': 3, 'severe': 4, 'none': 5}
     """Lookup table for --report and --halt threshold values."""
 
-    booleans={'1': 1, 'on': 1, 'yes': 1, 'true': 1,
-              '0': 0, 'off': 0, 'no': 0, 'false': 0, '': 0}
+    booleans={'1': True, 'on': True, 'yes': True, 'true': True,
+              '0': False, 'off': False, 'no': False, 'false': False, '': False}
     """Lookup table for boolean configuration file settings."""
 
-    try:
-        default_error_encoding = sys.stderr.encoding or 'ascii'
-    except AttributeError:
-        default_error_encoding = 'ascii'
+    default_error_encoding = getattr(sys.stderr, 'encoding',
+                                     None) or locale_encoding or 'ascii'
 
     default_error_encoding_error_handler = 'backslashreplace'
 
@@ -465,7 +493,7 @@ class OptionParser(optparse.OptionParser, docutils.SettingsSpec):
           ['--error-encoding-error-handler'],
           {'default': default_error_encoding_error_handler,
            'validator': validate_encoding_error_handler}),
-         ('Specify the language (as 2-letter code).  Default: en.',
+         ('Specify the language (as BCP 47 language tag).  Default: en.',
           ['--language', '-l'], {'dest': 'language_code', 'default': 'en',
                                  'metavar': '<name>'}),
          ('Write output file dependencies to <file>.',
@@ -624,8 +652,7 @@ class OptionParser(optparse.OptionParser, docutils.SettingsSpec):
     def check_values(self, values, args):
         """Store positional arguments as runtime settings."""
         values._source, values._destination = self.check_args(args)
-        make_paths_absolute(values.__dict__, self.relative_path_settings,
-                            os.getcwd())
+        make_paths_absolute(values.__dict__, self.relative_path_settings)
         values._config_files = self.config_files
         return values
 
@@ -672,7 +699,7 @@ class OptionParser(optparse.OptionParser, docutils.SettingsSpec):
         raise KeyError('No option with dest == %r.' % dest)
 
 
-class ConfigParser(CP.ConfigParser):
+class ConfigParser(CP.RawConfigParser):
 
     old_settings = {
         'pep_stylesheet': ('pep_html writer', 'stylesheet'),
@@ -694,10 +721,13 @@ Skipping "%s" configuration file.
 """
 
     def __init__(self, *args, **kwargs):
-        CP.ConfigParser.__init__(self, *args, **kwargs)
+        CP.RawConfigParser.__init__(self, *args, **kwargs)
 
         self._files = []
         """List of paths of configuration files read."""
+
+        self._stderr = ErrorOutput()
+        """Wrapper around sys.stderr catching en-/decoding errors"""
 
     def read(self, filenames, option_parser):
         if type(filenames) in (str, unicode):
@@ -709,9 +739,12 @@ Skipping "%s" configuration file.
             except IOError:
                 continue
             try:
-                CP.ConfigParser.readfp(self, fp, filename)
+                if sys.version_info < (3,2):
+                    CP.RawConfigParser.readfp(self, fp, filename)
+                else:
+                    CP.RawConfigParser.read_file(self, fp, filename)
             except UnicodeDecodeError:
-                sys.stderr.write(self.not_utf8_error % (filename, filename))
+                self._stderr.write(self.not_utf8_error % (filename, filename))
                 fp.close()
                 continue
             fp.close()
@@ -750,7 +783,7 @@ Skipping "%s" configuration file.
                 except KeyError:
                     continue
                 if option.validator:
-                    value = self.get(section, setting, raw=1)
+                    value = self.get(section, setting)
                     try:
                         new_value = option.validator(
                             setting, value, option_parser,
@@ -758,9 +791,10 @@ Skipping "%s" configuration file.
                     except Exception, error:
                         raise (ValueError(
                             'Error in config file "%s", section "[%s]":\n'
-                            '    %s: %s\n        %s = %s'
-                            % (filename, section, error.__class__.__name__,
-                               error, setting, value)), None, sys.exc_info()[2])
+                            '    %s\n'
+                            '        %s = %s'
+                            % (filename, section, ErrorString(error),
+                               setting, value)), None, sys.exc_info()[2])
                     self.set(section, setting, new_value)
                 if option.overrides:
                     self.set(section, option.overrides, None)
@@ -779,7 +813,7 @@ Skipping "%s" configuration file.
         section_dict = {}
         if self.has_section(section):
             for option in self.options(section):
-                section_dict[option] = self.get(section, option, raw=1)
+                section_dict[option] = self.get(section, option)
         return section_dict
 
 
