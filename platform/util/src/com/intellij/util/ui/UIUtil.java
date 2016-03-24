@@ -2078,7 +2078,7 @@ public class UIUtil {
     return null;
   }
 
-  public static <T extends JComponent> T findParentByClass(@NotNull Component c, Class<T> cls) {
+  public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
     for (Component component = c; component != null; component = component.getParent()) {
       if (cls.isAssignableFrom(component.getClass())) {
         @SuppressWarnings({"unchecked"}) final T t = (T)component;
