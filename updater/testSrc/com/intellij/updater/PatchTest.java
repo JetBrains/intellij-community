@@ -83,54 +83,54 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testValidation() throws Exception {
-    FileUtil.writeToFile(new File(myOlderDir, "bin/idea.bat"), "changed".getBytes());
+    File idea = new File(myOlderDir, "bin/idea.bat");
+    FileUtil.writeToFile(idea, "changed".getBytes());
     new File(myOlderDir, "extraDir").mkdirs();
     new File(myOlderDir, "extraDir/extraFile.txt").createNewFile();
     new File(myOlderDir, "newDir").mkdirs();
-    new File(myOlderDir, "newDir/newFile.txt").createNewFile();
-    FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "changed".getBytes());
-    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed".getBytes());
-    FileUtil.delete(new File(myOlderDir, "lib/bootstrap.jar"));
+    File newFile = new File(myOlderDir, "newDir/newFile.txt");
+    newFile.createNewFile();
+    File readme = new File(myOlderDir, "Readme.txt");
+    FileUtil.writeToFile(readme, "changed".getBytes());
+    File annotations = new File(myOlderDir, "lib/annotations.jar");
+    FileUtil.writeToFile(annotations, "changed".getBytes());
+    File bootstrap = new File(myOlderDir, "lib/bootstrap.jar");
+    FileUtil.delete(bootstrap);
 
     assertEquals(
       new HashSet<ValidationResult>(Arrays.asList(
         new ValidationResult(ValidationResult.Kind.CONFLICT,
-                             "newDir/newFile.txt",
+                             "newDir/newFile.txt", newFile,
                              ValidationResult.Action.CREATE,
-                             ValidationResult.ALREADY_EXISTS_MESSAGE,
-                             ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
+                             ValidationResult.ALREADY_EXISTS_MESSAGE, ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
         new ValidationResult(ValidationResult.Kind.ERROR,
-                             "Readme.txt",
+                             "Readme.txt", readme,
                              ValidationResult.Action.UPDATE,
-                             ValidationResult.MODIFIED_MESSAGE,
-                             ValidationResult.Option.IGNORE),
+                             ValidationResult.MODIFIED_MESSAGE, ValidationResult.Option.IGNORE),
         new ValidationResult(ValidationResult.Kind.ERROR,
-                             "lib/annotations.jar",
+                             "lib/annotations.jar", annotations,
                              ValidationResult.Action.UPDATE,
-                             ValidationResult.MODIFIED_MESSAGE,
-                             ValidationResult.Option.IGNORE),
+                             ValidationResult.MODIFIED_MESSAGE, ValidationResult.Option.IGNORE),
         new ValidationResult(ValidationResult.Kind.ERROR,
-                             "lib/bootstrap.jar",
+                             "lib/bootstrap.jar", bootstrap,
                              ValidationResult.Action.UPDATE,
-                             ValidationResult.ABSENT_MESSAGE,
-                             ValidationResult.Option.IGNORE),
+                             ValidationResult.ABSENT_MESSAGE, ValidationResult.Option.IGNORE),
         new ValidationResult(ValidationResult.Kind.CONFLICT,
-                             "bin/idea.bat",
+                             "bin/idea.bat", idea,
                              ValidationResult.Action.DELETE,
-                             ValidationResult.MODIFIED_MESSAGE,
-                             ValidationResult.Option.DELETE, ValidationResult.Option.KEEP))),
+                             ValidationResult.MODIFIED_MESSAGE, ValidationResult.Option.DELETE, ValidationResult.Option.KEEP))),
       new HashSet<ValidationResult>(myPatch.validate(myOlderDir, TEST_UI)));
   }
 
   @Test
   public void testValidationWithOptionalFiles() throws Exception {
-    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed".getBytes());
+    File toFile = new File(myOlderDir, "lib/annotations.jar");
+    FileUtil.writeToFile(toFile, "changed".getBytes());
     assertEquals(new HashSet<ValidationResult>(Arrays.asList(
       new ValidationResult(ValidationResult.Kind.ERROR,
-                           "lib/annotations.jar",
+                           "lib/annotations.jar", toFile,
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
-                           ValidationResult.Option.IGNORE))),
+                           ValidationResult.MODIFIED_MESSAGE, ValidationResult.Option.IGNORE))),
                  new HashSet<ValidationResult>(myPatch.validate(myOlderDir, TEST_UI)));
 
     PatchSpec spec = new PatchSpec()
@@ -138,7 +138,7 @@ public class PatchTest extends PatchTestCase {
       .setNewFolder(myNewerDir.getAbsolutePath())
       .setOptionalFiles(Arrays.asList("lib/annotations.jar"));
     myPatch = new Patch(spec, TEST_UI);
-    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
+    FileUtil.delete(toFile);
     assertEquals(Collections.<ValidationResult>emptyList(),
                  myPatch.validate(myOlderDir, TEST_UI));
   }
@@ -156,10 +156,9 @@ public class PatchTest extends PatchTestCase {
         assertEquals(
           new HashSet<ValidationResult>(Arrays.asList(
             new ValidationResult(ValidationResult.Kind.ERROR,
-                                 "Readme.txt",
+                                 "Readme.txt", f,
                                  ValidationResult.Action.UPDATE,
-                                 message,
-                                 option))),
+                                 message, option))),
           new HashSet<ValidationResult>(result));
       }
       finally {

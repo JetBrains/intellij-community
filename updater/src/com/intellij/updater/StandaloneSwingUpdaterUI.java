@@ -2,9 +2,6 @@ package com.intellij.updater;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,7 +9,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -345,22 +341,19 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
             if (i == 100) {
               List<ValidationResult> vr = new ArrayList<ValidationResult>();
               vr.add(new ValidationResult(ValidationResult.Kind.ERROR,
-                                          "foo/bar",
+                                          "foo/bar", null,
                                           ValidationResult.Action.CREATE,
                                           "Hello",
-                                          ValidationResult.Option.REPLACE,
-                                          ValidationResult.Option.KEEP));
+                                          ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
               vr.add(new ValidationResult(ValidationResult.Kind.CONFLICT,
-                                          "foo/bar/baz",
+                                          "foo/bar/baz", null,
                                           ValidationResult.Action.DELETE,
                                           "World",
-                                          ValidationResult.Option.DELETE,
-                                          ValidationResult.Option.KEEP));
+                                          ValidationResult.Option.DELETE, ValidationResult.Option.KEEP));
               vr.add(new ValidationResult(ValidationResult.Kind.INFO,
-                                          "xxx",
+                                          "xxx", null,
                                           ValidationResult.Action.NO_ACTION,
-                                          "bla-bla",
-                                          ValidationResult.Option.IGNORE));
+                                          "bla-bla", ValidationResult.Option.IGNORE));
               ui.askUser(vr);
             }
           }

@@ -92,7 +92,7 @@ public abstract class PatchAction {
     if (toFile.canRead() && toFile.canWrite() && isWritable(toFile)) return null;
     return new ValidationResult(ValidationResult.Kind.ERROR,
                                 myPath,
-                                action,
+                                toFile, action,
                                 ValidationResult.ACCESS_DENIED_MESSAGE,
                                 myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE);
   }
@@ -132,7 +132,7 @@ public abstract class PatchAction {
       }
       return new ValidationResult(ValidationResult.Kind.ERROR,
                                   myPath,
-                                  action,
+                                  toFile, action,
                                   message,
                                   ValidationResult.Option.KILL_PROCESS);
     }
@@ -161,7 +161,7 @@ public abstract class PatchAction {
         }
         return new ValidationResult(kind,
                                     myPath,
-                                    action,
+                                    toFile, action,
                                     ValidationResult.MODIFIED_MESSAGE,
                                     options);
       }
@@ -169,7 +169,7 @@ public abstract class PatchAction {
     else if (!isOptional) {
       return new ValidationResult(kind,
                                   myPath,
-                                  action,
+                                  toFile, action,
                                   ValidationResult.ABSENT_MESSAGE,
                                   myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE);
     }
