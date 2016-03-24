@@ -50,7 +50,7 @@ public class StudyConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Educational";
+    return "Education";
   }
 
   @NotNull
