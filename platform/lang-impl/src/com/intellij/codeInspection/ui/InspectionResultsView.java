@@ -83,7 +83,6 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.codeInspection.ex.InspectionRVContentProvider.insertByIndex;
 
@@ -630,28 +629,34 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myTreeStructureUpdateLock;
   }
 
+  public void addTools(Collection<Tools> tools) {
+    InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
+    boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
+    boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
+    for (Tools currentTools : tools) {
+      InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+      final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
+      for (ScopeToolState state : myProvider.getTools(currentTools)) {
+        InspectionToolWrapper toolWrapper = state.getTool();
+        if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+          addTool(toolWrapper,
+                  profile.getErrorLevel(key, state.getScope(myProject), myProject),
+                  isGroupedBySeverity,
+                  singleInspectionRun);
+        }
+      }
+    }
+  }
+
   public void buildTree() {
     final Application app = ApplicationManager.getApplication();
     final Runnable buildAction = () -> {
       try {
         setUpdating(true);
         synchronized (getTreeStructureUpdateLock()) {
-          InspectionProfile profile = myInspectionProfile;
-          boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
-          boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
           myGroups.clear();
           final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
-          for (Tools currentTools : tools.values()) {
-            InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
-            final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
-            for (ScopeToolState state : myProvider.getTools(currentTools)) {
-              InspectionToolWrapper toolWrapper = state.getTool();
-              if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
-                addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject),
-                        isGroupedBySeverity, singleInspectionRun);
-              }
-            }
-          }
+          addTools(tools.values());
         }
       }
       finally {
@@ -662,11 +667,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (app.isUnitTestMode()) {
       buildAction.run();
     } else {
-      app.executeOnPooledThread(() -> {
-        app.runReadAction(buildAction);
-      });
+      app.executeOnPooledThread(() -> app.runReadAction(buildAction));
     }
   }
+
 
   @NotNull
   private InspectionTreeNode getToolParentNode(@NotNull String groupName,
