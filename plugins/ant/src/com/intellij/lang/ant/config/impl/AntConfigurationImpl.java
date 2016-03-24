@@ -862,14 +862,17 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private static void queueLater(final Task task) {
     final Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      task.queue();
-    } else {
+    if (!app.isDispatchThread() || task.isHeadless()) {
+      // for headless tasks we need to ensure async execution. 
+      // Otherwise calls to AntConfiguration.getInstance() from the task will cause SOE
       app.invokeLater(new Runnable() {
         public void run() {
           task.queue();
         }
-      });
+      }, ModalityState.any());
+    }
+    else {
+      task.queue();
     }
   }
 
