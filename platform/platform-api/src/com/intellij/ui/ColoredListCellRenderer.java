@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer {
-  private final ListCellRenderer myDefaultGtkRenderer = UIUtil.isUnderGTKLookAndFeel() ? new JComboBox().getRenderer() : null;
+public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer<T> {
+  private final ListCellRenderer myDefaultGtkRenderer = UIUtil.isUnderGTKLookAndFeel() ? new JComboBox<T>().getRenderer() : null;
 
   protected boolean mySelected;
   protected Color myForeground;
@@ -45,7 +45,8 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     getIpad().right = UIUtil.getListCellHPadding();
   }
 
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  @Override
+  public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
     clear();
 
     if (myComboBox != null) {
@@ -72,7 +73,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
 
     setPaintFocusBorder(hasFocus);
 
-    customizeCellRenderer(list, (T)value, index, selected, hasFocus);
+    customizeCellRenderer(list, value, index, selected, hasFocus);
 
     if (myDefaultGtkRenderer != null && list.getModel() instanceof ComboBoxModel) {
       final Component component = myDefaultGtkRenderer.getListCellRendererComponent(list, value, index, selected, hasFocus);
@@ -87,6 +88,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
+  @Override
   public final void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
     if (mySelected) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
@@ -99,6 +101,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     }
   }
 
+  @Override
   @NotNull
   public Dimension getPreferredSize() {
     // There is a bug in BasicComboPopup. It does not add renderer into CellRendererPane,
@@ -116,15 +119,5 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     return result;
   }
 
-  protected abstract void customizeCellRenderer(JList list, T value, int index, boolean selected, boolean hasFocus);
-
-  public abstract static class KotlinFriendlyColoredListCellRenderer<T> extends ColoredListCellRenderer<T> {
-    @Override
-    protected final void customizeCellRenderer(JList list, T value, int index, boolean selected, boolean hasFocus) {
-
-    }
-
-    // cannot specify type param in JList if JDK 6
-    protected abstract void customizeCellRenderer(T value, int index, boolean selected, boolean hasFocus);
-  }
+  protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus);
 }
