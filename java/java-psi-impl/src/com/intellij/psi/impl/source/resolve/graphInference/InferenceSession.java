@@ -1153,7 +1153,7 @@ public class InferenceSession {
         type =  PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
       }
       else {
-        type = myErased ? null : upperBound;
+        type = upperBound;
       }
 
       if (type instanceof PsiIntersectionType) {
