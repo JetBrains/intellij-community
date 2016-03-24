@@ -32,6 +32,27 @@
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
       <option name="DIFF_SEPARATORS_BOTTOM_BORDER"/>
+
+      <option name="FILESTATUS_ADDED" value="0a7700"/>
+      <option name="FILESTATUS_DELETED" value="616161"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="773895"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="727238"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS" value="ff0000"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_CONFLICTS" value="ff0000"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS" value="ff0000"/>
+      <option name="FILESTATUS_MERGED" value="7503dc"/>
+      <option name="FILESTATUS_MODIFIED" value="0032a0"/>
+      <option name="FILESTATUS_NOT_CHANGED" value=""/>
+      <option name="FILESTATUS_NOT_CHANGED_IMMEDIATE" value="3264b4"/>
+      <option name="FILESTATUS_NOT_CHANGED_RECURSIVE" value="8aa4c8"/>
+      <option name="FILESTATUS_UNKNOWN" value="993300"/>
+      <option name="FILESTATUS_addedOutside" value="0eaa00"/>
+      <option name="FILESTATUS_changelistConflict" value="ff0000"/>
+      <option name="FILESTATUS_modifiedOutside" value="0047e4"/>
+      <option name="FILESTATUS_HIJACKED" value="b28c00"/>
+      <option name="FILESTATUS_OBSOLETE" value="7c7c00"/>
+      <option name="FILESTATUS_SWITCHED" value="08978f"/>
+      <option name="FILESTATUS_SUPPRESSED" value=""/>
     </colors>
 
     <attributes>
