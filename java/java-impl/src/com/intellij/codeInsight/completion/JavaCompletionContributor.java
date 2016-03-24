@@ -43,7 +43,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
-import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
@@ -158,7 +157,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     PsiVariable var = PsiTreeUtil.getParentOfType(position, PsiVariable.class, false, PsiClass.class);
     if (var != null && PsiTreeUtil.isAncestor(var.getInitializer(), position, false)) {
-      return new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class));
+      return new ExcludeFilter(var);
     }
 
     if (SWITCH_LABEL.accepts(position)) {
@@ -168,6 +167,11 @@ public class JavaCompletionContributor extends CompletionContributor {
           return element instanceof PsiEnumConstant;
         }
       };
+    }
+
+    PsiForeachStatement loop = PsiTreeUtil.getParentOfType(position, PsiForeachStatement.class);
+    if (loop != null && PsiTreeUtil.isAncestor(loop.getIteratedValue(), position, false)) {
+      return new ExcludeFilter(loop.getIterationParameter());
     }
 
     return TrueFilter.INSTANCE;
