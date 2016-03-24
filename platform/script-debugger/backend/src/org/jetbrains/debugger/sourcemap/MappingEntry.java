@@ -1,25 +1,20 @@
-package org.jetbrains.debugger.sourcemap;
-
-import org.jetbrains.annotations.Nullable;
+package org.jetbrains.debugger.sourcemap
 
 /**
  * Mapping entry in the source map
  */
-public abstract class MappingEntry {
-  public abstract int getGeneratedColumn();
+interface MappingEntry {
+  val generatedColumn: Int
 
-  public abstract int getGeneratedLine();
+  val generatedLine: Int
 
-  public abstract int getSourceLine();
+  val sourceLine: Int
 
-  public abstract int getSourceColumn();
+  val sourceColumn: Int
 
-  public int getSource() {
-    return -1;
-  }
+  val source: Int
+    get() = -1
 
-  @Nullable
-  public String getName() {
-    return null;
-  }
+  val name: String?
+    get() = null
 }
