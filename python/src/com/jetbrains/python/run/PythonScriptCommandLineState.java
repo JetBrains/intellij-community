@@ -31,6 +31,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PyConsoleType;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -66,7 +67,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
       PydevConsoleRunner runner =
         new PythonScriptWithConsoleRunner(myConfig.getProject(), myConfig.getSdk(), PyConsoleType.PYTHON, myConfig.getWorkingDirectory(),
-                                          myConfig.getEnvs(), patchers);
+                                          myConfig.getEnvs(), patchers,
+                                          PyConsoleOptions.getInstance(myConfig.getProject()).getPythonConsoleSettings());
 
       runner.runSync();
 
@@ -113,8 +115,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                          @Nullable String workingDir,
                                          Map<String, String> environmentVariables,
                                          CommandLinePatcher[] patchers,
+                                         PyConsoleOptions.PyConsoleSettings consoleSettings,
                                          String... statementsToExecute) {
-      super(project, sdk, consoleType, workingDir, environmentVariables, statementsToExecute);
+      super(project, sdk, consoleType, workingDir, environmentVariables, consoleSettings, statementsToExecute);
       myPatchers = patchers;
     }
 

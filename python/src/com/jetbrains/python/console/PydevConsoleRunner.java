@@ -145,6 +145,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private final PyConsoleType myConsoleType;
   private Map<String, String> myEnvironmentVariables;
   private String myCommandLine;
+  @NotNull private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
   private String[] myStatementsToExecute = ArrayUtil.EMPTY_STRING_ARRAY;
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
@@ -158,18 +159,23 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private String myConsoleTitle = null;
 
   public PydevConsoleRunner(@NotNull final Project project,
-                            @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
+                            @NotNull Sdk sdk,
+                            @NotNull final PyConsoleType consoleType,
                             @Nullable final String workingDir,
-                            Map<String, String> environmentVariables, String... statementsToExecute) {
+                            Map<String, String> environmentVariables,
+                            @NotNull
+                            PyConsoleOptions.PyConsoleSettings settingsProvider,
+                            String... statementsToExecute) {
     super(project, consoleType.getTitle(), workingDir);
     mySdk = sdk;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
+    myConsoleSettings = settingsProvider;
     myStatementsToExecute = statementsToExecute;
   }
 
   @Nullable
-  public static PyRemotePathMapper getPathMapper(@NotNull Project project, Sdk sdk) {
+  public static PyRemotePathMapper getPathMapper(@NotNull Project project, Sdk sdk, PyConsoleOptions.PyConsoleSettings consoleSettings) {
     if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
@@ -177,7 +183,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         PyRemotePathMapper remotePathMapper =
           instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
 
-        PathMappingSettings mappingSettings = PyConsoleOptions.getInstance(project).getPythonConsoleSettings().getMappingSettings();
+        PathMappingSettings mappingSettings = consoleSettings.getMappingSettings();
 
         remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
 
@@ -461,11 +467,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                                       String workingDir,
                                                       int[] ports,
                                                       PythonHelper helper) {
-    PyConsoleOptions.PyConsoleSettings settings = PyConsoleOptions.getInstance(getProject()).getPythonConsoleSettings();
-
-
     GeneralCommandLine cmd =
-      PythonCommandLineState.createPythonCommandLine(getProject(), new PythonConsoleRunParams(settings, workingDir, sdk,
+      PythonCommandLineState.createPythonCommandLine(getProject(), new PythonConsoleRunParams(myConsoleSettings, workingDir, sdk,
                                                                                               environmentVariables), false,
                                                      PtyCommandLine.isEnabled() && !SystemInfo.isWindows);
     cmd.withWorkDirectory(getWorkingDir());
@@ -543,7 +546,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     commandLine.getParametersList().set(2, "0");
 
     try {
-      PyRemotePathMapper pathMapper = getPathMapper(getProject(), mySdk);
+      PyRemotePathMapper pathMapper = getPathMapper(getProject(), mySdk, myConsoleSettings);
 
       assert pathMapper != null;
 

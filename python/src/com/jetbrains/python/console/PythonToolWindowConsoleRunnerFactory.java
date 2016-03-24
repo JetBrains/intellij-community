@@ -17,6 +17,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -28,7 +29,8 @@ public class PythonToolWindowConsoleRunnerFactory extends PydevConsoleRunnerFact
   protected PydevConsoleRunner createConsoleRunner(Project project,
                                                    Sdk sdk,
                                                    String workingDir,
-                                                   Map<String, String> envs, PyConsoleType consoleType, String ... setupFragment) {
-    return new PythonToolWindowConsoleRunner(project, sdk, consoleType, workingDir, envs, setupFragment);
+                                                   Map<String, String> envs, PyConsoleType consoleType,
+                                                   @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider, String... setupFragment) {
+    return new PythonToolWindowConsoleRunner(project, sdk, consoleType, workingDir, envs, settingsProvider, setupFragment);
   }
 }
