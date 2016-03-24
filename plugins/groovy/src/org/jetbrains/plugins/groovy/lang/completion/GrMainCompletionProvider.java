@@ -56,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
@@ -213,7 +212,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
     final Map<PsiModifierListOwner, LookupElement> staticMembers = ContainerUtil.newHashMap();
     final PsiElement qualifier = reference.getQualifier();
-    final PsiType qualifierType = getQualifierType(qualifier);
+    final PsiType qualifierType = GroovyCompletionUtil.getQualifierType(qualifier);
 
     if (reference instanceof GrReferenceExpression && (qualifier instanceof GrExpression || qualifier == null)) {
       for (String string : CompleteReferencesWithSameQualifier.getVariantsWithSameQualifier((GrReferenceExpression)reference, matcher, (GrExpression)qualifier)) {
@@ -283,18 +282,6 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       return addStaticMembers(parameters, matcher, staticMembers, consumer);
     }
     return EmptyRunnable.INSTANCE;
-  }
-
-  @Nullable
-  private static PsiType getQualifierType(PsiElement qualifier) {
-    PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
-    if (ResolveUtil.resolvesToClass(qualifier)) {
-      PsiType type = ResolveUtil.unwrapClassType(qualifierType);
-      if (type != null) {
-        qualifierType = type;
-      }
-    }
-    return qualifierType;
   }
 
   private static boolean isLightElementDeclaredDuringCompletion(Object object) {
