@@ -56,12 +56,12 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   private static TextRange getKeyWordRange(@NotNull final PyStringLiteralExpression element,
                                            @NotNull final PyStringFormatParser.SubstitutionChunk chunk) {
-    final TextRange shifted = chunk.getTextRange();
+    final TextRange textRange = chunk.getTextRange();
     if (chunk.getMappingKey() != null) {
-      final int start = shifted.getStartOffset() + chunk.getTextRange().substring(element.getText()).indexOf(chunk.getMappingKey());
+      final int start = textRange.getStartOffset() + chunk.getTextRange().substring(element.getText()).indexOf(chunk.getMappingKey());
       return new TextRange(start, start + chunk.getMappingKey().length());
     }
-    return shifted;
+    return textRange;
   }
 
   @Nullable
@@ -132,7 +132,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       return resolveDictLiteralExpression((PyDictLiteralExpression)expression);
     }
     else if (expression instanceof PyCallExpression) {
-      return resolveCallExpression((PyCallExpression)expression);
+      return resolveCallExpressionForKeywordSubstitution((PyCallExpression)expression);
     }
     
     return null;
@@ -140,11 +140,11 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private PsiElement resolvePositional(PyExpression expression) {
-    PsiElement result = null;
     PyExpression containedExpression = expression;
     if (expression instanceof PyParenthesizedExpression) {
       containedExpression = PyPsiUtils.flattenParens(expression);
     }
+    PsiElement result = null;
     
     if (containedExpression instanceof PyTupleExpression) {
       myIgnoreUnresolved = false;
@@ -156,18 +156,17 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     else if (containedExpression instanceof PyBinaryExpression && ((PyBinaryExpression)containedExpression).isOperator("+")) {
       result = resolveNotNestedBinaryExpression((PyBinaryExpression)containedExpression);
     }
-    else if (containedExpression instanceof PyLiteralExpression && myPosition == 0) {
+    else if (myPosition == 0) {
       result = containedExpression;
     }
-    else if (containedExpression instanceof PyCallExpression) {
-      result = resolveCallExpression((PyCallExpression)containedExpression);
+    else {
+      myIgnoreUnresolved = false;
     }
     return result;
   }
 
   @Nullable
   private PsiElement resolveNotNestedBinaryExpression(PyBinaryExpression containedExpression) {
-    myIgnoreUnresolved = true;
     PyExpression left = containedExpression.getLeftExpression();
     PyExpression right = containedExpression.getRightExpression();
     if (left instanceof PyParenthesizedExpression) {
@@ -229,7 +228,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         }        
       }
       else if ((pyExpression = PsiTreeUtil.getChildOfType(args[0], PyCallExpression.class)) != null) {
-        return resolveCallExpression((PyCallExpression)pyExpression);
+        return resolveCallExpressionForKeywordSubstitution((PyCallExpression)pyExpression);
       }
     }
     return null;
@@ -252,22 +251,17 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   @Nullable
-  private PyExpression resolveCallExpression(PyCallExpression pyExpression) {
+  private PyExpression resolveCallExpressionForKeywordSubstitution(PyCallExpression pyExpression) {
     PyExpression callee = pyExpression.getCallee();
     if (callee != null) {
       String name = callee.getName();
-
-      if ("dict".equals(name)) {
-        boolean isKeyword = myChunk.getMappingKey() != null;
-        myIgnoreUnresolved = false;
-        PyArgumentList list = pyExpression.getArgumentList();
-        if (isKeyword && list != null) {
-          return list.getKeywordArgument(myChunk.getMappingKey());
+        if ("dict".equals(name)) {
+          myIgnoreUnresolved = false;
+          PyArgumentList list = pyExpression.getArgumentList();
+          if (list != null) {
+            return list.getKeywordArgument(myChunk.getMappingKey());
+          }
         }
-        else {
-          return callee;
-        }
-      }
     }
     return null;
   }

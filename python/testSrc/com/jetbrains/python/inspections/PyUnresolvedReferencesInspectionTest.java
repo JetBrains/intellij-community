@@ -667,6 +667,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-18115
+  public void testPercentStringWithDictCall() {
+    doTest();
+  }
+
   // PY-18254
   public void testVarargsAnnotatedWithFunctionComment() {
     doTest();
