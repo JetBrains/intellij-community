@@ -35,6 +35,7 @@ public class AddArrangementRuleAction extends AbstractArrangementRuleAction impl
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.add.description"));
     getTemplatePresentation().setIcon(IconUtil.getAddIcon());
+    setEnabledInModalContext(true);
   }
 
   @Override

@@ -907,34 +907,50 @@
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
+    <!-- Arrangement rules -->
     <action id="Arrangement.Rule.Add"
+            use-shortcut-of="NewElement"
             class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
     <action id="Arrangement.Rule.Section.Add"
             class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
     <action id="Arrangement.Rule.Remove"
+            use-shortcut-of="$Delete"
             class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
     <action id="Arrangement.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+    </action>
     <action id="Arrangement.Rule.Match.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt UP"/>
+    </action>
     <action id="Arrangement.Rule.Match.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt DOWN"/>
+    </action>
     <action id="Arrangement.Custom.Token.Rule.Edit"
             class="com.intellij.application.options.codeStyle.arrangement.action.EditRuleAliasesDefinitionAction"/>
     <action id="Arrangement.Rule.Group.Condition.Move.Up"
+            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"/>
     <action id="Arrangement.Rule.Group.Condition.Move.Down"
+            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"/>
 
-    <action id="Arrangement.Alias.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.EditArrangementAliasRuleAction"/>
     <action id="Arrangement.Alias.Rule.Add"
+            use-shortcut-of="NewElement"
             class="com.intellij.application.options.codeStyle.arrangement.action.tokens.AddArrangementAliasRuleAction"/>
     <action id="Arrangement.Alias.Rule.Remove"
+            use-shortcut-of="$Delete"
             class="com.intellij.application.options.codeStyle.arrangement.action.tokens.RemoveArrangementAliasRuleAction"/>
+    <action id="Arrangement.Alias.Rule.Edit"
+            use-shortcut-of="Arrangement.Rule.Edit"
+            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.EditArrangementAliasRuleAction"/>
     <action id="Arrangement.Alias.Rule.Match.Condition.Move.Up"
+            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
             class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleUpAction"/>
     <action id="Arrangement.Alias.Rule.Match.Condition.Move.Down"
+            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
             class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleDownAction"/>
 
     <group id="Arrangement.Alias.Rule.ToolBar">
