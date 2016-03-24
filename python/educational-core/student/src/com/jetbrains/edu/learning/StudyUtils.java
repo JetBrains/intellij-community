@@ -498,4 +498,8 @@ public class StudyUtils {
       studyToolWindow.setTaskText(taskText);
     }
   }
+
+  public static boolean isStudyProject(@NotNull Project project) {
+    return StudyTaskManager.getInstance(project).getCourse() != null;
+  }
 }
