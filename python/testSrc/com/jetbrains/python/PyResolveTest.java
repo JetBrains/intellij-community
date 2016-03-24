@@ -714,7 +714,7 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testPercentStringWithRefAsArgument() {
     PsiElement target = resolve();
-    assertEquals(null, target);    
+    assertEquals("tuple", target.getText());    
   }
 
   //PY-2748
@@ -744,8 +744,8 @@ public class PyResolveTest extends PyResolveTestCase {
   // PY-2748
   public void testPercentStringPosParenDictCall() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PyReferenceExpression.class);
-    assertEquals("dict", ((PyReferenceExpression)target).getName());
+    assertInstanceOf(target, PyCallExpression.class);
+    assertEquals("dict()", target.getText());
   }
 
 
