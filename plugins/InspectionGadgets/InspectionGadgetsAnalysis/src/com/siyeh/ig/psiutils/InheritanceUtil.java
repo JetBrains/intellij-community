@@ -61,7 +61,7 @@ public class InheritanceUtil {
       return true;
     }
     final SearchScope scope = GlobalSearchScope.allScope(class1.getProject());
-    final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true, true);
+    final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true);
     final boolean[] result = new boolean[1];
     search.forEach(new Processor<PsiClass>() {
       AtomicInteger count = new AtomicInteger(0);
@@ -86,7 +86,7 @@ public class InheritanceUtil {
         return true;
       }
     }
-    final Query<PsiClass> search = ClassInheritorsSearch.search(aClass, scope, true, true);
+    final Query<PsiClass> search = ClassInheritorsSearch.search(aClass, scope, true);
     return !search.forEach(
       inheritor -> inheritor.isInterface() || inheritor.isAnnotationType() || inheritor.hasModifierProperty(PsiModifier.ABSTRACT));
   }
