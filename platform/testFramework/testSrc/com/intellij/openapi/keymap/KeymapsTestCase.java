@@ -334,6 +334,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "F5",                       "ToggleBreakpointEnabled", "UML.ApplyCurrentLayout"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
     { "control F6",               "PreviousEditorTab", "PreviousTab", },
+    { "control L",                "Vcs.Log.FocusTextFilter", "EditorSelectLine"},
     { "control M",                "Vcs.ShowMessageHistory", "OverrideMethods", },
     { "control N",                "FileChooser.NewFolder", "GotoClass", "GotoChangedFile"},
     { "control P",                "FileChooser.TogglePathShowing", "FindInPath"},
