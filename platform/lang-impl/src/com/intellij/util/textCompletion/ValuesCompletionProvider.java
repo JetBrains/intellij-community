@@ -15,10 +15,10 @@
  */
 package com.intellij.util.textCompletion;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.PlainPrefixMatcher;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +43,7 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
   @NotNull private final List<Character> mySeparators;
   @NotNull protected final Collection<? extends T> myValues;
   private final boolean myCaseSensitive;
+  @NotNull private final InsertHandler<LookupElement> myInsertHandler = new CompletionCharInsertHandler();
 
   public ValuesCompletionProvider(@NotNull TextCompletionValueDescriptor<T> descriptor,
                                   @NotNull List<Character> separators,
@@ -105,14 +106,34 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
     values = ContainerUtil.sorted(values, myDescriptor);
 
     for (T completionVariant : values) {
-      result.addElement(myDescriptor.createLookupBuilder(completionVariant));
+      result.addElement(installInsertHandler(myDescriptor.createLookupBuilder(completionVariant)));
     }
     result.stopHere();
   }
 
   @NotNull
+  private LookupElement installInsertHandler(@NotNull LookupElementBuilder builder) {
+    InsertHandler<LookupElement> handler = builder.getInsertHandler();
+    if (handler == null) return builder.withInsertHandler(myInsertHandler);
+    return builder.withInsertHandler(new InsertHandler<LookupElement>() {
+      @Override
+      public void handleInsert(InsertionContext context, LookupElement item) {
+        myInsertHandler.handleInsert(context, item);
+        handler.handleInsert(context, item);
+      }
+    });
+  }
+
+  @NotNull
   protected Collection<? extends T> getValues(@NotNull String prefix, @NotNull CompletionResultSet result) {
     return myValues;
+  }
+
+  public class CompletionCharInsertHandler implements InsertHandler<LookupElement> {
+    @Override
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      context.setAddCompletionChar(mySeparators.contains(context.getCompletionChar()));
+    }
   }
 
   public static class ValuesCompletionProviderDumbAware<T> extends ValuesCompletionProvider<T> implements DumbAware {
