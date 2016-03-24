@@ -181,11 +181,11 @@ public class BuilderHandler {
     return true;
   }
 
-  public boolean existInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    return existInnerClass(psiClass, null, psiAnnotation);
+  public boolean notExistInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    return notExistInnerClass(psiClass, null, psiAnnotation);
   }
 
-  public boolean existInnerClass(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
+  public boolean notExistInnerClass(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
     final PsiClass innerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
@@ -347,7 +347,7 @@ public class BuilderHandler {
         final PsiType returnType = createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(psiBuilderClass));
 
         final String singularName = handler.createSingularName(singularAnnotation, fieldName);
-        handler.addBuilderMethod(psiMethods, psiVariable, psiBuilderClass, fluentBuilder, returnType, singularName);
+        handler.addBuilderMethod(psiMethods, psiVariable, fieldName, psiBuilderClass, fluentBuilder, returnType, singularName);
       }
 
       handler.appendBuildCall(buildMethodParameterString, fieldName);

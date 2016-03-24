@@ -56,6 +56,49 @@ public class BuilderTest extends LombokParsingTestCase {
     doTest();
   }
 
+  public void testBuilderSingularGuavaListsSets() throws IOException {
+    doTest();
+  }
+
+  public void testBuilderSingularGuavaMaps() throws IOException {
+    doTest();
+  }
+
+  public void testBuilderSingularSets() throws IOException {
+    doTest();
+  }
+
+  public void testBuilderSingularLists() throws IOException {
+    doTest();
+  }
+
+  public void testBuilderSingularMaps() throws IOException {
+    doTest();
+  }
+
+  // ignored because of disabled auto singularization
+  public void ignore_testBuilderSingularNoAuto() throws IOException {
+    doTest();
+  }
+
+  public void testBuilderSingularRedirectToGuava() throws IOException {
+    doTest();
+  }
+
+  //  TODO implement me
+  public void ignore_testBuilderInstanceMethod() throws IOException {
+    doTest();
+  }
+
+  public void testBuilderSingularWithPrefixes() throws IOException {
+    doTest();
+  }
+
+  //  TODO implement me
+  public void ignore_testBuilderWithToBuilder() throws IOException {
+    doTest();
+  }
+
   //  TODO fixme
   public void ignore_testBuilderWithToBuilderOnClass() throws IOException {
     doTest();

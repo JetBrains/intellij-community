@@ -2,13 +2,16 @@ package de.plushnikov.intellij.plugin.processor.handler.singular;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -77,9 +80,24 @@ public class SingularMapHandler extends AbstractSingularHandler {
   protected void addAllMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder) {
     final Project project = methodBuilder.getProject();
 
-    final PsiType collectionType = PsiTypeUtil.getCollectionClassType((PsiClassType) psiFieldType, project, CommonClassNames.JAVA_UTIL_MAP);
+    final PsiType collectionType;
+    PsiTypeUtil.getCollectionClassType((PsiClassType) psiFieldType, project, CommonClassNames.JAVA_UTIL_MAP);
+
+    final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    PsiClass genericClass = facade.findClass(CommonClassNames.JAVA_UTIL_MAP, globalsearchscope);
+
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.putAll(genericClass, new PsiType[]{psiFieldType});
+    collectionType = JavaPsiFacade.getElementFactory(project).createType(genericClass, substitutor);
 
     methodBuilder.withParameter(singularName, collectionType);
+  }
+
+  protected String getClearMethodBody(String psiFieldName, boolean fluentBuilder) {
+    final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " != null) '{'\n this.{0}" + LOMBOK_KEY + ".clear();\n " +
+        " this.{0}" + LOMBOK_VALUE + ".clear(); '}'\n {1}";
+
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
   }
 
   protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {

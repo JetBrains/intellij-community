@@ -1,66 +1,66 @@
 import java.util.List;
-class BuilderComplex {
-	private static <T extends Number> void testVoidWithGenerics(T number, int arg2, String arg3, BuilderComplex selfRef) {
+class BuilderInstanceMethod<T> {
+	public String create(int show, final int yes, List<T> also, int $andMe) {
+		return "" + show + yes + also + $andMe;
 	}
 	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
-	public static class VoidBuilder<T extends Number> {
+	public class StringBuilder {
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		private T number;
+		private int show;
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		private int arg2;
+		private int yes;
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		private String arg3;
+		private List<T> also;
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		private BuilderComplex selfRef;
+		private int $andMe;
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		VoidBuilder() {
+		StringBuilder() {
 		}
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public VoidBuilder<T> number(final T number) {
-			this.number = number;
+		public StringBuilder show(final int show) {
+			this.show = show;
 			return this;
 		}
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public VoidBuilder<T> arg2(final int arg2) {
-			this.arg2 = arg2;
+		public StringBuilder yes(final int yes) {
+			this.yes = yes;
 			return this;
 		}
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public VoidBuilder<T> arg3(final String arg3) {
-			this.arg3 = arg3;
+		public StringBuilder also(final List<T> also) {
+			this.also = also;
 			return this;
 		}
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public VoidBuilder<T> selfRef(final BuilderComplex selfRef) {
-			this.selfRef = selfRef;
+		public StringBuilder $andMe(final int $andMe) {
+			this.$andMe = $andMe;
 			return this;
 		}
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-    //    TODO  BuilderComplex.<T>testVoidWithGenerics(number, arg2, arg3, selfRef);
-		public void execute() {
-      testVoidWithGenerics(number, arg2, arg3, selfRef);
+		public String build() {
+			return BuilderInstanceMethod.this.create(show, yes, also, $andMe);
 		}
 		@java.lang.Override
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public java.lang.String toString() {
-			return "BuilderComplex.VoidBuilder(number=" + this.number + ", arg2=" + this.arg2 + ", arg3=" + this.arg3 + ", selfRef=" + this.selfRef + ")";
+			return "BuilderInstanceMethod.StringBuilder(show=" + this.show + ", yes=" + this.yes + ", also=" + this.also + ", $andMe=" + this.$andMe + ")";
 		}
 	}
 	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
-	public static <T extends Number> VoidBuilder<T> builder() {
-		return new VoidBuilder<T>();
+	public StringBuilder builder() {
+		return new StringBuilder();
 	}
 }

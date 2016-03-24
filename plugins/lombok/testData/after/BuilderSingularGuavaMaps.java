@@ -1,92 +1,110 @@
-import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableSortedMap;
 class BuilderSingularGuavaMaps<K, V> {
 	private ImmutableMap<K, V> battleaxes;
 	private ImmutableSortedMap<Integer, ? extends V> vertices;
 	@SuppressWarnings("all")
 	private ImmutableBiMap rawMap;
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	BuilderSingularGuavaMaps(final ImmutableMap<K, V> battleaxes, final ImmutableSortedMap<Integer, ? extends V> vertices, final ImmutableBiMap rawMap) {
 		this.battleaxes = battleaxes;
 		this.vertices = vertices;
 		this.rawMap = rawMap;
 	}
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public static class BuilderSingularGuavaMapsBuilder<K, V> {
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		private ImmutableMap.Builder<K, V> battleaxes;
-		@SuppressWarnings("all")
+		private com.google.common.collect.ImmutableMap.Builder<K, V> battleaxes;
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		private ImmutableSortedMap.Builder<Integer, V> vertices;
-		@SuppressWarnings("all")
+		private com.google.common.collect.ImmutableSortedMap.Builder<Integer, V> vertices;
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		private ImmutableBiMap.Builder<Object, Object> rawMap;
-		@SuppressWarnings("all")
+		private com.google.common.collect.ImmutableBiMap.Builder<java.lang.Object, java.lang.Object> rawMap;
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		BuilderSingularGuavaMapsBuilder() {
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public BuilderSingularGuavaMapsBuilder<K, V> battleaxe(final K battleaxe$key, final V battleaxe$value) {
-			if (this.battleaxes == null) this.battleaxes = ImmutableMap.builder();
-			this.battleaxes.put(battleaxe$key, battleaxe$value);
+		public BuilderSingularGuavaMapsBuilder<K, V> battleaxe(final K key, final V value) {
+			if (this.battleaxes == null) this.battleaxes = com.google.common.collect.ImmutableMap.builder();
+			this.battleaxes.put(key, value);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderSingularGuavaMapsBuilder<K, V> battleaxes(final java.util.Map<? extends K, ? extends V> battleaxes) {
-			if (this.battleaxes == null) this.battleaxes = ImmutableMap.builder();
+			if (this.battleaxes == null) this.battleaxes = com.google.common.collect.ImmutableMap.builder();
 			this.battleaxes.putAll(battleaxes);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public BuilderSingularGuavaMapsBuilder<K, V> vertex(final Integer vertex$key, final V vertex$value) {
-			if (this.vertices == null) this.vertices = ImmutableSortedMap.naturalOrder();
-			this.vertices.put(vertex$key, vertex$value);
+		public BuilderSingularGuavaMapsBuilder<K, V> clearBattleaxes() {
+			this.battleaxes = null;
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
+		@javax.annotation.Generated("lombok")
+		public BuilderSingularGuavaMapsBuilder<K, V> vertex(final Integer key, final V value) {
+			if (this.vertices == null) this.vertices = com.google.common.collect.ImmutableSortedMap.naturalOrder();
+			this.vertices.put(key, value);
+			return this;
+		}
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderSingularGuavaMapsBuilder<K, V> vertices(final java.util.Map<? extends Integer, ? extends V> vertices) {
-			if (this.vertices == null) this.vertices = ImmutableSortedMap.naturalOrder();
+			if (this.vertices == null) this.vertices = com.google.common.collect.ImmutableSortedMap.naturalOrder();
 			this.vertices.putAll(vertices);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public BuilderSingularGuavaMapsBuilder<K, V> rawMap(final Object rawMap$key, final Object rawMap$value) {
-			if (this.rawMap == null) this.rawMap = ImmutableBiMap.builder();
-			this.rawMap.put(rawMap$key, rawMap$value);
+		public BuilderSingularGuavaMapsBuilder<K, V> clearVertices() {
+			this.vertices = null;
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
+		@javax.annotation.Generated("lombok")
+		public BuilderSingularGuavaMapsBuilder<K, V> rawMap(final java.lang.Object key, final java.lang.Object value) {
+			if (this.rawMap == null) this.rawMap = com.google.common.collect.ImmutableBiMap.builder();
+			this.rawMap.put(key, value);
+			return this;
+		}
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderSingularGuavaMapsBuilder<K, V> rawMap(final java.util.Map<?, ?> rawMap) {
-			if (this.rawMap == null) this.rawMap = ImmutableBiMap.builder();
+			if (this.rawMap == null) this.rawMap = com.google.common.collect.ImmutableBiMap.builder();
 			this.rawMap.putAll(rawMap);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
+		@javax.annotation.Generated("lombok")
+		public BuilderSingularGuavaMapsBuilder<K, V> clearRawMap() {
+			this.rawMap = null;
+			return this;
+		}
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderSingularGuavaMaps<K, V> build() {
-			ImmutableMap<K, V> battleaxes = this.battleaxes == null ? ImmutableMap.<K, V>of() : this.battleaxes.build();
-			ImmutableSortedMap<Integer, V> vertices = this.vertices == null ? ImmutableSortedMap.<Integer, V>of() : this.vertices.build();
-			ImmutableBiMap<Object, Object> rawMap = this.rawMap == null ? ImmutableBiMap.<Object, Object>of() : this.rawMap.build();
+			com.google.common.collect.ImmutableMap<K, V> battleaxes = this.battleaxes == null ? com.google.common.collect.ImmutableMap.<K, V>of() : this.battleaxes.build();
+			com.google.common.collect.ImmutableSortedMap<Integer, V> vertices = this.vertices == null ? com.google.common.collect.ImmutableSortedMap.<Integer, V>of() : this.vertices.build();
+			com.google.common.collect.ImmutableBiMap<java.lang.Object, java.lang.Object> rawMap = this.rawMap == null ? com.google.common.collect.ImmutableBiMap.<java.lang.Object, java.lang.Object>of() : this.rawMap.build();
 			return new BuilderSingularGuavaMaps<K, V>(battleaxes, vertices, rawMap);
 		}
-		@Override
-		@SuppressWarnings("all")
+		@java.lang.Override
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public String toString() {
+		public java.lang.String toString() {
 			return "BuilderSingularGuavaMaps.BuilderSingularGuavaMapsBuilder(battleaxes=" + this.battleaxes + ", vertices=" + this.vertices + ", rawMap=" + this.rawMap + ")";
 		}
 	}
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public static <K, V> BuilderSingularGuavaMapsBuilder<K, V> builder() {
 		return new BuilderSingularGuavaMapsBuilder<K, V>();

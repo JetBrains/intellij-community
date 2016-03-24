@@ -11,6 +11,7 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,8 +79,11 @@ public class PsiTypeUtil {
       final List<PsiType> typeList = new ArrayList<PsiType>(2);
       final Map<String, PsiType> nameTypeMap = new HashMap<String, PsiType>();
       for (Map.Entry<PsiTypeParameter, PsiType> entry : derivedSubstitutor.getSubstitutionMap().entrySet()) {
-        nameTypeMap.put(entry.getKey().getName(), entry.getValue());
-        typeList.add(entry.getValue());
+        final PsiType entryValue = entry.getValue();
+        if (null != entryValue) {
+          nameTypeMap.put(entry.getKey().getName(), entryValue);
+          typeList.add(entryValue);
+        }
       }
 
       PsiSubstitutor genericSubstitutor = PsiSubstitutor.EMPTY;
@@ -90,7 +94,13 @@ public class PsiTypeUtil {
         if (null == mappedType && typeList.size() > i) {
           mappedType = typeList.get(i);
         }
+        if (null == mappedType) {
+          mappedType = PsiType.getJavaLangObject(PsiManager.getInstance(project), globalsearchscope);
+        }
         if (null != mappedType) {
+          if (mappedType instanceof PsiWildcardType) {
+            mappedType = ((PsiWildcardType) mappedType).getBound();
+          }
           genericSubstitutor = genericSubstitutor.put(psiTypeParameter, mappedType);
         }
       }

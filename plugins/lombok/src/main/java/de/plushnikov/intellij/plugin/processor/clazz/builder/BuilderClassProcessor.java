@@ -41,7 +41,7 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    if (builderHandler.existInnerClass(psiClass, psiAnnotation)) {
+    if (builderHandler.notExistInnerClass(psiClass, psiAnnotation)) {
       target.add(builderHandler.createBuilderClass(psiClass, psiAnnotation));
     }
   }

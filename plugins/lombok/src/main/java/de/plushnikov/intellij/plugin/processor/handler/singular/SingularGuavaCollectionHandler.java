@@ -34,6 +34,12 @@ public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
+  protected String getClearMethodBody(String psiFieldName, boolean fluentBuilder) {
+    final String codeBlockTemplate = "this.{0} = null;\n {1}";
+
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
+  }
+
   protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
         "this.{0}.add({1});{4}";

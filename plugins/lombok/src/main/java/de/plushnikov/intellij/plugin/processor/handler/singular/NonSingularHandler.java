@@ -37,7 +37,7 @@ public class NonSingularHandler implements BuilderElementHandler {
     fields.add(fieldBuilder);
   }
 
-  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String psiFieldName) {
+  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String psiFieldName) {
     methods.add(new LombokLightMethodBuilder(psiVariable.getManager(), createSetterName(psiFieldName, fluentBuilder))
         .withMethodReturnType(returnType)
         .withContainingClass(innerClass)

@@ -43,7 +43,7 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {
-      if (builderHandler.existInnerClass(psiClass, psiMethod, psiAnnotation)) {
+      if (builderHandler.notExistInnerClass(psiClass, psiMethod, psiAnnotation)) {
         target.add(builderHandler.createBuilderClass(psiClass, psiMethod, psiAnnotation));
       }
     }

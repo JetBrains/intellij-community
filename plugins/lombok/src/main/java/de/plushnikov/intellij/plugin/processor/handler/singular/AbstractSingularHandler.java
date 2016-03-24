@@ -13,6 +13,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWildcardType;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -27,13 +28,13 @@ import java.util.List;
 public abstract class AbstractSingularHandler implements BuilderElementHandler {
   private final boolean shouldGenerateFullBodyBlock;
 
-  public AbstractSingularHandler(boolean shouldGenerateFullBodyBlock) {
+  AbstractSingularHandler(boolean shouldGenerateFullBodyBlock) {
     this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
   }
 
   @Override
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
-    final String fieldName = psiVariable.getName();
+    final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
 
     final PsiType fieldType = getBuilderFieldType(psiVariable.getType(), psiVariable.getProject());
     final LombokLightFieldBuilder fieldBuilder =
@@ -50,8 +51,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   }
 
   @Override
-  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String singularName) {
-    final String psiFieldName = psiVariable.getName();
+  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String singularName) {
+//    final String psiFieldName = psiVariable.getName();
     final PsiType psiFieldType = psiVariable.getType();
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType[] psiParameterTypes = PsiTypeUtil.extractTypeParameters(psiFieldType, psiManager);
@@ -61,21 +62,52 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
         .withContainingClass(innerClass)
         .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(createOneAddMethodCodeBlock(innerClass, fluentBuilder, singularName, psiFieldName, psiParameterTypes));
-
+        .withBody(createOneAddMethodCodeBlock(innerClass, fluentBuilder, singularName, fieldName, psiParameterTypes));
+    if (psiParameterTypes[0] instanceof PsiWildcardType) {
+      psiParameterTypes[0] = ((PsiWildcardType) psiParameterTypes[0]).getBound();
+    }
     addOneMethodParameter(singularName, psiParameterTypes, oneAddMethod);
     methods.add(oneAddMethod);
 
-    final LombokLightMethodBuilder allAddMethod = new LombokLightMethodBuilder(psiManager, psiFieldName)
+    final LombokLightMethodBuilder allAddMethod = new LombokLightMethodBuilder(psiManager, fieldName)
         .withMethodReturnType(returnType)
         .withContainingClass(innerClass)
         .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(createAllAddMethodCodeBlock(innerClass, fluentBuilder, psiFieldName, psiParameterTypes));
+        .withBody(createAllAddMethodCodeBlock(innerClass, fluentBuilder, fieldName, psiParameterTypes));
 
-    addAllMethodParameter(psiFieldName, psiFieldType, allAddMethod);
+    final PsiWildcardType psiWildcardType;
+    if (!(psiParameterTypes[0] instanceof PsiWildcardType)) {
+      psiWildcardType = PsiWildcardType.createExtends(psiManager, psiParameterTypes[0]);
+    } else {
+      psiWildcardType = (PsiWildcardType) psiParameterTypes[0];
+    }
+
+    addAllMethodParameter(fieldName, psiWildcardType, allAddMethod);
     methods.add(allAddMethod);
+
+    final LombokLightMethodBuilder clearMethod = new LombokLightMethodBuilder(psiManager, "clear" + StringUtil.capitalize(fieldName))
+        .withMethodReturnType(returnType)
+        .withContainingClass(innerClass)
+        .withNavigationElement(psiVariable)
+        .withModifier(PsiModifier.PUBLIC)
+        .withBody(createClearMethodCodeBlock(innerClass, fluentBuilder, fieldName));
+
+    methods.add(clearMethod);
   }
+
+  @NotNull
+  private PsiCodeBlock createClearMethodCodeBlock(@NotNull PsiClass innerClass, boolean fluentBuilder, String psiFieldName) {
+    final String blockText;
+    if (shouldGenerateFullBodyBlock) {
+      blockText = getClearMethodBody(psiFieldName, fluentBuilder);
+    } else {
+      blockText = fluentBuilder ? "return this;" : "";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, innerClass);
+  }
+
+  protected abstract String getClearMethodBody(String psiFieldName, boolean fluentBuilder);
 
   @NotNull
   private PsiCodeBlock createOneAddMethodCodeBlock(@NotNull PsiClass innerClass, boolean fluentBuilder, String singularName, String psiFieldName, PsiType[] psiParameterTypes) {

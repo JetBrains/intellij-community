@@ -45,14 +45,22 @@ class BuilderSingularMaps<K, V> {
 			return this;
 		}
 		@SuppressWarnings("all")
-		public BuilderSingularMapsBuilder<K, V> women(Map<? extends K, ? extends V> women) {
+		public BuilderSingularMapsBuilder<K, V> women(java.util.Map<? extends K, ? extends V> women) {
 			if (this.women$key == null) {
 				this.women$key = new java.util.ArrayList<K>();
 				this.women$value = new java.util.ArrayList<V>();
 			}
-			for (Map.Entry<? extends K, ? extends V> $lombokEntry : women.entrySet()) {
+			for (java.util.Map.Entry<? extends K, ? extends V> $lombokEntry : women.entrySet()) {
 				this.women$key.add($lombokEntry.getKey());
 				this.women$value.add($lombokEntry.getValue());
+			}
+			return this;
+		}
+		@SuppressWarnings("all")
+		public BuilderSingularMapsBuilder<K, V> clearWomen() {
+			if (this.women$key != null) {
+				this.women$key.clear();
+				this.women$value.clear();
 			}
 			return this;
 		}
@@ -67,14 +75,22 @@ class BuilderSingularMaps<K, V> {
 			return this;
 		}
 		@SuppressWarnings("all")
-		public BuilderSingularMapsBuilder<K, V> men(Map<? extends K, ? extends Number> men) {
+		public BuilderSingularMapsBuilder<K, V> men(java.util.Map<? extends K, ? extends Number> men) {
 			if (this.men$key == null) {
 				this.men$key = new java.util.ArrayList<K>();
 				this.men$value = new java.util.ArrayList<Number>();
 			}
-			for (Map.Entry<? extends K, ? extends Number> $lombokEntry : men.entrySet()) {
+			for (java.util.Map.Entry<? extends K, ? extends Number> $lombokEntry : men.entrySet()) {
 				this.men$key.add($lombokEntry.getKey());
 				this.men$value.add($lombokEntry.getValue());
+			}
+			return this;
+		}
+		@SuppressWarnings("all")
+		public BuilderSingularMapsBuilder<K, V> clearMen() {
+			if (this.men$key != null) {
+				this.men$key.clear();
+				this.men$value.clear();
 			}
 			return this;
 		}
@@ -89,14 +105,22 @@ class BuilderSingularMaps<K, V> {
 			return this;
 		}
 		@SuppressWarnings("all")
-		public BuilderSingularMapsBuilder<K, V> rawMap(Map<?, ?> rawMap) {
+		public BuilderSingularMapsBuilder<K, V> rawMap(java.util.Map<?, ?> rawMap) {
 			if (this.rawMap$key == null) {
 				this.rawMap$key = new java.util.ArrayList<Object>();
 				this.rawMap$value = new java.util.ArrayList<Object>();
 			}
-			for (Map.Entry<?, ?> $lombokEntry : rawMap.entrySet()) {
+			for (java.util.Map.Entry<?, ?> $lombokEntry : rawMap.entrySet()) {
 				this.rawMap$key.add($lombokEntry.getKey());
 				this.rawMap$value.add($lombokEntry.getValue());
+			}
+			return this;
+		}
+		@SuppressWarnings("all")
+		public BuilderSingularMapsBuilder<K, V> clearRawMap() {
+			if (this.rawMap$key != null) {
+				this.rawMap$key.clear();
+				this.rawMap$value.clear();
 			}
 			return this;
 		}
@@ -111,20 +135,28 @@ class BuilderSingularMaps<K, V> {
 			return this;
 		}
 		@SuppressWarnings("all")
-		public BuilderSingularMapsBuilder<K, V> stringMap(Map<? extends String, ? extends V> stringMap) {
+		public BuilderSingularMapsBuilder<K, V> stringMap(java.util.Map<? extends String, ? extends V> stringMap) {
 			if (this.stringMap$key == null) {
 				this.stringMap$key = new java.util.ArrayList<String>();
 				this.stringMap$value = new java.util.ArrayList<V>();
 			}
-			for (Map.Entry<? extends String, ? extends V> $lombokEntry : stringMap.entrySet()) {
+			for (java.util.Map.Entry<? extends String, ? extends V> $lombokEntry : stringMap.entrySet()) {
 				this.stringMap$key.add($lombokEntry.getKey());
 				this.stringMap$value.add($lombokEntry.getValue());
 			}
 			return this;
 		}
 		@SuppressWarnings("all")
+		public BuilderSingularMapsBuilder<K, V> clearStringMap() {
+			if (this.stringMap$key != null) {
+				this.stringMap$key.clear();
+				this.stringMap$value.clear();
+			}
+			return this;
+		}
+		@SuppressWarnings("all")
 		public BuilderSingularMaps<K, V> build() {
-			Map<K, V> women;
+			java.util.Map<K, V> women;
 			switch (this.women$key == null ? 0 : this.women$key.size()) {
 			case 0:
 				women = java.util.Collections.emptyMap();
@@ -137,10 +169,10 @@ class BuilderSingularMaps<K, V> {
 				for (int $i = 0; $i < this.women$key.size(); $i++) women.put(this.women$key.get($i), this.women$value.get($i));
 				women = java.util.Collections.unmodifiableMap(women);
 			}
-			SortedMap<K, Number> men = new java.util.TreeMap<K, Number>();
+			java.util.SortedMap<K, Number> men = new java.util.TreeMap<K, Number>();
 			if (this.men$key != null) for (int $i = 0; $i < (this.men$key == null ? 0 : this.men$key.size()); $i++) men.put(this.men$key.get($i), this.men$value.get($i));
 			men = java.util.Collections.unmodifiableSortedMap(men);
-			Map<Object, Object> rawMap;
+			java.util.Map<Object, Object> rawMap;
 			switch (this.rawMap$key == null ? 0 : this.rawMap$key.size()) {
 			case 0:
 				rawMap = java.util.Collections.emptyMap();
@@ -153,7 +185,7 @@ class BuilderSingularMaps<K, V> {
 				for (int $i = 0; $i < this.rawMap$key.size(); $i++) rawMap.put(this.rawMap$key.get($i), this.rawMap$value.get($i));
 				rawMap = java.util.Collections.unmodifiableMap(rawMap);
 			}
-			Map<String, V> stringMap;
+			java.util.Map<String, V> stringMap;
 			switch (this.stringMap$key == null ? 0 : this.stringMap$key.size()) {
 			case 0:
 				stringMap = java.util.Collections.emptyMap();

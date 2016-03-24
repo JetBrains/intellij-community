@@ -207,6 +207,7 @@
 
 				     <li>Fixed #142: IDE highlights val as an error if it had reparsed code before the line was completed</li>
 				     <li>Fixed #168: val does not work with generic method calls as the initializer expression</li>
+				     <li>Fixed #180: Low performance of @Builder analysis</li>
 				     <li>Fixed #183: val can not work when method has Generic return</li>
 				</ol>
 			</li>

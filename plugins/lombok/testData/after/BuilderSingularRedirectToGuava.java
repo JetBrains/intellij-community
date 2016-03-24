@@ -1,91 +1,109 @@
-import java.util.Collection;
-import java.util.NavigableMap;
 import java.util.Set;
+import java.util.NavigableMap;
+import java.util.Collection;
 class BuilderSingularRedirectToGuava {
 	private Set<String> dangerMice;
 	private NavigableMap<Integer, Number> things;
 	private Collection<Class<?>> doohickeys;
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	BuilderSingularRedirectToGuava(final Set<String> dangerMice, final NavigableMap<Integer, Number> things, final Collection<Class<?>> doohickeys) {
 		this.dangerMice = dangerMice;
 		this.things = things;
 		this.doohickeys = doohickeys;
 	}
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public static class BuilderSingularRedirectToGuavaBuilder {
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		private com.google.common.collect.ImmutableSet.Builder<String> dangerMice;
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		private com.google.common.collect.ImmutableSortedMap.Builder<Integer, Number> things;
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		private com.google.common.collect.ImmutableList.Builder<Class<?>> doohickeys;
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		BuilderSingularRedirectToGuavaBuilder() {
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderSingularRedirectToGuavaBuilder dangerMouse(final String dangerMouse) {
 			if (this.dangerMice == null) this.dangerMice = com.google.common.collect.ImmutableSet.builder();
 			this.dangerMice.add(dangerMouse);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public BuilderSingularRedirectToGuavaBuilder dangerMice(final Iterable<? extends String> dangerMice) {
+		public BuilderSingularRedirectToGuavaBuilder dangerMice(final java.lang.Iterable<? extends String> dangerMice) {
 			if (this.dangerMice == null) this.dangerMice = com.google.common.collect.ImmutableSet.builder();
 			this.dangerMice.addAll(dangerMice);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public BuilderSingularRedirectToGuavaBuilder thing(final Integer thing$key, final Number thing$value) {
-			if (this.things == null) this.things = com.google.common.collect.ImmutableSortedMap.naturalOrder();
-			this.things.put(thing$key, thing$value);
+		public BuilderSingularRedirectToGuavaBuilder clearDangerMice() {
+			this.dangerMice = null;
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
+		@javax.annotation.Generated("lombok")
+		public BuilderSingularRedirectToGuavaBuilder thing(final Integer key, final Number value) {
+			if (this.things == null) this.things = com.google.common.collect.ImmutableSortedMap.naturalOrder();
+			this.things.put(key, value);
+			return this;
+		}
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderSingularRedirectToGuavaBuilder things(final java.util.Map<? extends Integer, ? extends Number> things) {
 			if (this.things == null) this.things = com.google.common.collect.ImmutableSortedMap.naturalOrder();
 			this.things.putAll(things);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
+		@javax.annotation.Generated("lombok")
+		public BuilderSingularRedirectToGuavaBuilder clearThings() {
+			this.things = null;
+			return this;
+		}
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderSingularRedirectToGuavaBuilder doohickey(final Class<?> doohickey) {
 			if (this.doohickeys == null) this.doohickeys = com.google.common.collect.ImmutableList.builder();
 			this.doohickeys.add(doohickey);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public BuilderSingularRedirectToGuavaBuilder doohickeys(final Iterable<? extends Class<?>> doohickeys) {
+		public BuilderSingularRedirectToGuavaBuilder doohickeys(final java.lang.Iterable<? extends Class<?>> doohickeys) {
 			if (this.doohickeys == null) this.doohickeys = com.google.common.collect.ImmutableList.builder();
 			this.doohickeys.addAll(doohickeys);
 			return this;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
+		@javax.annotation.Generated("lombok")
+		public BuilderSingularRedirectToGuavaBuilder clearDoohickeys() {
+			this.doohickeys = null;
+			return this;
+		}
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderSingularRedirectToGuava build() {
-			Set<String> dangerMice = this.dangerMice == null ? com.google.common.collect.ImmutableSet.<String>of() : this.dangerMice.build();
-			NavigableMap<Integer, Number> things = this.things == null ? com.google.common.collect.ImmutableSortedMap.<Integer, Number>of() : this.things.build();
-			Collection<Class<?>> doohickeys = this.doohickeys == null ? com.google.common.collect.ImmutableList.<Class<?>>of() : this.doohickeys.build();
+			java.util.Set<String> dangerMice = this.dangerMice == null ? com.google.common.collect.ImmutableSet.<String>of() : this.dangerMice.build();
+			java.util.NavigableMap<Integer, Number> things = this.things == null ? com.google.common.collect.ImmutableSortedMap.<Integer, Number>of() : this.things.build();
+			java.util.Collection<Class<?>> doohickeys = this.doohickeys == null ? com.google.common.collect.ImmutableList.<Class<?>>of() : this.doohickeys.build();
 			return new BuilderSingularRedirectToGuava(dangerMice, things, doohickeys);
 		}
-		@Override
-		@SuppressWarnings("all")
+		@java.lang.Override
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public String toString() {
+		public java.lang.String toString() {
 			return "BuilderSingularRedirectToGuava.BuilderSingularRedirectToGuavaBuilder(dangerMice=" + this.dangerMice + ", things=" + this.things + ", doohickeys=" + this.doohickeys + ")";
 		}
 	}
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public static BuilderSingularRedirectToGuavaBuilder builder() {
 		return new BuilderSingularRedirectToGuavaBuilder();

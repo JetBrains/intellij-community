@@ -22,6 +22,7 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.SortedList;
+import com.jgoodies.common.base.Objects;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +84,7 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     for (PsiClass afterClass : afterClasses) {
       boolean compared = false;
       for (PsiClass beforeClass : beforeClasses) {
-        if (afterClass.getName().equals(beforeClass.getName())) {
+        if (Objects.equals(afterClass.getName(), beforeClass.getName())) {
           compareTwoClasses(beforeClass, afterClass);
           compared = true;
         }
@@ -120,7 +121,7 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
       boolean compared = false;
       final PsiModifierList afterFieldModifierList = afterField.getModifierList();
       for (PsiField beforeField : beforeClassFields) {
-        if (afterField.getName().equals(beforeField.getName())) {
+        if (Objects.equals(afterField.getName(), beforeField.getName())) {
           final PsiModifierList beforeFieldModifierList = beforeField.getModifierList();
 
           compareModifiers(beforeFieldModifierList, afterFieldModifierList);
@@ -212,8 +213,8 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
 
         boolean codeBlocksAreEqual = beforeMethodBody.textMatches(afterMethodBody);
         if (!codeBlocksAreEqual) {
-          String text1 = beforeMethodBody.getText().replaceAll("\\s+", "");
-          String text2 = afterMethodBody.getText().replaceAll("\\s+", "");
+          String text1 = beforeMethodBody.getText().replaceAll("java\\.lang\\.", "").replaceAll("\\s+", "");
+          String text2 = afterMethodBody.getText().replaceAll("java\\.lang\\.", "").replaceAll("\\s+", "");
           assertEquals("Methods not equal, Method: (" + afterMethod.getName() + ") Class:" + afterClass.getName(), text2, text1);
         }
       } else {

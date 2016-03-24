@@ -1,5 +1,7 @@
+import lombok.Builder;
+
 class BuilderWithExistingBuilderClass<T, K extends Number> {
-  @lombok.experimental.Builder
+	@Builder
 	public static <Z extends Number> BuilderWithExistingBuilderClass<String, Z> staticMethod(Z arg1, boolean arg2, String arg3) {
 		return null;
 	}

@@ -1,38 +1,38 @@
 class BuilderChainAndFluent {
 	private final int yes;
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	BuilderChainAndFluent(final int yes) {
 		this.yes = yes;
 	}
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public static class BuilderChainAndFluentBuilder {
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		private int yes;
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		BuilderChainAndFluentBuilder() {
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public void setYes(final int yes) {
 			this.yes = yes;
 		}
-		@SuppressWarnings("all")
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public BuilderChainAndFluent build() {
 			return new BuilderChainAndFluent(yes);
 		}
-		@Override
-		@SuppressWarnings("all")
+		@java.lang.Override
+		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
-		public String toString() {
+		public java.lang.String toString() {
 			return "BuilderChainAndFluent.BuilderChainAndFluentBuilder(yes=" + this.yes + ")";
 		}
 	}
-	@SuppressWarnings("all")
+	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public static BuilderChainAndFluentBuilder builder() {
 		return new BuilderChainAndFluentBuilder();
