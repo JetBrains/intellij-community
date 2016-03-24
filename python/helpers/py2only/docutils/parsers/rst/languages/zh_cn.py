@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: zh_cn.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: zh_cn.py 7119 2011-09-02 13:00:23Z milde $
 # Author: Panjunyong <panjy@zopechina.com>
 # Copyright: This module has been placed in the public domain.
 
@@ -20,6 +20,7 @@ directives = {
       # language-dependent: fixed
       u'注意': 'attention',
       u'小心': 'caution',
+      u'code (translation required)': 'code',
       u'危险': 'danger',
       u'错误': 'error',
       u'提示': 'hint',
@@ -45,6 +46,7 @@ directives = {
       #u'qa (translation required)': 'questions',
       #u'faq (translation required)': 'questions',
       u'元数据': 'meta',
+      u'math (translation required)': 'math',
       #u'imagemap (translation required)': 'imagemap',
       u'图片': 'image',
       u'图例': 'figure',
@@ -72,6 +74,7 @@ roles = {
     # language-dependent: fixed
     u'缩写': 'abbreviation',
     u'简称': 'acronym',
+    u'code (translation required)': 'code',
     u'index (translation required)': 'index',
     u'i (translation required)': 'index',
     u'下标': 'subscript',
@@ -86,6 +89,7 @@ roles = {
     u'强调': 'emphasis',
     u'加粗': 'strong',
     u'字面': 'literal',
+    u'math (translation required)': 'math',
     u'named-reference (translation required)': 'named-reference',
     u'anonymous-reference (translation required)': 'anonymous-reference',
     u'footnote-reference (translation required)': 'footnote-reference',

@@ -1,4 +1,4 @@
-# $Id: urischemes.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: urischemes.py 7464 2012-06-25 13:16:03Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 

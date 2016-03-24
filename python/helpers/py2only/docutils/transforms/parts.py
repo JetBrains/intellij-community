@@ -8,10 +8,11 @@ Transforms related to document parts.
 
 __docformat__ = 'reStructuredText'
 
-import sys
 
-from docutils import nodes
-from docutils.transforms import Transform
+import re
+import sys
+from docutils import nodes, utils
+from docutils.transforms import TransformError, Transform
 
 
 class SectNum(Transform):

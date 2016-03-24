@@ -1,4 +1,4 @@
-# $Id: __init__.py 5618 2008-07-28 08:37:32Z strank $
+# $Id: __init__.py 7648 2013-04-18 07:36:22Z milde $
 # Authors: David Goodger <goodger@python.org>; Ueli Schlaepfer
 # Copyright: This module has been placed in the public domain.
 
@@ -8,9 +8,12 @@ This package contains Docutils Reader modules.
 
 __docformat__ = 'reStructuredText'
 
+import sys
 
 from docutils import utils, parsers, Component
 from docutils.transforms import universal
+if sys.version_info < (2,5):
+    from docutils._compat import __import__
 
 
 class Reader(Component):
@@ -103,5 +106,8 @@ def get_reader_class(reader_name):
     reader_name = reader_name.lower()
     if reader_name in _reader_aliases:
         reader_name = _reader_aliases[reader_name]
-    module = __import__(reader_name, globals(), locals())
+    try:
+        module = __import__(reader_name, globals(), locals(), level=1)
+    except ImportError:
+        module = __import__(reader_name, globals(), locals(), level=0)
     return module.Reader

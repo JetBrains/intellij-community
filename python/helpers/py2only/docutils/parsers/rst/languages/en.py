@@ -1,4 +1,4 @@
-# $Id: en.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: en.py 7179 2011-10-15 22:06:45Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -19,6 +19,9 @@ directives = {
       # language-dependent: fixed
       'attention': 'attention',
       'caution': 'caution',
+      'code': 'code',
+      'code-block': 'code',
+      'sourcecode': 'code',
       'danger': 'danger',
       'error': 'error',
       'hint': 'hint',
@@ -44,6 +47,7 @@ directives = {
       #'qa': 'questions',
       #'faq': 'questions',
       'meta': 'meta',
+      'math': 'math',
       #'imagemap': 'imagemap',
       'image': 'image',
       'figure': 'figure',
@@ -74,6 +78,7 @@ roles = {
     'ab': 'abbreviation',
     'acronym': 'acronym',
     'ac': 'acronym',
+    'code': 'code',
     'index': 'index',
     'i': 'index',
     'subscript': 'subscript',
@@ -90,6 +95,7 @@ roles = {
     'emphasis': 'emphasis',
     'strong': 'strong',
     'literal': 'literal',
+    'math': 'math',
     'named-reference': 'named-reference',
     'anonymous-reference': 'anonymous-reference',
     'footnote-reference': 'footnote-reference',

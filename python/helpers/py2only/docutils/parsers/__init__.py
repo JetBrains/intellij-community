@@ -1,4 +1,4 @@
-# $Id: __init__.py 5618 2008-07-28 08:37:32Z strank $
+# $Id: __init__.py 7646 2013-04-17 14:17:37Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,7 +8,10 @@ This package contains Docutils parser modules.
 
 __docformat__ = 'reStructuredText'
 
+import sys
 from docutils import Component
+if sys.version_info < (2,5):
+    from docutils._compat import __import__
 
 
 class Parser(Component):
@@ -43,5 +46,8 @@ def get_parser_class(parser_name):
     parser_name = parser_name.lower()
     if parser_name in _parser_aliases:
         parser_name = _parser_aliases[parser_name]
-    module = __import__(parser_name, globals(), locals())
+    try:
+        module = __import__(parser_name, globals(), locals(), level=1)
+    except ImportError:
+        module = __import__(parser_name, globals(), locals(), level=0)
     return module.Parser

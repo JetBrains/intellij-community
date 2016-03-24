@@ -1,4 +1,4 @@
-# $Id: fr.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: fr.py 7119 2011-09-02 13:00:23Z milde $
 # Authors: David Goodger <goodger@python.org>; William Dode
 # Copyright: This module has been placed in the public domain.
 
@@ -18,6 +18,7 @@ __docformat__ = 'reStructuredText'
 directives = {
       u'attention': 'attention',
       u'pr\u00E9caution': 'caution',
+      u'code': 'code',
       u'danger': 'danger',
       u'erreur': 'error',
       u'conseil': 'hint',
@@ -45,6 +46,7 @@ directives = {
       u'csv-table (translation required)': 'csv-table',
       u'list-table (translation required)': 'list-table',
       u'm\u00E9ta': 'meta',
+      'math (translation required)': 'math',
       #u'imagemap (translation required)': 'imagemap',
       u'image': 'image',
       u'figure': 'figure',
@@ -75,6 +77,7 @@ roles = {
       u'abr\u00E9viation': 'abbreviation',
       u'acronyme': 'acronym',
       u'sigle': 'acronym',
+      u'code': 'code',
       u'index': 'index',
       u'indice': 'subscript',
       u'ind': 'subscript',
@@ -87,6 +90,7 @@ roles = {
       u'emphase': 'emphasis',
       u'fort': 'strong',
       u'litt\u00E9ral': 'literal',
+    'math (translation required)': 'math',
       u'nomm\u00E9e-r\u00E9f\u00E9rence': 'named-reference',
       u'anonyme-r\u00E9f\u00E9rence': 'anonymous-reference',
       u'note-r\u00E9f\u00E9rence': 'footnote-reference',
