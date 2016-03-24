@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1677,7 +1677,7 @@ public class FindDialog extends DialogWrapper {
           final String uniqueVirtualFilePath =
             UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(usageAdapter.getUsageInfo().getProject(), usageAdapter.getFile());
           // line number / file info
-          append(uniqueVirtualFilePath + " " + text[0].getText(), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+          append(uniqueVirtualFilePath + " " + text[0].getText(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         setBorder(null);
       }
@@ -1692,10 +1692,9 @@ public class FindDialog extends DialogWrapper {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      setBackground(UIUtil.getTableBackground(isSelected));
       myUsageRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
+      setBackground(myUsageRenderer.getBackground());
       return this;
     }
   }
