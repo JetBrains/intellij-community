@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -181,7 +182,33 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       protected boolean useIncludingFileAsContext() {
         return false;
       }
+
+      @NotNull
+      @Override
+      public Collection<PsiFileSystemItem> computeDefaultContexts() {
+        Collection<PsiFileSystemItem> contexts = super.computeDefaultContexts();
+        if (!isAbsolutePathReference()) {
+          return addFileDirectoryToContexts(contexts, context);
+        }
+        return contexts;
+      }
     }.resolve();
+  }
+
+  @NotNull
+  private static Collection<PsiFileSystemItem> addFileDirectoryToContexts(@NotNull Collection<PsiFileSystemItem> contexts,
+                                                                          @NotNull PsiFile context) {
+    VirtualFile file = context.getOriginalFile().getVirtualFile();
+    VirtualFile dir = file == null ? null : file.getParent();
+    if (dir != null) {
+      PsiFileSystemItem item = FileReferenceHelper.getPsiFileSystemItem(context.getManager(), dir);
+      if (item != null && !contexts.contains(item)) {
+        List<PsiFileSystemItem> result = ContainerUtil.newArrayList(contexts);
+        result.add(item);
+        return result;
+      }
+    }
+    return contexts;
   }
 
   private abstract class IncludeCacheHolder {
