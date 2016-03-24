@@ -209,11 +209,6 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(!myView.isUpdating());
-    }
-
-    @Override
     public final void setSelected(AnActionEvent e, boolean state) {
       setSelected(state);
       myView.update();

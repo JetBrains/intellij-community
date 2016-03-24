@@ -243,7 +243,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       }
       if (!isDisposed()) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        synchronized (view.getTreeWriteLock()) {
+        synchronized (view.getTreeStructureUpdateLock()) {
           final InspectionNode toolNode;
           toolNode = myToolNode == null ?
                      view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
