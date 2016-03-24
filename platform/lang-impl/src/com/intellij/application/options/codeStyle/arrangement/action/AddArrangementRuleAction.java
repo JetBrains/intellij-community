@@ -39,6 +39,12 @@ public class AddArrangementRuleAction extends AbstractArrangementRuleAction impl
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    ArrangementMatchingRulesControl control = getRulesControl(e);
+    e.getPresentation().setEnabled(control != null);
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
     ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
