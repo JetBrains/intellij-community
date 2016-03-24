@@ -8,7 +8,7 @@ class Outer <U, V> {
     Outer<String, String> o = new Outer<>(new Foo<String>() {
         @Override
         public void m() {
-
+            <caret>
         }
     });
   }
