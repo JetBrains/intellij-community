@@ -55,7 +55,8 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
+import com.intellij.openapi.vcs.ui.*;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -660,7 +661,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       if (revision != null) {
         final String message = revision.getCommitMessage();
         myOriginalComment = message;
-        @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(myVcs.getProject(), message);
+        @NonNls final String text = message == null ? "" : "<html><head>" +
+                                                           UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
+                                                           "</head><body>" +
+                                                           FontUtil.getHtmlWithFonts(IssueLinkHtmlRenderer
+                                                             .formatTextWithLinks(myVcs.getProject(), message)) +
+                                                           "</body></html>";
         myComments.setText(text);
         myComments.setCaretPosition(0);
       }

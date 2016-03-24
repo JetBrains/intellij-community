@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.frame;
+package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class FontUtil {
   @NotNull
-  public static Font getFontAbleToDisplay(char c, int style, @NotNull Font baseFont) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, baseFont.getSize(), style, baseFont.getFamily()).getFont();
+  public static Font getFontAbleToDisplay(char c, int size, int style, @NotNull String family) {
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, size, style, family).getFont();
+  }
+
+  @NotNull
+  public static String getHtmlWithFonts(@NotNull String input) {
+    Font font = UIUtil.getLabelFont();
+    return getHtmlWithFonts(input, font.getStyle(), font);
   }
 
   @NotNull
@@ -45,7 +52,7 @@ public class FontUtil {
       }
       else {
         if (font != null) result.append("</font>");
-        font = getFontAbleToDisplay(c, style, baseFont);
+        font = getFontAbleToDisplay(c, baseFont.getSize(), style, baseFont.getFamily());
         if (font != baseFont) result.append("<font face=\"").append(font.getFamily()).append("\">");
         result.append(c);
       }
