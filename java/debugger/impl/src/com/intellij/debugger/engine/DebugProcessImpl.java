@@ -1806,7 +1806,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    public void threadAction() {
+    public void threadAction(@NotNull SuspendContextImpl suspendContext) {
       final ThreadReferenceProxyImpl thread = myStackFrame.threadProxy();
       try {
         if (!getSuspendManager().isSuspended(thread)) {
@@ -1819,7 +1819,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return;
       }
 
-      final SuspendContextImpl suspendContext = getSuspendContext();
       if (!suspendContext.suspends(thread)) {
         suspendContext.postponeCommand(this);
         return;
