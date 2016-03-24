@@ -458,7 +458,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private boolean isRepetition(String path) {
+  protected boolean isRepetition(String path) {
     // collapse subsequent change file change notifications that happen once we copy large file,
     // this allows reduction of path checks at least 20% for Windows
     synchronized (myLastChangedPaths) {
