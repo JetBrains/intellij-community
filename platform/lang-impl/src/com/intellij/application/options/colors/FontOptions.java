@@ -129,15 +129,11 @@ public class FontOptions extends JPanel implements OptionsPanel{
       mySecondaryCombo.setEnabled(myUseSecondaryFontCheckbox.isSelected());
       syncFontFamilies();
     });
-    ItemListener itemListener = e -> {
-      if (e.getStateChange() == ItemEvent.SELECTED) {
-        syncFontFamilies();
-      }
-    };
+    ItemListener itemListener = this::syncFontFamilies;
     myPrimaryCombo.addItemListener(itemListener);
     mySecondaryCombo.addItemListener(itemListener);
 
-    ActionListener actionListener = e -> syncFontFamilies();
+    ActionListener actionListener = this::syncFontFamilies;
     myPrimaryCombo.addActionListener(actionListener);
     mySecondaryCombo.addActionListener(actionListener);
 
@@ -213,6 +209,22 @@ public class FontOptions extends JPanel implements OptionsPanel{
        return Math.min(OptionsConstants.MAX_EDITOR_LINE_SPACING, Math.max(OptionsConstants.MIN_EDITOR_LINE_SPACING, Float.parseFloat(myLineSpacingField.getText())));
     } catch (NumberFormatException e){
       return OptionsConstants.DEFAULT_EDITOR_LINE_SPACING;
+    }
+  }
+
+  /**
+   * Processes an event from {@code FontComboBox}
+   * if it is enabled and its item is selected.
+   *
+   * @param event the event to process
+   */
+  private void syncFontFamilies(AWTEvent event) {
+    Object source = event.getSource();
+    if (source instanceof FontComboBox) {
+      FontComboBox combo = (FontComboBox)source;
+      if (combo.isEnabled() && combo.getSelectedItem() != null) {
+        syncFontFamilies();
+      }
     }
   }
 
