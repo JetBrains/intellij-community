@@ -57,7 +57,7 @@ public class CreateAction extends PatchAction {
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
       String message = ValidationResult.ALREADY_EXISTS_MESSAGE, details = "checksum 0x" + Long.toHexString(myPatch.digestFile(toFile, myPatch.isNormalized()));
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), ValidationResult.Action.CREATE, message, details, options);
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), toFile, ValidationResult.Action.CREATE, message, details, options);
     }
     return null;
   }

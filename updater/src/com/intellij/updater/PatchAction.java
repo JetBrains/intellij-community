@@ -148,7 +148,7 @@ public abstract class PatchAction {
       String problem = isWritable(toFile.toPath());
       if (problem != null) {
         ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ACCESS_DENIED_MESSAGE, problem, options);
+        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), toFile, action, ValidationResult.ACCESS_DENIED_MESSAGE, problem, options);
       }
     }
     return null;
@@ -177,7 +177,7 @@ public abstract class PatchAction {
     List<NativeFileManager.Process> processes = NativeFileManager.getProcessesUsing(toFile);
     if (processes.isEmpty()) return null;
     String message = "Locked by: " + processes.stream().map(p -> "[" + p.pid + "] " + p.name).collect(Collectors.joining(", "));
-    return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, message, ValidationResult.Option.KILL_PROCESS);
+    return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), toFile, action, message, ValidationResult.Option.KILL_PROCESS);
   }
 
   protected ValidationResult doValidateNotChanged(File toFile, ValidationResult.Action action) throws IOException {
@@ -201,12 +201,12 @@ public abstract class PatchAction {
           }
         }
         String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile, myPatch.isNormalized()));
-        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
+        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), toFile, action, ValidationResult.MODIFIED_MESSAGE, details, options);
       }
     }
     else if (!isOptional()) {
       ValidationResult.Option[] options = {myPatch.isStrict() || isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-      return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
+      return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), toFile, action, ValidationResult.ABSENT_MESSAGE, options);
     }
 
     return null;

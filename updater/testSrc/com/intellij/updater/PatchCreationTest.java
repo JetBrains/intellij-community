@@ -83,54 +83,69 @@ public class PatchCreationTest extends PatchTestCase {
     FileUtil.copy(new File(myOlderDir, "bin/focuskiller.dll"), new File(myNewerDir, "newDir/focuskiller.dll"));
     Patch patch = createPatch();
 
+    File idea = new File(myOlderDir, "bin/idea.bat");
     FileUtil.writeToFile(new File(myOlderDir, "bin/idea.bat"), "changed");
+    File focusKiller = new File(myOlderDir, "bin/focuskiller.dll");
     FileUtil.writeToFile(new File(myOlderDir, "bin/focuskiller.dll"), "changed");
     FileUtil.createDirectory(new File(myOlderDir, "extraDir"));
     FileUtil.writeToFile(new File(myOlderDir, "extraDir/extraFile.txt"), "");
-    FileUtil.createDirectory(new File(myOlderDir, "newDir"));
-    FileUtil.writeToFile(new File(myOlderDir, "newDir/newFile.txt"), "");
-    FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "changed");
-    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
-    FileUtil.delete(new File(myOlderDir, "lib/bootstrap.jar"));
+    File newDir = new File(myOlderDir, "newDir");
+    FileUtil.createDirectory(newDir);
+    File newFile = new File(myOlderDir, "newDir/newFile.txt");
+    FileUtil.writeToFile(newFile, "");
+    File readme = new File(myOlderDir, "Readme.txt");
+    FileUtil.writeToFile(readme, "changed");
+    File annotations = new File(myOlderDir, "lib/annotations.jar");
+    FileUtil.writeToFile(annotations, "changed");
+    File bootstrap = new File(myOlderDir, "lib/bootstrap.jar");
+    FileUtil.delete(bootstrap);
 
     assertThat(sortResults(patch.validate(myOlderDir, TEST_UI))).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/focuskiller.dll",
+                           focusKiller,
                            ValidationResult.Action.DELETE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/idea.bat",
+                           idea,
                            ValidationResult.Action.DELETE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/",
+                           newDir,
                            ValidationResult.Action.CREATE,
                            ValidationResult.ALREADY_EXISTS_MESSAGE,
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/newFile.txt",
+                           newFile,
                            ValidationResult.Action.CREATE,
                            ValidationResult.ALREADY_EXISTS_MESSAGE,
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "Readme.txt",
+                           readme,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "bin/focuskiller.dll",
+                           focusKiller,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
+                           annotations,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/bootstrap.jar",
+                           bootstrap,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.ABSENT_MESSAGE,
                            ValidationResult.Option.IGNORE));
@@ -154,6 +169,7 @@ public class PatchCreationTest extends PatchTestCase {
       assertThat(results).containsExactly(
         new ValidationResult(ValidationResult.Kind.CONFLICT,
                              "bin/IDEA.bat",
+                             new File(myOlderDir, "bin/IDEA.bat"),
                              ValidationResult.Action.CREATE,
                              ValidationResult.ALREADY_EXISTS_MESSAGE,
                              ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
@@ -166,10 +182,12 @@ public class PatchCreationTest extends PatchTestCase {
   @Test
   public void testValidationWithOptionalFiles() throws Exception {
     Patch patch1 = createPatch();
-    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "lib/annotations.jar"));
+    File annotations = new File(myOlderDir, "lib/annotations.jar");
+    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), annotations);
     assertThat(patch1.validate(myOlderDir, TEST_UI)).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
+                           annotations,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE));
@@ -194,6 +212,7 @@ public class PatchCreationTest extends PatchTestCase {
       assertThat(patch.validate(myOlderDir, TEST_UI)).containsExactly(
         new ValidationResult(ValidationResult.Kind.ERROR,
                              "Readme.txt",
+                             f,
                              ValidationResult.Action.UPDATE,
                              message,
                              option));
