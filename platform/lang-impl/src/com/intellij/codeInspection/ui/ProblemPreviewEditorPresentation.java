@@ -19,27 +19,32 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
  */
-public class ProblemPreviewEditorFoldings {
-  private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorFoldings.class);
+public class ProblemPreviewEditorPresentation {
+  private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorPresentation.class);
 
   private final EditorEx myEditor;
+  private final Project myProject;
   private final Set<CommonProblemDescriptor> myDescriptors = new HashSet<>();
   private final SortedSet<PreviewEditorFoldingRegion> myFoldedRegions = new TreeSet<>(new Comparator<PreviewEditorFoldingRegion>() {
     @Override
@@ -52,25 +57,31 @@ public class ProblemPreviewEditorFoldings {
   });
   private final DocumentEx myDocument;
 
-  public ProblemPreviewEditorFoldings(EditorEx editor) {
+  public ProblemPreviewEditorPresentation(EditorEx editor, Project project) {
     myEditor = editor;
+    myProject = project;
     myDocument = editor.getDocument();
     myFoldedRegions.add(new PreviewEditorFoldingRegion(0, myDocument.getLineCount()));
   }
 
   void appendFoldings(CommonProblemDescriptor[] descriptors) {
     final boolean[] isUpdated = new boolean[]{false};
-    Arrays.stream(descriptors)
+    final List<UsageInfo> elements = Arrays.stream(descriptors)
       .filter(myDescriptors::add)
       .filter(d -> d instanceof ProblemDescriptorBase)
       .map(d -> ((ProblemDescriptorBase)d).getPsiElement())
       .filter(e -> e != null && e.isValid())
-      .map(ProblemPreviewEditorFoldings::getWholeElement)
-      .map(PsiElement::getTextRange)
-      .forEach((toShowRange) -> isUpdated[0] |= appendFoldings(toShowRange));
+      .map(ProblemPreviewEditorPresentation::getWholeElement)
+      .map((e) -> {
+        isUpdated[0] |= appendFoldings(e.getTextRange());
+        return e;
+      })
+      .map(UsageInfo::new)
+      .collect(Collectors.toList());
     if (isUpdated[0]) {
       updateFoldings();
     }
+    UsagePreviewPanel.highlight(elements, myEditor, myProject, false, HighlighterLayer.SELECTION);
   }
 
   /**

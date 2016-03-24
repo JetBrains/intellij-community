@@ -111,7 +111,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
       revalidate();
     }
 
-    highlight(infos, myEditor, myProject);
+    highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);
   }
 
   public int getLineHeight() {
@@ -121,19 +121,27 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
 
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
 
-  public static void highlight(@NotNull final List<UsageInfo> infos, @NotNull final Editor editor, @NotNull final Project project) {
+  public static void highlight(@NotNull final List<UsageInfo> infos,
+                               @NotNull final Editor editor,
+                               @NotNull final Project project,
+                               boolean highlightOnlyNameElements,
+                               int highlightLayer) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         if (project.isDisposed()) return;
         if (!editor.isDisposed()) {
-          doHighlight(infos, editor, project);
+          doHighlight(infos, editor, project, highlightOnlyNameElements, highlightLayer);
         }
       }
     }, ModalityState.current());
   }
 
-  private static void doHighlight(@NotNull List<UsageInfo> infos, @NotNull Editor editor, @NotNull Project project) {
+  private static void doHighlight(@NotNull List<UsageInfo> infos,
+                                  @NotNull Editor editor,
+                                  @NotNull Project project,
+                                  boolean highlightOnlyNameElements,
+                                  int highlightLayer) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     MarkupModel markupModel = editor.getMarkupModel();
@@ -157,9 +165,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
                             || infoRange.getStartOffset() > elementRange.getLength() 
                             || infoRange.getEndOffset() > elementRange.getLength() ? null 
                                                                                    : elementRange.cutOut(infoRange);
-      if (textRange == null) textRange = elementRange;
+      if (textRange == null || !highlightOnlyNameElements) textRange = elementRange;
       // hack to determine element range to highlight
-      if (psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
+      if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
         PsiFile psiFile = psiElement.getContainingFile();
         PsiElement nameElement = psiFile.findElementAt(offsetInFile);
         if (nameElement != null) {
@@ -170,7 +178,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
       textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
 
       RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                                   HighlighterLayer.ADDITIONAL_SYNTAX, attributes,
+                                                                                   highlightLayer, attributes,
                                                                                    HighlighterTargetArea.EXACT_RANGE);
       highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, Boolean.TRUE);
       editor.getCaretModel().moveToOffset(textRange.getEndOffset());

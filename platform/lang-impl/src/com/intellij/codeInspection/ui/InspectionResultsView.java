@@ -49,6 +49,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -59,7 +60,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
@@ -398,7 +398,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         mySplitter.setSecondComponent(getNothingToShowTextLabel());
       }
       else {
-        showInRightPanel(myTree.getCommonSelectedElement(), oldEditor == null);
+        showInRightPanel(myTree.getCommonSelectedElement());
       }
     }
     else {
@@ -407,12 +407,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
         if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-          showInRightPanel(problemNode.getElement(), oldEditor == null);
+          showInRightPanel(problemNode.getElement());
         }
         else if (node instanceof InspectionPackageNode ||
                  node instanceof InspectionModuleNode ||
                  node instanceof RefElementNode) {
-          showInRightPanel(node.getContainingFileLocalEntity(), oldEditor == null);
+          showInRightPanel(node.getContainingFileLocalEntity());
         }
         else if (node instanceof InspectionNode) {
           final String shortName = ((InspectionNode)node).getToolWrapper().getShortName();
@@ -420,7 +420,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             mySplitter.setSecondComponent(getNothingToShowTextLabel());
           }
           else {
-            showInRightPanel(null, oldEditor == null);
+            showInRightPanel(null);
           }
         }
         else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
@@ -454,7 +454,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return multipleSelectionLabel;
   }
 
-  private void showInRightPanel(@Nullable final RefEntity refEntity, boolean hasNoEditorToReuse) {
+  private void showInRightPanel(@Nullable final RefEntity refEntity) {
     Cursor currentCursor = getCursor();
     try {
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -467,14 +467,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
         previewPanel = presentation.getCustomPreviewPanel(refEntity);
       }
+      EditorEx previewEditor = null;
       if (previewPanel == null) {
-        previewPanel = createBaseRightComponentFor(problemCount, refEntity);
+        final Pair<JComponent, EditorEx> panelAndEditor = createBaseRightComponentFor(problemCount, refEntity);
+        previewPanel = panelAndEditor.getFirst();
+        previewEditor = panelAndEditor.getSecond();
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myPreviewEditor == null || (!hasNoEditorToReuse && myPreviewEditor.getUserData(PREVIEW_EDITOR_IS_REUSED_KEY) == null)
-                                                               ? null
-                                                               : myPreviewEditor, this);
+        final QuickFixPreviewDecorator fixToolbar = new QuickFixPreviewDecorator(previewEditor, this);
         myLoadingProgressPreview = fixToolbar;
         editorPanel.add(fixToolbar, BorderLayout.NORTH);
       }
@@ -485,7 +486,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private JComponent createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
+  private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
     if (selectedEntity instanceof RefElement &&
         selectedEntity.isValid() &&
         !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
@@ -523,7 +524,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         settings.setLeadingWhitespaceShown(true);
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
         myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-        UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
       }
       myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
 
@@ -537,12 +537,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           }
         }, ModalityState.any());
       }
-      return myPreviewEditor.getComponent();
+      return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
     else if (selectedEntity == null) {
-      return new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject);
+      return Pair.create(new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject), null);
     }
-    return new JPanel();
+    throw new IllegalStateException();
   }
 
   private boolean reuseEditorFor(Document document) {
@@ -875,8 +875,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (toolWrapper != null) {
       final QuickFixAction[] quickFixes = myProvider.getQuickFixes(toolWrapper, myTree);
       if (quickFixes != null) {
-        for (QuickFixAction quickFixe : quickFixes) {
-          actions.add(quickFixe);
+        for (QuickFixAction quickFix : quickFixes) {
+          actions.add(quickFix);
         }
       }
       final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());

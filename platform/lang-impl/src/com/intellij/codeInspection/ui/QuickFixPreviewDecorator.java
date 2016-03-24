@@ -39,18 +39,18 @@ import java.awt.*;
 /**
  * @author Dmitry Batkovich
  */
-public class QuickFixToolbar extends JPanel implements InspectionTreeLoadingProgressAware {
-  private static final Logger LOG = Logger.getInstance(QuickFixToolbar.class);
+public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLoadingProgressAware {
+  private static final Logger LOG = Logger.getInstance(QuickFixPreviewDecorator.class);
   private static final int MAX_FIX_COUNT = 3;
   @NotNull private final InspectionResultsView myView;
   private final InspectionToolWrapper myWrapper;
-  private final ProblemPreviewEditorFoldings myFoldings;
+  private final ProblemPreviewEditorPresentation myFoldings;
 
   private SimpleColoredComponent myWaitingLabel;
 
-  public QuickFixToolbar(@Nullable EditorEx editor,
-                         @NotNull InspectionResultsView view) {
-    myFoldings = editor == null ? null : new ProblemPreviewEditorFoldings(editor);
+  public QuickFixPreviewDecorator(@Nullable EditorEx editor,
+                                  @NotNull InspectionResultsView view) {
+    myFoldings = editor == null ? null : new ProblemPreviewEditorPresentation(editor, view.getProject());
     myView = view;
     myWrapper = view.getTree().getSelectedToolWrapper();
     LOG.assertTrue(myWrapper != null);
