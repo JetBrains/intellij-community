@@ -162,7 +162,7 @@ def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
             # additional check if interpreter is situated in a project directory
             library_roots = _get_library_roots()
             for root in library_roots:
-                if filename.startswith(root):
+                if root != '' and filename.startswith(root):
                     filename_to_not_in_scope_cache[filename] = True
 
         # at this point it must be loaded.
@@ -174,12 +174,15 @@ def is_filter_enabled():
 
 
 def is_filter_libraries():
-    return os.getenv('PYDEVD_FILTER_LIBRARIES') is not None
+    is_filter = os.getenv('PYDEVD_FILTER_LIBRARIES') is not None
+    pydev_log.debug("PYDEVD_FILTER_LIBRARIES %s\n" % is_filter)
+    return is_filter
 
 
 def _get_stepping_filters(filters_cache=[]):
     if not filters_cache:
         filters = os.getenv('PYDEVD_FILTERS', '').split(';')
+        pydev_log.debug("PYDEVD_FILTERS %s\n" % filters)
         new_filters = []
         for new_filter in filters:
             new_filters.append(new_filter)
