@@ -82,6 +82,9 @@ public class JavaFxDefaultPropertyAttributeDescriptor extends JavaFxPropertyAttr
         if (FxmlConstants.FX_VALUE.equals(attributeName)) {
           final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
           if (tagClass != null) {
+            if (tagClass.isEnum()) {
+              return JavaFxPsiUtil.validateEnumConstant(tagClass, value);
+            }
             final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);
             if (method == null) {
               return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";

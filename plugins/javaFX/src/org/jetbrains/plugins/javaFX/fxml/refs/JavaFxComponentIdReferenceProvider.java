@@ -99,7 +99,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
         final XmlTag parentTag = currentTag.getParentTag();
         for (final String id : fileIds.keySet()) {
           final XmlAttributeValue resolvedAttrValue = fileIds.get(id);
-          if (JavaFxPsiUtil.isClassAcceptable(parentTag, JavaFxPsiUtil.getTagClass(resolvedAttrValue)) == null) {
+          if (JavaFxPsiUtil.isClassAcceptable(parentTag, JavaFxPsiUtil.getTagClass(resolvedAttrValue))) {
             acceptableIds.add(id);
           }
         }

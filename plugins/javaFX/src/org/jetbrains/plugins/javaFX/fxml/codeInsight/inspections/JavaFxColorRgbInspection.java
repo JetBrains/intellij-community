@@ -36,7 +36,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
         final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
         if (descriptor instanceof JavaFxPropertyAttributeDescriptor) {
           final PsiClass psiClass = ((JavaFxPropertyAttributeDescriptor)descriptor).getPsiClass();
-          if (JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
+          if (psiClass != null && JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
             final XmlAttributeValue valueElement = attribute.getValueElement();
             final PsiElement location = valueElement != null ? valueElement : attribute;
             validateColorComponent(psiClass, attribute.getName(), attributeValue, location);
