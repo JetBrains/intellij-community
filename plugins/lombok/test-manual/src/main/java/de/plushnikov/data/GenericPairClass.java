@@ -1,4 +1,4 @@
-package de.plushnikov.datax;
+package de.plushnikov.data;
 
 import lombok.Data;
 

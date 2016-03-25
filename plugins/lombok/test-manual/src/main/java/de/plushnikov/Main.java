@@ -3,7 +3,7 @@ package de.plushnikov;
 import de.plushnikov.constructor.AllArgsConstructorClass;
 import de.plushnikov.constructor.ReqArgsConstructorClass;
 import de.plushnikov.data.DataClass;
-import de.plushnikov.datax.GenericPairClass;
+import de.plushnikov.data.GenericPairClass;
 import de.plushnikov.delegate.DelegateClass;
 import de.plushnikov.getter.FieldGetter;
 import de.plushnikov.getter.FieldGetterMethodExist;

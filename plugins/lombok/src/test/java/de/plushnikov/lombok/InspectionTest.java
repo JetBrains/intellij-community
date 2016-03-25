@@ -1,5 +1,9 @@
 package de.plushnikov.lombok;
 
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.InspectionTestCase;
 import de.plushnikov.intellij.plugin.inspection.LombokInspection;
 
@@ -13,8 +17,15 @@ public class InspectionTest extends InspectionTestCase {
     return "testData/inspection";
   }
 
+  @Override
+  protected Sdk getTestProjectSdk() {
+    Sdk sdk = JavaSdk.getInstance().createJdk("java 1.7", "/lib/mockJDK-1.7", false);
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    return sdk;
+  }
+
   private void doTest() throws Exception {
-    doTest(getTestName(true), new LombokInspection(), "java 1.5");
+    doTest(getTestName(true), new LombokInspection(), "java 1.7");
   }
 
   public void testIssue37() throws Exception {
@@ -58,6 +69,10 @@ public class InspectionTest extends InspectionTestCase {
 
   //TODO make this test work
   public void testSneakyThrowsTryWithResource() throws Exception {
+    doTest();
+  }
+
+  public void testDataEqualsAndHashCodeOverride() throws Exception {
     doTest();
   }
 }

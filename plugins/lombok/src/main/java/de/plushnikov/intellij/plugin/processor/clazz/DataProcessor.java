@@ -57,7 +57,7 @@ public class DataProcessor extends AbstractClassProcessor {
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
-      if (PsiClassUtil.hasSuperClass(psiClass)) {
+      if (PsiClassUtil.hasSuperClass(psiClass) && !equalsAndHashCodeProcessor.hasOneOfMethodsDefined(psiClass)) {
         builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass" +
                 "If this is not intentional, add '@EqualsAndHashCode(callSuper=true)' to your type.",
             PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper=true"));

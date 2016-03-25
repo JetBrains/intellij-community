@@ -5,14 +5,14 @@ import lombok.EqualsAndHashCode;
 
 import java.util.Timer;
 
-//@Data
-public class DataExtendsTest extends Timer{
+@Data
+public class DataExtendsTest extends Timer {
     float ffff;
     char ccc;
 
     @Data
-    class X extends java.util.Timer  {
+    @EqualsAndHashCode(callSuper = false)
+    class X extends Timer {
         int iiii;
-
     }
 }
