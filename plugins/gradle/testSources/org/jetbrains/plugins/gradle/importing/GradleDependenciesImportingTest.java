@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import java.util.List;
@@ -283,7 +284,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                        "include 'project2'\n");
 
     importProject(
-      "project(\":project1\") {\n" +
+      "project(':project1') {\n" +
       "  configurations {\n" +
       "    myConf {\n" +
       "      description = 'My Conf'\n" +
@@ -295,7 +296,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "  }\n" +
       "}\n" +
       "\n" +
-      "project(\":project2\") {\n" +
+      "project(':project2') {\n" +
       "  apply plugin: 'java'\n" +
       "  dependencies {\n" +
       "    compile project(path: ':project1', configuration: 'myConf')\n" +
@@ -305,7 +306,45 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModules("project", "project1", "project2", "project2_main", "project2_test");
 
+    assertModuleModuleDeps("project2_main");
     assertModuleLibDepScope("project2_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project2_main", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+  }
+
+  @Test
+  @TargetVersions("2.0+")
+  public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    testArtifacts\n" +
+      "  }\n" +
+      "\n" +
+      "  task testJar(type: Jar) {\n" +
+      "    classifier = 'tests'\n" +
+      "    from sourceSets.test.output\n" +
+      "  }\n" +
+      "\n" +
+      "  artifacts {\n" +
+      "    testArtifacts testJar\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    testCompile project(path: ':project1', configuration: 'testArtifacts')\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleModuleDeps("project2_main");
+    assertModuleModuleDeps("project2_test", "project1_test", "project2_main");
   }
 }
