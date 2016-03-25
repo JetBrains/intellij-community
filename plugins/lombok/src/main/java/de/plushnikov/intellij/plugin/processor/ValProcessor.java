@@ -18,12 +18,17 @@ import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -128,7 +133,8 @@ public class ValProcessor extends AbstractProcessor {
         (parent instanceof PsiParameter && isVal((PsiParameter) parent))) {
 
       if (parent instanceof PsiLocalVariable) {
-        psiType = processLocalVariableInitializer(((PsiLocalVariable) parent).getInitializer());
+        System.out.println("TypeElement: " + typeElement.hashCode() + " Parent: " + parent.hashCode());
+        psiType = processLocalVariableInitializer(typeElement, parent, ((PsiLocalVariable) parent).getInitializer());
       } else {
         psiType = processParameterDeclaration(((PsiParameter) parent).getDeclarationScope());
       }
@@ -140,16 +146,45 @@ public class ValProcessor extends AbstractProcessor {
     return psiType;
   }
 
-  private PsiType processLocalVariableInitializer(PsiExpression psiExpression) {
+  private static class FieldLombokCachedValueProvider implements CachedValueProvider<PsiType> {
+
+    private final PsiElement psiElement;
+    private final PsiExpression psiExpression;
+
+    FieldLombokCachedValueProvider(PsiElement psiElement, PsiExpression psiExpression) {
+      this.psiElement = psiElement;
+      this.psiExpression = psiExpression;
+    }
+
+    @Nullable
+    @Override
+    public Result<PsiType> compute() {
+      final PsiType result;
+      if (psiExpression instanceof PsiMethodCallExpression) {
+//        final PsiMethod psiMethod = ((PsiMethodCallExpression) psiExpression).resolveMethod();
+//        final PsiType returnType = psiMethod.getReturnType();
+        final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) psiExpression).getMethodExpression();
+        result = methodExpression.getType();
+      } else {
+        result = psiExpression.getType();
+      }
+      return new Result<PsiType>(result, psiElement, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    }
+  }
+
+  private PsiType processLocalVariableInitializer(PsiTypeElement typeElement, PsiElement parent, PsiExpression psiExpression) {
     PsiType result = null;
     if (null != psiExpression && !(psiExpression instanceof PsiArrayInitializerExpression)) {
-      if (!recursionBreaker.get().contains(psiExpression)) {
-        recursionBreaker.get().add(psiExpression);
-        try {
-          result = psiExpression.getType();
-        } finally {
-          recursionBreaker.get().remove(psiExpression);
-        }
+
+      result = CachedValuesManager.getCachedValue(typeElement, new FieldLombokCachedValueProvider(parent, psiExpression));
+
+//      if (!recursionBreaker.get().contains(psiExpression)) {
+//        recursionBreaker.get().add(psiExpression);
+//        try {
+//          result = psiExpression.getType();
+//        } finally {
+//          recursionBreaker.get().remove(psiExpression);
+//        }
 
         if (psiExpression instanceof PsiNewExpression) {
           final PsiJavaCodeReferenceElement reference = ((PsiNewExpression) psiExpression).getClassOrAnonymousClassReference();
@@ -164,7 +199,15 @@ public class ValProcessor extends AbstractProcessor {
           }
         }
       }
-    }
+//    else {
+//        if (psiExpression instanceof PsiMethodCallExpression) {
+//          final PsiMethod psiMethod = ((PsiMethodCallExpression) psiExpression).resolveMethod();
+//          if (null != psiMethod) {
+//            result = psiMethod.getReturnType();
+//          }
+//        }
+//      }
+//    }
     return result;
   }
 
