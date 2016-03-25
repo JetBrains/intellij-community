@@ -15,9 +15,5 @@ public class Issue168 {
         myList.add(123);
         myList.add(new Integer(args[0]));
         myList.size();
-
-        myList.size();
-
-        myList.add(1);
     }
 }

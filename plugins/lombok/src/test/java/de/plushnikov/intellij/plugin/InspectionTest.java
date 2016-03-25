@@ -19,7 +19,7 @@ public class InspectionTest extends InspectionTestCase {
 
   @Override
   protected Sdk getTestProjectSdk() {
-    Sdk sdk = JavaSdk.getInstance().createJdk("java 1.7", "/lib/mockJDK-1.7", false);
+    Sdk sdk = JavaSdk.getInstance().createJdk("java 1.7", "lib/mockJDK-1.7", false);
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     return sdk;
   }

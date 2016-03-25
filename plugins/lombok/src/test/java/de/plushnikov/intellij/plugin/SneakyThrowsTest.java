@@ -44,7 +44,7 @@ public class SneakyThrowsTest extends LightCodeInsightTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdk.getInstance().createJdk("java 1.7", "/lib/mockJDK-1.7", false);
+    return JavaSdk.getInstance().createJdk("java 1.7", "lib/mockJDK-1.7", false);
   }
 
   private static PsiMethodCallExpression createCall(@NonNls final String body) throws Exception {

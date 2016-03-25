@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.modelmapper.ModelMapper;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public class Issue105Another {
 
