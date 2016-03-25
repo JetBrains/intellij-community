@@ -16,6 +16,7 @@
 package org.jetbrains.debugger.sourcemap
 
 import com.google.gson.stream.JsonToken
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtil
@@ -142,6 +143,10 @@ private fun parseMap(reader: JsonReaderEx,
   if (encodedMappings.isNullOrEmpty()) {
     // empty map
     return null
+  }
+
+  if (Registry.`is`("js.debugger.fix.jspm.source.maps", false) && encodedMappings!!.startsWith(";") && file != null && file.endsWith(".ts!transpiled")) {
+    encodedMappings = encodedMappings.substring(1)
   }
 
   if (version != 3) {
