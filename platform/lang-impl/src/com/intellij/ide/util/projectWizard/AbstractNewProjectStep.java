@@ -96,7 +96,11 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     public AnAction[] getActions(@NotNull DirectoryProjectGenerator[] generators, @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
       final List<AnAction> actions = ContainerUtil.newArrayList();
       for (DirectoryProjectGenerator projectGenerator : generators) {
-        actions.addAll(ContainerUtil.list(getActions(projectGenerator, callback)));
+        try {
+          actions.addAll(ContainerUtil.list(getActions(projectGenerator, callback)));
+        } catch (Throwable throwable) {
+          LOG.error("Broken project generator " + projectGenerator, throwable);
+        }
       }
       return actions.toArray(new AnAction[actions.size()]);
     }
