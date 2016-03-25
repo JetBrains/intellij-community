@@ -53,15 +53,13 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   private TextAttributes myTextAttributes;
 
-  private DocumentEvent myIsInUpdate;
-
   public SelectionModelImpl(EditorImpl editor) {
     myEditor = editor;
   }
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
-    myIsInUpdate = event;
+    if (myEditor.getDocument().isInBulkUpdate()) return;
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
       ((CaretImpl)caret).beforeDocumentChange();
     }
@@ -69,16 +67,14 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    if (myIsInUpdate == event) {
-      myIsInUpdate = null;
-      myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
-        public void run() {
-          for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-            ((CaretImpl)caret).documentChanged();
-          }
+    if (myEditor.getDocument().isInBulkUpdate()) return;
+    myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
+      public void run() {
+        for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+          ((CaretImpl)caret).documentChanged();
         }
-      });
-    }
+      }
+    });
   }
 
   @Override
