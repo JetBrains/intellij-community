@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -952,16 +952,17 @@ public class ExpressionGenerator extends Generator {
     }
 
     if (ResolveUtil.isClassReference(referenceExpression)) {
+      // just delegate to qualifier
       LOG.assertTrue(qualifier != null);
       qualifier.accept(this);
-      builder.append(".class");
       return;
     }
 
-    //class name used as expression. Should be converted to <className>.class
-    if (resolved instanceof PsiClass && PsiUtil.isExpressionUsed(referenceExpression)) {
+    if (resolved instanceof PsiClass) {
       builder.append(((PsiClass)resolved).getQualifiedName());
-      builder.append(".class");
+      if (PsiUtil.isExpressionUsed(referenceExpression)) {
+        builder.append(".class");
+      }
       return;
     }
 
@@ -1035,9 +1036,6 @@ public class ExpressionGenerator extends Generator {
           if (!PsiUtil.isAccessedForWriting(referenceExpression)) {
             builder.append(".get()");
           }
-        }
-        else if (resolved instanceof PsiClass) {
-          TypeWriter.writeType(builder, referenceExpression.getType(), referenceExpression);
         }
         else {
           builder.append(refName);

@@ -100,7 +100,7 @@ public class XBreakpointUtil {
   }
 
   public static List<BreakpointPanelProvider> collectPanelProviders() {
-    List<BreakpointPanelProvider> panelProviders = new ArrayList<BreakpointPanelProvider>();
+    List<BreakpointPanelProvider> panelProviders = new ArrayList<>();
     for (DebuggerSupport debuggerSupport : DebuggerSupport.getDebuggerSupports()) {
       panelProviders.add(debuggerSupport.getBreakpointPanelProvider());
     }
@@ -116,7 +116,7 @@ public class XBreakpointUtil {
   @Nullable
   public static DebuggerSupport getDebuggerSupport(Project project, BreakpointItem breakpointItem) {
     DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
-    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    List<BreakpointItem> items = new ArrayList<>();
     for (DebuggerSupport support : debuggerSupports) {
       support.getBreakpointPanelProvider().provideBreakpointItems(project, items);
       if (items.contains(breakpointItem)) {

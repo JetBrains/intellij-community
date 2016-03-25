@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
@@ -36,6 +37,8 @@ import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
@@ -43,6 +46,9 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElemen
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * User: anna
@@ -112,7 +118,8 @@ public class JavaFxPsiUtil {
       for (String anImport : imports) {
         if (StringUtil.getShortName(anImport).equals(name)) {
           psiClass = psiFacade.findClass(anImport, file.getResolveScope());
-        } else if (StringUtil.endsWith(anImport, ".*")) {
+        }
+        else if (StringUtil.endsWith(anImport, ".*")) {
           psiClass = psiFacade.findClass(StringUtil.trimEnd(anImport, "*") + name, file.getResolveScope());
         }
         if (psiClass != null) {
@@ -120,7 +127,7 @@ public class JavaFxPsiUtil {
         }
       }
     }
-    return psiClass;
+    return null;
   }
 
   public static void insertImportWhenNeeded(XmlFile xmlFile,
@@ -133,7 +140,8 @@ public class JavaFxPsiUtil {
         final XmlProlog prolog = document.getProlog();
         if (prolog != null) {
           prolog.add(processingInstruction);
-        } else {
+        }
+        else {
           document.addBefore(processingInstruction, document.getRootTag());
         }
         PostprocessReformattingAspect.getInstance(xmlFile.getProject()).doPostponedFormatting(xmlFile.getViewProvider());
@@ -223,6 +231,7 @@ public class JavaFxPsiUtil {
 
   private static final Key<CachedValue<PsiClass>> INJECTED_CONTROLLER = Key.create("javafx.injected.controller");
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("javafx.controller");
+
   public static PsiClass getControllerClass(final PsiFile containingFile) {
     if (containingFile instanceof XmlFile) {
       final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
@@ -262,7 +271,7 @@ public class JavaFxPsiUtil {
     final String attributeValue = attribute.getValue();
     if (!StringUtil.isEmptyOrSpaces(attributeValue)) {
       final GlobalSearchScope customScope = GlobalSearchScope.projectScope(project).intersectWith(containingFile.getResolveScope());
-      return  JavaPsiFacade.getInstance(project).findClass(attributeValue, customScope);
+      return JavaPsiFacade.getInstance(project).findClass(attributeValue, customScope);
     }
     return null;
   }
@@ -304,9 +313,18 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static PsiClass getTagClass(XmlTag xmlTag) {
+  @Nullable
+  public static PsiClass getTagClass(@NotNull XmlTag xmlTag) {
     final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
     if (descriptor != null) {
+      if (descriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
+        final JavaFxClassBackedElementDescriptor rootTagDescriptor =
+          ((JavaFxDefaultPropertyElementDescriptor)descriptor).getFxRootTagDescriptor(xmlTag);
+        if (rootTagDescriptor != null) {
+          final PsiElement declaration = rootTagDescriptor.getDeclaration();
+          return declaration instanceof PsiClass ? (PsiClass)declaration : null;
+        }
+      }
       final PsiElement declaration = descriptor.getDeclaration();
       if (declaration instanceof PsiClass) {
         return (PsiClass)declaration;
@@ -315,20 +333,27 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static boolean isVisibleInFxml(PsiMember psiMember) {
+  public static boolean isVisibleInFxml(@NotNull PsiMember psiMember) {
     return psiMember.hasModifierProperty(PsiModifier.PUBLIC) ||
            AnnotationUtil.isAnnotated(psiMember, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
   }
 
-  public static PsiMethod findValueOfMethod(@NotNull final PsiClass tagClass) {
-    final PsiMethod[] methods = tagClass.findMethodsByName(JavaFxCommonNames.VALUE_OF, false);
+  @Nullable
+  public static PsiMethod findValueOfMethod(@NotNull final PsiType psiType) {
+    final PsiClass psiClass = PsiTypesUtil.getPsiClass(psiType);
+    return psiClass != null ? findValueOfMethod(psiClass) : null;
+  }
+
+  @Nullable
+  public static PsiMethod findValueOfMethod(@NotNull final PsiClass psiClass) {
+    final PsiMethod[] methods = psiClass.findMethodsByName(JavaFxCommonNames.VALUE_OF, true);
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameters.length == 1) {
           final PsiType type = parameters[0].getType();
           if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-            if (method.hasModifierProperty(PsiModifier.STATIC) && tagClass.equals(PsiUtil.resolveClassInType(method.getReturnType()))) {
+            if (psiClass.equals(PsiUtil.resolveClassInType(method.getReturnType()))) {
               return method;
             }
           }
@@ -373,7 +398,8 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiType getDefaultPropertyExpectedType(PsiClass aClass) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(aClass, Collections.singleton(JavaFxCommonNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+    final PsiAnnotation annotation =
+      AnnotationUtil.findAnnotationInHierarchy(aClass, Collections.singleton(JavaFxCommonNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
     if (annotation != null) {
       final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
       if (memberValue != null) {
@@ -392,7 +418,8 @@ public class JavaFxPsiUtil {
       return null;
     }
     final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(aClass,
-                                                                              Collections.singleton(JavaFxCommonNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+                                                                              Collections.singleton(
+                                                                                JavaFxCommonNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
     if (annotation != null) {
       final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
       if (memberValue != null) {
@@ -402,11 +429,16 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static String isAbleToInstantiate(final PsiClass psiClass) {
-    if(psiClass.getConstructors().length > 0) {
-      for (PsiMethod constr : psiClass.getConstructors()) {
-        final PsiParameter[] parameters = constr.getParameterList().getParameters();
-        if (parameters.length == 0) return null;
+  public static boolean isAbleToInstantiate(final PsiClass psiClass) {
+    return isAbleToInstantiate(psiClass, message -> {
+    });
+  }
+
+  public static boolean isAbleToInstantiate(final PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
+    if (psiClass.getConstructors().length > 0) {
+      for (PsiMethod constructor : psiClass.getConstructors()) {
+        final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+        if (parameters.length == 0) return true;
         boolean annotated = true;
         for (PsiParameter parameter : parameters) {
           if (!AnnotationUtil.isAnnotated(parameter, JavaFxCommonNames.JAVAFX_BEANS_NAMED_ARG, false)) {
@@ -414,14 +446,17 @@ public class JavaFxPsiUtil {
             break;
           }
         }
-        if (annotated) return null;
+        if (annotated) return true;
       }
       final PsiMethod valueOf = findValueOfMethod(psiClass);
       if (valueOf == null) {
-        if (!hasBuilder(psiClass)) return "Unable to instantiate";
+        if (!hasBuilder(psiClass)) {
+          messageConsumer.accept("Unable to instantiate");
+          return false;
+        }
       }
     }
-    return null;
+    return true;
   }
 
   public static boolean hasBuilder(@NotNull final PsiClass psiClass) {
@@ -455,57 +490,187 @@ public class JavaFxPsiUtil {
     });
   }
 
-  public static String isClassAcceptable(@Nullable XmlTag parentTag, @Nullable final PsiClass aClass) {
-    if (parentTag == null) {
-      return null;
-    }
-    if (aClass != null && aClass.isValid()) {
-      XmlElementDescriptor descriptor = parentTag.getDescriptor();
-      if (descriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
-        descriptor = ((JavaFxDefaultPropertyElementDescriptor)descriptor).getFxRootTagDescriptor(parentTag);
-      }
+  public static boolean isClassAcceptable(@Nullable XmlTag targetTag, @Nullable final PsiClass fromClass) {
+    return isClassAcceptable(targetTag, fromClass, (message, type) -> {
+    });
+  }
 
-      if (descriptor instanceof JavaFxPropertyElementDescriptor) {
-        final PsiClass containingClass = ((JavaFxPropertyElementDescriptor)descriptor).getPsiClass();
-        final PsiElement declaration = descriptor.getDeclaration();
-        final PsiType propertyType = getWritablePropertyType(containingClass, declaration);
-        return canCoerce(aClass, propertyType);
-      }
-      else if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
-        final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiClass) {
-          final PsiType type = getDefaultPropertyExpectedType((PsiClass)declaration);
-          if (type != null) {
-            return canCoerce(aClass, type);
+  public static boolean isClassAcceptable(@Nullable XmlTag targetTag, @Nullable final PsiClass fromClass,
+                                          @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+    if (targetTag == null || fromClass == null || !fromClass.isValid()) {
+      return true;
+    }
+    XmlElementDescriptor tagDescriptor = targetTag.getDescriptor();
+    if (tagDescriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
+      tagDescriptor = ((JavaFxDefaultPropertyElementDescriptor)tagDescriptor).getFxRootTagDescriptor(targetTag);
+    }
+
+    if (tagDescriptor instanceof JavaFxPropertyElementDescriptor) {
+      final PsiClass containingClass = ((JavaFxPropertyElementDescriptor)tagDescriptor).getPsiClass();
+      final PsiType targetType = getWritablePropertyType(containingClass, tagDescriptor.getDeclaration());
+      return canCoerce(targetType, fromClass, targetTag, messageConsumer);
+    }
+    else if (tagDescriptor instanceof JavaFxClassBackedElementDescriptor) {
+      final PsiElement tagDeclaration = tagDescriptor.getDeclaration();
+      if (tagDeclaration instanceof PsiClass) {
+        PsiClass defaultPropertyOwnerClass = (PsiClass)tagDeclaration;
+        final XmlAttribute factoryAttr = targetTag.getAttribute(FxmlConstants.FX_FACTORY);
+        if (factoryAttr != null) {
+          final PsiClass factoryReturnClass = getFactoryProducedClass((PsiClass)tagDeclaration, factoryAttr.getValue());
+          if (factoryReturnClass == null) {
+            return true;
           }
+          defaultPropertyOwnerClass = factoryReturnClass;
+        }
+        final PsiType targetType = getDefaultPropertyExpectedType(defaultPropertyOwnerClass);
+        if (targetType != null) {
+          return canCoerce(targetType, fromClass, targetTag, messageConsumer);
+        }
+        if (!isObservableCollection(defaultPropertyOwnerClass)) {
+          return noDefaultPropertyError(messageConsumer);
         }
       }
     }
-    return null;
+    return true;
   }
 
-  @Nullable
-  private static String canCoerce(@NotNull PsiClass aClass, @Nullable PsiType type) {
-    PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(type, aClass.getResolveScope());
-    if (collectionItemType == null && InheritanceUtil.isInheritor(type, JavaFxCommonNames.JAVAFX_BEANS_PROPERTY)) {
-      collectionItemType = getWritablePropertyType(type, aClass.getProject());
+  private static boolean noDefaultPropertyError(@NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+    messageConsumer.accept("Parent tag has no default property",
+                           Validator.ValidationHost.ErrorType.ERROR);
+    return false;
+  }
+
+  private static boolean canCoerce(@Nullable PsiType targetType, @NotNull PsiClass fromClass, @NotNull PsiElement context,
+                                   @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+    if (targetType == null) return true;
+    targetType = eraseFreeTypeParameters(targetType);
+    PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(targetType, fromClass.getResolveScope());
+    if (collectionItemType == null && InheritanceUtil.isInheritor(targetType, JavaFxCommonNames.JAVAFX_BEANS_PROPERTY)) {
+      collectionItemType = getWritablePropertyType(targetType, fromClass.getProject());
     }
-    if (collectionItemType != null && PsiPrimitiveType.getUnboxedType(collectionItemType) == null) {
-      final PsiClass baseClass = PsiUtil.resolveClassInType(collectionItemType);
-      if (baseClass != null) {
-        final String qualifiedName = baseClass.getQualifiedName();
-        if (qualifiedName != null && !Comparing.strEqual(qualifiedName, CommonClassNames.JAVA_LANG_STRING)) {
-          if (!InheritanceUtil.isInheritor(aClass, qualifiedName)) {
-             return unableToCoerceMessage(aClass, qualifiedName);
-          }
+    if (collectionItemType != null) {
+      return canCoerceImpl(collectionItemType, fromClass, context, messageConsumer);
+    }
+    return canCoerceImpl(targetType, fromClass, context, messageConsumer);
+  }
+
+  /**
+   * Similar to {@link GenericsUtil#getVariableTypeByExpressionType(PsiType)} and {@link TypeConversionUtil#erasure(PsiType)}
+   */
+  @NotNull
+  public static PsiType eraseFreeTypeParameters(@NotNull PsiType psiType) {
+    return psiType.accept(new PsiTypeVisitor<PsiType>() {
+      @Nullable
+      @Override
+      public PsiType visitType(PsiType type) {
+        return type;
+      }
+
+      @Nullable
+      @Override
+      public PsiType visitClassType(PsiClassType classType) {
+        final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+        final PsiClass aClass = resolveResult.getElement();
+        if (aClass == null) return classType;
+        if (aClass instanceof PsiTypeParameter) return null;
+        PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+        boolean unchanged = true;
+        for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
+          final PsiType typeArgument = resolveResult.getSubstitutor().substitute(typeParameter);
+          if (typeArgument == null) return classType.rawType();
+          final PsiType toPut = typeArgument.accept(this);
+          if (toPut == null) return classType.rawType();
+          unchanged &= toPut == typeArgument;
+          substitutor = substitutor.put(typeParameter, toPut);
         }
+        if (unchanged) return classType;
+        final PsiManager manager = aClass.getManager();
+        final PsiAnnotation[] applicableAnnotations = classType.getApplicableAnnotations();
+        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
+          .createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), applicableAnnotations);
+      }
+
+      @Override
+      public PsiType visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        return bound != null ? bound.accept(this) : null;
+      }
+
+      @Nullable
+      @Override
+      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        return capturedWildcardType.getUpperBound().accept(this);
+      }
+
+      @Override
+      public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
+        return visitArrayType(ellipsisType);
+      }
+
+      @Override
+      public PsiType visitArrayType(PsiArrayType arrayType) {
+        final PsiType componentType = arrayType.getComponentType();
+        final PsiType newComponentType = componentType.accept(this);
+        if (newComponentType == componentType) return arrayType;
+        return newComponentType != null ? newComponentType.createArrayType() : null;
+      }
+
+      @Override
+      public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+        final PsiClassType lub = PsiTypesUtil.getLowestUpperBoundClassType(disjunctionType);
+        return lub != null ? lub.accept(this) : null;
+      }
+    });
+  }
+
+  private static boolean canCoerceImpl(@NotNull PsiType targetType, @NotNull PsiClass fromClass, @NotNull PsiElement context,
+                                       @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+    if (targetType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ||
+        targetType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+        targetType.isAssignableFrom(PsiTypesUtil.getClassType(fromClass))) {
+      return true;
+    }
+    final PsiClassType boxedTargetClass =
+      targetType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)targetType).getBoxedType(context) : null;
+    if (boxedTargetClass != null && InheritanceUtil.isInheritor(boxedTargetClass, CommonClassNames.JAVA_LANG_NUMBER) ||
+        InheritanceUtil.isInheritor(targetType, CommonClassNames.JAVA_LANG_NUMBER)) {
+      if (Comparing.strEqual(fromClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING) ||
+          InheritanceUtil.isInheritor(fromClass, CommonClassNames.JAVA_LANG_NUMBER)) {
+        return true;
+      }
+      return unrelatedTypesWarning(targetType, fromClass, messageConsumer);
+    }
+    final PsiMethod valueOfMethod = findValueOfMethod(targetType);
+    final PsiType valueOfParameterType = valueOfMethod != null && valueOfMethod.getParameterList().getParametersCount() == 1 ?
+                                         valueOfMethod.getParameterList().getParameters()[0].getType() : null;
+    if (valueOfParameterType != null && valueOfParameterType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      return true;
+    }
+    if (Comparing.strEqual(fromClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING)) {
+      if (isPrimitiveOrBoxed(targetType) ||
+          valueOfParameterType != null && valueOfParameterType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return true;
       }
     }
-    return null;
+    if (valueOfMethod != null) {
+      return unrelatedTypesWarning(targetType, fromClass, messageConsumer);
+    }
+    return unableToCoerceError(targetType, fromClass, messageConsumer);
   }
 
-  private static String unableToCoerceMessage(PsiClass aClass, String qualifiedName) {
-    return "Unable to coerce " + HighlightUtil.formatClass(aClass)+ " to " + qualifiedName;
+  private static boolean unableToCoerceError(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
+                                             @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+    messageConsumer.accept("Unable to coerce " + HighlightUtil.formatClass(fromClass) + " to " + targetType.getCanonicalText(),
+                           Validator.ValidationHost.ErrorType.ERROR);
+    return false;
+  }
+
+  private static boolean unrelatedTypesWarning(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
+                                               @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+    messageConsumer.accept("Conversion between unrelated types, " + HighlightUtil.formatClass(fromClass) +
+                           " to " + targetType.getCanonicalText(),
+                           Validator.ValidationHost.ErrorType.WARNING);
+    return true;
   }
 
   public static boolean isOutOfHierarchy(final XmlAttributeValue element) {
@@ -662,7 +827,7 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiClass getPropertyClass(PsiType propertyType, XmlAttributeValue context) {
+  public static PsiClass getPropertyClass(PsiType propertyType, PsiElement context) {
     if (propertyType instanceof PsiPrimitiveType) {
       PsiClassType boxedType = ((PsiPrimitiveType)propertyType).getBoxedType(context);
       return boxedType != null ? boxedType.resolve() : null;
@@ -813,11 +978,133 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean isWritablePropertyType(@NotNull PsiClass psiClass, @NotNull PsiType fieldType) {
-    return (InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_LIST) ||
-            InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_SET) ||
-            InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_ARRAY)) &&
+    return isObservableCollection(PsiUtil.resolveClassInType(fieldType)) &&
            JavaGenericsUtil.getCollectionItemType(fieldType, psiClass.getResolveScope()) != null ||
            InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_MAP);
+  }
+
+  private static boolean isObservableCollection(@Nullable PsiClass psiClass) {
+    return InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_LIST) ||
+           InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_SET) ||
+           InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_ARRAY);
+  }
+
+  @Nullable
+  private static PsiSubstitutor getTagClassSubstitutor(@NotNull XmlAttribute xmlAttribute, @NotNull PsiClass controllerClass) {
+    final XmlTag xmlTag = xmlAttribute.getParent();
+    final PsiClass tagClass = getTagClass(xmlTag);
+    if (tagClass != null) {
+      final String tagFieldName = xmlTag.getAttributeValue(FxmlConstants.FX_ID);
+      if (tagFieldName != null) {
+        final PsiField tagField = controllerClass.findFieldByName(tagFieldName, true);
+        if (tagField != null && !tagField.hasModifierProperty(PsiModifier.STATIC) && isVisibleInFxml(tagField)) {
+          final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(tagField.getType());
+          final PsiClass resolvedClass = resolveResult.getElement();
+          if (resolvedClass != null) {
+            return TypeConversionUtil.getClassSubstitutor(tagClass, resolvedClass, resolveResult.getSubstitutor());
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiClassType getDeclaredEventType(@NotNull XmlAttribute xmlAttribute) {
+    final PsiClass tagClass = getTagClass(xmlAttribute.getParent());
+    if (tagClass != null) {
+      final PsiType eventHandlerPropertyType = getEventHandlerPropertyType(tagClass, xmlAttribute.getName());
+      if (eventHandlerPropertyType != null) {
+        final PsiClass controllerClass = getControllerClass(xmlAttribute.getContainingFile());
+        if (controllerClass != null) {
+          final PsiSubstitutor tagClassSubstitutor = getTagClassSubstitutor(xmlAttribute, controllerClass);
+
+          final PsiType handlerType = tagClassSubstitutor != null ?
+                                      tagClassSubstitutor.substitute(eventHandlerPropertyType) : eventHandlerPropertyType;
+          return substituteEventType(handlerType, xmlAttribute.getProject());
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getEventHandlerPropertyType(@NotNull PsiClass tagClass, @NotNull String eventName) {
+    final PsiMethod[] handlerSetterCandidates = tagClass.findMethodsByName(PropertyUtil.suggestSetterName(eventName), true);
+    for (PsiMethod handlerSetter : handlerSetterCandidates) {
+      if (!handlerSetter.hasModifierProperty(PsiModifier.STATIC) &&
+          handlerSetter.hasModifierProperty(PsiModifier.PUBLIC)) {
+        final PsiType propertyType = PropertyUtil.getPropertyType(handlerSetter);
+        if (InheritanceUtil.isInheritor(propertyType, JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER)) {
+          return propertyType;
+        }
+      }
+    }
+    final PsiField handlerField = tagClass.findFieldByName(eventName, true);
+    final PsiClassType propertyType = getPropertyClassType(handlerField);
+    if (InheritanceUtil.isInheritor(propertyType, JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER)) {
+      return propertyType;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiClassType substituteEventType(@Nullable PsiType eventHandlerType, @NotNull Project project) {
+    if (!(eventHandlerType instanceof PsiClassType)) return null;
+    final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)eventHandlerType).resolveGenerics();
+    final PsiClass eventHandlerClass = resolveResult.getElement();
+    if (eventHandlerClass == null) return null;
+    final PsiSubstitutor eventHandlerClassSubstitutor = resolveResult.getSubstitutor();
+
+    final PsiClass eventHandlerInterface =
+      JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER, GlobalSearchScope.allScope(project));
+    if (eventHandlerInterface == null) return null;
+    if (!InheritanceUtil.isInheritorOrSelf(eventHandlerClass, eventHandlerInterface, true)) return null;
+    final PsiTypeParameter[] typeParameters = eventHandlerInterface.getTypeParameters();
+    if (typeParameters.length != 1) return null;
+    final PsiTypeParameter eventTypeParameter = typeParameters[0];
+    final PsiSubstitutor substitutor =
+      TypeConversionUtil.getSuperClassSubstitutor(eventHandlerInterface, eventHandlerClass, eventHandlerClassSubstitutor);
+    final PsiType eventType = substitutor.substitute(eventTypeParameter);
+    if (eventType instanceof PsiClassType) {
+      return (PsiClassType)eventType;
+    }
+    if (eventType instanceof PsiWildcardType) { // TODO Handle wildcards more accurately
+      final PsiType boundType = ((PsiWildcardType)eventType).getBound();
+      if (boundType instanceof PsiClassType) {
+        return (PsiClassType)boundType;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiClass getFactoryProducedClass(@NotNull PsiClass aClass, @Nullable String factoryMethodName) {
+    if (factoryMethodName == null) return null;
+    final PsiMethod[] methods = aClass.findMethodsByName(factoryMethodName, true);
+    for (PsiMethod method : methods) {
+      if (method.getParameterList().getParametersCount() == 0 &&
+          method.hasModifierProperty(PsiModifier.STATIC)) {
+        return PsiUtil.resolveClassInType(method.getReturnType());
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String validateEnumConstant(@NotNull PsiClass enumClass, @NonNls @Nullable String name) {
+    if (!enumClass.isEnum() || name == null) return null;
+    final Set<String> constantNames = CachedValuesManager.getCachedValue(enumClass, () ->
+      CachedValueProvider.Result.create(Arrays.stream(enumClass.getFields())
+                                          .filter(PsiEnumConstant.class::isInstance)
+                                          .map(PsiField::getName)
+                                          .map(String::toUpperCase)
+                                          .collect(Collectors.toCollection(THashSet::new)),
+                                        PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+    if (!constantNames.contains(name.toUpperCase())) {
+      return "No enum constant '" + name + "' in " + enumClass.getQualifiedName();
+    }
+    return null;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {

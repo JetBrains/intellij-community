@@ -156,9 +156,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       }
       catch (Exception ex) {
         root.add( MessageDescriptor.DEBUG_INFO_UNAVAILABLE);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(ex);
-        }
+        LOG.debug(ex);
       }
 
       final boolean hasThreadToSelect = suspendContextThread != null; // thread can be null if pause was pressed

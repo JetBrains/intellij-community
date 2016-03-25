@@ -21,7 +21,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,6 +37,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.containers.ContainerUtil.list;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -90,13 +90,22 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
+
+    final String paramComment = param.getTypeCommentAnnotation();
+    if (paramComment != null) {
+      return Ref.create(getStringBasedType(paramComment, param, new Context(context)));
+    }
+
     final String comment = func.getTypeCommentAnnotation();
     if (comment != null) {
       final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(param, comment);
       final PyCallableType functionType = as(result.getType(), PyCallableType.class);
       if (functionType != null) {
         final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
-        assert paramTypes != null;
+        // Function annotation of kind (...) -> Type
+        if (paramTypes == null) {
+          return Ref.create();
+        }
         final PyParameter[] funcParams = func.getParameterList().getParameters();
         final int startOffset = omitFirstParamInTypeComment(func) ? 1 : 0;
         for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
@@ -163,9 +172,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression && context.maySwitchToAST(referenceTarget)) {
+    if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      final String comment = getTypeComment(target);
+      final String comment = target.getTypeCommentAnnotation();
       if (comment != null) {
         final PyType type = getStringBasedType(comment, referenceTarget, new Context(context));
         if (type instanceof PyTupleType) {
@@ -175,20 +184,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
         }
         return type;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String getTypeComment(@NotNull PyTargetExpression target) {
-    final PsiElement commentContainer = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class, PyWithStatement.class,
-                                                                    PyForPart.class);
-    if (commentContainer != null) {
-      final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
-      if (comment != null) {
-        final String text = comment.getText();
-        return getTypeCommentValue(text);
       }
     }
     return null;
@@ -206,23 +201,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return m.group(1);
     }
     return null;
-  }
-
-  @Nullable
-  private static PsiComment getSameLineTrailingCommentChild(@NotNull PsiElement element) {
-    PsiElement child = element.getFirstChild();
-    while (true) {
-      if (child == null) {
-        return null;
-      }
-      if (child instanceof PsiComment) {
-        return (PsiComment)child;
-      }
-      if (child.getText().contains("\n")) {
-        return null;
-      }
-      child = child.getNextSibling();
-    }
   }
 
   private static boolean isAny(@NotNull PyType type) {
@@ -348,6 +326,31 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   public static PyType getType(@NotNull PsiElement resolved, @NotNull List<PyType> elementTypes) {
     final String qualifiedName = getQualifiedName(resolved);
+    
+    final List<Integer> paramListTypePositions = new ArrayList<>();
+    final List<Integer> ellipsisTypePositions = new ArrayList<>();
+    for (int i = 0; i < elementTypes.size(); i++) {
+      final PyType type = elementTypes.get(i);
+      if (type instanceof PyTypeParser.ParameterListType) {
+        paramListTypePositions.add(i);
+      }
+      else if (type instanceof PyTypeParser.EllipsisType) {
+        ellipsisTypePositions.add(i);
+      }
+    }
+    
+    if (!paramListTypePositions.isEmpty()) {
+      if (!("typing.Callable".equals(qualifiedName) && paramListTypePositions.equals(list(0)))) {
+        return null;
+      }
+    }
+    if (!ellipsisTypePositions.isEmpty()) {
+      if (!("typing.Callable".equals(qualifiedName) && ellipsisTypePositions.equals(list(0)) ||
+            "typing.Tuple".equals(qualifiedName) && ellipsisTypePositions.equals(list(1)) && elementTypes.size() == 2)) {
+        return null;
+      }
+    }
+    
     if ("typing.Union".equals(qualifiedName)) {
       return PyUnionType.union(elementTypes);
     }
@@ -355,9 +358,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return PyUnionType.union(elementTypes.get(0), PyNoneType.INSTANCE);
     }
     if ("typing.Callable".equals(qualifiedName) && elementTypes.size() == 2) {
-      return new PyCallableTypeImpl(null, elementTypes.get(1));
+      final PyTypeParser.ParameterListType paramList = as(elementTypes.get(0), PyTypeParser.ParameterListType.class);
+      if (paramList != null) {
+        return new PyCallableTypeImpl(paramList.getCallableParameters(), elementTypes.get(1));
+      }
+      if (elementTypes.get(0) instanceof PyTypeParser.EllipsisType) {
+        return new PyCallableTypeImpl(null, elementTypes.get(1));
+      }
     }
     if ("typing.Tuple".equals(qualifiedName)) {
+      if (elementTypes.get(1) instanceof PyTypeParser.EllipsisType) {
+        return PyTupleType.createHomogeneous(resolved, elementTypes.get(0));
+      }
       return PyTupleType.create(resolved, elementTypes.toArray(new PyType[elementTypes.size()]));
     }
     final PyType builtinCollection = getBuiltinCollection(resolved);
@@ -466,21 +478,28 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           final PyExpression[] elements = tupleExpr.getElements();
           if (elements.length == 2) {
             final PyExpression parametersExpr = elements[0];
+            final PyExpression returnTypeExpr = elements[1];
             if (parametersExpr instanceof PyListLiteralExpression) {
               final List<PyCallableParameter> parameters = new ArrayList<PyCallableParameter>();
               final PyListLiteralExpression listExpr = (PyListLiteralExpression)parametersExpr;
               for (PyExpression argExpr : listExpr.getElements()) {
                 parameters.add(new PyCallableParameterImpl(null, getType(argExpr, context)));
               }
-              final PyExpression returnTypeExpr = elements[1];
               final PyType returnType = getType(returnTypeExpr, context);
               return new PyCallableTypeImpl(parameters, returnType);
+            }
+            if (isEllipsis(parametersExpr)) {
+              return new PyCallableTypeImpl(null, getType(returnTypeExpr, context));
             }
           }
         }
       }
     }
     return null;
+  }
+
+  private static boolean isEllipsis(@NotNull PyExpression parametersExpr) {
+    return parametersExpr instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)parametersExpr).isEllipsis();
   }
 
   @Nullable
@@ -556,6 +575,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         final PyClass cls = ((PyClassType)operandType).getPyClass();
         final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
         if (PyNames.TUPLE.equals(cls.getQualifiedName())) {
+          if (indexExpr instanceof PyTupleExpression) {
+            final PyExpression[] elements = ((PyTupleExpression)indexExpr).getElements();
+            if (elements.length == 2 && isEllipsis(elements[1])) {
+              return PyTupleType.createHomogeneous(element, indexTypes.get(0));
+            }
+          }
           return PyTupleType.create(element, indexTypes.toArray(new PyType[indexTypes.size()]));
         }
         else if (indexExpr != null) {

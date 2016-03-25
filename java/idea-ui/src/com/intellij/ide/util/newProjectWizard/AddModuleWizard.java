@@ -21,7 +21,6 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.newProjectWizard.modes.ImportMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -49,24 +48,6 @@ public class AddModuleWizard extends AbstractProjectWizard {
   private ProjectImportProvider[] myImportProviders;
   private final ModulesProvider myModulesProvider;
   private WizardMode myWizardMode;
-
-  /**
-   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
-   */
-  public AddModuleWizard(@Nullable final Project project, final @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
-    super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project, defaultPath);
-    myModulesProvider = modulesProvider;
-    initModuleWizard(project, defaultPath);
-  }
-
-  /**
-   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
-   */
-  public AddModuleWizard(Component parent, final Project project, @NotNull ModulesProvider modulesProvider) {
-    super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project, parent);
-    myModulesProvider = modulesProvider;
-    initModuleWizard(project, null);
-  }
 
   /** Import mode */
   public AddModuleWizard(@Nullable Project project, String filePath, ProjectImportProvider... importProviders) {
@@ -104,22 +85,16 @@ public class AddModuleWizard extends AbstractProjectWizard {
       }
     });
 
-    if (myImportProviders == null) {
-      myWizardMode = new CreateFromTemplateMode();
-      appendSteps(myWizardMode.getSteps(myWizardContext, myModulesProvider));
+    myWizardMode = new ImportMode(myImportProviders);
+    StepSequence sequence = myWizardMode.getSteps(myWizardContext, DefaultModulesProvider.createForProject(project));
+    appendSteps(sequence);
+    for (ProjectImportProvider provider : myImportProviders) {
+      provider.getBuilder().setFileToImport(defaultPath);
     }
-    else {
-      myWizardMode = new ImportMode(myImportProviders);
-      StepSequence sequence = myWizardMode.getSteps(myWizardContext, DefaultModulesProvider.createForProject(project));
-      appendSteps(sequence);
-      for (ProjectImportProvider provider : myImportProviders) {
-        provider.getBuilder().setFileToImport(defaultPath);
-      }
-      if (myImportProviders.length == 1) {
-        final ProjectImportBuilder builder = myImportProviders[0].getBuilder();
-        myWizardContext.setProjectBuilder(builder);
-        builder.setUpdate(getWizardContext().getProject() != null);
-      }
+    if (myImportProviders.length == 1) {
+      final ProjectImportBuilder builder = myImportProviders[0].getBuilder();
+      myWizardContext.setProjectBuilder(builder);
+      builder.setUpdate(getWizardContext().getProject() != null);
     }
     init();
   }

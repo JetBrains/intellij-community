@@ -1,6 +1,5 @@
 import pickle, zlib, base64, os
 import py
-from py._code import code  # @UnresolvedImport
 from _pydev_runfiles import pydev_runfiles_xml_rpc
 from pydevd_file_utils import _NormFile
 import pytest
@@ -35,38 +34,53 @@ def connect_to_server_for_communication_to_xml_rpc_on_xdist():
 PY2 = sys.version_info[0] <= 2
 PY3 = not PY2
 
+_mock_code = []
+try:
+    from py._code import code  # @UnresolvedImport
+    _mock_code.append(code)
+except ImportError:
+    pass
+try:
+    from _pytest._code import code  # @UnresolvedImport
+    _mock_code.append(code)
+except ImportError:
+    pass
+
 #===================================================================================================
 # Mocking to get clickable file representations
 #===================================================================================================
 def _MockFileRepresentation():
-    code.ReprFileLocation._original_toterminal = code.ReprFileLocation.toterminal
+    for code in _mock_code:
+        code.ReprFileLocation._original_toterminal = code.ReprFileLocation.toterminal
 
-    def toterminal(self, tw):
-        # filename and lineno output for each entry,
-        # using an output format that most editors understand
-        msg = self.message
-        i = msg.find("\n")
-        if i != -1:
-            msg = msg[:i]
 
-        path = os.path.abspath(self.path)
+        def toterminal(self, tw):
+            # filename and lineno output for each entry,
+            # using an output format that most editors understand
+            msg = self.message
+            i = msg.find("\n")
+            if i != -1:
+                msg = msg[:i]
 
-        if PY2:
-            if not isinstance(path, unicode):  # Note: it usually is NOT unicode...
-                path = path.decode(sys.getfilesystemencoding(), 'replace')
+            path = os.path.abspath(self.path)
 
-            if not isinstance(msg, unicode):  # Note: it usually is unicode...
-                msg = msg.decode('utf-8', 'replace')
-            unicode_line = unicode('File "%s", line %s\n%s') % (path, self.lineno, msg)
-            tw.line(unicode_line)
-        else:
-            tw.line('File "%s", line %s\n%s' % (path, self.lineno, msg))
+            if PY2:
+                if not isinstance(path, unicode):  # Note: it usually is NOT unicode...
+                    path = path.decode(sys.getfilesystemencoding(), 'replace')
 
-    code.ReprFileLocation.toterminal = toterminal
+                if not isinstance(msg, unicode):  # Note: it usually is unicode...
+                    msg = msg.decode('utf-8', 'replace')
+                unicode_line = unicode('File "%s", line %s\n%s') % (path, self.lineno, msg)
+                tw.line(unicode_line)
+            else:
+                tw.line('File "%s", line %s\n%s' % (path, self.lineno, msg))
+
+        code.ReprFileLocation.toterminal = toterminal
 
 
 def _UninstallMockFileRepresentation():
-    code.ReprFileLocation.toterminal = code.ReprFileLocation._original_toterminal #@UndefinedVariable
+    for code in _mock_code:
+        code.ReprFileLocation.toterminal = code.ReprFileLocation._original_toterminal #@UndefinedVariable
 
 
 class State:
@@ -143,7 +157,7 @@ def pytest_runtest_makereport(item, call):
         handled = False
 
         if not (call.excinfo and
-            call.excinfo.errisinstance(pytest.xfail.Exception)):
+                    call.excinfo.errisinstance(pytest.xfail.Exception)):
             evalxfail = getattr(item, '_evalxfail', None)
             # Something which had an xfail failed: this is expected.
             if evalxfail and (not hasattr(evalxfail, 'expr') or evalxfail.expr):
@@ -154,11 +168,7 @@ def pytest_runtest_makereport(item, call):
         if handled:
             pass
 
-        elif not isinstance(excinfo, py.code.ExceptionInfo):  # @UndefinedVariable
-            report_outcome = "failed"
-            report_longrepr = excinfo
-
-        elif excinfo.errisinstance(pytest.xfail.Exception):
+        if excinfo.errisinstance(pytest.xfail.Exception):
             # Case where an explicit xfail is raised (i.e.: pytest.xfail("reason") is called
             # programatically).
             report_outcome = "passed"
@@ -168,6 +178,10 @@ def pytest_runtest_makereport(item, call):
             report_outcome = "skipped"
             r = excinfo._getreprcrash()
             report_longrepr = None #(str(r.path), r.lineno, r.message)
+
+        elif not isinstance(excinfo, py.code.ExceptionInfo):  # @UndefinedVariable
+            report_outcome = "failed"
+            report_longrepr = excinfo
 
         else:
             report_outcome = "failed"

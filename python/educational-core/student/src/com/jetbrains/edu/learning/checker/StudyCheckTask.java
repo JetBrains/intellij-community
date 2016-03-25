@@ -125,6 +125,9 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         }
       }
     }
+    else {
+      LOG.warn("No configurator is provided for the plugin");
+    }
   }
 
   protected void postAttemptToStepic(StudyTestsOutputParser.TestsOutput testsOutput) {

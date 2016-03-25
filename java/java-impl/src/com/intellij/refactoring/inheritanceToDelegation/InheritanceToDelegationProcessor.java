@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
-    final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, true).toArray(PsiClass.EMPTY_ARRAY);
+    final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass).toArray(PsiClass.EMPTY_ARRAY);
     myClassInheritors = new HashSet<PsiClass>();
     myClassInheritors.add(myClass);
     addAll(myClassInheritors, inheritors);

@@ -16,6 +16,7 @@
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     setThirdStateEnabled(false);
     setHorizontalAlignment(CENTER);
     setVerticalAlignment(CENTER);
-    setBorder(BorderFactory.createEmptyBorder(0, 0, 0, InspectionsConfigTreeTable.getAdditionalPadding()));
+    setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, InspectionsConfigTreeTable.getAdditionalPadding()));
     addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {

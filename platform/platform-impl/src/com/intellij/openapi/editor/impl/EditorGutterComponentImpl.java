@@ -135,15 +135,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private int myTextAnnotationGuttersSize = 0;
   private int myTextAnnotationExtraSize = 0;
   private TIntArrayList myTextAnnotationGutterSizes = new TIntArrayList();
-  private ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<TextAnnotationGutterProvider>();
-  private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<TextAnnotationGutterProvider, EditorGutterAction>();
+  private ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
+  private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip = null;
   @NotNull private TIntFunction myLineNumberConvertor;
   @Nullable private TIntFunction myAdditionalLineNumberConvertor;
   private TIntFunction myLineNumberAreaWidthFunction;
   private boolean myShowDefaultGutterPopup = true;
   @Nullable private ActionGroup myCustomGutterPopupGroup;
-  private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
+  private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<>();
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
   private boolean myRightFreePaintersAreaShown;
@@ -658,27 +658,28 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     updateSize();
   }
 
-  public void updateSize() {
-    updateSize(false);
+  void updateSizeOnShowNotify() {
+    updateSize(false, true);
   }
 
-  void updateSize(boolean onLayout) {
+  public void updateSize() {
+    updateSize(false, false);
+  }
+
+  void updateSize(boolean onLayout, boolean canShrink) {
     int prevHash = sizeHash();
-    updateSizeInner(onLayout);
+
+    if (!onLayout) {
+      calcLineNumberAreaWidth();
+      calcLineMarkerAreaWidth(canShrink);
+      calcAnnotationsSize();
+    }
+    calcAnnotationExtraSize();
 
     if (prevHash != sizeHash()) {
       fireResized();
     }
     repaint();
-  }
-
-  private void updateSizeInner(boolean onLayout) {
-    if (!onLayout) {
-      calcLineNumberAreaWidth();
-      calcLineMarkerAreaWidth();
-      calcAnnotationsSize();
-    }
-    calcAnnotationExtraSize();
   }
 
   private int sizeHash() {
@@ -736,8 +737,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
 
-  private void calcLineMarkerAreaWidth() {
-    myLineToGutterRenderers = new TIntObjectHashMap<List<GutterMark>>();
+  private void calcLineMarkerAreaWidth(boolean canShrink) {
+    myLineToGutterRenderers = new TIntObjectHashMap<>();
     myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
     myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
 
@@ -762,7 +763,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         int line = myEditor.getDocument().getLineNumber(lineStartOffset);
         List<GutterMark> renderers = myLineToGutterRenderers.get(line);
         if (renderers == null) {
-          renderers = new SmartList<GutterMark>();
+          renderers = new SmartList<>();
           myLineToGutterRenderers.put(line, renderers);
         }
 
@@ -772,7 +773,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    myIconsAreaWidth = myEditor.getLineHeight();
+    if (canShrink) {
+      myIconsAreaWidth = myEditor.getLineHeight();
+    } else {
+      myIconsAreaWidth = Math.max(myIconsAreaWidth, myEditor.getLineHeight());
+    }
 
     myLineToGutterRenderers.forEachValue(new TObjectProcedure<List<GutterMark>>() {
       @Override
@@ -960,7 +965,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     final int leftSize = x - getIconAreaOffset();
 
-    x = getIconAreaOffset() + myIconsAreaWidth - 2; // because of 2px LineMarkerRenderers
+    x = getIconAreaOffset() + myIconsAreaWidth;
     for (GutterMark r : row) {
       if (!checkDumbAware(r)) continue;
       if (((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.RIGHT) {
@@ -1426,12 +1431,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     if (toolTip != null && !toolTip.isEmpty()) {
-      final Ref<Point> t = new Ref<Point>(e.getPoint());
+      final Ref<Point> t = new Ref<>(e.getPoint());
       int line = EditorUtil.yPositionToLogicalLine(myEditor, e);
       List<GutterMark> row = myLineToGutterRenderers.get(line);
       Balloon.Position ballPosition = Balloon.Position.atRight;
       if (row != null) {
-        final TreeMap<Integer, GutterMark> xPos = new TreeMap<Integer, GutterMark>();
+        final TreeMap<Integer, GutterMark> xPos = new TreeMap<>();
         final int[] currentPos = {0};
         processIconsRow(line, row, new LineGutterIconRendererProcessor() {
           @Override
@@ -1445,7 +1450,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           }
         });
 
-        List<Integer> xx = new ArrayList<Integer>(xPos.keySet());
+        List<Integer> xx = new ArrayList<>(xPos.keySet());
         int posIndex = xx.indexOf(currentPos[0]);
         if (xPos.size() > 1 && posIndex == 0) {
           ballPosition = Balloon.Position.below;
@@ -1663,7 +1668,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void revalidateSizes() {
-    myTextAnnotationGutters = new ArrayList<TextAnnotationGutterProvider>();
+    myTextAnnotationGutters = new ArrayList<>();
     myTextAnnotationGutterSizes = new TIntArrayList();
     updateSize();
   }
@@ -1742,7 +1747,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
       DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
       actionGroup.add(new CloseAnnotationsAction());
-      final List<AnAction> addActions = new ArrayList<AnAction>();
+      final List<AnAction> addActions = new ArrayList<>();
       final Point p = e.getPoint();
       int line = EditorUtil.yPositionToLogicalLine(myEditor, p);
       //if (line >= myEditor.getDocument().getLineCount()) return;

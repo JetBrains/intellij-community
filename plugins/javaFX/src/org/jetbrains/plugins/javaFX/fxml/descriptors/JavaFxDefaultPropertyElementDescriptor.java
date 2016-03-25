@@ -297,10 +297,8 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
           final PsiElement declaration = descriptor.getDeclaration();
           if (declaration instanceof PsiClass) {
             final PsiClass psiClass = (PsiClass)declaration;
-            final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), psiClass);
-            if (canCoerceError != null) {
-              host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
-            }
+            JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), psiClass, (errorMessage, errorType) ->
+              host.addMessage(context.getNavigationElement(), errorMessage, errorType));
             if (FxmlConstants.FX_COPY.equals(contextName)) {
               boolean copyConstructorFound = false;
               for (PsiMethod constructor : psiClass.getConstructors()) {

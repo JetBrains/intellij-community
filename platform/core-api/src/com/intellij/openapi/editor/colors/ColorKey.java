@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -82,7 +83,7 @@ public final class ColorKey implements Comparable<ColorKey> {
   }
 
   @NotNull
-  public static ColorKey createColorKey(@NonNls @NotNull String externalName, Color defaultColor) {
+  public static ColorKey createColorKey(@NonNls @NotNull String externalName, @Nullable Color defaultColor) {
     ColorKey key = createColorKey(externalName);
 
     if (key.getDefaultColor() == null) {

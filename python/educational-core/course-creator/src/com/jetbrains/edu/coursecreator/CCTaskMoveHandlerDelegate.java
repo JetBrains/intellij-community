@@ -192,6 +192,6 @@ public class CCTaskMoveHandlerDelegate extends MoveHandlerDelegate {
                            DataContext dataContext,
                            @Nullable PsiReference reference,
                            Editor editor) {
-    return true;
+    return CCProjectService.getInstance(project).getCourse() != null;
   }
 }

@@ -16,12 +16,11 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -34,7 +33,7 @@ public class InspectionTreeUpdater {
 
   public InspectionTreeUpdater(InspectionResultsView view) {
     myView = view;
-    myUpdateQueue = new MergingUpdateQueue("InspectionView", 100, true, view);
+    myUpdateQueue = new MergingUpdateQueue("InspectionView", 100, true, view, view);
   }
 
   public void updateWithPreviewPanel() {
@@ -62,6 +61,10 @@ public class InspectionTreeUpdater {
           }
         } finally {
           tree.setQueueUpdate(false);
+          if (tree.getSelectionModel().getMinSelectionRow() == -1) {
+            TreeUtil.selectFirstNode(tree);
+            tree.expandRow(0);
+          }
         }
       }
 

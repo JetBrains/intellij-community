@@ -40,6 +40,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -48,6 +49,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -58,7 +60,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
@@ -111,7 +112,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final GlobalInspectionContextImpl myGlobalInspectionContext;
   private boolean myRerun;
   private volatile boolean myDisposed;
-  private boolean myUpdating;
+  private int myUpdatingRequestors; //accessed only in edt
 
   @NotNull
   private final InspectionRVContentProvider myProvider;
@@ -120,7 +121,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
 
-  private final Object myTreeWriteLock = new Object();
+  private final Object myTreeStructureUpdateLock = new Object();
 
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
@@ -137,8 +138,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myOccurenceNavigator = initOccurenceNavigator();
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
-
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT | SideBorder.RIGHT));
+    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
+    mySplitter.setHonorComponentsMinimumSize(false);
 
     mySplitter.addPropertyChangeListener(evt -> {
       if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
@@ -146,11 +147,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     });
     add(mySplitter, BorderLayout.CENTER);
-
     createActionsToolbar();
-    TreeUtil.selectFirstNode(myTree);
   }
-
 
   private void initTreeListeners() {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -469,12 +467,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
         previewPanel = presentation.getCustomPreviewPanel(refEntity);
       }
+      EditorEx previewEditor = null;
       if (previewPanel == null) {
-        previewPanel = createBaseRightComponentFor(problemCount, refEntity);
+        final Pair<JComponent, EditorEx> panelAndEditor = createBaseRightComponentFor(problemCount, refEntity);
+        previewPanel = panelAndEditor.getFirst();
+        previewEditor = panelAndEditor.getSecond();
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final QuickFixToolbar fixToolbar = new QuickFixToolbar(myPreviewEditor, this);
+        final QuickFixPreviewDecorator fixToolbar = new QuickFixPreviewDecorator(previewEditor, this);
         myLoadingProgressPreview = fixToolbar;
         editorPanel.add(fixToolbar, BorderLayout.NORTH);
       }
@@ -485,7 +486,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private JComponent createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
+  private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
     if (selectedEntity instanceof RefElement &&
         selectedEntity.isValid() &&
         !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
@@ -521,10 +522,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         settings.setAdditionalColumnsCount(0);
         settings.setAdditionalLinesCount(0);
         settings.setLeadingWhitespaceShown(true);
-        settings.setRightMarginShown(true);
-        settings.setRightMargin(60);
-        UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
+        myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
+        myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
       }
+      myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
 
       if (problemCount == 1) {
         final PsiElement finalSelectedElement = selectedElement;
@@ -536,12 +537,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           }
         }, ModalityState.any());
       }
-      return myPreviewEditor.getComponent();
+      return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
     else if (selectedEntity == null) {
-      return new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject);
+      return Pair.create(new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject), null);
     }
-    return new JPanel();
+    throw new IllegalStateException();
   }
 
   private boolean reuseEditorFor(Document document) {
@@ -561,7 +562,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure);
     InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(toolWrapper);
     toolNode = presentation.createToolNode(myGlobalInspectionContext, toolNode, myProvider, parentNode, showStructure);
-    synchronized (myTreeWriteLock) {
+    synchronized (getTreeStructureUpdateLock()) {
       ((DefaultInspectionToolPresentation)presentation).setToolNode(toolNode);
     }
     registerActionShortcuts(presentation);
@@ -569,12 +570,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void registerActionShortcuts(@NotNull InspectionToolPresentation presentation) {
-    final QuickFixAction[] fixes = presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY, null);
-    if (fixes != null) {
-      for (QuickFixAction fix : fixes) {
-        fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final QuickFixAction[] fixes = presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY, null);
+      if (fixes != null) {
+        for (QuickFixAction fix : fixes) {
+          fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
+        }
       }
-    }
+    });
   }
 
   @Nullable
@@ -602,9 +605,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   public void setUpdating(boolean isUpdating) {
     final Runnable update = () -> {
-      myUpdating = isUpdating;
-      myTree.setPaintBusy(isUpdating);
-      if (!isUpdating && myLoadingProgressPreview != null) {
+      if (isUpdating) {
+        myUpdatingRequestors++;
+      } else {
+        myUpdatingRequestors--;
+      }
+      boolean hasUpdatingRequestors = myUpdatingRequestors > 0;
+      myTree.setPaintBusy(hasUpdatingRequestors);
+      if (!hasUpdatingRequestors && myLoadingProgressPreview != null) {
         myLoadingProgressPreview.treeLoaded();
       }
     };
@@ -617,8 +625,27 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  public Object getTreeWriteLock() {
-    return myTreeWriteLock;
+  public Object getTreeStructureUpdateLock() {
+    return myTreeStructureUpdateLock;
+  }
+
+  public void addTools(Collection<Tools> tools) {
+    InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
+    boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
+    boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
+    for (Tools currentTools : tools) {
+      InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+      final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
+      for (ScopeToolState state : myProvider.getTools(currentTools)) {
+        InspectionToolWrapper toolWrapper = state.getTool();
+        if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+          addTool(toolWrapper,
+                  profile.getErrorLevel(key, state.getScope(myProject), myProject),
+                  isGroupedBySeverity,
+                  singleInspectionRun);
+        }
+      }
+    }
   }
 
   public void buildTree() {
@@ -626,21 +653,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final Runnable buildAction = () -> {
       try {
         setUpdating(true);
-        InspectionProfile profile = myInspectionProfile;
-        boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
-        boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
-        myGroups.clear();
-        final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
-        for (Tools currentTools : tools.values()) {
-          InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
-          final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
-          for (ScopeToolState state : myProvider.getTools(currentTools)) {
-            InspectionToolWrapper toolWrapper = state.getTool();
-            if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
-              addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject),
-                      isGroupedBySeverity, singleInspectionRun);
-            }
-          }
+        synchronized (getTreeStructureUpdateLock()) {
+          myGroups.clear();
+          final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
+          addTools(tools.values());
         }
       }
       finally {
@@ -651,11 +667,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (app.isUnitTestMode()) {
       buildAction.run();
     } else {
-      app.executeOnPooledThread(() -> {
-        app.runReadAction(buildAction);
-      });
+      app.executeOnPooledThread(() -> app.runReadAction(buildAction));
     }
   }
+
 
   @NotNull
   private InspectionTreeNode getToolParentNode(@NotNull String groupName,
@@ -872,8 +887,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (toolWrapper != null) {
       final QuickFixAction[] quickFixes = myProvider.getQuickFixes(toolWrapper, myTree);
       if (quickFixes != null) {
-        for (QuickFixAction quickFixe : quickFixes) {
-          actions.add(quickFixe);
+        for (QuickFixAction quickFix : quickFixes) {
+          actions.add(quickFix);
         }
       }
       final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
@@ -961,7 +976,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public boolean isUpdating() {
-    return myUpdating;
+    return myUpdatingRequestors > 0;
   }
 
   public void updateRightPanelLoading() {

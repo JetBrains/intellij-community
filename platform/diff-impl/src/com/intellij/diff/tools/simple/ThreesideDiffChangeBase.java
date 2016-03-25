@@ -93,7 +93,7 @@ public abstract class ThreesideDiffChangeBase {
 
   public abstract int getEndLine(@NotNull ThreeSide side);
 
-  protected abstract boolean isResolved(@NotNull ThreeSide side);
+  public abstract boolean isResolved(@NotNull ThreeSide side);
 
   @NotNull
   protected abstract Editor getEditor(@NotNull ThreeSide side);

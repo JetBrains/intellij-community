@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
-import org.junit.After;
-import org.junit.Before;
+import com.intellij.testFramework.rules.TempDirectory;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,17 +27,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class RepositoryHelperTest {
-  private File myTempFile;
-
-  @Before
-  public void setUp() throws Exception {
-    myTempFile = IoTestUtil.createTestFile("repo.xml");
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    FileUtil.delete(myTempFile);
-  }
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test(expected = IOException.class)
   public void testEmpty() throws IOException {
@@ -48,6 +37,12 @@ public class RepositoryHelperTest {
   @Test
   public void testWrongFormat() throws IOException {
     List<IdeaPluginDescriptor> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><root/>");
+    assertEquals(0, list.size());
+  }
+
+  @Test(expected = IOException.class)
+  public void testFormatErrors() throws IOException {
+    List<IdeaPluginDescriptor> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><id>42</id>");
     assertEquals(0, list.size());
   }
 
@@ -112,8 +107,9 @@ public class RepositoryHelperTest {
   }
 
   private List<IdeaPluginDescriptor> loadPlugins(String data) throws IOException {
-    FileUtil.writeToFile(myTempFile, data);
-    String url = myTempFile.toURI().toURL().toString();
+    File tempFile = tempDir.newFile("repo.xml");
+    FileUtil.writeToFile(tempFile, data);
+    String url = tempFile.toURI().toURL().toString();
     return RepositoryHelper.loadPlugins(url, null);
   }
 }

@@ -305,6 +305,8 @@
                     interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider"
                     area="IDEA_PROJECT"/>
 
+    <extensionPoint name="customScopesFilter" interface="com.intellij.psi.search.scope.packageSet.CustomScopesFilter"/>
+
     <extensionPoint name="scopeDescriptorProvider" interface="com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider"/>
     <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 

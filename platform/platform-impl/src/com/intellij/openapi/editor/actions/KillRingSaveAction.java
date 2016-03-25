@@ -16,17 +16,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.ide.KillRingTransferable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Other-Kill-Commands.html">kill-ring-save</a> command.
@@ -50,12 +46,6 @@ public class KillRingSaveAction extends TextComponentEditorAction {
 
     Handler(boolean remove) {
       myRemove = remove;
-    }
-
-    @Override
-    public AccessToken startTransaction(@NotNull Editor editor) {
-      if (editor instanceof TextComponentEditor || !myRemove) return null;
-      return TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING);
     }
 
     @Override

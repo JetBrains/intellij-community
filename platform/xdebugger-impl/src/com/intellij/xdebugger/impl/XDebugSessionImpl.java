@@ -86,8 +86,8 @@ public class XDebugSessionImpl implements XDebugSession {
                                                                                                false);
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints =
-    new THashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
-  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new SmartHashSet<XBreakpoint<?>>());
+    new THashMap<>();
+  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new SmartHashSet<>());
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
   private MyBreakpointListener myBreakpointListener;
@@ -109,9 +109,9 @@ public class XDebugSessionImpl implements XDebugSession {
   private final AtomicBoolean myStopped = new AtomicBoolean();
   private boolean myPauseActionSupported;
   private final AtomicBoolean myShowTabOnSuspend;
-  private final List<AnAction> myRestartActions = new SmartList<AnAction>();
-  private final List<AnAction> myExtraStopActions = new SmartList<AnAction>();
-  private final List<AnAction> myExtraActions = new SmartList<AnAction>();
+  private final List<AnAction> myRestartActions = new SmartList<>();
+  private final List<AnAction> myExtraStopActions = new SmartList<>();
+  private final List<AnAction> myExtraActions = new SmartList<>();
   private ConsoleView myConsoleView;
   private final Icon myIcon;
 
@@ -346,7 +346,7 @@ public class XDebugSessionImpl implements XDebugSession {
       return;
     }
 
-    Set<XBreakpointType<?, ?>> breakpointTypes = new THashSet<XBreakpointType<?, ?>>();
+    Set<XBreakpointType<?, ?>> breakpointTypes = new THashSet<>();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       breakpointTypes.add(getBreakpointTypeClass(handler));
     }

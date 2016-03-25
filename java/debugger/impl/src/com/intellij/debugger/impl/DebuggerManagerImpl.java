@@ -170,7 +170,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   public Collection<DebuggerSession> getSessions() {
     synchronized (mySessions) {
       final Collection<DebuggerSession> values = mySessions.values();
-      return values.isEmpty() ? Collections.<DebuggerSession>emptyList() : new ArrayList<>(values);
+      return values.isEmpty() ? Collections.emptyList() : new ArrayList<>(values);
     }
   }
 

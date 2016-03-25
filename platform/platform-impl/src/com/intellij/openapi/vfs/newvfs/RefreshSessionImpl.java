@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -49,6 +48,8 @@ public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
   private final ModalityState myModalityState;
+  private final DumbModePermission myDumbModePermission;
+  private final Throwable myStartTrace;
   private final Semaphore mySemaphore = new Semaphore();
 
   private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
@@ -56,8 +57,6 @@ public class RefreshSessionImpl extends RefreshSession {
   private volatile boolean iHaveEventsToFire;
   private volatile RefreshWorker myWorker = null;
   private volatile boolean myCancelled = false;
-  private final DumbModePermission myDumbModePermission;
-  private final Throwable myStartTrace;
 
   public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
     this(async, recursive, finishRunnable, ModalityState.NON_MODAL);
@@ -124,15 +123,9 @@ public class RefreshSessionImpl extends RefreshSession {
     boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
-      final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-      final FileWatcher watcher;
-      if (fileSystem instanceof LocalFileSystemImpl) {
-        LocalFileSystemImpl fs = (LocalFileSystemImpl)fileSystem;
-        fs.markSuspiciousFilesDirty(workQueue);
-        watcher = fs.getFileWatcher();
-      }
-      else {
-        watcher = null;
+      LocalFileSystem fs = LocalFileSystem.getInstance();
+      if (fs instanceof LocalFileSystemImpl) {
+        ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
       }
 
       long t = 0;
@@ -145,12 +138,12 @@ public class RefreshSessionImpl extends RefreshSession {
         if (myCancelled) break;
 
         NewVirtualFile nvf = (NewVirtualFile)file;
-        if (!myIsRecursive && (!myIsAsync || (watcher != null && !watcher.isWatched(nvf)))) {
-          // we're unable to definitely refresh synchronously by means of file watcher.
-          nvf.markDirty();
+        if (!myIsRecursive && !myIsAsync) {
+          nvf.markDirty();  // always scan when non-recursive AND synchronous - needed e.g. when refreshing project files on open
         }
 
-        RefreshWorker worker = myWorker = new RefreshWorker(nvf, myIsRecursive);
+        RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
+        myWorker = worker;
         worker.scan();
         List<VFileEvent> events = worker.getEvents();
         if (myEvents.addAll(events)) {

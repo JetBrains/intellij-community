@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
-import com.intellij.util.Function;
 import gnu.trove.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -2408,7 +2407,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return emptyList();
@@ -2499,6 +2498,12 @@ public class ContainerUtil extends ContainerUtilRt {
     //noinspection deprecation
     return new ConcurrentLongObjectHashMap<V>();
   }
+  @NotNull
+  @Contract(pure=true)
+  public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap(int initialCapacity) {
+    //noinspection deprecation
+    return new ConcurrentLongObjectHashMap<V>(initialCapacity);
+  }
 
   @NotNull
   @Contract(pure=true)
@@ -2522,6 +2527,14 @@ public class ContainerUtil extends ContainerUtilRt {
                                                                              @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
     //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
+                                                                             float loadFactor,
+                                                                             int concurrencyLevel,
+                                                                             @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    return new ConcurrentSoftKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @NotNull

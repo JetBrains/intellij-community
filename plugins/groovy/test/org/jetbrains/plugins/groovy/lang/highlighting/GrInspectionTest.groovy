@@ -50,11 +50,11 @@ class GrInspectionTest extends GrHighlightingTestBase {
 
   public void testResolveMetaClass() { doTest(new GroovyAccessibilityInspection()) }
 
-  public void testResultOfAssignmentUsed() { doTest(new GroovyResultOfAssignmentUsedInspection()) }
+  public void testResultOfAssignmentUsed() { doTest(new GroovyResultOfAssignmentUsedInspection(inspectClosures: true)) }
 
   public void testSuppressions() { doTest(new GrUnresolvedAccessInspection(), new GroovyUntypedAccessInspection()) }
 
-  public void testInnerClassConstructorThis() { doTest(true, true, true, new GroovyResultOfAssignmentUsedInspection()) }
+  public void testInnerClassConstructorThis() { doTest(true, true, true, new GroovyResultOfAssignmentUsedInspection(inspectClosures: true)) }
 
   public void testUnnecessaryReturnInSwitch() { doTest(new GroovyUnnecessaryReturnInspection()) }
 

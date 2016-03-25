@@ -16,14 +16,11 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,12 +34,18 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
+import com.intellij.util.textCompletion.TextCompletionProvider;
+import com.intellij.util.textCompletion.TextFieldWithCompletion;
+import com.intellij.util.textCompletion.ValuesCompletionProvider;
+import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -89,7 +92,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private Boolean myNextCommitIsPushed = null; // The push option of the next commit
   private Date myNextCommitAuthorDate;
 
-  public GitCheckinEnvironment(@NotNull Project project, @NotNull final VcsDirtyScopeManager dirtyScopeManager, final GitVcsSettings settings) {
+  public GitCheckinEnvironment(@NotNull Project project,
+                               @NotNull final VcsDirtyScopeManager dirtyScopeManager,
+                               final GitVcsSettings settings) {
     myProject = project;
     myDirtyScopeManager = dirtyScopeManager;
     mySettings = settings;
@@ -249,14 +254,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Preform a merge commit
    *
-   *
-   * @param project     a project
-   * @param root        a vcs root
-   * @param added       added files
-   * @param removed     removed files
-   * @param messageFile a message file for commit
-   * @param author      an author
-   * @param exceptions  the list of exceptions to report
+   * @param project          a project
+   * @param root             a vcs root
+   * @param added            added files
+   * @param removed          removed files
+   * @param messageFile      a message file for commit
+   * @param author           an author
+   * @param exceptions       the list of exceptions to report
    * @param partialOperation
    * @return true if merge commit was successful
    */
@@ -284,7 +288,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return false;
     }
     String rootPath = root.getPath();
-    for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {
+    for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens(); ) {
       String line = lines.nextToken().trim();
       if (line.length() == 0) {
         continue;
@@ -364,7 +368,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   /**
    * Check if commit has failed due to unfinished merge or cherry-pick.
-   *
    *
    * @param ex an exception to examine
    * @return true if exception means that there is a partial commit during merge
@@ -619,19 +622,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @NotNull
     private EditorTextField createTextField(@NotNull Project project, @NotNull List<String> list) {
-      TextFieldWithAutoCompletionListProvider<String> completionProvider = new TextFieldWithAutoCompletion.StringsCompletionProvider(list, null);
-      return new TextFieldWithAutoCompletion<String>(project, completionProvider, true, null) {
-        @Override
-        protected EditorEx createEditor() {
-          EditorEx editor = super.createEditor();
-          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, true);
-          EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-          if (customization != null) {
-            customization.customize(editor);
-          }
-          return editor;
-        }
-      };
+      TextCompletionProvider completionProvider =
+        new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), list);
+      return new TextFieldWithCompletion(project, completionProvider, "", true, true, true);
     }
 
     @Override

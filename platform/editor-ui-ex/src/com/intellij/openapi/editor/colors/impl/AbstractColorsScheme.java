@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -173,6 +174,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public void setEditorFontSize(int fontSize) {
+    fontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
     myFontPreferences.register(getEditorFontName(), fontSize);
     initFonts();
   }
@@ -707,6 +709,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public void setConsoleFontSize(int fontSize) {
+    fontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
     myConsoleFontPreferences.register(getConsoleFontName(), fontSize);
     initFonts();
   }

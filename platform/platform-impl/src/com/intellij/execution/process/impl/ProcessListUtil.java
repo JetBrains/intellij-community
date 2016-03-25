@@ -305,7 +305,7 @@ public class ProcessListUtil {
       String name = line.substring(0, commandLineStart).trim();
       if (name.isEmpty()) continue;
 
-      String commandLine = line.substring(commandLineStart, pidStart).trim();
+      String commandLine = line.substring(commandLineStart, executablePathStart).trim();
       String args = "";
 
       if (commandLine.isEmpty()) {

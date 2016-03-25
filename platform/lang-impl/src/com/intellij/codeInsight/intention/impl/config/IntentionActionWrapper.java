@@ -18,7 +18,6 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class IntentionActionWrapper implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper");
@@ -105,11 +103,5 @@ public class IntentionActionWrapper implements IntentionAction {
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj) || getDelegate().equals(obj);
-  }
-
-  @Nullable
-  @Override
-  public TransactionKind getTransactionKind() {
-    return getDelegate().getTransactionKind();
   }
 }

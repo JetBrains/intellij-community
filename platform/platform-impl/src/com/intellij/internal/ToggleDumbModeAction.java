@@ -18,7 +18,6 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbModeTask;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-@WrapInTransaction
 public class ToggleDumbModeAction extends DumbAwareAction {
   private volatile boolean myDumb = false;
 

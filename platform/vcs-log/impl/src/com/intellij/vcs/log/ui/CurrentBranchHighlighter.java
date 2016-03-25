@@ -27,6 +27,7 @@ import java.awt.*;
 
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
+  private static final String HEAD = "HEAD";
   @NotNull private final VcsLogDataManager myDataManager;
   @NotNull private final VcsLogUi myLogUi;
   @Nullable private String mySingleFilteredBranch;
@@ -42,7 +43,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     VcsLogProvider provider = myDataManager.getLogProvider(details.getRoot());
     String currentBranch = provider.getCurrentBranch(details.getRoot());
-    if (currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
+    if (!HEAD.equals(mySingleFilteredBranch) && currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
       Condition<CommitId> condition =
         myDataManager.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
       if (condition.value(new CommitId(details.getId(), details.getRoot()))) {

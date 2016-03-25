@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,7 +321,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           @Override
           public Result<SearchScope> compute() {
             final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
-            classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0], true).findAll());
+            classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0]).findAll());
 
             final Set<PsiClass> supers = new HashSet<PsiClass>();
             for (PsiClass psiClass : classesToSearch) {

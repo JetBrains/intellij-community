@@ -78,7 +78,7 @@ public class StudyNavigator {
 
   public static  void navigateToAnswerPlaceholder(@NotNull final Editor editor, @NotNull final AnswerPlaceholder answerPlaceholder,
                                                   @NotNull final TaskFile taskFile) {
-    if (!answerPlaceholder.isValid(editor.getDocument())) {
+    if (editor.isDisposed() || !answerPlaceholder.isValid(editor.getDocument())) {
       return;
     }
     LogicalPosition placeholderStart = new LogicalPosition(answerPlaceholder.getLine(), answerPlaceholder.getStart());

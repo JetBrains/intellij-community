@@ -71,9 +71,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Date;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
 public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvider {
@@ -422,29 +420,30 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   @NotNull
   private String getArrowTooltipText(int commit, @Nullable Integer row) {
-    // mini details getter needs row in order to pre-load commit
-    // this is going to be fixed soon
     VcsShortCommitDetails details;
-    if (row == null || row < 0) {
-      details = myLogDataManager.getMiniDetailsGetter().getCommitDataIfAvailable(commit);
+    if (row != null && row >= 0) {
+      details = getModel().getShortDetails(row); // preload rows around the commit
     }
     else {
-      details = getModel().getShortDetails(row);
+      details = myLogDataManager.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
     }
-    String balloonText;
-    if (details != null && !(details instanceof LoadingDetails)) {
+
+    String balloonText = "";
+    if (details instanceof LoadingDetails) {
+      CommitId commitId = myLogDataManager.getCommitId(commit);
+      if (commitId != null) {
+        balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
+        if (myUi.isMultipleRoots()) {
+          balloonText += " in " + commitId.getRoot().getName();
+        }
+      }
+    }
+    else {
       balloonText = "Jump to <b>\"" +
                     StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
                     "\"</b> by " +
                     details.getAuthor().getName() +
                     DetailsPanel.formatDateTime(details.getAuthorTime());
-    }
-    else {
-      CommitId commitId = myLogDataManager.getCommitId(commit);
-      balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
-      if (myUi.isMultipleRoots()) {
-        balloonText += " in " + commitId.getRoot().getName();
-      }
     }
     return balloonText;
   }

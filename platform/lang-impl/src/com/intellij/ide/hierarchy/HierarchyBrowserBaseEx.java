@@ -561,16 +561,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   static class BaseOnThisElementAction extends AnAction {
-    private final String myActionId;
     private final String myBrowserDataKey;
     @NotNull private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
     BaseOnThisElementAction(@NotNull String text,
-                            @NotNull String actionId,
                             @NotNull String browserDataKey,
                             @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
       super(text);
-      myActionId = actionId;
       myBrowserDataKey = browserDataKey;
       myProviderLanguageExtension = providerLanguageExtension;
     }
@@ -606,8 +603,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     @Override
     public final void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
-
-      registerCustomShortcutSet(ActionManager.getInstance().getAction(myActionId).getShortcutSet(), null);
 
       final DataContext dataContext = event.getDataContext();
       final HierarchyBrowserBaseEx browser = (HierarchyBrowserBaseEx)dataContext.getData(myBrowserDataKey);

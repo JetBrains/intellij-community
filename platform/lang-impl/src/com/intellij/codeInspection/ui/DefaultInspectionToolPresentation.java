@@ -229,21 +229,10 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       return;
     }
     if (myToolWrapper instanceof LocalInspectionToolWrapper) {
-      InspectionResultsView view = context.getView();
-      if (view == null) {
-        view = UIUtil.invokeAndWaitIfNeeded(() -> {
-          InspectionResultsView newView = context.getView();
-          if (newView != null) {
-            return newView;
-          }
-          newView = new InspectionResultsView(context, new InspectionRVContentProviderImpl(context.getProject()));
-          context.addView(newView);
-          return newView;
-        });
-      }
+      InspectionResultsView view = context.createViewIfNeed();
       if (!isDisposed()) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        synchronized (view.getTreeWriteLock()) {
+        synchronized (view.getTreeStructureUpdateLock()) {
           final InspectionNode toolNode;
           toolNode = myToolNode == null ?
                      view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),

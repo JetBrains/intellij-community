@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     myDebugProcess = debugProcess;
     myScope = scope;
     myStratumId = stratumId;
-    myFileTypes = Collections.unmodifiableSet(new HashSet<LanguageFileType>(Arrays.asList(acceptedFileTypes)));
+    myFileTypes = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(acceptedFileTypes)));
     mySourcesFinder = sourcesFinder;
     String generatedClassPattern = getGeneratedClassesPackage();
     if(generatedClassPattern.length() == 0) {
@@ -117,7 +117,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
 
     final List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().allClasses();
 
-    final List<ReferenceType> result = new ArrayList<ReferenceType>();
+    final List<ReferenceType> result = new ArrayList<>();
 
     for (final ReferenceType referenceType : referenceTypes) {
       myGeneratedClassPatternMatcher.reset(referenceType.name());
@@ -143,7 +143,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   @NotNull
   public List<Location> locationsOfLine(@NotNull final ReferenceType type, @NotNull final SourcePosition position) throws NoDataException {
     List<Location> locations = locationsOfClassAt(type, position);
-    return locations != null ? locations : Collections.<Location>emptyList();
+    return locations != null ? locations : Collections.emptyList();
 
   }
 
@@ -190,7 +190,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
 
   protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
     final List<String> paths = type.sourcePaths(myStratumId);
-    final ArrayList<String> relativePaths = new ArrayList<String>();
+    final ArrayList<String> relativePaths = new ArrayList<>();
     for (String path : paths) {
       relativePaths.add(getRelativePath(path));
     }

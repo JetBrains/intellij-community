@@ -87,7 +87,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
             tagType = PropertyUtil.getPropertyType((PsiMember)declaration);
           }
           PsiClass tagClass = PsiUtil.resolveClassInType(tagType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)tagType).getBoxedType(parent) : tagType);
-          if ((tagClass != null && JavaFxPsiUtil.isAbleToInstantiate(tagClass) == null) || descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {
+          if ((tagClass != null && JavaFxPsiUtil.isAbleToInstantiate(tagClass)) || descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {
             setText("Expand '" + ((XmlAttribute)parent).getName() + "' to tag");
             return true;
           }

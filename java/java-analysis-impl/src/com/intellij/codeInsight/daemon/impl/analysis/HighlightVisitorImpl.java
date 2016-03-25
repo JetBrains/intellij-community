@@ -1079,11 +1079,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (resolved instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)resolved;
 
-      final PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-      if (containingClass instanceof PsiAnonymousClass &&
+      final PsiElement containingClass = PsiTreeUtil.getNonStrictParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
+      if ((containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiLambdaExpression) &&
           !PsiTreeUtil.isAncestor(containingClass, variable, false) &&
           !(variable instanceof PsiField)) {
-        if (!PsiTreeUtil.isAncestor(((PsiAnonymousClass) containingClass).getArgumentList(), ref, false)) {
+        if (containingClass instanceof PsiLambdaExpression || !PsiTreeUtil.isAncestor(((PsiAnonymousClass) containingClass).getArgumentList(), ref, false)) {
           myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create());
         }
       }

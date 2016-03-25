@@ -118,6 +118,12 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     final Runnable process = new TaskRunnable(task, progressIndicator, continuation);
 
     TaskContainer action = new TaskContainer(task) {
+
+      @Override
+      public String toString() {
+        return task.toString();
+      }
+
       @Override
       public void run() {
         boolean canceled = false;

@@ -21,10 +21,7 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -72,11 +69,6 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
   public PasteHandler(EditorActionHandler originalAction) {
     myOriginalHandler = originalAction;
-  }
-
-  @Override
-  public AccessToken startTransaction(@NotNull Editor editor) {
-    return TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING);
   }
 
   @Override

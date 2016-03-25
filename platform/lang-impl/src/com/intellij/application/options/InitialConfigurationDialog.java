@@ -387,7 +387,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     else if (KeymapManager.MAC_OS_X_KEYMAP.equals(name) || KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP.equals(name)) {
       return SystemInfo.isMac;
     }
-    else if (KeymapManager.X_WINDOW_KEYMAP.equals(name) || "Default for GNOME".equals(name) || "Default for KDE".equals(name)) {
+    else if (KeymapManager.X_WINDOW_KEYMAP.equals(name) || "Default for GNOME".equals(name) || KeymapManager.KDE_KEYMAP.equals(name)) {
       return SystemInfo.isXWindow;
     }
     return true;

@@ -140,6 +140,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     if (expression instanceof PyParenthesizedExpression) {
       containedExpression = PyPsiUtils.flattenParens(expression);
     }
+    
     if (containedExpression instanceof PyTupleExpression) {
       final PyExpression[] elements = ((PySequenceExpression)containedExpression).getElements();
       if (elements.length > myPosition) {
@@ -150,10 +151,10 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       result = resolveNotNestedBinaryExpression((PyBinaryExpression)containedExpression);
     }
     else if (containedExpression instanceof PyLiteralExpression && myPosition == 0) {
-      return expression;
+      return containedExpression;
     }
     else if (containedExpression instanceof PyCallExpression) {
-      return resolveCallExpression((PyCallExpression)expression);
+      return resolveCallExpression((PyCallExpression)containedExpression);
     }
     else if (containedExpression instanceof PyReferenceExpression) {
       myIgnoreUnresolved = true;

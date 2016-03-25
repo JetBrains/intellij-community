@@ -15,15 +15,19 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class LanguagePostfixTemplate extends LanguageExtension<PostfixTemplateProvider> {
+  private static final Logger LOG = Logger.getInstance(LanguagePostfixTemplate.class);
+
   public static final LanguagePostfixTemplate LANG_EP = new LanguagePostfixTemplate();
   public static final String EP_NAME = "com.intellij.codeInsight.template.postfixTemplateProvider";
 
@@ -41,13 +45,28 @@ public class LanguagePostfixTemplate extends LanguageExtension<PostfixTemplatePr
   }
 
   private static void validateTemplatesForLanguage(Language key, List<PostfixTemplateProvider> providers) {
-    Set<String> templateKeys = ContainerUtil.newHashSet();
+    Map<String, PostfixTemplateProvider> templateKeys = ContainerUtil.newHashMap();
     for (PostfixTemplateProvider provider : providers) {
       for (PostfixTemplate template : provider.getTemplates()) {
-        if (!templateKeys.add(template.getKey())) {
-          throw new IllegalStateException("Duplicated key " + template.getKey() + " for language " + key.getID());
+        PostfixTemplateProvider oldProvider = templateKeys.put(template.getKey(), provider);
+        if (oldProvider != null) {
+          String oldPlugin = getPluginId(oldProvider);
+          String newPlugin = getPluginId(provider);
+          LOG.error("Duplicated postfix completion key '" + template.getKey() + "' for language " + key.getID() +
+                    ". Possible you need to disable one of the plugins: " + oldPlugin + ", " + newPlugin);
         }
       }
     }
   }
+
+  @NotNull
+  private static String getPluginId(@NotNull PostfixTemplateProvider provider) {
+    ClassLoader loader = provider.getClass().getClassLoader();
+    if (loader instanceof PluginClassLoader) {
+      return ((PluginClassLoader)loader).getPluginId().getIdString();
+    }
+
+    return "";
+  }
+
 }

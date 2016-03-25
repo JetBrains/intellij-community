@@ -90,6 +90,10 @@ public class EventLog {
     }
   }
 
+  public static void showNotification(@NotNull Project project, @NotNull String groupId, @NotNull String id) {
+    getProjectComponent(project).showNotification(groupId, id);
+  }
+
   private static EventLog getApplicationComponent() {
     return ApplicationManager.getApplication().getComponent(EventLog.class);
   }
@@ -110,7 +114,12 @@ public class EventLog {
     Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
     List<RangeMarker> lineSeparators = new ArrayList<RangeMarker>();
 
-    String title = truncateLongString(showMore, notification.getTitle());
+    String title = notification.getTitle();
+    String subtitle = notification.getSubtitle();
+    if (StringUtil.isNotEmpty(title) && StringUtil.isNotEmpty(subtitle)) {
+      title += " (" + subtitle + ")";
+    }
+    title = truncateLongString(showMore, title);
     String content = truncateLongString(showMore, notification.getContent());
 
     RangeMarker afterTitle = null;
@@ -364,22 +373,29 @@ public class EventLog {
     final ToolWindow eventLog = getEventLog(project);
     if (eventLog != null) {
       if (!eventLog.isVisible()) {
-        eventLog.activate(new Runnable() {
-          @Override
-          public void run() {
-            if (notification == null) return;
-            String contentName = getContentName(notification);
-            Content content = eventLog.getContentManager().findContent(contentName);
-            if (content != null) {
-              eventLog.getContentManager().setSelectedContent(content);
-            }
-          }
-        }, true);
+        activate(eventLog, notification == null ? null :notification.getGroupId(), null);
       }
       else {
         eventLog.hide(null);
       }
     }
+  }
+
+  private static void activate(@NotNull ToolWindow eventLog, @Nullable final String groupId, @Nullable final Runnable r) {
+    eventLog.activate(new Runnable() {
+      @Override
+      public void run() {
+        if (groupId == null) return;
+        String contentName = getContentName(groupId);
+        Content content = eventLog.getContentManager().findContent(contentName);
+        if (content != null) {
+          eventLog.getContentManager().setSelectedContent(content);
+        }
+        if (r != null) {
+          r.run();
+        }
+      }
+    }, true);
   }
 
   public static class ProjectTracker extends AbstractProjectComponent {
@@ -453,11 +469,31 @@ public class EventLog {
       });
     }
 
+    private void showNotification(@NotNull final String groupId, @NotNull final String id) {
+      ToolWindow eventLog = getEventLog(myProject);
+      if (eventLog != null) {
+        activate(eventLog, groupId, new Runnable() {
+          @Override
+          public void run() {
+            EventLogConsole console = getConsole(groupId);
+            if (console != null) {
+              console.showNotification(id);
+            }
+          }
+        });
+      }
+    }
+
     @Nullable
-    private EventLogConsole getConsole(Notification notification) {
+    private EventLogConsole getConsole(@NotNull Notification notification) {
+      return getConsole(notification.getGroupId());
+    }
+
+    @Nullable
+    private EventLogConsole getConsole(@NotNull String groupId) {
       if (myCategoryMap.get(DEFAULT_CATEGORY) == null) return null; // still not initialized
 
-      String name = getContentName(notification);
+      String name = getContentName(groupId);
       EventLogConsole console = myCategoryMap.get(name);
       return console != null ? console : createNewContent(name);
     }
@@ -475,9 +511,9 @@ public class EventLog {
   }
 
   @NotNull
-  private static String getContentName(Notification notification) {
+  private static String getContentName(String groupId) {
     for (EventLogCategory category : EventLogCategory.EP_NAME.getExtensions()) {
-      if (category.acceptsNotification(notification.getGroupId())) {
+      if (category.acceptsNotification(groupId)) {
         return category.getDisplayName();
       }
     }
@@ -539,6 +575,7 @@ public class EventLog {
         Ref<Object> layoutDataRef = null;
         if (NotificationsManagerImpl.newEnabled()) {
           BalloonLayoutData layoutData = new BalloonLayoutData();
+          layoutData.groupId = "";
           layoutData.showFullContent = true;
           layoutData.showSettingButton = false;
           layoutDataRef = new Ref<>(layoutData);

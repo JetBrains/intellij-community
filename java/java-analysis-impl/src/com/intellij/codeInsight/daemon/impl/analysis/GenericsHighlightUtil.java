@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -442,36 +441,7 @@ public class GenericsHighlightUtil {
 
   static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass,
                                                     @NotNull PsiIdentifier classIdentifier) {
-    final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
-      new THashMap<MethodSignature, Set<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
-    PsiClass[] supers = aClass.getSupers();
-    for (int i = 0; i < supers.length; i++) {
-      PsiClass superClass = supers[i];
-      boolean subType = false;
-      for (int j = 0; j < supers.length; j++) {
-        if (j == i) continue;
-        subType |= supers[j].isInheritor(supers[i], true);
-      }
-      if (subType) continue;
-      final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-      for (HierarchicalMethodSignature hms : superClass.getVisibleSignatures()) {
-        final PsiMethod method = hms.getMethod();
-        if (MethodSignatureUtil.findMethodBySignature(aClass, method.getSignature(superClassSubstitutor), false) != null) continue;
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) continue;
-        final PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY);
-        if (containingClassSubstitutor == null) continue;
-        final PsiSubstitutor finalSubstitutor =
-          PsiSuperMethodImplUtil.obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
-        final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
-        Set<PsiMethod> methods = overrideEquivalent.get(signature);
-        if (methods == null) {
-          methods = new LinkedHashSet<PsiMethod>();
-          overrideEquivalent.put(signature, methods);
-        }
-        methods.add(method);
-      }
-    }
+    final Map<? extends MethodSignature, Set<PsiMethod>> overrideEquivalent = PsiSuperMethodUtil.collectOverrideEquivalents(aClass);
 
     final boolean isInterface = aClass.isInterface();
     for (Set<PsiMethod> overrideEquivalentMethods : overrideEquivalent.values()) {
@@ -550,7 +520,8 @@ public class GenericsHighlightUtil {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) continue;
         final PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
-        final PsiSubstitutor finalSubstitutor = PsiSuperMethodImplUtil.obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
+        final PsiSubstitutor finalSubstitutor = PsiSuperMethodUtil
+          .obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
         final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
         final PsiMethod foundMethod = overrideEquivalent.get(signature);
         PsiClass foundMethodContainingClass;
@@ -1507,6 +1478,7 @@ public class GenericsHighlightUtil {
       }
 
       if (checkParameters) {
+        boolean isInLibrary = !index.isInContent(vFile);
         if (superType instanceof PsiClassType) {
           for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
             final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, true, resolveScope, factory);
@@ -1517,7 +1489,7 @@ public class GenericsHighlightUtil {
         }
 
         for (PsiClassType type : aClass.getSuperTypes()) {
-          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, true, resolveScope, factory);
+          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, !isInLibrary, resolveScope, factory);
           if (notAccessibleMessage != null) {
             return notAccessibleMessage;
           }

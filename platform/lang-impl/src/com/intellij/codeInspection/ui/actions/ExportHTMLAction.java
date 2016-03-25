@@ -73,8 +73,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   @NonNls private static final String PROBLEMS = "problems";
   @NonNls private static final String HTML = "HTML";
   @NonNls private static final String XML = "XML";
-  @NonNls
-  private static String CSS = "";
+  @NonNls private static final String CSS = "p.problem-description-group {color: %s; font-weight:bold;}";
 
 
   public ExportHTMLAction(final InspectionResultsView view) {
@@ -281,6 +280,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+      presentation.updateContent();
       final Map<String, Set<RefEntity>> toolContent = presentation.getContent();
       content.putAll(toolContent);
     }
@@ -316,8 +316,6 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
       contentIndex.append("</body></html>");
       HTMLExportUtil.writeFile(exporter.getRootFolder(), packageName + "-index.html", contentIndex, myView.getProject());
-      CSS = "p.problem-description-group {color: %s; font-weight:bold;}\n" +
-            ".";
       HTMLExportUtil.writeFile(exporter.getRootFolder(), "inspection-report-style.css", String.format(CSS, UIUtil.isUnderDarcula() ? "#A5C25C" : "#005555"), myView.getProject());
     }
 

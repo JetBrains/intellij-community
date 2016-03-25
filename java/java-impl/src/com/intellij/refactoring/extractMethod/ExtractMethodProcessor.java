@@ -1013,7 +1013,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
+    myExtractedMethod = addExtractedMethod(newMethod);
     if (isNeedToChangeCallContext() && myNeedChangeContext) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
@@ -1021,6 +1021,10 @@ public class ExtractMethodProcessor implements MatchProvider {
         methodExpression.setQualifierExpression(RefactoringChangeUtil.createThisExpression(myManager, myTargetClass));
       }
     }
+  }
+
+  protected PsiMethod addExtractedMethod(PsiMethod newMethod) {
+    return (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
   }
 
   @Nullable

@@ -50,6 +50,21 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
     resetChildrenNavigation();
   }
 
+  @Override
+  public void updateLoadingProgress() {
+    resetChildrenAndRepaint();
+  }
+
+  @Override
+  public void treeLoaded() {
+    resetChildrenAndRepaint();
+  }
+
+  @NotNull
+  public static String getTitleText(boolean addGroupWord, boolean addColon) {
+    return "Select inspection" + (addGroupWord ? " group " : " ") + "to see problems" + (addColon ? ":" : ".");
+  }
+
   private void resetChildrenNavigation() {
     final int currentChildrenCount = myNode.getChildCount();
     if (myShownChildrenCount != currentChildrenCount) {
@@ -70,18 +85,9 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
     }
   }
 
-  @NotNull
-  public static String getTitleText(boolean addGroupWord, boolean addColon) {
-    return "Select inspection" + (addGroupWord ? " group " : " ") + "to see problems" + (addColon ? ":" : ".");
-  }
-
-  @Override
-  public void updateLoadingProgress() {
+  private void resetChildrenAndRepaint() {
     resetChildrenNavigation();
-  }
-
-  @Override
-  public void treeLoaded() {
-    resetChildrenNavigation();
+    revalidate();
+    repaint();
   }
 }

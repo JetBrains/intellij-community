@@ -74,10 +74,13 @@
       <separator/>
       <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
       <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.Graph.Print"/>
-      <reference ref="AddToFavorites"/>
 
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="InvalidateCaches"/>
     </group>
+
+    <reference ref="AddToFavorites">
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="PrintExportGroup"/>
+    </reference>
 
     <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">
       <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
@@ -656,7 +659,9 @@
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
     </action>
 
-    <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"/>
+    <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type"
+            class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"
+            use-shortcut-of="TypeHierarchy"/>
     <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
     <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
@@ -707,25 +712,29 @@
 
     <group id="XDebugger.Actions">
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
-      <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction"/>
+      <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
       <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
-      <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"/>
-      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"/>
+      <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"
+              use-shortcut-of="EditSource"/>
+      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"
+              use-shortcut-of="Debugger.EditTypeSource"/>
 
       <action id="Debugger.Tree.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
       <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
 
       <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
-      <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction"/>
-      <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy" text="Copy Watch"/>
-      <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.Actions.Delete"/>
+      <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue"/>
+      <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy"
+              text="Copy Watch" use-shortcut-of="EditorDuplicate"/>
+      <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.Actions.Delete"
+              use-shortcut-of="$Delete"/>
       <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="AllIcons.Debugger.MuteBreakpoints"/>
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
-      <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction"/>
+      <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
     </group>
@@ -898,34 +907,50 @@
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
+    <!-- Arrangement rules -->
     <action id="Arrangement.Rule.Add"
+            use-shortcut-of="NewElement"
             class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
     <action id="Arrangement.Rule.Section.Add"
             class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
     <action id="Arrangement.Rule.Remove"
+            use-shortcut-of="$Delete"
             class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
     <action id="Arrangement.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+    </action>
     <action id="Arrangement.Rule.Match.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt UP"/>
+    </action>
     <action id="Arrangement.Rule.Match.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt DOWN"/>
+    </action>
     <action id="Arrangement.Custom.Token.Rule.Edit"
             class="com.intellij.application.options.codeStyle.arrangement.action.EditRuleAliasesDefinitionAction"/>
     <action id="Arrangement.Rule.Group.Condition.Move.Up"
+            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"/>
     <action id="Arrangement.Rule.Group.Condition.Move.Down"
+            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"/>
 
-    <action id="Arrangement.Alias.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.EditArrangementAliasRuleAction"/>
     <action id="Arrangement.Alias.Rule.Add"
+            use-shortcut-of="NewElement"
             class="com.intellij.application.options.codeStyle.arrangement.action.tokens.AddArrangementAliasRuleAction"/>
     <action id="Arrangement.Alias.Rule.Remove"
+            use-shortcut-of="$Delete"
             class="com.intellij.application.options.codeStyle.arrangement.action.tokens.RemoveArrangementAliasRuleAction"/>
+    <action id="Arrangement.Alias.Rule.Edit"
+            use-shortcut-of="Arrangement.Rule.Edit"
+            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.EditArrangementAliasRuleAction"/>
     <action id="Arrangement.Alias.Rule.Match.Condition.Move.Up"
+            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
             class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleUpAction"/>
     <action id="Arrangement.Alias.Rule.Match.Condition.Move.Down"
+            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
             class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleDownAction"/>
 
     <group id="Arrangement.Alias.Rule.ToolBar">

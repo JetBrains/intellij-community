@@ -179,9 +179,11 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     return myExistential.isSuper() ? myExistential.getBound() : NULL;
   }
 
+  @NotNull
   public PsiType getUpperBound () {
     final PsiType bound = myExistential.getBound();
     if (myExistential.isExtends() && myParameter == null) {
+      assert bound != null : myExistential.getCanonicalText();
       return bound;
     }
     else {
@@ -189,7 +191,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     }
   }
 
-  public void setUpperBound(PsiType upperBound) {
+  public void setUpperBound(@NotNull PsiType upperBound) {
     myUpperBound = upperBound;
   }
 

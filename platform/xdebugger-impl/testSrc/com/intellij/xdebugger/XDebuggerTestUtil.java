@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -306,9 +306,9 @@ public class XDebuggerTestUtil {
   }
 
   public static void assertVariables(List<XValue> vars, String... names) throws InterruptedException {
-    List<String> expectedNames = new ArrayList<String>(Arrays.asList(names));
+    List<String> expectedNames = new ArrayList<>(Arrays.asList(names));
 
-    List<String> actualNames = new ArrayList<String>();
+    List<String> actualNames = new ArrayList<>();
     for (XValue each : vars) {
       actualNames.add(computePresentation(each).myName);
     }
@@ -319,9 +319,9 @@ public class XDebuggerTestUtil {
   }
 
   public static void assertVariablesContain(List<XValue> vars, String... names) throws InterruptedException {
-    List<String> expectedNames = new ArrayList<String>(Arrays.asList(names));
+    List<String> expectedNames = new ArrayList<>(Arrays.asList(names));
 
-    List<String> actualNames = new ArrayList<String>();
+    List<String> actualNames = new ArrayList<>();
     for (XValue each : vars) {
       actualNames.add(computePresentation(each).myName);
     }

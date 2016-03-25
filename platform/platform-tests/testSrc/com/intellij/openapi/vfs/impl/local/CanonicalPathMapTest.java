@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class CanonicalPathMapTest {
     // REMAP from native file watcher: /?/root/mapped -> /?/root/real
     pathMap.addMapping(Collections.singletonList(pair(mappedDir.getPath(), realDir.getPath())));
 
-    Collection<String> watchedPaths = pathMap.getWatchedPaths(new File(mappedDir, "file.txt").getPath(), true, false);
+    Collection<String> watchedPaths = pathMap.getWatchedPaths(new File(mappedDir, "file.txt").getPath(), true);
     assertThat(watchedPaths).containsExactly(new File(symLink, "file.txt").getPath());
   }
 }

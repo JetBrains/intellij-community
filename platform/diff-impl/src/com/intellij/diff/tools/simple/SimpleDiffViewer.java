@@ -19,6 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
@@ -237,7 +239,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         clearDiffPresentation();
 
         myIsContentsEqual = data.isContentsEqual();
-        if (data.isContentsEqual()) myPanel.addNotification(DiffNotifications.createEqualContents());
+        if (data.isContentsEqual()) {
+          boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
+          boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
+          myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
+        }
 
         if (data.getFragments() != null) {
           for (LineFragment fragment : data.getFragments()) {
@@ -333,12 +339,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       myDiffChanges.removeAll(invalid);
       myInvalidDiffChanges.addAll(invalid);
     }
-  }
-
-  @Override
-  protected void onDocumentChange(@NotNull DocumentEvent e) {
-    super.onDocumentChange(e);
-    myFoldingModel.onDocumentChanged(e);
   }
 
   @CalledInAwt

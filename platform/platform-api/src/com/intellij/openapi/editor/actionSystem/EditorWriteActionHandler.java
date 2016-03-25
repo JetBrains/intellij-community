@@ -17,15 +17,11 @@ package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,12 +36,6 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
   protected EditorWriteActionHandler(boolean runForEachCaret) {
     super(runForEachCaret);
-  }
-
-  @Override
-  public AccessToken startTransaction(@NotNull Editor editor) {
-    if (editor instanceof TextComponentEditor) return null;
-    return TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING);
   }
 
   @Override

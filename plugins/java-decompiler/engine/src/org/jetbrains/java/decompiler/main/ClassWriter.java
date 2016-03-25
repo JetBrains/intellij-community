@@ -43,25 +43,27 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.*;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ClassWriter {
-  private final ClassReference14Processor ref14processor;
   private final PoolInterceptor interceptor;
 
   public ClassWriter() {
-    ref14processor = new ClassReference14Processor();
     interceptor = DecompilerContext.getPoolInterceptor();
   }
 
-  private void invokeProcessors(ClassNode node) {
+  private static void invokeProcessors(ClassNode node) {
     ClassWrapper wrapper = node.getWrapper();
     StructClass cl = wrapper.getClassStruct();
 
     InitializerProcessor.extractInitializers(wrapper);
 
-    if (node.type == ClassNode.CLASS_ROOT && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_CLASS_1_4)) {
-      ref14processor.processClassReferences(node);
+    if (node.type == ClassNode.CLASS_ROOT &&
+        !cl.isVersionGE_1_5() &&
+        DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_CLASS_1_4)) {
+      ClassReference14Processor.processClassReferences(node);
     }
 
     if (cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM)) {
@@ -273,7 +275,8 @@ public class ClassWriter {
   }
 
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
-    StructLineNumberTableAttribute table = (StructLineNumberTableAttribute)method.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
+    StructLineNumberTableAttribute table =
+      (StructLineNumberTableAttribute)method.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
     tracer.setLineNumberTable(table);
     String key = InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor());
     DecompilerContext.getBytecodeSourceMapper().addTracer(cls.qualifiedName, key, tracer);
@@ -571,7 +574,9 @@ public class ClassWriter {
         changed = true;
         res.append("_");
       }
-      else res.append(c);
+      else {
+        res.append(c);
+      }
     }
     if (!changed) {
       return name;
@@ -661,7 +666,7 @@ public class ClassWriter {
             int actualParams = md.params.length;
             List<VarVersionPair> sigFields = methodWrapper.signatureFields;
             if (sigFields != null) {
-               actualParams = 0;
+              actualParams = 0;
               for (VarVersionPair field : methodWrapper.signatureFields) {
                 if (field == null) {
                   actualParams++;
@@ -961,7 +966,8 @@ public class ClassWriter {
   }
 
   private static final String[] PARAMETER_ANNOTATION_ATTRIBUTES = {
-    StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
+    StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS,
+    StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
 
   private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int param) {
 
@@ -1004,7 +1010,8 @@ public class ClassWriter {
     CodeConstants.ACC_FINAL | CodeConstants.ACC_TRANSIENT | CodeConstants.ACC_VOLATILE;
   private static final int METHOD_ALLOWED =
     CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE | CodeConstants.ACC_ABSTRACT |
-    CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNCHRONIZED | CodeConstants.ACC_NATIVE | CodeConstants.ACC_STRICT;
+    CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNCHRONIZED | CodeConstants.ACC_NATIVE |
+    CodeConstants.ACC_STRICT;
 
   private static final int CLASS_EXCLUDED = CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_STATIC;
   private static final int FIELD_EXCLUDED = CodeConstants.ACC_PUBLIC | CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL;

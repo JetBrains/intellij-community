@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -52,7 +53,6 @@ public class TreeTable extends JBTable {
 
   public TreeTable(TreeTableModel treeTableModel) {
     super();
-
     setModel(treeTableModel);
   }
 
@@ -92,7 +92,7 @@ public class TreeTable extends JBTable {
 
     // And update the height of the trees row to match that of the table.
     if (myTree.getRowHeight() < 1) {
-      setRowHeight(18);  // Metal looks better like this.
+      setRowHeight(JBUI.scale(18));  // Metal looks better like this.
     }
     else {
       setRowHeight(getRowHeight());

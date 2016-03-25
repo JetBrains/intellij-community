@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -32,11 +33,13 @@ public abstract class LicensingFacade {
   }
 
   public abstract String getLicensedToMessage();
+
   public abstract List<String> getLicenseRestrictionsMessages();
+
   public abstract boolean isEvaluationLicense();
-  public abstract boolean isSubscriptionLicense();
+
+  public abstract boolean isPerpetualForProduct(@NotNull Date productBuildDate);
 
   @Nullable
-  public abstract Boolean isPaidUpgrade(int majorVersion, Date releaseDate);
-  public abstract String getUpgradeUrl();
+  public abstract Date getLicenseExpirationDate();
 }

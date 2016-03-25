@@ -194,7 +194,9 @@ public final class PyToxTest extends PyEnvTestCase {
 
         // Check expected output
         Assert
-          .assertThat(String.format("Interpreter %s does not have expected string in output", interpreterName),
+          .assertThat(String.format("Interpreter %s does not have expected string in output. \n " +
+                                    "All : " + all + "\n" +
+                                    "Error:" + stderr, interpreterName),
                       getTestOutput(interpreterSuite), Matchers.containsString(myInterpreters.get(interpreterName).myExpectedOutput));
       }
 

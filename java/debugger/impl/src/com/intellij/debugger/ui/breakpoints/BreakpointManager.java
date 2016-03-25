@@ -251,9 +251,7 @@ public class BreakpointManager {
         exceptionBreakpoint.setQualifiedName(exceptionClassName);
         exceptionBreakpoint.setPackageName(packageName);
         addBreakpoint(exceptionBreakpoint);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("ExceptionBreakpoint Added");
-        }
+        LOG.debug("ExceptionBreakpoint Added");
         return exceptionBreakpoint;
       }
       return null;

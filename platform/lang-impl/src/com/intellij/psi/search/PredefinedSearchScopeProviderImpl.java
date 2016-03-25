@@ -146,7 +146,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     }
 
     if (usageView) {
-      if (prevSearchFiles) {
+      if (!prevSearchFiles) {
         addHierarchyScope(project, result);
       }
       UsageView selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView();

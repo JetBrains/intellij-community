@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -43,8 +44,8 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,10 +74,10 @@ public abstract class XVariablesViewBase extends XDebugView {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
     tree.setSourcePosition(position);
-    tree.setRoot(buildRootNode(stackFrame), false);
+    createNewRootNode(stackFrame);
     final Project project = tree.getProject();
     project.putUserData(XVariablesView.DEBUG_VARIABLES, new XVariablesView.InlineVariablesInfo());
-    project.putUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS, new ObjectLongHashMap<VirtualFile>());
+    project.putUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS, new ObjectLongHashMap<>());
     Object newEqualityObject = stackFrame.getEqualityObject();
     if (myFrameEqualityObject != null && newEqualityObject != null && myFrameEqualityObject.equals(newEqualityObject)
         && myTreeState != null) {
@@ -88,9 +89,16 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
   }
 
-  @NotNull
-  protected XDebuggerTreeNode buildRootNode(@NotNull XStackFrame stackFrame) {
-    return new XStackFrameNode(getTree(), stackFrame);
+  protected XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {
+    XValueContainerNode root;
+    if (stackFrame == null) {
+      root = new XValueContainerNode<XValueContainer>(getTree(), null, new XValueContainer() {}) {};
+    }
+    else {
+      root = new XStackFrameNode(getTree(), stackFrame);
+    }
+    getTree().setRoot(root, false);
+    return root;
   }
 
   private void registerInlineEvaluator(final XStackFrame stackFrame,

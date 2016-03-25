@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Executor;
 
@@ -35,7 +34,7 @@ import java.util.concurrent.Executor;
  */
 public class Preloader implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.Preloader");
-  private final Executor myExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final Executor myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
   private final ProgressIndicator myIndicator = new ProgressIndicatorBase();
   private final ProgressIndicator myWrappingIndicator = new AbstractProgressIndicatorBase() {
     @Override

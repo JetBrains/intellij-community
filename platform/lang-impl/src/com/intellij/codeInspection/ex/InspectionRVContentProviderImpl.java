@@ -112,9 +112,13 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       }
       entities.addAll(moduleProblems);
     }
-    buildTree(context, contents, false, toolWrapper, computeContainer, showStructure, node -> {
-      merge(node, toolNode, true);
-    });
+    buildTree(context,
+              contents,
+              false,
+              toolWrapper,
+              computeContainer,
+              showStructure,
+              node -> merge(node, toolNode, true));
 
     if (presentation.isOldProblemsIncluded()) {
       final Map<RefEntity, CommonProblemDescriptor[]> oldProblems = presentation.getOldProblemElements();
@@ -125,9 +129,13 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         }
       };
 
-      buildTree(context, presentation.getOldContent(), true, toolWrapper, computeContainer, showStructure, node -> {
-        merge(node, toolNode, true);
-      });
+      buildTree(context,
+                presentation.getOldContent(),
+                true,
+                toolWrapper,
+                computeContainer,
+                showStructure,
+                node -> merge(node, toolNode, true));
     }
     merge(toolNode, parentNode, false);
   }

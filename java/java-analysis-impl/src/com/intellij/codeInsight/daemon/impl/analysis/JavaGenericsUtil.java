@@ -101,18 +101,8 @@ public class JavaGenericsUtil {
                 final PsiExpression[] args = argumentList.getExpressions();
                 if (args.length == parametersCount) {
                   final PsiExpression lastArg = args[args.length - 1];
-                  if (lastArg instanceof PsiReferenceExpression) {
-                    final PsiElement lastArgsResolve = ((PsiReferenceExpression)lastArg).resolve();
-                    if (lastArgsResolve instanceof PsiParameter) {
-                      if (((PsiParameter)lastArgsResolve).getType() instanceof PsiArrayType) {
-                        return false;
-                      }
-                    }
-                  }
-                  else if (lastArg instanceof PsiMethodCallExpression) {
-                    if (lastArg.getType() instanceof PsiArrayType) {
-                      return false;
-                    }
+                  if (lastArg.getType() instanceof PsiArrayType) {
+                    return false;
                   }
                 }
                 for (int i = parametersCount - 1; i < args.length; i++) {

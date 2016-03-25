@@ -1229,8 +1229,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
-    if (!TransactionGuard.getInstance().isInsideTransaction() && Registry.is("ide.require.transaction.for.model.changes", false)) {
-      // please assign exceptions that occur here to Peter
+    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
+      // please assign exceptions here to Peter
       LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
     }
     boolean writeActionPending = myWriteActionPending;

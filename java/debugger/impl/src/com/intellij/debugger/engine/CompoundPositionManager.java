@@ -103,7 +103,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) {
-    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.<ReferenceType>emptyList());
+    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.emptyList());
   }
 
   @Override
@@ -121,7 +121,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     }
 
     final SourcePosition finalPosition = position;
-    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.<Location>emptyList());
+    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.emptyList());
   }
 
   @Override
@@ -139,11 +139,11 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       else {
         ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
         if (prepareRequest == null) {
-          return Collections.<ClassPrepareRequest>emptyList();
+          return Collections.emptyList();
         }
         return Collections.singletonList(prepareRequest);
       }
-    }, Collections.<ClassPrepareRequest>emptyList());
+    }, Collections.emptyList());
   }
 
   @Nullable

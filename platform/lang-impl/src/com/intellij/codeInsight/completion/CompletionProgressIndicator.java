@@ -26,6 +26,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
@@ -61,7 +62,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,6 +82,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -412,12 +413,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myCount++;
 
     if (myCount == 1) {
-      new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this).addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myFreezeSemaphore.up();
-        }
-      }, 300);
+      JobScheduler.getScheduler().schedule(myFreezeSemaphore::up, 300, TimeUnit.MILLISECONDS);
     }
     myQueue.queue(myUpdate);
   }

@@ -76,9 +76,7 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
       return (Value)r.getReturnValue();
     }
     catch (Throwable/*IncompatibleThreadStateException*/ e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+      LOG.debug(e);
       if (e instanceof EvaluateException) {
         throw ((EvaluateException)e);
       }

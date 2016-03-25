@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="twitter4j-core-4.0.4">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/python/educational-core/student/lib/twitter4j-core-4.0.4.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

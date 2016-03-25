@@ -91,7 +91,7 @@ public abstract class XDebuggerEditorBase {
           }
           ListPopup popup = createLanguagePopup();
           popup.showUnderneathOf(myChooseFactory);
-          myPopup = new WeakReference<ListPopup>(popup);
+          myPopup = new WeakReference<>(popup);
           return true;
         }
         return false;

@@ -21,9 +21,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -72,6 +70,7 @@ import java.util.Set;
  */
 public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
+  private static TransactionGuardImpl ourTransactionGuard;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -356,7 +355,10 @@ public class IdeEventQueue extends EventQueue {
   private static boolean appIsLoaded() {
     if (ourAppIsLoaded) return true;
     boolean loaded = IdeaApplication.isLoaded();
-    if (loaded) ourAppIsLoaded = true;
+    if (loaded) {
+      ourAppIsLoaded = true;
+      ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+    }
     return loaded;
   }
 
@@ -386,7 +388,7 @@ public class IdeEventQueue extends EventQueue {
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    try {
+    try (AccessToken ignored = ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(myIsInInputEvent)) {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {

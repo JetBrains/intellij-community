@@ -28,12 +28,11 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -184,10 +183,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (pair == null) return false;
 
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      TransactionKind kind = action.getTransactionKind();
-      try (AccessToken ignore = kind == null ? null : TransactionGuard.getInstance().startSynchronousTransaction(kind);
-           AccessToken ignored = action.startInWriteAction() ? WriteAction.start() : null) {
-        action.invoke(project, pair.second, pair.first);
+      Runnable r = () -> action.invoke(project, pair.second, pair.first);
+      try {
+        if (action.startInWriteAction()) {
+          WriteAction.run(r::run);
+        } else {
+          r.run();
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

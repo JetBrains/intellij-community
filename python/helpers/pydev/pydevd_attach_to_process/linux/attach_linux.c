@@ -234,7 +234,7 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     CHECK_NULL(pyImportModFunc, "PyImport_ImportModuleNoBlock not found.\n", 8);
 
 
-    auto PyObjectHolder pydevdTracingMod = PyObjectHolder(isDebug, pyImportModFunc("_pydevd_bundle.pydevd_tracing"));
+    PyObjectHolder pydevdTracingMod = PyObjectHolder(isDebug, pyImportModFunc("pydevd_tracing"));
     CHECK_NULL(pydevdTracingMod.ToPython(), "pydevd_tracing module null.\n", 9);
 
     if(!pyHasAttrFunc(pydevdTracingMod.ToPython(), "_original_settrace")){
@@ -249,20 +249,20 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     *(void**)(&pyGetAttr) = dlsym(main_hndl, "PyObject_GetAttrString");
     CHECK_NULL(pyGetAttr, "PyObject_GetAttrString not found.\n", 8);
 
-    auto PyObjectHolder settrace = PyObjectHolder(isDebug, pyGetAttr(pydevdTracingMod.ToPython(), "_original_settrace"));
+    PyObjectHolder settrace = PyObjectHolder(isDebug, pyGetAttr(pydevdTracingMod.ToPython(), "_original_settrace"));
     CHECK_NULL(settrace.ToPython(), "pydevd_tracing._original_settrace null!\n", 10);
 
-    auto PyObjectHolder pydevdMod = PyObjectHolder(isDebug, pyImportModFunc("pydevd"));
+    PyObjectHolder pydevdMod = PyObjectHolder(isDebug, pyImportModFunc("pydevd"));
     CHECK_NULL(pydevdMod.ToPython(), "pydevd module null.\n", 10);
 
-    auto PyObjectHolder getGlobalDebugger = PyObjectHolder(isDebug, pyGetAttr(pydevdMod.ToPython(), "GetGlobalDebugger"));
+    PyObjectHolder getGlobalDebugger = PyObjectHolder(isDebug, pyGetAttr(pydevdMod.ToPython(), "GetGlobalDebugger"));
     CHECK_NULL(getGlobalDebugger.ToPython(), "pydevd.GetGlobalDebugger null.\n", 11);
 
     PyObject_CallFunctionObjArgs call;
     *(void**)(&call) = dlsym(main_hndl, "PyObject_CallFunctionObjArgs");
     CHECK_NULL(call, "PyObject_CallFunctionObjArgs not found.\n", 11);
 
-    auto PyObjectHolder globalDbg = PyObjectHolder(isDebug, call(getGlobalDebugger.ToPython(), NULL));
+    PyObjectHolder globalDbg = PyObjectHolder(isDebug, call(getGlobalDebugger.ToPython(), NULL));
     CHECK_NULL(globalDbg.ToPython(), "pydevd.GetGlobalDebugger() returned null.\n", 12);
 
     if(!pyHasAttrFunc(globalDbg.ToPython(), "trace_dispatch")){
@@ -271,8 +271,8 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
         }
         return 13;
     }
-    
-    auto PyObjectHolder traceFunc = PyObjectHolder(isDebug, pyGetAttr(globalDbg.ToPython(), "trace_dispatch"));
+
+    PyObjectHolder traceFunc = PyObjectHolder(isDebug, pyGetAttr(globalDbg.ToPython(), "trace_dispatch"));
     CHECK_NULL(traceFunc.ToPython(), "pydevd.GetGlobalDebugger().trace_dispatch returned null!\n", 14);
     
     DecRef(call(settrace.ToPython(), traceFunc.ToPython(), NULL), isDebug);

@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
-* @author traff
-*/
+ * @author traff
+ */
 public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   @Override
   public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
@@ -49,11 +49,12 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
     assert sdk != null;
 
-    PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, sdk);
+    PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
+
+    PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, sdk, settingsProvider);
 
     String[] setupFragment;
 
-    PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
     Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.shouldAddContentRoots(),
                                                                              settingsProvider.shouldAddSourceRoots());
 
@@ -108,15 +109,17 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     Map<String, String> envs = Maps.newHashMap(settingsProvider.getEnvs());
     String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
     envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
-
-
-    return createConsoleRunner(project, sdk, workingDir, envs, PyConsoleType.PYTHON, setupFragment);
+    
+    return createConsoleRunner(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, setupFragment);
   }
 
   protected PydevConsoleRunner createConsoleRunner(Project project,
                                                    Sdk sdk,
                                                    String workingDir,
-                                                   Map<String, String> envs, PyConsoleType consoleType, String ... setupFragment) {
-    return new PydevConsoleRunner(project, sdk, consoleType, workingDir, envs, setupFragment);
+                                                   Map<String, String> envs,
+                                                   PyConsoleType consoleType,
+                                                   PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                                   String... setupFragment) {
+    return new PydevConsoleRunner(project, sdk, consoleType, workingDir, envs, settingsProvider, setupFragment);
   }
 }

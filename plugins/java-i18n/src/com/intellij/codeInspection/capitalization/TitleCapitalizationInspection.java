@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -182,11 +183,11 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static boolean checkSentenceCapitalization(@NotNull String value) {
-    String[] words = value.split(" ");
-    if (words.length == 0) return true;
-    if (!isCapitalizedWord(words[0])) return false;
-    for (int i = 1; i < words.length; i++) {
-      String word = words[i];
+    List<String> words = StringUtil.split(value, " ");
+    if (words.size() == 0) return true;
+    if (Character.isLetter(words.get(0).charAt(0)) && !isCapitalizedWord(words.get(0))) return false;
+    for (int i = 1, size = words.size(); i < size; i++) {
+      String word = words.get(i);
       if (isCapitalizedWord(word)) {
         // check for abbreviations like SQL or I18n
         if (word.length() == 1 || !Character.isLowerCase(word.charAt(1)))
@@ -197,8 +198,8 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     return true;
   }
 
-  private static boolean isCapitalizedWord(@Nullable String word) {
-    return StringUtil.isNotEmpty(word) && (!Character.isLetter(word.charAt(0)) || StringUtil.isCapitalized(word));
+  private static boolean isCapitalizedWord(String word) {
+    return word.length() > 0 && Character.isLetter(word.charAt(0)) && Character.isUpperCase(word.charAt(0));
   }
 
   private static class TitleCapitalizationFix implements LocalQuickFix {

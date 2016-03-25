@@ -735,6 +735,12 @@ public class PyResolveTest extends PyResolveTestCase {
     assertEquals("hello", ((PyStringLiteralExpression)((PyKeywordArgument)target).getValueExpression()).getStringValue());
   }
 
+  // PY-2748
+  public void testPercentStringParenDictCall() {
+    PsiElement target = resolve();
+    assertEquals("hello", ((PyStringLiteralExpression)((PyKeywordArgument)target).getValueExpression()).getStringValue());
+  }
+
 
   public void testGlobalNotDefinedAtTopLevel() {
     assertResolvesTo(PyTargetExpression.class, "foo");

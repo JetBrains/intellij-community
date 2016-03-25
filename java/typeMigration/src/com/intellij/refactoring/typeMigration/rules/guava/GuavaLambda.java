@@ -25,20 +25,26 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Batkovich
  */
 public enum GuavaLambda {
-  PREDICATE("com.google.common.base.Predicate", "java.util.function.Predicate", "apply", "test"),
-  FUNCTION("com.google.common.base.Function", "java.util.function.Function", "apply", "apply"),
-  SUPPLIER("com.google.common.base.Supplier", "java.util.function.Supplier", "get", "get");
+  PREDICATE("com.google.common.base.Predicate", "java.util.function.Predicate", "apply", "test", 1),
+  FUNCTION("com.google.common.base.Function", "java.util.function.Function", "apply", "apply", 1),
+  SUPPLIER("com.google.common.base.Supplier", "java.util.function.Supplier", "get", "get", 0);
 
   private final String myClassQName;
   private final String myJavaAnalogueClassQName;
   private final String mySamName;
   private final String myJavaAnalogueSamName;
+  private final int myParametersCount;
 
-  GuavaLambda(String classQName, String javaAnalogueClassQName, String samName, String javaAnalogueSamName) {
+  GuavaLambda(String classQName, String javaAnalogueClassQName, String samName, String javaAnalogueSamName, int count) {
     myClassQName = classQName;
     myJavaAnalogueClassQName = javaAnalogueClassQName;
     mySamName = samName;
     myJavaAnalogueSamName = javaAnalogueSamName;
+    myParametersCount = count;
+  }
+
+  public int getParametersCount() {
+    return myParametersCount;
   }
 
   public String getClassQName() {

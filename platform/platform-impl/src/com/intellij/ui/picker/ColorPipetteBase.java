@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,6 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 public abstract class ColorPipetteBase implements ColorPipette {
-  protected static final int SIZE = 30;
-  protected static final int DIALOG_SIZE = SIZE - 4;
-  protected static final Point HOT_SPOT = new Point(DIALOG_SIZE/2, DIALOG_SIZE/2);
-
   private final Alarm myColorListenersNotifier = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   protected final JComponent myParent;
   private final ColorListener myColorListener;
@@ -63,21 +59,15 @@ public abstract class ColorPipetteBase implements ColorPipette {
     setInitialColor(pixelColor);
   }
 
-  protected Color getPixelColor(Point mouseLocation) {
-    Color result = null;
+  protected Color getPixelColor(Point location) {
     if (SystemInfo.isMac) {
-      BufferedImage image = MacColorPipette.captureScreen(myPickerFrame, new Rectangle(mouseLocation.x - HOT_SPOT.x + SIZE / 2,
-                                                                              mouseLocation.y - HOT_SPOT.y + SIZE / 2, 1, 1));
+      BufferedImage image = MacColorPipette.captureScreen(myPickerFrame, new Rectangle(location.x, location.y, 1, 1));
       if (image != null) {
         //noinspection UseJBColor
-        result = new Color(image.getRGB(0, 0));
+        return new Color(image.getRGB(0, 0));
       }
     }
-    if (result == null) {
-      result =
-        myRobot.getPixelColor(mouseLocation.x - HOT_SPOT.x + SIZE / 2 , mouseLocation.y - HOT_SPOT.y + SIZE / 2 );
-    }
-    return result;
+    return myRobot.getPixelColor(location.x, location.y);
   }
 
   @Nullable
@@ -114,12 +104,12 @@ public abstract class ColorPipetteBase implements ColorPipette {
     PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return null;
 
-    Point mouseLoc = pointerInfo.getLocation();
+    Point mouseLocation = pointerInfo.getLocation();
     Dialog pickerDialog = getPickerDialog();
-    if (pickerDialog != null) {
-      pickerDialog.setLocation(mouseLoc.x - HOT_SPOT.x, mouseLoc.y - HOT_SPOT.y);
+    if (pickerDialog != null && mouseLocation != null) {
+      pickerDialog.setLocation(mouseLocation.x - pickerDialog.getWidth() / 2, mouseLocation.y - pickerDialog.getHeight() / 2);
     }
-    return mouseLoc;
+    return mouseLocation;
   }
 
   @Nullable

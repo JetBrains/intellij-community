@@ -15,24 +15,23 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.EditorCustomization;
-import com.intellij.ui.TextFieldWithAutoCompletion;
-import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
+import com.intellij.util.textCompletion.TextCompletionProvider;
+import com.intellij.util.textCompletion.TextFieldWithCompletion;
+import com.intellij.util.textCompletion.ValuesCompletionProvider;
+import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 
-public class PushTargetTextField extends TextFieldWithAutoCompletion<String> {
-
-  public PushTargetTextField(@NotNull Project project, @NotNull final List<String> targetVariants, @NotNull String defaultTargetName) {
-    super(project, getCompletionProvider(targetVariants), true, defaultTargetName);
-    setOneLineMode(true);
+public class PushTargetTextField extends TextFieldWithCompletion {
+  public PushTargetTextField(@NotNull Project project, @NotNull List<String> targetVariants, @NotNull String defaultTargetName) {
+    super(project, getCompletionProvider(targetVariants), defaultTargetName, true, true, true);
     addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -47,27 +46,16 @@ public class PushTargetTextField extends TextFieldWithAutoCompletion<String> {
   }
 
   @Override
-  protected EditorEx createEditor() {
-    // editor created lazy, so we need to update editor customization after initialization
-    EditorEx editorEx = super.createEditor();
-    EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-    if (customization != null) {
-      customization.customize(editorEx);
-    }
-    return editorEx;
-  }
-
-  @Override
   protected void updateBorder(@NotNull final EditorEx editor) {
   }
 
   @NotNull
-  private static TextFieldWithAutoCompletionListProvider<String> getCompletionProvider(@NotNull final List<String> targetVariants) {
-    return new StringsCompletionProvider(targetVariants, null) {
+  private static TextCompletionProvider getCompletionProvider(@NotNull final List<String> targetVariants) {
+    return new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor() {
       @Override
       public int compare(String item1, String item2) {
         return Integer.valueOf(ContainerUtil.indexOf(targetVariants, item1)).compareTo(ContainerUtil.indexOf(targetVariants, item2));
       }
-    };
+    }, targetVariants);
   }
 }

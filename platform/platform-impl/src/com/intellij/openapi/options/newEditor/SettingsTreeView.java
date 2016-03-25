@@ -269,8 +269,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
   @Nullable
   Project findConfigurableProject(@Nullable Configurable configurable) {
     if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-      return wrapper.getExtensionPoint().getProject();
+      return getProjectFromWrapper((ConfigurableWrapper)configurable);
     }
     return findConfigurableProject(findNode(configurable));
   }
@@ -280,8 +279,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
     if (node != null) {
       Configurable configurable = node.myConfigurable;
       if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        return wrapper.getExtensionPoint().getProject();
+        return getProjectFromWrapper((ConfigurableWrapper)configurable);
       }
       SimpleNode parent = node.getParent();
       if (parent instanceof MyNode) {
@@ -289,6 +287,15 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
       }
     }
     return null;
+  }
+  
+  @Nullable
+  private static Project getProjectFromWrapper(@NotNull ConfigurableWrapper wrapper) {
+    Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, wrapper);
+    if (wrapped != null && !wrapped.isProjectLevel()) {
+      return null;
+    }
+    return wrapper.getExtensionPoint().getProject();
   }
 
   private static int getLeftMargin(int level) {

@@ -46,7 +46,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public class UnversionedViewDialog extends DialogWrapper {
@@ -112,33 +111,25 @@ public class UnversionedViewDialog extends DialogWrapper {
     myPanel = new JPanel(new BorderLayout());
 
     final DefaultActionGroup group = new DefaultActionGroup();
-
-    final List<AnAction> actions = new LinkedList<AnAction>();
-    final CommonActionsManager cam = CommonActionsManager.getInstance();
-    final Expander expander = new Expander();
-    final AnAction expandAction = cam.createExpandAllAction(expander, myView);
-    actions.add(expandAction);
-    final AnAction collapseAction = cam.createCollapseAllAction(expander, myView);
-    actions.add(collapseAction);
-    actions.add(new ToggleShowFlattenAction());
-
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, false);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, true);
 
     final ActionGroup operatingActions = (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
     registerShortcuts(operatingActions, actionToolbar.getToolbarDataContext());
     refreshViewAfterActionPerformed(operatingActions);
-    actions.add(operatingActions);
+    group.add(operatingActions);
 
-    for (AnAction action : actions) {
-      group.add(action);
-    }
-    myPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+    final CommonActionsManager cam = CommonActionsManager.getInstance();
+    final Expander expander = new Expander();
+    group.addSeparator();
+    group.add(new ToggleShowFlattenAction());
+    group.add(cam.createExpandAllAction(expander, myView));
+    group.add(cam.createCollapseAllAction(expander, myView));
+
+    myPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
 
     final DefaultActionGroup secondGroup = new DefaultActionGroup();
-    for (AnAction action : actions) {
-      secondGroup.add(action);
-    }
+    secondGroup.addAll(operatingActions);
 
     myView.setMenuActions(secondGroup);
     myView.setShowFlatten(false);
@@ -190,7 +181,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     }
 
     public boolean canExpand() {
-      return true;
+      return !myView.isShowFlatten();
     }
 
     public void collapseAll() {
@@ -199,7 +190,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     }
 
     public boolean canCollapse() {
-      return true;
+      return !myView.isShowFlatten();
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2243,6 +2243,31 @@ SourceConcrete.someOtherStatic<caret>Method()
       def computer = it.substitutorComputer
       assert computer instanceof NotNullCachedComputableWrapper
       assert !computer.computed
+    }
+  }
+
+  void 'test resolve method with class qualifier'() {
+    myFixture.addClass '''\
+package foo.bar;
+
+public class A {
+  public static void foo() {}
+  public static String getCanonicalName() {return "";}
+}
+'''
+    def data = [
+      'A.fo<caret>o()'              : 'foo.bar.A',
+      'A.class.fo<caret>o()'        : 'foo.bar.A',
+      'A.simpleN<caret>ame'         : 'java.lang.Class',
+      'A.class.simpleN<caret>ame'   : 'java.lang.Class',
+      'A.canonicalN<caret>ame'      : 'foo.bar.A',
+      'A.class.canonicalN<caret>ame': 'foo.bar.A'
+    ]
+    data.each { expression, expectedClass ->
+      def ref = configureByText "import foo.bar.A; $expression"
+      def element = ref.resolve()
+      assert element instanceof PsiMember : "$expression -> $expectedClass"
+      assert element.containingClass.qualifiedName == expectedClass
     }
   }
 }

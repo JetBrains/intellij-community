@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +31,13 @@ import java.io.*;
  */
 public final class PrivacyPolicy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.PrivacyPolicy");
+  private static final String POLICY_TEXT_PROPERTY = "jb.privacy.policy.text"; // to be used in tests to pass arbitrary policy text
   private static final String CACHED_RESOURCE_NAME = "Cached";
   private static final String RELATIVE_RESOURCE_PATH = "JetBrains/PrivacyPolicy";
   private static final String VERSION_COMMENT_START = "<!--";
   private static final String VERSION_COMMENT_END = "-->";
   private static final String ACCEPTED_VERSION_KEY = "JetBrains.privacy_policy.accepted_version";
-  private static final Version EMBEDDED_VERSION = new Version(1, 0);
   private static final Version MAGIC_VERSION = new Version(999, 999);
-  @Nullable
-  private static volatile Version ourLatestVersion;
 
   private static final File ourCachedPolicyFile;
   static {
@@ -75,9 +74,12 @@ public final class PrivacyPolicy {
     ourCachedPolicyFile = new File(dataDir, CACHED_RESOURCE_NAME);
   }
 
-  public static boolean isLatestVersionAccepted() {
-    final Version latest = getLatestVersion();
-    return getAcceptedVersion().equals(latest) || MAGIC_VERSION.equals(latest);
+  public static boolean isVersionAccepted(final Version ver) {
+    if (ver.isUnknown() || MAGIC_VERSION.equals(ver)) {
+      return true;
+    }
+    final Version currentAccepted = getAcceptedVersion();
+    return !currentAccepted.isUnknown() && currentAccepted.getMajor() == ver.getMajor() ;
   }
 
   public static void setVersionAccepted(@NotNull Version version) {
@@ -90,49 +92,28 @@ public final class PrivacyPolicy {
   }
 
   @NotNull
-  public static Version getLatestVersion() {
-    final Version cached = ourLatestVersion;
-    if (cached != null) {
-      return cached;
-    }
-    Version latest = EMBEDDED_VERSION;
-    if (ourCachedPolicyFile.exists()) {
-      try {
-        final Version version = loadVersion(new FileInputStream(ourCachedPolicyFile));
-        if (!version.isUnknown() && version.compareTo(latest) > 0) {
-          latest = version;
-        }
-      }
-      catch (FileNotFoundException ignored) {
-      }
-    }
-    ourLatestVersion = latest;
-    return latest;
-  }
-
-  @NotNull
   public static Version getAcceptedVersion() {
     return Version.fromString(Prefs.get(ACCEPTED_VERSION_KEY, null));
   }
 
-  public static String getText() {
-    return getText(getLatestVersion());
-  }
-
   @NotNull
-  public static String getText(@NotNull Version version) {
-    String text = null;
+  public static Pair<Version, String> getContent() {
     try {
-      if (EMBEDDED_VERSION.equals(version)) {
-        text = loadText(PrivacyPolicy.class.getResourceAsStream("/PrivacyPolicy-" + EMBEDDED_VERSION + ".html"));
+      final String text = System.getProperty(POLICY_TEXT_PROPERTY, null);
+      if (text != null) {
+        final Pair<Version, String> fromProperty = loadContent(new ByteArrayInputStream(text.getBytes("utf-8")));
+        if (!fromProperty.getFirst().isUnknown()) {
+          return fromProperty;
+        }
       }
-      else {
-        text = loadText(new FileInputStream(ourCachedPolicyFile));
+      final Pair<Version, String> fromFile = loadContent(new FileInputStream(ourCachedPolicyFile));
+      if (!fromFile.getFirst().isUnknown()) {
+        return fromFile;
       }
     }
-    catch (Exception ignored) {
+    catch (IOException ignored) {
     }
-    return text == null? "" : text;
+    return loadContent(PrivacyPolicy.class.getResourceAsStream("/PrivacyPolicy.html"));
   }
 
   public static void updateText(String text) {
@@ -142,18 +123,16 @@ public final class PrivacyPolicy {
     catch (IOException e) {
       LOG.info(e);
     }
-    finally {
-      ourLatestVersion = null; // clear cache
-    }
   }
 
-  @Nullable
-  private static String loadText(InputStream stream) {
+  @NotNull
+  private static Pair<Version, String> loadContent(InputStream stream) {
     try {
       if (stream != null) {
         final Reader reader = new InputStreamReader(stream, "utf-8");
         try {
-          return new String(FileUtil.adaptiveLoadText(reader));
+          final String text = new String(FileUtil.adaptiveLoadText(reader));
+          return Pair.create(parseVersion(text), text);
         }
         finally {
           reader.close();
@@ -163,13 +142,13 @@ public final class PrivacyPolicy {
     catch (IOException e) {
       LOG.info(e);
     }
-    return null;
+    return Pair.create(Version.UNKNOWN, "");
   }
 
   @NotNull
-  private static Version loadVersion(final InputStream is) {
+  private static Version parseVersion(String text) {
     try {
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(is, "utf-8"));
+      final BufferedReader reader = new BufferedReader(new StringReader(text));
       try {
         final String line = reader.readLine();
         if (line != null) {
@@ -218,6 +197,14 @@ public final class PrivacyPolicy {
 
     public boolean isUnknown() {
       return myMajor < 0 || myMinor < 0;
+    }
+
+    public int getMajor() {
+      return myMajor;
+    }
+
+    public int getMinor() {
+      return myMinor;
     }
 
     @Override

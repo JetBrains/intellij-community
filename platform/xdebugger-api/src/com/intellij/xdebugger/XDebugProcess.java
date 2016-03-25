@@ -75,7 +75,7 @@ public abstract class XDebugProcess {
 
   /**
    * Called when {@link XDebugSession} is initialized and breakpoints are registered in
-   * {@link com.intellij.xdebugger.breakpoints.XBreakpointHandler}
+   * {@link XBreakpointHandler}
    */
   public void sessionInitialized() {
   }
@@ -88,32 +88,51 @@ public abstract class XDebugProcess {
   public void startPausing() {
   }
 
+  @Deprecated
   /**
-   * Resume execution and call {@link XDebugSession#positionReached}
-   * when next line in current method/function is reached.
-   * Do not call this method directly. Use {@link XDebugSession#stepOver} instead
+   * @deprecated Use {@link #startStepOver(XSuspendContext)} instead
    */
   public void startStepOver() {
     throw new AbstractMethodError();
   }
 
+  /**
+   * Resume execution and call {@link XDebugSession#positionReached}
+   * when next line in current method/function is reached.
+   * Do not call this method directly. Use {@link XDebugSession#stepOver} instead
+   */
   public void startStepOver(@Nullable XSuspendContext context) {
+    //noinspection deprecation
     startStepOver();
+  }
+
+  @Deprecated
+  /**
+   * @deprecated Use {@link #startForceStepInto(XSuspendContext)} instead
+   */
+  public void startForceStepInto(){
+    //noinspection deprecation
+    startStepInto();
   }
 
   /**
    * Steps into suppressed call
-   *
+   * <p>
    * Resume execution and call {@link XDebugSession#positionReached}
    * when next line is reached.
    * Do not call this method directly. Use {@link XDebugSession#forceStepInto} instead
    */
-  public void startForceStepInto(){
-    startStepInto();
+  public void startForceStepInto(@Nullable XSuspendContext context) {
+    //noinspection deprecation
+    startForceStepInto();
   }
 
-  public void startForceStepInto(@Nullable XSuspendContext context) {
-    startForceStepInto();
+  @Deprecated
+  /**
+   * @deprecated Use {@link #startStepInto(XSuspendContext)} instead
+   */
+  public void startStepInto() {
+    throw new AbstractMethodError();
   }
 
   /**
@@ -121,12 +140,17 @@ public abstract class XDebugProcess {
    * when next line is reached.
    * Do not call this method directly. Use {@link XDebugSession#stepInto} instead
    */
-  public void startStepInto() {
-    throw new AbstractMethodError();
+  public void startStepInto(@Nullable XSuspendContext context) {
+    //noinspection deprecation
+    startStepInto();
   }
 
-  public void startStepInto(@Nullable XSuspendContext context) {
-    startStepInto();
+  @Deprecated
+  /**
+   * @deprecated Use {@link #startStepOut(XSuspendContext)} instead
+   */
+  public void startStepOut() {
+    throw new AbstractMethodError();
   }
 
   /**
@@ -134,17 +158,14 @@ public abstract class XDebugProcess {
    * after returning from current method/function.
    * Do not call this method directly. Use {@link XDebugSession#stepOut} instead
    */
-  public void startStepOut() {
-    throw new AbstractMethodError();
-  }
-
   public void startStepOut(@Nullable XSuspendContext context) {
+    //noinspection deprecation
     startStepOut();
   }
 
   /**
-   * Implement {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
-   * @return {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} instance
+   * Implement {@link XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
+   * @return {@link XSmartStepIntoHandler} instance
    */
   @Nullable
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
@@ -165,29 +186,40 @@ public abstract class XDebugProcess {
     return Promise.DONE;
   }
 
+  @Deprecated
   /**
-   * Resume execution.
-   * Do not call this method directly. Use {@link XDebugSession#resume} instead
+   * @deprecated Use {@link #resume(XSuspendContext)} instead
    */
   public void resume() {
     throw new AbstractMethodError();
   }
 
+  /**
+   * Resume execution.
+   * Do not call this method directly. Use {@link XDebugSession#resume} instead
+   */
   public void resume(@Nullable XSuspendContext context) {
+    //noinspection deprecation
     resume();
   }
 
+  @Deprecated
   /**
-   * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
-   * when <code>position</code> is reached.
-   * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead
-   * @param position position in source code
+   * @deprecated Use {@link #runToPosition(XSuspendContext)} instead
    */
   public void runToPosition(@NotNull XSourcePosition position) {
     throw new AbstractMethodError();
   }
 
+  /**
+   * Resume execution and call {@link XDebugSession#positionReached(XSuspendContext)}
+   * when <code>position</code> is reached.
+   * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead
+   *
+   * @param position position in source code
+   */
   public void runToPosition(@NotNull XSourcePosition position, @Nullable XSuspendContext context) {
+    //noinspection deprecation
     runToPosition(position);
   }
 

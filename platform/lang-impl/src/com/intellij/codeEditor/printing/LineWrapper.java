@@ -19,13 +19,14 @@ import com.intellij.util.containers.IntArrayList;
 
 public class LineWrapper {
 
-  public static IntArrayList calcBreakOffsets(char[] text, int startOffset, int endOffset, int column, double x, double clipX, WidthProvider widthProvider) {
+  public static IntArrayList calcBreakOffsets(char[] text, int startOffset, int endOffset, boolean lineStart, double x, double clipX, 
+                                              WidthProvider widthProvider) {
     IntArrayList breakOffsets = new IntArrayList();
     int nextOffset = startOffset;
     while (true) {
       int prevOffset = nextOffset;
       nextOffset = calcWordBreakOffset(text, nextOffset, endOffset, x, clipX, widthProvider);
-      if (nextOffset == prevOffset && column == 0) {
+      if (nextOffset == prevOffset && lineStart) {
         nextOffset = calcCharBreakOffset(text, nextOffset, endOffset, x, clipX, widthProvider);
         if (nextOffset == prevOffset) {
           nextOffset++; // extremal case when even one character doesn't fit into clip width
@@ -35,7 +36,7 @@ public class LineWrapper {
         break;
       }
       breakOffsets.add(nextOffset);
-      column = 0;
+      lineStart = true;
       x = 0;
     }
     return breakOffsets;

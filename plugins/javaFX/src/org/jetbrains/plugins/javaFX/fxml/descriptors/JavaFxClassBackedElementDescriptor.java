@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -322,27 +321,14 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     } else {
       final XmlAttribute factoryAttr = context.getAttribute(FxmlConstants.FX_FACTORY);
       if (factoryAttr != null) {
-        final XmlAttributeValue valueElement = factoryAttr.getValueElement();
-        if (valueElement != null) {
-          final PsiReference reference = valueElement.getReference();
-          final PsiElement staticFactoryMethod = reference != null ? reference.resolve() : null;
-          if (staticFactoryMethod instanceof PsiMethod && 
-              ((PsiMethod)staticFactoryMethod).getParameterList().getParametersCount() == 0 && 
-              ((PsiMethod)staticFactoryMethod).hasModifierProperty(PsiModifier.STATIC)) {
-            aClass = PsiUtil.resolveClassInType(((PsiMethod)staticFactoryMethod).getReturnType());
-          }
-        }
+        aClass = JavaFxPsiUtil.getFactoryProducedClass(myPsiClass, factoryAttr.getValue());
       }
     }
-    final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(parentTag, aClass);
-    if (canCoerceError != null) {
-      host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
-    }
+    JavaFxPsiUtil.isClassAcceptable(parentTag, aClass, (errorMessage, errorType) ->
+      host.addMessage(context.getNavigationElement(), errorMessage, errorType));
     if (aClass != null && aClass.isValid()) {
-      final String message = JavaFxPsiUtil.isAbleToInstantiate(aClass);
-      if (message != null) {
-        host.addMessage(context, message, ValidationHost.ErrorType.ERROR);
-      }
+      JavaFxPsiUtil.isAbleToInstantiate(aClass, errorMessage ->
+        host.addMessage(context, errorMessage, ValidationHost.ErrorType.ERROR));
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,9 +193,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       if (isWatchModification() && vm.canWatchFieldModification()) {
         ModificationWatchpointRequest request = manager.createModificationWatchpointRequest(this, field);
         debugProcess.getRequestsManager().enableRequest(request);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Modification request added");
-        }
+        LOG.debug("Modification request added");
       }
       if (isWatchAccess() && vm.canWatchFieldAccess()) {
         AccessWatchpointRequest request = manager.createAccessWatchpointRequest(this, field);

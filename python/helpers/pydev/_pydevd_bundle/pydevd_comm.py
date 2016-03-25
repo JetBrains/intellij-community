@@ -61,6 +61,7 @@ each command has a format:
 from _pydev_bundle.pydev_imports import _queue
 from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
+from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport

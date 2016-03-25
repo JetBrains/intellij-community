@@ -127,6 +127,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -148,7 +149,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int DEFAULT_MORE_STEP_COUNT = 15;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
   public static final int MAX_TOP_HIT = 15;
-  private static final int POPUP_MAX_WIDTH = 600;
   private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
@@ -278,7 +278,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         } else {
           lastKnownHeight = size.height;
         }
-        return new Dimension(Math.max(myBalloon.getSize().width, Math.min(size.width - 2, POPUP_MAX_WIDTH)), myList.isEmpty() ? JBUI.scale(30) : size.height);
+        return new Dimension(Math.max(myBalloon.getSize().width, Math.min(size.width - 2, getPopupMaxWidth())), myList.isEmpty() ? JBUI.scale(30) : size.height);
       }
 
       @Override
@@ -2150,10 +2150,22 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             myPopup = builder
               .setRequestFocus(false)
               .setCancelKeyEnabled(false)
+              .setResizable(true)
               .setCancelCallback(new Computable<Boolean>() {
                 @Override
                 public Boolean compute() {
-                  return myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
+                  final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+                  if (event instanceof MouseEvent) {
+                    final Component comp = ((MouseEvent)event).getComponent();
+                    if (UIUtil.getWindow(comp) == UIUtil.getWindow(myBalloon.getContent())) {
+                      return false;
+                    }
+                  }
+                  final boolean canClose = myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
+                  if (canClose) {
+                    PropertiesComponent.getInstance().setValue("search.everywhere.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
+                  }
+                  return canClose;
                 }
               })
               .setShowShadow(false)
@@ -2369,11 +2381,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
     if (!SystemInfo.isMac) {
-      if ((sz.width > POPUP_MAX_WIDTH || sz.height > POPUP_MAX_WIDTH)) {
+      if ((sz.width > getPopupMaxWidth() || sz.height > getPopupMaxWidth())) {
         final JBScrollPane pane = new JBScrollPane();
         final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
         final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
-        sz = new Dimension(Math.min(POPUP_MAX_WIDTH, Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(POPUP_MAX_WIDTH, sz.height + extraHeight));
+        sz = new Dimension(Math.min(getPopupMaxWidth(), Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(getPopupMaxWidth(), sz.height + extraHeight));
         sz.width += 20;
         sz.height+=2;
       } else {
@@ -2396,6 +2408,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       catch (Exception ignore) {}
     }
+  }
+
+  private static int getPopupMaxWidth() {
+    return PropertiesComponent.getInstance().getInt("search.everywhere.max.popup.width", JBUI.scale(600));
   }
 
   private void adjustPopup() {

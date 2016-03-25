@@ -41,10 +41,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
@@ -69,7 +66,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.URI;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -627,7 +624,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     if (element instanceof PsiClass) {
       ClassInfo info = findUrlForClass((PsiClass)element);
-      urls = info == null ? null : info.docUrls;
+      urls = info == null ? null : info.externalDocUrls;
     }
     else if (element instanceof PsiField) {
       PsiField field = (PsiField)element;
@@ -635,10 +632,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       if (aClass != null) {
         ClassInfo info = findUrlForClass(aClass);
         if (info != null) {
-          urls = info.docUrls;
-          for (int i = 0; i < urls.size(); i++) {
-            urls.set(i, urls.get(i) + "#" + field.getName());
-          }
+          urls = ContainerUtil.map(info.externalDocUrls, (url) -> url + "#" + field.getName());
         }
       }
     }
@@ -649,14 +643,14 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         ClassInfo info = findUrlForClass(aClass);
         if (info != null) {
           urls = ContainerUtil.newSmartList();
-          for (String classUrl : info.docUrls) {
+          for (int i = 0; i < info.externalDocUrls.size(); i++) {
             // For JDK docs we assume it's always generated with matching javadoc version
-            LanguageLevel languageLevel = info.isInJdk ? PsiUtil.getLanguageLevel(method) : detectLanguageLevel(classUrl);
+            LanguageLevel languageLevel = info.isInJdk ? PsiUtil.getLanguageLevel(method) : detectLanguageLevel(info.internalDocUrls.get(i));
 
             String signature = formatMethodSignature(method,
                                                      languageLevel.isAtLeast(LanguageLevel.JDK_1_5),
                                                      languageLevel.isAtLeast(LanguageLevel.JDK_1_8));
-            urls.add(classUrl + "#" + signature);
+            urls.add(info.externalDocUrls.get(i) + "#" + signature);
           }
         }
       }
@@ -675,10 +669,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       return null;
     }
     else {
-      for (int i = 0; i < urls.size(); i++) {
-        urls.set(i, FileUtil.toSystemIndependentName(urls.get(i)));
-      }
-      return urls;
+      return ContainerUtil.map(urls, FileUtil::toSystemIndependentName);
     }
   }
   
@@ -709,12 +700,12 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   private static LanguageLevel detectLanguageLevel(String javadocPageUrl) {
     try {
-      URI uri = VfsUtil.toUri(javadocPageUrl);
-      if (uri == null) {
+      URL url = VfsUtilCore.convertToURL(javadocPageUrl);
+      if (url == null) {
         LOG.warn("Couldn't open URL " + javadocPageUrl);
       }
       else {
-        try (InputStream stream = URLUtil.openStream(uri.toURL());
+        try (InputStream stream = URLUtil.openStream(url);
              Reader isr = new InputStreamReader(stream);
              BufferedReader reader = new BufferedReader(isr)) {
           String line;
@@ -840,26 +831,28 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         return ContainerUtil.isEmpty(httpRoots) ? null : new ClassInfo(false, httpRoots);
       }
     }
-
+    
     for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
       boolean isJdk = orderEntry instanceof JdkOrderEntry;
+      List<String> internalUrls = new ArrayList<>();
       for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
+        String internalUrl = PlatformDocumentationUtil.getDocUrl(root, relPath);
+        if (internalUrl == null) continue;
         if (root.getFileSystem() == JarFileSystem.getInstance()) {
           VirtualFile file = root.findFileByRelativePath(relPath);
           List<Url> urls = file == null ? null : BuiltInWebBrowserUrlProvider.getUrls(file, project, null);
           if (!ContainerUtil.isEmpty(urls)) {
-            List<String> result = new SmartList<String>();
+            List<String> externalUrls = new SmartList<String>();
             for (Url url : urls) {
-              result.add(url.toExternalForm());
+              externalUrls.add(url.toExternalForm());
             }
-            return new ClassInfo(isJdk, result);
+            return new ClassInfo(isJdk, Collections.nCopies(externalUrls.size(), internalUrl), externalUrls);
           }
         }
+        internalUrls.add(internalUrl);
       }
-
-      List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(JavadocOrderRootType.getUrls(orderEntry), relPath);
-      if (!ContainerUtil.isEmpty(httpRoot)) {
-        return new ClassInfo(isJdk, httpRoot);
+      if (!ContainerUtil.isEmpty(internalUrls)) {
+        return new ClassInfo(isJdk, internalUrls);
       }
     }
     return null;
@@ -872,7 +865,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     for (PsiDirectory directory : aPackage.getDirectories()) {
       ClassInfo urls = findUrlForVirtualFile(aPackage.getProject(), directory.getVirtualFile(), qName);
       if (urls != null) {
-        return urls.docUrls;
+        return urls.externalDocUrls;
       }
     }
     return null;
@@ -939,11 +932,19 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   
   private static class ClassInfo {
     private final boolean isInJdk;
-    private final @NotNull List<String> docUrls;
+    /** These should be used to fetch documentation in IDEA code */
+    private final @NotNull List<String> internalDocUrls;
+    /** These are for viewing documentation in browser (jar:// urls here are replaced with http:// urls provided by built-in web server) */
+    private final @NotNull List<String> externalDocUrls;
 
-    private ClassInfo(boolean jdk, @NotNull List<String> urls) {
+    private ClassInfo(boolean jdk, @NotNull List<String> docUrls) {
+      this(jdk, docUrls, docUrls);
+    }
+    
+    private ClassInfo(boolean jdk, @NotNull List<String> internalUrls, @NotNull List<String> externalUrls) {
       isInJdk = jdk;
-      docUrls = urls;
+      internalDocUrls = internalUrls;
+      externalDocUrls = externalUrls;
     }
   }
 }

@@ -38,7 +38,7 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
   public abstract List<Variant> computeSmartStepVariants(@NotNull XSourcePosition position);
 
   /**
-   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
+   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSuspendContext)}
    * when <code>variant</code> function/method is reached
    * @param variant selected variant
    */

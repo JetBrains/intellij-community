@@ -95,7 +95,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   };
 
   public ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
-    this(parent, color, true, enableOpacity, Collections.<ColorPickerListener>emptyList(), false);
+    this(parent, color, true, enableOpacity, Collections.emptyList(), false);
   }
 
   private ColorPicker(Disposable parent,
@@ -1051,7 +1051,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private static class DefaultColorPipette extends ColorPipetteBase {
-
+    private static final int SIZE = 30;
+    private static final int DIALOG_SIZE = SIZE - 4;
+    private static final Point HOT_SPOT = new Point(DIALOG_SIZE / 2, DIALOG_SIZE / 2);
+    
     private final Rectangle myCaptureRect = new Rectangle(-4, -4, 8, 8);
     private final Rectangle myZoomRect = new Rectangle(0, 0, SIZE, SIZE);
     private final Point myPreviousLocation = new Point();
@@ -1070,6 +1073,11 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
           updatePipette();
         }
       });
+    }
+
+    @Override
+    protected Color getPixelColor(Point location) {
+      return super.getPixelColor(new Point(location.x - HOT_SPOT.x + SIZE / 2, location.y - HOT_SPOT.y + SIZE / 2));
     }
 
     @Override

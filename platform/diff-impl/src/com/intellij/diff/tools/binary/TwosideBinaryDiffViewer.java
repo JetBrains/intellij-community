@@ -64,7 +64,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
 
     myStatusPanel = new StatusPanel();
-    new MyFocusOppositePaneAction().setupAction(myPanel);
+    new MyFocusOppositePaneAction().install(myPanel);
 
     myContentPanel.setTopAction(new MyAcceptSideAction(Side.LEFT));
     myContentPanel.setBottomAction(new MyAcceptSideAction(Side.RIGHT));

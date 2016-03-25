@@ -27,7 +27,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -248,34 +247,22 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   private void applyAction(final IntentionActionWithTextCaching cachedAction) {
-    myFinalRunnable = new Runnable() {
-      @Override
-      public void run() {
-        HintManager.getInstance().hideAllHints();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
-            if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
-              DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
-              return;
-            }
-            
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            PsiFile file;
-            if (myEditor != null) {
-              file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
-              if (file == null) {
-                return;
-              }
-            } else {
-              file = myFile;
-            }
-
-            ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
-          }
-        });
+    myFinalRunnable = () -> {
+      HintManager.getInstance().hideAllHints();
+      if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
+      if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
+        DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
+        return;
       }
+
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      PsiFile file = myEditor != null ? PsiUtilBase.getPsiFileInEditor(myEditor, myProject) : myFile;
+      if (file == null) {
+        return;
+      }
+
+      ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
     };
   }
 

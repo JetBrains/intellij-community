@@ -35,6 +35,7 @@ import org.jetbrains.rpc.LOG
 import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JList
 
 abstract class RemoteVmConnection : VmConnection<Vm>() {
   var port = -1
@@ -106,7 +107,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 
 fun RemoteVmConnection.open(address: InetSocketAddress, processHandler: ProcessHandler) = open(address, Condition<java.lang.Void> { processHandler.isProcessTerminating || processHandler.isProcessTerminated })
 
-fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T, ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<*>) -> Unit): Promise<T> {
+fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T, ColoredListCellRenderer<*>) -> Unit): Promise<T> {
   if (targets.size == 1) {
     return resolvedPromise(targets.first())
   }
@@ -117,8 +118,8 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
   val result = org.jetbrains.concurrency.AsyncPromise<T>()
   ApplicationManager.getApplication().invokeLater {
     val list = JBList(targets)
-    list.cellRenderer = object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
-      override fun customizeCellRenderer(value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
+    list.cellRenderer = object : ColoredListCellRenderer<T>() {
+      override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
         renderer(value, this)
       }
     }

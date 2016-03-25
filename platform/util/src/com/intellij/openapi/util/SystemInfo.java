@@ -64,6 +64,8 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
 
   public static final boolean isXWindow = isUnix && !isMac;
+  // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
+  public static final boolean isKDE = !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
   // http://www.freedesktop.org/software/systemd/man/os-release.html
   private static final NotNullLazyValue<Map<String, String>> ourOsReleaseInfo = new AtomicNotNullLazyValue<Map<String, String>>() {

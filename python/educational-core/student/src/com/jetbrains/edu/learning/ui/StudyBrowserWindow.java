@@ -124,12 +124,17 @@ class StudyBrowserWindow extends JFrame {
     });
   }
 
-  public void loadContent(@NotNull final String content, StudyPluginConfigurator configurator) {
-    String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
-    Platform.runLater(()-> {
+  public void loadContent(@NotNull final String content, @Nullable StudyPluginConfigurator configurator) {
+    if (configurator == null) {
+      Platform.runLater(() -> myEngine.loadContent(content));
+    }
+    else {
+      String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
+      Platform.runLater(() -> {
         updateLookWithProgressBarIfNeeded();
-        myEngine.loadContent(withCodeHighlighting);        
+        myEngine.loadContent(withCodeHighlighting);
       });
+    }
   }
 
   @Nullable

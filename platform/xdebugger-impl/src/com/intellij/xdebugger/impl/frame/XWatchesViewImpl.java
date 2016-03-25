@@ -15,8 +15,7 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
@@ -29,7 +28,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
@@ -45,14 +43,12 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,27 +71,21 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private boolean myRebuildNeeded;
+  private final boolean myWatchesInVariables;
 
-  public XWatchesViewImpl(@NotNull XDebugSessionImpl session) {
+  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
     super(session);
+    myWatchesInVariables = watchesInVariables;
 
     ActionManager actionManager = ActionManager.getInstance();
 
     XDebuggerTree tree = getTree();
-    tree.setRoot(buildRootNode(null), false);
-    AnAction newWatchAction = actionManager.getAction(XDebuggerActions.XNEW_WATCH);
-    AnAction removeWatchAction = actionManager.getAction(XDebuggerActions.XREMOVE_WATCH);
-    AnAction copyAction = actionManager.getAction(XDebuggerActions.XCOPY_WATCH);
-    AnAction editWatchAction = actionManager.getAction(XDebuggerActions.XEDIT_WATCH);
+    createNewRootNode(null);
 
-    newWatchAction.registerCustomShortcutSet(CommonShortcuts.INSERT, tree, myDisposables);
-    removeWatchAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), tree, myDisposables);
-
-    CustomShortcutSet f2Shortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
-    editWatchAction.registerCustomShortcutSet(f2Shortcut, tree, myDisposables);
-
-    copyAction.registerCustomShortcutSet(
-      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE).getShortcutSet(), tree, myDisposables);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XNEW_WATCH, tree, myDisposables);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XREMOVE_WATCH, tree, myDisposables);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XCOPY_WATCH, tree, myDisposables);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XEDIT_WATCH, tree, myDisposables);
 
     DnDManager.getInstance().registerTarget(this, tree);
 
@@ -114,59 +104,56 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }.registerCustomShortcutSet(CommonShortcuts.getPaste(), tree, myDisposables);
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(getTree()).disableUpDownActions();
-    decorator.setAddAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        executeAction(XDebuggerActions.XNEW_WATCH);
-      }
+
+    decorator.setAddAction(button -> executeAction(XDebuggerActions.XNEW_WATCH));
+    decorator.setAddActionName(actionManager.getAction(XDebuggerActions.XNEW_WATCH).getTemplatePresentation().getText());
+
+    AnAction removeWatchAction = actionManager.getAction(XDebuggerActions.XREMOVE_WATCH);
+    decorator.setRemoveAction(button -> executeAction(XDebuggerActions.XREMOVE_WATCH));
+    decorator.setRemoveActionName(removeWatchAction.getTemplatePresentation().getText());
+
+    decorator.setRemoveActionUpdater(e -> {
+      removeWatchAction.update(e);
+      return e.getPresentation().isEnabled();
     });
-    decorator.setRemoveAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        executeAction(XDebuggerActions.XREMOVE_WATCH);
-      }
+    decorator.addExtraAction(AnActionButton.fromAction(actionManager.getAction(XDebuggerActions.XCOPY_WATCH)));
+    decorator.addExtraAction(
+      new ToggleActionButton(XDebuggerBundle.message("debugger.session.tab.show.watches.in.variables"), AllIcons.Debugger.Watches) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          XDebugSessionTab tab = session.getSessionTab();
+          return tab == null || tab.isWatchesInVariables();
+        }
+
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          XDebugSessionTab tab = session.getSessionTab();
+          if (tab != null) {
+            tab.setWatchesInVariables(!tab.isWatchesInVariables());
+          }
+        }
+      });
+    decorator.setMoveUpAction(button -> {
+      List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+      assert nodes.size() == 1;
+      myRootNode.moveUp(nodes.get(0));
+      updateSessionData();
     });
-    decorator.setRemoveActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        removeWatchAction.update(e);
-        return e.getPresentation().isEnabled();
-      }
+    decorator.setMoveUpActionUpdater(e -> {
+      List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+      if (nodes.size() != 1) return false;
+      return myRootNode.getIndex(nodes.get(0)) > 0;
     });
-    decorator.addExtraAction(AnActionButton.fromAction(copyAction));
-    decorator.setMoveUpAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
-        assert nodes.size() == 1;
-        myRootNode.moveUp(nodes.get(0));
-        updateSessionData();
-      }
+    decorator.setMoveDownAction(button -> {
+      List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+      assert nodes.size() == 1;
+      myRootNode.moveDown(nodes.get(0));
+      updateSessionData();
     });
-    decorator.setMoveUpActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
-        if (nodes.size() != 1) return false;
-        return myRootNode.getIndex(nodes.get(0)) > 0;
-      }
-    });
-    decorator.setMoveDownAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
-        assert nodes.size() == 1;
-        myRootNode.moveDown(nodes.get(0));
-        updateSessionData();
-      }
-    });
-    decorator.setMoveDownActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
-        if (nodes.size() != 1) return false;
-        return myRootNode.getIndex(nodes.get(0)) < myRootNode.getWatchChildren().size() - 1;
-      }
+    decorator.setMoveDownActionUpdater(e -> {
+      List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
+      if (nodes.size() != 1) return false;
+      return myRootNode.getIndex(nodes.get(0)) < myRootNode.getWatchChildren().size() - 1;
     });
     CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR,
                                                    SystemInfo.isMac ? 1 : 0, 0,
@@ -174,13 +161,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     decorator.setToolbarBorder(border);
     decorator.setPanelBorder(BorderFactory.createEmptyBorder());
     getPanel().removeAll();
-    getPanel().add(decorator.createPanel());
-    if (Registry.is("debugger.watches.in.variables")) {
-      decorator.getActionsPanel().setVisible(false);
+    if (myWatchesInVariables) {
+      decorator.setToolbarPosition(ActionToolbarPosition.LEFT);
     }
     else {
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
+    getPanel().add(decorator.createPanel());
 
     installEditListeners();
   }
@@ -267,17 +254,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   public void dispose() {
     Disposer.dispose(myDisposables);
     DnDManager.getInstance().unregisterTarget(this, getTree());
-  }
-
-  @Override
-  protected void clear() {
-    XDebuggerTree tree = getTree();
-    XExpression[] expressions = getExpressions();
-    super.clear();
-    if (expressions.length > 0) {
-      myRootNode = new WatchesRootNode(tree, this, expressions, null);
-      tree.setRoot(myRootNode, false);
-    }
+    super.dispose();
   }
 
   private static boolean isAboveSelectedItem(MouseEvent event, XDebuggerTree watchTree) {
@@ -304,25 +281,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
     XDebugSession session = getSession(getTree());
-    myRootNode.addWatchExpression(session != null ? session.getDebugProcess().getEvaluator() : null, expression, index, navigateToWatchNode);
+    myRootNode.addWatchExpression(session != null ? session.getCurrentStackFrame() : null, expression, index, navigateToWatchNode);
     updateSessionData();
     if (navigateToWatchNode && session != null) {
-      showWatchesTab((XDebugSessionImpl)session);
-    }
-  }
-
-  private static void showWatchesTab(@NotNull XDebugSessionImpl session) {
-    XDebugSessionTab tab = session.getSessionTab();
-    if (tab != null) {
-      tab.toFront(false, null);
-      // restore watches tab if minimized
-      JComponent component = tab.getUi().getComponent();
-      if (component instanceof DataProvider) {
-        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
-        if (ui != null) {
-          ui.restoreContent(DebuggerContentInfo.WATCHES_CONTENT);
-        }
-      }
+      XDebugSessionTab.showWatchesView((XDebugSessionImpl)session);
     }
   }
 
@@ -332,24 +294,28 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void processSessionEvent(@NotNull final SessionEvent event) {
-    if (Registry.is("debugger.watches.in.variables") ||
-        getPanel().isShowing() ||
-        ApplicationManager.getApplication().isUnitTestMode()) {
+    if (getPanel().isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       myRebuildNeeded = false;
     }
     else {
       myRebuildNeeded = true;
-      return;
     }
     super.processSessionEvent(event);
   }
 
-  @NotNull
   @Override
-  protected XDebuggerTreeNode buildRootNode(@Nullable XStackFrame stackFrame) {
-    WatchesRootNode node = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame);
+  protected XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {
+    WatchesRootNode node = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame, myWatchesInVariables);
     myRootNode = node;
+    getTree().setRoot(node, false);
     return node;
+  }
+
+  @Override
+  protected void addEmptyMessage(XValueContainerNode root) {
+    if (myWatchesInVariables) {
+      super.addEmptyMessage(root);
+    }
   }
 
   @NotNull

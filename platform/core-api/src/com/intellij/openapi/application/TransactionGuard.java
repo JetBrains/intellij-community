@@ -25,12 +25,14 @@ import org.jetbrains.annotations.NotNull;
  * A service managing model transactions.<p/>
  *
  * A transaction ensures that IntelliJ model (PSI, documents, VFS, project roots etc.) isn't modified in an unexpected way
- * while working with it, with either read or write access. The main property of transactions is isolation: at most one transaction
+ * while working with it, with either read or write access. The main property of transactions is mutual exclusion: at most one transaction
  * can be running at any given time. The code inside transaction can perform read or write actions and, more importantly, show dialogs
  * and process UI events in other ways: it's guaranteed that no one will be able to sneak in with an unexpected model change using
  * {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or analogs.<p/>
  *
- * Transactions are run on UI thread. They have read access by default. All write actions should be performed inside a transaction.<p/>
+ * Transactions are run on UI thread. They have read access by default. All write actions that don't happen as the result of direct user input
+ * should be performed inside a transaction. No write action should be performed from within an {@code invokeLater}-like call
+ * unless wrapped into a transaction.<p/>
  *
  * The recommended way to perform a transaction is to invoke {@link #submitTransaction(Runnable)}. It either runs the transaction immediately
  * (if on UI thread and there's no other transaction running) or queues it to invoke at some later moment, when it becomes possible.<p/>
@@ -45,20 +47,21 @@ import org.jetbrains.annotations.NotNull;
  *
  * Q: How large/long should transactions be?
  * A: As short as possible, but not shorter. Take them for minimal period of time that you need the model you're working with
- * to be consistent. If your action doesn't require any user interaction, the whole action can be wrapped inside
- * a transaction (see {@link WrapInTransaction}). If the action only displays a dialog (e.g. Settings) and does nothing else,
- * it probably shouldn't take a transaction for all the dialog showing time.
- * Actions inside the dialog should care of transactions themselves.<p/>
+ * to be consistent. If your action doesn't display any modal progresses or dialogs, transaction can be omitted.
+ * If the action only displays a dialog (e.g. Settings) and does nothing else, and that dialog is ready to possible PSI/VFS events,
+ * there should also be no transaction for all the dialog showing time. Actions inside the dialog should care of transactions themselves.
+ * If the dialog isn't prepared to any model changes from outside, a transaction around showing the dialog is advised.<p/>
  *
  * The most complicated case is when the action both displays modal dialogs and performs modifications. The only case when those dialogs
- * should be shown under a transaction is when the mere reason of their showing lies somewhere in PSI/VFS/project model, and the are not
+ * should be shown under a transaction is when the mere reason of their showing lies somewhere in PSI/VFS/project model, and they are not
  * prepared to foreign code affecting the state of things at the moment of showing. For example, dialogs asking for making files writable
  * are shown only because VFS indicates the file is read-only. So they wouldn't make sense if they allowed modifications to that file
  * while they're shown. Their clients are not prepared to such changes either. So such dialogs should be shown under the same transaction,
  * as the following meaningful modifications performed by the action. Most refactoring dialogs are similar and refactoring actions should
  * take transactions for the whole refactoring process, with all the dialogs inside.<p/>
  *
- * Having said all that, it's still advisable that the transactions be as short as possible and preferably exclude any modal dialogs
+ * But note that some background processes may need occasional transactions, and will therefore be paused until the dialog is closed.
+ * Therefore, it's still advisable that the transactions be as short as possible and preferably exclude any modal dialogs
  * for which transaction-ness is not critical. So a better overall strategy would be to either make the dialogs non-modal,
  * or at least make them and the code that shows them prepared for possible model changes while the dialog is shown.<p/>
  *
@@ -66,15 +69,9 @@ import org.jetbrains.annotations.NotNull;
  * project: they'd be blocked by the running transaction.
  *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
- * A: Add a transaction somewhere into the call stack, to the outermost callee where having read/write model consistency is needed.
- * If it's a user action, transaction should be synchronous (see {@link #startSynchronousTransaction(TransactionKind)}. For AnAction
- * inheritors, {@link WrapInTransaction} annotation might be handy. Note that not all actions need to be wrapped into transactions, only
- * those that require the model to be consistent. For example, actions that display settings dialogs or VCS actions are most likely exempt.
+ * A: You're likely inside an "invokeLater"-like call. Please consider replacing it with {@link #submitTransaction(Runnable)} or
+ * {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
  * <p/>
- *
- * If the exception occurs not inside a user action, it's probably from some kind of "invokeLater".
- * Then, replace "invokeLater" with {@link #submitTransaction(Runnable)} or
- * {@link #submitMergeableTransaction(TransactionKind, Runnable)} call.<p/>
  *
  * Q: I've got <b>"Nested transactions are not allowed"</b> exception, what do I do?<br/>
  * A: First, identify the place in the stack where the outer transaction is started (the exception attachment should contain it).
@@ -162,11 +159,6 @@ public abstract class TransactionGuard {
   public abstract AccessToken startSynchronousTransaction(@NotNull TransactionKind kind);
 
   /**
-   * @return whether there's a transaction currently running
-   */
-  public abstract boolean isInsideTransaction();
-
-  /**
    * When on UI thread and there's no other transaction running, executes the given runnable. If there is a transaction running,
    * but the given {@code kind} is allowed via {@link #acceptNestedTransactions(TransactionKind...)}, merges two transactions
    * and executes the provided code immediately. Otherwise
@@ -189,5 +181,13 @@ public abstract class TransactionGuard {
    * nested transactions anymore.
    */
   @NotNull
-  public abstract AccessToken acceptNestedTransactions(TransactionKind... kinds);
+  public abstract AccessToken acceptNestedTransactions(@NotNull TransactionKind... kinds);
+
+  /**
+   * Asserts that a transaction is currently running, or not. Callable only on Swing thread.
+   * @param transactionRequired whether the assertion should check that the application is inside transaction or not
+   * @param errorMessage the message that will be logged if current transaction status differs from the expected one
+   */
+  public abstract void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage);
+
 }

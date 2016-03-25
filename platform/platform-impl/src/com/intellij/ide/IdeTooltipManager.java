@@ -152,8 +152,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
-      if (c == myCurrentComponent) {
-        hideCurrent(me, null, null);
+      boolean clickOnTooltip = myCurrentTipUi != null && myCurrentTipUi == JBPopupFactory.getInstance().getParentBalloonFor(c);
+      if (c == myCurrentComponent || clickOnTooltip) {
+        hideCurrent(me, null, null, null, !clickOnTooltip);
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {

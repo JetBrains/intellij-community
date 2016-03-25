@@ -15,10 +15,12 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiVariable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
+import com.intellij.refactoring.typeMigration.inspections.GuavaConversionSettings;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +30,7 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
+  private final static Logger LOG = Logger.getInstance(GuavaLambdaConversionRule.class);
   private final GuavaLambda myLambda;
 
   protected GuavaLambdaConversionRule(GuavaLambda lambda) {
@@ -58,6 +61,20 @@ public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
     return myLambda.getJavaAnalogueClassQName();
   }
 
+  @Nullable
+  @Override
+  protected TypeConversionDescriptorBase findConversionForAnonymous(@NotNull PsiAnonymousClass anonymousClass,
+                                                                    GuavaConversionSettings settings) {
+    final TypeConversionDescriptorBase conversion = super.findConversionForAnonymous(anonymousClass, settings);
+    if (conversion != null) {
+      return conversion;
+    }
+    final PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
+    return baseClass != null && myLambda.getClassQName().equals(baseClass.getQualifiedName())
+           ? new ConvertLambdaClassToJavaClassDescriptor()
+           : null;
+  }
+
   public static class Function extends GuavaLambdaConversionRule {
     public Function() {
       super(GuavaLambda.FUNCTION);
@@ -70,5 +87,11 @@ public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
     }
   }
 
+  private static class ConvertLambdaClassToJavaClassDescriptor extends TypeConversionDescriptorBase {
+    @Override
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+      return GuavaConversionUtil.tryConvertClassAndSamNameToJava((PsiNewExpression)expression);
+    }
+  }
 }
 

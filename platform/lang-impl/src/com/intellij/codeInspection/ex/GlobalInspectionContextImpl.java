@@ -42,6 +42,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PathMacroManager;
@@ -141,7 +142,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   public void addView(@NotNull InspectionResultsView view) {
     addView(view, view.getCurrentProfileName() == null
                   ? InspectionsBundle.message("inspection.results.title")
-                  : InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
+                  : InspectionsBundle.message(mySingleInspectionRun ?
+                                              "inspection.results.for.inspection.toolwindow.title" :
+                                              "inspection.results.for.profile.toolwindow.title",
+                                              view.getCurrentProfileName()));
 
   }
 
@@ -665,6 +669,26 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
       }
     }
+    final InspectionResultsView view = createViewIfNeed();
+    if (!view.isDisposed()) {
+      ReadAction.run(() -> view.addTools(globalTools));
+    }
+  }
+
+  @NotNull
+  public InspectionResultsView createViewIfNeed() {
+    if (myView == null) {
+      return  UIUtil.invokeAndWaitIfNeeded(() -> {
+        InspectionResultsView newView = getView();
+        if (newView != null) {
+          return newView;
+        }
+        newView = new InspectionResultsView(this, new InspectionRVContentProviderImpl(getProject()));
+        addView(newView);
+        return newView;
+      });
+    }
+    return myView;
   }
 
   private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,

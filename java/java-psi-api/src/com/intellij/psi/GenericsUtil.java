@@ -307,7 +307,10 @@ public class GenericsUtil {
         PsiType componentType = arrayType.getComponentType();
         PsiType type = componentType.accept(this);
         if (type == componentType) return arrayType;
-        return type.createArrayType();
+        if (type instanceof PsiWildcardType) {
+          type = ((PsiWildcardType)type).getBound();
+        }
+        return type != null ? type.createArrayType() : arrayType;
       }
 
       @Override

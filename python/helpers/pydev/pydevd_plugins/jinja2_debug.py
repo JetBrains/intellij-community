@@ -360,11 +360,12 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
         elif get_exception_name(exception) in ('TemplateSyntaxError', 'TemplateAssertionError'):
             #errors in compile time
             name = frame.f_code.co_name
-            if name in ('template', 'top-level template code') or name.startswith('block '):
+            if name in ('template', 'top-level template code', '<module>') or name.startswith('block '):
                 #Jinja2 translates exception info and creates fake frame on his own
-                pydb_frame.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK, message=exception_type)
+                pydb_frame.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
                 add_exception_to_frame(frame, (exception, value, trace))
                 thread.additional_info.suspend_type = JINJA2_SUSPEND
+                thread.additional_info.pydev_message = exception_type
                 flag = True
                 return flag, frame
     return None

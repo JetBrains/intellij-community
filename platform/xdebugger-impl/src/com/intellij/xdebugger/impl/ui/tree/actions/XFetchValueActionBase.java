@@ -105,7 +105,7 @@ public abstract class XFetchValueActionBase extends AnAction {
   }
 
   public class ValueCollector {
-    private final List<String> values = new SmartList<String>();
+    private final List<String> values = new SmartList<>();
     private final IntIntHashMap indents = new IntIntHashMap();
     private final XDebuggerTree myTree;
     private volatile boolean processed;

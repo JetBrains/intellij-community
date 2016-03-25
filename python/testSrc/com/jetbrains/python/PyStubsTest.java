@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -27,17 +28,24 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -429,5 +437,149 @@ public class PyStubsTest extends PyTestCase {
     final String annotation = func.getTypeCommentAnnotation();
     assertEquals("(str) -> int", annotation);
     assertNotParsed(file);
+  }
+
+  // PY-18741
+  public void testParameterTypeComment() {
+    final PyFile file = getTestFile();
+    final PyFunction func = file.findTopLevelFunction("func");
+    assertNotNull(func);
+    final PyParameter[] parameters = func.getParameterList().getParameters();
+    assertSize(2, parameters);
+    final PyNamedParameter param = assertInstanceOf(parameters[0], PyNamedParameter.class);
+    final String annotation = param.getTypeCommentAnnotation();
+    assertEquals("int", annotation);
+    assertNotParsed(file);
+
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
+    final PyType paramType = context.getType(param);
+    assertInstanceOf(paramType, PyClassType.class);
+    assertNotParsed(file);
+  }
+
+  public void testTargetExpressionTypeComment() {
+    final PyFile file = getTestFile();
+    final PyTargetExpression target = file.findTopLevelAttribute("x");
+    assertNotNull(target);
+
+    final String annotation = target.getTypeCommentAnnotation();
+    assertEquals("int", annotation);
+    assertNotParsed(file);
+
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
+    final PyType paramType = context.getType(target);
+    assertInstanceOf(paramType, PyClassType.class);
+    assertNotParsed(file);
+  }
+
+  public void testFullyQualifiedNamedTuple() {
+    doTestNamedTuple(
+      QualifiedName.fromDottedString("collections.namedtuple")
+    );
+  }
+
+  public void testFullyQualifiedNamedTupleWithAs() {
+    doTestNamedTuple(
+      QualifiedName.fromDottedString("C.namedtuple")
+    );
+  }
+
+  public void testImportedNamedTuple() {
+    doTestNamedTuple(
+      QualifiedName.fromComponents("namedtuple")
+    );
+  }
+
+  public void testImportedNamedTupleWithAs() {
+    doTestNamedTuple(
+      QualifiedName.fromComponents("NT")
+    );
+  }
+
+  public void testNamedTupleFieldsSequence() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testNamedTupleNameReference() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testNamedTupleFieldsReference() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testNamedTupleNameChain() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testNamedTupleFieldsChain() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testImportedNamedTupleName() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void testImportedNamedTupleFields() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  private void doTestNamedTuple(@NotNull QualifiedName expectedCalleeName) {
+    doTestNamedTuple("name", Collections.singletonList("field"), expectedCalleeName);
+  }
+
+  private void doTestNamedTupleArguments() {
+    doTestNamedTuple("name", Arrays.asList("x", "y"), QualifiedName.fromComponents("namedtuple"));
+  }
+
+  private void doTestNamedTuple(@NotNull String expectedName,
+                                @NotNull List<String> expectedFields,
+                                @NotNull QualifiedName expectedCalleeName) {
+    final PyFile file = getTestFile();
+
+    final PyTargetExpression attribute = file.findTopLevelAttribute("nt");
+    assertNotNull(attribute);
+
+    final PyNamedTupleStub stub = attribute.getStub().getCustomStub(PyNamedTupleStub.class);
+    assertNotNull(stub);
+    assertEquals(expectedCalleeName, stub.getCalleeName());
+
+    final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
+    doTestNamedTuple(expectedName, expectedFields, typeFromStub);
+    assertNotParsed(file);
+
+    final FileASTNode astNode = file.getNode();
+    assertNotNull(astNode);
+
+    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
+    doTestNamedTuple(expectedName, expectedFields, typeFromAst);
+  }
+
+  private void doTestUnsupportedNamedTuple() {
+    final PyFile file = getTestFile();
+
+    final PyTargetExpression attribute = file.findTopLevelAttribute("nt");
+    assertNotNull(attribute);
+
+    final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
+    assertNull(typeFromStub);
+    assertNotParsed(file);
+
+    final FileASTNode astNode = file.getNode();
+    assertNotNull(astNode);
+
+    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
+    assertNull(typeFromAst);
+  }
+
+  private static void doTestNamedTuple(@NotNull String expectedName,
+                                       @NotNull List<String> expectedFields,
+                                       @Nullable PyType type) {
+    assertInstanceOf(type, PyNamedTupleType.class);
+
+    final PyNamedTupleType namedTupleType = (PyNamedTupleType)type;
+
+    assertEquals(expectedName, namedTupleType.getName());
+    assertEquals(expectedFields, namedTupleType.getElementNames());
   }
 }

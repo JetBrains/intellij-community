@@ -41,7 +41,7 @@ public class HgChangeProvider implements ChangeProvider {
   private final Project myProject;
   private final VcsKey myVcsKey;
 
-  public static final FileStatus COPIED = FileStatusFactory.getInstance().createFileStatus("COPIED", "Copied", FileStatus.COLOR_ADDED);
+  public static final FileStatus COPIED = FileStatusFactory.getInstance().createFileStatus("COPIED", "Copied", FileStatus.ADDED.getColor());
   public static final FileStatus RENAMED = FileStatusFactory.getInstance().createFileStatus("RENAMED", "Renamed",
                                                                                             JBColor.CYAN.darker().darker());
 

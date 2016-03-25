@@ -167,6 +167,11 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("stringBuffer", "buffer");
   }
 
+  public void testDontIterateOverLoopVariable() throws Throwable {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'nodes', 'new', 'null'
+  }
+
   public void testDuplicateSuggestionsFromUsage() {
     configure();
     assertStringItems("preferencePolicy", "policy", "aPreferencePolicy");

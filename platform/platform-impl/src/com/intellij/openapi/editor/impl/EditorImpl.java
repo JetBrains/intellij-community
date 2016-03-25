@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.application.options.OptionsConstants;
+import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -30,7 +30,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,6 +98,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
+import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -342,7 +344,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
-    if (shouldSoftWrapsBeForced()) {
+    if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
       mySettings.setUseSoftWrapsQuiet();
       putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
     }
@@ -581,10 +583,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
   }
 
-  private boolean shouldSoftWrapsBeForced() {
-    if (mySettings.isUseSoftWraps() ||
-        // Disable checking for files in intermediate states - e.g. for files during refactoring.
-        myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument)) {
+  public boolean shouldSoftWrapsBeForced() {
+    if (myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument)) {
+      // Disable checking for files in intermediate states - e.g. for files during refactoring.
       return false;
     }
     int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
@@ -1030,7 +1031,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable.Adapter() {
       @Override
       public void showNotify() {
-        myGutterComponent.updateSize();
+        myGutterComponent.updateSizeOnShowNotify();
       }
     });
     Disposer.register(getDisposable(), connector);
@@ -6338,7 +6339,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private final Map<ColorKey, Color>                   myOwnColors       = ContainerUtilRt.newHashMap();
     private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap;
-    private int myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
+    private int myMaxFontSize = EditorFontsConstants.getMaxEditorFontSize();
     private int myFontSize = -1;
     private int myConsoleFontSize = -1;
     private String myFaceName;
@@ -6510,7 +6511,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setDelegate(@NotNull EditorColorsScheme delegate) {
       super.setDelegate(delegate);
       int globalFontSize = getDelegate().getEditorFontSize();
-      myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
+      myMaxFontSize = Math.max(EditorFontsConstants.getMaxEditorFontSize(), globalFontSize);
       reinitFonts();
       clearSettingsCache();
     }
@@ -7114,11 +7115,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
+    public void setUI(ScrollPaneUI ui) {
+      super.setUI(ui);
+      // disable standard Swing keybindings
+      setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
+    }
+
+    @Override
     public void layout() {
       if (isInDistractionFreeMode()) {
         // re-calc gutter extra size after editor size is set
         // & layout once again to avoid blinking
-        myGutterComponent.updateSize(true);
+        myGutterComponent.updateSize(true, true);
       }
       super.layout();
     }

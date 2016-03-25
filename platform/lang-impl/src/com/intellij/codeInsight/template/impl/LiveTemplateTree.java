@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.Function;
+import com.intellij.util.JdomKt;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.Convertor;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.Set;
 
 /**
@@ -65,22 +60,19 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        Object object = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
-        if (object instanceof TemplateGroup) {
-          return ((TemplateGroup)object).getName();
-        }
-        if (object instanceof TemplateImpl) {
-          TemplateImpl template = (TemplateImpl)object;
-          return StringUtil.notNullize(template.getGroupName()) + " " +
-                 StringUtil.notNullize(template.getKey()) + " " +
-                 StringUtil.notNullize(template.getDescription()) + " " +
-                 template.getTemplateText();
-        }
-        return "";
+    new TreeSpeedSearch(this, o -> {
+      Object object = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
+      if (object instanceof TemplateGroup) {
+        return ((TemplateGroup)object).getName();
       }
+      if (object instanceof TemplateImpl) {
+        TemplateImpl template = (TemplateImpl)object;
+        return StringUtil.notNullize(template.getGroupName()) + " " +
+               StringUtil.notNullize(template.getKey()) + " " +
+               StringUtil.notNullize(template.getDescription()) + " " +
+               template.getTemplateText();
+      }
+      return "";
     }, true);
   }
 
@@ -98,15 +90,12 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
     final Set<TemplateImpl> templates = myConfigurable.getSelectedTemplates().keySet();
 
 
-    CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(templates, new Function<TemplateImpl, String>() {
-      @Override
-      public String fun(TemplateImpl template) {
-        TemplateContext zeroContext = new TemplateContext();
-        for (TemplateContextType type : TemplateContextType.EP_NAME.getExtensions()) {
-          zeroContext.setEnabled(type, false);
-        }
-        return JDOMUtil.writeElement(TemplateSettings.serializeTemplate(template, zeroContext));
+    CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(templates, template -> {
+      TemplateContext zeroContext = new TemplateContext();
+      for (TemplateContextType type : TemplateContextType.EP_NAME.getExtensions()) {
+        zeroContext.setEnabled(type, false);
       }
+      return JDOMUtil.writeElement(TemplateSettings.serializeTemplate(template, zeroContext));
     }, SystemProperties.getLineSeparator())));
     
   }
@@ -143,7 +132,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
     assert buffer != null;
 
     try {
-      for (Element templateElement : JDOMUtil.load(new StringReader("<root>" + buffer + "</root>")).getChildren(TemplateSettings.TEMPLATE)) {
+      for (Element templateElement : JdomKt.loadElement("<root>" + buffer + "</root>").getChildren(TemplateSettings.TEMPLATE)) {
         TemplateImpl template = TemplateSettings.readTemplateFromElement(group.getName(), templateElement, getClass().getClassLoader());
         while (group.containsTemplate(template.getKey(), template.getId())) {
           template.setKey(template.getKey() + "1");
@@ -154,9 +143,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
         myConfigurable.addTemplate(template);
       }
     }
-    catch (JDOMException ignore) {
-    }
-    catch (IOException ignore) {
+    catch (Exception ignore) {
     }
   }
 }

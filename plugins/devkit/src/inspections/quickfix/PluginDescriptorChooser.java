@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
@@ -49,19 +48,21 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class PluginDescriptorChooser {
 
-  private static final ImmutableMap<String, String> INTELLIJ_MODULES = ImmutableMap.<String, String>builder()
-    .put("platform-api", "PlatformExtensions.xml")
-    .put("platform-impl", "PlatformExtensions.xml")
-    .put("lang-api", "LangExtensions.xml")
-    .put("lang-impl", "LangExtensions.xml")
-    .put("vcs-api", "VcsExtensions.xml")
-    .put("vcs-impl", "VcsExtensions.xml")
-    .put("openapi", "IdeaPlugin.xml")
-    .put("java-impl", "IdeaPlugin.xml")
-    .build();
+  private static final Map<String, String> INTELLIJ_MODULES =
+    ContainerUtil.<String, String>immutableMapBuilder()
+      .put("platform-api", "PlatformExtensions.xml")
+      .put("platform-impl", "PlatformExtensions.xml")
+      .put("lang-api", "LangExtensions.xml")
+      .put("lang-impl", "LangExtensions.xml")
+      .put("vcs-api", "VcsExtensions.xml")
+      .put("vcs-impl", "VcsExtensions.xml")
+      .put("openapi", "IdeaPlugin.xml")
+      .put("java-impl", "IdeaPlugin.xml")
+      .build();
 
   public static void show(final Project project,
                           final Editor editor,

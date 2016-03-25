@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -35,6 +36,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -317,7 +319,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (iterableType instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)iterableType;
       final List<PyType> memberTypes = new ArrayList<PyType>();
-      for (int i = 0; i < tupleType.getElementCount(); i++) {
+      for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
         memberTypes.add(tupleType.getElementType(i));
       }
       return PyUnionType.union(memberTypes);
@@ -676,5 +678,53 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public String getQualifiedName() {
     return QualifiedNameFinder.getQualifiedName(this);
+  }
+
+  @Nullable
+  @Override
+  public PsiComment getTypeComment() {
+    final PsiElement commentContainer = PsiTreeUtil.getParentOfType(this,
+                                                                    PyAssignmentStatement.class,
+                                                                    PyWithStatement.class,
+                                                                    PyForPart.class);
+    if (commentContainer != null) {
+      final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
+      if (comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null) {
+        return comment;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiComment getSameLineTrailingCommentChild(@NotNull PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    while (true) {
+      if (child == null) {
+        return null;
+      }
+      if (child instanceof PsiComment) {
+        return (PsiComment)child;
+      }
+      if (child.getText().contains("\n")) {
+        return null;
+      }
+      child = child.getNextSibling();
+    }
+  }
+
+  @Nullable
+  @Override
+  public String getTypeCommentAnnotation() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      return stub.getTypeComment();
+    }
+    
+    final PsiComment comment = getTypeComment();
+    if (comment != null) {
+      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
+    }
+    return null;
   }
 }

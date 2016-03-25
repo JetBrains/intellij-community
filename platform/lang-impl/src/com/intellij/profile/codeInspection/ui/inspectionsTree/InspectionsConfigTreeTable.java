@@ -43,6 +43,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -99,10 +100,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
         return value;
       }
     });
-    severitiesColumn.setMaxWidth(20);
+    severitiesColumn.setMaxWidth(JBUI.scale(20));
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(20 + getAdditionalPadding());
+    isEnabledColumn.setMaxWidth(JBUI.scale(20 + getAdditionalPadding()));
     isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
     isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
@@ -174,6 +175,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
     });
 
+    getTableHeader().setReorderingAllowed(false);
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {
                                model.swapInspectionEnableState();

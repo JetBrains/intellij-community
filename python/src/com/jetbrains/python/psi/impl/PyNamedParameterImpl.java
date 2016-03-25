@@ -19,9 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -33,6 +31,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -445,5 +444,35 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       }
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  public PsiComment getTypeComment() {
+    for (PsiElement next = getNextSibling(); next != null; next = next.getNextSibling()) {
+      if (next.textContains('\n')) break;
+      if (!(next instanceof PsiWhiteSpace)) {
+        if (",".equals(next.getText())) continue;
+        if (next instanceof PsiComment && PyTypingTypeProvider.getTypeCommentValue(next.getText()) != null) {
+          return (PsiComment)next;
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getTypeCommentAnnotation() {
+    final PyNamedParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getTypeComment();
+    }
+    final PsiComment comment = getTypeComment();
+    if (comment != null) {
+      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
+    }
+    return null;
   }
 }

@@ -50,6 +50,18 @@ import java.util.Set;
 public class ExistingModuleLoader extends ModuleBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ExistingModuleLoader");
 
+  public static ExistingModuleLoader setUpLoader(final String moduleFilePath) {
+    final ExistingModuleLoader moduleLoader = new ExistingModuleLoader();
+    moduleLoader.setModuleFilePath(moduleFilePath);
+    final int startIndex = moduleFilePath.lastIndexOf('/');
+    final int endIndex = moduleFilePath.lastIndexOf(".");
+    if (startIndex >= 0 && endIndex > startIndex + 1) {
+      final String name = moduleFilePath.substring(startIndex + 1, endIndex);
+      moduleLoader.setName(name);
+    }
+    return moduleLoader;
+  }
+
   @NotNull
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {

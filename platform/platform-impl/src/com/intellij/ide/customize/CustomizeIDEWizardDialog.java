@@ -54,7 +54,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     super(null, true, true);
-    setTitle("Customize " + ApplicationNamesInfo.getInstance().getProductName());
+    setTitle("Customize " + ApplicationNamesInfo.getInstance().getFullProductName());
     getPeer().setAppIcons();
 
     stepsProvider.initSteps(this, mySteps);

@@ -169,8 +169,10 @@ public class AboutPopup {
       LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, null));
+        appendLast();
         for (String message : provider.getLicenseRestrictionsMessages()) {
           myLines.add(new AboutBoxLine(message));
+          appendLast();
         }
       }
 

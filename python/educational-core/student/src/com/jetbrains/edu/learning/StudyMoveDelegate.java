@@ -49,6 +49,6 @@ public class StudyMoveDelegate extends MoveHandlerDelegate{
                            DataContext dataContext,
                            @Nullable PsiReference reference,
                            Editor editor) {
-    return true;
+    return StudyUtils.isStudyProject(project);
   }
 }

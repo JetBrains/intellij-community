@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class CodeBlockGenerationTest extends LightGroovyTestCase {
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     final String text = result.text
     final String expected = psiManager.findFile(myFixture.copyFileToProject(testName + '.java')).text
-    assertEquals expected, text
+    assertEquals expected.trim(), text.trim()
   }
 
   private addFile(String text) {
@@ -189,6 +189,8 @@ public final class Matcher {
   void testEmptyVarargs() { doTest() }
 
   void testClassReference() { doTest() }
+
+  void testClassMethod() { doTest() }
 
   void testEquals() { doTest() }
 

@@ -1644,9 +1644,8 @@ public abstract class DialogWrapper {
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
         LOG.error("Project-modal dialogs should not be shown under a write action.");
       }
-      if (TransactionGuard.getInstance().isInsideTransaction()) {
-        LOG.error("Project-modal dialogs should not be shown inside a transaction. See TransactionGuard documentation.");
-      }
+      TransactionGuard.getInstance().assertInsideTransaction(
+        false, "Project-modal dialogs should not be shown inside a transaction. See TransactionGuard documentation.");
     }
 
     final AsyncResult<Boolean> result = new AsyncResult<Boolean>();

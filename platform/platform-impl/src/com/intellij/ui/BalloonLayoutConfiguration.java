@@ -84,10 +84,11 @@ public class BalloonLayoutConfiguration {
   public static final int NotificationSpace = JBUI.scale(10);
 
   @NotNull
-  public static BalloonLayoutConfiguration create(@NotNull Notification notification, @NotNull BalloonLayoutData layoutData) {
+  public static BalloonLayoutConfiguration create(@NotNull Notification notification,
+                                                  @NotNull BalloonLayoutData layoutData,
+                                                  boolean actions) {
     boolean title = notification.isTitle();
     boolean content = notification.isContent();
-    boolean actions = !notification.getActions().isEmpty();
     if (title && content && actions) {
       return treeLines();
     }

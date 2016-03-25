@@ -66,7 +66,7 @@ abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTag
 
   @Override
   protected boolean isAccessible(PsiMember member, XmlTag reference) {
-    return member instanceof PsiClass && JavaFxPsiUtil.isClassAcceptable(reference.getParentTag(), (PsiClass)member) == null;
+    return member instanceof PsiClass && JavaFxPsiUtil.isClassAcceptable(reference.getParentTag(), (PsiClass)member);
   }
 
   @Override
