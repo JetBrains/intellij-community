@@ -948,6 +948,7 @@ public class FindPopupPanel extends JBPanel {
           myResultsPopup = (AbstractPopup)builder
             .setShowShadow(false)
             .setShowBorder(false)
+            .setResizable(true)
             .setCancelCallback(new Computable<Boolean>() {
               @Override
               public Boolean compute() {
