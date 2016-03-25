@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ public class GroovyMarkerTypes {
       PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
 
       for (GrAccessorMethod method : accessors) {
-        OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
+        OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
       }
       if (processor.isOverflow()) {
         return DaemonBundle.message("method.is.overridden.too.many");
@@ -164,7 +164,7 @@ public class GroovyMarkerTypes {
             @Override
             public void run() {
               for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
-                OverridingMethodsSearch.search(method, true).forEach(collectProcessor);
+                OverridingMethodsSearch.search(method).forEach(collectProcessor);
               }
             }
           });
@@ -233,7 +233,7 @@ public class GroovyMarkerTypes {
         final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
 
         for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-          OverridingMethodsSearch.search(m, true).forEach(new ReadActionProcessor<PsiMethod>() {
+          OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
             @Override
             public boolean processInReadAction(PsiMethod method) {
               if (method instanceof GrTraitMethod) {
@@ -282,7 +282,7 @@ public class GroovyMarkerTypes {
               @Override
               public void run() {
                 for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-                  OverridingMethodsSearch.search(m, true).forEach(new ReadActionProcessor<PsiMethod>() {
+                  OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
                     @Override
                     public boolean processInReadAction(PsiMethod psiMethod) {
                       if (psiMethod instanceof GrReflectedMethod) {
@@ -368,7 +368,7 @@ public class GroovyMarkerTypes {
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       for (PsiMethod method : PsiImplUtil.getMethodOrReflectedMethods(myMethod)) {
-        OverridingMethodsSearch.search(method, true).forEach(
+        OverridingMethodsSearch.search(method).forEach(
           new CommonProcessors.CollectProcessor<PsiMethod>() {
             @Override
             public boolean process(PsiMethod psiMethod) {

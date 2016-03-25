@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -608,7 +608,7 @@ public class TypeMigrationLabeler {
       }
 
 
-      final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
+      final PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
       for (int i = -1; i < methods.length; i++) {
         final TypeMigrationUsageInfo m;
@@ -635,7 +635,7 @@ public class TypeMigrationLabeler {
       final PsiMethod method = (PsiMethod)((PsiParameter)resolved).getDeclarationScope();
 
       final int index = method.getParameterList().getParameterIndex(((PsiParameter)resolved));
-      final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
+      final PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
 
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
       final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method.getParameterList().getParameters()[index]);
