@@ -53,9 +53,9 @@ import java.util.*;
 
 public abstract class DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
-  private static final Key<Method> TO_STRING_METHOD_KEY = new Key<Method>("CachedToStringMethod");
-  public static final Set<String> ourPrimitiveTypeNames = new HashSet<String>(Arrays.asList(
-      "byte", "short", "int", "long", "float", "double", "boolean", "char"
+  private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
+  public static final Set<String> ourPrimitiveTypeNames = new HashSet<>(Arrays.asList(
+    "byte", "short", "int", "long", "float", "double", "boolean", "char"
   ));
 
   public static void cleanupAfterProcessFinish(DebugProcess debugProcess) {
@@ -428,7 +428,7 @@ public abstract class DebuggerUtils {
   }
   
   public static boolean hasSideEffectsOrReferencesMissingVars(PsiElement element, @Nullable final Set<String> visibleLocalVariables) {
-    final Ref<Boolean> rv = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> rv = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override 
       public void visitPostfixExpression(final PsiPostfixExpression expression) {
