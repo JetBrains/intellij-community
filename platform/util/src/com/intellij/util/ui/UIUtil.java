@@ -2558,9 +2558,15 @@ public class UIUtil {
       // Here we weaken the requirements to only 2) and force GTK LaF
       // installation in order to let it properly scale default font
       // based on Xft.dpi value.
-      LookAndFeel laf = new GTKLookAndFeel();
-      if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
-        return systemLaFClassName = laf.getClass().getName();
+      try {
+        String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+        Class cls = Class.forName(name);
+        LookAndFeel laf = (LookAndFeel)cls.newInstance();
+        if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
+          return systemLaFClassName = name;
+        }
+      }
+      catch (Exception ignore) {
       }
     }
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
