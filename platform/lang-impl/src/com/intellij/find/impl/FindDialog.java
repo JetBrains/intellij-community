@@ -645,6 +645,7 @@ public class FindDialog extends DialogWrapper {
             settings.setUseSoftWraps(true);
           }
         };
+        myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder());
         myResultsPreviewTable = table;
         new TableSpeedSearch(table, new Convertor<Object, String>() {
           @Override
