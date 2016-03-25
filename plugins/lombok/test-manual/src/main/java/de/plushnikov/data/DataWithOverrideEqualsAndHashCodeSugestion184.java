@@ -3,13 +3,13 @@ package de.plushnikov.data;
 import lombok.Data;
 
 public class DataWithOverrideEqualsAndHashCodeSugestion184 {
-  //    @Data
+  @Data
   private static class SomeBasic {
     private int property;
   }
 
   @Data
-  private static class SomesComplex extends SomeBasic {
+  private static class SomeComplex extends SomeBasic {
     private final String value;
 
     @Override
@@ -21,7 +21,7 @@ public class DataWithOverrideEqualsAndHashCodeSugestion184 {
         return false;
       }
 
-      SomesComplex that = (SomesComplex) o;
+      SomeComplex that = (SomeComplex) o;
 
       return value.equals(that.value);
     }
@@ -38,7 +38,7 @@ public class DataWithOverrideEqualsAndHashCodeSugestion184 {
   }
 
   public static void main(String[] args) {
-    SomesComplex complex = new SomesComplex("This is very complex");
+    SomeComplex complex = new SomeComplex("This is very complex");
     System.out.println(complex);
 
     SomeDifferent different = new SomeDifferent("This is something different");
