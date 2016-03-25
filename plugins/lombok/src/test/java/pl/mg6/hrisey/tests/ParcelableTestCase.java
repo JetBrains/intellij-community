@@ -1,6 +1,6 @@
 package pl.mg6.hrisey.tests;
 
-import de.plushnikov.lombok.LombokParsingTestCase;
+import de.plushnikov.intellij.plugin.LombokParsingTestCase;
 
 import java.io.IOException;
 

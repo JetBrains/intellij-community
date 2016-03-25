@@ -1,4 +1,4 @@
-package de.plushnikov.lombok;
+package de.plushnikov.intellij.plugin;
 
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -49,26 +49,6 @@ public class InspectionTest extends InspectionTestCase {
   }
 
   public void testDelegateOnStaticFieldOrMethod() throws Exception {
-    doTest();
-  }
-
-  //TODO make this test work
-  public void testSneakyThrowsSingle() throws Exception {
-    doTest();
-  }
-
-  //TODO make this test work
-  public void testSneakyThrowsPlain() throws Exception {
-    doTest();
-  }
-
-  //TODO make this test work
-  public void testSneakyThrowsMultiple() throws Exception {
-    doTest();
-  }
-
-  //TODO make this test work
-  public void testSneakyThrowsTryWithResource() throws Exception {
     doTest();
   }
 

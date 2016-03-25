@@ -145,6 +145,16 @@ sourceSets {
     }
 }
 
+apply plugin: 'jacoco'
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+check.dependsOn jacocoTestReport
+
 apply plugin: 'org.jetbrains.intellij'
 intellij {
     def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")

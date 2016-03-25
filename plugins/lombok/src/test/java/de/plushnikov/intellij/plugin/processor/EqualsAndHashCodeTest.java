@@ -1,6 +1,6 @@
-package de.plushnikov.lombok.tests;
+package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.lombok.LombokParsingTestCase;
+import de.plushnikov.intellij.plugin.LombokParsingTestCase;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes

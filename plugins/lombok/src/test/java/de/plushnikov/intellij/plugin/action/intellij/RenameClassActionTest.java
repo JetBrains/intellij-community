@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.action.intellij;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.lombok.LombokLightCodeInsightTestCase;
+import de.plushnikov.intellij.plugin.LombokLightCodeInsightTestCase;
 
 public class RenameClassActionTest extends LombokLightCodeInsightTestCase {
 

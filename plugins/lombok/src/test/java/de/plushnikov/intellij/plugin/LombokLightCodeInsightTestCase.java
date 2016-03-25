@@ -1,4 +1,4 @@
-package de.plushnikov.lombok;
+package de.plushnikov.intellij.plugin;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdk;
