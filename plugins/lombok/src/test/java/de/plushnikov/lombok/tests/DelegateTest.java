@@ -35,4 +35,8 @@ public class DelegateTest extends LombokParsingTestCase {
   public void testDelegateWithException() throws Exception {
     doTest();
   }
+
+  public void testDelegateGenericInterfaceIssue88() throws Exception {
+    doTest();
+  }
 }

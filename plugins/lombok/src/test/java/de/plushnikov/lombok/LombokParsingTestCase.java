@@ -1,6 +1,7 @@
 package de.plushnikov.lombok;
 
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
@@ -36,10 +37,6 @@ import java.util.Collection;
 public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCase {
 
   private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
-
-  protected boolean shouldCompareInitializers() {
-    return true;
-  }
 
   protected boolean shouldCompareAnnotations() {
     return false;
@@ -83,7 +80,7 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     for (PsiClass afterClass : afterClasses) {
       boolean compared = false;
       for (PsiClass beforeClass : beforeClasses) {
-        if (afterClass.getName().equals(beforeClass.getName())) {
+        if (Objects.equal(afterClass.getName(), beforeClass.getName())) {
           compareTwoClasses(beforeClass, afterClass);
           compared = true;
         }
@@ -120,7 +117,7 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
       boolean compared = false;
       final PsiModifierList afterFieldModifierList = afterField.getModifierList();
       for (PsiField beforeField : beforeClassFields) {
-        if (afterField.getName().equals(beforeField.getName())) {
+        if (Objects.equal(afterField.getName(), beforeField.getName())) {
           final PsiModifierList beforeFieldModifierList = beforeField.getModifierList();
 
           compareModifiers(beforeFieldModifierList, afterFieldModifierList);
@@ -134,11 +131,9 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
   }
 
   private void compareInitializers(PsiExpression beforeInitializer, PsiExpression afterInitializer) {
-    if (shouldCompareInitializers()) {
-      String beforeInitializerText = null == beforeInitializer ? "" : beforeInitializer.getText();
-      String afterInitializerText = null == afterInitializer ? "" : afterInitializer.getText();
-      assertEquals("Initializers are not equals ", afterInitializerText, beforeInitializerText);
-    }
+    String beforeInitializerText = null == beforeInitializer ? "" : beforeInitializer.getText();
+    String afterInitializerText = null == afterInitializer ? "" : afterInitializer.getText();
+    assertEquals("Initializers are not equals ", afterInitializerText, beforeInitializerText);
   }
 
   private void compareType(PsiType beforeType, PsiType afterType, PomNamedTarget whereTarget) {

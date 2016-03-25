@@ -42,7 +42,7 @@ public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFix
     return new DefaultLightProjectDescriptor() {
       @Override
       public Sdk getSdk() {
-        return JavaSdk.getInstance().createJdk("java 1.7", "./lib/mockJDK-1.7", false);
+        return JavaSdk.getInstance().createJdk("java 1.7", "/lib/mockJDK-1.7", false);
       }
 
       @Override
