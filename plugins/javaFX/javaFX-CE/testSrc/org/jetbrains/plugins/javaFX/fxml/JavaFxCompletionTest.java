@@ -22,11 +22,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * User: anna
@@ -226,28 +222,33 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testFxIdExactOptionsLabel() throws Exception {
-    doOptionsTest(Arrays.asList("parentPrivateLabel", "parentPublicLabel", "privateLabel", "publicLabel", "parentControl", "control", "grandLabel"),
-                  "FxIdExactOptionsController", "FxIdExactOptionsModel");
+    configureAndComplete("FxIdExactOptionsController.java", "FxIdExactOptionsModel.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "parentPrivateLabel", "parentPublicLabel", "privateLabel", "publicLabel", "parentControl", "control", "grandLabel");
   }
 
   public void testFxIdExactOptionsDefine() throws Exception {
-    doOptionsTest(Arrays.asList("parentModel", "model"), "FxIdExactOptionsController", "FxIdExactOptionsModel");
+    configureAndComplete("FxIdExactOptionsController.java", "FxIdExactOptionsModel.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "parentModel", "model");
   }
 
   public void testFxIdGuessedOptionsRoot() throws Exception {
-    doOptionsTest(Arrays.asList("pane", "box", "model"), "FxIdGuessedOptionsController");
+    configureAndComplete("FxIdGuessedOptionsController.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "pane", "box", "model");
   }
 
   public void testFxIdGuessedOptionsNode() throws Exception {
-    doOptionsTest(Arrays.asList("pane", "node", "box", "model"), "FxIdGuessedOptionsController");
+    configureAndComplete("FxIdGuessedOptionsController.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "pane", "node", "box", "model");
   }
 
   public void testFxIdGuessedOptionsDefine() throws Exception {
-    doOptionsTest(Arrays.asList("pane", "node", "box", "model", "text", "target"), "FxIdGuessedOptionsController");
+    configureAndComplete("FxIdGuessedOptionsController.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "pane", "node", "box", "model", "text", "target");
   }
 
   public void testFxIdGuessedOptionsNested() throws Exception {
-    doOptionsTest(Arrays.asList("pane", "node", "box", "model", "text", "target"), "FxIdGuessedOptionsController");
+    configureAndComplete("FxIdGuessedOptionsController.java");
+    assertSameElements(myFixture.getLookupElementStrings(),"pane", "node", "box", "model", "text", "target");
   }
 
   public void testVariableCompletionBooleanFirst() throws Exception {
@@ -264,15 +265,12 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertOrderedEquals(myFixture.getLookupElementStrings(), expected);
   }
 
-  private void doOptionsTest(final List<String> expectedOptions, final String... javaClasses) {
+  private void configureAndComplete(final String... extraFiles) {
     final List<String> files = new ArrayList<>();
     files.add(getTestName(true) + ".fxml");
-    Arrays.stream(javaClasses).map(name -> name + ".java").forEach(files::add);
+    Collections.addAll(files, extraFiles);
     myFixture.configureByFiles(ArrayUtil.toStringArray(files));
     complete();
-
-    final Set<String> actualOptions = Arrays.stream(myItems).map(LookupElement::getLookupString).collect(Collectors.toSet());
-    assertSameElements(expectedOptions, actualOptions);
   }
 
   public void testOnlyCssAsStylesheets() throws Exception {
