@@ -205,6 +205,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
                                              : rangeMarker.getEndOffset())
                                           : myFirstErrorOffset);
     }
+    rangeMarker.dispose();
   }
 
   protected PsiElement restoreInvalidElementFromRange(@NotNull PsiFile file,

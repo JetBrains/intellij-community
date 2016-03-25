@@ -212,39 +212,38 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private void doEnter(PsiElement atCaret, Editor editor, boolean afterCompletion) throws IncorrectOperationException {
     final PsiFile psiFile = atCaret.getContainingFile();
 
-    final RangeMarker rangeMarker = createRangeMarker(atCaret);
     if (myFirstErrorOffset != Integer.MAX_VALUE) {
       editor.getCaretModel().moveToOffset(myFirstErrorOffset);
       reformat(atCaret);
       return;
     }
 
+    final RangeMarker rangeMarker = createRangeMarker(atCaret);
     reformat(atCaret);
     commit(editor);
 
-    if (mySkipEnter) {
-      return;
-    }
-    
-    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
-    for (EnterProcessor processor : afterCompletion ? ourAfterCompletionEnterProcessors : ourEnterProcessors) {
-      if(atCaret == null){
-        // Can't restore element at caret after enter processor execution!
-        break;
+    if (!mySkipEnter) {
+      atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
+      for (EnterProcessor processor : afterCompletion ? ourAfterCompletionEnterProcessors : ourEnterProcessors) {
+        if (atCaret == null) {
+          // Can't restore element at caret after enter processor execution!
+          break;
+        }
+
+        if (processor.doEnter(editor, atCaret, isModified(editor))) return;
       }
 
-      if (processor.doEnter(editor, atCaret, isModified(editor))) return;
-    }
-
-    if (!isModified(editor) && !afterCompletion) {
-      plainEnter(editor);
-    } else {
-      if (myFirstErrorOffset == Integer.MAX_VALUE) {
-        editor.getCaretModel().moveToOffset(rangeMarker.getEndOffset());
+      if (!isModified(editor) && !afterCompletion) {
+        plainEnter(editor);
       } else {
-        editor.getCaretModel().moveToOffset(myFirstErrorOffset);
+        if (myFirstErrorOffset == Integer.MAX_VALUE) {
+          editor.getCaretModel().moveToOffset(rangeMarker.getEndOffset());
+        } else {
+          editor.getCaretModel().moveToOffset(myFirstErrorOffset);
+        }
       }
     }
+    rangeMarker.dispose();
   }
 
   private static void collectAllElements(PsiElement atCaret, List<PsiElement> res, boolean recurse) {
