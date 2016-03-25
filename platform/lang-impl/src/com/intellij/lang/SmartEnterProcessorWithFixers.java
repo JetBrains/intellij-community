@@ -250,11 +250,6 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     }
   }
 
-  @Override
-  public void commit(@NotNull Editor editor) { // pull up
-    super.commit(editor);
-  }
-
   public void registerUnresolvedError(int offset) {
     if (myFirstErrorOffset > offset) {
       myFirstErrorOffset = offset;
