@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,19 +53,14 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (progress != null) {
       progress.pushState();
-      String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          return baseClass.getName();
-        }
-      });
+      String className = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
       progress.setText(className != null ?
                        PsiBundle.message("psi.search.inheritors.of.class.progress", className) :
                        PsiBundle.message("psi.search.inheritors.progress"));
     }
 
     try {
-      processInheritors(consumer, baseClass, searchScope, parameters);
+      processInheritors(parameters, consumer);
     }
     finally {
       if (progress != null) {
@@ -75,26 +70,22 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
 
   }
 
-  private static void processInheritors(@NotNull final Processor<PsiClass> consumer,
-                                           @NotNull final PsiClass baseClass,
-                                           @NotNull final SearchScope searchScope,
-                                           @NotNull final ClassInheritorsSearch.SearchParameters parameters) {
-    if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return;
+  private static boolean processInheritors(@NotNull final ClassInheritorsSearch.SearchParameters parameters,
+                                           @NotNull final Processor<PsiClass> consumer) {
+    @NotNull final PsiClass baseClass = parameters.getClassToProcess();
+    if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return true;
 
+    final SearchScope searchScope = parameters.getScope();
     Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (isJavaLangObject(baseClass)) {
-      AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
-        @Override
-        public boolean process(final PsiClass aClass) {
+      return AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).forEach(aClass -> {
           ProgressManager.checkCanceled();
           return isJavaLangObject(aClass) || consumer.process(aClass);
-        }
       });
-      return;
     }
 
     final Ref<PsiClass> currentBase = Ref.create(null);
-    final Stack<PsiAnchor> stack = new Stack<PsiAnchor>();
+    final Stack<PsiAnchor> stack = new Stack<>();
     final Set<PsiAnchor> processed = ContainerUtil.newTroveSet();
 
     final Processor<PsiClass> processor = new ReadActionProcessor<PsiClass>() {
@@ -126,11 +117,8 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       }
     };
     
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
+    ApplicationManager.getApplication().runReadAction(() -> {
         stack.push(PsiAnchor.create(baseClass));
-      }
     });
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
     
@@ -140,35 +128,21 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       final PsiAnchor anchor = stack.pop();
       if (!processed.add(anchor)) continue;
 
-      PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            return (PsiClass)anchor.retrieve();
-          }
-        });
+      PsiClass psiClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)anchor.retrieve());
       if (psiClass == null) continue;
 
       currentBase.set(psiClass);
-      if (!DirectClassInheritorsSearch.search(psiClass, projectScope, parameters.isIncludeAnonymous(), false).forEach(processor)) return;
+      if (!DirectClassInheritorsSearch.search(psiClass, projectScope, parameters.isIncludeAnonymous(), false).forEach(processor)) return false;
     }
+    return true;
   }
 
-  private static boolean isJavaLangObject(@NotNull final PsiClass baseClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return baseClass.isValid() && CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName());
-      }
-    });
+  static boolean isJavaLangObject(@NotNull final PsiClass baseClass) {
+    return ApplicationManager.getApplication().runReadAction(
+      (Computable<Boolean>)() -> baseClass.isValid() && CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName()));
   }
 
   private static boolean isFinal(@NotNull final PsiClass baseClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return Boolean.valueOf(baseClass.hasModifierProperty(PsiModifier.FINAL));
-      }
-    }).booleanValue();
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> baseClass.hasModifierProperty(PsiModifier.FINAL));
   }
-
 }

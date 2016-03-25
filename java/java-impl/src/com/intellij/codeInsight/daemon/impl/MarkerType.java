@@ -60,7 +60,6 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class MarkerType {
-
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
   @NotNull private final String myDebugName;

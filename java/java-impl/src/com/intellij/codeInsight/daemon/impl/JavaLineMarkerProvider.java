@@ -40,7 +40,6 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -124,9 +123,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo<PsiElement>(element, element.getTextRange(), null, Pass.UPDATE_ALL,
-                                                               FunctionUtil.<Object, String>nullConstant(), null,
-                                                               GutterIconRenderer.Alignment.RIGHT);
+          LineMarkerInfo info = new LineMarkerInfo<>(element, element.getTextRange(), null, Pass.UPDATE_ALL,
+                                                     FunctionUtil.<Object, String>nullConstant(), null,
+                                                     GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
@@ -165,7 +164,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Map<PsiClass, PsiClass> subClassCache = FindSuperElementsHelper.createSubClassCache();
 
-    Collection<PsiMethod> methods = new THashSet<PsiMethod>();
+    Collection<PsiMethod> methods = new THashSet<>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
@@ -264,8 +263,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   private void collectOverridingMethods(@NotNull final Collection<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
     if (!myOverriddenOption.isEnabled() && !myImplementedOption.isEnabled()) return;
-    final Set<PsiMethod> overridden = new HashSet<PsiMethod>();
-    Set<PsiClass> classes = new THashSet<PsiClass>();
+    final Set<PsiMethod> overridden = new HashSet<>();
+    Set<PsiClass> classes = new THashSet<>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       final PsiClass parentClass = method.getContainingClass();
@@ -275,17 +274,14 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
 
     for (final PsiClass aClass : classes) {
-      AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
-        @Override
-        public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-          ProgressManager.checkCanceled();
+      AllOverridingMethodsSearch.search(aClass).forEach(pair -> {
+        ProgressManager.checkCanceled();
 
-          final PsiMethod superMethod = pair.getFirst();
-          if (methods.remove(superMethod)) {
-            overridden.add(superMethod);
-          }
-          return !methods.isEmpty();
+        final PsiMethod superMethod = pair.getFirst();
+        if (methods.remove(superMethod)) {
+          overridden.add(superMethod);
         }
+        return !methods.isEmpty();
       });
     }
 
@@ -354,12 +350,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     @NotNull
     @Override
     public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos) {
-      return new Function<PsiElement, String>() {
-        @Override
-        public String fun(PsiElement element) {
-          return "Multiple method overrides";
-        }
-      };
+      return (Function<PsiElement, String>)element -> "Multiple method overrides";
     }
 
     @Override

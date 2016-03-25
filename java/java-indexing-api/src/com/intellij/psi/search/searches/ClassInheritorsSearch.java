@@ -39,12 +39,12 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
   public static class SearchParameters {
-    private final PsiClass myClass;
-    private final SearchScope myScope;
+    @NotNull private final PsiClass myClass;
+    @NotNull private final SearchScope myScope;
     private final boolean myCheckDeep;
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
-    private final Condition<String> myNameCondition;
+    @NotNull private final Condition<String> myNameCondition;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
       this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.alwaysTrue());
