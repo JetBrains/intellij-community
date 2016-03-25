@@ -129,6 +129,14 @@ public class GrReferenceResolveRunner {
       return true;
     }
 
+    if (qualifierType instanceof PsiCapturedWildcardType) {
+      PsiWildcardType wildcard = ((PsiCapturedWildcardType)qualifierType).getWildcard();
+      if (wildcard.isExtends()) {
+        PsiType bound = wildcard.getExtendsBound();
+        return processQualifierType(bound, state);
+      }
+    }
+
     if (qualifierType instanceof GrTraitType) {
       return processTraitType((GrTraitType)qualifierType, state);
     }
