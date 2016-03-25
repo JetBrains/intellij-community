@@ -58,30 +58,30 @@ class CompletionFileLogger(private val installationUID: String,
         logFileManager.println(line)
     }
 
-    private fun getRecentlyAddedLookupItems(lookup: LookupImpl): List<LookupEntryInfo> {
-        val newElements = mutableListOf<LookupElement>()
-        lookup.items.forEach {
-            if (getElementId(it) == null) {
-                registerElement(it)
-                newElements.add(it)
-            }
+    private fun getRecentlyAddedLookupItems(items: List<LookupElement>): List<LookupElement> {
+        val newElements = items.filter { getElementId(it) == null }
+        newElements.forEach {
+            registerElement(it)
         }
+        return newElements
+    }
 
-        val relevanceObjects = lookup.getRelevanceObjects(newElements, false)
-        val newInfos = newElements.map {
+    fun List<LookupElement>.toLookupInfos(lookup: LookupImpl): List<LookupEntryInfo> {
+        val relevanceObjects = lookup.getRelevanceObjects(this, false)
+        return this.map {
             val id = getElementId(it)!!
             val relevanceMap = relevanceObjects[it]?.map { Pair(it.first, it.second?.toString()) }?.toMap()
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
         }
-
-        return newInfos
     }
-
+    
     override fun completionStarted(lookup: LookupImpl, isExperimentPerformed: Boolean, experimentVersion: Int) {
-        lookup.items.forEach { registerElement(it) }
-        val relevanceObjects = lookup.getRelevanceObjects(lookup.items, false)
+        val lookupItems = lookup.items
+        
+        lookupItems.forEach { registerElement(it) }
+        val relevanceObjects = lookup.getRelevanceObjects(lookupItems, false)
 
-        val lookupEntryInfos = lookup.items.map {
+        val lookupEntryInfos = lookupItems.map {
             val id = getElementId(it)!!
             val relevanceMap = relevanceObjects[it]?.map { Pair(it.first, it.second?.toString()) }?.toMap()
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
@@ -97,27 +97,33 @@ class CompletionFileLogger(private val installationUID: String,
     }
 
     override fun afterCharTyped(c: Char, lookup: LookupImpl) {
-        val newInfos = getRecentlyAddedLookupItems(lookup)
-        val ids = lookup.items.map { getElementId(it)!! }
-        val currentPosition = lookup.items.indexOf(lookup.currentItem)
+        val lookupItems = lookup.items
+        val newItems = getRecentlyAddedLookupItems(lookupItems).toLookupInfos(lookup)
+        
+        val ids = lookupItems.map { getElementId(it)!! }
+        val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
-        val event = TypeEvent(installationUID, completionUID, ids, newInfos, currentPosition)
+        val event = TypeEvent(installationUID, completionUID, ids, newItems, currentPosition)
         logEvent(event)
     }
 
     override fun downPressed(lookup: LookupImpl) {
-        val newInfos = getRecentlyAddedLookupItems(lookup)
-        val ids = if (newInfos.isNotEmpty()) lookup.items.map { getElementId(it)!! } else emptyList<Int>()
-        val currentPosition = lookup.items.indexOf(lookup.currentItem)
+        val lookupItems = lookup.items
+        
+        val newInfos = getRecentlyAddedLookupItems(lookupItems).toLookupInfos(lookup)
+        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList<Int>()
+        val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = DownPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
         logEvent(event)
     }
 
     override fun upPressed(lookup: LookupImpl) {
-        val newInfos = getRecentlyAddedLookupItems(lookup)
-        val ids = if (newInfos.isNotEmpty()) lookup.items.map { getElementId(it)!! } else emptyList<Int>()
-        val currentPosition = lookup.items.indexOf(lookup.currentItem)
+        val lookupItems = lookup.items
+        
+        val newInfos = getRecentlyAddedLookupItems(lookupItems).toLookupInfos(lookup)
+        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList<Int>()
+        val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = UpPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
         logEvent(event)
@@ -143,9 +149,11 @@ class CompletionFileLogger(private val installationUID: String,
     }
     
     override fun afterBackspacePressed(lookup: LookupImpl) {
-        val newInfos = getRecentlyAddedLookupItems(lookup)
-        val ids = lookup.items.map { getElementId(it)!! }
-        val currentPosition = lookup.items.indexOf(lookup.currentItem)
+        val lookupItems = lookup.items
+        
+        val newInfos = getRecentlyAddedLookupItems(lookupItems).toLookupInfos(lookup)
+        val ids = lookupItems.map { getElementId(it)!! }
+        val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = BackspaceEvent(installationUID, completionUID, ids, newInfos, currentPosition)
         logEvent(event)
