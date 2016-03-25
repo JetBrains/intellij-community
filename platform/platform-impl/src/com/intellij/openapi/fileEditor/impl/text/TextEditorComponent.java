@@ -288,11 +288,13 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
      * We can reuse this runnable to decrease number of allocated object.
      */
     private final Runnable myUpdateRunnable;
+    private boolean myUpdateScheduled;
 
     public MyDocumentListener() {
       myUpdateRunnable = new Runnable() {
         @Override
         public void run() {
+          myUpdateScheduled = false;
           updateModifiedProperty();
         }
       };
@@ -300,8 +302,11 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
 
     @Override
     public void documentChanged(DocumentEvent e) {
-      // document's timestamp is changed later on undo or PSI changes
-      ApplicationManager.getApplication().invokeLater(myUpdateRunnable);
+      if (!myUpdateScheduled) {
+        // document's timestamp is changed later on undo or PSI changes
+        ApplicationManager.getApplication().invokeLater(myUpdateRunnable);
+        myUpdateScheduled = true;
+      }
     }
   }
 
