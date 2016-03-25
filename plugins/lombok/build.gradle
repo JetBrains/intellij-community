@@ -1,5 +1,5 @@
 plugins {
-    id "org.jetbrains.intellij" version "0.0.39"
+    id "org.jetbrains.intellij" version "0.0.43"
     id "de.undercouch.download" version '2.1.0'
 }
 
@@ -125,7 +125,6 @@ tasks.withType(JavaCompile) {
         options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
     }
 }
-compileJava.dependsOn(generatePsiAndParser)
 
 plugins.withType(JavaPlugin) {
     test {
@@ -165,3 +164,5 @@ intellij {
         password System.properties['intellij.publish.password']
     }
 }
+
+compileJava.dependsOn(generatePsiAndParser)

@@ -199,15 +199,18 @@
 		<ul>
 		<li>0.10
 				<ol>
+				     <li>Overall significant performance optimizations</li>
 				     <li>Fixed #88: Delegating to class with generics using @Delegate annotation </li>
 				     <li>Fixed #136: "Cannot infer arguments" with @RequiredArgsConstructor </li>
-
 				     <li>Fixed #157: Intellij fails to infer type for constructor defined with @RequiredArgsConstructor </li>
-				     <li>Fixed #176: Unchecked warning when using static constructor for @Data and @Value on parameterized class</li>
+				     <li>Fixed #176: Unchecked warning when using static constructor for @Data and @Value on parametrized class</li>
+             <li>Fixed #180: Low performance of @Builder analysis</li>
 
 				     <li>Fixed #142: IDE highlights val as an error if it had reparsed code before the line was completed</li>
 				     <li>Fixed #168: val does not work with generic method calls as the initializer expression</li>
 				     <li>Fixed #183: val can not work when method has Generic return</li>
+
+				     <!--<li>Fixed #184: Linter suggests to add @EqualsAndHashCode to declare callSuper, but already overriden</li>-->
 				</ol>
 			</li>
 		<li>0.9.8
