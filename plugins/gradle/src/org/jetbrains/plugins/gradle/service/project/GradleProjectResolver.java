@@ -352,6 +352,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     mergeSourceSetContentRoots(moduleMap, resolverCtx);
     mergeLibraryAndModuleDependencyData(projectDataNode, gradleHomeDir, gradleVersion);
+    projectDataNode.putUserData(RESOLVED_SOURCE_SETS, null);
+    projectDataNode.putUserData(MODULES_OUTPUTS, null);
+    projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, null);
 
     // ensure unique library names
     Collection<DataNode<LibraryData>> libraries = ExternalSystemApiUtil.getChildren(projectDataNode, ProjectKeys.LIBRARY);
