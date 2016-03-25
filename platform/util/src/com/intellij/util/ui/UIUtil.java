@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.WeakHashMap;
+import com.sun.java.swing.plaf.gtk.GTKLookAndFeel;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -2544,11 +2545,25 @@ public class UIUtil {
     }
   }
 
+  private static String systemLaFClassName;
+
   public static String getSystemLookAndFeelClassName() {
-    // Force GTK LaF on Linux to let it retrieve system font settings
-    // with proper font scale based on Xft.dpi
-    return SystemInfo.isLinux ? "com.sun.java.swing.plaf.gtk.GTKLookAndFeel" :
-           UIManager.getSystemLookAndFeelClassName();
+    if (systemLaFClassName != null) {
+      return systemLaFClassName;
+    }
+    else if (SystemInfo.isLinux) {
+      // Normally, GTK LaF is considered "system" when:
+      // 1) Gnome session is run
+      // 2) gtk lib is available
+      // Here we weaken the requirements to only 2) and force GTK LaF
+      // installation in order to let it properly scale default font
+      // based on Xft.dpi value.
+      LookAndFeel laf = new GTKLookAndFeel();
+      if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
+        return systemLaFClassName = laf.getClass().getName();
+      }
+    }
+    return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 
   public static void initDefaultLAF() {
