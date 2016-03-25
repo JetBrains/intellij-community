@@ -54,12 +54,10 @@ public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider
                                                         @NotNull final List<PyStringFormatParser.SubstitutionChunk> chunks,
                                                         boolean isPercent) {
     final PsiReference[] result = new PsiReference[chunks.size()];
-    if (!element.isDocString()) {
       for (int i = 0; i < chunks.size(); i++) {
         final PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
         result[i] = new PySubstitutionChunkReference(element, chunk, i, isPercent);
       }
-    }
     return result;
   }
 }

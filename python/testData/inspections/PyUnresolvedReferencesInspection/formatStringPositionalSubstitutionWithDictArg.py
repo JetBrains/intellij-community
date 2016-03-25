@@ -1,0 +1,1 @@
+print('<warning descr="Unresolved reference '{}'">{}</warning>'.format(foo='foo'))

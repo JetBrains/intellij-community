@@ -1,0 +1,1 @@
+print("{foo}".format(**dict({'foo': 'bar'})))

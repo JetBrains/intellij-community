@@ -546,17 +546,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testPropertyNotListedInSlots() {
     doTest();
   }
-
-  // PY-2748
-  public void testFormatStringPackedDictCall() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testFormatStringPackedDict() {
-    doTest();
-  }
-
+  
   // PY-2748
   public void testFormatStringPositional() {
     doTest();
@@ -669,6 +659,42 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-18115
   public void testPercentStringWithDictCall() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringPositionalSubstitutionWithDictArg() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithCallArgument() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithEmptyDictArg() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithDictLiteralExprInsideDictCall() {
+    doTest();
+  }
+  
+  // PY-18115
+  public void testFormatStringWithDictArgWithCallExprKey() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithPackedAndNonPackedArgs() {
+    doTest();
+  }
+  
+  
+  // PY-18950
+  public void testPercentStringKeywordArgumentWithReferenceKeyDictArgument() {
     doTest();
   }
 
