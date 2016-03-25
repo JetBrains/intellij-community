@@ -507,30 +507,7 @@ public class PopupChooserBuilder {
 
     private MyListWrapper(final JList list) {
       super(UIUtil.isUnderAquaLookAndFeel() ? 0 : -1);
-      JBViewport viewport = new JBViewport() {
-        @Override
-        protected LayoutManager createLayoutManager() {
-          return new ViewportLayout() {
-            @Override
-            public Dimension preferredLayoutSize(Container parent) {
-              int size = list.getModel().getSize();
-              if (size >= 0 && size <= 20) {
-                return list.getPreferredSize();
-              } else {
-                final Dimension sz = super.preferredLayoutSize(parent);
-                final Point p = RelativePoint.getNorthWestOf(myList).getScreenPoint();
-                final Rectangle screen = ScreenUtil.getScreenRectangle(p);
-
-                final int bordersEtc = 20;
-                final int maxWidth = Math.abs(screen.x + screen.width - p.x) - 2 * bordersEtc;
-                return new Dimension(Math.min(maxWidth, sz.width) + bordersEtc, sz.height + list.getCellBounds(0, 0).height / 2);
-              }
-            }
-          };
-        }
-      };
       list.setVisibleRowCount(15);
-      setViewport(viewport);
       setViewportView(list);
 
 
