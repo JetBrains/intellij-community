@@ -153,4 +153,15 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
 }
 
 
-
+//fun main(args: Array<String>) {
+//    val inputStream = FileInputStream("bad_one.txt")
+    
+//    val good = FileOutputStream("good.txt")
+//    val bad = FileOutputStream("bad.txt")
+    
+//    val good = System.out
+//    val bad = System.err
+    
+//    val separator = SessionsInputSeparator(inputStream, good, bad)
+//    separator.processInput()
+//}
