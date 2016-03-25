@@ -607,6 +607,7 @@ public class HighlightMethodUtil {
     CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, info, fixRange);
     WrapArrayToArraysAsListFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
     WrapLongWithMathToIntExactFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
+    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
     PermuteArgumentsFix.registerFix(info, methodCall, candidates, fixRange);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), info);
     registerChangeParameterClassFix(methodCall, list, info);
@@ -694,6 +695,7 @@ public class HighlightMethodUtil {
     CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, info, fixRange);
     WrapArrayToArraysAsListFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
     WrapLongWithMathToIntExactFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
+    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
     PermuteArgumentsFix.registerFix(info, methodCall, candidates, fixRange);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), info);
     registerChangeParameterClassFix(methodCall, list, info);
@@ -729,6 +731,7 @@ public class HighlightMethodUtil {
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapArrayToArraysAsListFix.REGISTAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapLongWithMathToIntExactFix.REGISTAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
+    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
     registerChangeMethodSignatureFromUsageIntentions(methodCandidates, list, highlightInfo, fixRange);
     RemoveRedundantArgumentsFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
