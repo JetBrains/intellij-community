@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -84,13 +83,17 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   private static void collectSubclassesDescriptors(PsiType psiType, @NotNull final List<XmlElementDescriptor> descriptors) {
     final PsiClass aClass = PsiUtil.resolveClassInType(psiType);
     if (aClass != null) {
-      ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass aClass) {
-          descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
+      ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true, true, false)
+        .forEach(psiClass -> {
+          addElementDescriptor(descriptors, psiClass);
           return true;
-        }
-      });
+        });
+      addElementDescriptor(descriptors, aClass);
+    }
+  }
+
+  private static void addElementDescriptor(@NotNull List<XmlElementDescriptor> descriptors, @NotNull PsiClass aClass) {
+    if (!PsiUtil.isAbstractClass(aClass) && !PsiUtil.isInnerClass(aClass)) {
       descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
     }
   }

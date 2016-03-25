@@ -178,6 +178,13 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "disable");
   }
 
+  public void testPropertyTagSubclass() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertContainsElements(myFixture.getLookupElementStrings(), "Color", "ImagePattern", "LinearGradient", "RadialGradient");
+    assertDoesntContain(myFixture.getLookupElementStrings(), "Paint");
+  }
+
   public void testSubclassesAndDefaultProperty() throws Exception {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     complete();
