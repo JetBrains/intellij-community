@@ -45,4 +45,8 @@ public class DataTest extends LombokParsingTestCase {
     // Test for issue #9
     doTest();
   }
+
+  public void testDataWithGeneric176() throws IOException {
+    doTest();
+  }
 }

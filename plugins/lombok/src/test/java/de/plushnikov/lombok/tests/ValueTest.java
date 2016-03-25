@@ -51,4 +51,8 @@ public class ValueTest extends LombokParsingTestCase {
   public void testValueAndWitherAndRequiredConstructor() throws IOException {
     doTest();
   }
+
+  public void testValueWithGeneric176() throws IOException {
+    doTest();
+  }
 }
