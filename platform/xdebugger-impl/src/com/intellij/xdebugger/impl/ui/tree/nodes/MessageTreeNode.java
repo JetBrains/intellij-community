@@ -117,7 +117,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   public static List<MessageTreeNode> createMessages(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull String errorMessage,
                                                      XDebuggerTreeNodeHyperlink link,
                                                      final Icon icon, final SimpleTextAttributes attributes) {
-    List<MessageTreeNode> messages = new SmartList<MessageTreeNode>();
+    List<MessageTreeNode> messages = new SmartList<>();
     final List<String> lines = StringUtil.split(errorMessage, "\n", true, false);
     for (int i = 0; i < lines.size(); i++) {
       messages.add(new MessageTreeNode(tree, parent, lines.get(i), attributes,
@@ -137,7 +137,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
                                  XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
     }
 
-    List<Object> objects = new ArrayList<Object>();
+    List<Object> objects = new ArrayList<>();
     int prev = 0;
     do {
       if (matcher.start() != prev) {

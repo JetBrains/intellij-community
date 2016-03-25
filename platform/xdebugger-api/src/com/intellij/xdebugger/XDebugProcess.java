@@ -75,7 +75,7 @@ public abstract class XDebugProcess {
 
   /**
    * Called when {@link XDebugSession} is initialized and breakpoints are registered in
-   * {@link com.intellij.xdebugger.breakpoints.XBreakpointHandler}
+   * {@link XBreakpointHandler}
    */
   public void sessionInitialized() {
   }
@@ -164,8 +164,8 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Implement {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
-   * @return {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} instance
+   * Implement {@link XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
+   * @return {@link XSmartStepIntoHandler} instance
    */
   @Nullable
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
@@ -212,7 +212,7 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
+   * Resume execution and call {@link XDebugSession#positionReached(XSuspendContext)}
    * when <code>position</code> is reached.
    * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead
    *

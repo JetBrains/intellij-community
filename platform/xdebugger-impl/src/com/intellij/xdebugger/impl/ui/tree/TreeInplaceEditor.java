@@ -46,7 +46,7 @@ import java.util.List;
 public abstract class TreeInplaceEditor implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor");
   private JComponent myInplaceEditorComponent;
-  private final List<Runnable> myRemoveActions = new ArrayList<Runnable>();
+  private final List<Runnable> myRemoveActions = new ArrayList<>();
 
   protected abstract JComponent createInplaceEditorComponent();
 

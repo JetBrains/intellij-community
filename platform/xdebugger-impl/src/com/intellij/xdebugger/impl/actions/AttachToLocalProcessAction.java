@@ -112,13 +112,12 @@ public class AttachToLocalProcessAction extends AnAction {
   public static List<AttachItem> collectAttachItems(@NotNull final Project project, 
                                                     @NotNull ProcessInfo[] processList,
                                                     @NotNull XLocalAttachDebuggerProvider... providers) {
-    MultiMap<XLocalAttachGroup, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> groupWithItems
-      = new MultiMap<XLocalAttachGroup, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>();
+    MultiMap<XLocalAttachGroup, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> groupWithItems = new MultiMap<>();
     
     UserDataHolderBase dataHolder = new UserDataHolderBase();
     for (ProcessInfo eachInfo : processList) {
 
-      MultiMap<XLocalAttachGroup, XLocalAttachDebugger> groupsWithDebuggers = new MultiMap<XLocalAttachGroup, XLocalAttachDebugger>();
+      MultiMap<XLocalAttachGroup, XLocalAttachDebugger> groupsWithDebuggers = new MultiMap<>();
       for (XLocalAttachDebuggerProvider eachProvider : providers) {
         groupsWithDebuggers.putValues(eachProvider.getAttachGroup(), eachProvider.getAvailableDebuggers(project, eachInfo, dataHolder));
       }
@@ -126,18 +125,18 @@ public class AttachToLocalProcessAction extends AnAction {
       for (XLocalAttachGroup eachGroup : groupsWithDebuggers.keySet()) {
         Collection<XLocalAttachDebugger> debuggers = groupsWithDebuggers.get(eachGroup);
         if (!debuggers.isEmpty()) {
-          groupWithItems.putValue(eachGroup, Pair.create(eachInfo, new ArrayList<XLocalAttachDebugger>(debuggers)));
+          groupWithItems.putValue(eachGroup, Pair.create(eachInfo, new ArrayList<>(debuggers)));
         }
       }
     }
 
-    ArrayList<XLocalAttachGroup> sortedGroups = new ArrayList<XLocalAttachGroup>(groupWithItems.keySet());
+    ArrayList<XLocalAttachGroup> sortedGroups = new ArrayList<>(groupWithItems.keySet());
     Collections.sort(sortedGroups, (a, b) -> a.getOrder() - b.getOrder());
 
-    List<AttachItem> currentItems = new ArrayList<AttachItem>();
+    List<AttachItem> currentItems = new ArrayList<>();
     for (final XLocalAttachGroup eachGroup : sortedGroups) {
       List<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> sortedItems
-        = new ArrayList<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>(groupWithItems.get(eachGroup));
+        = new ArrayList<>(groupWithItems.get(eachGroup));
       Collections.sort(sortedItems, (a, b) -> eachGroup.compare(project, a.first, b.first));
 
       boolean first = true;
@@ -147,7 +146,7 @@ public class AttachToLocalProcessAction extends AnAction {
       }
     }
 
-    List<AttachItem> currentHistoryItems = new ArrayList<AttachItem>();
+    List<AttachItem> currentHistoryItems = new ArrayList<>();
     List<HistoryItem> history = getHistory(project);
     for (int i = history.size() - 1; i >= 0; i--) {
       HistoryItem eachHistoryItem = history.get(i);
@@ -183,7 +182,7 @@ public class AttachToLocalProcessAction extends AnAction {
   public static void addToHistory(@NotNull Project project, @NotNull AttachItem item) {
     LinkedHashMap<String, HistoryItem> history = project.getUserData(HISTORY_KEY);
     if (history == null) {
-      project.putUserData(HISTORY_KEY, history = new LinkedHashMap<String, HistoryItem>());
+      project.putUserData(HISTORY_KEY, history = new LinkedHashMap<>());
     }
     ProcessInfo processInfo = item.getProcessInfo();
     history.remove(processInfo.getCommandLine());
@@ -198,7 +197,7 @@ public class AttachToLocalProcessAction extends AnAction {
   public static List<HistoryItem> getHistory(@NotNull Project project) {
     LinkedHashMap<String, HistoryItem> history = project.getUserData(HISTORY_KEY);
     return history == null ? Collections.emptyList()
-                           : Collections.unmodifiableList(new ArrayList<HistoryItem>(history.values()));
+                           : Collections.unmodifiableList(new ArrayList<>(history.values()));
   }
 
   public static class HistoryItem {

@@ -52,9 +52,9 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
   private final BreakpointItemsTreeController myTreeController;
-  private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<XBreakpointGroupingRule>();
+  private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<>();
 
-  private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
+  private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(this::updateChildren, 100);
   private final FavoritesManager myFavoritesManager;
@@ -91,7 +91,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   private void updateChildren() {
     if (myProject.isDisposed()) return;
     myChildren.clear();
-    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    List<BreakpointItem> items = new ArrayList<>();
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       provider.provideBreakpointItems(myProject, items);
     }
@@ -111,7 +111,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   }
 
   private void replicate(DefaultMutableTreeNode source, AbstractTreeNode destination, final List<AbstractTreeNode<Object>> destinationChildren) {
-    final ArrayList<AbstractTreeNode<Object>> copyChildren = new ArrayList<AbstractTreeNode<Object>>();
+    final ArrayList<AbstractTreeNode<Object>> copyChildren = new ArrayList<>();
     AbstractTreeNode<Object> copy = new AbstractTreeNode<Object>(myProject, source.getUserObject()) {
       @NotNull
       @Override

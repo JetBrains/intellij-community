@@ -93,7 +93,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
 
   private List<String> getMessages(int category) {
     final List<String> messages = myMessages.get(category);
-    return messages == null? Collections.<String>emptyList() : messages;
+    return messages == null ? Collections.emptyList() : messages;
   }
     
   private static String buildMessage(List<String> messages) {

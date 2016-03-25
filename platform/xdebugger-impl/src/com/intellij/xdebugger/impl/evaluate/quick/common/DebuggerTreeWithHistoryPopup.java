@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
 
   public static <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D initialItem, @NotNull Editor editor,
                                        @NotNull Point point, @NotNull Project project, Runnable hideRunnable) {
-    new DebuggerTreeWithHistoryPopup<D>(initialItem, creator, editor, point, project, hideRunnable).updateTree(initialItem);
+    new DebuggerTreeWithHistoryPopup<>(initialItem, creator, editor, point, project, hideRunnable).updateTree(initialItem);
   }
 
   private TreeModelListener createTreeListener(final Tree tree) {

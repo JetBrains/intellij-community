@@ -65,7 +65,7 @@ import java.util.List;
  * @author nik
  */
 public class XLineBreakpointManager {
-  private final BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<XLineBreakpointImpl, Document>();
+  private final BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<>();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
   private final XDependentBreakpointManager myDependentBreakpointManager;
@@ -98,7 +98,7 @@ public class XLineBreakpointManager {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          List<XBreakpoint<?>> toRemove = new SmartList<XBreakpoint<?>>();
+          List<XBreakpoint<?>> toRemove = new SmartList<>();
           for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
             if (breakpoint.getFileUrl().equals(event.getFile().getUrl())) {
               toRemove.add(breakpoint);
@@ -167,7 +167,7 @@ public class XLineBreakpointManager {
     }
 
     TIntHashSet lines = new TIntHashSet();
-    List<XBreakpoint<?>> toRemove = new SmartList<XBreakpoint<?>>();
+    List<XBreakpoint<?>> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
       if (!breakpoint.isValid() || !lines.add(breakpoint.getLine())) {
