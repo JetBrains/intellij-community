@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -55,11 +56,8 @@ public class PlatformDocumentationUtil {
   @Nullable
   public static String getDocUrl(@NotNull VirtualFile root, String relPath) {
     if (root.getFileSystem() instanceof HttpFileSystem) {
-      String url = root.getUrl();
-      if (url.toLowerCase(Locale.getDefault()).endsWith("/index.html")) {
-        url = url.substring(0, url.length() - 10);
-      }
-      else if (!url.endsWith("/")) {
+      String url = StringUtil.trimEnd(root.getUrl(), "/index.html", true);
+      if (!url.endsWith("/")) {
         url += "/";
       }
       return url + relPath;

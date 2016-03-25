@@ -632,10 +632,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       if (aClass != null) {
         ClassInfo info = findUrlForClass(aClass);
         if (info != null) {
-          urls = info.externalDocUrls;
-          for (int i = 0; i < urls.size(); i++) {
-            urls.set(i, urls.get(i) + "#" + field.getName());
-          }
+          urls = ContainerUtil.map(info.externalDocUrls, (url) -> url + "#" + field.getName());
         }
       }
     }
@@ -672,10 +669,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       return null;
     }
     else {
-      for (int i = 0; i < urls.size(); i++) {
-        urls.set(i, FileUtil.toSystemIndependentName(urls.get(i)));
-      }
-      return urls;
+      return ContainerUtil.map(urls, FileUtil::toSystemIndependentName);
     }
   }
   
@@ -938,7 +932,9 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   
   private static class ClassInfo {
     private final boolean isInJdk;
+    /** These should be used to fetch documentation in IDEA code */
     private final @NotNull List<String> internalDocUrls;
+    /** These are for viewing documentation in browser (jar:// urls here are replaced with http:// urls provided by built-in web server) */
     private final @NotNull List<String> externalDocUrls;
 
     private ClassInfo(boolean jdk, @NotNull List<String> docUrls) {
