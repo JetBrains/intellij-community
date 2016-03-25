@@ -1,13 +1,6 @@
 language: java
 sudo: false
 
-before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-cache:
-  directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-
 jdk:
   - oraclejdk8
 
@@ -19,7 +12,7 @@ env:
 
 before_install:
  - chmod +x gradlew
- - pip install codecov
+ - pip install --user codecov
 
 after_success:
   - codecov
