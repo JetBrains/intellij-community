@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -44,22 +43,11 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler");
-  protected static final NotNullLazyKey<HashSet<Language>, PsiFile> LANGUAGE_OVERRIDE = NotNullLazyKey.create(
-    "overrideEnterAfterUnmatchedBraceHandler",
-    new NotNullFunction<PsiFile, HashSet<Language>>() {
-      @NotNull
-      @Override
-      public HashSet<Language> fun(PsiFile holder) {
-        return new HashSet<Language>();
-      }
-    });
 
   @Override
   public Result preprocessEnter(@NotNull final PsiFile file,
@@ -93,7 +81,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @return true, if handler is in charge
    */
   public boolean isApplicable(@NotNull PsiFile file, int caretOffset) {
-    return !LANGUAGE_OVERRIDE.getValue(file).contains(PsiUtilCore.getLanguageAtOffset(file, caretOffset));
+    return true;
   }
 
   /**
