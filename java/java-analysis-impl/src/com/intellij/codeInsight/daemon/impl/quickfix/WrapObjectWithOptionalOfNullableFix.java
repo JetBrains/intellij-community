@@ -157,7 +157,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
     }
 
     @Override
-    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, final PsiElement context) {
+    public boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context) {
       return parameterType.isConvertibleFrom(exprType) || areConvertible(exprType, parameterType);
     }
 
