@@ -48,9 +48,9 @@ class GitLogRecord {
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
   private static final String UTF_8 = "UTF-8";
 
-  private final Map<GitLogParser.GitLogOption, String> myOptions;
-  private final List<String> myPaths;
-  private final List<GitLogStatusInfo> myStatusInfo;
+  @NotNull private final Map<GitLogParser.GitLogOption, String> myOptions;
+  @NotNull private final List<String> myPaths;
+  @NotNull private final List<GitLogStatusInfo> myStatusInfo;
   private final boolean mySupportsRawBody;
 
   private GitHandler myHandler;
@@ -65,6 +65,7 @@ class GitLogRecord {
     mySupportsRawBody = supportsRawBody;
   }
 
+  @NotNull
   private List<String> getPaths() {
     return myPaths;
   }
@@ -75,7 +76,7 @@ class GitLogRecord {
   }
 
   @NotNull
-  public List<FilePath> getFilePaths(VirtualFile root) throws VcsException {
+  public List<FilePath> getFilePaths(@NotNull VirtualFile root) throws VcsException {
     List<FilePath> res = new ArrayList<FilePath>();
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
@@ -97,42 +98,52 @@ class GitLogRecord {
   }
 
   // trivial access methods
+  @NotNull
   String getHash() {
     return lookup(HASH);
   }
 
+  @NotNull
   String getAuthorName() {
     return decode(lookup(AUTHOR_NAME));
   }
 
+  @NotNull
   String getAuthorEmail() {
     return lookup(AUTHOR_EMAIL);
   }
 
+  @NotNull
   String getCommitterName() {
     return decode(lookup(COMMITTER_NAME));
   }
 
+  @NotNull
   String getCommitterEmail() {
     return lookup(COMMITTER_EMAIL);
   }
 
+  @NotNull
   String getSubject() {
     return decode(lookup(SUBJECT));
   }
 
+  @NotNull
   String getBody() {
     return decode(lookup(BODY));
   }
 
+  @NotNull
   String getRawBody() {
     return decode(lookup(RAW_BODY));
   }
 
+  @NotNull
   String getEncoding() {
     return lookup(ENCODING);
   }
 
+  @NotNull
   String getShortenedRefLog() {
     return lookup(SHORT_REF_LOG_SELECTOR);
   }
@@ -188,12 +199,14 @@ class GitLogRecord {
     return ((getSubject() + "\n\n" + getBody()).trim());
   }
 
+  @NotNull
   String[] getParentsHashes() {
     final String parents = lookup(PARENTS);
     if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 
+  @NotNull
   public Collection<String> getRefs() {
     final String decorate = myOptions.get(REF_NAMES);
     return parseRefNames(decorate);
@@ -260,7 +273,8 @@ class GitLogRecord {
     return new String(raw);
   }
 
-  public List<Change> parseChanges(Project project, VirtualFile vcsRoot) throws VcsException {
+  @NotNull
+  public List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) throws VcsException {
     return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), Arrays.asList(getParentsHashes()));
   }
 
