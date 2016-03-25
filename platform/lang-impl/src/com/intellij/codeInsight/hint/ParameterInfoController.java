@@ -157,6 +157,10 @@ public class ParameterInfoController implements Disposable {
     return array;
   }
 
+  public static boolean isShownForEditor(@NotNull Editor editor) {
+    return !getAllControllers(editor).isEmpty();
+  }
+
   public static boolean isAlreadyShown(Editor editor, int lbraceOffset) {
     return findControllerAtOffset(editor, lbraceOffset) != null;
   }

@@ -40,6 +40,8 @@ public class PrevNextParameterHandler extends EditorActionHandler {
 
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    if (!ParameterInfoController.isShownForEditor(editor)) return false;
+
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
