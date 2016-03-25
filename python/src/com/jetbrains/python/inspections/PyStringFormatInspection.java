@@ -263,7 +263,7 @@ public class PyStringFormatInspection extends PyInspection {
         final PyKeyValueExpression[] expressions = ((PyDictLiteralExpression)pyElement).getElements();
         if (myUsedMappingKeys.isEmpty()) {
           if (myExpectedArguments > 0) {
-            if (myExpectedArguments == (expressions.length + additionalExpressions.size())) {
+            if (myExpectedArguments > 1 && myExpectedArguments == (expressions.length + additionalExpressions.size())) {
               // probably "%s %s" % {'a':1, 'b':2}, with names forgotten in template
               registerProblem(rightExpression, PyBundle.message("INSP.format.requires.no.mapping"));
             }
