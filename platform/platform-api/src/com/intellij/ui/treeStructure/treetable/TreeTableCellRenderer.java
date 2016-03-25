@@ -17,9 +17,12 @@ package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.util.ui.ClientPropertyHolder;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
@@ -71,7 +74,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
 
     //myTree.setCellFocused(false);
 
-    myCellRendererComponent.setComponent(component);
+    myCellRendererComponent.setComponent(component, expanded, leaf);
     return myCellRendererComponent;
   }
 
@@ -118,13 +121,17 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
   private class TableCellRendererComponent extends JPanel {
     /** The component resulting from rendering a cell of the TreeTableTree column */
     private Component myComponent;
+    private boolean myExpanded;
+    private boolean myLeaf;
 
     public TableCellRendererComponent() {
       super(new BorderLayout());
     }
 
-    public void setComponent(Component component) {
+    public void setComponent(Component component, boolean expanded, boolean leaf) {
       myComponent = component;
+      myExpanded = expanded;
+      myLeaf = leaf;
 
       // Since we wrap a new component, we need to reset our accessible context
       accessibleContext = null;
@@ -140,8 +147,8 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     public AccessibleContext getAccessibleContext() {
       // Return the accessible context of the component we wrap (if it is accessible)
       if (accessibleContext == null) {
-        if (myComponent instanceof Accessible) {
-          accessibleContext = myComponent.getAccessibleContext();
+        if ((myComponent instanceof Accessible) && (myComponent.getAccessibleContext() != null)) {
+          accessibleContext = new AccessibleTableCellRendererComponent(myComponent.getAccessibleContext());
         } else {
           // If myComponent is not accessible -- which should be rare for a fully accessible application,
           // returning the default JPanel accessibility context is a reasonable default.
@@ -149,6 +156,25 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
         }
       }
       return accessibleContext;
+    }
+
+    protected class AccessibleTableCellRendererComponent extends AccessibleContextDelegate {
+
+      public AccessibleTableCellRendererComponent(AccessibleContext context) {
+        super(context);
+      }
+
+      @Override
+      public AccessibleStateSet getAccessibleStateSet() {
+        AccessibleStateSet set = super.getAccessibleStateSet();
+        if (!myLeaf) {
+          // Add expandable+expanded/collapsed states so that screen readers announce
+          // that this is an item that can be expanded (or collapsed).
+          set.add(AccessibleState.EXPANDABLE);
+          set.add(myExpanded ? AccessibleState.EXPANDED : AccessibleState.COLLAPSED);
+        }
+        return set;
+      }
     }
   }
 }
