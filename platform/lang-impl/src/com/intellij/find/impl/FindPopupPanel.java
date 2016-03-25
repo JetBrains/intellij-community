@@ -100,8 +100,11 @@ import java.util.regex.PatternSyntaxException;
 import static com.intellij.find.impl.FindDialog.createCheckbox;
 
 public class FindPopupPanel extends JBPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindPopupPanel");
-  private static final KeyStroke OK_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK);
+  private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
+  // unify with CommonShortcuts.CTRL_ENTER
+  private static final KeyStroke OK_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
+                                                                                          ? InputEvent.META_DOWN_MASK
+                                                                                          : InputEvent.CTRL_DOWN_MASK);
 
   private static final KeyStroke MOVE_CARET_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
   private static final KeyStroke MOVE_CARET_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);
@@ -258,6 +261,12 @@ public class FindPopupPanel extends JBPanel {
         }
       };
     myFileMaskField.setPreferredWidth(JBUI.scale(100));
+    myFileMaskField.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        scheduleResultsUpdate();
+      }
+    });
     myCbFileFilter.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -370,8 +379,6 @@ public class FindPopupPanel extends JBPanel {
       (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, scopeActionGroup, true);
     myScopeSelectionToolbar.setForceMinimumSize(true);
     myScopeSelectionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myScopeSelectionToolbar.setBorder(new RoundedLineBorder(JBColor.border(), JBUI.scale(5)));
-
 
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     String[] names = new String[modules.length];
@@ -495,6 +502,7 @@ public class FindPopupPanel extends JBPanel {
     myResultsPreviewTable.setShowColumns(false);
     myResultsPreviewTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myResultsPreviewTable.setShowGrid(false);
+    myResultsPreviewTable.setIntercellSpacing(JBUI.emptySize());
     new NavigateToSourceListener().installOn(myResultsPreviewTable);
     applyFont(JBUI.Fonts.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
               myResultsPreviewTable);
@@ -804,10 +812,11 @@ public class FindPopupPanel extends JBPanel {
     applyTo(myModel, false);
     FindManager.getInstance(myProject).getFindInProjectModel().copyFrom(myModel);
     ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
-    FindSettings.getInstance().setDefaultScopeName(myScopeCombo.getSelectedScopeName());
+    FindSettings findSettings = FindSettings.getInstance();
+    findSettings.setDefaultScopeName(myScopeCombo.getSelectedScopeName());
+    findSettings.setFileMask(myModel.getFileFilter());
 
-
-    ValidationInfo result = getValidationInfo(/*findModel*/myModel);
+    ValidationInfo result = getValidationInfo(myModel);
 
     final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
     myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
@@ -830,7 +839,7 @@ public class FindPopupPanel extends JBPanel {
       return;
     }
 
-    myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new FindDialog.UsageTableCellRenderer());
+    myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false));
     myResultsPreviewTable.getEmptyText().setText("Searching...");
 
     final AtomicInteger resultsCount = new AtomicInteger();
@@ -839,8 +848,8 @@ public class FindPopupPanel extends JBPanel {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
         final UsageViewPresentation presentation =
-          FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), /*findModel*/myModel.clone());
-        final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
+          FindInProjectUtil.setupViewPresentation(findSettings.isShowResultsInSeparateView(), /*findModel*/myModel.clone());
+        final boolean showPanelIfOnlyOneUsage = !findSettings.isSkipResultsWithOneUsage();
 
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
@@ -904,21 +913,24 @@ public class FindPopupPanel extends JBPanel {
         public void run() {
           JPanel popupContent = new JPanel(new BorderLayout());
           popupContent.setName("PopupContent!!!");
-          Splitter splitter = new JBSplitter(true, .33F, .1F, .5F);
+          Splitter splitter = new JBSplitter(true, .33F);
           splitter.setDividerWidth(1);
-          splitter.setFirstComponent(new JBScrollPane(myResultsPreviewTable) {
+          splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+          JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
             @Override
             public Dimension getMinimumSize() {
               Dimension size = super.getMinimumSize();
               size.height = Math.max(size.height, myResultsPreviewTable.getPreferredScrollableViewportSize().height);
               return size;
             }
-          });
+          };
+          scrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
+          splitter.setFirstComponent(scrollPane);
           popupContent.add(splitter, BorderLayout.CENTER);
           JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4, fillx, hidemode 3, gap 0"));
           bottomPanel.add(myTabResultsButton);
           bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
-          JBLabel label = new JBLabel("Ctrl+Enter");
+          JBLabel label = new JBLabel(KeymapUtil.getShortcutsText(new Shortcut[]{new KeyboardShortcut(OK_KEYSTROKE, null)}));
           label.setEnabled(false);
           bottomPanel.add(label, "gapright 10");
           bottomPanel.add(myOKButton);
@@ -926,8 +938,8 @@ public class FindPopupPanel extends JBPanel {
 
           popupContent.registerKeyboardAction(myOkActionListener, OK_KEYSTROKE, WHEN_IN_FOCUSED_WINDOW);
 
-
           myCodePreviewComponent = myUsagePreviewPanel.createComponent();
+          myCodePreviewComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
           splitter.setSecondComponent(myCodePreviewComponent);
 
           AtomicBoolean canClose = new AtomicBoolean();
