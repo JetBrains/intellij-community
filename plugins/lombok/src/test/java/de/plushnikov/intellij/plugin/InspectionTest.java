@@ -55,4 +55,8 @@ public class InspectionTest extends InspectionTestCase {
   public void testDataEqualsAndHashCodeOverride() throws Exception {
     doTest();
   }
+
+  public void testValInspection() throws Exception {
+    doTest();
+  }
 }

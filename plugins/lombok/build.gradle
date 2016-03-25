@@ -175,4 +175,4 @@ intellij {
     }
 }
 
-compileJava.dependsOn(generatePsiAndParser)
+//compileJava.dependsOn(generatePsiAndParser)
