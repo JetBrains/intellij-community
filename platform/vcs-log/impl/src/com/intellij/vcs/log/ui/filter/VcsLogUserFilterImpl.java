@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class VcsLogUserFilterImpl implements VcsLogUserFilter {
+  private static final Logger LOG = Logger.getInstance(VcsLogUserFilterImpl.class);
 
   @NotNull public static final String ME = "me";
 
@@ -99,8 +101,12 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
         }
         else if (!name.equals(ME)) {
           String lowerUser = VcsUserUtil.nameToLowerCase(name);
-          return VcsUserUtil.nameToLowerCase(commit.getAuthor().getName()).equals(lowerUser) ||
-                 VcsUserUtil.emailToLowerCase(commit.getAuthor().getEmail()).startsWith(lowerUser + "@");
+          boolean result = VcsUserUtil.nameToLowerCase(commit.getAuthor().getName()).equals(lowerUser) ||
+                      VcsUserUtil.emailToLowerCase(commit.getAuthor().getEmail()).startsWith(lowerUser + "@");
+          if (result) {
+            LOG.warn("Unregistered author " + commit.getAuthor() + " for commit " + commit.getId().asString() + "; search pattern " + name);
+          }
+          return result;
         }
         return false;
       }
