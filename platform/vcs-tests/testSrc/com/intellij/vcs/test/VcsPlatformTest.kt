@@ -20,8 +20,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
@@ -44,6 +45,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     checkTestRootIsEmpty(myTestRoot)
 
     runInEdtAndWait { super@VcsPlatformTest.setUp() }
+    refresh()
 
     myTestStartedIndicator = enableDebugLogging()
 
@@ -104,7 +106,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   }
 
   protected open fun refresh() {
-    VfsUtil.markDirtyAndRefresh(false, true, false, myProjectRoot)
+    (LocalFileSystem.getInstance() as LocalFileSystemImpl).refreshWithoutFileWatcher(false)
   }
 
   protected fun updateChangeListManager() {
