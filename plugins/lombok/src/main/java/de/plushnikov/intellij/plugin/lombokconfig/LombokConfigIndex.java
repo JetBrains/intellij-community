@@ -51,7 +51,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
           final String canonicalPath = PathUtil.toSystemIndependentName(directoryFile.getCanonicalPath());
           if (null != canonicalPath) {
             final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties((LombokConfigFile) inputData.getPsiFile());
-            System.out.println("Index lombok.config in: " + canonicalPath);
+
             result = new HashMap<ConfigIndexKey, String>();
             for (LombokConfigProperty configProperty : configProperties) {
               result.put(new ConfigIndexKey(canonicalPath, LombokConfigPsiUtil.getKey(configProperty)),

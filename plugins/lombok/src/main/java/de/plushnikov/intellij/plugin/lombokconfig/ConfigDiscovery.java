@@ -65,11 +65,9 @@ public class ConfigDiscovery {
       if (null == property) {
         final String stopBubblingProperty = readProperty(fileBasedIndex, searchScope, currentPath, ConfigKeys.CONFIG_STOP_BUBBLING);
         if (Boolean.parseBoolean(stopBubblingProperty)) {
-          System.out.println("Stop bubbling in: " + currentPath);
           break;
         }
       } else {
-        System.out.println("Found property: " + configKey + " in: " + currentPath);
         return property;
       }
 
@@ -81,7 +79,6 @@ public class ConfigDiscovery {
       }
     }
 
-    System.out.println("Return default for property: " + configKey);
     return configKey.getConfigDefaultValue();
   }
 
