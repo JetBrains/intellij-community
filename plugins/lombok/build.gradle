@@ -126,6 +126,11 @@ tasks.withType(JavaCompile) {
     }
 }
 
+compileJava {
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+}
+
 plugins.withType(JavaPlugin) {
     test {
         systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
