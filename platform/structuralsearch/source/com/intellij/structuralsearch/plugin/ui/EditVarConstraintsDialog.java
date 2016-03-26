@@ -466,7 +466,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
     containedInConstraints.setVisible(contextVar);
     textConstraintsPanel.setVisible(!contextVar);
-    expressionConstraints.setVisible(!contextVar);
     partOfSearchResults.setEnabled(!contextVar);
     occurencePanel.setVisible(!contextVar);
   }
