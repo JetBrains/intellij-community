@@ -170,9 +170,15 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public PsiElement getPresentableElement(PsiElement element) {
-    if (element instanceof PsiJavaCodeReferenceElement) {
+    if (element instanceof PsiReferenceExpression) {
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiTypeElement) {
+      if (parent instanceof PsiMethodCallExpression) {
+        return parent;
+      }
+    }
+    else if (element instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnnotation) {
         return parent;
       }
     }

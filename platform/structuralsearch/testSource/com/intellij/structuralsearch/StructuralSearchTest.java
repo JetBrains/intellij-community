@@ -1177,10 +1177,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String source2 = "class A {" +
                            "  String s = new String();" +
-                           "  int m() {" +
+                           "  @SuppressWarnings(\"\") int m() {" +
+                           "    n();" +
                            "    int i = 2+1;" +
                            "    return i;" +
                            "  }" +
+                           "  void n() {}" +
                            "}";
     assertEquals("type of variables in script are as expected", 1,
                  findMatchesCount(source2,
@@ -1196,11 +1198,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                   "g instanceof PsiTypeElement &&" +
                                   "h instanceof PsiLocalVariable &&" +
                                   "i instanceof PsiPolyadicExpression &&" +
-                                  "j instanceof PsiReferenceExpression\n" +
+                                  "j instanceof PsiReferenceExpression &&" +
+                                  "k instanceof PsiMethodCallExpression &&" +
+                                  "l instanceof PsiAnnotation\n" +
                                   "\")]" +
                                   "class '_a {" +
-                                  "  '_b '_c = '_d;" +
-                                  "  '_e '_f() {" +
+                                  "  '_b '_c = new '_d();" +
+                                  "  @'_l '_e '_f() {" +
+                                  "    '_k();" +
                                   "    '_g '_h = '_i;" +
                                   "    return '_j;" +
                                   "  }" +
