@@ -211,11 +211,9 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
 
   protected abstract fun doRunToLocation(position: XSourcePosition): List<Breakpoint>
 
-  fun isRunToCursorBreakpoints(breakpoints: List<Breakpoint>): Boolean {
-    synchronized (runToLocationBreakpoints) {
-      return runToLocationBreakpoints.containsAll(breakpoints)
-    }
-  }
+  fun isRunToCursorBreakpoints(breakpoints: List<Breakpoint>) = synchronized (runToLocationBreakpoints) { runToLocationBreakpoints.containsAll(breakpoints) }
+
+  fun isRunToCursorBreakpoint(breakpoint: Breakpoint) = synchronized (runToLocationBreakpoints) { runToLocationBreakpoints.contains(breakpoint) }
 
   fun updateAllBreakpoints(vm: Vm) {
     val array = synchronized (lock) { IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.let { it.keys.toTypedArray() } } ?: return
