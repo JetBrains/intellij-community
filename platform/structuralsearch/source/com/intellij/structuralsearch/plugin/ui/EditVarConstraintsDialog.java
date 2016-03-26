@@ -272,7 +272,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     customScriptCode.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(@NotNull final ActionEvent e) {
         final List<String> variableNames = ContainerUtil.newArrayList(myConfiguration.getMatchOptions().getVariableConstraintNames());
-        variableNames.remove(current.getName());
         variableNames.remove(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();

@@ -1210,6 +1210,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                   "    return '_j;" +
                                   "  }" +
                                   "}"));
+
+    assertEquals("Current variable should be available under own name", 1,
+                 findMatchesCount(source2,
+                                  "'_a + '_b:[script(\"__log__.info(b)\n__log__.info(__context__)\ntrue\")]"));
   }
 
   public void testCheckScriptValidation() {
