@@ -136,7 +136,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
                                  @NotNull PsiElement endElement) {
         return startElement.isValid() &&
                startElement.getManager().isInProject(startElement) &&
-               PsiUtil.isLanguageLevel8OrHigher(startElement) && areConvertible(expression.getType(), type);
+               PsiUtil.isLanguageLevel8OrHigher(startElement) && areConvertible(((PsiExpression) startElement).getType(), type);
       }
 
       @NotNull
@@ -168,7 +168,10 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
   }
 
   private static boolean areConvertible(@Nullable PsiType exprType, @Nullable PsiType parameterType) {
-    if (exprType == null || !(parameterType instanceof PsiClassType)) {
+    if (exprType == null ||
+        !exprType.isValid() ||
+        !(parameterType instanceof PsiClassType) ||
+        !parameterType.isValid()) {
       return false;
     }
     final PsiClassType.ClassResolveResult resolve = ((PsiClassType)parameterType).resolveGenerics();
