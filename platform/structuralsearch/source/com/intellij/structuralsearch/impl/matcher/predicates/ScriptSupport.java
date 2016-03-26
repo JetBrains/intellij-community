@@ -41,7 +41,7 @@ public class ScriptSupport {
     File scriptFile = new File(text);
     GroovyShell shell = new GroovyShell();
     try {
-      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name);
+      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + "_script.groovy");
     } catch (Exception ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
