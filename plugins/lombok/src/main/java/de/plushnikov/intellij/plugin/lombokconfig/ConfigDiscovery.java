@@ -1,12 +1,15 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -22,36 +25,69 @@ public class ConfigDiscovery {
 
   @NotNull
   public String getStringLombokConfigProperty(@NotNull ConfigKeys configKey, @NotNull PsiClass psiClass) {
-    final PsiFile psiFile = psiClass.getContainingFile();
-    if (psiFile instanceof PsiJavaFile) {
-      final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-      final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(psiClass.getProject());
+    final PsiFile psiFile;
+    if (psiClass instanceof LombokLightClassBuilder) {
+      // Use containing class for all LombokLightClasses
+      final PsiClass containingClass = psiClass.getContainingClass();
+      if (null != containingClass) {
+        psiFile = containingClass.getContainingFile();
+      } else {
+        psiFile = null;
+      }
+    } else {
+      psiFile = psiClass.getContainingFile();
+    }
 
-      String packageName = ((PsiJavaFile) psiFile).getPackageName();
-      while (null != packageName) {
-
-        final String property = readProperty(fileBasedIndex, searchScope, packageName, configKey);
-        if (null == property) {
-          final String stopBublingProperty = readProperty(fileBasedIndex, searchScope, packageName, ConfigKeys.CONFIG_STOP_BUBBLING);
-          if (Boolean.parseBoolean(stopBublingProperty)) {
-            break;
+    if (null != psiFile) {
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (null != virtualFile) {
+        final VirtualFile fileDirectory = virtualFile.getParent();
+        if (null != fileDirectory) {
+          final String canonicalPath = fileDirectory.getCanonicalPath();
+          if (null != canonicalPath) {
+            return discoverProperty(configKey, PathUtil.toSystemIndependentName(canonicalPath), psiClass.getProject());
           }
-        } else {
-          return property;
-        }
-
-        if (!packageName.isEmpty()) {
-          packageName = StringUtil.getPackageName(packageName);
-        } else {
-          packageName = null;
         }
       }
     }
     return configKey.getConfigDefaultValue();
   }
 
-  private String readProperty(FileBasedIndex fileBasedIndex, GlobalSearchScope searchScope, String packageName, ConfigKeys configKey) {
-    final ConfigIndexKey configIndexKey = new ConfigIndexKey(packageName, configKey.getConfigKey());
+  @NotNull
+  private String discoverProperty(@NotNull ConfigKeys configKey, @NotNull String canonicalPath, @NotNull Project project) {
+    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+
+    String currentPath = canonicalPath;
+    while (null != currentPath) {
+
+      final String property = readProperty(fileBasedIndex, searchScope, currentPath, configKey);
+      if (null == property) {
+        final String stopBubblingProperty = readProperty(fileBasedIndex, searchScope, currentPath, ConfigKeys.CONFIG_STOP_BUBBLING);
+        if (Boolean.parseBoolean(stopBubblingProperty)) {
+          System.out.println("Stop bubbling in: " + currentPath);
+          break;
+        }
+      } else {
+        System.out.println("Found property: " + configKey + " in: " + currentPath);
+        return property;
+      }
+
+      final int endIndex = currentPath.lastIndexOf('/');
+      if (endIndex > 0) {
+        currentPath = currentPath.substring(0, endIndex);
+      } else {
+        currentPath = null;
+      }
+    }
+
+    System.out.println("Return default for property: " + configKey);
+    return configKey.getConfigDefaultValue();
+  }
+
+  @Nullable
+  private String readProperty(FileBasedIndex fileBasedIndex, GlobalSearchScope searchScope, String directoryName, ConfigKeys configKey) {
+    final ConfigIndexKey configIndexKey = new ConfigIndexKey(directoryName, configKey.getConfigKey());
     final List<String> values = fileBasedIndex.getValues(LombokConfigIndex.NAME, configIndexKey, searchScope);
     if (!values.isEmpty()) {
       return values.iterator().next();

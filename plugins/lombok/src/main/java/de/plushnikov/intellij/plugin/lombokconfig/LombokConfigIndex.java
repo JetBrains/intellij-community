@@ -1,10 +1,8 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -24,12 +22,14 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, String> {
   @NonNls
   public static final ID<ConfigIndexKey, String> NAME = ID.create("LombokConfigIndex");
+  private static final int INDEX_FORMAT_VERSION = 4;
 
   @NotNull
   @Override
@@ -44,16 +44,18 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
       @NotNull
       @Override
       public Map<ConfigIndexKey, String> map(@NotNull FileContent inputData) {
-        Map<ConfigIndexKey, String> result = new HashMap<ConfigIndexKey, String>();
+        Map<ConfigIndexKey, String> result = Collections.emptyMap();
 
-        final PsiManager psiManager = PsiManager.getInstance(inputData.getProject());
-        final PsiDirectory directory = psiManager.findDirectory(inputData.getFile().getParent());
-        if (null != directory) {
-          final PsiPackage directoryPackage = JavaDirectoryService.getInstance().getPackage(directory);
-          if (null != directoryPackage) {
+        final VirtualFile directoryFile = inputData.getFile().getParent();
+        if (null != directoryFile) {
+          final String canonicalPath = PathUtil.toSystemIndependentName(directoryFile.getCanonicalPath());
+          if (null != canonicalPath) {
             final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties((LombokConfigFile) inputData.getPsiFile());
+            System.out.println("Index lombok.config in: " + canonicalPath);
+            result = new HashMap<ConfigIndexKey, String>();
             for (LombokConfigProperty configProperty : configProperties) {
-              result.put(new ConfigIndexKey(directoryPackage.getQualifiedName(), LombokConfigPsiUtil.getKey(configProperty)), LombokConfigPsiUtil.getValue(configProperty));
+              result.put(new ConfigIndexKey(canonicalPath, LombokConfigPsiUtil.getKey(configProperty)),
+                  LombokConfigPsiUtil.getValue(configProperty));
             }
           }
         }
@@ -79,7 +81,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
 
       @Override
       public void save(@NotNull DataOutput out, ConfigIndexKey value) throws IOException {
-        out.writeUTF(StringUtil.notNullize(value.getPackageName()));
+        out.writeUTF(StringUtil.notNullize(value.getDirectoryName()));
         out.writeUTF(StringUtil.notNullize(value.getConfigKey()));
       }
 
@@ -109,6 +111,6 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
 
   @Override
   public int getVersion() {
-    return 1;
+    return INDEX_FORMAT_VERSION;
   }
 }
