@@ -84,7 +84,7 @@ public class ScriptSupport {
   public String evaluate(MatchResult result, PsiElement context) {
     try {
       final HashMap<String, Object> variableMap = new HashMap<String, Object>();
-      variableMap.put("__log__", myScriptLog);
+      variableMap.put(ScriptLog.SCRIPT_LOG_VAR_NAME, myScriptLog);
       if (result != null) {
         buildVariableMap(result, variableMap);
         if (context == null) {
