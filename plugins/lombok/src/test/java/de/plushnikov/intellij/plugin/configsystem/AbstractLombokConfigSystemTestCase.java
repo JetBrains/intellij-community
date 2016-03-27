@@ -7,6 +7,7 @@ import java.io.IOException;
 public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokParsingTestCase {
   public void doTest() throws IOException {
     final String fullFileName = getTestName(true).replace('$', '/') + ".java";
+    System.out.println(fullFileName);
     final String subPath = fullFileName.substring(0, fullFileName.lastIndexOf('/'));
     final String fileName = fullFileName.substring(fullFileName.lastIndexOf('/') + 1);
 
