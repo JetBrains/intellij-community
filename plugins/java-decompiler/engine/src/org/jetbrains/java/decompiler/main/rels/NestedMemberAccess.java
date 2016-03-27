@@ -32,7 +32,10 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent.EXPRENT_FIELD;
 
 public class NestedMemberAccess {
 
@@ -40,9 +43,10 @@ public class NestedMemberAccess {
   private static final int METHOD_ACCESS_FIELD_GET = 2;
   private static final int METHOD_ACCESS_FIELD_SET = 3;
   private static final int METHOD_ACCESS_METHOD = 4;
+  private static final int METHOD_ACCESS_FIELD_INCREMENT_DECREMENT = 5;
 
   private boolean noSynthFlag;
-  private final Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
+  private final Map<MethodWrapper, Integer> mapMethodType = new HashMap<>();
 
 
   public void propagateMemberAccess(ClassNode root) {
@@ -118,6 +122,9 @@ public class NestedMemberAccess {
                 }
 
                 break;
+              case Exprent.EXPRENT_FUNCTION:
+                type = determineFunctionType(exprCore, type);
+                break;
               case Exprent.EXPRENT_INVOCATION:
                 type = METHOD_ACCESS_METHOD;
                 break;
@@ -138,7 +145,6 @@ public class NestedMemberAccess {
                   }
                 }
             }
-
 
             if (type == METHOD_ACCESS_METHOD) { // FIXME: check for private flag of the method
 
@@ -213,6 +219,22 @@ public class NestedMemberAccess {
     }
   }
 
+  private int determineFunctionType(final Exprent exprent, final int defaultType) {
+
+    final FunctionExprent functionExprent = (FunctionExprent) exprent;
+    if (functionExprent.getLstOperands().size() != 1) {
+      return defaultType;
+    }
+
+    final Exprent operand = functionExprent.getLstOperands().get(0);
+    if (operand.type != EXPRENT_FIELD) {
+      return defaultType;
+    }
+
+    return METHOD_ACCESS_FIELD_INCREMENT_DECREMENT;
+
+  }
+
 
   private void eliminateStaticAccess(ClassNode node) {
 
@@ -228,8 +250,8 @@ public class NestedMemberAccess {
 
         DirectGraph graph = meth.getOrBuildGraph();
 
-        HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
-        LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
+        HashSet<DirectNode> setVisited = new HashSet<>();
+        LinkedList<DirectNode> stack = new LinkedList<>();
         stack.add(graph.first);
 
         while (!stack.isEmpty()) {  // TODO: replace with interface iterator?
@@ -323,7 +345,6 @@ public class NestedMemberAccess {
   }
 
   private Exprent replaceAccessExprent(ClassNode caller, MethodWrapper methdest, InvocationExprent invexpr) {
-
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(invexpr.getClassname());
 
     MethodWrapper methsource = null;
@@ -408,6 +429,9 @@ public class NestedMemberAccess {
         }
         retexprent = ret;
         break;
+      case METHOD_ACCESS_FIELD_INCREMENT_DECREMENT:
+        retexprent = getExprent(invexpr, source);
+        break;
       case METHOD_ACCESS_METHOD:
         if (source.type == Exprent.EXPRENT_EXIT) {
           source = ((ExitExprent)source).getValue();
@@ -446,4 +470,26 @@ public class NestedMemberAccess {
 
     return retexprent;
   }
+
+  private Exprent getExprent(final InvocationExprent invexpr, final Exprent source) {
+    final FunctionExprent functionExprent = (FunctionExprent) ((ExitExprent) source).getValue().copy();
+
+    final List<Exprent> lstParameters = invexpr.getLstParameters();
+
+    final FieldExprent fieldExprent = (FieldExprent) functionExprent.getLstOperands().get(0);
+    if (fieldExprent.isStatic()) {
+      if (!lstParameters.isEmpty()) {
+        return null;
+      }
+      return functionExprent;
+    }
+
+    if (lstParameters.size() != 1) {
+      return null;
+    }
+
+    fieldExprent.replaceExprent(fieldExprent.getInstance(), lstParameters.get(0));
+    return functionExprent;
+  }
+
 }
