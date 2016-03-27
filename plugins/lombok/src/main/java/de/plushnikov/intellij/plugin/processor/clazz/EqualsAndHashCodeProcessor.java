@@ -14,6 +14,7 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -220,7 +221,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   private String createEqualsBlockString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean hasCanEqualMethod) {
-    final boolean callSuper = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
+    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKeys.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
     final String psiClassName = psiClass.getName();
@@ -279,7 +280,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final int PRIME_FOR_FALSE = 97;
 
   private String createHashcodeBlockString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final boolean callSuper = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
+    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKeys.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
@@ -333,6 +334,18 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     } finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  private boolean readCallSuperAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+    final boolean result;
+    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
+    if (null == declaredAnnotationValue) {
+      final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKeys.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
+      result = "CALL".equalsIgnoreCase(configProperty);
+    } else {
+      result = declaredAnnotationValue;
+    }
+    return result;
   }
 
   @Override

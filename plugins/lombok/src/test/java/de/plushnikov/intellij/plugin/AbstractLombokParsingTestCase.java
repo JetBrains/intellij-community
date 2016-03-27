@@ -31,6 +31,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
  */
@@ -170,7 +173,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
       Collection<String> afterAnnotations = Lists.newArrayList(Collections2.transform(Arrays.asList(afterModifierList.getAnnotations()), new QualifiedNameFunction()));
 
       Iterables.removeIf(beforeAnnotations, Predicates.containsPattern("lombok.*"));
-      assertEquals("Annotationcounts are different ", afterAnnotations.size(), beforeAnnotations.size());
+      assertThat("Annotations are different", beforeAnnotations, equalTo(afterAnnotations));
     }
   }
 
