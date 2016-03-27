@@ -1,5 +1,3 @@
-package de.plushnikov.test;
-
 public class SomeTest {
 
   private int intProperty;
@@ -29,30 +27,17 @@ public class SomeTest {
   }
 
   public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof SomeTest)) {
-      return false;
-    }
+    if (o == this) return true;
+    if (!(o instanceof SomeTest)) return false;
     final SomeTest other = (SomeTest) o;
-    if (!other.canEqual((Object) this)) {
+    if (!other.canEqual((java.lang.Object) this)) return false;
+    if (this.intProperty != other.intProperty) return false;
+    if (this.booleanProperty != other.booleanProperty) return false;
+    if (java.lang.Double.compare(this.doubleProperty, other.doubleProperty) != 0) return false;
+    final java.lang.Object this$stringProperty = this.stringProperty;
+    final java.lang.Object other$stringProperty = other.stringProperty;
+    if (this$stringProperty == null ? other$stringProperty != null : !this$stringProperty.equals(other$stringProperty))
       return false;
-    }
-    if (this.intProperty != other.intProperty) {
-      return false;
-    }
-    if (this.booleanProperty != other.booleanProperty) {
-      return false;
-    }
-    if (Double.compare(this.doubleProperty, other.doubleProperty) != 0) {
-      return false;
-    }
-    final Object this$stringProperty = this.stringProperty;
-    final Object other$stringProperty = other.stringProperty;
-    if (this$stringProperty == null ? other$stringProperty != null : !this$stringProperty.equals(other$stringProperty)) {
-      return false;
-    }
     return true;
   }
 
@@ -61,14 +46,14 @@ public class SomeTest {
     int result = 1;
     result = result * PRIME + this.intProperty;
     result = result * PRIME + (this.booleanProperty ? 79 : 97);
-    final long $doubleProperty = Double.doubleToLongBits(this.doubleProperty);
+    final long $doubleProperty = java.lang.Double.doubleToLongBits(this.doubleProperty);
     result = result * PRIME + (int) ($doubleProperty >>> 32 ^ $doubleProperty);
-    final Object $stringProperty = this.stringProperty;
+    final java.lang.Object $stringProperty = this.stringProperty;
     result = result * PRIME + ($stringProperty == null ? 0 : $stringProperty.hashCode());
     return result;
   }
 
-  protected boolean canEqual(Object other) {
+  protected boolean canEqual(java.lang.Object other) {
     return other instanceof SomeTest;
   }
 }

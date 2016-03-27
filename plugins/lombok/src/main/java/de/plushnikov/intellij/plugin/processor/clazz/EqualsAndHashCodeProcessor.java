@@ -280,7 +280,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   private String createHashcodeBlockString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final boolean callSuper = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
-    final boolean doNotUseGetters = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "doNotUseGetters", false);
+    final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKeys.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
