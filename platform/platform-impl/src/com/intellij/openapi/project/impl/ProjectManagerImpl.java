@@ -141,7 +141,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   public static int TEST_PROJECTS_CREATED;
-  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = true;
+  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
   private static final int MAX_LEAKY_PROJECTS = 42;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
 
@@ -153,7 +153,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       TEST_PROJECTS_CREATED++;
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
-        for (int i = 0; i < 42; i++) {
+        for (int i = 0; i < MAX_LEAKY_PROJECTS; i++) {
           if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
           System.gc();
           TimeoutUtil.sleep(100);
