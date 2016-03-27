@@ -1,13 +1,13 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.intellij.plugin.LombokParsingTestCase;
+import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 import java.io.IOException;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class BuilderTest extends LombokParsingTestCase {
+public class BuilderTest extends AbstractLombokParsingTestCase {
 
   // This test is lombok's homepage example.
   public void testBuilderExample() throws IOException {

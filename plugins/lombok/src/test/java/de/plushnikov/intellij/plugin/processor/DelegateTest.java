@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.intellij.plugin.LombokParsingTestCase;
+import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class DelegateTest extends LombokParsingTestCase {
+public class DelegateTest extends AbstractLombokParsingTestCase {
 
   public void ignore_testDelegateOnGetter() throws Exception {
     //TODO known problem, try to fix later

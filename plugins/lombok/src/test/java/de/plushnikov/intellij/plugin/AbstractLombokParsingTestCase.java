@@ -34,9 +34,9 @@ import java.util.Collection;
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
  */
-public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCase {
+public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightCodeInsightTestCase {
 
-  private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
+  private static final Logger LOG = Logger.getLogger(AbstractLombokParsingTestCase.class);
 
   protected boolean shouldCompareAnnotations() {
     return false;

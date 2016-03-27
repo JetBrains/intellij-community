@@ -23,12 +23,12 @@ public class AccessorsInfo {
   private final boolean fluent;
   private final boolean chain;
   private final String[] prefixes;
-  private final boolean dontUseIsPrefix;
+  private final boolean doNotUseIsPrefix;
 
-  protected AccessorsInfo(boolean fluentValue, boolean chainValue, boolean dontUseIsPrefix, String... prefixes) {
+  protected AccessorsInfo(boolean fluentValue, boolean chainValue, boolean doNotUseIsPrefix, String... prefixes) {
     this.fluent = fluentValue;
     this.chain = chainValue;
-    this.dontUseIsPrefix = dontUseIsPrefix;
+    this.doNotUseIsPrefix = doNotUseIsPrefix;
     this.prefixes = null == prefixes ? new String[0] : prefixes;
   }
 
@@ -55,10 +55,13 @@ public class AccessorsInfo {
       }
       containingClass = containingClass.getContainingClass();
     }
-    return build(false, false, false);
+
+    final boolean doNotUseIsPrefix = null != psiClass &&
+        ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
+    return build(false, false, doNotUseIsPrefix);
   }
 
-  private static AccessorsInfo buildFromAnnotation(PsiAnnotation accessorsAnnotation, PsiClass psiClass) {
+  private static AccessorsInfo buildFromAnnotation(@NotNull PsiAnnotation accessorsAnnotation, @Nullable PsiClass psiClass) {
     final boolean isFluent = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "fluent", ConfigKeys.ACCESSORS_FLUENT);
     final boolean isChained = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "chain", ConfigKeys.ACCESSORS_CHAIN);
 
@@ -79,8 +82,8 @@ public class AccessorsInfo {
     return chain;
   }
 
-  public boolean isDontUseIsPrefix() {
-    return dontUseIsPrefix;
+  public boolean isDoNotUseIsPrefix() {
+    return doNotUseIsPrefix;
   }
 
   public String[] getPrefixes() {

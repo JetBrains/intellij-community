@@ -3,9 +3,9 @@ package de.plushnikov.intellij.plugin.action.intellij;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.LombokLightCodeInsightTestCase;
+import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
-public class RenameClassActionTest extends LombokLightCodeInsightTestCase {
+public class RenameClassActionTest extends AbstractLombokLightCodeInsightTestCase {
 
   @Override
   protected String getBasePath() {

@@ -1,10 +1,10 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.intellij.plugin.LombokParsingTestCase;
+import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 import java.io.IOException;
 
-public class WitherTest extends LombokParsingTestCase {
+public class WitherTest extends AbstractLombokParsingTestCase {
 
   protected boolean shouldCompareCodeBlocks() {
     return false;

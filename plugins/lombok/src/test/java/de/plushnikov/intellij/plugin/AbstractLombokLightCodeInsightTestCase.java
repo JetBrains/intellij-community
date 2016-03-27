@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
   private static final String LOMBOK_SRC_PATH = "./generated/src";
 
   @Override

@@ -160,8 +160,8 @@ public class LombokHandlerUtil {
 			return null;
 		}
 
-		if (Boolean.TRUE.equals(accessors.isDontUseIsPrefix())) {
-			isBoolean = false;
+    if (Boolean.TRUE.equals(accessors.isDoNotUseIsPrefix())) {
+      isBoolean = false;
 		}
     boolean explicitPrefix = accessors != null;//accessors.isExplicit("prefix");
     boolean explicitFluent = accessors != null && accessors.isFluent();//accessors.isExplicit("fluent");
@@ -232,8 +232,8 @@ public class LombokHandlerUtil {
   private static List<String> toAllAccessorNames(AccessorsInfo accessors, CharSequence fieldName, boolean isBoolean,
                                                  String booleanPrefix, String normalPrefix, boolean adhereToFluent) {
 
-		if (Boolean.TRUE.equals(accessors.isDontUseIsPrefix())) {
-			isBoolean = false;
+    if (Boolean.TRUE.equals(accessors.isDoNotUseIsPrefix())) {
+      isBoolean = false;
 		}
     if (!isBoolean) {
       String accessorName = toAccessorName(accessors, fieldName, false, booleanPrefix, normalPrefix, adhereToFluent);

@@ -1,10 +1,10 @@
 package pl.mg6.hrisey.tests;
 
-import de.plushnikov.intellij.plugin.LombokParsingTestCase;
+import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 import java.io.IOException;
 
-public class ParcelableTestCase extends LombokParsingTestCase {
+public class ParcelableTestCase extends AbstractLombokParsingTestCase {
 
   @Override
   protected boolean shouldCompareCodeBlocks() {

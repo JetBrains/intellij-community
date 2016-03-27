@@ -5,9 +5,9 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.plugin.LombokLightCodeInsightTestCase;
+import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
-public class ValTest extends LombokLightCodeInsightTestCase {
+public class ValTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testSimpleInt() throws Exception {
     configureClass("100");
