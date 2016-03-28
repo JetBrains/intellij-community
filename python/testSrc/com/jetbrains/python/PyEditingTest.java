@@ -44,7 +44,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testPairedQuotesInRawString() {   // PY-263
-    assertEquals("r''", doTestTyping("r", 1, '\''));
+    assertEquals("x = r''", doTestTyping("x = r", 5, '\''));
   }
 
   public void testQuotesInString() {   // PY-5041
@@ -60,23 +60,23 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testAutoClosingQuoteAtRBracket() {
-    assertEquals("'']", doTestTyping("]", 0, '\''));
+    assertEquals("x = '']", doTestTyping("x = ]", 4, '\''));
   }
 
   public void testAutoClosingQuoteAtRParen() {
-    assertEquals("'')", doTestTyping(")", 0, '\''));
+    assertEquals("x = '')", doTestTyping("x = )", 4, '\''));
   }
 
   public void testAutoClosingQuoteAtComma() {
-    assertEquals("'',", doTestTyping(",", 0, '\''));
+    assertEquals("x = '',", doTestTyping("x = ,", 4, '\''));
   }
 
   public void testAutoClosingQuoteAtSpace() {
-    assertEquals("'' ", doTestTyping(" ", 0, '\''));
+    assertEquals("x = '' ", doTestTyping("x =  ", 4, '\''));
   }
 
   public void testAutoCloseTriple() {
-    assertEquals("''''''", doTestTyping("''", 2, '\''));
+    assertEquals("x = ''''''", doTestTyping("x = ''", 6, '\''));
   }
 
   public void testAutoRemoveTriple() {
@@ -84,7 +84,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testOvertypeFromInside() {
-    assertEquals("''", doTestTyping("''", 1, '\''));
+    assertEquals("x = ''", doTestTyping("x = ''", 5, '\''));
   }
 
   public void testGreedyBackspace() {  // PY-254
@@ -211,6 +211,11 @@ public class PyEditingTest extends PyTestCase {
                                                    "  \"\"\"");
       }
     });
+  }
+
+  // PY-18486
+  public void testTripleQuotesThenEnterInsertsDocstring() {
+    doDocStringTypingTest("\"\"\"\n", DocStringFormat.REST);
   }
 
   public void testEnterDocStringStubInClass() {
