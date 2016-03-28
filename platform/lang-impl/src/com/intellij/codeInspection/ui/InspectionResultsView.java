@@ -590,14 +590,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public void update() {
-    updateView(true);
-  }
-
-  public void updateView(boolean strict) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-      myTree.repaint();
-    }
     myTree.removeAllNodes();
     mySeverityGroupNodes.clear();
     buildTree();

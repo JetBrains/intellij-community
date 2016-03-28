@@ -117,7 +117,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     myTreeState = treeState;
   }
 
-  public synchronized void addView(@NotNull InspectionResultsView view, @NotNull String title) {
+  public synchronized void addView(@NotNull InspectionResultsView view,
+                                   @NotNull String title,
+                                   boolean isOffline) {
     LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       @Override
@@ -132,7 +134,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
 
     myView = view;
-    myView.setUpdating(true);
+    if (!isOffline) {
+      myView.setUpdating(true);
+    }
     if (myTreeState != null) {
       myView.getTree().setTreeState(myTreeState);
     }
@@ -153,7 +157,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                   : InspectionsBundle.message(mySingleInspectionRun ?
                                               "inspection.results.for.inspection.toolwindow.title" :
                                               "inspection.results.for.profile.toolwindow.title",
-                                              view.getCurrentProfileName()));
+                                              view.getCurrentProfileName()), false);
 
   }
 

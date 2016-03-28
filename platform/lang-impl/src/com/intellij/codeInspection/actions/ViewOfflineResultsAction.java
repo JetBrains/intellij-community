@@ -227,7 +227,7 @@ public class ViewOfflineResultsAction extends AnAction {
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
-    context.addView(view, title);
+    context.addView(view, title, true);
     return view;
   }
 }
