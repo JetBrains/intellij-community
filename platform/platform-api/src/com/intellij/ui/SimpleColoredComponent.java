@@ -123,6 +123,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myFragmentPadding = new TIntIntHashMap(10);
     myFragmentAlignment = new TIntIntHashMap(10);
     setOpaque(true);
+    updateUI();
+  }
+
+  @Override
+  public void updateUI() {
+    UISettings.setupComponentAntialiasing(this);
   }
 
   @NotNull

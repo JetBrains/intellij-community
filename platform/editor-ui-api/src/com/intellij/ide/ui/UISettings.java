@@ -39,6 +39,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -276,7 +277,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
   }
 
-  /* This method must not be used for set up antialiasing for editor components
+  /**
+   *  This method must not be used for set up antialiasing for editor components. To make sure antialiasing settings are taken into account
+   *  when preferred size of component is calculated, {@link #setupComponentAntialiasing(JComponent)} method should be called from
+   *  <code>updateUI()</code> or <code>setUI()</code> method of component.
    */
   public static void setupAntialiasing(final Graphics g) {
 
@@ -300,5 +304,12 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
 
       setupFractionalMetrics(g2d);
+  }
+
+  /**
+   * @see #setupComponentAntialiasing(JComponent)
+   */
+  public static void setupComponentAntialiasing(JComponent component) {
+    component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
   }
 }
