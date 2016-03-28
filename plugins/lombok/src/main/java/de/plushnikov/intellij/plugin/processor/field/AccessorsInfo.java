@@ -61,17 +61,17 @@ public class AccessorsInfo {
     return build(false, false, doNotUseIsPrefix);
   }
 
-  private static AccessorsInfo buildFromAnnotation(@NotNull PsiAnnotation accessorsAnnotation, @Nullable PsiClass psiClass) {
+  private static AccessorsInfo buildFromAnnotation(@NotNull PsiAnnotation accessorsAnnotation, @NotNull PsiClass psiClass) {
     final boolean isFluent = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "fluent", ConfigKeys.ACCESSORS_FLUENT);
     final boolean isChained = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "chain", ConfigKeys.ACCESSORS_CHAIN);
 
     Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "chain");
     Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, "prefix", String.class);
 
-    final boolean dontUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
+    final boolean doNotUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
 
     boolean isChainDeclaredOrImplicit = isChained || (isFluent && null == chainDeclaredValue);
-    return new AccessorsInfo(isFluent, isChainDeclaredOrImplicit, dontUseIsPrefix, prefixes.toArray(new String[prefixes.size()]));
+    return new AccessorsInfo(isFluent, isChainDeclaredOrImplicit, doNotUseIsPrefix, prefixes.toArray(new String[prefixes.size()]));
   }
 
   public boolean isFluent() {

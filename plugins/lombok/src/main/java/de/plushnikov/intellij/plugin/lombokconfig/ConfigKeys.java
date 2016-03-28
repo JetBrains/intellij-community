@@ -26,7 +26,7 @@ public enum ConfigKeys {
   SINGULAR_USE_GUAVA("lombok.singular.useGuava", "false"),
   SINGULAR_AUTO("lombok.singular.auto", "true"),
 
-  NONNULL_EXCEPTIONTYPE("lombok.nonNull.exceptionType", "NullPointerException");
+  NONNULL_EXCEPTIONTYPE("lombok.nonNull.exceptionType", "java.lang.NullPointerException");
 
   private final String configKey;
   private final String configDefaultValue;

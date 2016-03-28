@@ -22,6 +22,8 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class LombokConfigCompletionContributor extends CompletionContributor {
 
+  private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = "lombok.equalsAndHashCode.callSuper";
+
   public LombokConfigCompletionContributor() {
     final Collection<String> booleanOptions = new HashSet<String>(Arrays.asList(
         "config.stopBubbling", "lombok.accessors.chain", "lombok.accessors.fluent",
@@ -41,7 +43,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
         "lombok.wither.flagUsage"));
 
     final Collection<String> otherOptions = new HashSet<String>(Arrays.asList(
-        "lombok.accessors.prefix", "lombok.log.fieldName", "lombok.nonNull.exceptionType"));
+        "lombok.accessors.prefix", "lombok.log.fieldName", "lombok.nonNull.exceptionType", LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER));
 
     final Collection<String> allOptions = new HashSet<String>(booleanOptions);
     allOptions.addAll(flagUsageOptions);
@@ -60,6 +62,10 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
               } else if (flagUsageOptions.contains(configPropertyKey)) {
                 resultSet.addElement(LookupElementBuilder.create("WARNING"));
                 resultSet.addElement(LookupElementBuilder.create("ERROR"));
+              } else if (LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER.equals(configPropertyKey)) {
+                resultSet.addElement(LookupElementBuilder.create("CALL"));
+                resultSet.addElement(LookupElementBuilder.create("SKIP"));
+                resultSet.addElement(LookupElementBuilder.create("WARN"));
               }
             }
           }
