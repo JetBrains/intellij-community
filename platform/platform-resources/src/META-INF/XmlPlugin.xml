@@ -313,6 +313,7 @@
     <completionData fileType="XHTML" className="com.intellij.codeInsight.completion.XHtmlCompletionData"/>
     <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
 
+    <referenceProviderType key="Path References Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
     <!--<pom.declarationSearcher implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.IdDeclarationSearcher"/>-->
     <anchorReferenceProvider implementation="com.intellij.xml.util.AnchorPathReferenceProvider"/>
