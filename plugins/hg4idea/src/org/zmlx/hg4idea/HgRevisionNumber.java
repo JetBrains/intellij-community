@@ -15,6 +15,7 @@ package org.zmlx.hg4idea;
 import com.google.common.base.Objects;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -109,8 +110,18 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   @NotNull
-  public String getAuthor() {
+  public String getName() {
     return author;
+  }
+
+  @NotNull
+  public String getEmail() {
+    return email;
+  }
+
+  @NotNull
+  public String getAuthor() {
+    return VcsUserUtil.getUserName(author, email);
   }
 
   public boolean isWorkingVersion() {
@@ -207,10 +218,5 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   @NotNull
   public String getSubject() {
     return mySubject;
-  }
-
-  @NotNull
-  public String getEmail() {
-    return email;
   }
 }

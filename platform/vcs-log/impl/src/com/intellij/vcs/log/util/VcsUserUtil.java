@@ -51,10 +51,15 @@ public class VcsUserUtil {
 
   @NotNull
   private static String getName(@NotNull VcsUser user) {
-    if (!user.getName().isEmpty()) return user.getName();
-    String emailNamePart = getNameFromEmail(user.getEmail());
+    return getUserName(user.getName(), user.getEmail());
+  }
+
+  @NotNull
+  public static String getUserName(@NotNull String name, @NotNull String email) {
+    if (!name.isEmpty()) return name;
+    String emailNamePart = getNameFromEmail(email);
     if (emailNamePart != null) return emailNamePart;
-    return user.getEmail();
+    return email;
   }
 
   @Nullable

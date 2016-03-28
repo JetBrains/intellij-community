@@ -172,8 +172,8 @@ public class HgHistoryUtil {
       vcsFullCommitDetailsList.add(factory.createFullDetails(factory.createHash(vcsRevisionNumber.getChangeset()), parentsHash,
                                                              revision.getRevisionDate().getTime(), root,
                                                              vcsRevisionNumber.getSubject(),
-                                                             vcsRevisionNumber.getAuthor(), vcsRevisionNumber.getEmail(),
-                                                             vcsRevisionNumber.getCommitMessage(), vcsRevisionNumber.getAuthor(),
+                                                             vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail(),
+                                                             vcsRevisionNumber.getCommitMessage(), vcsRevisionNumber.getName(),
                                                              vcsRevisionNumber.getEmail(), revision.getRevisionDate().getTime(),
                                                              new ThrowableComputable<Collection<Change>, Exception>() {
                                                                @Override

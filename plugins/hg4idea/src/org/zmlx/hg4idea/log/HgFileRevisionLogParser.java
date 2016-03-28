@@ -92,7 +92,7 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
         }
       }
     }
-    return new HgFileRevision(myProject, myHgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage,
+    return new HgFileRevision(myProject, myHgFile, vcsRevisionNumber, branchName, revisionDate, vcsRevisionNumber.getAuthor(), commitMessage,
                               filesModified, filesAdded, filesDeleted, copies);
   }
 
