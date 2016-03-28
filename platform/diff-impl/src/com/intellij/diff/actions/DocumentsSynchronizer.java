@@ -33,7 +33,7 @@ abstract class DocumentsSynchronizer {
   @NotNull protected final Document myDocument2;
   @Nullable private final Project myProject;
 
-  private volatile boolean myDuringModification = false;
+  private boolean myDuringModification = false;
 
   private final DocumentAdapter myListener1 = new DocumentAdapter() {
     @Override
