@@ -615,6 +615,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (!hasUpdatingRequestors && myLoadingProgressPreview != null) {
         myLoadingProgressPreview.treeLoaded();
       }
+      //TODO Dmitrii Batkovich it's a hack (preview panel should be created during selection update)
+      if (!hasUpdatingRequestors && mySplitter.getSecondComponent() == null) {
+        syncRightPanel();
+      }
     };
     final Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
