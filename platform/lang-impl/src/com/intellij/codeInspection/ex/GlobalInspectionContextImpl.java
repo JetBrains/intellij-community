@@ -669,15 +669,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
       }
     }
-    final InspectionResultsView view = createViewIfNeed();
-    if (!view.isDisposed()) {
-      ReadAction.run(() -> view.addTools(globalTools));
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final InspectionResultsView view = createViewIfNeed();
+      if (!view.isDisposed()) {
+        ReadAction.run(() -> view.addTools(globalTools));
+      }
     }
   }
 
   @NotNull
   public InspectionResultsView createViewIfNeed() {
     if (myView == null) {
+      LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
       return  UIUtil.invokeAndWaitIfNeeded(() -> {
         InspectionResultsView newView = getView();
         if (newView != null) {
