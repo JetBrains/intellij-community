@@ -121,7 +121,7 @@ abstract class GroovyDslExecutor extends Script implements GdslScopeMethods, Gds
   }
 
   CustomMembersHolder processVariants(GroovyClassDescriptor descriptor, ProcessingContext ctx, PsiType psiType) {
-    if (!isOk()) return CompoundMembersHolder.EMPTY
+    if (!isOk() || !enhancers) return CompoundMembersHolder.EMPTY
 
     CompoundMembersHolder holder = new CompoundMembersHolder()
     for (pair in enhancers) {
