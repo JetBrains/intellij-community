@@ -162,7 +162,11 @@ def _find_django_render_frame(frame):
 #=======================================================================================================================
 
 def _read_file(filename):
-    f = open(filename, "r")
+    try:
+        f = open(filename, "r")
+    except:
+        # try to force encoding in python 3 when reading template source
+        f = open(filename, "r", encoding='utf-8')
     s = f.read()
     f.close()
     return s
