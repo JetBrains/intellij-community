@@ -752,6 +752,19 @@ public class AbstractPopup implements JBPopup {
       sizeToSet = myForcedSize;
     }
 
+    if (myLocateWithinScreen) {
+      Dimension size = sizeToSet != null ? sizeToSet : myContent.getPreferredSize();
+      Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
+      if (size.width > screen.width) {
+        size.width = screen.width;
+        sizeToSet = size;
+      }
+      if (size.height > screen.height) {
+        size.height = screen.height;
+        sizeToSet = size;
+      }
+    }
+
     if (sizeToSet != null) {
       sizeToSet.width = Math.max(sizeToSet.width, myContent.getMinimumSize().width);
       sizeToSet.height = Math.max(sizeToSet.height, myContent.getMinimumSize().height);
