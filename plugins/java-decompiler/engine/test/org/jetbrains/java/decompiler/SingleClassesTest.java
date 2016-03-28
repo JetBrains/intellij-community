@@ -85,8 +85,9 @@ public class SingleClassesTest {
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
+  @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
 
-  protected void doTest(String testFile, String... companionFiles) {
+  private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
 
     File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
