@@ -31,7 +31,6 @@ import git4idea.commands.GitHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -46,7 +45,6 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
 class GitLogRecord {
 
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
-  private static final String UTF_8 = "UTF-8";
 
   @NotNull private final Map<GitLogParser.GitLogOption, String> myOptions;
   @NotNull private final List<String> myPaths;
@@ -105,7 +103,7 @@ class GitLogRecord {
 
   @NotNull
   String getAuthorName() {
-    return decode(lookup(AUTHOR_NAME));
+    return lookup(AUTHOR_NAME);
   }
 
   @NotNull
@@ -115,7 +113,7 @@ class GitLogRecord {
 
   @NotNull
   String getCommitterName() {
-    return decode(lookup(COMMITTER_NAME));
+    return lookup(COMMITTER_NAME);
   }
 
   @NotNull
@@ -125,22 +123,17 @@ class GitLogRecord {
 
   @NotNull
   String getSubject() {
-    return decode(lookup(SUBJECT));
+    return lookup(SUBJECT);
   }
 
   @NotNull
   String getBody() {
-    return decode(lookup(BODY));
+    return lookup(BODY);
   }
 
   @NotNull
   String getRawBody() {
-    return decode(lookup(RAW_BODY));
-  }
-
-  @NotNull
-  String getEncoding() {
-    return lookup(ENCODING);
+    return lookup(RAW_BODY);
   }
 
   @NotNull
@@ -175,28 +168,8 @@ class GitLogRecord {
     }
   }
 
-  @NotNull
-  String decode(@NotNull String input) {
-    String encoding = getEncoding();
-    if (encoding.isEmpty() || UTF_8.equalsIgnoreCase(encoding)) {
-      return input;
-    }
-    try {
-      return new String(input.getBytes(encoding), UTF_8);
-    }
-    catch (UnsupportedEncodingException e) {
-      LOG.error("Could not convert \"" + input + "\" from " + encoding + " to " + UTF_8, e);
-      return input;
-    }
-  }
-
-  @NotNull
   String getFullMessage() {
-    if (mySupportsRawBody) {
-      return getRawBody().trim();
-    }
-
-    return ((getSubject() + "\n\n" + getBody()).trim());
+    return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
   }
 
   @NotNull

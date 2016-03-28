@@ -112,7 +112,7 @@ public class GitLogParser {
   enum GitLogOption {
     HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
     COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
-    RAW_BODY("B"), ENCODING("e");
+    RAW_BODY("B");
 
     private String myPlaceholder;
     GitLogOption(String placeholder) { myPlaceholder = placeholder; }
