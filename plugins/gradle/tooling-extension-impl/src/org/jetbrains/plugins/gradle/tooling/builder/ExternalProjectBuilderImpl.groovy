@@ -307,7 +307,34 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       }
     }
 
+    cleanupSharedSourceFolders(result)
+
     result
+  }
+
+  private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {
+    def mainSourceSet = map[SourceSet.MAIN_SOURCE_SET_NAME]
+    cleanupSharedSourceFolders(map, mainSourceSet, null)
+    cleanupSharedSourceFolders(map, map[SourceSet.TEST_SOURCE_SET_NAME], mainSourceSet)
+  }
+
+  private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> result, ExternalSourceSet sourceSet, ExternalSourceSet toIgnore) {
+    if(!sourceSet) return
+
+    result.entrySet().each {
+      if (!it.value.is(sourceSet) && !it.value.is(toIgnore)) {
+        def customSourceSet = it.value
+        ExternalSystemSourceType.values().each {
+          def customSourceDirectorySet = customSourceSet.sources[it] as ExternalSourceDirectorySet
+          if (customSourceDirectorySet) {
+            def mainSourcesMap = sourceSet.sources
+            mainSourcesMap.values().each {
+              customSourceDirectorySet.srcDirs.removeAll(it.srcDirs)
+            }
+          }
+        }
+      }
+    }
   }
 
   static <T> T chooseNotNull(T ... params) {
