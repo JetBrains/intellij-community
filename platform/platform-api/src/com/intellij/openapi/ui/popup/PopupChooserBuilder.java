@@ -532,6 +532,13 @@ public class PopupChooserBuilder {
       return null;
     }
 
+    @Override
+    public Dimension getPreferredSize() {
+      return isPreferredSizeSet()
+             ? super.getPreferredSize()
+             : myList.getPreferredSize();
+    }
+
     public void setBorder(Border border) {
       if (myList != null){
         myList.setBorder(border);
