@@ -68,7 +68,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
     myTemplatesList.setPreferredSize(JBUI.size(300, 100));
     myTemplatesList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         append(((ProjectTemplate)value).getName());
       }
     });
