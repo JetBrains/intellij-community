@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -38,7 +37,6 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.FunctionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +83,8 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
                                 superMethod.getBody() != null && GrTraitUtil.isTrait(superMethod.getContainingClass());
             final Icon icon = overrides ? AllIcons.Gutter.OverridingMethod : AllIcons.Gutter.ImplementingMethod;
             final MarkerType type = GroovyMarkerTypes.OVERRIDING_PROPERTY_TYPE;
-            return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(), type.getNavigationHandler(),
+            return new LineMarkerInfo<>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(),
+                                        type.getNavigationHandler(),
                                                   GutterIconRenderer.Alignment.LEFT);
           }
         }
@@ -95,7 +94,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
                hasSuperMethods((GrMethod)element.getParent())) {
         final Icon icon = AllIcons.Gutter.OverridingMethod;
         final MarkerType type = GroovyMarkerTypes.GR_OVERRIDING_METHOD;
-        return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(),
+        return new LineMarkerInfo<>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(),
                                               type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
       }
     }
@@ -132,7 +131,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
             comment = ((GrDocCommentOwner)element1).getDocComment();
           }
           LineMarkerInfo info =
-            new LineMarkerInfo<PsiElement>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,
+            new LineMarkerInfo<>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,
                                            Pass.UPDATE_ALL, FunctionUtil.<Object, String>nullConstant(), null,
                                            GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
@@ -186,7 +185,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
-    Set<PsiMethod> methods = new HashSet<PsiMethod>();
+    Set<PsiMethod> methods = new HashSet<>();
     Map<PsiClass, PsiClass> subClassCache = FindSuperElementsHelper.createSubClassCache();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
@@ -210,9 +209,9 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   }
 
   private static void collectOverridingMethods(@NotNull final Set<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
-    final Set<PsiElement> overridden = new HashSet<PsiElement>();
+    final Set<PsiElement> overridden = new HashSet<>();
 
-    Set<PsiClass> classes = new THashSet<PsiClass>();
+    Set<PsiClass> classes = new THashSet<>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       final PsiClass parentClass = method.getContainingClass();
@@ -222,19 +221,16 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     }
 
     for (final PsiClass aClass : classes) {
-      AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
-        @Override
-        public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-          ProgressManager.checkCanceled();
+      AllOverridingMethodsSearch.search(aClass).forEach(pair -> {
+        ProgressManager.checkCanceled();
 
-          final PsiMethod superMethod = pair.getFirst();
-          if (isCorrectTarget(superMethod) && isCorrectTarget(pair.getSecond())) {
-            if (methods.remove(superMethod)) {
-              overridden.add(PsiImplUtil.handleMirror(superMethod));
-            }
+        final PsiMethod superMethod = pair.getFirst();
+        if (isCorrectTarget(superMethod) && isCorrectTarget(pair.getSecond())) {
+          if (methods.remove(superMethod)) {
+            overridden.add(PsiImplUtil.handleMirror(superMethod));
           }
-          return !methods.isEmpty();
         }
+        return !methods.isEmpty();
       });
     }
 
@@ -243,17 +239,11 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
       element = PsiImplUtil.handleMirror(element);
 
-      PsiElement range;
-      if (element instanceof GrNamedElement) {
-        range = ((GrNamedElement)element).getNameIdentifierGroovy();
-      }
-      else {
-        range = element;
-      }
+      PsiElement range = element instanceof GrNamedElement ? ((GrNamedElement)element).getNameIdentifierGroovy() : element;
 
       final MarkerType type = element instanceof GrField ? GroovyMarkerTypes.OVERRIDEN_PROPERTY_TYPE
                                                          : GroovyMarkerTypes.GR_OVERRIDEN_METHOD;
-      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
+      LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
                                                            type.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
     }
