@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -69,20 +71,26 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
 
       final PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(propertyType, declaration.getResolveScope());
       if (collectionItemType != null) {
-        collectSubclassesDescriptors(collectionItemType, descriptors);
+        collectSubclassesDescriptors(collectionItemType, descriptors, context);
       }
       else if (!JavaFxPsiUtil.isPrimitiveOrBoxed(propertyType)) {
-        collectSubclassesDescriptors(propertyType, descriptors);
+        collectSubclassesDescriptors(propertyType, descriptors, context);
       }
 
-      if (!descriptors.isEmpty()) return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
+      if (!descriptors.isEmpty()) return descriptors.toArray(XmlElementDescriptor.EMPTY_ARRAY);
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
-  private static void collectSubclassesDescriptors(PsiType psiType, @NotNull final List<XmlElementDescriptor> descriptors) {
+  private static void collectSubclassesDescriptors(@Nullable PsiType psiType,
+                                                   @NotNull final List<XmlElementDescriptor> descriptors,
+                                                   @NotNull PsiElement context) {
     final PsiClass aClass = PsiUtil.resolveClassInType(psiType);
     if (aClass != null) {
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+        collectRawPropertyDescriptors(descriptors, context);
+        return;
+      }
       ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true, true, false)
         .forEach(psiClass -> {
           addElementDescriptor(descriptors, psiClass);
@@ -92,8 +100,24 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
     }
   }
 
-  private static void addElementDescriptor(@NotNull List<XmlElementDescriptor> descriptors, @NotNull PsiClass aClass) {
-    if (!PsiUtil.isAbstractClass(aClass) && !PsiUtil.isInnerClass(aClass)) {
+  private static void collectRawPropertyDescriptors(@NotNull List<XmlElementDescriptor> descriptors, @NotNull PsiElement context) {
+    final Project project = context.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    // Offer most used simple types. TODO try to guess suitable types from the project sources
+    addElementDescriptor(descriptors, facade.findClass(CommonClassNames.JAVA_LANG_STRING, scope));
+    addElementDescriptor(descriptors, facade.findClass(CommonClassNames.JAVA_LANG_DOUBLE, scope));
+    addElementDescriptor(descriptors, facade.findClass(CommonClassNames.JAVA_LANG_INTEGER, scope));
+    addElementDescriptor(descriptors, facade.findClass(CommonClassNames.JAVA_LANG_BOOLEAN, scope));
+  }
+
+  private static void addElementDescriptor(@NotNull List<XmlElementDescriptor> descriptors, @Nullable PsiClass aClass) {
+    if (aClass != null &&
+        !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName()) &&
+        !aClass.isInterface() &&
+        !PsiUtil.isAbstractClass(aClass) &&
+        !PsiUtil.isInnerClass(aClass) &&
+        JavaFxPsiUtil.isAbleToInstantiate(aClass)) {
       descriptors.add(new JavaFxClassTagDescriptor(aClass.getName(), aClass));
     }
   }

@@ -133,57 +133,48 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testPrimitiveSubtags() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertDoesntContain(myFixture.getLookupElementStrings(), "geomBoundsInvalid");
   }
 
   public void testDefaultPropertyWrappedField() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "image", "Image");
   }
 
   public void testInfinity() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "Infinity", "-Infinity", "NaN", "-NaN");
   }
 
   public void testNoInfinity() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertDoesntContain(myFixture.getLookupElementStrings(), "Infinity");
   }
 
   public void testBooleanValues() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
   }
 
   public void testBooleanValuesNonStatic() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
   }
 
   public void testPropertyNameWithoutField() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "disable");
   }
 
   public void testPropertyTagSubclass() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "Color", "ImagePattern", "LinearGradient", "RadialGradient");
     assertDoesntContain(myFixture.getLookupElementStrings(), "Paint");
   }
 
   public void testSubclassesAndDefaultProperty() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
     assertNotNull(lookupElementStrings);
     final String buttonVariant = "Button";
@@ -219,6 +210,11 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAllowPropertyTypeClass() throws Exception {
     doTest("ColumnConstraints");
+  }
+
+  public void testRawCollectionItem() throws Exception {
+    configureAndComplete();
+    assertDoesntContain(myFixture.getLookupElementStrings(), "T", "Object", "java.lang.Object");
   }
 
   public void testFxIdExactOptionsLabel() throws Exception {
@@ -260,16 +256,21 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   private void doOrderTest(String... expected) {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertOrderedEquals(myFixture.getLookupElementStrings(), expected);
   }
 
   private void configureAndComplete(final String... extraFiles) {
-    final List<String> files = new ArrayList<>();
-    files.add(getTestName(true) + ".fxml");
-    Collections.addAll(files, extraFiles);
-    myFixture.configureByFiles(ArrayUtil.toStringArray(files));
+    final String fxmlFileName = getTestName(true) + ".fxml";
+    if (extraFiles.length != 0) {
+      final List<String> files = new ArrayList<>();
+      files.add(fxmlFileName);
+      Collections.addAll(files, extraFiles);
+      myFixture.configureByFiles(ArrayUtil.toStringArray(files));
+    }
+    else {
+      myFixture.configureByFiles(fxmlFileName);
+    }
     complete();
   }
 
