@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -121,32 +122,17 @@ class UndoableGroup {
     final boolean wrapInBulkUpdate = myActions.size() > 50;
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
-    final Set<DocumentEx> bulkDocuments = new THashSet<DocumentEx>();
+    final Ref<DocumentEx> bulkDocument = new Ref<>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
           for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
             if (wrapInBulkUpdate) {
-              Collection<DocumentEx> newDocuments = new THashSet<DocumentEx>();
-              Set<DocumentEx> documentsToRemoveFromBulk = new THashSet<DocumentEx>(bulkDocuments);
-              DocumentReference[] affectedDocuments = action.getAffectedDocuments();
-              if (affectedDocuments != null) {
-                for (DocumentReference affectedDocument : affectedDocuments) {
-                  VirtualFile file = affectedDocument.getFile();
-                  if (file != null && !file.isValid()) continue;
-                  DocumentEx document = (DocumentEx)affectedDocument.getDocument();
-                  if (document == null) continue;
-                  documentsToRemoveFromBulk.remove(document);
-                  if (bulkDocuments.contains(document)) continue;
-                  newDocuments.add(document);
-                  document.setInBulkUpdate(true);
-                }
-              }
-              for (DocumentEx document : documentsToRemoveFromBulk) {
-                document.setInBulkUpdate(false);
-              }
-              bulkDocuments.removeAll(documentsToRemoveFromBulk);
-              bulkDocuments.addAll(newDocuments);
+              DocumentEx newDocument = getDocumentToSetBulkMode(action);
+              DocumentEx oldDocument = bulkDocument.get();
+              if (oldDocument != null && !oldDocument.equals(newDocument)) oldDocument.setInBulkUpdate(false);
+              if (newDocument != null && !newDocument.equals(oldDocument)) newDocument.setInBulkUpdate(true);
+              bulkDocument.set(newDocument);
             }
 
             if (isUndo) {
@@ -161,13 +147,26 @@ class UndoableGroup {
           reportUndoProblem(e, isUndo);
         }
         finally {
-          for (DocumentEx bulkDocument : bulkDocuments) {
-            bulkDocument.setInBulkUpdate(false);
+          DocumentEx document = bulkDocument.get();
+          if (document != null) {
+            document.setInBulkUpdate(false);
           }
         }
       }
     });
     commitAllDocuments();
+  }
+
+  private static DocumentEx getDocumentToSetBulkMode(UndoableAction action) {
+    // We use bulk update only for EditorChangeAction, cause we know that it only changes document. Other actions can do things
+    // not allowed in bulk update.
+    if (!(action instanceof EditorChangeAction)) return null;
+    //noinspection ConstantConditions
+    DocumentReference newDocumentRef = action.getAffectedDocuments()[0];
+    if (newDocumentRef == null) return null;
+    VirtualFile file = newDocumentRef.getFile();
+    if (file != null && !file.isValid()) return null;
+    return  (DocumentEx)newDocumentRef.getDocument();
   }
 
   boolean isInsideStartFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
