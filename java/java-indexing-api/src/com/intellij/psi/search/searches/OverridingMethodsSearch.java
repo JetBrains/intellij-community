@@ -40,8 +40,8 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
     @NotNull private final SearchScope myScope;
     private final boolean myCheckDeep;
 
-    public SearchParameters(@NotNull PsiMethod aClass, @NotNull SearchScope scope, final boolean checkDeep) {
-      myMethod = aClass;
+    public SearchParameters(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean checkDeep) {
+      myMethod = method;
       myScope = scope;
       myCheckDeep = checkDeep;
     }
