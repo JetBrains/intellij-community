@@ -1463,10 +1463,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (!space && !canStickChildrenTogether(myChild1, myChild2)) {
         space = true;
       }
-
-      if (!keepLineBreaks && myRole2 == ChildRoleBase.NONE) {
-        keepLineBreaks = true;
-      }
       myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
     }
   }
