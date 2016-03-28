@@ -162,8 +162,10 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           indentText = strings.get(0);
         }
       }
-      if (indentText.length() == firstLineIndent)
+      // Top-level, there should be no indentation
+      if (PsiTreeUtil.getParentOfType(ws, PyStatementList.class) == null) {
         return "";
+      }
     }
     return indentText;
   }

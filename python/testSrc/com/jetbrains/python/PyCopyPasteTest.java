@@ -371,4 +371,9 @@ public class PyCopyPasteTest extends PyTestCase {
   private void doTestMultiLine() {
     doTest("multiLine/");
   }
+
+  // PY-18522
+  public void testSameIndentPreserved() {
+    doTest();
+  }
 }
