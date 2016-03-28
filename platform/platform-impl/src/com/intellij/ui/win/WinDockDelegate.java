@@ -47,7 +47,7 @@ public class WinDockDelegate implements SystemDock.Delegate {
     Task[] tasks = new Task[recentProjectActions.length];
     for (int i = 0; i < recentProjectActions.length; i ++) {
       ReopenProjectAction rpa = (ReopenProjectAction)recentProjectActions[i];
-      tasks[i] = new Task(javaExe, argsToExecute + RecentTasks.getShortenPath(rpa.getProjectPath()), rpa.getTemplatePresentation().getText());
+      tasks[i] = new Task(RecentTasks.getShortenPath(javaExe), argsToExecute + RecentTasks.getShortenPath(rpa.getProjectPath()), rpa.getTemplatePresentation().getText());
     }
     RecentTasks.addTasks(tasks);
   }
