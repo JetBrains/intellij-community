@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,17 @@ package org.jetbrains.plugins.groovy.dsl.toplevel
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.Scope
+
 import static com.intellij.patterns.PlatformPatterns.psiFile
 import static com.intellij.patterns.PlatformPatterns.virtualFile
 
 /**
  * @author ilyas
  */
+@CompileStatic
 class Context {
   private final List<ContextFilter> myFilters = []
 
@@ -34,7 +37,7 @@ class Context {
     if (!args) return
 
     // filetypes : [<file_ext>*]
-    List<String> extensions = args.filetypes
+    List<String> extensions = args.filetypes as List<String>
     if (extensions instanceof List) {
       extensions = extensions.collect { StringUtil.trimStart(it, '.') }
       def vfilePattern = extensions.size() == 1 ? virtualFile().withExtension(extensions[0]) : virtualFile().withExtension(extensions as String[])
@@ -60,10 +63,10 @@ class Context {
     // ctype : <ctype>
     // Qualifier type to be augmented
     if (args.ctype instanceof String) {
-      addFilter ClassContextFilter.subtypeOf(args.ctype)
+      addFilter ClassContextFilter.subtypeOf(args.ctype as String)
     }
     else if (args.ctype instanceof ElementPattern) {
-      addFilter ClassContextFilter.fromClassPattern(args.ctype)
+      addFilter ClassContextFilter.fromClassPattern(args.ctype as ElementPattern)
     }
   }
 

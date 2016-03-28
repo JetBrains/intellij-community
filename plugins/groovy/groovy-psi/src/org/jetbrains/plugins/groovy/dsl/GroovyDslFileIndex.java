@@ -205,7 +205,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     for (GroovyDslScript script : getDslScripts(project)) {
       final MultiMap staticInfo = script.getStaticInfo();
       //noinspection unchecked
-      final Collection infos = staticInfo != null ? staticInfo.get("scriptSuperClass") : Collections.emptyList();
+      final Collection infos = staticInfo.get("scriptSuperClass");
 
       for (Object info : infos) {
         if (info instanceof Map) {
@@ -510,7 +510,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     try {
-      return new GroovyDslExecutor(text, vfile.getName());
+      return GroovyDslExecutor.createAndRunExecutor(text, vfile.getName());
     }
     catch (final Throwable e) {
       if (project.isDisposed()) {
