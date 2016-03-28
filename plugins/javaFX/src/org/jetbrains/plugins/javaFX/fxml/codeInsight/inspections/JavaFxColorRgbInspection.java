@@ -11,7 +11,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
 /**
  * @author Pavel.Dolgov
@@ -50,8 +50,8 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
         if (tag.getSubTags().length != 0) return;
 
         final XmlElementDescriptor descriptor = tag.getDescriptor();
-        if (descriptor instanceof JavaFxPropertyElementDescriptor) {
-          final PsiClass psiClass = ((JavaFxPropertyElementDescriptor)descriptor).getPsiClass();
+        if (descriptor instanceof JavaFxPropertyTagDescriptor) {
+          final PsiClass psiClass = ((JavaFxPropertyTagDescriptor)descriptor).getPsiClass();
           if (JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
             final XmlTagValue valueElement = tag.getValue();
             final XmlText[] textElements = valueElement.getTextElements();

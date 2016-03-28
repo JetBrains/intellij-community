@@ -41,9 +41,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.*;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -317,14 +315,6 @@ public class JavaFxPsiUtil {
   public static PsiClass getTagClass(@NotNull XmlTag xmlTag) {
     final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
     if (descriptor != null) {
-      if (descriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
-        final JavaFxClassBackedElementDescriptor rootTagDescriptor =
-          ((JavaFxDefaultPropertyElementDescriptor)descriptor).getFxRootTagDescriptor(xmlTag);
-        if (rootTagDescriptor != null) {
-          final PsiElement declaration = rootTagDescriptor.getDeclaration();
-          return declaration instanceof PsiClass ? (PsiClass)declaration : null;
-        }
-      }
       final PsiElement declaration = descriptor.getDeclaration();
       if (declaration instanceof PsiClass) {
         return (PsiClass)declaration;
@@ -366,11 +356,8 @@ public class JavaFxPsiUtil {
   public static boolean isReadOnly(String attributeName, XmlTag tag) {
     if (findStaticPropertySetter(attributeName, tag) != null) return false;
     final XmlElementDescriptor descriptor = tag.getDescriptor();
-    if (descriptor != null) {
-      final PsiElement declaration = descriptor.getDeclaration();
-      if (declaration instanceof PsiClass) {
-        return !collectWritableProperties((PsiClass)declaration).containsKey(attributeName);
-      }
+    if (descriptor instanceof JavaFxClassTagDescriptorBase) {
+      return ((JavaFxClassTagDescriptorBase)descriptor).isReadOnlyAttribute(attributeName);
     }
     return false;
   }
@@ -397,13 +384,15 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static PsiType getDefaultPropertyExpectedType(PsiClass aClass) {
+  @Nullable
+  private static PsiType getDefaultPropertyExpectedType(@Nullable PsiClass aClass) {
+    if (aClass == null) return null;
     final PsiAnnotation annotation =
       AnnotationUtil.findAnnotationInHierarchy(aClass, Collections.singleton(JavaFxCommonNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
     if (annotation != null) {
       final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
       if (memberValue != null) {
-        final String propertyName = StringUtil.stripQuotesAroundValue(memberValue.getText());
+        final String propertyName = StringUtil.unquoteString(memberValue.getText());
         final PsiMethod getter = findPropertyGetter(propertyName, aClass);
         if (getter != null) {
           return getter.getReturnType();
@@ -423,18 +412,18 @@ public class JavaFxPsiUtil {
     if (annotation != null) {
       final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
       if (memberValue != null) {
-        return StringUtil.stripQuotesAroundValue(memberValue.getText());
+        return StringUtil.unquoteString(memberValue.getText());
       }
     }
     return null;
   }
 
-  public static boolean isAbleToInstantiate(final PsiClass psiClass) {
+  public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass) {
     return isAbleToInstantiate(psiClass, message -> {
     });
   }
 
-  public static boolean isAbleToInstantiate(final PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
+  public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
     if (psiClass.getConstructors().length > 0) {
       for (PsiMethod constructor : psiClass.getConstructors()) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
@@ -500,27 +489,19 @@ public class JavaFxPsiUtil {
     if (targetTag == null || fromClass == null || !fromClass.isValid()) {
       return true;
     }
-    XmlElementDescriptor tagDescriptor = targetTag.getDescriptor();
-    if (tagDescriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
-      tagDescriptor = ((JavaFxDefaultPropertyElementDescriptor)tagDescriptor).getFxRootTagDescriptor(targetTag);
-    }
-
-    if (tagDescriptor instanceof JavaFxPropertyElementDescriptor) {
-      final PsiClass containingClass = ((JavaFxPropertyElementDescriptor)tagDescriptor).getPsiClass();
+    final XmlElementDescriptor tagDescriptor = targetTag.getDescriptor();
+    if (tagDescriptor instanceof JavaFxPropertyTagDescriptor) {
+      final PsiClass containingClass = ((JavaFxPropertyTagDescriptor)tagDescriptor).getPsiClass();
       final PsiType targetType = getWritablePropertyType(containingClass, tagDescriptor.getDeclaration());
       return canCoerce(targetType, fromClass, targetTag, messageConsumer);
     }
-    else if (tagDescriptor instanceof JavaFxClassBackedElementDescriptor) {
+    else if (tagDescriptor instanceof JavaFxClassTagDescriptorBase) {
       final PsiElement tagDeclaration = tagDescriptor.getDeclaration();
       if (tagDeclaration instanceof PsiClass) {
         PsiClass defaultPropertyOwnerClass = (PsiClass)tagDeclaration;
         final XmlAttribute factoryAttr = targetTag.getAttribute(FxmlConstants.FX_FACTORY);
         if (factoryAttr != null) {
-          final PsiClass factoryReturnClass = getFactoryProducedClass((PsiClass)tagDeclaration, factoryAttr.getValue());
-          if (factoryReturnClass == null) {
-            return true;
-          }
-          defaultPropertyOwnerClass = factoryReturnClass;
+          defaultPropertyOwnerClass = getFactoryProducedClass((PsiClass)tagDeclaration, factoryAttr.getValue());
         }
         final PsiType targetType = getDefaultPropertyExpectedType(defaultPropertyOwnerClass);
         if (targetType != null) {
@@ -984,9 +965,10 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean isObservableCollection(@Nullable PsiClass psiClass) {
-    return InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_LIST) ||
-           InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_SET) ||
-           InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_ARRAY);
+    return psiClass != null &&
+           (InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_LIST) ||
+            InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_SET) ||
+            InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_ARRAY));
   }
 
   @Nullable
@@ -1079,9 +1061,9 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiClass getFactoryProducedClass(@NotNull PsiClass aClass, @Nullable String factoryMethodName) {
-    if (factoryMethodName == null) return null;
-    final PsiMethod[] methods = aClass.findMethodsByName(factoryMethodName, true);
+  public static PsiClass getFactoryProducedClass(@Nullable PsiClass psiClass, @Nullable String factoryMethodName) {
+    if (psiClass == null || factoryMethodName == null) return null;
+    final PsiMethod[] methods = psiClass.findMethodsByName(factoryMethodName, true);
     for (PsiMethod method : methods) {
       if (method.getParameterList().getParametersCount() == 0 &&
           method.hasModifierProperty(PsiModifier.STATIC)) {

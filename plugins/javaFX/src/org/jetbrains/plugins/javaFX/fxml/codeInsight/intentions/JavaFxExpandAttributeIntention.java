@@ -33,7 +33,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyAttributeDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
@@ -79,7 +79,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
       final PsiElement parent = element.getParent();
       if (parent instanceof XmlAttribute) {
         final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-        if (descriptor instanceof JavaFxPropertyAttributeDescriptor && !(descriptor instanceof JavaFxDefaultPropertyAttributeDescriptor)) {
+        if (descriptor instanceof JavaFxPropertyAttributeDescriptor && !(descriptor instanceof JavaFxBuiltInAttributeDescriptor)) {
 
           PsiType tagType = null;
           final PsiElement declaration = descriptor.getDeclaration();

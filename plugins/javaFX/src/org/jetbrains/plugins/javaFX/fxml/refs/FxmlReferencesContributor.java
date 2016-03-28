@@ -64,19 +64,19 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .and(attributeValueInFxml),
                                         new JavaFxFieldIdReferenceProvider());
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.SOURCE)
                                                                                      .withParent(XmlPatterns.xmlTag()
                                                                                                    .withName(FxmlConstants.FX_INCLUDE)))
                                           .and(attributeValueInFxml),
                                         new JavaFxSourceReferenceProvider());
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.SOURCE)
                                                                                      .withParent(XmlPatterns.xmlTag()
                                                                                                    .withName(FxmlConstants.FX_SCRIPT)))
                                           .and(attributeValueInFxml),
                                         new JavaFxSourceReferenceProvider());
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.SOURCE)
                                                                                      .withParent(XmlPatterns.xmlTag()
                                                                                                    .withName(string().oneOf(FxmlConstants.FX_REFERENCE, FxmlConstants.FX_COPY))))
                                           .and(attributeValueInFxml),

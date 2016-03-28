@@ -27,12 +27,12 @@ import java.util.List;
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
+public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;
   private final boolean myStatic;
 
-  public JavaFxPropertyElementDescriptor(PsiClass psiClass, String name, boolean isStatic) {
+  public JavaFxPropertyTagDescriptor(PsiClass psiClass, String name, boolean isStatic) {
     myPsiClass = psiClass;
     myName = name;
     myStatic = isStatic;
@@ -63,8 +63,8 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
 
     if (propertyType != null) {
       final ArrayList<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
-      for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
-        descriptors.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
+      for (String name : FxmlConstants.FX_BUILT_IN_TAGS) {
+        descriptors.add(new JavaFxBuiltInTagDescriptor(name, null));
       }
 
       final PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(propertyType, declaration.getResolveScope());
@@ -94,18 +94,14 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
 
   private static void addElementDescriptor(@NotNull List<XmlElementDescriptor> descriptors, @NotNull PsiClass aClass) {
     if (!PsiUtil.isAbstractClass(aClass) && !PsiUtil.isInnerClass(aClass)) {
-      descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
+      descriptors.add(new JavaFxClassTagDescriptor(aClass.getName(), aClass));
     }
   }
 
   @Nullable
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
-    final String name = childTag.getName();
-    if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
-      return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
-    }
-    return new JavaFxClassBackedElementDescriptor(name, childTag);
+    return JavaFxClassTagDescriptorBase.createTagDescriptor(childTag);
   }
 
   @Override

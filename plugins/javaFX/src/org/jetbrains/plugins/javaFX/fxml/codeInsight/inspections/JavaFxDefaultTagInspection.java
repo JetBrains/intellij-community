@@ -22,7 +22,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
 /**
  * User: anna
@@ -38,7 +38,7 @@ public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
       public void visitXmlTag(XmlTag tag) {
         super.visitXmlTag(tag);
         final XmlElementDescriptor descriptor = tag.getDescriptor();
-        if (descriptor instanceof JavaFxPropertyElementDescriptor) {
+        if (descriptor instanceof JavaFxPropertyTagDescriptor) {
           final XmlTag parentTag = tag.getParentTag();
           if (parentTag != null) {
             final String propertyName = JavaFxPsiUtil.getDefaultPropertyName(JavaFxPsiUtil.getTagClass(parentTag));

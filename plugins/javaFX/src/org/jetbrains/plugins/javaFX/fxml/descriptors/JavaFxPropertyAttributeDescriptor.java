@@ -140,7 +140,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             final XmlTag xmlTag = ((XmlAttribute)parent).getParent();
             if (xmlTag != null) {
               final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
-              if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+              if (descriptor instanceof JavaFxClassTagDescriptorBase) {
                 final PsiElement declaration = descriptor.getDeclaration();
                 if (declaration instanceof PsiClass) {
                   final PsiField fieldByName = controllerClass.findFieldByName(xmlAttributeValue.getValue(), false);

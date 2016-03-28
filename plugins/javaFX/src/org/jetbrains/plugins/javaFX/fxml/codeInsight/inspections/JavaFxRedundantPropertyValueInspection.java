@@ -22,7 +22,7 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -80,7 +80,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
       public void visitXmlTag(XmlTag tag) {
         super.visitXmlTag(tag);
         final XmlElementDescriptor descriptor = tag.getDescriptor();
-        if (!(descriptor instanceof JavaFxPropertyElementDescriptor)) {
+        if (!(descriptor instanceof JavaFxPropertyTagDescriptor)) {
           return;
         }
         if (tag.getSubTags().length != 0) return;
@@ -91,7 +91,9 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
           return;
         }
 
-        final PsiClass tagClass = JavaFxPsiUtil.getTagClass(tag.getParentTag());
+        final XmlTag parentTag = tag.getParentTag();
+        if (parentTag == null) return;
+        final PsiClass tagClass = JavaFxPsiUtil.getTagClass(parentTag);
         final String defaultValue = getDefaultValue(tag.getName(), tagClass);
         if (defaultValue == null) return;
 

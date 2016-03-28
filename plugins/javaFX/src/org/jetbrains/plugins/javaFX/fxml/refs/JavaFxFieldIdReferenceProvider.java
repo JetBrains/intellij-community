@@ -132,7 +132,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
       }
       else if (parentTag.getParent() instanceof XmlDocument) {
         final String name = xmlTag.getName();
-        if (!FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
+        if (!FxmlConstants.FX_BUILT_IN_TAGS.contains(name)) {
           className = JavaFxCommonNames.JAVAFX_SCENE_NODE;
         }
       }

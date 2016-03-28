@@ -30,17 +30,19 @@ import java.util.List;
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxDefaultPropertyAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxDefaultPropertyAttributeDescriptor.class.getName());
+public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
+  private static final Logger LOG = Logger.getInstance("#" + JavaFxBuiltInAttributeDescriptor.class.getName());
 
-  private String myDefaultPropertyName = null;
-  public JavaFxDefaultPropertyAttributeDescriptor(String name, PsiClass psiClass) {
+  private final String myParentTagName;
+
+  public JavaFxBuiltInAttributeDescriptor(String name, PsiClass psiClass) {
     super(name, psiClass);
+    myParentTagName = null;
   }
 
-  public JavaFxDefaultPropertyAttributeDescriptor(String name, String defaultPropertyName) {
+  public JavaFxBuiltInAttributeDescriptor(String name, String parentTagName) {
     super(name, null);
-    myDefaultPropertyName = defaultPropertyName;
+    myParentTagName = parentTagName;
   }
 
   @Override
@@ -50,16 +52,14 @@ public class JavaFxDefaultPropertyAttributeDescriptor extends JavaFxPropertyAttr
 
   @Override
   public boolean isEnumerated() {
-    return getName().equals("fx:constant");
+    return getName().equals(FxmlConstants.FX_CONSTANT);
   }
 
   @Override
   public boolean isRequired() {
-    if (myDefaultPropertyName != null) {
-      final List<String> requiredAttrs = FxmlConstants.FX_REQUIRED_ELEMENT_ATTRIBUTES.get(myDefaultPropertyName);
-      if (requiredAttrs != null && requiredAttrs.contains(getName())) return true;
-    }
-    return false;
+    if (myParentTagName == null) return super.isRequired();
+    final List<String> requiredAttrs = FxmlConstants.FX_BUILT_IN_TAG_REQUIRED_ATTRIBUTES.get(myParentTagName);
+    return requiredAttrs != null && requiredAttrs.contains(getName());
   }
 
   @Override
