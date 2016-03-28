@@ -799,6 +799,10 @@
                      displayName="Java-style property access"
                      groupName="Style" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
+                     displayName="Change to operator"
+                     groupName="Style" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessToStaticFieldLockedOnInstance"
                      displayName="Access to static field locked on instance data"
                      groupName="Threading issues" enabledByDefault="true" level="WARNING"

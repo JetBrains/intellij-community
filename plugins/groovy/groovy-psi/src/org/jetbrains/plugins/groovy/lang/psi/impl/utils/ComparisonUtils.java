@@ -15,10 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class ComparisonUtils {
     s_invertedComparisons.put(GroovyTokenTypes.mLE, ">");
   }
 
-  public static boolean isComparison(GrExpression exp) {
+  public static boolean isComparison(PsiElement exp) {
     if (!(exp instanceof GrBinaryExpression)) {
       return false;
     }

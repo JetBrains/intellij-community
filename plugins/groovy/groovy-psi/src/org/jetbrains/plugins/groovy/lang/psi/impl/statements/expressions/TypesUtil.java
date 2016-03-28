@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Iterator;
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*;
 
 /**
  * @author ven
@@ -134,33 +136,33 @@ public class TypesUtil {
   private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<IElementType, String>();
 
   static {
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, "or");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, "xor");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.kAS, "asType");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mCOMPARE_TO, "compareTo");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGT, "compareTo");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGE, "compareTo");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLT, "compareTo");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLE, "compareTo");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR_STAR, "power");
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, "leftShift");
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, "rightShift");
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, "rightShiftUnsigned");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mEQUAL, "equals");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mNOT_EQUAL, "equals");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, PLUS);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, MINUS);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, AND);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, OR);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, XOR);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, DIV);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, MOD);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, MULTIPLY);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.kAS, AS_TYPE);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mCOMPARE_TO, COMPARE_TO);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGT, COMPARE_TO);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGE, COMPARE_TO);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLT, COMPARE_TO);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLE, COMPARE_TO);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR_STAR, POWER);
+    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, LEFT_SHIFT);
+    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, RIGHT_SHIFT);
+    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, RIGHT_SHIFT_UNSIGNED);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mEQUAL, EQUALS);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mNOT_EQUAL, EQUALS);
 
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mLNOT, "asBoolean");
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "positive");
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "negative");
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, "previous");
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mINC, "next");
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, "bitwiseNegate");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mLNOT, AS_BOOLEAN);
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, POSITIVE);
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, NEGATIVE);
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, PREVIOUS);
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mINC, NEXT);
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, BITWISE_NEGATE);
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
