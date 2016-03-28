@@ -122,17 +122,22 @@ class UndoableGroup {
     final boolean wrapInBulkUpdate = myActions.size() > 50;
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
-    final Ref<DocumentEx> bulkDocument = new Ref<>();
+    final Set<DocumentEx> bulkDocuments = new THashSet<DocumentEx>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
           for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
             if (wrapInBulkUpdate) {
               DocumentEx newDocument = getDocumentToSetBulkMode(action);
-              DocumentEx oldDocument = bulkDocument.get();
-              if (oldDocument != null && !oldDocument.equals(newDocument)) oldDocument.setInBulkUpdate(false);
-              if (newDocument != null && !newDocument.equals(oldDocument)) newDocument.setInBulkUpdate(true);
-              bulkDocument.set(newDocument);
+              if (newDocument == null) {
+                for (DocumentEx document : bulkDocuments) {
+                  document.setInBulkUpdate(false);
+                }
+                bulkDocuments.clear();
+              }
+              else if (bulkDocuments.add(newDocument)) {
+                newDocument.setInBulkUpdate(true);
+              }
             }
 
             if (isUndo) {
@@ -147,9 +152,8 @@ class UndoableGroup {
           reportUndoProblem(e, isUndo);
         }
         finally {
-          DocumentEx document = bulkDocument.get();
-          if (document != null) {
-            document.setInBulkUpdate(false);
+          for (DocumentEx bulkDocument : bulkDocuments) {
+            bulkDocument.setInBulkUpdate(false);
           }
         }
       }
