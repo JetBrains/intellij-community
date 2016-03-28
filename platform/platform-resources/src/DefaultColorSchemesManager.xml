@@ -14,7 +14,7 @@
       <option name="NOTIFICATION_BACKGROUND" value="ffffcc" />
       <option name="SELECTED_INDENT_GUIDE" value="c8c8c8"/>
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
-      <option name="LINE_NUMBERS_COLOR" value="b2b2b2"/>
+      <option name="LINE_NUMBERS_COLOR" value="999999"/>
       <option name="ANNOTATIONS_COLOR" value="000080" />
       <option name="ANNOTATIONS_MERGED_COLOR" value="008080" />
       <option name="CARET_COLOR" value="0"/>
@@ -1032,7 +1032,7 @@
       <option name="FILESTATUS_modifiedOutside" value="6897bb" />
       <option name="GUTTER_BACKGROUND" value="313335" />
       <option name="INDENT_GUIDE" value="373737" />
-      <option name="LINE_NUMBERS_COLOR" value="515457" />
+      <option name="LINE_NUMBERS_COLOR" value="585a5c" />
       <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
       <option name="MODIFIED_LINES_COLOR" value="374752" deuteranopia="333a4c" protanopia="333a4c"/>
       <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
