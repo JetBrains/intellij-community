@@ -33,14 +33,10 @@ import java.util.*;
 
 public class NestedMemberAccess {
 
-  private static final int METHOD_ACCESS_NORMAL = 1;
-  private static final int METHOD_ACCESS_FIELD_GET = 2;
-  private static final int METHOD_ACCESS_FIELD_SET = 3;
-  private static final int METHOD_ACCESS_METHOD = 4;
-  private static final int METHOD_ACCESS_FUNCTION = 5;
+  private enum MethodAccess {NORMAL, FIELD_GET, FIELD_SET, METHOD, FUNCTION}
 
   private boolean noSynthFlag;
-  private final Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
+  private final Map<MethodWrapper, MethodAccess> mapMethodType = new HashMap<MethodWrapper, MethodAccess>();
 
 
   public void propagateMemberAccess(ClassNode root) {
@@ -71,7 +67,7 @@ public class NestedMemberAccess {
   }
 
   private void computeMethodType(ClassNode node, MethodWrapper method) {
-    int type = METHOD_ACCESS_NORMAL;
+    MethodAccess type = MethodAccess.NORMAL;
 
     if (method.root != null) {
       DirectGraph graph = method.getOrBuildGraph();
@@ -102,7 +98,7 @@ public class NestedMemberAccess {
                   if (fexpr.getClassname().equals(node.classStruct.qualifiedName)) {  // FIXME: check for private flag of the field
                     if (fexpr.isStatic() ||
                         (fexpr.getInstance().type == Exprent.EXPRENT_VAR && ((VarExprent)fexpr.getInstance()).getIndex() == 0)) {
-                      type = METHOD_ACCESS_FIELD_GET;
+                      type = MethodAccess.FIELD_GET;
                     }
                   }
                 }
@@ -111,7 +107,7 @@ public class NestedMemberAccess {
                 if (parcount == 1) {
                   // this or final variable
                   if (((VarExprent)exprCore).getIndex() != 0) {
-                    type = METHOD_ACCESS_FIELD_GET;
+                    type = MethodAccess.FIELD_GET;
                   }
                 }
 
@@ -122,12 +118,12 @@ public class NestedMemberAccess {
                 if (functionExprent.getFuncType() >= FunctionExprent.FUNCTION_IMM &&
                     functionExprent.getFuncType() <= FunctionExprent.FUNCTION_PPI) {
                   if (functionExprent.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
-                    type = METHOD_ACCESS_FUNCTION;
+                    type = MethodAccess.FUNCTION;
                   }
                 }
                 break;
               case Exprent.EXPRENT_INVOCATION:
-                type = METHOD_ACCESS_METHOD;
+                type = MethodAccess.METHOD;
                 break;
               case Exprent.EXPRENT_ASSIGNMENT:
                 AssignmentExprent asexpr = (AssignmentExprent)exprCore;
@@ -139,7 +135,7 @@ public class NestedMemberAccess {
                       if (fexpras.isStatic() ||
                           (fexpras.getInstance().type == Exprent.EXPRENT_VAR && ((VarExprent)fexpras.getInstance()).getIndex() == 0)) {
                         if (((VarExprent)asexpr.getRight()).getIndex() == parcount - 1) {
-                          type = METHOD_ACCESS_FIELD_SET;
+                          type = MethodAccess.FIELD_SET;
                         }
                       }
                     }
@@ -147,9 +143,9 @@ public class NestedMemberAccess {
                 }
             }
 
-            if (type == METHOD_ACCESS_METHOD) { // FIXME: check for private flag of the method
+            if (type == MethodAccess.METHOD) { // FIXME: check for private flag of the method
 
-              type = METHOD_ACCESS_NORMAL;
+              type = MethodAccess.NORMAL;
 
               InvocationExprent invexpr = (InvocationExprent)exprCore;
 
@@ -169,7 +165,7 @@ public class NestedMemberAccess {
                 }
 
                 if (equalpars) {
-                  type = METHOD_ACCESS_METHOD;
+                  type = MethodAccess.METHOD;
                 }
               }
             }
@@ -198,7 +194,7 @@ public class NestedMemberAccess {
                         if (exexpr.getExitType() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
                           if (exexpr.getValue().type == Exprent.EXPRENT_VAR &&
                               ((VarExprent)asexpr.getRight()).getIndex() == parcount - 1) {
-                            type = METHOD_ACCESS_FIELD_SET;
+                            type = MethodAccess.FIELD_SET;
                           }
                         }
                       }
@@ -212,7 +208,7 @@ public class NestedMemberAccess {
       }
     }
 
-    if (type != METHOD_ACCESS_NORMAL) {
+    if (type != MethodAccess.NORMAL) {
       mapMethodType.put(method, type);
     }
     else {
@@ -349,10 +345,10 @@ public class NestedMemberAccess {
       return null;
     }
 
-    int type = mapMethodType.get(methsource);
+    MethodAccess type = mapMethodType.get(methsource);
 
-    //		// FIXME: impossible case. METHOD_ACCESS_NORMAL is not saved in the map
-    //		if(type == METHOD_ACCESS_NORMAL) {
+    //		// FIXME: impossible case. MethodAccess.NORMAL is not saved in the map
+    //		if(type == MethodAccess.NORMAL) {
     //			return null;
     //		}
 
@@ -366,7 +362,7 @@ public class NestedMemberAccess {
     Exprent retexprent = null;
 
     switch (type) {
-      case METHOD_ACCESS_FIELD_GET:
+      case FIELD_GET:
         ExitExprent exsource = (ExitExprent)source;
         if (exsource.getValue().type == Exprent.EXPRENT_VAR) { // qualified this
           VarExprent var = (VarExprent)exsource.getValue();
@@ -394,7 +390,7 @@ public class NestedMemberAccess {
           retexprent = ret;
         }
         break;
-      case METHOD_ACCESS_FIELD_SET:
+      case FIELD_SET:
         AssignmentExprent ret;
         if (source.type == Exprent.EXPRENT_EXIT) {
           ExitExprent extex = (ExitExprent)source;
@@ -414,10 +410,10 @@ public class NestedMemberAccess {
         }
         retexprent = ret;
         break;
-      case METHOD_ACCESS_FUNCTION:
+      case FUNCTION:
         retexprent = replaceFunction(invexpr, source);
         break;
-      case METHOD_ACCESS_METHOD:
+      case METHOD:
         if (source.type == Exprent.EXPRENT_EXIT) {
           source = ((ExitExprent)source).getValue();
         }
