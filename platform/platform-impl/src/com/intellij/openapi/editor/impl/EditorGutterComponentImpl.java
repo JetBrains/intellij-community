@@ -140,7 +140,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private String myLastGutterToolTip = null;
   @NotNull private TIntFunction myLineNumberConvertor;
   @Nullable private TIntFunction myAdditionalLineNumberConvertor;
-  private TIntFunction myLineNumberAreaWidthFunction;
   private boolean myShowDefaultGutterPopup = true;
   @Nullable private ActionGroup myCustomGutterPopupGroup;
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<>();
@@ -509,10 +508,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor();
   }
 
+  private Font getFontForLineNumbers() {
+    Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
+    float editorFontSize = editorFont.getSize2D();
+    return editorFont.deriveFont(Math.max(1f, editorFontSize - 1f));
+  }
+
+  private int calcLineNumbersAreaWidth(int maxLineNumber) {
+    return getFontMetrics(getFontForLineNumbers()).stringWidth(Integer.toString(maxLineNumber + 1));
+  }
+
   private void doPaintLineNumbers(Graphics2D g, Rectangle clip, int offset, @NotNull TIntFunction convertor) {
-    if (!isLineNumbersShown()) {
-      return;
-    }
     int startLineNumber = myEditor.yToVisibleLine(clip.y);
     int endLineNumber = myEditor.yToVisibleLine(clip.y + clip.height) + 1;
     int lastLine = myEditor.logicalToVisualPosition(
@@ -525,7 +531,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
     g.setColor(color != null ? color : JBColor.blue);
-    g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+    Font font = getFontForLineNumbers();
+    g.setFont(font);
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
@@ -545,7 +552,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
           int textOffset = isMirrored() ?
                            offset - getLineNumberAreaWidth() - 1:
-                           offset - myEditor.getFontMetrics(Font.PLAIN).stringWidth(s);
+                           offset - g.getFontMetrics().stringWidth(s);
 
           g.drawString(s,
                        textOffset,
@@ -1244,20 +1251,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                   getGapAfterIconsArea() + getRightFreePaintersAreaWidth() : 0;
   }
 
-  public void setLineNumberAreaWidthFunction(@NotNull TIntFunction calculator) {
-    myLineNumberAreaWidthFunction = calculator;
-  }
-
   private void calcLineNumberAreaWidth() {
-    if (myLineNumberAreaWidthFunction == null || !isLineNumbersShown()) return;
+    if (!isLineNumbersShown()) return;
 
     int maxLineNumber = getMaxLineNumber(myLineNumberConvertor);
-    myLineNumberAreaWidth = myLineNumberAreaWidthFunction.execute(maxLineNumber);
+    myLineNumberAreaWidth = calcLineNumbersAreaWidth(maxLineNumber);
 
     myAdditionalLineNumberAreaWidth = 0;
     if (myAdditionalLineNumberConvertor != null) {
       int maxAdditionalLineNumber = getMaxLineNumber(myAdditionalLineNumberConvertor);
-      myAdditionalLineNumberAreaWidth = myLineNumberAreaWidthFunction.execute(maxAdditionalLineNumber);
+      myAdditionalLineNumberAreaWidth = calcLineNumbersAreaWidth(maxAdditionalLineNumber);
     }
   }
 
