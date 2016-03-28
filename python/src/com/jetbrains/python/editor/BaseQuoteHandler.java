@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -34,7 +35,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   private final char[] ourAutoClosingChars; // we add auto-close quotes before these
 
   public BaseQuoteHandler(TokenSet tokenSet, char[] autoClosingChars) {
-    super(tokenSet);
+    super(TokenSet.andNot(tokenSet, TokenSet.create(PyTokenTypes.DOCSTRING)));
     ourAutoClosingChars = autoClosingChars;
     Arrays.sort(ourAutoClosingChars);
   }
