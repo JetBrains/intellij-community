@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -27,6 +28,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurence
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -34,15 +36,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /**
  * @author max
@@ -67,62 +66,57 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project);
-    final String searchKey = ApplicationManager.getApplication().runReadAction((Computable<String>)aClass::getName);
-    if (StringUtil.isEmpty(searchKey)) {
+    Pair<List<PsiClass>, AtomicIntegerArray> pair = calculateDirectSubClasses(project, aClass);
+    List<PsiClass> result = pair.getFirst();
+    AtomicIntegerArray isInheritorFlag = pair.getSecond();
+
+    if (result.isEmpty()) {
       return true;
     }
 
-    Collection<PsiReferenceList> candidates =
-      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(searchKey, project, scope));
-
-    Map<String, List<PsiClass>> classes = new HashMap<>();
-
-    for (final PsiReferenceList referenceList : candidates) {
+    final VirtualFile jarFile = getJarFile(aClass);
+    // iterate by same-FQN groups. For each group process only same-jar subclasses, or all of them if they are all outside the jarFile.
+    int groupStart = 0;
+    boolean sameJarClassFound = false;
+    for (int i = 0; i < result.size(); i++) {
       ProgressManager.checkCanceled();
-      final PsiClass candidate = (PsiClass)ApplicationManager.getApplication().runReadAction((Computable<PsiElement>)referenceList::getParent);
-      if (!checkInheritance(parameters, aClass, candidate, project)) continue;
-
-      String fqn = ApplicationManager.getApplication().runReadAction((Computable<String>)candidate::getQualifiedName);
-      List<PsiClass> list = classes.get(fqn);
-      if (list == null) {
-        list = new ArrayList<>();
-        classes.put(fqn, list);
-      }
-      list.add(candidate);
-    }
-
-    if (!classes.isEmpty()) {
-      final VirtualFile jarFile = getJarFile(aClass);
-      for (List<PsiClass> sameNamedClasses : classes.values()) {
-        ProgressManager.checkCanceled();
-        if (!processSameNamedClasses(sameNamedClasses, jarFile, consumer)) return false;
-      }
-    }
-
-    if (parameters.includeAnonymous()) {
-      Collection<PsiAnonymousClass> anonymousCandidates =
-        MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(searchKey, project, scope));
-
-      for (PsiAnonymousClass candidate : anonymousCandidates) {
-        ProgressManager.checkCanceled();
-        if (!checkInheritance(parameters, aClass, candidate, project)) continue;
-
-        if (!consumer.process(candidate)) return false;
-      }
-
-      boolean isEnum = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)aClass::isEnum);
-      if (isEnum) {
-        // abstract enum can be subclassed in the body
-        PsiField[] fields = ApplicationManager.getApplication().runReadAction((Computable<PsiField[]>)aClass::getFields);
-        for (final PsiField field : fields) {
+      PsiClass subClass = result.get(i);
+      if (subClass instanceof PsiAnonymousClass) {
+        // we reached anonymous classes tail, process them all and exit
+        if (!parameters.includeAnonymous()) {
+          return true;
+        }
+        for (; i < result.size(); i++) {
           ProgressManager.checkCanceled();
-          if (field instanceof PsiEnumConstant) {
-            PsiEnumConstantInitializer initializingClass =
-              ApplicationManager.getApplication().runReadAction((Computable<PsiEnumConstantInitializer>)((PsiEnumConstant)field)::getInitializingClass);
-            if (initializingClass != null) {
-              if (!consumer.process(initializingClass)) return false;
-            }
+          subClass = result.get(i);
+          if (!checkInheritance(parameters.isCheckInheritance(), aClass, subClass, project, isInheritorFlag, i)) continue;
+          if (!isInScope(scope, subClass)) continue;
+          if (!consumer.process(subClass)) return false;
+        }
+        return true;
+      }
+
+      if (subClass == PsiUtil.NULL_PSI_CLASS) {
+        // the end of the same-FQN group. Process only same-jar classes in the group or the whole group if there were none.
+        if (!sameJarClassFound) {
+          for (int g=groupStart; g<i; g++) {
+            ProgressManager.checkCanceled();
+            subClass = result.get(g);
+            if (!checkInheritance(parameters.isCheckInheritance(), aClass, subClass, project, isInheritorFlag, g)) continue;
+            if (!consumer.process(subClass)) return false;
           }
+        }
+        groupStart = i+1;
+        sameJarClassFound = false;
+      }
+      else {
+        if (!checkInheritance(parameters.isCheckInheritance(), aClass, subClass, project, isInheritorFlag, i)) continue;
+        if (!isInScope(scope, subClass)) continue;
+        VirtualFile currentJarFile = getJarFile(subClass);
+        boolean fromSameJar = Comparing.equal(currentJarFile, jarFile);
+        if (fromSameJar) {
+          sameJarClassFound = true;
+          if (!consumer.process(subClass)) return false;
         }
       }
     }
@@ -130,31 +124,97 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return true;
   }
 
-  private static boolean checkInheritance(@NotNull DirectClassInheritorsSearch.SearchParameters p,
-                                          @NotNull PsiClass aClass,
-                                          @NotNull PsiClass candidate,
-                                          @NotNull Project project) {
-    return MethodUsagesSearcher.resolveInReadAction(project, () -> !p.isCheckInheritance() || candidate.isInheritor(aClass, false));
+  private static boolean isInScope(GlobalSearchScope scope, PsiClass subClass) {
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> PsiSearchScopeUtil.isInScope(scope, subClass));
   }
 
-  private static boolean processSameNamedClasses(@NotNull List<PsiClass> sameNamedClasses,
-                                                 @Nullable VirtualFile jarFile,
-                                                 @NotNull Processor<PsiClass> consumer) {
-    // if there is a class from the same jar, prefer it
-    boolean sameJarClassFound = false;
+  private static final int INHERITANCE_UNKNOWN = 0;
+  private static final int INHERITANCE_YES = 1;
+  private static final int INHERITANCE_NO = 2;
 
-    if (jarFile != null && sameNamedClasses.size() > 1) {
-      for (PsiClass sameNamedClass : sameNamedClasses) {
+  // Returns pair ( list of direct subclasses, array of corresponding isInheritor flags )
+  // The array initially contains INHERITANCE_UNKNOWN values, then the isInheritor() method result is cached in the array as INHERITANCE_YES or INHERITANCE_NO.
+  // The list starts with non-anonymous classes, ends with anonymous sub classes
+  // Regular classes grouped by their FQN. (Because among the same-named subclasses we should return only the same-jar ones, or all of them if there were none)
+  // The groups are separated with NULL_PSI_CLASS
+  @NotNull
+  private static Pair<List<PsiClass>, AtomicIntegerArray> calculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
+    Pair<List<PsiClass>, AtomicIntegerArray> cached = HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.get(baseClass);
+    if (cached != null) {
+      return cached;
+    }
+
+    final String className = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
+    if (StringUtil.isEmpty(className)) {
+      return Pair.create(Collections.emptyList(), new AtomicIntegerArray(0));
+    }
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+    Collection<PsiReferenceList> candidates =
+      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(className, project, allScope));
+
+    Map<String, List<PsiClass>> classes = new HashMap<>();
+    int count = 0;
+
+    for (final PsiReferenceList referenceList : candidates) {
+      ProgressManager.checkCanceled();
+      final PsiClass candidate = (PsiClass)ApplicationManager.getApplication().runReadAction((Computable<PsiElement>)referenceList::getParent);
+
+      String fqn = ApplicationManager.getApplication().runReadAction((Computable<String>)candidate::getQualifiedName);
+      List<PsiClass> list = classes.get(fqn);
+      if (list == null) {
+        list = new SmartList<>();
+        classes.put(fqn, list);
+      }
+      list.add(candidate);
+      count++;
+    }
+
+    Collection<PsiAnonymousClass> anonymousCandidates =
+      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(className, project, allScope));
+
+    List<PsiClass> result = new ArrayList<>(count+classes.size()+anonymousCandidates.size()+1);
+    for (Map.Entry<String, List<PsiClass>> entry : classes.entrySet()) {
+      result.addAll(entry.getValue());
+      result.add(PsiUtil.NULL_PSI_CLASS);
+    }
+
+    result.addAll(anonymousCandidates);
+
+    boolean isEnum = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isEnum);
+    if (isEnum) {
+      // abstract enum can be subclassed in the body
+      PsiField[] fields = ApplicationManager.getApplication().runReadAction((Computable<PsiField[]>)baseClass::getFields);
+      for (final PsiField field : fields) {
         ProgressManager.checkCanceled();
-        boolean fromSameJar = Comparing.equal(getJarFile(sameNamedClass), jarFile);
-        if (fromSameJar) {
-          sameJarClassFound = true;
-          if (!consumer.process(sameNamedClass)) return false;
+        if (field instanceof PsiEnumConstant) {
+          PsiEnumConstantInitializer initializingClass =
+            ApplicationManager.getApplication().runReadAction((Computable<PsiEnumConstantInitializer>)((PsiEnumConstant)field)::getInitializingClass);
+          if (initializingClass != null) {
+            result.add(initializingClass);
+          }
         }
       }
     }
 
-    return sameJarClassFound || ContainerUtil.process(sameNamedClasses, consumer);
+    Pair<List<PsiClass>, AtomicIntegerArray> pair = Pair.create(result, new AtomicIntegerArray(result.size()));
+    HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.put(baseClass, pair);
+    return pair;
+  }
+
+  private static boolean checkInheritance(boolean checkInheritance,
+                                          @NotNull PsiClass aClass,
+                                          @NotNull PsiClass candidate,
+                                          @NotNull Project project,
+                                          @NotNull AtomicIntegerArray isInheritorFlags,
+                                          int i) {
+    if (!checkInheritance) return true;
+    int cachedFlag = isInheritorFlags.get(i);
+    if (cachedFlag == INHERITANCE_YES) return true;
+    if (cachedFlag == INHERITANCE_NO) return false;
+    assert cachedFlag == INHERITANCE_UNKNOWN;
+    boolean isReallyInherited = MethodUsagesSearcher.resolveInReadAction(project, () -> candidate.isInheritor(aClass, false));
+    isInheritorFlags.set(i, isReallyInherited ? INHERITANCE_YES : INHERITANCE_NO);
+    return isReallyInherited;
   }
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {

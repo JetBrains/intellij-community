@@ -56,6 +56,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       myScope = scope;
       myCheckDeep = checkDeep;
       myCheckInheritance = checkInheritance;
+      assert checkInheritance;
       myIncludeAnonymous = includeAnonymous;
       myNameCondition = nameCondition;
     }
@@ -95,6 +96,32 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
              (myCheckInheritance ? " (check inheritance)":"") +
              (myIncludeAnonymous ? " (anonymous)":"")+
              (myNameCondition == Conditions.<String>alwaysTrue() ? "" : " condition: "+myNameCondition);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SearchParameters that = (SearchParameters)o;
+
+      if (myCheckDeep != that.myCheckDeep) return false;
+      if (myCheckInheritance != that.myCheckInheritance) return false;
+      if (myIncludeAnonymous != that.myIncludeAnonymous) return false;
+      if (!myClass.equals(that.myClass)) return false;
+      if (!myScope.equals(that.myScope)) return false;
+      return myNameCondition.equals(that.myNameCondition);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myClass.hashCode();
+      result = 31 * result + myScope.hashCode();
+      result = 31 * result + (myCheckDeep ? 1 : 0);
+      result = 31 * result + (myCheckInheritance ? 1 : 0);
+      result = 31 * result + (myIncludeAnonymous ? 1 : 0);
+      result = 31 * result + myNameCondition.hashCode();
+      return result;
     }
   }
 

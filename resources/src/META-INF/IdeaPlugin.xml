@@ -446,6 +446,8 @@
                     serviceImplementation="com.intellij.psi.impl.PsiNameHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
                     serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl"/>
+    <projectService
+                    serviceImplementation="com.intellij.psi.impl.search.HighlightingCaches"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
                     serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.source.resolve.JavaResolveCache"

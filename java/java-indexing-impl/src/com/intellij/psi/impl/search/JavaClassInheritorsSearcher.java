@@ -18,7 +18,6 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,22 +32,22 @@ import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 
 public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.JavaClassInheritorsSearcher");
-  
   @Override
   public void processQuery(@NotNull ClassInheritorsSearch.SearchParameters parameters, @NotNull Processor<PsiClass> consumer) {
     final PsiClass baseClass = parameters.getClassToProcess();
-    final SearchScope searchScope = parameters.getScope();
-
-    LOG.assertTrue(searchScope != null);
+    assert parameters.isCheckDeep();
+    assert parameters.isCheckInheritance();
 
     ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (progress != null) {
@@ -67,7 +66,6 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
         progress.popState();
       }
     }
-
   }
 
   private static boolean processInheritors(@NotNull final ClassInheritorsSearch.SearchParameters parameters,
@@ -79,11 +77,34 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (isJavaLangObject(baseClass)) {
       return AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).forEach(aClass -> {
-          ProgressManager.checkCanceled();
-          return isJavaLangObject(aClass) || consumer.process(aClass);
+        ProgressManager.checkCanceled();
+        return isJavaLangObject(aClass) || consumer.process(aClass);
       });
     }
 
+    Collection<PsiClass> cached = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES.get(parameters);
+    if (cached == null) {
+      cached = new ArrayList<>();
+      boolean success = getAllSubClasses(project, baseClass, parameters, new CommonProcessors.CollectProcessor<>(cached));
+      assert success;
+      HighlightingCaches.getInstance(project).ALL_SUB_CLASSES.put(parameters, cached);
+    }
+
+    Processor<PsiClass> readActionedConsumer = ReadActionProcessor.wrapInReadAction(consumer);
+    for (final PsiClass subClass : cached) {
+      ProgressManager.checkCanceled();
+      if (!readActionedConsumer.process(subClass)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean getAllSubClasses(@NotNull Project project,
+                                          @NotNull PsiClass baseClass,
+                                          @NotNull ClassInheritorsSearch.SearchParameters parameters,
+                                          @NotNull Processor<PsiClass> consumer) {
+    SearchScope searchScope = parameters.getScope();
     final Ref<PsiClass> currentBase = Ref.create(null);
     final Stack<PsiAnchor> stack = new Stack<>();
     final Set<PsiAnchor> processed = ContainerUtil.newTroveSet();
@@ -93,7 +114,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       public boolean processInReadAction(PsiClass candidate) {
         ProgressManager.checkCanceled();
 
-        if (parameters.isCheckInheritance() || parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass)) {
+        if (parameters.isCheckInheritance() || !(candidate instanceof PsiAnonymousClass)) {
           if (!candidate.isInheritor(currentBase.get(), false)) {
             return true;
           }
@@ -103,25 +124,25 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
           if (candidate instanceof PsiAnonymousClass) {
             return consumer.process(candidate);
           }
-          
+
           final String name = candidate.getName();
           if (name != null && parameters.getNameCondition().value(name) && !consumer.process(candidate)) {
             return false;
           }
         }
 
-        if (parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass) && !isFinal(candidate)) {
+        if (!(candidate instanceof PsiAnonymousClass) && !candidate.hasModifierProperty(PsiModifier.FINAL)) {
           stack.push(PsiAnchor.create(candidate));
         }
         return true;
       }
     };
-    
+
     ApplicationManager.getApplication().runReadAction(() -> {
-        stack.push(PsiAnchor.create(baseClass));
+      stack.push(PsiAnchor.create(baseClass));
     });
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
-    
+
     while (!stack.isEmpty()) {
       ProgressManager.checkCanceled();
 

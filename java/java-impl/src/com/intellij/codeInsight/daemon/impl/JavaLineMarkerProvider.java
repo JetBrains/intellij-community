@@ -27,12 +27,12 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -48,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
@@ -162,7 +161,6 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Map<PsiClass, PsiClass> subClassCache = FindSuperElementsHelper.createSubClassCache();
 
     Collection<PsiMethod> methods = new THashSet<>();
     //noinspection ForLoopReplaceableByForEach
@@ -178,18 +176,17 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
       }
       else if (parent instanceof PsiClass && !(parent instanceof PsiTypeParameter)) {
-        collectInheritingClasses((PsiClass)parent, result, subClassCache);
+        collectInheritingClasses((PsiClass)parent, result);
       }
     }
     if (!methods.isEmpty()) {
       collectOverridingMethods(methods, result);
-      collectSiblingInheritedMethods(methods, result, subClassCache);
+      collectSiblingInheritedMethods(methods, result);
     }
   }
 
   private static void collectSiblingInheritedMethods(@NotNull final Collection<PsiMethod> methods,
-                                                     @NotNull Collection<LineMarkerInfo> result,
-                                                     @NotNull Map<PsiClass, PsiClass> subClassCache) {
+                                                     @NotNull Collection<LineMarkerInfo> result) {
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       PsiClass aClass = method.getContainingClass();
@@ -198,7 +195,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       boolean canHaveSiblingSuper = !method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC) && method.hasModifierProperty(PsiModifier.PUBLIC)&& !method.hasModifierProperty(PsiModifier.FINAL)&& !method.hasModifierProperty(PsiModifier.NATIVE);
       if (!canHaveSiblingSuper) continue;
 
-      PsiMethod siblingInheritedViaSubClass = Pair.getFirst(FindSuperElementsHelper.getSiblingInheritedViaSubClass(method, subClassCache));
+      PsiMethod siblingInheritedViaSubClass = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
       if (siblingInheritedViaSubClass == null) {
         continue;
       }
@@ -229,14 +226,13 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   protected void collectInheritingClasses(@NotNull PsiClass aClass,
-                                              @NotNull Collection<LineMarkerInfo> result,
-                                              @NotNull Map<PsiClass, PsiClass> subClassCache) {
+                                          @NotNull Collection<LineMarkerInfo> result) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       return;
     }
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return; // It's useless to have overridden markers for object.
 
-    PsiClass subClass = subClassCache.get(aClass);
+    PsiClass subClass = DirectClassInheritorsSearch.search(aClass).findFirst();
     if (subClass != null || FunctionalExpressionSearch.search(aClass).findFirst() != null) {
       final Icon icon;
       if (aClass.isInterface()) {

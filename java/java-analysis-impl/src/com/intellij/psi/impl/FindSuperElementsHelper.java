@@ -24,10 +24,8 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -66,12 +64,11 @@ public class FindSuperElementsHelper {
   }
 
   public static PsiMethod getSiblingInheritedViaSubClass(@NotNull PsiMethod method) {
-    return Pair.getFirst(getSiblingInheritedViaSubClass(method, createSubClassCache()));
+    return Pair.getFirst(getSiblingInfoInheritedViaSubClass(method));
   }
 
   // returns super method, sub class
-  public static Pair<PsiMethod, PsiClass> getSiblingInheritedViaSubClass(@NotNull final PsiMethod method,
-                                                                         @NotNull Map<PsiClass, PsiClass> subClassCache) {
+  public static Pair<PsiMethod, PsiClass> getSiblingInfoInheritedViaSubClass(@NotNull final PsiMethod method) {
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return null;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return null;
     final PsiClass containingClass = method.getContainingClass();
@@ -86,55 +83,44 @@ public class FindSuperElementsHelper {
     final Ref<Pair<PsiMethod, PsiClass>> result = Ref.create();
     ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true, true, false).forEach(
     inheritor -> {
+      ProgressManager.checkCanceled();
+      for (PsiClassType interfaceType : inheritor.getImplementsListTypes()) {
         ProgressManager.checkCanceled();
-        for (PsiClassType interfaceType : inheritor.getImplementsListTypes()) {
+        PsiClassType.ClassResolveResult resolved = interfaceType.resolveGenerics();
+        PsiClass anInterface = resolved.getElement();
+        if (anInterface == null || !checkedInterfaces.add(PsiAnchor.create(anInterface))) continue;
+        for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
+          PsiElement navigationElement = superMethod.getNavigationElement();
+          if (!(navigationElement instanceof PsiMethod)) continue; // Kotlin
+          superMethod = (PsiMethod)navigationElement;
           ProgressManager.checkCanceled();
-          PsiClassType.ClassResolveResult resolved = interfaceType.resolveGenerics();
-          PsiClass anInterface = resolved.getElement();
-          if (anInterface == null || !checkedInterfaces.add(PsiAnchor.create(anInterface))) continue;
-          for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
-            PsiElement navigationElement = superMethod.getNavigationElement();
-            if (!(navigationElement instanceof PsiMethod)) continue; // Kotlin
-            superMethod = (PsiMethod)navigationElement;
-            ProgressManager.checkCanceled();
-            PsiClass superInterface = superMethod.getContainingClass();
-            if (superInterface == null) {
-              continue;
-            }
-            if (containingClass.isInheritor(superInterface, true)) {
-              // if containingClass implements the superInterface then it's not a sibling inheritance but a pretty boring the usual one
-              continue;
-            }
-
-            // calculate substitutor of containingClass --> inheritor
-            PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
-            // calculate substitutor of inheritor --> superInterface
-            substitutor = TypeConversionUtil.getSuperClassSubstitutor(superInterface, inheritor, substitutor);
-
-            final MethodSignature superSignature = superMethod.getSignature(substitutor);
-            final MethodSignature derivedSignature = method.getSignature(PsiSubstitutor.EMPTY);
-            boolean isOverridden = MethodSignatureUtil.isSubsignature(superSignature, derivedSignature);
-
-            if (!isOverridden) {
-              continue;
-            }
-            result.set(Pair.create(superMethod, inheritor));
-            return false;
+          PsiClass superInterface = superMethod.getContainingClass();
+          if (superInterface == null) {
+            continue;
           }
+          if (containingClass.isInheritor(superInterface, true)) {
+            // if containingClass implements the superInterface then it's not a sibling inheritance but a pretty boring the usual one
+            continue;
+          }
+
+          // calculate substitutor of containingClass --> inheritor
+          PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
+          // calculate substitutor of inheritor --> superInterface
+          substitutor = TypeConversionUtil.getSuperClassSubstitutor(superInterface, inheritor, substitutor);
+
+          final MethodSignature superSignature = superMethod.getSignature(substitutor);
+          final MethodSignature derivedSignature = method.getSignature(PsiSubstitutor.EMPTY);
+          boolean isOverridden = MethodSignatureUtil.isSubsignature(superSignature, derivedSignature);
+
+          if (!isOverridden) {
+            continue;
+          }
+          result.set(Pair.create(superMethod, inheritor));
+          return false;
         }
-        return true;
+      }
+      return true;
     });
     return result.get();
-  }
-
-  @NotNull
-  public static Map<PsiClass, PsiClass> createSubClassCache() {
-    return new FactoryMap<PsiClass, PsiClass>() {
-        @Nullable
-        @Override
-        protected PsiClass create(PsiClass aClass) {
-          return ClassInheritorsSearch.search(aClass, false).findFirst();
-        }
-      };
   }
 }

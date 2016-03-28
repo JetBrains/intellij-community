@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
@@ -58,7 +57,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -85,7 +87,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
             final MarkerType type = GroovyMarkerTypes.OVERRIDING_PROPERTY_TYPE;
             return new LineMarkerInfo<>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(),
                                         type.getNavigationHandler(),
-                                                  GutterIconRenderer.Alignment.LEFT);
+                                        GutterIconRenderer.Alignment.LEFT);
           }
         }
       }
@@ -95,7 +97,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
         final Icon icon = AllIcons.Gutter.OverridingMethod;
         final MarkerType type = GroovyMarkerTypes.GR_OVERRIDING_METHOD;
         return new LineMarkerInfo<>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(),
-                                              type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
+                                    type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
       }
     }
     //need to draw method separator above docComment
@@ -132,8 +134,8 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
           }
           LineMarkerInfo info =
             new LineMarkerInfo<>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,
-                                           Pass.UPDATE_ALL, FunctionUtil.<Object, String>nullConstant(), null,
-                                           GutterIconRenderer.Alignment.RIGHT);
+                                 Pass.UPDATE_ALL, FunctionUtil.<Object, String>nullConstant(), null,
+                                 GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
@@ -186,7 +188,6 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     Set<PsiMethod> methods = new HashSet<>();
-    Map<PsiClass, PsiClass> subClassCache = FindSuperElementsHelper.createSubClassCache();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
       if (element instanceof GrField) {
@@ -202,7 +203,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
         }
       }
       else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-        collectInheritingClasses((PsiClass)element, result, subClassCache);
+        collectInheritingClasses((PsiClass)element, result);
       }
     }
     collectOverridingMethods(methods, result);
@@ -244,7 +245,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       final MarkerType type = element instanceof GrField ? GroovyMarkerTypes.OVERRIDEN_PROPERTY_TYPE
                                                          : GroovyMarkerTypes.GR_OVERRIDEN_METHOD;
       LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
-                                                           type.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
+                                                 type.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
     }
   }
