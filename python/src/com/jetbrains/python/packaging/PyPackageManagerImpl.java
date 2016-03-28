@@ -207,7 +207,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     args.addAll(extraArgs);
     for (PyRequirement req : requirements) {
-      args.addAll(req.toOptions());
+      args.add(req.toOptions());
     }
     try {
       getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
@@ -221,7 +221,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
       simplifiedArgs.addAll(extraArgs);
       for (PyRequirement req : requirements) {
-        simplifiedArgs.addAll(req.toOptions());
+        simplifiedArgs.add(req.toOptions());
       }
       throw new PyExecutionException(e.getMessage(), "pip", simplifiedArgs, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
