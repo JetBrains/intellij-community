@@ -52,9 +52,8 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class InspectionTree extends Tree {
-  private final HashSet<Object> myExpandedUserObjects;
   @NotNull private final GlobalInspectionContextImpl myContext;
-  private SelectionPath mySelectionPath;
+  @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
   public InspectionTree(@NotNull Project project,
@@ -68,8 +67,7 @@ public class InspectionTree extends Tree {
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());
 
-    myExpandedUserObjects = new HashSet<Object>();
-    myExpandedUserObjects.add(project);
+    myState.getExpandedUserObjects().add(project);
 
     TreeUtil.installActions(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
@@ -83,8 +81,8 @@ public class InspectionTree extends Tree {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         TreePath newSelection = e.getNewLeadSelectionPath();
-        if (newSelection != null) {
-          mySelectionPath = new SelectionPath(newSelection);
+        if (newSelection != null && !isUnderQueueUpdate()) {
+          myState.setSelectionPath(newSelection);
         }
       }
     });
@@ -272,17 +270,33 @@ public class InspectionTree extends Tree {
     ((InspectionRootNode) getRoot()).getUpdater().update(true);
   }
 
+  public void restoreExpansionAndSelection() {
+    myState.restoreExpansionAndSelection(this);
+  }
+
+  public void setState(@NotNull InspectionTreeState state) {
+    myState = state;
+  }
+
+  public InspectionTreeState getTreeState() {
+    return myState;
+  }
+
+  public void setTreeState(@NotNull InspectionTreeState treeState) {
+    myState = treeState;
+  }
+
   private class ExpandListener implements TreeWillExpandListener {
     @Override
     public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       final Object userObject = node.getUserObject();
       //TODO: never re-sort
-      if (node.isValid() && !myExpandedUserObjects.contains(userObject)) {
+      if (node.isValid() && !myState.getExpandedUserObjects().contains(userObject)) {
         sortChildren(node);
         nodeStructureChanged(node);
       }
-      myExpandedUserObjects.add(userObject);
+      myState.getExpandedUserObjects().add(userObject);
       // Smart expand
       if (node.getChildCount() == 1) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -297,27 +311,7 @@ public class InspectionTree extends Tree {
     @Override
     public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
       InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
-      myExpandedUserObjects.remove(node.getUserObject());
-    }
-  }
-
-  public void restoreExpansionAndSelection() {
-    restoreExpansionStatus((InspectionTreeNode)getModel().getRoot());
-    if (mySelectionPath != null) {
-      mySelectionPath.restore();
-    }
-  }
-
-  public void restoreExpansionStatus(InspectionTreeNode node) {
-    if (myExpandedUserObjects.contains(node.getUserObject())) {
-      //sortChildren(node);
-      TreeNode[] pathToNode = node.getPath();
-      expandPath(new TreePath(pathToNode));
-      Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode childNode = (InspectionTreeNode)children.nextElement();
-        restoreExpansionStatus(childNode);
-      }
+      myState.getExpandedUserObjects().remove(node.getUserObject());
     }
   }
 
@@ -392,75 +386,6 @@ public class InspectionTree extends Tree {
     node.removeAllChildren();
     TreeUtil.addChildrenTo(node, children);
     ((DefaultTreeModel)getModel()).reload(node);
-  }
-
-  private class SelectionPath {
-    private final Object[] myPath;
-    private final int[] myIndicies;
-
-    public SelectionPath(TreePath path) {
-      myPath = path.getPath();
-      myIndicies = new int[myPath.length];
-      for (int i = 0; i < myPath.length - 1; i++) {
-        InspectionTreeNode node = (InspectionTreeNode)myPath[i];
-        myIndicies[i + 1] = getChildIndex(node, (InspectionTreeNode)myPath[i + 1]);
-      }
-    }
-
-    private int getChildIndex(InspectionTreeNode node, InspectionTreeNode child) {
-      int idx = 0;
-      Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode ch = (InspectionTreeNode)children.nextElement();
-        if (ch == child) break;
-        idx++;
-      }
-      return idx;
-    }
-
-    public void restore() {
-      getSelectionModel().removeSelectionPaths(getSelectionModel().getSelectionPaths());
-      TreeUtil.selectPath(InspectionTree.this, restorePath());
-    }
-
-    private TreePath restorePath() {
-      ArrayList<Object> newPath = new ArrayList<Object>();
-
-      newPath.add(getModel().getRoot());
-      restorePath(newPath, 1);
-
-      return new TreePath(newPath.toArray(new InspectionTreeNode[newPath.size()]));
-    }
-
-    private void restorePath(ArrayList<Object> newPath, int idx) {
-      if (idx >= myPath.length) return;
-      InspectionTreeNode oldNode = (InspectionTreeNode)myPath[idx];
-
-      InspectionTreeNode newRoot = (InspectionTreeNode)newPath.get(idx - 1);
-
-
-      InspectionResultsViewComparator comparator = InspectionResultsViewComparator.getInstance();
-      Enumeration children = newRoot.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-        if (comparator.compare(child, oldNode) == 0) {
-          newPath.add(child);
-          restorePath(newPath, idx + 1);
-          return;
-        }
-      }
-
-      // Exactly same element not found. Trying to select somewhat near.
-      int count = newRoot.getChildCount();
-      if (count > 0) {
-        if (myIndicies[idx] < count) {
-          newPath.add(newRoot.getChildAt(myIndicies[idx]));
-        }
-        else {
-          newPath.add(newRoot.getChildAt(count - 1));
-        }
-      }
-    }
   }
 
   @NotNull

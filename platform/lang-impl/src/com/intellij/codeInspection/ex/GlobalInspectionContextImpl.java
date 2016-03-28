@@ -32,6 +32,7 @@ import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTreeState;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -99,10 +100,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
+  private InspectionTreeState myTreeState;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
     super(project);
-
     myUIOptions = AnalysisUIOptions.getInstance(project).copy();
     myContentManager = contentManager;
   }
@@ -110,6 +111,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   @NotNull
   private ContentManager getContentManager() {
     return myContentManager.getValue();
+  }
+
+  public void setTreeState(InspectionTreeState treeState) {
+    myTreeState = treeState;
   }
 
   public synchronized void addView(@NotNull InspectionResultsView view, @NotNull String title) {
@@ -128,6 +133,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
     myView = view;
     myView.setUpdating(true);
+    if (myTreeState != null) {
+      myView.getTree().setTreeState(myTreeState);
+    }
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
 
     myContent.setDisposer(myView);
