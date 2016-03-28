@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 public class NestedMemberAccess {
 
@@ -40,6 +37,7 @@ public class NestedMemberAccess {
   private static final int METHOD_ACCESS_FIELD_GET = 2;
   private static final int METHOD_ACCESS_FIELD_SET = 3;
   private static final int METHOD_ACCESS_METHOD = 4;
+  private static final int METHOD_ACCESS_FUNCTION = 5;
 
   private boolean noSynthFlag;
   private final Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
@@ -118,6 +116,16 @@ public class NestedMemberAccess {
                 }
 
                 break;
+              case Exprent.EXPRENT_FUNCTION:
+                // for now detect only increment/decrement
+                FunctionExprent functionExprent = (FunctionExprent)exprCore;
+                if (functionExprent.getFuncType() >= FunctionExprent.FUNCTION_IMM &&
+                    functionExprent.getFuncType() <= FunctionExprent.FUNCTION_PPI) {
+                  if (functionExprent.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
+                    type = METHOD_ACCESS_FUNCTION;
+                  }
+                }
+                break;
               case Exprent.EXPRENT_INVOCATION:
                 type = METHOD_ACCESS_METHOD;
                 break;
@@ -138,7 +146,6 @@ public class NestedMemberAccess {
                   }
                 }
             }
-
 
             if (type == METHOD_ACCESS_METHOD) { // FIXME: check for private flag of the method
 
@@ -323,7 +330,6 @@ public class NestedMemberAccess {
   }
 
   private Exprent replaceAccessExprent(ClassNode caller, MethodWrapper methdest, InvocationExprent invexpr) {
-
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(invexpr.getClassname());
 
     MethodWrapper methsource = null;
@@ -408,6 +414,9 @@ public class NestedMemberAccess {
         }
         retexprent = ret;
         break;
+      case METHOD_ACCESS_FUNCTION:
+        retexprent = replaceFunction(invexpr, source);
+        break;
       case METHOD_ACCESS_METHOD:
         if (source.type == Exprent.EXPRENT_EXIT) {
           source = ((ExitExprent)source).getValue();
@@ -445,5 +454,26 @@ public class NestedMemberAccess {
     }
 
     return retexprent;
+  }
+
+  private static Exprent replaceFunction(final InvocationExprent invexpr, final Exprent source) {
+    FunctionExprent functionExprent = (FunctionExprent)((ExitExprent)source).getValue().copy();
+
+    List<Exprent> lstParameters = invexpr.getLstParameters();
+
+    FieldExprent fieldExprent = (FieldExprent)functionExprent.getLstOperands().get(0);
+    if (fieldExprent.isStatic()) {
+      if (!lstParameters.isEmpty()) {
+        return null;
+      }
+      return functionExprent;
+    }
+
+    if (lstParameters.size() != 1) {
+      return null;
+    }
+
+    fieldExprent.replaceExprent(fieldExprent.getInstance(), lstParameters.get(0));
+    return functionExprent;
   }
 }
