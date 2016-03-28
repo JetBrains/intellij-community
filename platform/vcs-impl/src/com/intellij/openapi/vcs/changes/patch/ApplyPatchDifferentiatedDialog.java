@@ -94,6 +94,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @Nullable private final Collection<Change> myPreselectedChanges;
+  private final boolean myUseProjectRootAsPredefinedBase;
 
   private JComponent myCenterPanel;
   protected final Project myProject;
@@ -117,7 +118,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
-    this(project, callback, executors, applyPatchMode, patchFile, null, null, null, null, null);
+    this(project, callback, executors, applyPatchMode, patchFile, null, null, null, null, null, false);
   }
 
   public ApplyPatchDifferentiatedDialog(final Project project,
@@ -126,7 +127,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         @NotNull final ApplyPatchMode applyPatchMode,
                                         @NotNull final List<TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList) {
-    this(project, callback, executors, applyPatchMode, null, patches, defaultList, null, null, null);
+    this(project, callback, executors, applyPatchMode, null, patches, defaultList, null, null, null, false);
   }
 
   public ApplyPatchDifferentiatedDialog(final Project project,
@@ -137,10 +138,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         @Nullable final List<TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList,
                                         @Nullable List<ShelvedBinaryFilePatch> binaryShelvedPatches,
-                                        @Nullable Collection<Change> preselectedChanges, @Nullable String externalCommitMessage) {
+                                        @Nullable Collection<Change> preselectedChanges,
+                                        @Nullable String externalCommitMessage,
+                                        boolean useProjectRootAsPredefinedBase) {
     super(project, true);
     myCallback = callback;
     myExecutors = executors;
+    myUseProjectRootAsPredefinedBase = useProjectRootAsPredefinedBase;
     setModal(false);
     setTitle(applyPatchMode.getTitle());
 
@@ -269,7 +273,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private void init(List<? extends FilePatch> patches) {
-    final List<AbstractFilePatchInProgress> matchedPatches = new MatchPatchPaths(myProject).execute(patches);
+    final List<AbstractFilePatchInProgress> matchedPatches =
+      new MatchPatchPaths(myProject).execute(patches, myUseProjectRootAsPredefinedBase);
     //todo add shelved binary patches
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -380,7 +385,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
         filePatches.addAll(myBinaryShelvedPatches);
       }
-      final List<AbstractFilePatchInProgress> matchedPatches = new MatchPatchPaths(myProject).execute(filePatches);
+      final List<AbstractFilePatchInProgress> matchedPatches =
+        new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
