@@ -124,7 +124,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
       result.append("public void actionPerformed(java.awt.event.ActionEvent e){");
       result.append("onCancel();");
       result.append("}});\n");
-      result.append("\n");
+      result.append("\n ");
       result.append(UIDesignerBundle.message("comment.call.onCancel.cross")).append("\n");
       result.append("setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);\n");
       result.append("addWindowListener(new java.awt.event.WindowAdapter() {\n");
@@ -132,7 +132,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
       result.append("   onCancel();\n");
       result.append("  }\n");
       result.append("});\n");
-      result.append("\n");
+      result.append("\n ");
       result.append(UIDesignerBundle.message("comment.call.onCancel.escape")).append("\n");
       result.append("contentPane.registerKeyboardAction(");
       result.append("  new java.awt.event.ActionListener() {");
@@ -149,7 +149,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
     if (generateOK) {
       result.append("\n");
-      result.append("private void onOK(){\n");
+      result.append("private void onOK(){\n ");
       result.append(UIDesignerBundle.message("comment.onok")).append("\n");
       result.append("dispose();\n");
       result.append("}\n");
@@ -157,7 +157,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
     if (generateCancel) {
       result.append("\n");
-      result.append("private void onCancel(){\n");
+      result.append("private void onCancel(){\n ");
       result.append(UIDesignerBundle.message("comment.oncancel")).append("\n");
       result.append("dispose();\n");
       result.append("}\n");
