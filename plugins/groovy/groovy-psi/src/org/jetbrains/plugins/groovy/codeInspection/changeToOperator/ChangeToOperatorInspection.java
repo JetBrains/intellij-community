@@ -23,7 +23,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -37,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import javax.swing.*;
 import java.util.Map;
 
-import static com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING;
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message;
 
 public class ChangeToOperatorInspection extends BaseInspection {
@@ -65,21 +64,18 @@ public class ChangeToOperatorInspection extends BaseInspection {
         if (transformation == null) return;
 
         // TODO apply transformation recursively
-        ReplacementData replacement = transformation.transform(methodCallExpression, 
-                                                               new OptionsData(useDoubleNegation, shouldChangeCompareToEqualityToEquals));
-        registerFixIfValid(replacement);
+        OptionsData optionsData = new OptionsData(useDoubleNegation, shouldChangeCompareToEqualityToEquals);
+        ReplacementData replacement = transformation.transform(methodCallExpression, optionsData);
+        if (replacement == null) return;
+
+        GrExpression expression = replacement.getExpression();
+        String text = expression.getText();
+        GroovyFix fix = getFix(message("change.to.operator.fix", text), replacement.getReplacement());
+        registerError(expression, message("change.to.operator.message", text), new LocalQuickFix[]{fix}, GENERIC_ERROR_OR_WARNING);
       }
 
       private boolean isValid(PsiModifierListOwner method) {
         return ((method != null) && !method.hasModifierProperty(PsiModifier.STATIC));
-      }
-
-      private void registerFixIfValid(@Nullable ReplacementData replacement) {
-        if (replacement == null) return;
-
-        String message = getMessage();
-        LocalQuickFix[] quickFixes = {getFix(message, replacement.getReplacement())};
-        registerError(replacement.getExpression(), message, quickFixes, WEAK_WARNING);
       }
 
       private GroovyFix getFix(@NotNull final String message, final String replacement) {
@@ -99,15 +95,11 @@ public class ChangeToOperatorInspection extends BaseInspection {
     };
   }
 
-  public String getMessage() {
-    return message("convert.to.operator");
-  }
-
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(message("convert.to.operator.double.negation.option"), "useDoubleNegation");
-    optionsPanel.addCheckbox(message("convert.to.operator.compareto.equality.option"), "shouldChangeCompareToEqualityToEquals");
+    optionsPanel.addCheckbox(message("change.to.operator.double.negation.option"), "useDoubleNegation");
+    optionsPanel.addCheckbox(message("change.to.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");
     return optionsPanel;
   }
 }

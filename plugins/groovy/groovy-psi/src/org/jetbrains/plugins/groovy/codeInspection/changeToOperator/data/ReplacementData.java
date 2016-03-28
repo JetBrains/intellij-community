@@ -31,10 +31,6 @@ public final class ReplacementData {
     return element;
   }
 
-  public String getExpressionText() {
-    return element.getText();
-  }
-
   public String getReplacement() {
     return replacement;
   }

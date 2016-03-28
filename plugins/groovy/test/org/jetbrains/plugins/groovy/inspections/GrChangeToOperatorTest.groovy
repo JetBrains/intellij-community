@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.inspections
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.LightProjectDescriptor
 import org.intellij.lang.annotations.Language
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection
 
 import java.util.regex.Pattern
@@ -24,7 +26,11 @@ import java.util.regex.Pattern
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_FILE_TYPE
 import static org.jetbrains.plugins.groovy.util.TestUtils.CARET_MARKER
 
-public class GrChangeToOperatorTest extends LightCodeInsightFixtureTestCase {
+public class GrChangeToOperatorTest extends LightGroovyTestCase {
+
+  final String basePath = null
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_2_3_9
+
   def inspection = new ChangeToOperatorInspection()
 
   void testSimpleUnaryExpression() {
@@ -44,8 +50,7 @@ public class GrChangeToOperatorTest extends LightCodeInsightFixtureTestCase {
     assertValid(/if (${_}!a.asBoolean()${_});/, /!a/)
   }
 
-  // TODO  
-  void notYetTestable_testComplexNegatableUnaryExpression() {
+  void testComplexNegatableUnaryExpression() {
     assertValid(/if (${_}'a'.intern().asBoolean()${_});/, /'a'.intern()/)
   }
 
@@ -59,8 +64,7 @@ public class GrChangeToOperatorTest extends LightCodeInsightFixtureTestCase {
     assertValid(/if (${_}!a.asBoolean()${_});/, /!a/)
   }
 
-  // TODO 
-  void notYetTestable_testComplexNegatedOption() {
+  void testComplexNegatedOption() {
     inspection.useDoubleNegation = false
 
     assertValid(/if (${_}'a'.intern().asBoolean()${_});/, /'a'.intern()/)
@@ -89,10 +93,9 @@ public class GrChangeToOperatorTest extends LightCodeInsightFixtureTestCase {
     assertValid(/${_}a.xor((a.b+1) == b)${_} == a/, /(a ^ ((a.b + 1) == b))/)
   }
 
-  // TODO 
-  void notYetTestable_testComplexBinaryExpression() {
+  void testComplexBinaryExpression() {
     assertValid(/b.isCase(a)/, /a in b/)
-    assertValid(/if (${_}[1,2,3].isCase(2-1)${_});/, /(2 - 1) in [1,2,3]/)
+    assertValid(/if (${_}[1, 2, 3].isCase(2-1)${_});/, /(2 - 1) in [1, 2, 3]/)
     assertValid(/def x = ${_}"1".plus(1)${_}/, /"1" + 1/)
     assertValid(/("1" + 1).plus(1)/, /("1" + 1) + 1/)
     assertValid(/!a.toString().asBoolean()/, /!a.toString()/)
@@ -103,8 +106,7 @@ public class GrChangeToOperatorTest extends LightCodeInsightFixtureTestCase {
     assertValid(/!a.equals(b)/, /a != b/)
   }
 
-  // TODO 
-  void notYetTestable_testComplexNegatableBinaryExpression() {
+  void testComplexNegatableBinaryExpression() {
     assertValid(/!(1.toString().replace('1', '2')+"").equals(2.toString())/, /(1.toString().replace('1', '2') + "") != 2.toString()/)
   }
 
@@ -171,7 +173,7 @@ public class GrChangeToOperatorTest extends LightCodeInsightFixtureTestCase {
   private void assertValid(@Language('Groovy') String text, @Language('Groovy') String methodReplacement) {
     def (prefix, method, suffix) = getMessage(text)
     configure("${prefix}${CARET_MARKER}${method}${suffix}")
-    myFixture.launchAction(myFixture.findSingleIntention(inspection.getMessage()))
+    myFixture.launchAction(myFixture.findSingleIntention("Change '"))
     myFixture.checkResult("${DECLARATIONS}  ${prefix}${methodReplacement}${suffix}")
   }
 
