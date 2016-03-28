@@ -16,7 +16,12 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -158,6 +163,65 @@ public class ThreeStateCheckBox extends JCheckBox {
         break;
       default:
         break;
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleThreeStateCheckBox();
+    }
+    return accessibleContext;
+  }
+
+  /**
+   * Emulate accessibility behavior of tri-state checkboxes, as tri-state checkboxes
+   * are not part of the JAB specification.
+   */
+  protected class AccessibleThreeStateCheckBox extends AccessibleJCheckBox {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      if (myThirdStateEnabled) {
+        // Return TOGGLE_BUTTON so that screen readers don't announce the "not checked" state
+        return AccessibleRole.TOGGLE_BUTTON;
+      }
+
+      return super.getAccessibleRole();
+    }
+
+    @Override
+    public AccessibleStateSet getAccessibleStateSet() {
+      if (myThirdStateEnabled) {
+        // Remove CHECKED so that screen readers don't announce the "checked" state
+        AccessibleStateSet set = super.getAccessibleStateSet();
+        set.remove(AccessibleState.CHECKED);
+        return set;
+      }
+
+      return super.getAccessibleStateSet();
+    }
+
+    @Override
+    public String getAccessibleName() {
+      if (myThirdStateEnabled) {
+        // Add a state description suffix to the accessible name, so that screen readers
+        // announce the state as part of the accessible name.
+        return addStateDescription(super.getAccessibleName());
+      }
+      return super.getAccessibleName();
+    }
+
+    private String addStateDescription(String name) {
+      switch(getState()) {
+        case SELECTED:
+          return AccessibleContextUtil.combineAccessibleStrings(name, " ", "checked");
+        case NOT_SELECTED:
+          return AccessibleContextUtil.combineAccessibleStrings(name, " ", "not checked");
+        case DONT_CARE:
+          return AccessibleContextUtil.combineAccessibleStrings(name, " ", "partially checked");
+        default:
+          return name;
+      }
     }
   }
 }
