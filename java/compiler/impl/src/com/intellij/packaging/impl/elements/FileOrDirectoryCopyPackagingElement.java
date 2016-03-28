@@ -74,10 +74,10 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
       boolean containsJars = false;
       for (VirtualFile child : file.getChildren()) {
         if (child.isDirectory() && child.isInLocalFileSystem()) {
-          containsDirectories = true;
+          containsDirectories |= true;
         }
         else {
-          containsJars = isJar(child);
+          containsJars |= isJar(child);
         }
         if (containsDirectories && containsJars) break;
       }
