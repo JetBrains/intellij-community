@@ -295,6 +295,11 @@ public class InlineUtil {
   }
 
   private static boolean isSafeToFlatten(PsiCall callExpression, PsiMethod oldRefMethod, PsiExpression[] arrayElements) {
+    for (PsiExpression arrayElement : arrayElements) {
+      if (arrayElement instanceof PsiArrayInitializerExpression) {
+        return false;
+      }
+    }
     PsiCall copy = (PsiCall)callExpression.copy();
     PsiExpressionList copyArgumentList = copy.getArgumentList();
     LOG.assertTrue(copyArgumentList != null);
