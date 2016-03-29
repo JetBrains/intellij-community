@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -36,11 +37,21 @@ public class InspectionTreeState {
     mySelectionPath = new InspectionTreeSelectionPath(selectionPath);
   }
 
-  public void restoreExpansionAndSelection(InspectionTree tree) {
+  public void restoreExpansionAndSelection(InspectionTree tree, InspectionTreeNode reloadedNode) {
     restoreExpansionStatus((InspectionTreeNode)tree.getModel().getRoot(), tree);
     if (mySelectionPath != null) {
+      if (reloadedNode == null || needRestore(reloadedNode))
       mySelectionPath.restore(tree);
     }
+  }
+
+  private boolean needRestore(@NotNull InspectionTreeNode node) {
+    for (Object o : mySelectionPath.myPath) {
+      if (InspectionResultsViewComparator.getInstance().compare(o, node) == 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void restoreExpansionStatus(InspectionTreeNode node, InspectionTree tree) {

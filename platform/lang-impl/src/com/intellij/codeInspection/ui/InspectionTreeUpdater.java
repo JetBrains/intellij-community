@@ -67,7 +67,7 @@ public class InspectionTreeUpdater {
         ((DefaultTreeModel)tree.getModel()).reload(myNode);
         tree.revalidate();
         tree.repaint();
-        tree.restoreExpansionAndSelection();
+        tree.restoreExpansionAndSelection((InspectionTreeNode)myNode);
         if (myDoUpdatePreviewPanel.compareAndSet(true, false)) {
           myView.updateRightPanelLoading();
         }

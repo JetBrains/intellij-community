@@ -658,7 +658,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       finally {
         setUpdating(false);
-        UIUtil.invokeLaterIfNeeded(myTree::restoreExpansionAndSelection);
+        UIUtil.invokeLaterIfNeeded(() -> myTree.restoreExpansionAndSelection(null));
       }
     };
     if (app.isUnitTestMode()) {
