@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A service managing model transactions.<p/>
@@ -41,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
  * outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document)
  * should be allowed. For such cases, the framework should be notified which transaction kinds are allowed to merged into
  * the main transaction and executed immediately. Use {@link #acceptNestedTransactions(TransactionKind...)} for that. Inner transactions
- * should be given some kind in such circumstances: {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+ * should be given some kind in such circumstances: {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}.
  *
  * <p><h1>FAQ</h1></p>
  *
@@ -69,8 +71,8 @@ import org.jetbrains.annotations.NotNull;
  * project: they'd be blocked by the running transaction.
  *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
- * A: You're likely inside an "invokeLater"-like call. Please consider replacing it with {@link #submitTransaction(Runnable)} or
- * {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+ * A: You're likely inside an "invokeLater"-like call. Please consider replacing it with {@link #submitTransaction(Disposable, Runnable)}  or
+ * {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}
  * <p/>
  *
  * Q: I've got <b>"Nested transactions are not allowed"</b> exception, what do I do?<br/>
@@ -82,9 +84,9 @@ import org.jetbrains.annotations.NotNull;
  * (for text field editing inside the dialogs) but not to
  * other model changes, e.g. root changes. The outer transaction code might then specify which kinds it's prepared to (by using
  * {@link #acceptNestedTransactions(TransactionKind...)}), and the inner transaction code should have the very same transaction kind
- * (by using {@link #submitMergeableTransaction(TransactionKind, Runnable)} or {@link #startSynchronousTransaction(TransactionKind)}).
- * If the nested transaction is not expected by the outer code, it must be made asynchronous by using either {@link #submitTransaction(Runnable)}
- * or {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+ * (by using {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)} or {@link #startSynchronousTransaction(TransactionKind)}).
+ * If the nested transaction is not expected by the outer code, it must be made asynchronous by using either {@link #submitTransaction(Disposable, Runnable)}
+ * or {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}.
  * <p/>
  *
  * Q: What's the difference between transactions and read/write actions and commands ({@link com.intellij.openapi.command.CommandProcessor})?<br/>
@@ -104,16 +106,26 @@ public abstract class TransactionGuard {
   }
 
   /**
+   * Same as {@link #submitTransaction(Disposable, Runnable)}, but without any parent disposable.
+   */
+  public static void submitTransaction(@NotNull Runnable transaction) {
+    submitTransaction(null, transaction);
+  }
+
+  /**
    * Ensures that some code will be run in a transaction. It's guaranteed that no other transactions are run at the same time.
    * The code will be run on Swing thread immediately or after all other queued transactions (if any) have been completed.<p/>
    *
-   * For more advanced version, see {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+   * For more advanced version, see {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}
    * Transactions submitted via this method use {@link TransactionKind#ANY_CHANGE} kind.
    *
+   * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
+   *                         and so it won't be run after it has been disposed. Can be null, that would mean the transaction can be run
+   *                         until the application is disposed.
    * @param transaction code to execute inside a transaction.
    */
-  public static void submitTransaction(@NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(TransactionKind.ANY_CHANGE, transaction);
+  public static void submitTransaction(@Nullable Disposable parentDisposable, @NotNull Runnable transaction) {
+    getInstance().submitMergeableTransaction(parentDisposable, TransactionKind.ANY_CHANGE, transaction);
   }
 
   /**
@@ -132,7 +144,7 @@ public abstract class TransactionGuard {
   /**
    * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
    * or inside a read action on non-UI thread.
-   * @see #submitMergeableTransaction(TransactionKind, Runnable)
+   * @see #submitMergeableTransaction(Disposable, TransactionKind, Runnable)
    * @throws ProcessCanceledException if current thread is interrupted
    */
   public abstract void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull Runnable transaction) throws ProcessCanceledException;
@@ -152,11 +164,18 @@ public abstract class TransactionGuard {
   }
 
   /**
-   * A synchronous version of {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+   * A synchronous version of {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}.
    * @return a token object for this transaction. Call {@link AccessToken#finish()} (inside finally) when the transaction is complete.
    */
   @NotNull
   public abstract AccessToken startSynchronousTransaction(@NotNull TransactionKind kind);
+
+  /**
+   * Same as {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)} with no parent disposable.
+   */
+  public void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction) {
+    submitMergeableTransaction(null, kind, transaction);
+  }
 
   /**
    * When on UI thread and there's no other transaction running, executes the given runnable. If there is a transaction running,
@@ -164,10 +183,13 @@ public abstract class TransactionGuard {
    * and executes the provided code immediately. Otherwise
    * adds the runnable to a queue. When all transactions scheduled before this one are finished, executes the given
    * runnable under a transaction.
+   * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
+   *                         and so it won't be run after it has been disposed. Can be null, that would mean the transaction can be run
+   *                         until the application is disposed.
    * @param kind a "kind" object for transaction merging
    * @param transaction code to execute inside a transaction.
    */
-  public abstract void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction);
+  public abstract void submitMergeableTransaction(@Nullable Disposable parentDisposable, @NotNull TransactionKind kind, @NotNull Runnable transaction);
 
   /**
    * Allow incoming transactions of the specified kinds to be executed immediately, instead of being queued until the current transaction is finished.<p/>

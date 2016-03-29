@@ -141,7 +141,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
         }
       };
 
-      TransactionGuard.submitTransaction(new Runnable() {
+      TransactionGuard.submitTransaction(myProject, new Runnable() {
         public void run() {
           CompileScope scope;
           final CompilerManager compilerManager = CompilerManager.getInstance(myProject);

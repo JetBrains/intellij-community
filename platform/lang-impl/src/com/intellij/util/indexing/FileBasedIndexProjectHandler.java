@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,8 +81,8 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
           PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
 
           // schedule dumb mode start after the read action we're currently in
-          TransactionGuard.submitTransaction(() -> {
-            if (!project.isDisposed() && FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
+          TransactionGuard.submitTransaction(project, () -> {
+            if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
               DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
             }
           });

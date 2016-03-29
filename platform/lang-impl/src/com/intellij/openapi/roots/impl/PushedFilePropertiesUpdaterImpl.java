@@ -23,6 +23,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
@@ -408,16 +409,11 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
   private static void reloadPsi(final VirtualFile file, final Project project) {
     final FileManagerImpl fileManager = (FileManagerImpl)((PsiManagerEx)PsiManager.getInstance(project)).getFileManager();
     if (fileManager.findCachedViewProvider(file) != null) {
-      Runnable runnable = () -> {
-        if (project.isDisposed()) {
-          return;
-        }
-        ApplicationManager.getApplication().runWriteAction(() -> fileManager.forceReload(file));
-      };
+      Runnable runnable = () -> WriteAction.run(() -> fileManager.forceReload(file));
       if (ApplicationManager.getApplication().isDispatchThread()) {
         runnable.run();
       } else {
-        TransactionGuard.submitTransaction(runnable);
+        TransactionGuard.submitTransaction(project, runnable);
       }
     }
   }

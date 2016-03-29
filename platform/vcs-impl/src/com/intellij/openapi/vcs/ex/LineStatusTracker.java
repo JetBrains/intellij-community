@@ -386,7 +386,7 @@ public class LineStatusTracker {
 
   private void markFileUnchanged() {
     // later to avoid saving inside document change event processing.
-    ApplicationManager.getApplication().invokeLater(() -> TransactionGuard.submitTransaction(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> TransactionGuard.submitTransaction(myProject, () -> {
         FileDocumentManager.getInstance().saveDocument(myDocument);
         boolean stillEmpty;
         synchronized (myLock) {

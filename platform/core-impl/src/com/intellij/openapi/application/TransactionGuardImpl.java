@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Queue;
@@ -111,7 +114,15 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitMergeableTransaction(@NotNull final TransactionKind kind, @NotNull final Runnable transaction) {
+  public void submitMergeableTransaction(@Nullable final Disposable parentDisposable, @NotNull final TransactionKind kind, @NotNull final Runnable _transaction) {
+    @NotNull final Runnable transaction = parentDisposable == null ? _transaction : new Runnable() {
+      @Override
+      public void run() {
+        if (!Disposer.isDisposed(parentDisposable)) {
+          _transaction.run();
+        }
+      }
+    };
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -183,7 +194,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitMergeableTransaction(kind, new Runnable() {
+    submitMergeableTransaction(null, kind, new Runnable() {
       @Override
       public void run() {
         try {
