@@ -16,7 +16,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.LightColors;
@@ -111,36 +110,32 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   private void _openFatals(@Nullable final LogMessage message) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        myDialog = new IdeErrorsDialog(myMessagePool, message) {
-          public void doOKAction() {
-            super.doOKAction();
-            disposeDialog(this);
-          }
-
-          public void doCancelAction() {
-            super.doCancelAction();
-            disposeDialog(this);
-          }
-
-          @Override
-          protected void updateOnSubmit() {
-            super.updateOnSubmit();
-            updateState(computeState());
-          }
-        };
-
-        myMessagePool.addListener(myDialog);
-        if (!isOtherModalWindowActive()) {
-          myDialog.show();
-        }
-        else {
-          myDialog.close(0);
-          disposeDialog(myDialog);
-        }
+    myDialog = new IdeErrorsDialog(myMessagePool, message) {
+      public void doOKAction() {
+        super.doOKAction();
+        disposeDialog(this);
       }
-    });
+
+      public void doCancelAction() {
+        super.doCancelAction();
+        disposeDialog(this);
+      }
+
+      @Override
+      protected void updateOnSubmit() {
+        super.updateOnSubmit();
+        updateState(computeState());
+      }
+    };
+
+    myMessagePool.addListener(myDialog);
+    if (!isOtherModalWindowActive()) {
+      myDialog.show();
+    }
+    else {
+      myDialog.close(0);
+      disposeDialog(myDialog);
+    }
   }
 
   private void updateState(final IdeFatalErrorsIcon.State state) {
