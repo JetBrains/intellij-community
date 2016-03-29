@@ -38,6 +38,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -175,10 +176,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
-    // not sure we should turn it on on start (and pre-select smthg - rather heavy actions..)
-    /*if (VcsConfiguration.getInstance(myProject).CHANGE_DETAILS_ON) {
-      myToggleDetailsAction.actionPerformed(null);
-    }*/
+
+    myDetailsOn = VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
+    changeDetails();
   }
 
   public void projectClosed() {
@@ -545,8 +545,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myDetailsOn = state;
-      // not sure we should turn it on on start (and pre-select smthg - rather heavy actions..)
-      //      VcsConfiguration.getInstance(myProject).CHANGE_DETAILS_ON = myDetailsOn;
+      VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = myDetailsOn;
       changeDetails();
     }
   }
