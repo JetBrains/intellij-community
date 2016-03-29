@@ -522,7 +522,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(myToolWrapper.getShortName()), psiElement);
         severity = level.getSeverity();
       }
-      
+
       if (severity != null) {
         ProblemHighlightType problemHighlightType = descriptor instanceof ProblemDescriptor
                                                     ? ((ProblemDescriptor)descriptor).getHighlightType()
@@ -531,7 +531,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         problemClassElement.setAttribute("severity", severity.myName);
         problemClassElement.setAttribute("attribute_key", attributeKey);
       }
-      
+
       element.addContent(problemClassElement);
       if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
         final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
@@ -738,11 +738,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public boolean isElementIgnored(final RefEntity element) {
     for (RefEntity entity : getIgnoredElements().keySet()) {
       if (Comparing.equal(entity, element)) {
-        for (RefEntity entity1 : getProblemElements().keySet()) {
-          if (Comparing.equal(entity1, element)) {
-            return false;
-          }
-        }
         return true;
       }
     }
