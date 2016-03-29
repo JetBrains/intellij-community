@@ -129,7 +129,7 @@ abstract class GroovyDslExecutor extends Script implements GdslScopeMethods, Gds
       ctx.put(DslPointcut.BOUND, null)
       if (pair.first.isApplicable(descriptor, ctx)) {
         def generator = new CustomMembersGenerator(descriptor, psiType, ctx.get(DslPointcut.BOUND))
-        doRun(pair, generator)
+        doRun(generator, pair.second)
         holder.addHolder(generator.membersHolder)
       }
     }
@@ -137,8 +137,8 @@ abstract class GroovyDslExecutor extends Script implements GdslScopeMethods, Gds
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void doRun(Pair<ContextFilter, Closure> pair, CustomMembersGenerator generator) {
-    use(cats) { generator.with pair.second }
+  private void doRun(CustomMembersGenerator generator, Closure closure) {
+    use(cats) { generator.with closure }
   }
 
   String toString() { "${super.toString()}; file = $fileName"; }
@@ -146,7 +146,7 @@ abstract class GroovyDslExecutor extends Script implements GdslScopeMethods, Gds
   public static GroovyDslExecutor createAndRunExecutor(String text, String fileName) {
     def configuration = new CompilerConfiguration()
     configuration.scriptBaseClass = GroovyDslExecutor.name
-    def shell = new GroovyShell(this.class.classLoader, configuration)
+    def shell = new GroovyShell(configuration)
     def script = shell.parse(text, StringUtil.sanitizeJavaIdentifier(fileName)) as GroovyDslExecutor
     script.fileName = fileName
     script.run()
