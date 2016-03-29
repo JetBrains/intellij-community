@@ -56,6 +56,9 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   protected void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     initializeInitializerPlace(initializerExpression, ourLastInitializerPlace);
     String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
+    if (ourLastVisibility == null) {
+      ourLastVisibility = PsiModifier.PRIVATE;
+    }
     myVisibilityPanel.setVisibility(ourLastVisibility);
     super.initializeControls(initializerExpression, ourLastInitializerPlace);
   }
