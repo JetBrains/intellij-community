@@ -83,7 +83,7 @@ public class Notification {
 
     LOG.assertTrue(isTitle() || isContent(), "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
 
-    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(hashCode());
+    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(this));
   }
 
   public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
