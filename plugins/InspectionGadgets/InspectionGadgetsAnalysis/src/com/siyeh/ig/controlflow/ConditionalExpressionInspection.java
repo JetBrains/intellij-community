@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -69,7 +69,8 @@ public class ConditionalExpressionInspection extends BaseInspection {
         }
         if (parent instanceof PsiAssignmentExpression ||
             parent instanceof PsiReturnStatement ||
-            parent instanceof PsiLocalVariable) {
+            parent instanceof PsiLocalVariable  ||
+            parent instanceof PsiLambdaExpression) {
           return;
         }
       }
