@@ -357,6 +357,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
                        changeListManager.getSwitchedRoots(),
                        SHOW_IGNORED_MODE ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
                        changeListManager.getLogicallyLockedFolders());
+
+    changeDetails();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -548,7 +550,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     @NotNull
     @Override
     protected List<Change> getSelectedChanges() {
-      return Arrays.asList(myView.getSelectedChanges());
+      Change[] changes = myView.getSelectedChanges();
+      if (changes.length == 0) changes = myView.getChanges();
+      return Arrays.asList(changes);
     }
 
     @NotNull
