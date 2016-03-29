@@ -136,6 +136,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       if (element == null) continue;
 
       PullUpHelper<MemberInfo> processor = getProcessor(element);
+      if (processor == null) continue;
+
       processor.updateUsage(element);
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -198,6 +200,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     for (MemberInfo info : myMembersToMove) {
       PullUpHelper<MemberInfo> processor = getProcessor(info);
 
+      LOG.assertTrue(processor != null, info.getMember());
       if (!(info.getMember() instanceof PsiClass) || info.getOverrides() == null) {
         processor.setCorrectVisibility(info);
         processor.encodeContextInfo(info);
@@ -207,27 +210,37 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     }
 
     for (PsiMember member : myMembersAfterMove) {
-      getProcessor(member).postProcessMember(member);
+      PullUpHelper<MemberInfo> processor = getProcessor(member);
+      LOG.assertTrue(processor != null, member);
+
+      processor.postProcessMember(member);
 
       final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(myProject);
       ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, member);
     }
   }
 
+  @Nullable
   private PullUpHelper<MemberInfo> getProcessor(@NotNull PsiElement element) {
     Language language = element.getLanguage();
     return getProcessor(language);
   }
 
+  @Nullable
   private PullUpHelper<MemberInfo> getProcessor(Language language) {
     PullUpHelper<MemberInfo> helper = myProcessors.get(language);
     if (helper == null) {
-      helper = PullUpHelper.INSTANCE.forLanguage(language).createPullUpHelper(this);
+      PullUpHelperFactory helperFactory = PullUpHelper.INSTANCE.forLanguage(language);
+      if (helperFactory == null) {
+        return null;
+      }
+      helper = helperFactory.createPullUpHelper(this);
       myProcessors.put(language, helper);
     }
     return helper;
   }
 
+  @Nullable
   private PullUpHelper<MemberInfo> getProcessor(@NotNull MemberInfo info) {
     PsiReferenceList refList = info.getSourceReferenceList();
     if (refList != null) {
@@ -265,7 +278,9 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
 
     if (movedFields.isEmpty()) return;
 
-    getProcessor(myTargetSuperClass).moveFieldInitializations(movedFields);
+    PullUpHelper<MemberInfo> processor = getProcessor(myTargetSuperClass);
+    LOG.assertTrue(processor != null, myTargetSuperClass);
+    processor.moveFieldInitializations(movedFields);
   }
 
   public static boolean checkedInterfacesContain(Collection<? extends MemberInfoBase<? extends PsiMember>> memberInfos, PsiMethod psiMethod) {
