@@ -289,7 +289,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
       //noinspection unchecked
-      boolean showUnversioned = myShowVcsCommit && myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
+      boolean showUnversioned =
+        myShowVcsCommit && myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT && Registry.is("vcs.unversioned.files.in.commit");
       MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection, true, true,
                                                                         new Runnable() {
                                                                           @Override
@@ -1026,7 +1027,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
 
     BorderLayoutPanel bottomPanel = JBUI.Panels.simplePanel().addToRight(myLegend.getComponent());
-    if (myShowVcsCommit && !myIsAlien) {
+    if (myShowVcsCommit && !myIsAlien && Registry.is("vcs.unversioned.files.in.commit")) {
       bottomPanel.addToLeft(createShowUnversionedFilesLabel());
     }
     myBrowser.getBottomPanel().add(bottomPanel, BorderLayout.SOUTH);
