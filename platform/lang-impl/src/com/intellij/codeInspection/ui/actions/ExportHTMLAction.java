@@ -180,12 +180,12 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
             final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
             for (InspectionToolWrapper wrapper : toolWrappers) {
               InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-              if (!toolNode.isResolved()) {
+              if (!toolNode.isResolved(myView.getExcludedManager())) {
                 final Set<RefEntity> excludedEntities = new HashSet<>();
                 final Set<CommonProblemDescriptor> excludedDescriptors = new HashSet<>();
                 TreeUtil.traverse(toolNode, o -> {
                   InspectionTreeNode n = (InspectionTreeNode)o;
-                  if (n.isResolved()) {
+                  if (n.isResolved(myView.getExcludedManager())) {
                     if (n instanceof RefElementNode) {
                       excludedEntities.add(((RefElementNode)n).getElement());
                     }

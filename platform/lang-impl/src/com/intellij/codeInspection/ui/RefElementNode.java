@@ -83,21 +83,20 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   @Override
-  public boolean isResolved() {
+  public boolean isResolved(ExcludedInspectionTreeNodesManager excludedManager) {
     return myToolPresentation.isElementIgnored(getElement());
   }
 
-
   @Override
-  public void ignoreElement() {
+  public void ignoreElement(ExcludedInspectionTreeNodesManager excludedManager) {
     myToolPresentation.ignoreCurrentElement(getElement());
-    super.ignoreElement();
+    super.ignoreElement(excludedManager);
   }
 
   @Override
-  public void amnesty() {
+  public void amnesty(ExcludedInspectionTreeNodesManager excludedManager) {
     myToolPresentation.amnesty(getElement());
-    super.amnesty();
+    super.amnesty(excludedManager);
   }
 
   @Override

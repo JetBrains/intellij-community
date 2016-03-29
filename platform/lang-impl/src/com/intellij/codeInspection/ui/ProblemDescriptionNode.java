@@ -91,18 +91,18 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
 
   @Override
-  public boolean isResolved() {
+  public boolean isResolved(ExcludedInspectionTreeNodesManager manager) {
     return myElement instanceof RefElement && getPresentation().isProblemResolved(myElement, getDescriptor());
   }
 
   @Override
-  public void ignoreElement() {
+  public void ignoreElement(ExcludedInspectionTreeNodesManager manager) {
     InspectionToolPresentation presentation = getPresentation();
     presentation.ignoreCurrentElementProblem(getElement(), getDescriptor());
   }
 
   @Override
-  public void amnesty() {
+  public void amnesty(ExcludedInspectionTreeNodesManager manager) {
     InspectionToolPresentation presentation = getPresentation();
     presentation.amnesty(getElement());
   }

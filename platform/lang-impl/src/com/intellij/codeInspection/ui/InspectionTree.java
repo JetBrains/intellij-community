@@ -54,6 +54,7 @@ import java.util.*;
 
 public class InspectionTree extends Tree {
   @NotNull private final GlobalInspectionContextImpl myContext;
+  @NotNull private final ExcludedInspectionTreeNodesManager myExcludedManager;
   @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
@@ -61,6 +62,7 @@ public class InspectionTree extends Tree {
                         @NotNull GlobalInspectionContextImpl context, InspectionResultsView view) {
     setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
+    myExcludedManager = view.getExcludedManager();
 
     setCellRenderer(new CellRenderer());
     setRootVisible(!myContext.isSingleInspectionRun());
@@ -208,7 +210,7 @@ public class InspectionTree extends Tree {
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
-      traverseDescriptors((InspectionTreeNode)node, descriptors);
+      traverseDescriptors((InspectionTreeNode)node, descriptors, myExcludedManager);
     }
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
   }
@@ -249,9 +251,11 @@ public class InspectionTree extends Tree {
     return count;
   }
 
-  private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
+  private static void traverseDescriptors(InspectionTreeNode node,
+                                          LinkedHashSet<CommonProblemDescriptor> descriptors,
+                                          ExcludedInspectionTreeNodesManager manager){
     if (node instanceof ProblemDescriptionNode) {
-      if (node.isValid() && !node.isResolved()) {
+      if (node.isValid() && !node.isResolved(manager)) {
         final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
         if (descriptor != null) {
           descriptors.add(descriptor);
@@ -259,7 +263,7 @@ public class InspectionTree extends Tree {
       }
     }
     for(int i = node.getChildCount() - 1; i >= 0; i--){
-      traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors);
+      traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors, manager);
     }
   }
 
@@ -316,7 +320,7 @@ public class InspectionTree extends Tree {
     }
   }
 
-  private static class CellRenderer extends ColoredTreeCellRenderer {
+  private class CellRenderer extends ColoredTreeCellRenderer {
     /*  private Project myProject;
       InspectionManagerEx myManager;
       public CellRenderer(Project project) {
@@ -352,14 +356,14 @@ public class InspectionTree extends Tree {
       append(tail);
     }
 
-    public static SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
-      if (node.isResolved()) {
+    public SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
+      if (node.isResolved(myExcludedManager)) {
         return new SimpleTextAttributes(attributes.getBgColor(), attributes.getFgColor(), attributes.getWaveColor(), attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);
       }
       return attributes;
     }
 
-    private static SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
+    private SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
       SimpleTextAttributes foreground = SimpleTextAttributes.REGULAR_ATTRIBUTES;
       if (node instanceof RefElementNode) {
         RefEntity refElement = ((RefElementNode)node).getElement();
@@ -379,7 +383,7 @@ public class InspectionTree extends Tree {
       return foreground;
     }
 
-    private static boolean appearsBold(Object node) {
+    private boolean appearsBold(Object node) {
       return ((InspectionTreeNode)node).appearsBold();
     }
   }

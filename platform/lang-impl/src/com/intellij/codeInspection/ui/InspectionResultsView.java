@@ -120,6 +120,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private AnAction myExcludeAction;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
+  private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager();
 
   private final Object myTreeStructureUpdateLock = new Object();
 
@@ -188,7 +189,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       @Nullable
       protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
-        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isResolved()) {
+        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isResolved(myExcludedInspectionTreeNodesManager)) {
           return null;
         }
         if (node instanceof RefElementNode) {
@@ -250,7 +251,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           for (TreePath path : paths) {
-            ((InspectionTreeNode)path.getLastPathComponent()).amnesty();
+            ((InspectionTreeNode)path.getLastPathComponent()).amnesty(myExcludedInspectionTreeNodesManager);
           }
         }
         myTree.queueUpdate();
@@ -274,7 +275,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           for (TreePath path : paths) {
-            ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement();
+            ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement(myExcludedInspectionTreeNodesManager);
           }
         }
         myTree.queueUpdate();
@@ -578,6 +579,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         }
       }
     });
+  }
+
+  @NotNull
+  public ExcludedInspectionTreeNodesManager getExcludedManager() {
+    return myExcludedInspectionTreeNodesManager;
   }
 
   @Nullable
