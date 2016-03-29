@@ -230,7 +230,10 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
           break;
         }
 
-        if (processor.doEnter(editor, atCaret, isModified(editor))) return;
+        if (processor.doEnter(editor, atCaret, isModified(editor))) {
+          rangeMarker.dispose();
+          return;
+        }
       }
 
       if (!isModified(editor) && !afterCompletion) {

@@ -178,14 +178,15 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     }
 
     final RangeMarker rangeMarker = createRangeMarker(atCaret);
+
     if (reformatBeforeEnter(atCaret)) {
       reformat(atCaret);
     }
     commit(editor);
+    PsiElement actualAtCaret = restoreElementAtCaret(psiFile, atCaret, rangeMarker);
+    int endOffset = rangeMarker.getEndOffset();
 
-    PsiElement actualAtCaret = atCaret.isValid()
-      ? atCaret
-      : restoreInvalidElementFromRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
+    rangeMarker.dispose();
 
     if (actualAtCaret != null) {
       for (FixEnterProcessor enterProcessor : myEnterProcessors) {
@@ -196,24 +197,24 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     }
 
     if (!isModified(editor) && !afterCompletion) {
-      plainEnter(editor);
+      if (actualAtCaret != null) {
+        plainEnter(editor);
+      }
     }
     else {
       editor.getCaretModel().moveToOffset(myFirstErrorOffset == Integer.MAX_VALUE
                                           ? (actualAtCaret != null
                                              ? actualAtCaret.getTextRange().getEndOffset()
-                                             : rangeMarker.getEndOffset())
+                                             : endOffset)
                                           : myFirstErrorOffset);
     }
-    rangeMarker.dispose();
   }
 
-  protected PsiElement restoreInvalidElementFromRange(@NotNull PsiFile file,
-                                                      int startOffset,
-                                                      int endOffset,
-                                                      @NotNull Class<? extends PsiElement> klass) {
-    LOG.warn("Please, override com.intellij.lang.SmartEnterProcessorWithFixers.restoreInvalidElementFromRange for your language!");
-    return null;
+  protected PsiElement restoreElementAtCaret(PsiFile file, PsiElement origElement, RangeMarker marker){
+    if (!origElement.isValid()) {
+      LOG.warn("Please, override com.intellij.lang.SmartEnterProcessorWithFixers.restoreElementAtCaret for your language!");
+    }
+    return origElement;
   }
 
   protected boolean reformatBeforeEnter(@NotNull PsiElement atCaret) {return true;}
