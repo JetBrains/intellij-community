@@ -278,7 +278,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement(myExcludedInspectionTreeNodesManager);
           }
         }
-        myTree.queueUpdate();
+        if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+          InspectionResultsView.this.update();
+        } else {
+          myTree.queueUpdate();
+        }
       }
 
       @Override
