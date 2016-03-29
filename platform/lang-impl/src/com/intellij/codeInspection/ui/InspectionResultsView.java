@@ -547,7 +547,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     else if (selectedEntity == null) {
       return Pair.create(new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject), null);
     }
-    throw new IllegalStateException();
+    return Pair.create(new JPanel(), null);
   }
 
   private boolean reuseEditorFor(Document document) {
