@@ -64,6 +64,12 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
   }
 
   @Override
+  public String toString() {
+    final PsiClass psiClass = getPsiClass();
+    return "<" + getName() + " -> " + (psiClass != null ? psiClass.getName() : myXmlTag.getAttributeValue(FxmlConstants.TYPE) + "?") + ">";
+  }
+
+  @Override
   public PsiElement getDeclaration() {
     final PsiClass psiClass = getPsiClass();
     return psiClass != null ? psiClass : myXmlTag;
@@ -106,6 +112,11 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
         return "Cannot resolve class " + value;
       }
       return null;
+    }
+
+    @Override
+    public String toString() {
+      return FxmlConstants.FX_ROOT + "#" + getName();
     }
   }
 }

@@ -23,4 +23,9 @@ public class JavaFxClassTagDescriptor extends JavaFxClassTagDescriptorBase {
   public PsiClass getPsiClass() {
     return myPsiClass;
   }
+
+  @Override
+  public String toString() {
+    return myPsiClass != null ? "<" + myPsiClass.getName() + ">" : "<" + getName() + "?>";
+  }
 }

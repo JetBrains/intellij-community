@@ -87,7 +87,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       return ArrayUtil.toStringArray(enumConstants);
     }
 
-    final String propertyQName = JavaFxPsiUtil.getBoxedPropertyType(myPsiClass, getDeclarationImpl());
+    final String propertyQName = JavaFxPsiUtil.getBoxedPropertyType(myPsiClass, getDeclarationMember());
     if (CommonClassNames.JAVA_LANG_FLOAT.equals(propertyQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(propertyQName)) {
       return new String[] {"Infinity", "-Infinity", "NaN",  "-NaN"};
     } else if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyQName)) {
@@ -238,10 +238,10 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
 
   @Override
   public PsiElement getDeclaration() {
-    return getDeclarationImpl();
+    return getDeclarationMember();
   }
 
-  private PsiMember getDeclarationImpl() {
+  private PsiMember getDeclarationMember() {
     return JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(myName);
   }
 
@@ -267,5 +267,10 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public String toString() {
+    return (myPsiClass != null ? myPsiClass.getName() + "#" : "?#") + myName;
   }
 }

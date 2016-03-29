@@ -271,4 +271,10 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
       }
     }
   }
+
+  @Override
+  public String toString() {
+    final String source = myXmlTag != null ? myXmlTag.getAttributeValue(FxmlConstants.SOURCE) : null;
+    return "<" + myName + (source != null ? " -> " + source : "") + ">";
+  }
 }

@@ -199,4 +199,9 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
+
+  @Override
+  public String toString() {
+    return "<" + (myStatic ? "static " : "") + (myPsiClass != null ? myPsiClass.getName() + "#" : "?#") + myName + ">";
+  }
 }

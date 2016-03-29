@@ -100,4 +100,9 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
     }
     return super.validateValue(context, value);
   }
+
+  @Override
+  public String toString() {
+    return myParentTagName != null ? myParentTagName + "#" + getName() : super.toString();
+  }
 }
