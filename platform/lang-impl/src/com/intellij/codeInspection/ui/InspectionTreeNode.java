@@ -89,7 +89,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super.add(newChild);
     if (myUpdater != null) {
       ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      myUpdater.updateWithPreviewPanel();
+      myUpdater.updateWithPreviewPanel(this);
     }
   }
 
@@ -98,7 +98,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super.insert(newChild, childIndex);
     if (myUpdater != null) {
       ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      myUpdater.updateWithPreviewPanel();
+      myUpdater.updateWithPreviewPanel(this);
     }
   }
 
@@ -124,5 +124,15 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       current = entity;
     }
     return current;
+  }
+
+  @Override
+  public synchronized void setParent(MutableTreeNode newParent) {
+    super.setParent(newParent);
+  }
+
+  @Override
+  public synchronized TreeNode getParent() {
+    return super.getParent();
   }
 }
