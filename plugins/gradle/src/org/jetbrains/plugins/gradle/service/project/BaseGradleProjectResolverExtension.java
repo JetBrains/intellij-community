@@ -77,6 +77,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
 /**
@@ -399,10 +400,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
       assert sourceSetMap != null;
 
+      final Map<String, String> artifactsMap = ideProject.getUserData(CONFIGURATION_ARTIFACTS);
+      assert artifactsMap != null;
+
       processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<GradleSourceSetData> dataNode, @NotNull ExternalSourceSet sourceSet) {
-          buildDependencies(sourceSetMap, dataNode, sourceSet.getDependencies(), ideProject);
+          buildDependencies(sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
         }
       });
 
