@@ -39,10 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -338,7 +335,7 @@ public class AnalysisScope {
     if (modules != null) {
       for (final Module module : modules) {
         final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-        if (!moduleFileIndex.iterateContent(createScopeIterator(processor, moduleFileIndex, GlobalSearchScope.moduleScope(module)))) {
+        if (!moduleFileIndex.iterateContent(createScopeIterator(processor, moduleFileIndex, null))) {
           return false;
         }
       }
@@ -358,13 +355,13 @@ public class AnalysisScope {
       return file == null || processor.process(file);
     }
 
-    return projectFileIndex.iterateContent(createScopeIterator(processor, projectFileIndex, GlobalSearchScope.projectScope(myProject)));
+    return projectFileIndex.iterateContent(createScopeIterator(processor, projectFileIndex, null));
   }
 
   @NotNull
   private ContentIterator createScopeIterator(@NotNull final Processor<VirtualFile> processor,
-                                              final FileIndex projectFileIndex,
-                                              final SearchScope searchScope) {
+                                              @NotNull final FileIndex projectFileIndex,
+                                              @Nullable final SearchScope searchScope) {
     return new ContentIterator() {
         @Override
         public boolean processFile(@NotNull final VirtualFile fileOrDir) {
@@ -373,7 +370,7 @@ public class AnalysisScope {
             public Boolean compute() {
               if (isFiltered(fileOrDir, projectFileIndex)) return false;
               if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
-              return ((GlobalSearchScope)searchScope).contains(fileOrDir);
+              return searchScope == null || ((GlobalSearchScope)searchScope).contains(fileOrDir);
             }
           }).booleanValue();
           return !isInScope || processor.process(fileOrDir);
