@@ -401,10 +401,13 @@ public class InferenceSession {
   private boolean isOverloadCheck() {
     if (myContext != null) {
       for (Object o : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
-        final PsiExpressionList element = (PsiExpressionList)o;
-        for (PsiExpression expression : element.getExpressions()) {
-          if (expression == myContext) {
-            return true;
+        //method references do not contain nested arguments anyway
+        if (o instanceof PsiExpressionList) {
+          final PsiExpressionList element = (PsiExpressionList)o;
+          for (PsiExpression expression : element.getExpressions()) {
+            if (expression == myContext) {
+              return true;
+            }
           }
         }
       }
