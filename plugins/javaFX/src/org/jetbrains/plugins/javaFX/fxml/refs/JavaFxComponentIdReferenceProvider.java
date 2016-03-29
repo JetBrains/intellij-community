@@ -26,12 +26,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
@@ -80,7 +78,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     if (startsWithDollar) {
       final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(element.getContainingFile());
 
-      final PsiClass targetPropertyClass = JavaFxPsiUtil.getPropertyClass(xmlAttributeValue);
+      final PsiClass targetPropertyClass = JavaFxPsiUtil.getWritablePropertyClass(xmlAttributeValue);
       final boolean isConvertible = targetPropertyClass != null && JavaFxPsiUtil.hasConversionFromAnyType(targetPropertyClass);
 
       final Map<String, TypeMatch> typeMatches = fileIds.entrySet().stream().collect(
@@ -211,16 +209,11 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     @NotNull
     @Override
     public Object[] getVariants() {
-      final PsiElement parent = getElement().getParent();
-      if (parent instanceof XmlAttribute) {
-        final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-        if (descriptor != null) {
-          final PsiElement declaration = descriptor.getDeclaration();
-          final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myTagClass, declaration);
-          if (propertyType != null) {
-            return collectProperties(propertyType, parent.getProject());
-          }
-        }
+      final XmlAttributeValue xmlAttributeValue = getElement();
+      final PsiElement declaration = JavaFxPsiUtil.getAttributeDeclaration(xmlAttributeValue);
+      final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myTagClass, declaration);
+      if (propertyType != null) {
+        return collectProperties(propertyType, xmlAttributeValue.getProject());
       }
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }

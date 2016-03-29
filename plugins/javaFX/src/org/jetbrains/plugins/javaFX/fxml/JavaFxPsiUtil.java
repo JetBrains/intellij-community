@@ -275,50 +275,46 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static boolean checkIfAttributeHandler(XmlAttribute attribute) {
-    final String attributeName = attribute.getName();
-    final XmlTag xmlTag = attribute.getParent();
-    final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
-    if (descriptor == null) return false;
-    final PsiElement currentTagClass = descriptor.getDeclaration();
-    if (!(currentTagClass instanceof PsiClass)) return false;
-    final PsiField handlerField = ((PsiClass)currentTagClass).findFieldByName(attributeName, true);
-    if (handlerField == null) {
-      final String suggestedSetterName = PropertyUtil.suggestSetterName(attributeName);
-      final PsiMethod[] existingSetters = ((PsiClass)currentTagClass).findMethodsByName(suggestedSetterName, true);
-      for (PsiMethod setter : existingSetters) {
-        final PsiParameter[] parameters = setter.getParameterList().getParameters();
-        if (parameters.length == 1 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER)) {
-          return true;
-        }
-      }
-      return false;
-    }
-    final PsiClass objectPropertyClass = getPropertyClass(handlerField);
-    if (objectPropertyClass == null || !InheritanceUtil.isInheritor(objectPropertyClass, JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER)) {
-      return false;
-    }
-    return true;
+  public static boolean isEventHandlerProperty(@NotNull XmlAttribute attribute) {
+    final PsiClass tagClass = getTagClass(attribute.getParent());
+    return tagClass != null && getEventHandlerPropertyType(tagClass, attribute.getName()) != null;
   }
 
   @Nullable
-  public static PsiClass getTagClass(XmlAttributeValue xmlAttributeValue) {
-    if (xmlAttributeValue == null) return null;
-    final PsiElement xmlAttribute = xmlAttributeValue.getParent();
-    final XmlTag xmlTag = ((XmlAttribute)xmlAttribute).getParent();
-    if (xmlTag != null) {
-      return getTagClass(xmlTag);
+  public static PsiClass getTagClass(@Nullable XmlAttributeValue xmlAttributeValue) {
+    if (xmlAttributeValue != null) {
+      final PsiElement parent = xmlAttributeValue.getParent();
+      if (parent instanceof XmlAttribute) {
+        final XmlTag xmlTag = ((XmlAttribute)parent).getParent();
+        return getTagClass(xmlTag);
+      }
     }
     return null;
   }
 
   @Nullable
-  public static PsiClass getTagClass(@NotNull XmlTag xmlTag) {
-    final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
-    if (descriptor != null) {
-      final PsiElement declaration = descriptor.getDeclaration();
-      if (declaration instanceof PsiClass) {
-        return (PsiClass)declaration;
+  public static PsiClass getTagClass(@Nullable XmlTag xmlTag) {
+    if (xmlTag != null) {
+      final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+      if (descriptor != null) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiClass) {
+          return (PsiClass)declaration;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement getAttributeDeclaration(@Nullable XmlAttributeValue xmlAttributeValue) {
+    if (xmlAttributeValue != null) {
+      final PsiElement parent = xmlAttributeValue.getParent();
+      if (parent instanceof XmlAttribute) {
+        final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+        if (descriptor != null) {
+          return descriptor.getDeclaration();
+        }
       }
     }
     return null;
@@ -820,13 +816,11 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiClass getPropertyClass(XmlAttributeValue xmlAttributeValue) {
+  public static PsiClass getWritablePropertyClass(@Nullable XmlAttributeValue xmlAttributeValue) {
     final PsiClass tagClass = getTagClass(xmlAttributeValue);
     if (tagClass != null) {
-      XmlAttribute xmlAttribute = (XmlAttribute)xmlAttributeValue.getParent();
-      final XmlAttributeDescriptor descriptor = xmlAttribute.getDescriptor();
-      if (descriptor != null) {
-        final PsiElement declaration = descriptor.getDeclaration();
+      final PsiElement declaration = getAttributeDeclaration(xmlAttributeValue);
+      if (declaration != null) {
         return getPropertyClass(getWritablePropertyType(tagClass, declaration), xmlAttributeValue);
       }
     }
