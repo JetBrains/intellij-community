@@ -120,6 +120,7 @@
     <orderEntry type="module" module-name="designer" />
     <orderEntry type="module" module-name="sdk-updates" />
     <orderEntry type="module" module-name="analytics" />
+    <orderEntry type="module" module-name="ndk-workspace" />
     <orderEntry type="module" module-name="android-ndk" />
     <orderEntry type="module" module-name="games" />
   </component>
