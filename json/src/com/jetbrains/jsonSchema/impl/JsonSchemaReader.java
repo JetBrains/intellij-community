@@ -64,7 +64,7 @@ public class JsonSchemaReader {
     }
   }
 
-  public static void registerObjectsForCrossDefinitions(@Nullable final Project project, @NotNull final JsonSchemaObject object) {
+  public static void registerObjectsExportedDefinitions(@Nullable final Project project, @NotNull final JsonSchemaObject object) {
     String id = object.getId();
     if (!StringUtil.isEmptyOrSpaces(id)) {
       id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
@@ -91,7 +91,7 @@ public class JsonSchemaReader {
       if (properties != null && !properties.isEmpty()) {
         map.putAll(convertor.convert("#/properties/", properties));
       }
-      JsonSchemaCrossDefinitions.getInstance(project).register(id, map);
+      JsonSchemaExportedDefinitions.getInstance(project).register(id, map);
     }
   }
 
@@ -161,7 +161,7 @@ public class JsonSchemaReader {
       if (!processCrossReferences) return null;
       final String url = ref.substring(0, idx);
       final String relative = ref.substring(idx);
-      return JsonSchemaCrossDefinitions.getInstance(project).findDefinition(url, relative, root);
+      return JsonSchemaExportedDefinitions.getInstance(project).findDefinition(url, relative, root);
     }
     ref = ref.substring(2);
 

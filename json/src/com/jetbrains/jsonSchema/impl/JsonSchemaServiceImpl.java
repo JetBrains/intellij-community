@@ -40,11 +40,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   private final Project myProject;
   private final ConcurrentMap<JsonSchemaFileProvider, JsonSchemaObjectCodeInsightWrapper> myWrappers = ContainerUtil.newConcurrentMap();
-  private final AtomicBoolean myCrossDefinitionsInitialized;
+  private final AtomicBoolean myExportedDefinitionsInitialized;
 
   public JsonSchemaServiceImpl(@Nullable Project project) {
     myProject = project;
-    myCrossDefinitionsInitialized = new AtomicBoolean();
+    myExportedDefinitionsInitialized = new AtomicBoolean();
   }
 
   @NotNull
@@ -135,14 +135,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Override
-  public void refreshCrossDefinitions() {
-    myCrossDefinitionsInitialized.getAndSet(false);
-    ensureCrossDefinitionsInitialized();
+  public void refreshExportedDefinitions() {
+    myExportedDefinitionsInitialized.getAndSet(false);
+    ensureExportedDefinitionsInitialized();
   }
 
   @Override
-  public void ensureCrossDefinitionsInitialized() {
-    if (myCrossDefinitionsInitialized.get()) return;
+  public void ensureExportedDefinitionsInitialized() {
+    if (myExportedDefinitionsInitialized.get()) return;
     final JsonSchemaProviderFactory[] factories = getProviderFactories();
     for (JsonSchemaProviderFactory factory : factories) {
       for (JsonSchemaFileProvider provider : factory.getProviders(myProject)) {
@@ -150,14 +150,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         if (reader == null) continue;
         try {
           final JsonSchemaObject resultObject = new JsonSchemaReader(myProject).read(reader, false);
-          JsonSchemaReader.registerObjectsForCrossDefinitions(myProject, resultObject);
+          JsonSchemaReader.registerObjectsExportedDefinitions(myProject, resultObject);
         }
         catch (IOException e) {
           logException(provider, e);
         }
       }
     }
-    myCrossDefinitionsInitialized.getAndSet(true);
+    myExportedDefinitionsInitialized.getAndSet(true);
   }
 
   @Nullable

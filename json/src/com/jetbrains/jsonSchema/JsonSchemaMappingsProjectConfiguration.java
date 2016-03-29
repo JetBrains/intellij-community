@@ -79,7 +79,7 @@ public class JsonSchemaMappingsProjectConfiguration extends JsonSchemaMappingsCo
       if (schemaFile != null) mySchemaFiles.put(schemaFile, info);
     }
     if (refreshStaticProviders) {
-      ServiceManager.getService(myProject, JsonSchemaService.class).refreshCrossDefinitions();
+      ServiceManager.getService(myProject, JsonSchemaService.class).refreshExportedDefinitions();
     }
   }
 

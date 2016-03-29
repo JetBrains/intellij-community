@@ -29,15 +29,15 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaReader.LOG;
 /**
  * @author Irina.Chernushina on 3/28/2016.
  */
-public class JsonSchemaCrossDefinitions {
+public class JsonSchemaExportedDefinitions {
   private final Map<String, Map<String, JsonSchemaObject>> myMap;
   private final Project myProject;
 
-  public static JsonSchemaCrossDefinitions getInstance(final Project project) {
-    return ServiceManager.getService(project, JsonSchemaCrossDefinitions.class);
+  public static JsonSchemaExportedDefinitions getInstance(final Project project) {
+    return ServiceManager.getService(project, JsonSchemaExportedDefinitions.class);
   }
 
-  public JsonSchemaCrossDefinitions(@NotNull final Project project) {
+  public JsonSchemaExportedDefinitions(@NotNull final Project project) {
     myProject = project;
     myMap = Collections.synchronizedMap(new HashMap<>());
   }
@@ -50,7 +50,7 @@ public class JsonSchemaCrossDefinitions {
   }
 
   public JsonSchemaObject findDefinition(@NotNull final String url, @NotNull final String relativePart, @NotNull final JsonSchemaObject rootObject) {
-    ServiceManager.getService(myProject, JsonSchemaService.class).ensureCrossDefinitionsInitialized();
+    ServiceManager.getService(myProject, JsonSchemaService.class).ensureExportedDefinitionsInitialized();
     final Map<String, JsonSchemaObject> map = myMap.get(url);
     if (map != null) {
       return JsonSchemaReader.findDefinition(myProject, relativePart, rootObject, map, false);
