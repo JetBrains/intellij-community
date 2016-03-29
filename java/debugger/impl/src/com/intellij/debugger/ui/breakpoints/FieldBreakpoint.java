@@ -84,18 +84,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   protected Icon getDisabledIcon(boolean isMuted) {
-    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    if (isMuted) {
-      return master == null? AllIcons.Debugger.Db_muted_disabled_field_breakpoint : AllIcons.Debugger.Db_muted_dep_field_breakpoint;
+    if (DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this) != null) {
+      return isMuted ? AllIcons.Debugger.Db_muted_dep_field_breakpoint : AllIcons.Debugger.Db_dep_field_breakpoint;
     }
-    else {
-      return master == null? AllIcons.Debugger.Db_disabled_field_breakpoint : AllIcons.Debugger.Db_dep_field_breakpoint;
-    }
-  }
-
-  @Override
-  protected Icon getSetIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint;
+    return null;
   }
 
   @Override
