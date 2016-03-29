@@ -351,8 +351,9 @@ public class InspectionTree extends Tree {
       } else {
         setIcon(node.getIcon(expanded));
       }
-      //do not need reset model (for recalculation of prefered size) when digit number of problemCount is growth
-      final String tail = StringUtil.repeat(" ", Math.max(0, 8 - String.valueOf(problemCount).length()));
+      // do not need reset model (for recalculation of prefered size) when digit number of problemCount is growth
+      // or INVALID marker appears
+      final String tail = StringUtil.repeat(" ", Math.max(0, 5- - String.valueOf(problemCount).length()));
       append(tail);
     }
 
