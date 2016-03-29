@@ -139,7 +139,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
-  @NotNull private final JScrollPane myScrollPane;
+  @NotNull private final JScrollPane myScrollPane = new MyScrollPane();
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
@@ -355,6 +355,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocumentMarkupModel = new EditorFilteringMarkupModelEx(this, documentMarkup);
     myFoldingModel = new FoldingModelImpl(this);
     myCaretModel = new CaretModelImpl(this);
+    myScrollingModel = new ScrollingModelImpl(this);
     mySoftWrapModel = new SoftWrapModelImpl(this);
     if (!myUseNewRendering) mySizeContainer.reset();
 
@@ -533,7 +534,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     setHighlighter(highlighter);
 
     myEditorComponent = new EditorComponentImpl(this);
-    myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     myVerticalScrollBar.setOpaque(false);
@@ -555,7 +555,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
     initComponent();
-    myScrollingModel = new ScrollingModelImpl(this);
 
     if (myUseNewRendering) {
       myView = new EditorView(this);
