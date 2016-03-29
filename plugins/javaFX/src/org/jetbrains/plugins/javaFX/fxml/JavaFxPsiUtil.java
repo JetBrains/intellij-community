@@ -803,7 +803,8 @@ public class JavaFxPsiUtil {
     for (XmlTag tag : SyntaxTraverser.psiTraverser().withRoot(rootTag).filter(XmlTag.class)) {
       final XmlAttribute idAttribute = tag.getAttribute(FxmlConstants.FX_ID);
       if (idAttribute != null) {
-        fileIds.put(idAttribute.getValue(), idAttribute.getValueElement());
+        final String idValue = idAttribute.getValue();
+        if (idValue != null) fileIds.put(idValue, idAttribute.getValueElement());
       }
     }
     final XmlAttribute controllerAttribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);

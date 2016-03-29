@@ -173,6 +173,11 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertDoesntContain(myFixture.getLookupElementStrings(), "Paint");
   }
 
+  public void testNullFxId() throws Exception {
+    configureAndComplete();
+    assertDoesntContain(myFixture.getLookupElementStrings(), "null");
+  }
+
   public void testSubclassesAndDefaultProperty() throws Exception {
     configureAndComplete();
     final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
