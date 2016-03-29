@@ -1457,7 +1457,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else {
         // we do invoke later since we can have read lock acquired
         //noinspection SSBasedInspection
-        TransactionGuard.getInstance().submitTransactionLater(null, rebuildRunnable);
+        TransactionGuard.getInstance().submitTransactionLater(app, rebuildRunnable);
       }
     }
   }

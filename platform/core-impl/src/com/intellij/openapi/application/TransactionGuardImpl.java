@@ -25,7 +25,6 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Queue;
@@ -260,7 +259,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionLater(@Nullable final Disposable parentDisposable, @NotNull final Runnable transaction) {
+  public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
     Application app = ApplicationManager.getApplication();
     app.invokeLater(new Runnable() {
       @Override

@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A service managing model transactions.<p/>
@@ -144,7 +143,7 @@ public abstract class TransactionGuard {
    * Schedules a given runnable to be executed inside a transaction later on Swing thread.
    * Same as {@link #submitTransaction(Disposable, Runnable)}, but the runnable is never executed immediately.
    */
-  public abstract void submitTransactionLater(@Nullable Disposable parentDisposable, @NotNull Runnable transaction);
+  public abstract void submitTransactionLater(@NotNull Disposable parentDisposable, @NotNull Runnable transaction);
 
   /**
    * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
