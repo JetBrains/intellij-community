@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,6 +269,32 @@ def test() {
 
     tor.foo { r, e -> r.times { e.each { it.bar() } } }
     tor.foo { it.times { println 'polymorphic' } }
+}
+'''
+  }
+
+  void 'test from string with non fqn options no error'() {
+    addBigInteger()
+    myFixture.addClass('''
+import groovy.transform.stc.ClosureParams;
+import groovy.transform.stc.FromString;
+import groovy.lang.Closure;
+
+public class A {
+  public static void foo(@ClosureParams(value = FromString.class, options = "BigInteger") Closure c) {}
+}
+''')
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class B {
+  def foo(BufferedReader r) {
+    r.eachLine { String a -> }
+  }
+  def bar() {
+    A.foo { BigInteger b -> }
+  }
 }
 '''
   }
