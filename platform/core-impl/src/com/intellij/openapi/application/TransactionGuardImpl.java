@@ -114,8 +114,8 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitMergeableTransaction(@Nullable final Disposable parentDisposable, @NotNull final TransactionKind kind, @NotNull final Runnable _transaction) {
-    @NotNull final Runnable transaction = parentDisposable == null ? _transaction : new Runnable() {
+  public void submitMergeableTransaction(@NotNull final Disposable parentDisposable, @NotNull final TransactionKind kind, @NotNull final Runnable _transaction) {
+    @NotNull final Runnable transaction = new Runnable() {
       @Override
       public void run() {
         if (!Disposer.isDisposed(parentDisposable)) {
@@ -194,7 +194,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitMergeableTransaction(null, kind, new Runnable() {
+    submitMergeableTransaction(ApplicationManager.getApplication(), kind, new Runnable() {
       @Override
       public void run() {
         try {

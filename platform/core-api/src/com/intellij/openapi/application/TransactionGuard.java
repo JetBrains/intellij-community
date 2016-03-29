@@ -109,7 +109,7 @@ public abstract class TransactionGuard {
    * Same as {@link #submitTransaction(Disposable, Runnable)}, but without any parent disposable.
    */
   public static void submitTransaction(@NotNull Runnable transaction) {
-    submitTransaction(null, transaction);
+    submitTransaction(ApplicationManager.getApplication(), transaction);
   }
 
   /**
@@ -120,11 +120,10 @@ public abstract class TransactionGuard {
    * Transactions submitted via this method use {@link TransactionKind#ANY_CHANGE} kind.
    *
    * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
-   *                         and so it won't be run after it has been disposed. Can be null, that would mean the transaction can be run
-   *                         until the application is disposed.
+   *                         and so it won't be run after it has been disposed
    * @param transaction code to execute inside a transaction.
    */
-  public static void submitTransaction(@Nullable Disposable parentDisposable, @NotNull Runnable transaction) {
+  public static void submitTransaction(@NotNull Disposable parentDisposable, @NotNull Runnable transaction) {
     getInstance().submitMergeableTransaction(parentDisposable, TransactionKind.ANY_CHANGE, transaction);
   }
 
@@ -180,7 +179,7 @@ public abstract class TransactionGuard {
    * Same as {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)} with no parent disposable.
    */
   public void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction) {
-    submitMergeableTransaction(null, kind, transaction);
+    submitMergeableTransaction(ApplicationManager.getApplication(), kind, transaction);
   }
 
   /**
@@ -190,12 +189,11 @@ public abstract class TransactionGuard {
    * adds the runnable to a queue. When all transactions scheduled before this one are finished, executes the given
    * runnable under a transaction.
    * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
-   *                         and so it won't be run after it has been disposed. Can be null, that would mean the transaction can be run
-   *                         until the application is disposed.
+   *                         and so it won't be run after it has been disposed.
    * @param kind a "kind" object for transaction merging
    * @param transaction code to execute inside a transaction.
    */
-  public abstract void submitMergeableTransaction(@Nullable Disposable parentDisposable, @NotNull TransactionKind kind, @NotNull Runnable transaction);
+  public abstract void submitMergeableTransaction(@NotNull Disposable parentDisposable, @NotNull TransactionKind kind, @NotNull Runnable transaction);
 
   /**
    * Allow incoming transactions of the specified kinds to be executed immediately, instead of being queued until the current transaction is finished.<p/>
