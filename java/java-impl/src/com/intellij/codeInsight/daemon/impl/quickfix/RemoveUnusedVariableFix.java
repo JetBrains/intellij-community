@@ -118,7 +118,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
                                            @NonNls String beforeText,
                                            @NonNls String afterText) {
     if (sideEffects.isEmpty()) return RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
       return canCopeWithSideEffects
              ? RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT
              : RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
