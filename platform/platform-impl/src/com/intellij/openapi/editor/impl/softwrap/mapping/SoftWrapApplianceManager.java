@@ -1115,12 +1115,13 @@ public class SoftWrapApplianceManager implements Dumpable {
 
     @Override
     public int getVisibleAreaWidth() {
+      Insets insets = myEditor.getContentComponent().getInsets();
+      int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
       if (myEditor.isInDistractionFreeMode()) {
         int rightMargin = myEditor.getSettings().getRightMargin(myEditor.getProject());
-        if (rightMargin > 0) return rightMargin * EditorUtil.getPlainSpaceWidth(myEditor);
+        if (rightMargin > 0) width = Math.min(width, rightMargin * EditorUtil.getPlainSpaceWidth(myEditor));
       }
-      Insets insets = myEditor.getContentComponent().getInsets();
-      return Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
+      return width;
     }
   }
 
