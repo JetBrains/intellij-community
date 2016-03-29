@@ -29,6 +29,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -346,6 +347,9 @@ public class InspectionTree extends Tree {
       } else {
         setIcon(node.getIcon(expanded));
       }
+      //do not need reset model (for recalculation of prefered size) when digit number of problemCount is growth
+      final String tail = StringUtil.repeat(" ", Math.max(0, 8 - String.valueOf(problemCount).length()));
+      append(tail);
     }
 
     public static SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
