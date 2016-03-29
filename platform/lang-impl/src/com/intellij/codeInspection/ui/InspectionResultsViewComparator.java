@@ -49,7 +49,7 @@ public class InspectionResultsViewComparator implements Comparator {
   private static final Logger LOG = Logger.getInstance("#" + InspectionResultsViewComparator.class.getName());
 
   public boolean areEqual(Object o1, Object o2) {
-    return compare(o1, o2) == 0;
+    return o1.getClass().equals(o2.getClass()) && compare(o1, o2) == 0;
   }
 
   @Override

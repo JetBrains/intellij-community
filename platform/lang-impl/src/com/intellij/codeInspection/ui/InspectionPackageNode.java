@@ -37,4 +37,16 @@ public class InspectionPackageNode extends InspectionTreeNode {
   public Icon getIcon(boolean expanded) {
     return PlatformIcons.PACKAGE_ICON;
   }
+
+  @Override
+  public boolean isResolved() {
+    System.out.println("");
+    return super.isResolved();
+  }
+
+  @Override
+  public void ignoreElement() {
+    System.out.println("ignore " + this);
+    super.ignoreElement();
+  }
 }
