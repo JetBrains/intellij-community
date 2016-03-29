@@ -265,7 +265,7 @@ class DependencyResolverImpl implements DependencyResolver {
       if (dependency instanceof ExternalProjectDependency) {
         ExternalProjectDependency projectDependency = dependency
         def project = rootProject.findProject(projectDependency.projectPath)
-        def configuration = project?.configurations?.findByName("default")
+        def configuration = project?.configurations?.findByName(projectDependency.configurationName)
         configuration?.allArtifacts?.files?.files?.each {
           resolvedDependenciesMap.put(scope, it)
           def classpathOrderMap = scope == compileScope ? compileClasspathOrder :
@@ -641,6 +641,7 @@ class DependencyResolverImpl implements DependencyResolver {
             version: project.version,
             scope: scope,
             projectPath: project.path,
+            configurationName: it.projectConfiguration.name
           )
           projectDependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.files
           result.add(projectDependency)
@@ -732,7 +733,8 @@ class DependencyResolverImpl implements DependencyResolver {
                     version: version,
                     scope: scope,
                     selectionReason: selectionReason,
-                    projectPath: componentSelector.projectPath
+                    projectPath: componentSelector.projectPath,
+                    configurationName: it.projectConfiguration.name
                   )
                   dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect { it.file }
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
@@ -745,6 +747,25 @@ class DependencyResolverImpl implements DependencyResolver {
                   dependencies.add(dependency)
                 }
                 else {
+                  final dependency = new DefaultExternalProjectDependency(
+                    name: name,
+                    group: group,
+                    version: version,
+                    scope: scope,
+                    selectionReason: selectionReason,
+                    projectPath: componentSelector.projectPath,
+                    configurationName: it.projectConfiguration.name
+                  )
+                  dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect { it.file }
+                  dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
+
+//                  if (componentResult != dependencyResult.from) {
+//                    dependency.dependencies.addAll(
+//                      transform(componentResult.dependencies)
+//                    )
+//                  }
+                  dependencies.add(dependency)
+
                   def files = []
                   def artifacts = it.projectConfiguration.getArtifacts()
                   if (artifacts && !artifacts.isEmpty()) {
@@ -779,9 +800,9 @@ class DependencyResolverImpl implements DependencyResolver {
                   }
 
                   if(!files.isEmpty()) {
-                    final dependency = new DefaultFileCollectionDependency(files)
-                    dependency.scope = scope
-                    dependencies.add(dependency)
+                    final fileCollectionDependency = new DefaultFileCollectionDependency(files)
+                    fileCollectionDependency.scope = scope
+                    dependencies.add(fileCollectionDependency)
                     resolvedDepsFiles.addAll(files)
                   }
                 }
