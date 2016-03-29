@@ -100,9 +100,9 @@ class DefaultResolver:
     def resolve(self, var, attribute):
         return getattr(var, attribute)
 
-    def get_dictionary(self, var):
+    def get_dictionary(self, var, names=None):
         if MethodWrapperType:
-            return self._getPyDictionary(var)
+            return self._getPyDictionary(var, names)
         else:
             return self._getJyDictionary(var)
 
@@ -162,15 +162,20 @@ class DefaultResolver:
 
         return ret
 
-    def _getPyDictionary(self, var):
+    def get_names(self, var):
+        names = dir(var)
+        if not names and hasattr(var, '__members__'):
+            names = var.__members__
+        return names
+
+    def _getPyDictionary(self, var, names=None):
         filterPrivate = False
         filterSpecial = True
         filterFunction = True
         filterBuiltIn = True
 
-        names = dir(var)
-        if not names and hasattr(var, '__members__'):
-            names = var.__members__
+        if not names:
+            names = self.get_names(var)
         d = {}
 
         #Be aware that the order in which the filters are applied attempts to
@@ -482,21 +487,34 @@ class MultiValueDictResolver(DictResolver):
 
         raise UnableToResolveVariableException()
 
-    def get_dictionary(self, dict):
-        ret = {}
-        i = 0
-        for key in dict_keys(dict):
-            val = dict.getlist(key)
-            i += 1
-            #we need to add the id because otherwise we cannot find the real object to get its contents later on.
-            key = '%s (%s)' % (self.key_to_str(key), id(key))
-            ret[key] = val
-            if i > MAX_ITEMS_TO_HANDLE:
-                ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
-                break
 
-        ret['__len__'] = len(dict)
-        return ret
+
+#=======================================================================================================================
+# DjangoFormResolver
+#=======================================================================================================================
+class DjangoFormResolver(DefaultResolver):
+    has_errors_attr = False
+
+    def get_names(self, var):
+        names = dir(var)
+        if not names and hasattr(var, '__members__'):
+            names = var.__members__
+
+        if "errors" in names:
+            self.has_errors_attr = True
+            names.remove("errors")
+        return names
+
+    def get_dictionary(self, var, names=None):
+        # Do not call self.errors because it is property and has side effects
+        d = defaultResolver.get_dictionary(var, self.get_names(var))
+        if self.has_errors_attr:
+            try:
+                errors_attr = getattr(var, "_errors")
+            except:
+                errors_attr = None
+            d["errors"] = errors_attr
+        return d
 
 
 #=======================================================================================================================
@@ -567,5 +585,6 @@ jyArrayResolver = JyArrayResolver()
 setResolver = SetResolver()
 ndarrayResolver = NdArrayResolver()
 multiValueDictResolver = MultiValueDictResolver()
+djangoFormResolver = DjangoFormResolver()
 dequeResolver = DequeResolver()
 frameResolver = FrameResolver()
