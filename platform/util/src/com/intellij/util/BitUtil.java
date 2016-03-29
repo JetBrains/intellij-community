@@ -24,7 +24,7 @@ public class BitUtil {
     return (value & mask) == mask;
   }
   public static boolean isSet(final int value, final int mask) {
-    assertOneBitMask(mask);
+    assertOneBitMask(toUnsignedLong(mask));
     return (value & mask) == mask;
   }
   public static boolean isSet(long flags, long mask) {
@@ -52,9 +52,15 @@ public class BitUtil {
    * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
    */
   public static int set(int value, int mask, boolean setBit) {
-    assertOneBitMask(mask);
+    assertOneBitMask(toUnsignedLong(mask));
     return setBit ? value | mask : value & ~mask;
   }
+
+  // Integer.toUnsignedLong in java 8
+  private static long toUnsignedLong(long mask) {
+    return mask & 0xffffffffL;
+  }
+
   /**
    * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
    */
