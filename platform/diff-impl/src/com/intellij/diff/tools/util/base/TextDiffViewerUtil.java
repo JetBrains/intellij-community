@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +49,6 @@ import java.util.List;
 
 public class TextDiffViewerUtil {
   public static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
-  public static final Key<Boolean> READ_ONLY_LOCK_KEY = Key.create("ReadOnlyLockAction");
 
   @NotNull
   public static List<AnAction> createEditorPopupActions() {
@@ -320,14 +318,16 @@ public class TextDiffViewerUtil {
 
   public static abstract class ReadOnlyLockAction extends ToggleAction implements DumbAware {
     @NotNull protected final DiffContext myContext;
+    @NotNull protected final TextDiffSettings mySettings;
 
     public ReadOnlyLockAction(@NotNull DiffContext context) {
       super("Disable editing", null, AllIcons.Nodes.Padlock);
       myContext = context;
+      mySettings = getTextSettings(context);
       setEnabledInModalContext(true);
     }
 
-    protected void init() {
+    protected void applyDefaults() {
       if (isVisible()) { // apply default state
         setSelected(null, isSelected(null));
       }
@@ -345,12 +345,12 @@ public class TextDiffViewerUtil {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myContext.getUserData(READ_ONLY_LOCK_KEY) != Boolean.FALSE;
+      return mySettings.isReadOnlyLock();
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myContext.putUserData(READ_ONLY_LOCK_KEY, state);
+      mySettings.setReadOnlyLock(state);
       doApply(state);
     }
 
@@ -369,7 +369,7 @@ public class TextDiffViewerUtil {
     public EditorReadOnlyLockAction(@NotNull DiffContext context, @NotNull List<? extends EditorEx> editableEditors) {
       super(context);
       myEditableEditors = editableEditors;
-      init();
+      applyDefaults();
     }
 
     @Override
