@@ -6,7 +6,10 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConvertor;
 import com.intellij.util.ThrowablePairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +24,13 @@ import java.util.*;
 public class JsonSchemaReader {
   public static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.impl.JsonSchemaReader");
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
+  private final Project myProject;
 
-  public JsonSchemaObject read(@NotNull final Reader reader) throws IOException {
+  public JsonSchemaReader(@Nullable final Project project) {
+    myProject = project;
+  }
+
+  public JsonSchemaObject read(@NotNull final Reader reader, boolean processCrossReferences) throws IOException {
     final JsonReader in = new JsonReader(reader);
     in.setLenient(true);
 
@@ -35,15 +43,15 @@ public class JsonSchemaReader {
       adapter.readSomeProperty(in, name, object);
     }
 
-    processReferences(object, adapter.getAllObjects(), adapter.getIds());
+    processReferences(object, adapter.getAllObjects(), adapter.getIds(), processCrossReferences);
     final ArrayList<JsonSchemaObject> withoutDefinitions = new ArrayList<JsonSchemaObject>(adapter.getAllObjects());
     removeDefinitions(object, withoutDefinitions);
     return object;
   }
 
-  public static boolean isJsonSchema(@NotNull final String string, Consumer<String> errorConsumer) {
+  public static boolean isJsonSchema(Project project, @NotNull final String string, Consumer<String> errorConsumer) {
     try {
-      new JsonSchemaReader().read(new java.io.StringReader(string));
+      new JsonSchemaReader(project).read(new java.io.StringReader(string), true);
       return true;
     } catch (IOException e) {
       LOG.info(e);
@@ -53,6 +61,37 @@ public class JsonSchemaReader {
       LOG.info(e);
       errorConsumer.consume(e.getMessage());
       return false;
+    }
+  }
+
+  public static void registerObjectsForCrossDefinitions(@Nullable final Project project, @NotNull final JsonSchemaObject object) {
+    String id = object.getId();
+    if (!StringUtil.isEmptyOrSpaces(id)) {
+      id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+      final PairConvertor<String, Map<String, JsonSchemaObject>, Map<String, JsonSchemaObject>> convertor =
+        new PairConvertor<String, Map<String, JsonSchemaObject>,Map<String, JsonSchemaObject>>() {
+          @Override
+          public Map<String, JsonSchemaObject> convert(String s, Map<String, JsonSchemaObject> map) {
+            final Map<String, JsonSchemaObject> converted = new HashMap<>();
+            for (Map.Entry<String, JsonSchemaObject> entry : map.entrySet()) {
+              String key = entry.getKey();
+              key = key.startsWith("/") ? key.substring(1) : key;
+              converted.put(s + key, entry.getValue());
+            }
+            return converted;
+          }
+      };
+
+      final HashMap<String, JsonSchemaObject> map = new HashMap<>();
+      final Map<String, JsonSchemaObject> definitions = object.getDefinitions();
+      if (definitions != null && !definitions.isEmpty()) {
+        map.putAll(convertor.convert("#/definitions/", definitions));
+      }
+      final Map<String, JsonSchemaObject> properties = object.getProperties();
+      if (properties != null && !properties.isEmpty()) {
+        map.putAll(convertor.convert("#/properties/", properties));
+      }
+      JsonSchemaCrossDefinitions.getInstance(project).register(id, map);
     }
   }
 
@@ -69,7 +108,10 @@ public class JsonSchemaReader {
     }
   }
 
-  private void processReferences(JsonSchemaObject root, Set<JsonSchemaObject> objects, Map<String, JsonSchemaObject> ids) {
+  private void processReferences(JsonSchemaObject root,
+                                 Set<JsonSchemaObject> objects,
+                                 Map<String, JsonSchemaObject> ids,
+                                 boolean processCrossReferences) {
     final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<JsonSchemaObject>();
     queue.addAll(objects);
     int control = 10000;
@@ -81,8 +123,13 @@ public class JsonSchemaReader {
       final JsonSchemaObject current = queue.removeFirst();
       if ("#".equals(current.getRef())) continue;
       if (current.getRef() != null) {
-        final JsonSchemaObject definition = findDefinition(current.getRef(), root, ids);
+        final JsonSchemaObject definition = findDefinition(myProject, current.getRef(), root, ids, processCrossReferences);
         if (definition == null) {
+          if (!processCrossReferences) {
+            // just skip current item
+            current.setRef(null);
+            continue;
+          }
           throw new RuntimeException("Can not find definition: " + current.getRef());
         }
         if (definition.getRef() != null && !"#".equals(definition.getRef())) {
@@ -101,13 +148,21 @@ public class JsonSchemaReader {
   }
 
   @Nullable
-  private JsonSchemaObject findDefinition(String ref, JsonSchemaObject root, Map<String, JsonSchemaObject> ids) {
+  static JsonSchemaObject findDefinition(@Nullable Project project, @NotNull String ref, @NotNull final JsonSchemaObject root,
+                                         @NotNull final Map<String, JsonSchemaObject> ids, boolean processCrossReferences) {
     if ("#".equals(ref)) {
       return root;
     }
     final JsonSchemaObject found = ids.get(ref);
     if (found != null) return found;
-    if (!ref.startsWith("#/")) throw new RuntimeException("Non-relative reference: " + ref);
+    if (!ref.startsWith("#/")) {
+      int idx = ref.indexOf("#/");
+      if (idx == -1) throw new RuntimeException("Non-relative or erroneous reference: " + ref);
+      if (!processCrossReferences) return null;
+      final String url = ref.substring(0, idx);
+      final String relative = ref.substring(idx);
+      return JsonSchemaCrossDefinitions.getInstance(project).findDefinition(url, relative, root);
+    }
     ref = ref.substring(2);
 
     final String[] parts = ref.split("/");

@@ -108,7 +108,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         Messages.showErrorDialog(myProject, "Please select file under project root.", ADD_PROJECT_SCHEMA);
         return;
       }
-      final JsonSchemaChecker importer = new JsonSchemaChecker(file, true);
+      final JsonSchemaChecker importer = new JsonSchemaChecker(myProject, file, true);
       if (!importer.checkSchemaFile()) {
         if (!StringUtil.isEmptyOrSpaces(importer.getError())) {
           JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(importer.getError(), MessageType.ERROR).notify(myProject);
@@ -345,10 +345,12 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   public static class JsonSchemaChecker {
     private static final int MAX_SCHEMA_LENGTH = FileUtil.MEGABYTE;
+    private final Project myProject;
     private final boolean myLoadText;
     private final VirtualFile myFile;
 
-    public JsonSchemaChecker(VirtualFile file, boolean loadText) {
+    public JsonSchemaChecker(Project project, VirtualFile file, boolean loadText) {
+      myProject = project;
       myLoadText = loadText;
       myFile = file;
     }
@@ -379,7 +381,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         return false;
       }
       final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
-      if (!JsonSchemaReader.isJsonSchema(myText, collectConsumer)) {
+      if (!JsonSchemaReader.isJsonSchema(myProject, myText, collectConsumer)) {
         myError = "JSON Schema not found or contain error in '" + myFile.getName() + "'";
         if (!collectConsumer.getResult().isEmpty()) {
           myError += ": " + StringUtil.join(collectConsumer.getResult(), "; ");

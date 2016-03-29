@@ -15,6 +15,10 @@ import java.util.List;
 
 public interface JsonSchemaService {
 
+  void refreshStaticProviders();
+
+  void ensureStaticProvidersInitialized();
+
   class Impl {
 
     @Nullable

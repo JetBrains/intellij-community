@@ -21,8 +21,8 @@ public class JsonSchemaReadTest {
   public void testReadSchemaItself() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/schema.json");
     Assert.assertTrue(file.exists());
-    final JsonSchemaReader reader = new JsonSchemaReader();
-    final JsonSchemaObject read = reader.read(new FileReader(file));
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
+    final JsonSchemaObject read = reader.read(new FileReader(file), true);
 
     Assert.assertEquals("http://json-schema.org/draft-04/schema#", read.getId());
     Assert.assertTrue(read.getDefinitions().containsKey("positiveInteger"));
@@ -61,8 +61,8 @@ public class JsonSchemaReadTest {
   public void testReadSchemaWithCustomTags() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
     Assert.assertTrue(file.exists());
-    final JsonSchemaReader reader = new JsonSchemaReader();
-    final JsonSchemaObject read = reader.read(new FileReader(file));
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
+    final JsonSchemaObject read = reader.read(new FileReader(file), true);
     Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
   }
 
@@ -89,9 +89,9 @@ public class JsonSchemaReadTest {
     final Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
-        final JsonSchemaReader reader = new JsonSchemaReader();
+        final JsonSchemaReader reader = new JsonSchemaReader(null);
         try {
-          reader.read(new FileReader(file));
+          reader.read(new FileReader(file), true);
           done.set(true);
         }
         catch (IOException e) {

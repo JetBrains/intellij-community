@@ -109,7 +109,7 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
     final PsiElement element = file.findElementAt(position);
     Assert.assertNotNull(element);
 
-    final JsonSchemaObject schemaObject = new JsonSchemaReader().read(new StringReader(schema));
+    final JsonSchemaObject schemaObject = new JsonSchemaReader(null).read(new StringReader(schema), true);
     Assert.assertNotNull(schemaObject);
 
     final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element);

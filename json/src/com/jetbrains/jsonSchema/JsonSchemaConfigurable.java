@@ -104,7 +104,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
     final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
     final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
     try {
-      if (!JsonSchemaReader.isJsonSchema(FileUtil.loadFile(file), collectConsumer)) {
+      if (!JsonSchemaReader.isJsonSchema(myProject, FileUtil.loadFile(file), collectConsumer)) {
         final String message;
         if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
         else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");

@@ -44,9 +44,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
                                            @NotNull final List<JsonSchemaFileProvider> list) {
     final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> map = configuration.getStateMap();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : map.values()) {
-      if (!info.getPatterns().isEmpty()) {
-        list.add(new MyProvider(project, info.getName(), configuration.convertToAbsoluteFile(info.getRelativePathToSchema()), info.getPatterns()));
-      }
+      list.add(new MyProvider(project, info.getName(), configuration.convertToAbsoluteFile(info.getRelativePathToSchema()), info.getPatterns()));
     }
   }
 
@@ -122,7 +120,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
 
     @Override
     public boolean isAvailable(@NotNull VirtualFile file) {
-      if (file.isDirectory() || !file.isValid() ||
+      if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() ||
           myProject != null && JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isRegisteredSchemaFile(file)) return false;
       for (Processor<VirtualFile> pattern : myPatterns) {
         if (pattern.process(file)) return true;

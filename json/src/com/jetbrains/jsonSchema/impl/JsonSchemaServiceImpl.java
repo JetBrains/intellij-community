@@ -27,10 +27,12 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static final Logger LOGGER = Logger.getInstance(JsonSchemaServiceImpl.class);
@@ -38,9 +40,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   private final Project myProject;
   private final ConcurrentMap<JsonSchemaFileProvider, JsonSchemaObjectCodeInsightWrapper> myWrappers = ContainerUtil.newConcurrentMap();
+  private final AtomicBoolean myStaticProvidersInitialized;
 
   public JsonSchemaServiceImpl(@Nullable Project project) {
     myProject = project;
+    myStaticProvidersInitialized = new AtomicBoolean();
   }
 
   @NotNull
@@ -88,23 +92,27 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Nullable
-  private static JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider provider) {
+  private JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider provider) {
     Reader reader = provider.getSchemaReader();
     try {
       if (reader != null) {
-        JsonSchemaObject resultObject = new JsonSchemaReader().read(reader);
+        final JsonSchemaObject resultObject = new JsonSchemaReader(myProject).read(reader, true);
         return new JsonSchemaObjectCodeInsightWrapper(provider.getName(), resultObject).setUserSchema(provider instanceof JsonSchemaImportedProviderMarker);
       }
     }
     catch (Exception e) {
-      final String message = "Error while processing json schema file: " + e.getMessage();
-      if (provider instanceof JsonSchemaImportedProviderMarker) {
-        RARE_LOGGER.info(message, e);
-      } else {
-        LOGGER.error(message, e);
-      }
+      logException(provider, e);
     }
     return null;
+  }
+
+  private void logException(@NotNull JsonSchemaFileProvider provider, Exception e) {
+    final String message = "Error while processing json schema file: " + e.getMessage();
+    if (provider instanceof JsonSchemaImportedProviderMarker) {
+      RARE_LOGGER.info(message, e);
+    } else {
+      LOGGER.error(message, e);
+    }
   }
 
   @Override
@@ -124,6 +132,32 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       return (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
     }
     return null;
+  }
+
+  @Override
+  public void refreshStaticProviders() {
+    myStaticProvidersInitialized.getAndSet(false);
+    ensureStaticProvidersInitialized();
+  }
+
+  @Override
+  public void ensureStaticProvidersInitialized() {
+    if (myStaticProvidersInitialized.get()) return;
+    final JsonSchemaProviderFactory[] factories = getProviderFactories();
+    for (JsonSchemaProviderFactory factory : factories) {
+      for (JsonSchemaFileProvider provider : factory.getProviders(myProject)) {
+        final Reader reader = provider.getSchemaReader();
+        if (reader == null) continue;
+        try {
+          final JsonSchemaObject resultObject = new JsonSchemaReader(myProject).read(reader, false);
+          JsonSchemaReader.registerObjectsForCrossDefinitions(myProject, resultObject);
+        }
+        catch (IOException e) {
+          logException(provider, e);
+        }
+      }
+    }
+    myStaticProvidersInitialized.getAndSet(true);
   }
 
   @Nullable
