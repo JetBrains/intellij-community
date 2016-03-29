@@ -84,11 +84,7 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node2 instanceof InspectionModuleNode) return 1;
 
     if (node1 instanceof InspectionPackageNode && node2 instanceof InspectionPackageNode) {
-      final int nonQualified = ((InspectionPackageNode)node1).getPackageName().compareToIgnoreCase(((InspectionPackageNode)node2).getPackageName());
-      if (nonQualified != 0) {
-        return nonQualified;
-      }
-      return nonQualified;
+      return ((InspectionPackageNode)node1).getPackageName().compareToIgnoreCase(((InspectionPackageNode)node2).getPackageName());
     }
     if (node1 instanceof InspectionPackageNode) return -1;
     if (node2 instanceof InspectionPackageNode) return 1;
