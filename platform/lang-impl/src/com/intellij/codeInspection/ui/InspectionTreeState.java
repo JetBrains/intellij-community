@@ -47,7 +47,7 @@ public class InspectionTreeState {
 
   private boolean needRestore(@NotNull InspectionTreeNode node) {
     for (Object o : mySelectionPath.myPath) {
-      if (InspectionResultsViewComparator.getInstance().compare(o, node) == 0) {
+      if (InspectionResultsViewComparator.getInstance().areEqual(o, node)) {
         return true;
       }
     }
@@ -115,7 +115,7 @@ public class InspectionTreeState {
       Enumeration children = newRoot.children();
       while (children.hasMoreElements()) {
         InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-        if (comparator.compare(child, oldNode) == 0) {
+        if (comparator.areEqual(child, oldNode)) {
           newPath.add(child);
           restorePath(newPath, idx + 1);
           return;

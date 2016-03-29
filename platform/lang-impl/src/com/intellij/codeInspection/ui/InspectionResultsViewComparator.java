@@ -48,6 +48,10 @@ import java.util.Comparator;
 public class InspectionResultsViewComparator implements Comparator {
   private static final Logger LOG = Logger.getInstance("#" + InspectionResultsViewComparator.class.getName());
 
+  public boolean areEqual(Object o1, Object o2) {
+    return compare(o1, o2) == 0;
+  }
+
   @Override
   public int compare(Object o1, Object o2) {
     InspectionTreeNode node1 = (InspectionTreeNode)o1;

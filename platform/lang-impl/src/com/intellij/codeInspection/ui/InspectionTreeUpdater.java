@@ -86,7 +86,7 @@ public class InspectionTreeUpdater {
       MyTreeUpdate other = (MyTreeUpdate) update;
       TreeNode currentNode = other.myNode;
       while (currentNode != null) {
-        if (InspectionResultsViewComparator.getInstance().compare(currentNode, myNode) == 0) {
+        if (InspectionResultsViewComparator.getInstance().areEqual(currentNode, myNode)) {
           return true;
         }
         currentNode = currentNode.getParent();
