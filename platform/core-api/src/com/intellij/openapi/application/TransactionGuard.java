@@ -142,6 +142,12 @@ public abstract class TransactionGuard {
   }
 
   /**
+   * Schedules a given runnable to be executed inside a transaction later on Swing thread.
+   * Same as {@link #submitTransaction(Disposable, Runnable)}, but the runnable is never executed immediately.
+   */
+  public abstract void submitTransactionLater(@Nullable Disposable parentDisposable, @NotNull Runnable transaction);
+
+  /**
    * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
    * or inside a read action on non-UI thread.
    * @see #submitMergeableTransaction(Disposable, TransactionKind, Runnable)

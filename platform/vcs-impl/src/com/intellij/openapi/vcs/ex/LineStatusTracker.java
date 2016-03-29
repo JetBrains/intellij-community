@@ -386,7 +386,7 @@ public class LineStatusTracker {
 
   private void markFileUnchanged() {
     // later to avoid saving inside document change event processing.
-    ApplicationManager.getApplication().invokeLater(() -> TransactionGuard.submitTransaction(myProject, () -> {
+    TransactionGuard.getInstance().submitTransactionLater(myProject, () -> {
         FileDocumentManager.getInstance().saveDocument(myDocument);
         boolean stillEmpty;
         synchronized (myLock) {
@@ -396,7 +396,7 @@ public class LineStatusTracker {
           // file was modified, and now it's not -> dirty local change
           myVcsDirtyScopeManager.fileDirty(myVirtualFile);
         }
-    }));
+    });
   }
 
   private class MyApplicationListener extends ApplicationAdapter {

@@ -258,4 +258,15 @@ public class TransactionGuardImpl extends TransactionGuard {
   public boolean isWriteActionAllowed() {
     return !Registry.is("ide.require.transaction.for.model.changes", false) || isInsideTransaction() || myUserActivity;
   }
+
+  @Override
+  public void submitTransactionLater(@Nullable final Disposable parentDisposable, @NotNull final Runnable transaction) {
+    Application app = ApplicationManager.getApplication();
+    app.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        submitMergeableTransaction(parentDisposable, TransactionKind.ANY_CHANGE, transaction);
+      }
+    }, app.getDisposed());
+  }
 }
