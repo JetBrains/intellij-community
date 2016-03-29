@@ -40,11 +40,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   private final Project myProject;
   private final ConcurrentMap<JsonSchemaFileProvider, JsonSchemaObjectCodeInsightWrapper> myWrappers = ContainerUtil.newConcurrentMap();
-  private final AtomicBoolean myStaticProvidersInitialized;
+  private final AtomicBoolean myCrossDefinitionsInitialized;
 
   public JsonSchemaServiceImpl(@Nullable Project project) {
     myProject = project;
-    myStaticProvidersInitialized = new AtomicBoolean();
+    myCrossDefinitionsInitialized = new AtomicBoolean();
   }
 
   @NotNull
@@ -106,7 +106,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return null;
   }
 
-  private void logException(@NotNull JsonSchemaFileProvider provider, Exception e) {
+  private static void logException(@NotNull JsonSchemaFileProvider provider, Exception e) {
     final String message = "Error while processing json schema file: " + e.getMessage();
     if (provider instanceof JsonSchemaImportedProviderMarker) {
       RARE_LOGGER.info(message, e);
@@ -135,14 +135,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Override
-  public void refreshStaticProviders() {
-    myStaticProvidersInitialized.getAndSet(false);
-    ensureStaticProvidersInitialized();
+  public void refreshCrossDefinitions() {
+    myCrossDefinitionsInitialized.getAndSet(false);
+    ensureCrossDefinitionsInitialized();
   }
 
   @Override
-  public void ensureStaticProvidersInitialized() {
-    if (myStaticProvidersInitialized.get()) return;
+  public void ensureCrossDefinitionsInitialized() {
+    if (myCrossDefinitionsInitialized.get()) return;
     final JsonSchemaProviderFactory[] factories = getProviderFactories();
     for (JsonSchemaProviderFactory factory : factories) {
       for (JsonSchemaFileProvider provider : factory.getProviders(myProject)) {
@@ -157,7 +157,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         }
       }
     }
-    myStaticProvidersInitialized.getAndSet(true);
+    myCrossDefinitionsInitialized.getAndSet(true);
   }
 
   @Nullable

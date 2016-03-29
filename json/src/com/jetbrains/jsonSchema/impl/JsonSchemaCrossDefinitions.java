@@ -50,7 +50,7 @@ public class JsonSchemaCrossDefinitions {
   }
 
   public JsonSchemaObject findDefinition(@NotNull final String url, @NotNull final String relativePart, @NotNull final JsonSchemaObject rootObject) {
-    ServiceManager.getService(myProject, JsonSchemaService.class).ensureStaticProvidersInitialized();
+    ServiceManager.getService(myProject, JsonSchemaService.class).ensureCrossDefinitionsInitialized();
     final Map<String, JsonSchemaObject> map = myMap.get(url);
     if (map != null) {
       return JsonSchemaReader.findDefinition(myProject, relativePart, rootObject, map, false);

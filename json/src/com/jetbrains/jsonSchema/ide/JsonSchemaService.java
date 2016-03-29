@@ -15,9 +15,9 @@ import java.util.List;
 
 public interface JsonSchemaService {
 
-  void refreshStaticProviders();
+  void refreshCrossDefinitions();
 
-  void ensureStaticProvidersInitialized();
+  void ensureCrossDefinitionsInitialized();
 
   class Impl {
 
