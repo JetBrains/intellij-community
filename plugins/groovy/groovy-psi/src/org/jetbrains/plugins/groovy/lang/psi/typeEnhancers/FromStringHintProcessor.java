@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.List;
 
@@ -49,6 +50,9 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
                 PsiTypeParameterList typeParameterList = method.getTypeParameterList();
                 PsiElement context = typeParameterList != null ? typeParameterList : method;
                 PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, context);
+                if (original instanceof PsiClassType && ((PsiClassType)original).resolve() == null) {
+                  original = GroovyPsiElementFactory.getInstance(method.getProject()).createTypeElement(param).getType();
+                }
                 return substitutor.substitute(original);
               }
               catch (IncorrectOperationException e) {
