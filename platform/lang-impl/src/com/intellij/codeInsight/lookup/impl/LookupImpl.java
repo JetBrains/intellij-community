@@ -1086,6 +1086,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+
     assert !myUpdating;
     LookupElement prevItem = getCurrentItem();
     myUpdating = true;
@@ -1105,6 +1107,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void markReused() {
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+
     synchronized (myList) {
       myArranger = myArranger.createEmptyCopy();
     }
@@ -1156,6 +1160,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @NotNull
   public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items, boolean hideSingleValued) {
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+
     synchronized (myList) {
       return myPresentableArranger.getRelevanceObjects(items, hideSingleValued);
     }
