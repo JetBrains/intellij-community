@@ -43,12 +43,15 @@ class FileFilterPanel {
     FindDialog.initFileFilter(myFileMask, myUseFileMask);
     myUseFileMask.setSelected(StringUtil.isNotEmpty(options.FILE_MASK));
     myFileMask.setEnabled(StringUtil.isNotEmpty(options.FILE_MASK));
-    myUseFileMask.addActionListener(new ActionListener() {
+    myFileMask.setSelectedItem(options.FILE_MASK);
+    ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         options.FILE_MASK = myUseFileMask.isSelected() ? (String)myFileMask.getSelectedItem() : null;
       }
-    });
+    };
+    myUseFileMask.addActionListener(listener);
+    myFileMask.addActionListener(listener);
   }
 
   @Nullable
