@@ -38,7 +38,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
   protected String getTestDataPath() {
     PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();
     if (strategy.equals(PathManagerEx.TestDataLookupStrategy.COMMUNITY)) {
-      return PathManager.getHomePath() + "/plugins/json";
+      return PathManager.getHomePath() + "/json";
     }
     return PathManager.getHomePath() + "/community/json";
   }
