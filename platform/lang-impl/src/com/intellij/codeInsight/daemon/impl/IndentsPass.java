@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
@@ -383,17 +384,33 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     void calculate() {
       assert myDocument != null;
       final FileType fileType = myFile.getFileType();
+      int tabSize = EditorUtil.getTabSize(myEditor);
 
       for (int line = 0; line < lineIndents.length; line++) {
         ProgressManager.checkCanceled();
         int lineStart = myDocument.getLineStartOffset(line);
         int lineEnd = myDocument.getLineEndOffset(line);
-        final int nonWhitespaceOffset = CharArrayUtil.shiftForward(myChars, lineStart, lineEnd, " \t");
-        if (nonWhitespaceOffset == lineEnd || isComment(nonWhitespaceOffset)) { // treating commented lines in the same way as empty lines
+        int offset = lineStart;
+        int column = 0;
+        outer:
+        while(offset < lineEnd) {
+          switch (myChars.charAt(offset)) {
+            case ' ':
+              column++;
+              break;
+            case '\t':
+              column = ((column / tabSize) + 1) * tabSize;
+              break;
+            default:
+              break outer;
+          }
+          offset++;
+        }
+        if (offset == lineEnd || isComment(offset)) { // treating commented lines in the same way as empty lines
           lineIndents[line] = -1; // Blank line marker
         }
         else {
-          lineIndents[line] = ((EditorImpl)myEditor).calcColumnNumber(nonWhitespaceOffset, line, true, myChars);
+          lineIndents[line] = column;
         }
       }
 
