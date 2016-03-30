@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,11 +81,13 @@ public class ModuleUtilCore {
 
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
-    if (!element.isValid()) {
-      return null;
-    }
     PsiFile containingFile = element.getContainingFile();
-    if (containingFile != null && !containingFile.isValid()) return null;
+    if (containingFile == null) {
+      if (!element.isValid()) return null;
+    }
+    else {
+      if (!containingFile.isValid()) return null;
+    }
 
     Project project = (containingFile == null ? element : containingFile).getProject();
     if (project.isDefault()) return null;
