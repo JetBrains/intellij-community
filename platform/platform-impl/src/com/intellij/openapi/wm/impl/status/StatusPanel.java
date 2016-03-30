@@ -39,6 +39,8 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -243,4 +245,18 @@ class StatusPanel extends JPanel {
     return myTextPanel.getText();
   }
 
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleStatusPanel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleStatusPanel extends AccessibleJPanel {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.STATUS_BAR;
+    }
+  }
 }

@@ -311,6 +311,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setPositionChangeYShift(tooltip.getPositionChangeY())
       .setHideOnKeyOutside(!tooltip.isExplicitClose())
       .setHideOnAction(!tooltip.isExplicitClose())
+      .setRequestFocus(tooltip.isRequestFocus())
       .setLayer(tooltip.getLayer());
     tooltip.getTipComponent().setForeground(fg);
     tooltip.getTipComponent().setBorder(new EmptyBorder(1, 3, 2, 3));

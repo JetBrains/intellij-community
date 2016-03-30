@@ -24,10 +24,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 
-public class TextPanel extends JComponent {
+public class TextPanel extends JComponent implements Accessible {
   @Nullable private String  myText;
   @Nullable private Color myCustomColor;
 
@@ -135,7 +138,20 @@ public class TextPanel extends JComponent {
       return;
     }
 
+    String oldAccessibleName = null;
+    if (accessibleContext != null) {
+      oldAccessibleName = accessibleContext.getAccessibleName();
+    }
+
     myText = text;
+
+    if ((accessibleContext != null) && !StringUtil.equals(accessibleContext.getAccessibleName(), oldAccessibleName)) {
+      accessibleContext.firePropertyChange(
+        AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+        oldAccessibleName,
+        accessibleContext.getAccessibleName());
+    }
+
     setPreferredSize(getPanelDimensionFromFontMetrics(myText));
     revalidate();
     repaint();
@@ -225,6 +241,26 @@ public class TextPanel extends JComponent {
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       return new Dimension(size.width + 3, size.height);
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleTextPanel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleTextPanel extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
+    }
+
+    @Override
+    public String getAccessibleName() {
+      return myText;
     }
   }
 }

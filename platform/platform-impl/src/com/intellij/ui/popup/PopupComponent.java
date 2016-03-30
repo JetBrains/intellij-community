@@ -134,7 +134,7 @@ public interface PopupComponent {
         @Override
         public void windowClosed(WindowEvent e) {
           super.windowClosed(e);
-          A11YFix.invokeFocusGained(myDialog);
+          //A11YFix.invokeFocusGained(myDialog);
         }
       });
     }

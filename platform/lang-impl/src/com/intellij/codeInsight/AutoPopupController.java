@@ -185,7 +185,7 @@ public class AutoPopupController implements Disposable {
           if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
-            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
+            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm
           }
