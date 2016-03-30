@@ -16,8 +16,12 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.completion.CompletionTestCase;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Assert;
 
@@ -65,6 +69,63 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     complete();
     assertStringItems("\"one\"", "\"two\"");
+
+    instance.removeSchema(inherited);
+    instance.removeSchema(base);
+  }
+
+  public void testJsonSchemaCrossReferenceCompletionWithSchemaEditing() throws Exception {
+    configureByFiles(null, BASE_PATH + "/completion.json", BASE_PATH + "/base.json",
+                          BASE_PATH + "/inherited.json");
+
+    String moduleDir = null;
+    VirtualFile moduleFile = null;
+    VirtualFile[] children = getProject().getBaseDir().getChildren();
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) {
+        moduleDir = child.getName();
+        moduleFile = child;
+        break;
+      }
+    }
+    Assert.assertNotNull(moduleDir);
+
+    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
+      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", "/" + moduleDir + "/base.json", false, Collections.emptyList());
+    instance.addSchema(base);
+
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/inherited.json", false,
+                                                           Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+
+    instance.addSchema(inherited);
+
+    complete();
+    assertStringItems("\"one\"", "\"two\"");
+
+    final VirtualFile baseFile = moduleFile.findChild("base.json");
+    Assert.assertNotNull(baseFile);
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Document document = fileDocumentManager.getDocument(baseFile);
+    Assert.assertNotNull(document);
+    String str = "\"enum\": [\"one\", \"two\"]";
+    int start = document.getText().indexOf(str);
+    Assert.assertTrue(start > 0);
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        document.replaceString(start, start + str.length(), "\"enum\": [\"one1\", \"two1\"]");
+
+        fileDocumentManager.saveAllDocuments();
+      }
+    });
+    LookupImpl lookup = getActiveLookup();
+    if (lookup != null) lookup.hide();
+
+    complete();
+    assertStringItems("\"one1\"", "\"two1\"");
 
     instance.removeSchema(inherited);
     instance.removeSchema(base);

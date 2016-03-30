@@ -19,6 +19,7 @@ import com.intellij.json.JsonFileType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ResourceUtil;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
@@ -29,29 +30,30 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Irina.Chernushina on 2/24/2016.
  */
 public class JsonSchemaProjectSelfProviderFactory {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory");
-  private final JsonSchemaFileProvider[] myProviders;
+  private final List<JsonSchemaFileProvider<Object>> myProviders;
 
   public static JsonSchemaProjectSelfProviderFactory getInstance(final Project project) {
     return ServiceManager.getService(project, JsonSchemaProjectSelfProviderFactory.class);
   }
 
   public JsonSchemaProjectSelfProviderFactory(final Project project) {
-    myProviders = new JsonSchemaFileProvider[]{
-      new MyJsonSchemaFileProvider(project)
-    };
+    myProviders = Collections.singletonList(new MyJsonSchemaFileProvider(project));
   }
 
-  public JsonSchemaFileProvider[] getProviders() {
+  public List<JsonSchemaFileProvider<Object>> getProviders() {
     return myProviders;
   }
 
-  private static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
+  private static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider<Object> {
+    public static final Pair<SchemaType, Object> KEY = Pair.create(SchemaType.schema, SchemaType.schema);
     private final Project myProject;
 
     public MyJsonSchemaFileProvider(Project project) {
@@ -75,6 +77,12 @@ public class JsonSchemaProjectSelfProviderFactory {
     @Override
     public String getName() {
       return "schema.json";
+    }
+
+    @NotNull
+    @Override
+    public Pair<SchemaType, Object> getKey() {
+      return KEY;
     }
 
     @Nullable
