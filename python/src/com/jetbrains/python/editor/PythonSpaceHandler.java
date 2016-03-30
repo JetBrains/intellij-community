@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
+import com.jetbrains.python.editor.PythonEnterHandler.DocstringState;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public class PythonSpaceHandler extends TypedHandlerDelegate {
       if (element == null) return Result.CONTINUE;
       int expectedStringStart = offset - 4;        // """ or ''' plus space char
       final Document document = editor.getDocument();
-      if (PythonEnterHandler.atDocCommentStart(element, expectedStringStart, document)) {
+      if (PythonEnterHandler.canGenerateDocstring(element, expectedStringStart, document) == DocstringState.INCOMPLETE) {
         final PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
         if (docOwner != null) {
           final String quotes = document.getText(TextRange.from(expectedStringStart, 3));
