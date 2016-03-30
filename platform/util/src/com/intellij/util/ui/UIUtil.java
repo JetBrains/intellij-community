@@ -109,10 +109,12 @@ public class UIUtil {
     Properties properties = new Properties();
     for (String path : paths) {
       try {
-        File propsFile = new File(path);
-        FileInputStream in = new FileInputStream(propsFile);
-        properties.load(in);
-        in.close();
+        FileInputStream in = new FileInputStream(new File(path));
+        try {
+          properties.load(in);
+        } finally {
+          if (in != null) in.close();
+        }
       }
       catch (Exception ignore) {
         continue;
