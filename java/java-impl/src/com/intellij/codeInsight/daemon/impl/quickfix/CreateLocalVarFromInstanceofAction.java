@@ -33,12 +33,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -213,7 +212,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       TemplateBuilderImpl builder = new TemplateBuilderImpl(localVariable);
       builder.setEndVariableAfter(localVariable.getNameIdentifier());
 
-      Template template = generateTemplate(project, localVariable.getInitializer(), localVariable.getType(), instanceOfExpression);
+      Template template = generateTemplate(project, localVariable.getInitializer(), localVariable.getType());
 
       Editor newEditor = CreateFromUsageBaseFix.positionCursor(project, file, localVariable.getNameIdentifier());
       if (newEditor == null) return;
@@ -398,14 +397,12 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     return element instanceof PsiPrefixExpression && ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.EXCL;
   }
 
-  private static Template generateTemplate(Project project, PsiExpression initializer, PsiType type, PsiElement place) {
+  private static Template generateTemplate(Project project, PsiExpression initializer, PsiType type) {
     final TemplateManager templateManager = TemplateManager.getInstance(project);
     final Template template = templateManager.createTemplate("", "");
     template.setToReformat(true);
 
-    SuggestedNameInfo suggestedNameInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.LOCAL_VARIABLE, null,
-                                                                                                        initializer, type);
-    suggestedNameInfo = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(suggestedNameInfo, place, true);
+    final SuggestedNameInfo suggestedNameInfo = IntroduceVariableBase.getSuggestedName(type, initializer, initializer);
 
     Set<LookupElement> itemSet = new LinkedHashSet<LookupElement>();
     for (String name : suggestedNameInfo.names) {
