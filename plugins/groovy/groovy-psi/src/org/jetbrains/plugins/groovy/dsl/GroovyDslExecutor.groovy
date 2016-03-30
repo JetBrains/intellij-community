@@ -146,7 +146,7 @@ abstract class GroovyDslExecutor extends Script implements GdslScopeMethods, Gds
   public static GroovyDslExecutor createAndRunExecutor(String text, String fileName) {
     def configuration = new CompilerConfiguration()
     configuration.scriptBaseClass = GroovyDslExecutor.name
-    def shell = new GroovyShell(configuration)
+    def shell = new GroovyShell(GroovyDslExecutor.classLoader, configuration)
     def script = shell.parse(text, StringUtil.sanitizeJavaIdentifier(fileName)) as GroovyDslExecutor
     script.fileName = fileName
     script.run()
