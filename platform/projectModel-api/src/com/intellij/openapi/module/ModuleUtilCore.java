@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,9 +34,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ModuleUtilCore {
-  public static final Key<Module> KEY_MODULE = new Key<Module>("Module");
+  public static final Key<Module> KEY_MODULE = new Key<>("Module");
 
-  public static boolean projectContainsFile(final Project project, VirtualFile file, boolean isLibraryElement) {
+  public static boolean projectContainsFile(@NotNull Project project, @NotNull VirtualFile file, boolean isLibraryElement) {
     ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     if (isLibraryElement) {
       List<OrderEntry> orders = projectFileIndex.getOrderEntriesForFile(file);
@@ -53,16 +53,12 @@ public class ModuleUtilCore {
     }
   }
 
+  @NotNull
   public static String getModuleNameInReadAction(@NotNull final Module module) {
-    return new ReadAction<String>(){
-      @Override
-      protected void run(@NotNull final Result<String> result) throws Throwable {
-        result.setResult(module.getName());
-      }
-    }.execute().getResultObject();
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)module::getName);
   }
 
-  public static boolean isModuleDisposed(PsiElement element) {
+  public static boolean isModuleDisposed(@NotNull PsiElement element) {
     if (!element.isValid()) return true;
     final Project project = element.getProject();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
@@ -109,7 +105,7 @@ public class ModuleUtilCore {
         if (orderEntries.size() == 1) {
           return orderEntries.get(0).getOwnerModule();
         }
-        Set<Module> modules = new HashSet<Module>();
+        Set<Module> modules = new HashSet<>();
         for (OrderEntry orderEntry : orderEntries) {
           modules.add(orderEntry.getOwnerModule());
         }
@@ -146,7 +142,7 @@ public class ModuleUtilCore {
   }
 
   //ignores export flag
-  public static void getDependencies(@NotNull Module module, Set<Module> modules) {
+  public static void getDependencies(@NotNull Module module, @NotNull Set<Module> modules) {
     if (modules.contains(module)) return;
     modules.add(module);
     Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
@@ -160,7 +156,7 @@ public class ModuleUtilCore {
    * @param module to find dependencies on
    * @param result resulted set
    */
-  public static void collectModulesDependsOn(@NotNull final Module module, final Set<Module> result) {
+  public static void collectModulesDependsOn(@NotNull final Module module, @NotNull Set<Module> result) {
     if (result.contains(module)) return;
     result.add(module);
     final ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
@@ -185,7 +181,7 @@ public class ModuleUtilCore {
 
   @NotNull
   public static List<Module> getAllDependentModules(@NotNull Module module) {
-    final ArrayList<Module> list = new ArrayList<Module>();
+    final ArrayList<Module> list = new ArrayList<>();
     final Graph<Module> graph = ModuleManager.getInstance(module.getProject()).moduleGraph();
     for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
       list.add(i.next());
@@ -193,7 +189,7 @@ public class ModuleUtilCore {
     return list;
   }
 
-  public static boolean visitMeAndDependentModules(@NotNull final Module module, final ModuleVisitor visitor) {
+  public static boolean visitMeAndDependentModules(@NotNull final Module module, @NotNull ModuleVisitor visitor) {
     if (!visitor.visit(module)) {
       return false;
     }
@@ -206,7 +202,7 @@ public class ModuleUtilCore {
     return true;
   }
 
-  public static boolean moduleContainsFile(@NotNull final Module module, VirtualFile file, boolean isLibraryElement) {
+  public static boolean moduleContainsFile(@NotNull final Module module, @NotNull VirtualFile file, boolean isLibraryElement) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     if (isLibraryElement) {
       OrderEntry orderEntry = moduleRootManager.getFileIndex().getOrderEntryForFile(file);
@@ -231,12 +227,12 @@ public class ModuleUtilCore {
     return PathUtilRt.getParentPath(module.getModuleFilePath());
   }
 
+  @FunctionalInterface
   public interface ModuleVisitor {
     /**
-     *
      * @param module module to be visited.
      * @return false to stop visiting.
      */
-    boolean visit(final Module module);
+    boolean visit(@NotNull Module module);
   }
 }
