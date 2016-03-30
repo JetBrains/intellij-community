@@ -98,6 +98,9 @@ class GitRepositoryReader {
       currentBranch = null;
       currentRevision = null;
     }
+    if (currentBranch == null && currentRevision == null) {
+      LOG.error("Couldn't identify neither current branch nor current revision. .git/HEAD content: [" + headInfo.content + "]");
+    }
     return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
   }
 
