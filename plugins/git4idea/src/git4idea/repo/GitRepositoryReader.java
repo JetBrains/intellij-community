@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -169,7 +170,7 @@ class GitRepositoryReader {
     if (rebaseDir.exists()) {
       File headName = new File(rebaseDir, "head-name");
       if (headName.exists()) {
-        return DvcsUtil.tryLoadFileOrReturn(headName, null);
+        return DvcsUtil.tryLoadFileOrReturn(headName, null, CharsetToolkit.UTF8);
       }
     }
     return null;
@@ -197,7 +198,7 @@ class GitRepositoryReader {
       return Collections.emptyMap();
     }
     try {
-      String content = DvcsUtil.tryLoadFile(myPackedRefsFile);
+      String content = DvcsUtil.tryLoadFile(myPackedRefsFile, CharsetToolkit.UTF8);
       return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), new Function<String, Pair<String, String>>() {
         @Override
         public Pair<String, String> fun(String line) {
@@ -319,7 +320,7 @@ class GitRepositoryReader {
   private HeadInfo readHead() {
     String headContent;
     try {
-      headContent = DvcsUtil.tryLoadFile(myHeadFile);
+      headContent = DvcsUtil.tryLoadFile(myHeadFile, CharsetToolkit.UTF8);
     }
     catch (RepoStateException e) {
       LOG.error(e);
