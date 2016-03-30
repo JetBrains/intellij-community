@@ -125,6 +125,15 @@ public class InferenceSessionContainer {
     final InferenceSessionContainer copy = new InferenceSessionContainer() {
       @Override
       public PsiSubstitutor findNestedSubstitutor(PsiElement arg, @Nullable PsiSubstitutor defaultSession) {
+        //for the case foo(bar(a -> m())): top level inference won't touch lambda "a -> m()"
+        //for the case foo(a -> bar(b -> m())): top level inference would go till nested lambda "b -> m()" and the state from top level could be found here by "bar(b -> m())"
+        //but proceeding with additional constraints from saved point would produce new expression constraints with different inference variables (could be found in myNestedSessions)
+        //which won't be found in the system if we won't reject stored sessions in such cases
+        final PsiSubstitutor substitutor = super.findNestedSubstitutor(arg, null);
+        if (substitutor != null) {
+          return substitutor;
+        }
+
         final InitialInferenceState state = nestedStates.get(PsiTreeUtil.getParentOfType(arg, PsiCall.class));
         if (state != null) {
           return state.getInferenceSubstitutor();
