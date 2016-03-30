@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -83,6 +84,10 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.net.URI;
 import java.nio.channels.NonWritableChannelException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -352,7 +357,8 @@ public class SvnUtil {
     File dbFile = resolveDatabase(path);
 
     if (dbFile != null) {
-      result = FileUtilRt.doIOOperation(new WorkingCopyFormatOperation(dbFile));
+      result = FileUtilRt.doIOOperation(
+        Registry.is("svn.use.sqlite.jdbc") ? new SqLiteJdbcWorkingCopyFormatOperation(dbFile) : new WorkingCopyFormatOperation(dbFile));
 
       if (result == null) {
         notifyDatabaseError();
@@ -851,7 +857,6 @@ public class SvnUtil {
     @Nullable
     @Override
     public WorkingCopyFormat execute(boolean lastAttempt) {
-      // TODO: rewrite it using sqlite jdbc driver
       SqLiteDb db = null;
       int userVersion = 0;
 
@@ -883,6 +888,56 @@ public class SvnUtil {
       WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
 
       return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+  }
+
+  private static class SqLiteJdbcWorkingCopyFormatOperation
+    implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+    @NotNull private final File myDbFile;
+
+    public SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
+      myDbFile = dbFile;
+    }
+
+    @Nullable
+    @Override
+    public WorkingCopyFormat execute(boolean lastAttempt) {
+      Connection connection = null;
+      int userVersion = 0;
+
+      try {
+        Class.forName("org.sqlite.JDBC");
+        connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(myDbFile.getPath()));
+        ResultSet resultSet = connection.createStatement().executeQuery("pragma user_version");
+
+        if (resultSet.next()) {
+          userVersion = resultSet.getInt(1);
+        }
+        else {
+          LOG.info("No result while getting user version for " + myDbFile.getPath());
+        }
+      }
+      catch (ClassNotFoundException | SQLException e) {
+        LOG.info(e);
+      }
+      finally {
+        close(connection);
+      }
+
+      WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
+
+      return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+
+    private static void close(@Nullable Connection connection) {
+      if (connection != null) {
+        try {
+          connection.close();
+        }
+        catch (SQLException e) {
+          notifyDatabaseError();
+        }
+      }
     }
   }
 
