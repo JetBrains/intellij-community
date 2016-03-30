@@ -242,7 +242,7 @@ public class PluginGroups {
   }
 
   public static void addGoPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("Go", "Custom Languages:Go language supprt:ro.redeul.google.go");
+    featuredPlugins.put("Go", "Custom Languages:Go language support:ro.redeul.google.go");
   }
 
   public static void addMarkdownPlugin(Map<String, String> featuredPlugins) {
