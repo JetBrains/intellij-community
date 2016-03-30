@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -214,10 +215,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   public void resort(boolean addAgain) {
     final List<LookupElement> items = getItems();
 
-    synchronized (myList) {
+    withLock(() -> {
       myPresentableArranger.prefixChanged(this);
       getListModel().removeAll();
-    }
+      return null;
+    });
 
     if (addAgain) {
       for (final LookupElement item : items) {
@@ -237,9 +239,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     myMatchers.put(item, matcher);
     updateLookupWidth(item, presentation);
-    synchronized (myList) {
+    withLock(() -> {
       myArranger.addElement(this, item, presentation);
-    }
+      return null;
+    });
     return true;
   }
 
@@ -288,12 +291,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public List<LookupElement> getItems() {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-    }
-    synchronized (myList) {
-      return ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem));
-    }
+    return withLock(() -> ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem)));
   }
 
   public String getAdditionalPrefix() {
@@ -303,9 +301,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   void appendPrefix(char c) {
     checkValid();
     myOffsets.appendPrefix(c);
-    synchronized (myList) {
+    withLock(() -> {
       myPresentableArranger.prefixChanged(this);
-    }
+      return null;
+    });
     requestResize();
     refreshUi(false, true);
     ensureSelectionVisible(true);
@@ -353,11 +352,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       markSelectionTouched();
     }
 
-    boolean shouldUpdate;
-    synchronized (myList) {
-      shouldUpdate = myPresentableArranger == myArranger;
+    boolean shouldUpdate = withLock(() -> {
       myPresentableArranger.prefixChanged(this);
-    }
+      return myPresentableArranger == myArranger;
+    });
     requestResize();
     if (shouldUpdate) {
       refreshUi(false, true);
@@ -375,11 +373,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     CollectionListModel<LookupElement> listModel = getListModel();
 
-    Pair<List<LookupElement>, Integer> pair;
-    synchronized (myList) {
-      pair = myPresentableArranger.arrangeItems(this, onExplicitAction || reused);
-    }
-    
+    Pair<List<LookupElement>, Integer> pair = withLock(() -> myPresentableArranger.arrangeItems(this, onExplicitAction || reused));
     List<LookupElement> items = pair.first;
     Integer toSelect = pair.second;
     if (toSelect == null || toSelect < 0 || items.size() > 0 && toSelect >= items.size()) {
@@ -409,7 +403,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private boolean checkReused() {
-    synchronized (myList) {
+    return withLock(() -> {
       if (myPresentableArranger != myArranger) {
         myPresentableArranger = myArranger;
         myOffsets.clearAdditionalPrefix();
@@ -417,7 +411,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         return true;
       }
       return false;
-    }
+    });
   }
 
   private void updateListHeight(ListModel model) {
@@ -944,9 +938,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     })) {
       return;
     }
-    synchronized (myList) {
+    withLock(() -> {
       myPresentableArranger.prefixChanged(this);
-    }
+      return null;
+    });
     refreshUi(true, true);
   }
 
@@ -1086,8 +1081,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-
     assert !myUpdating;
     LookupElement prevItem = getCurrentItem();
     myUpdating = true;
@@ -1107,11 +1100,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void markReused() {
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-
-    synchronized (myList) {
-      myArranger = myArranger.createEmptyCopy();
-    }
+    withLock(() -> myArranger = myArranger.createEmptyCopy());
     requestResize();
   }
 
@@ -1160,10 +1149,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @NotNull
   public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items, boolean hideSingleValued) {
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+    return withLock(() -> myPresentableArranger.getRelevanceObjects(items, hideSingleValued));
+  }
 
+  private <T> T withLock(Computable<T> computable) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+    }
     synchronized (myList) {
-      return myPresentableArranger.getRelevanceObjects(items, hideSingleValued);
+      return computable.compute();
     }
   }
 
