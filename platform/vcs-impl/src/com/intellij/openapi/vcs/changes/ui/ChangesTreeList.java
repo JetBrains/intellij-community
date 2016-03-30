@@ -81,7 +81,6 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   private boolean myAlwaysExpandList;
 
   @NotNull private final MyTreeCellRenderer myNodeRenderer;
-  @NotNull private final MyTreeCellRenderer myShowFlattenNodeRenderer;
 
   @NonNls private static final String ROOT = "root";
 
@@ -106,8 +105,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     myChangeDecorator = decorator;
     myIncludedChanges = new HashSet<T>(initiallyIncluded);
     myAlwaysExpandList = true;
-    myNodeRenderer = new MyTreeCellRenderer(new ChangesBrowserNodeRenderer(myProject, false, myHighlightProblems));
-    myShowFlattenNodeRenderer = new MyTreeCellRenderer(new ChangesBrowserNodeRenderer(myProject, true, myHighlightProblems));
+    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
+    myNodeRenderer = new MyTreeCellRenderer(nodeRenderer);
 
     setLayout(new BorderLayout());
 
@@ -124,7 +123,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         return node.getTextPresentation();
       }
     });
-
+    myTree.setCellRenderer(myNodeRenderer);
     add(myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
@@ -262,7 +261,6 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
     myShowFlatten = showFlatten;
     setChangesToDisplay(getChanges());
-    myTree.setCellRenderer(myShowFlatten ? myShowFlattenNodeRenderer : myNodeRenderer);
     if (!myAlwaysExpandList && !myShowFlatten && myNonFlatTreeState != null) {
       myNonFlatTreeState.applyTo(myTree, (DefaultMutableTreeNode)myTree.getModel().getRoot());
     }
