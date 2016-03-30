@@ -217,18 +217,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return myComponents.length - o.myComponents.length;
   }
 
-  public int compareToWithVariableLength(@NotNull BuildNumber o) {
-    for (int i = 0; i < Math.min(myComponents.length, o.myComponents.length); i++) {
-      int result = myComponents[i] - o.myComponents[i];
-      if (result != 0) return result;
-
-      if (myComponents[i] == Integer.MAX_VALUE) return 0; // anything after first SNAPSHOT doesn't really matter
-    }
-    return myComponents.length - o.myComponents.length;
-  }
-  
-  
-
   @NotNull
   public String getProductCode() {
     return myProductCode;

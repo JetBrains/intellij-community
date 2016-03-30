@@ -19,8 +19,8 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -267,14 +267,14 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         }
       }
       if (!files.isEmpty()) {
-        final int resultCode = Messages.showYesNoCancelDialog(ApplicationInfoEx.getInstanceEx().getFullApplicationName() +
-                                                              " module files found:\n" +
-                                                              StringUtil.join(files,new Function<File, String>() {
+        final int resultCode = Messages.showYesNoCancelDialog(ApplicationNamesInfo.getInstance().getFullProductName() +
+                                                                                   " module files found:\n" +
+                                                                                   StringUtil.join(files,new Function<File, String>() {
                                                                 public String fun(File file) {
                                                                   return file.getPath();
                                                                 }
                                                               }, "\n") +
-                                                              ".\n Would you like to reuse them?", "Module Files Found",
+                                                                                   ".\n Would you like to reuse them?", "Module Files Found",
                                                               Messages.getQuestionIcon());
         if (resultCode != Messages.YES) {
           if (resultCode == Messages.NO) {
