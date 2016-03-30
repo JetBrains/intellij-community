@@ -92,14 +92,20 @@ class FromStringLightElement extends LightElement {
     }
 
     PsiClass containingClass = myMethod.getContainingClass();
-    for (PsiTypeParameter parameter : containingClass == null ? PsiTypeParameter.EMPTY_ARRAY : containingClass.getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+    if (containingClass != null) {
+    PsiTypeParameter[] parameters = containingClass.getTypeParameters();
+      for (PsiTypeParameter parameter : parameters) {
+        if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+      }
     }
 
     if (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, myFile)) {
       return false;
     }
 
+    // Suppose place is 'MyClass<T>' and MyClass belongs to default package.
+    // This reference will not be resolved, because context has no parents (it has no parents at all.
+    // See com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.OurGenericsResolver.resolve()
     if (place instanceof PsiQualifiedReference) {
       PsiQualifiedReference reference = (PsiQualifiedReference)place;
       if (reference.getQualifier() == null && reference.getReferenceName() != null) {
