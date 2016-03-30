@@ -109,7 +109,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   private val key = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
 
   private val lintOptions = "${DocLint.XMSGS_CUSTOM_PREFIX}html/private,accessibility/private"
-  private val lintPattern = "^[^:]+:(\\d+):\\s+(error|warning):\\s+(.+)$".toPattern()
+  private val lintPattern = "^.+:(\\d+):\\s+(error|warning):\\s+(.+)$".toPattern()
 
   private fun isJava8SourceFile(file: PsiFile) =
       file is PsiJavaFile && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
