@@ -67,6 +67,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return element;
   }
 
+  /**
+   * @deprecated use {@link #invoke(Project, Editor, PsiFile, int, PsiElement, boolean)} instead
+   */
+  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
+    invoke(project, editor, file, lbraceOffset, highlightedElement, false);
+  }
+
   public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
