@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -68,7 +69,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   private JComponent myDiffBottomComponent;
 
   public static DataKey<ChangesBrowserBase> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
-  private ShowDiffAction myDiffAction;
+  private AnAction myDiffAction;
   private final VirtualFile myToSelect;
 
   public void setChangesToDisplay(final List<T> changes) {
@@ -148,7 +149,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   protected Runnable getDoubleClickHandler() {
     return new Runnable() {
       public void run() {
-        showDiff(getChangesSelection());
+        showDiff();
       }
     };
   }
@@ -265,7 +266,12 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   protected void updateDiffContext(@NotNull ShowDiffContext context) {
   }
 
-  private void showDiff(@NotNull ChangesSelection selection) {
+  private boolean canShowDiff() {
+    return ShowDiffAction.canShowDiff(myProject, getChangesSelection().getChanges());
+  }
+
+  private void showDiff() {
+    ChangesSelection selection = getChangesSelection();
     List<Change> changes = selection.getChanges();
 
     Change[] changesArray = changes.toArray(new Change[changes.size()]);
@@ -342,17 +348,16 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
-    myDiffAction = new ShowDiffAction() {
+    myDiffAction = new DumbAwareAction() {
       public void update(AnActionEvent e) {
-        ChangesSelection selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
-        e.getPresentation().setEnabled(selection != null && canShowDiff(myProject, selection.getChanges()));
+        e.getPresentation().setEnabled(canShowDiff());
       }
 
       public void actionPerformed(AnActionEvent e) {
-        showDiff(e.getRequiredData(VcsDataKeys.CHANGES_SELECTION));
+        showDiff();
       }
     };
-    myDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myViewer);
+    EmptyAction.setupAction(myDiffAction, "ChangesView.Diff", myViewer);
     toolBarGroup.add(myDiffAction);
   }
 
@@ -434,7 +439,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     return ChangesUtil.getFilesFromChanges(changes);
   }
 
-  public ShowDiffAction getDiffAction() {
+  public AnAction getDiffAction() {
     return myDiffAction;
   }
 
