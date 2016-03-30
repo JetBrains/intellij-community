@@ -28,13 +28,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.image.BufferedImage;
-import java.awt.image.ImageFilter;
-import java.awt.image.RGBImageFilter;
+import java.awt.event.*;
+import java.awt.image.*;
+import java.io.File;
 
 /**
  * @author Sergey.Malenkov
@@ -75,7 +75,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
 
     private void updateFilter(MutableFilter filter) {
       filter.update(myFirstSlider.getValue() / 100.0, mySecondSlider.getValue() / 100.0);
-      myView.set(filter);
+      myView.setFilter(filter);
     }
 
     private ColorDialog(AnActionEvent event) {
@@ -95,6 +95,29 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       myView.setBorder(BorderFactory.createEtchedBorder());
       myView.setMinimumSize(new JBDimension(360, 200));
       myView.setPreferredSize(new JBDimension(720, 400));
+      myView.addMouseListener(new MouseAdapter() {
+        private JFileChooser myFileChooser;
+
+        @Override
+        public void mousePressed(MouseEvent event) {
+          if (SwingUtilities.isLeftMouseButton(event)) {
+            if (myFileChooser == null) {
+              myFileChooser = new JFileChooser();
+              myFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+              myFileChooser.setMultiSelectionEnabled(false);
+            }
+            File file = JFileChooser.APPROVE_OPTION != myFileChooser.showOpenDialog(myView) ? null : myFileChooser.getSelectedFile();
+            if (file != null) {
+              try {
+                myView.setImage(ImageIO.read(file));
+              }
+              catch (Exception exception) {
+                myView.setImage(null);
+              }
+            }
+          }
+        }
+      });
 
       ChangeListener listener = event -> {
         if (myView.myFilter instanceof MutableFilter) {
@@ -115,7 +138,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
             else {
               hideSlider(myFirstSlider, listener);
               hideSlider(mySecondSlider, listener);
-              myView.set(item.myFilter);
+              myView.setFilter(item.myFilter);
             }
           }
         }
@@ -187,6 +210,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
   }
 
   private static final class ColorView extends JComponent {
+    private BufferedImage myBackground;
     private ImageFilter myFilter;
     private Image myImage;
 
@@ -196,7 +220,10 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       JBInsets.removeFrom(bounds, getInsets());
       if (bounds.isEmpty()) return;
 
-      if (myImage == null || bounds.width != myImage.getWidth(this) || bounds.height != myImage.getHeight(this)) {
+      if (myBackground != null) {
+        if (myImage == null) myImage = ImageUtil.filter(myBackground, myFilter);
+      }
+      else if (myImage == null || bounds.width != myImage.getWidth(this) || bounds.height != myImage.getHeight(this)) {
         int[] array = new int[bounds.width * bounds.height];
         float width = (float)(bounds.width - 1);
         float height = (float)(bounds.height - 1);
@@ -215,7 +242,13 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       g.drawImage(myImage, bounds.x, bounds.y, bounds.width, bounds.height, this);
     }
 
-    void set(ImageFilter filter) {
+    void setImage(BufferedImage image) {
+      myImage = null;
+      myBackground = image;
+      repaint();
+    }
+
+    void setFilter(ImageFilter filter) {
       myImage = null;
       myFilter = filter;
       repaint();
