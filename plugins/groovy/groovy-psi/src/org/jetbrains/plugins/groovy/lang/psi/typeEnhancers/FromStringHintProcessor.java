@@ -16,11 +16,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
 
@@ -39,6 +46,7 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
   public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
                                                  @NotNull final PsiSubstitutor substitutor,
                                                  @NotNull String[] options) {
+    LightElement context = new FromStringLightElement(method);
     return ContainerUtil.map(options, new Function<String, PsiType[]>() {
       @Override
       public PsiType[] fun(String value) {
@@ -47,12 +55,7 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
             @Override
             public PsiType fun(String param) {
               try {
-                PsiTypeParameterList typeParameterList = method.getTypeParameterList();
-                PsiElement context = typeParameterList != null ? typeParameterList : method;
                 PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, context);
-                if (original instanceof PsiClassType && ((PsiClassType)original).resolve() == null) {
-                  original = GroovyPsiElementFactory.getInstance(method.getProject()).createTypeElement(param).getType();
-                }
                 return substitutor.substitute(original);
               }
               catch (IncorrectOperationException e) {
@@ -63,5 +66,55 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
           }, new PsiType[params.length]);
       }
     });
+  }
+}
+
+class FromStringLightElement extends LightElement {
+
+  private final PsiMethod myMethod;
+  private final GroovyFile myFile;
+
+  FromStringLightElement(@NotNull PsiMethod method) {
+    super(method.getManager(), GroovyLanguage.INSTANCE);
+    myMethod = method;
+    myFile = GroovyPsiElementFactory.getInstance(getProject()).createGroovyFile("", false, null);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!ResolveUtil.shouldProcessClasses(processor.getHint(ElementClassHint.KEY))) return true;
+
+    for (PsiTypeParameter parameter : myMethod.getTypeParameters()) {
+      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+    }
+
+    PsiClass containingClass = myMethod.getContainingClass();
+    for (PsiTypeParameter parameter : containingClass == null ? PsiTypeParameter.EMPTY_ARRAY : containingClass.getTypeParameters()) {
+      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+    }
+
+    if (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, myFile)) {
+      return false;
+    }
+
+    if (place instanceof PsiQualifiedReference) {
+      PsiQualifiedReference reference = (PsiQualifiedReference)place;
+      if (reference.getQualifier() == null && reference.getReferenceName() != null) {
+        PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(reference.getReferenceName(), getResolveScope());
+        if (aClass != null && !ResolveUtil.processElement(processor, aClass, state)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return "fromStringLightElement";
   }
 }
