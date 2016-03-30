@@ -7,8 +7,8 @@ public class Sample {
   <B> B bar(G<B> gb) {return null;}
 
   void f(G1 g1) {
-    G<String> l11 =  bar<error descr="'bar(Sample.G<B>)' in 'Sample' cannot be applied to '(Sample.G1)'">(g1)</error>;
-    String l1 = bar<error descr="'bar(Sample.G<B>)' in 'Sample' cannot be applied to '(Sample.G1)'">(g1)</error>;
+    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Sample.G<java.lang.String>'">G<String> l11 =  bar(g1);</error>
+    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">String l1 = bar(g1);</error>
     Object o = bar(g1);
   }
 }
