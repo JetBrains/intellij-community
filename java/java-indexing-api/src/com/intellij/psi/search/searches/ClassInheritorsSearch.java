@@ -143,6 +143,10 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   }
 
   @NotNull
+  @Deprecated //todo to be removed in IDEA 17
+  /**
+   * @deprecated use {@link #search(com.intellij.psi.PsiClass, com.intellij.psi.search.SearchScope, boolean)} instead
+   */
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
   }
