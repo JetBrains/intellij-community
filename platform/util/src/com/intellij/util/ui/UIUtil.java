@@ -1895,9 +1895,9 @@ public class UIUtil {
     AWTEvent event = eventQueue.peekEvent();
     if (event == null) return false;
     try {
-      AWTEvent event1 = eventQueue.getNextEvent();
-      if (event1 instanceof InvocationEvent) {
-        ((InvocationEvent)event1).dispatch();
+      event = eventQueue.getNextEvent();
+      if (event instanceof InvocationEvent) {
+        eventQueue.getClass().getDeclaredMethod("dispatchEvent", AWTEvent.class).invoke(eventQueue, event);
       }
     }
     catch (Exception e) {
