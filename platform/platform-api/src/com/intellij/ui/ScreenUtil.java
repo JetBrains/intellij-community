@@ -131,6 +131,12 @@ public class ScreenUtil {
     return getScreenRectangle(p.x, p.y);
   }
 
+  public static Rectangle getScreenRectangle(@NotNull Component component) {
+    Point p = new Point();
+    SwingUtilities.convertPointToScreen(p, component);
+    return getScreenRectangle(p);
+  }
+
   /**
    * @param bounds a rectangle used to find corresponding graphics device
    * @return a graphics device that contains the biggest part of the specified rectangle
