@@ -308,6 +308,7 @@ libraryLicense(name: "Velocity", version: "1.7", license: "Apache 2.0", url: "ht
 libraryLicense(name: "winp", version: "1.23", license: "MIT", url: "http://java.net/projects/winp", licenseUrl: "http://opensource.org/licenses/mit-license.php")
 libraryLicense(name: "Xalan", libraryName:"Xalan-2.7.1", version: "2.7.1", license: "Apache 2.0", url: "http://xml.apache.org/xalan-j/", licenseUrl: "http://xml.apache.org/xalan-j/")
 libraryLicense(name: "Xerces", version: "2.11", license: "Apache 2.0", url: "http://xerces.apache.org/xerces2-j/", licenseUrl: "http://xerces.apache.org/xerces2-j/")
+libraryLicense(name: "Xerial SQLite JDBC", libraryName: "sqlite", version: "3.6.20.1", license: "Apache 2.0", url: "https://github.com/xerial/sqlite-jdbc")
 libraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: "Apache 2.0", url: "http://ws.apache.org/xmlrpc/xmlrpc2/", licenseUrl: "http://ws.apache.org/xmlrpc/xmlrpc2/license.html")
 libraryLicense(name: "XML Commons (xml-apis.jar, resolver.jar)", version: "", license: "Apache 2.0, W3C Software License , public domain", url: "http://xml.apache.org/commons/", licenseUrl: "http://xml.apache.org/commons/licenses.html")
 libraryLicense(name: "XMLBeans", libraryName: "XmlBeans", version: "2.3.0", license: "Apache 2.0", url: "http://xmlbeans.apache.org/", licenseUrl: "http://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/xmlbeans-2.3.0/xmlbeans.LICENSE")
