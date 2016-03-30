@@ -39,7 +39,7 @@ class HighlightingCaches {
 
   private final List<Map<?,?>> allCaches = ContainerUtil.createConcurrentList();
 
-  public HighlightingCaches(Project project) {
+  public HighlightingCaches(@NotNull Project project) {
     project.getMessageBus().connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
@@ -55,13 +55,16 @@ class HighlightingCaches {
     });
   }
 
-  final Map<PsiClass, Pair<List<PsiClass>, AtomicIntegerArray>> DIRECT_SUB_CLASSES = createCache();
-  final Map<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>> ALL_SUB_CLASSES = createCache();
-  final Map<PsiMethod, Collection<PsiMethod>> OVERRIDING_METHODS = createCache();
+  // baseClass -> (list of direct subclasses, isInheritor flag array)
+  final Map<PsiClass, Pair<List<PsiClass>, AtomicIntegerArray>> DIRECT_SUB_CLASSES = createWeakCache();
+  // baseClass -> list of (search params, corresponding cached sub classes)
+  final ConcurrentMap<PsiClass, List<Pair<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>>>> ALL_SUB_CLASSES = createWeakCache();
+  // baseMethod -> all overriding methods
+  final Map<PsiMethod, Collection<PsiMethod>> OVERRIDING_METHODS = createWeakCache();
 
   @NotNull
-  private <T,V> Map<T,V> createCache() {
-    ConcurrentMap<T, V> map = ContainerUtil.createConcurrentSoftKeySoftValueMap(10, 0.7f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy());
+  private <T,V> ConcurrentMap<T,V> createWeakCache() {
+    ConcurrentMap<T, V> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(10, 0.7f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy());
     allCaches.add(map);
     return map;
   }

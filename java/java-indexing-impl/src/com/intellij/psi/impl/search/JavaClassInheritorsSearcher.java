@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,9 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters> {
   @Override
@@ -82,13 +81,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       });
     }
 
-    Collection<PsiClass> cached = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES.get(parameters);
-    if (cached == null) {
-      cached = new ArrayList<>();
-      boolean success = getAllSubClasses(project, baseClass, parameters, new CommonProcessors.CollectProcessor<>(cached));
-      assert success;
-      HighlightingCaches.getInstance(project).ALL_SUB_CLASSES.put(parameters, cached);
-    }
+    Collection<PsiClass> cached = getOrComputeSubClasses(project, parameters);
 
     Processor<PsiClass> readActionedConsumer = ReadActionProcessor.wrapInReadAction(consumer);
     for (final PsiClass subClass : cached) {
@@ -100,8 +93,46 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     return true;
   }
 
+  @NotNull
+  private static Collection<PsiClass> getOrComputeSubClasses(@NotNull Project project,
+                                                             @NotNull ClassInheritorsSearch.SearchParameters parameters) {
+    List<PsiClass> computed = null;
+    PsiClass baseClass = parameters.getClassToProcess();
+    while (true) {
+      Collection<PsiClass> cached = null;
+      List<Pair<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>>> cachedPairs = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES.get(baseClass);
+      if (cachedPairs != null) {
+        for (Pair<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>> pair : cachedPairs) {
+          ClassInheritorsSearch.SearchParameters cachedParams = pair.getFirst();
+          if (cachedParams.equals(parameters)) {
+            cached = pair.getSecond();
+            break;
+          }
+        }
+      }
+      if (cached != null) {
+        return cached;
+      }
+      if (computed == null) {
+        computed = new ArrayList<>();
+        boolean success = getAllSubClasses(project, parameters, new CommonProcessors.CollectProcessor<>(computed));
+        assert success;
+      }
+
+      if (cachedPairs != null) {
+        cachedPairs.add(Pair.create(parameters, computed));
+        break;
+      }
+      List<Pair<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>>> newCachedPairs =
+        ContainerUtil.createConcurrentList(Collections.singletonList(Pair.create(parameters, computed)));
+      if (HighlightingCaches.getInstance(project).ALL_SUB_CLASSES.putIfAbsent(baseClass, newCachedPairs) == null) {
+        break;
+      }
+    }
+    return computed;
+  }
+
   private static boolean getAllSubClasses(@NotNull Project project,
-                                          @NotNull PsiClass baseClass,
                                           @NotNull ClassInheritorsSearch.SearchParameters parameters,
                                           @NotNull Processor<PsiClass> consumer) {
     SearchScope searchScope = parameters.getScope();
@@ -139,6 +170,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     };
 
     ApplicationManager.getApplication().runReadAction(() -> {
+      @NotNull PsiClass baseClass = parameters.getClassToProcess();
       stack.push(PsiAnchor.create(baseClass));
     });
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);

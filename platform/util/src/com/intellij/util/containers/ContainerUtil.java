@@ -2611,6 +2611,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return new LockFreeCopyOnWriteArrayList<T>();
   }
 
+  @NotNull
+  @Contract(pure=true)
+  public static <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> collection) {
+    return new LockFreeCopyOnWriteArrayList<T>(collection);
+  }
+
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     ContainerUtilRt.addIfNotNull(element, result);
   }
