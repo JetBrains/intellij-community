@@ -41,6 +41,20 @@ public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
         return enumConstants;
       }
     }
+    else if (element instanceof PsiReferenceList) {
+      return ((PsiReferenceList)element).getReferenceElements();
+    }
+    else if (element instanceof PsiTypeElement) {
+      final PsiTypeElement[] result = PsiTreeUtil.getChildrenOfType(element, PsiTypeElement.class);
+      return result == null ? PsiElement.EMPTY_ARRAY : result;
+    }
+    else if (element instanceof PsiResourceList) {
+      final PsiElement[] result = PsiTreeUtil.getChildrenOfType(element, PsiResourceListElement.class);
+      return result == null ? PsiElement.EMPTY_ARRAY : result;
+    }
+    else if (element instanceof PsiPolyadicExpression) {
+      return ((PsiPolyadicExpression)element).getOperands();
+    }
     return PsiElement.EMPTY_ARRAY;
   }
 }
