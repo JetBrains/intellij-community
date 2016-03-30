@@ -118,7 +118,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myCreateBranch.setSelected(myTaskManager.getState().createBranch && myBranchFrom.getItemCount() > 0);
       myBranchFrom.setRenderer(new ColoredListCellRenderer<VcsTaskHandler.TaskInfo>() {
         @Override
-        protected void customizeCellRenderer(JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
           if (value != null) {
             append(value.getName());
           }
