@@ -75,7 +75,7 @@ void foo(@ClosureParams(value=FromString,options="java.lang.String") Closure cl)
 
 @CompileStatic
 def test() {
-    foo { <error descr="Expected String">Date</error> str -> println str}
+    foo { <error descr="Expected 'java.lang.String', found 'java.util.Date'">Date</error> str -> println str}
 }
 '''
   }
@@ -99,7 +99,7 @@ void foo(@ClosureParams(value=FromString,options="java.util.List<java.lang.Strin
 
 @CompileStatic
 def test() {
-    foo { <error descr="Expected List<String>">List<Date></error> d -> d.each { println it } }
+    foo { <error descr="Expected 'java.util.List<java.lang.String>', found 'java.util.List<java.util.Date>'">List<Date></error> d -> d.each { println it } }
 }
 '''
   }
