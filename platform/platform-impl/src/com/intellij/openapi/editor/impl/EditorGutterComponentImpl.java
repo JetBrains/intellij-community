@@ -1580,7 +1580,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     GutterIconRenderer renderer = getGutterRenderer(e);
     AnAction clickAction = null;
     if (renderer != null && e.getButton() < 4) {
-      clickAction = (InputEvent.BUTTON2_MASK & e.getModifiers()) > 0
+      clickAction = BitUtil.isSet(e.getModifiers(), InputEvent.BUTTON2_MASK)
                     ? renderer.getMiddleButtonClickAction()
                     : renderer.getClickAction();
     }

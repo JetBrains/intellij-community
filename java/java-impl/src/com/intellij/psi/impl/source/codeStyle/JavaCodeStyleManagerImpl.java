@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,8 +73,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     CheckUtil.checkWritable(element);
     if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
 
-    final boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
-    final boolean incompleteCode = (flags & INCOMPLETE_CODE) != 0;
+    final boolean addImports = !BitUtil.isSet(flags, DO_NOT_ADD_IMPORTS);
+    final boolean incompleteCode = BitUtil.isSet(flags, INCOMPLETE_CODE);
 
     final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
     if (adjuster != null) {

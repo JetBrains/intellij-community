@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -265,7 +262,7 @@ public class PsiClassImplUtil {
     public Icon fun(ClassIconRequest r) {
       if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
 
-      final boolean isLocked = (r.flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !r.psiClass.isWritable();
+      final boolean isLocked = BitUtil.isSet(r.flags, Iconable.ICON_FLAG_READ_STATUS) && !r.psiClass.isWritable();
       Icon symbolIcon = r.symbolIcon != null
                         ? r.symbolIcon
                         : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));

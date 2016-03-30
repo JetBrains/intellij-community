@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -112,6 +113,6 @@ class ComplexTextFragment extends TextFragment {
   }
   
   boolean isRtl() {
-    return (myGlyphVector.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0;
+    return BitUtil.isSet(myGlyphVector.getLayoutFlags(), GlyphVector.FLAG_RUN_RTL);
   }
 }

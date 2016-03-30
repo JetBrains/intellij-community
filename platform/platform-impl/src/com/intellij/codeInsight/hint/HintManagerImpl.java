@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -175,7 +176,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
         HintInfo[] infos = getHintsStackArray();
         for (HintInfo info : infos) {
-          if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
+          if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
             if (info.hint.isVisible()) {
               info.hint.hide();
             }
@@ -225,8 +226,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private void updateScrollableHints(VisibleAreaEvent e) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo info : getHintsStackArray()) {
-      if (info.hint != null && (info.flags & UPDATE_BY_SCROLLING) != 0) {
-        updateScrollableHintPosition(e, info.hint, (info.flags & HIDE_IF_OUT_OF_EDITOR) != 0);
+      if (info.hint != null && BitUtil.isSet(info.flags, UPDATE_BY_SCROLLING)) {
+        updateScrollableHintPosition(e, info.hint, BitUtil.isSet(info.flags, HIDE_IF_OUT_OF_EDITOR));
       }
     }
   }
@@ -235,7 +236,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   public boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo hintInfo : getHintsStackArray()) {
-      if (hintInfo.hint.isVisible() && (hintInfo.flags & HIDE_BY_OTHER_HINT) != 0) return true;
+      if (hintInfo.hint.isVisible() && BitUtil.isSet(hintInfo.flags, HIDE_BY_OTHER_HINT)) return true;
       if (willShowTooltip && hintInfo.hint.isAwtTooltip()) {
         // only one AWT tooltip can be visible, so this hint will hide even though it's not marked with HIDE_BY_OTHER_HINT
         return true;
@@ -359,7 +360,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     });
 
-    if ((flags & HIDE_BY_MOUSEOVER) != 0) {
+    if (BitUtil.isSet(flags, HIDE_BY_MOUSEOVER)) {
       ListenerUtil.addMouseMotionListener(component, new MouseMotionAdapter() {
         @Override
         public void mouseMoved(MouseEvent e) {

@@ -214,7 +214,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static boolean areChildrenLoaded(final int parentId) {
-    return (FSRecords.getFlags(parentId) & CHILDREN_CACHED_FLAG) != 0;
+    return BitUtil.isSet(FSRecords.getFlags(parentId), CHILDREN_CACHED_FLAG);
   }
 
   @Override
@@ -348,12 +348,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public boolean isWritable(@NotNull VirtualFile file) {
-    return (getFileAttributes(getFileId(file)) & IS_READ_ONLY) == 0;
+    return !BitUtil.isSet(getFileAttributes(getFileId(file)), IS_READ_ONLY);
   }
 
   @Override
   public boolean isHidden(@NotNull VirtualFile file) {
-    return (getFileAttributes(getFileId(file)) & IS_HIDDEN) != 0;
+    return BitUtil.isSet(getFileAttributes(getFileId(file)), IS_HIDDEN);
   }
 
   @Override
@@ -1208,7 +1208,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static boolean checkFlag(int fileId, int mask) {
-    return (FSRecords.getFlags(fileId) & mask) != 0;
+    return BitUtil.isSet(FSRecords.getFlags(fileId), mask);
   }
 
   private static void executeTouch(@NotNull VirtualFile file, boolean reloadContentFromDelegate, long newModificationStamp) {

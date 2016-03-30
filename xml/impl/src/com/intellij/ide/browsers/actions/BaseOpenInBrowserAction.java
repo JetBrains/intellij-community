@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Url;
@@ -157,7 +158,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
   }
 
   public static void open(@NotNull AnActionEvent event, @Nullable WebBrowser browser) {
-    open(createRequest(event.getDataContext()), (event.getModifiers() & InputEvent.SHIFT_MASK) != 0, browser);
+    open(createRequest(event.getDataContext()), BitUtil.isSet(event.getModifiers(), InputEvent.SHIFT_MASK), browser);
   }
 
   public static void open(@Nullable final OpenInBrowserRequest request, boolean preferLocalUrl, @Nullable final WebBrowser browser) {

@@ -29,10 +29,7 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -175,7 +172,7 @@ public class ExceptionUtil {
           .getInstance(finallyBlock.getProject()).getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
         int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
         List<PsiClassType> thrownExceptions = getThrownExceptions(finallyBlock);
-        if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) {
+        if (!BitUtil.isSet(completionReasons, ControlFlowUtil.NORMAL_COMPLETION_REASON)) {
           array = ContainerUtil.newArrayList(thrownExceptions);
         }
         else {
@@ -783,7 +780,7 @@ public class ExceptionUtil {
     try {
       ControlFlow flow = ControlFlowFactory.getInstance(finallyBlock.getProject()).getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
       int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
-      if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) return true;
+      if (!BitUtil.isSet(completionReasons, ControlFlowUtil.NORMAL_COMPLETION_REASON)) return true;
     }
     catch (AnalysisCanceledException e) {
       return true;
