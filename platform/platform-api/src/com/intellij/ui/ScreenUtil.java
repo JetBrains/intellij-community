@@ -132,6 +132,9 @@ public class ScreenUtil {
   }
 
   public static Rectangle getScreenRectangle(@NotNull Component component) {
+    GraphicsConfiguration configuration = component.getGraphicsConfiguration();
+    if (configuration != null) return getScreenRectangle(configuration);
+    // try to find the nearest screen if configuration is not available
     Point p = new Point();
     SwingUtilities.convertPointToScreen(p, component);
     return getScreenRectangle(p);
