@@ -276,6 +276,18 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest("s1.js");
   }
 
+  public void testPropertyNameExpression() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyChainExpression() throws Exception {
+    doTest();
+  }
+
+  public void testIncorrectPropertyExpressionSyntax() throws Exception {
+    doTest();
+  }
+
   private void doTest(String additionalPath) {
     myFixture.configureByFiles(getTestName(true) + ".fxml", additionalPath);
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");

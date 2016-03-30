@@ -252,19 +252,6 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertSameElements(myFixture.getLookupElementStrings(),"pane", "node", "box", "model", "text", "target");
   }
 
-  public void testVariableCompletionBooleanFirst() throws Exception {
-    doOrderTest("zAssignable", "dConvertible", "tConvertible", "controller", "mUnknown");
-  }
-
-  public void testVariableCompletionTooltipFirst() throws Exception {
-    doOrderTest("tAssignable", "controller", "mUnknown", "dIncompatible");
-  }
-
-  private void doOrderTest(String... expected) {
-    configureAndComplete();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), expected);
-  }
-
   private void configureAndComplete(final String... extraFiles) {
     final String fxmlFileName = getTestName(true) + ".fxml";
     if (extraFiles.length != 0) {

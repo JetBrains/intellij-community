@@ -361,8 +361,20 @@ public class JavaFxPsiUtil {
     return false;
   }
 
-  public static boolean isExpressionBinding(String value) {
-    return value.startsWith("${") && value.endsWith("}") && value.contains(".");
+  public static boolean isExpressionBinding(@Nullable String value) {
+    return value != null && value.startsWith("${") && value.endsWith("}");
+  }
+
+  public static boolean isIncorrectExpressionBinding(@Nullable String value) {
+    if (value == null || !value.startsWith("$")) return false;
+    if (value.length() == 1) return true;
+    final boolean expressionStarts = value.startsWith("${");
+    final boolean expressionEnds = value.endsWith("}");
+    if (expressionStarts && expressionEnds && value.length() == 3) return true;
+    if (expressionStarts != expressionEnds) return true;
+    if (expressionStarts && value.indexOf('{', 2) >= 2) return true;
+    if (expressionEnds && value.indexOf('}') < value.length() - 1) return true;
+    return false;
   }
 
   @Nullable
@@ -697,7 +709,7 @@ public class JavaFxPsiUtil {
 
 
   @Nullable
-  public static PsiType getReadablePropertyType(PsiElement declaration) {
+  public static PsiType getReadablePropertyType(@Nullable PsiElement declaration) {
     if (declaration instanceof PsiField) {
       return getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonNames.ourReadOnlyMap);
     }
@@ -751,7 +763,7 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiClass getTagClassById(String id, PsiElement context, XmlAttributeValue xmlAttributeValue) {
+  public static PsiClass getTagClassById(@Nullable XmlAttributeValue xmlAttributeValue, @Nullable String id, @NotNull PsiElement context) {
     return FxmlConstants.CONTROLLER.equals(id) ? getControllerClass(context.getContainingFile()) : getTagClass(xmlAttributeValue);
   }
 
@@ -768,7 +780,7 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiClass getPropertyClass(PsiType propertyType, PsiElement context) {
+  public static PsiClass getPropertyClass(@Nullable PsiType propertyType, @NotNull PsiElement context) {
     if (propertyType instanceof PsiPrimitiveType) {
       PsiClassType boxedType = ((PsiPrimitiveType)propertyType).getBoxedType(context);
       return boxedType != null ? boxedType.resolve() : null;
@@ -801,17 +813,17 @@ public class JavaFxPsiUtil {
   }
 
   @NotNull
-  public static List<PsiMember> collectReadableProperties(@Nullable PsiClass psiClass) {
+  public static Map<String, PsiMember> collectReadableProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () ->
         CachedValueProvider.Result.create(prepareReadableProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
     }
-    return Collections.emptyList();
+    return Collections.emptyMap();
   }
 
 
   @NotNull
-  private static List<PsiMember> prepareReadableProperties(@NotNull PsiClass psiClass) {
+  private static Map<String, PsiMember> prepareReadableProperties(@NotNull PsiClass psiClass) {
     final Map<String, PsiMember> acceptableMembers = new THashMap<>();
     for (PsiMethod method : psiClass.getAllMethods()) {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
@@ -821,7 +833,7 @@ public class JavaFxPsiUtil {
         acceptableMembers.put(propertyName, method);
       }
     }
-    return new ArrayList<>(acceptableMembers.values());
+    return acceptableMembers;
   }
 
   @NotNull

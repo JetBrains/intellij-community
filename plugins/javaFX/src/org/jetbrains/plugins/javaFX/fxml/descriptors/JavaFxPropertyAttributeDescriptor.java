@@ -2,8 +2,6 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -19,6 +17,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -171,40 +170,40 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
 
   @Nullable
   private static String validatePropertyExpression(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
-    final String referencesId = value.substring(1);
+    if (JavaFxPsiUtil.isIncorrectExpressionBinding(value)) {
+      return "Incorrect expression syntax";
+    }
+    final List<String> propertyNames = JavaFxPsiUtil.isExpressionBinding(value)
+                                       ? StringUtil.split(value.substring(2, value.length() - 1), ".", true, false)
+                                       : Collections.singletonList(value.substring(1));
+    if (isIncompletePropertyChain(propertyNames)) {
+      return "Incorrect expression syntax";
+    }
+
     final XmlTag currentTag = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlTag.class);
-    final Map<String, XmlAttributeValue> fileIds = JavaFxPsiUtil.collectFileIds(currentTag);
     final PsiClass targetPropertyClass = JavaFxPsiUtil.getWritablePropertyClass(xmlAttributeValue);
     if (targetPropertyClass == null || JavaFxPsiUtil.hasConversionFromAnyType(targetPropertyClass)) return null;
-    final PsiClass valueClass;
-    if (JavaFxPsiUtil.isExpressionBinding(value)) {
-      final String expressionText = referencesId.substring(1, referencesId.length() - 1);
-      final String newId = StringUtil.getPackageName(expressionText);
-      final PsiClass tagClass = JavaFxPsiUtil.getTagClassById(newId, xmlAttributeValue, fileIds.get(newId));
-      if (tagClass == null) return null;
 
-      final String fieldRef = StringUtil.getShortName(expressionText);
-      final String fieldName =
-        JavaCodeStyleManager.getInstance(tagClass.getProject()).propertyNameToVariableName(fieldRef, VariableKind.FIELD);
-      PsiField psiField = tagClass.findFieldByName(fieldName, true);
+    final String firstPropertyName = propertyNames.get(0);
+    final Map<String, XmlAttributeValue> fileIds = JavaFxPsiUtil.collectFileIds(currentTag);
+    final PsiClass tagClass = JavaFxPsiUtil.getTagClassById(fileIds.get(firstPropertyName), firstPropertyName, xmlAttributeValue);
+    if (tagClass != null) {
+      PsiClass aClass = tagClass;
+      final List<String> remainingPropertyNames = propertyNames.subList(1, propertyNames.size());
+      for (String propertyName : remainingPropertyNames) {
+        if (aClass == null) break;
+        final PsiMember member = JavaFxPsiUtil.collectReadableProperties(aClass).get(propertyName);
+        aClass = JavaFxPsiUtil.getPropertyClass(JavaFxPsiUtil.getReadablePropertyType(member), xmlAttributeValue);
+      }
+      if (aClass != null && !InheritanceUtil.isInheritorOrSelf(aClass, targetPropertyClass, true)) {
+        return "Invalid value: unable to coerce to " + targetPropertyClass.getQualifiedName();
+      }
+    }
+    return null;
+  }
 
-      final PsiMember propertyDeclaration;
-      if (psiField != null && psiField.hasModifierProperty(PsiModifier.PUBLIC)) {
-        propertyDeclaration = psiField;
-      }
-      else {
-        propertyDeclaration = JavaFxPsiUtil.findPropertyGetter(fieldRef, tagClass);
-      }
-      if (propertyDeclaration == null) return null;
-      valueClass = JavaFxPsiUtil.getPropertyClass(JavaFxPsiUtil.getReadablePropertyType(propertyDeclaration), xmlAttributeValue);
-    }
-    else {
-      valueClass = JavaFxPsiUtil.getTagClassById(referencesId, xmlAttributeValue, fileIds.get(referencesId));
-    }
-    if (valueClass == null || InheritanceUtil.isInheritorOrSelf(valueClass, targetPropertyClass, true)) {
-      return null;
-    }
-    return "Invalid value: unable to coerce to " + targetPropertyClass.getQualifiedName();
+  public static boolean isIncompletePropertyChain(@NotNull List<String> propertyNames) {
+    return propertyNames.isEmpty() || propertyNames.contains("");
   }
 
   @Nullable
