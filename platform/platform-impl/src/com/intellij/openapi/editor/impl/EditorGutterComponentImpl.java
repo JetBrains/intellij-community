@@ -270,6 +270,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       EditorUIUtil.setupAntialiasing(g);
       Color backgroundColor = getBackground();
 
+      if (myEditor.isDisposed()) {
+        g.setColor(myEditor.getDisposedBackground());
+        g.fillRect(clip.x, clip.y, clip.width, clip.height);
+        return;
+      }
+
       // paint all backgrounds
       int gutterSeparatorX = getWhitespaceSeparatorOffset();
       paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor);
