@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.junit.Assert;
 
 import java.util.Collections;
@@ -70,7 +71,39 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     complete();
     assertStringItems("\"one\"", "\"two\"");
 
+    LookupImpl lookup = getActiveLookup();
+    if (lookup != null) lookup.hide();
+    JsonSchemaService.Impl.get(getProject()).reset();
+    complete();
+    assertStringItems("\"one\"", "\"two\"");
+
     instance.removeSchema(inherited);
+    instance.removeSchema(base);
+  }
+
+  public void testRefreshSchemaCompletionSimpleVariant() throws Exception {
+    configureByFiles(null, BASE_PATH + "/baseCompletion.json", BASE_PATH + "/baseProperties.json");
+
+    String moduleDir = null;
+    VirtualFile moduleFile = null;
+    VirtualFile[] children = getProject().getBaseDir().getChildren();
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) {
+        moduleDir = child.getName();
+        moduleFile = child;
+        break;
+      }
+    }
+    Assert.assertNotNull(moduleDir);
+
+    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
+      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", "/" + moduleDir + "/baseProperties.json", false,
+                                                         Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+    instance.addSchema(base);
+
+    testSchemaCompletion(moduleFile, "baseProperties.json");
+
     instance.removeSchema(base);
   }
 
@@ -101,10 +134,17 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     instance.addSchema(inherited);
 
+    testSchemaCompletion(moduleFile, "base.json");
+
+    instance.removeSchema(inherited);
+    instance.removeSchema(base);
+  }
+
+  private void testSchemaCompletion(VirtualFile moduleFile, final String fileName) {
     complete();
     assertStringItems("\"one\"", "\"two\"");
 
-    final VirtualFile baseFile = moduleFile.findChild("base.json");
+    final VirtualFile baseFile = moduleFile.findChild(fileName);
     Assert.assertNotNull(baseFile);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getDocument(baseFile);
@@ -127,7 +167,10 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     complete();
     assertStringItems("\"one1\"", "\"two1\"");
 
-    instance.removeSchema(inherited);
-    instance.removeSchema(base);
+    lookup = getActiveLookup();
+    if (lookup != null) lookup.hide();
+    JsonSchemaService.Impl.get(getProject()).reset();
+    complete();
+    assertStringItems("\"one1\"", "\"two1\"");
   }
 }
