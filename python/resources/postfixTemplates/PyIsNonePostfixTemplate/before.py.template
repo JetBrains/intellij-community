@@ -1,2 +1,2 @@
 def f(a):
-  <spot>a</spot>.ifn
+    <spot>a</spot>.ifn

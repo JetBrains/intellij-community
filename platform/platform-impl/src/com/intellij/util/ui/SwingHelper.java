@@ -54,13 +54,18 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionListener;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class SwingHelper {
 
@@ -483,6 +488,49 @@ public class SwingHelper {
     Dimension preferredSize = component.getPreferredSize();
     preferredSize.width = width;
     component.setPreferredSize(preferredSize);
+  }
+
+  public static boolean scrollToReference(JEditorPane view, String reference) {
+    reference = StringUtil.trimStart(reference, "#");
+    List<String> toCheck = Arrays.asList("a", "h1", "h2", "h3", "h4");
+    Document document = view.getDocument();
+    if (document instanceof HTMLDocument) {
+      List<Element> list = new ArrayList<Element>();
+      for (Element root : document.getRootElements()) {
+        getAllElements(root, list, toCheck);
+      }
+      for (Element element : list) {
+          AttributeSet attributes = element.getAttributes();
+          String nm = (String)attributes.getAttribute(HTML.Attribute.NAME);
+          if (nm == null) nm = (String)attributes.getAttribute(HTML.Attribute.ID);
+          if ((nm != null) && nm.equals(reference)) {
+            try {
+              int pos = element.getStartOffset();
+              Rectangle r = view.modelToView(pos);
+              if (r != null) {
+                Rectangle vis = view.getVisibleRect();
+                r.y -= 5;
+                r.height = vis.height;
+                view.scrollRectToVisible(r);
+                return true;
+              }
+            }
+            catch (BadLocationException ex) {
+              //ignore
+            }
+          }
+      }
+    }
+    return false;
+  }
+
+  private static void getAllElements(Element root, List<Element> list, List<String> toCheck) {
+    if (toCheck.contains(root.getName().toLowerCase())) {
+      list.add(root);
+    }
+    for (int i = 0; i < root.getElementCount(); i++) {
+      getAllElements(root.getElement(i), list, toCheck);
+    }
   }
 
   public static class HtmlViewerBuilder {

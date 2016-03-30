@@ -1,2 +1,2 @@
 string = "bridge"
-"my string is" <ref>"{}".format(string)
+"my string is {<ref>}".format(string)

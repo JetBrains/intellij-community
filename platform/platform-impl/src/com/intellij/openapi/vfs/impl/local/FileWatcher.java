@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -54,14 +53,25 @@ public class FileWatcher {
   };
 
   public static class DirtyPaths {
-    public final List<String> dirtyPaths = ContainerUtil.newSmartList();
-    public final List<String> dirtyPathsRecursive = ContainerUtil.newSmartList();
-    public final List<String> dirtyDirectories = ContainerUtil.newSmartList();
+    public final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
+    public final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
+    public final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
 
     public static final DirtyPaths EMPTY = new DirtyPaths();
 
     public boolean isEmpty() {
       return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
+    }
+
+    private void addDirtyPath(String path) {
+      if (!dirtyPathsRecursive.contains(path)) {
+        dirtyPaths.add(path);
+      }
+    }
+
+    private void addDirtyPathRecursive(String path) {
+      dirtyPaths.remove(path);
+      dirtyPathsRecursive.add(path);
     }
   }
 
@@ -88,9 +98,9 @@ public class FileWatcher {
 
   public boolean isOperational() {
     for (PluggableFileWatcher watcher : myWatchers) {
-      if (!watcher.isOperational()) return false;
+      if (watcher.isOperational()) return true;
     }
-    return true;
+    return false;
   }
 
   public boolean isSettingRoots() {
@@ -119,7 +129,7 @@ public class FileWatcher {
       }
     }
 
-    return result != null ? result : Collections.<String>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 
   /**
@@ -136,23 +146,13 @@ public class FileWatcher {
     }
   }
 
-  public boolean isWatched(@NotNull VirtualFile file) {
-    // At the moment, "watched" means "monitored by at least one operational watcher".
-    // The following condition matches the above statement only for a single watcher, but this should work for a moment.
-    // todo[r.sh] reconsider usages of isWatched() and getManualWatchRoots() in LFS and refresh session
-    return isOperational() && !myPathMap.getWatchedPaths(file.getPath(), true, true).isEmpty();
-  }
-
-  public void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
+  public void notifyOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
     LOG.warn(cause);
 
     if (myFailureShown.compareAndSet(false, true)) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          String title = ApplicationBundle.message("watcher.slow.sync");
-          Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
-        }
+      String title = ApplicationBundle.message("watcher.slow.sync");
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
       }, ModalityState.NON_MODAL);
     }
   }
@@ -196,10 +196,12 @@ public class FileWatcher {
 
     @Override
     public void notifyDirtyPath(@NotNull String path) {
-      Collection<String> paths = myPathMap.getWatchedPaths(path, true, false);
+      Collection<String> paths = myPathMap.getWatchedPaths(path, true);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
-          myDirtyPaths.dirtyPaths.addAll(paths);
+          for (String eachPath : paths) {
+            myDirtyPaths.addDirtyPath(eachPath);
+          }
         }
       }
       notifyOnAnyEvent();
@@ -207,14 +209,14 @@ public class FileWatcher {
 
     @Override
     public void notifyPathCreatedOrDeleted(@NotNull String path) {
-      Collection<String> paths = myPathMap.getWatchedPaths(path, true, false);
+      Collection<String> paths = myPathMap.getWatchedPaths(path, true);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String p : paths) {
-            myDirtyPaths.dirtyPathsRecursive.add(p);
+            myDirtyPaths.addDirtyPathRecursive(p);
             String parentPath = new File(p).getParent();
             if (parentPath != null) {
-              myDirtyPaths.dirtyPaths.add(parentPath);
+              myDirtyPaths.addDirtyPath(parentPath);
             }
           }
         }
@@ -224,7 +226,7 @@ public class FileWatcher {
 
     @Override
     public void notifyDirtyDirectory(@NotNull String path) {
-      Collection<String> paths = myPathMap.getWatchedPaths(path, false, false);
+      Collection<String> paths = myPathMap.getWatchedPaths(path, false);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           myDirtyPaths.dirtyDirectories.addAll(paths);
@@ -235,10 +237,12 @@ public class FileWatcher {
 
     @Override
     public void notifyDirtyPathRecursive(@NotNull String path) {
-      Collection<String> paths = myPathMap.getWatchedPaths(path, false, false);
+      Collection<String> paths = myPathMap.getWatchedPaths(path, false);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
-          myDirtyPaths.dirtyPathsRecursive.addAll(paths);
+          for (String each : paths) {
+            myDirtyPaths.addDirtyPathRecursive(each);
+          }
         }
       }
       notifyOnAnyEvent();

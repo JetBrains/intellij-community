@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -375,7 +375,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     if (field.getContainingClass() == null) return;
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
     final PsiClass containingClass = field.getContainingClass();
-    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, true).findAll();
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass).findAll();
     for (PsiClass inheritor : inheritors) {
       PsiField conflictingField = inheritor.findFieldByName(newName, false);
       if (conflictingField != null) {

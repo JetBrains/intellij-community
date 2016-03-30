@@ -14,10 +14,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
-import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

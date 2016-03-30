@@ -6,5 +6,13 @@ public class NullArgumentToVariableArgMethod {
         String.format("%s", <warning descr="Confusing argument 'null', unclear if a varargs or non-varargs call is desired">null</warning>);
         String.format("%d", 1);
         String.format("%s", <warning descr="Confusing argument 'ss', unclear if a varargs or non-varargs call is desired">ss</warning>);
+
+        CompletableFuture[] futures = {};
+        CompletableFuture.allOf(futures);
+    }
+}
+class CompletableFuture<T> {
+    public static CompletableFuture<Void> allOf(CompletableFuture<?>... cfs) {
+        return null;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,14 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
   final String basePath = "${TestUtils.testDataPath}optimizeImports/"
 
   @Override
-  protected void setUp() {
+  void setUp() {
     super.setUp()
     CodeInsightSettings.instance.OPTIMIZE_IMPORTS_ON_THE_FLY = true
     ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true)
   }
 
   @Override
-  protected void tearDown() {
+  void tearDown() {
     CodeInsightSettings.instance.OPTIMIZE_IMPORTS_ON_THE_FLY = false
     super.tearDown()
   }

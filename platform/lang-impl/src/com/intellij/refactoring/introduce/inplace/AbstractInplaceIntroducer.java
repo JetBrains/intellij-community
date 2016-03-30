@@ -530,7 +530,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   @Override
   protected boolean performRefactoring() {
     if (!ensureValid()) return false;
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+    WriteCommandAction.runWriteCommandAction(myProject, getCommandName(), getCommandName(), new Runnable() {
       @Override
       public void run() {
         final String refactoringId = getRefactoringId();
@@ -551,7 +551,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         }
         performIntroduce();
       }
-    }, getCommandName(), getCommandName());
+    });
 
     V variable = getVariable();
     if (variable != null) {

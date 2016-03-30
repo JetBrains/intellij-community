@@ -29,7 +29,6 @@ import javax.swing.*;
  */
 public class InspectionNode extends InspectionTreeNode {
   public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
-  private boolean myTooBigForOnlineRefresh = false;
 
   public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
     super(toolWrapper);
@@ -49,10 +48,4 @@ public class InspectionNode extends InspectionTreeNode {
     return TOOL;
   }
 
-  public boolean isTooBigForOnlineRefresh() {
-    if (!myTooBigForOnlineRefresh) {
-      myTooBigForOnlineRefresh = getProblemCount() > 1000;
-    }
-    return myTooBigForOnlineRefresh;
-  }
 }

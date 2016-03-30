@@ -36,5 +36,4 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
    */
   @Nullable
   Date getBefore();
-
 }

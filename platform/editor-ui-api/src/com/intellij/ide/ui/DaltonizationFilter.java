@@ -3,26 +3,33 @@ package com.intellij.ide.ui;
 import java.awt.image.ImageFilter;
 
 final class DaltonizationFilter extends WeightFilter {
+  public static ImageFilter get(ColorBlindness blindness) {
+    if (blindness == ColorBlindness.protanopia) return protanopia;
+    if (blindness == ColorBlindness.deuteranopia) return deuteranopia;
+    if (blindness == ColorBlindness.tritanopia) return tritanopia;
+    return null;
+  }
+
   public static final ImageFilter protanopia = forProtanopia(null);
   public static final ImageFilter deuteranopia = forDeuteranopia(null);
   public static final ImageFilter tritanopia = forTritanopia(null);
 
   public static ImageFilter forProtanopia(Double weight) {
-    return new DaltonizationFilter(weight, 0, 2.02344, -2.52581, 0, 1, 0, 0, 0, 1);
+    return new DaltonizationFilter("Protanopia", weight, 0, 2.02344, -2.52581, 0, 1, 0, 0, 0, 1);
   }
 
   public static ImageFilter forDeuteranopia(Double weight) {
-    return new DaltonizationFilter(weight, 1, 0, 0, 0.494207, 0, 1.24827, 0, 0, 1);
+    return new DaltonizationFilter("Deuteranopia", weight, 1, 0, 0, 0.494207, 0, 1.24827, 0, 0, 1);
   }
 
   public static ImageFilter forTritanopia(Double weight) {
-    return new DaltonizationFilter(weight, 1, 0, 0, 0, 1, 0, -0.395913, 0.801109, 0);
+    return new DaltonizationFilter("Tritanopia", weight, 1, 0, 0, 0, 1, 0, -0.395913, 0.801109, 0);
   }
 
   private final double[] myMatrix;
 
-  private DaltonizationFilter(Double weight, double... matrix) {
-    super(weight);
+  private DaltonizationFilter(String name, Double weight, double... matrix) {
+    super(name + " (daltonization)", weight);
     myMatrix = matrix;
   }
 
@@ -46,12 +53,9 @@ final class DaltonizationFilter extends WeightFilter {
     B = srcB - B;
     // Shift colors towards visible spectrum (apply error modifications)
     // and add compensation to original values
-    double dstR = srcR + (0.0 * R) + (0.0 * G) + (0.0 * B);
-    double dstG = srcG + (0.7 * R) + (1.0 * G) + (0.0 * B);
-    double dstB = srcB + (0.7 * R) + (0.0 * G) + (1.0 * B);
-    return toRGB(srcR, srcG, srcB,
-                 dstR < 0 ? 0 : dstR > 255 ? 255 : dstR,
-                 dstR < 0 ? 0 : dstR > 255 ? 255 : dstG,
-                 dstR < 0 ? 0 : dstR > 255 ? 255 : dstB);
+    double dstR = fix(srcR + (0.0 * R) + (0.0 * G) + (0.0 * B));
+    double dstG = fix(srcG + (0.7 * R) + (1.0 * G) + (0.0 * B));
+    double dstB = fix(srcB + (0.7 * R) + (0.0 * G) + (1.0 * B));
+    return toRGB(srcR, srcG, srcB, dstR, dstG, dstB);
   }
 }

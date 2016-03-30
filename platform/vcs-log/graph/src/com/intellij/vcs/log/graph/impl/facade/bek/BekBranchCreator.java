@@ -98,5 +98,4 @@ class BekBranchCreator {
 
     return nodeIndexes;
   }
-
 }

@@ -30,6 +30,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
@@ -68,7 +69,9 @@ public class FindInProjectManager {
     findModel.setOpenInNewTabVisible(true);
     findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     findModel.setOpenInNewTab(toOpenInNewTab);
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
+    if (findModel.getDirectoryName() == null) {//Don't replace or reset old (stored) directory
+      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+    }
 
     String text = PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext);
     if (text != null) {
@@ -78,7 +81,10 @@ public class FindInProjectManager {
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       FindUtil.initStringToFindWithSelection(findModel, editor);
     }
-
+    if (Registry.is("ide.find.as.popup")) {
+      findManager.showFindPopup(findModel, dataContext);
+      return;
+    }
     findManager.showFindDialog(findModel, new Runnable() {
       @Override
       public void run() {

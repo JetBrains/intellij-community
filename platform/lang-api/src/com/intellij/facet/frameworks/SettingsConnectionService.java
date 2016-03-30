@@ -25,7 +25,6 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -65,24 +64,21 @@ public abstract class SettingsConnectionService {
   private Map<String, String> readSettings(final String... attributes) {
     return HttpRequests.request(mySettingsUrl)
       .productNameAsUserAgent()
-      .connect(new HttpRequests.RequestProcessor<Map<String, String>>() {
-        @Override
-        public Map<String, String> process(@NotNull HttpRequests.Request request) throws IOException {
-          Map<String, String> settings = ContainerUtilRt.newLinkedHashMap();
-          try {
-            Element root = JDOMUtil.load(request.getReader());
-            for (String s : attributes) {
-              String attributeValue = root.getAttributeValue(s);
-              if (StringUtil.isNotEmpty(attributeValue)) {
-                settings.put(s, attributeValue);
-              }
+      .connect(request -> {
+        Map<String, String> settings = ContainerUtilRt.newLinkedHashMap();
+        try {
+          Element root = JDOMUtil.load(request.getReader());
+          for (String s : attributes) {
+            String attributeValue = root.getAttributeValue(s);
+            if (StringUtil.isNotEmpty(attributeValue)) {
+              settings.put(s, attributeValue);
             }
           }
-          catch (JDOMException e) {
-            LOG.error(e);
-          }
-          return settings;
         }
+        catch (JDOMException e) {
+          LOG.error(e);
+        }
+        return settings;
       }, Collections.<String, String>emptyMap(), LOG);
   }
 

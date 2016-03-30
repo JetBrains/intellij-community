@@ -59,6 +59,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -626,7 +627,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-    StyleConstants.setFontSize(myFontSizeStyle, scheme.getQuickDocFontSize().getSize());
+    StyleConstants.setFontSize(myFontSizeStyle, JBUI.scale(scheme.getQuickDocFontSize().getSize()));
     if (Registry.is("documentation.component.editor.font")) {
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }
@@ -755,21 +756,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
 
       final PsiElement element = myElement.getElement();
-      final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
       final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-      if (!(provider instanceof CompositeDocumentationProvider &&
-            ((CompositeDocumentationProvider)provider).handleExternal(element, originalElement))) {
-        List<String> urls;
-        if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl)) {
-          urls = Collections.singletonList(myEffectiveExternalUrl);
-        }
-        else {
-          urls = provider.getUrlFor(element, originalElement);
-          assert urls != null : provider;
-          assert !urls.isEmpty() : provider;
-        }
-        ExternalJavaDocAction.showExternalJavadoc(urls, PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()));
-      }
+      
+      ExternalJavaDocAction.showExternalJavadoc(element, originalElement, myEffectiveExternalUrl, e.getDataContext());
     }
 
     @Override

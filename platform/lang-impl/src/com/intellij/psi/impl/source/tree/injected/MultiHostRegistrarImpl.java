@@ -39,7 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.DocumentCommitProcessor;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -467,7 +467,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
               try {
                 final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
                                                                     oldFileNode.getText());
-                DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
+                DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
               }
               finally {
                 DebugUtil.finishPsiModification();

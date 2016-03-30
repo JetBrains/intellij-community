@@ -32,8 +32,16 @@ import java.util.Vector;
 public class JUnitStarter {
   public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
+
   public static final String JUNIT3_PARAMETER = "-junit3";
+  public static final String JUNIT4_PARAMETER = "-junit4";
+  public static final String JUNIT5_PARAMETER = "-junit5";
+  public static final String JUNIT5_KEY = "idea.is.junit5";
+
   private static final String SOCKET = "-socket";
+  public static final String JUNIT3_RUNNER_NAME = "com.intellij.junit3.JUnit3IdeaTestRunner";
+  public static final String JUNIT4_RUNNER_NAME = "com.intellij.junit4.JUnit4IdeaTestRunner";
+  public static final String JUNIT5_RUNNER_NAME = "com.intellij.junit5.JUnit5IdeaTestRunner";
   private static String ourForkMode;
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
@@ -60,9 +68,9 @@ public class JUnitStarter {
     final ArrayList listeners = new ArrayList();
     final String[] name = new String[1];
 
-    boolean isJUnit4 = processParameters(argList, listeners, name);
+    String agentName = processParameters(argList, listeners, name);
 
-    if (!canWorkWithJUnitVersion(System.err, isJUnit4)) {
+    if (!canWorkWithJUnitVersion(System.err, agentName)) {
       System.exit(-3);
     }
     if (!checkVersion(args, System.err)) {
@@ -71,12 +79,12 @@ public class JUnitStarter {
 
     String[] array = new String[argList.size()];
     argList.copyInto(array);
-    int exitCode = prepareStreamsAndStart(array, isJUnit4, listeners, name[0]);
+    int exitCode = prepareStreamsAndStart(array, agentName, listeners, name[0]);
     System.exit(exitCode);
   }
 
-  private static boolean processParameters(Vector args, final List listeners, String[] params) {
-    boolean isJunit4 = true;
+  private static String processParameters(Vector args, final List listeners, String[] params) {
+    String agentName = isJUnit5Preferred() ? JUNIT5_RUNNER_NAME : JUNIT4_RUNNER_NAME;
     Vector result = new Vector(args.size());
     for (int i = 0; i < args.size(); i++) {
       String arg = (String)args.get(i);
@@ -84,7 +92,13 @@ public class JUnitStarter {
         //ignore
       }
       else if (arg.equals(JUNIT3_PARAMETER)){
-        isJunit4 = false;
+        agentName = JUNIT3_RUNNER_NAME;
+      }
+      else if (arg.equals(JUNIT4_PARAMETER)) {
+        agentName = JUNIT4_RUNNER_NAME;
+      }
+      else if (arg.equals(JUNIT5_PARAMETER)) {
+        agentName = JUNIT5_RUNNER_NAME;
       }
       else {
         if (arg.startsWith("@name")) {
@@ -145,26 +159,28 @@ public class JUnitStarter {
       String arg = (String)result.get(i);
       args.addElement(arg);
     }
-    if (!isJunit4) {
+    if (JUNIT3_RUNNER_NAME.equals(agentName)) {
       try {
         Class.forName("org.junit.runner.Computer");
+        agentName = JUNIT4_RUNNER_NAME;
       }
       catch (ClassNotFoundException e) {
-        return false;
+        return JUNIT3_RUNNER_NAME;
       }
     }
+
     try {
       final String forceJUnit3 = System.getProperty("idea.force.junit3");
-      if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return false;
+      if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return JUNIT3_RUNNER_NAME;
     }
     catch (SecurityException ignored) {}
-    try {
-      Class.forName("org.junit.Test");
-      return true;
-    }
-    catch (ClassNotFoundException e) {
-      return false;
-    }
+    return agentName;
+  }
+
+  public static boolean isJUnit5Preferred() {
+    final String useJUnit5 = System.getProperty(JUNIT5_KEY);
+    final Boolean boolValue = useJUnit5 == null ? null : Boolean.valueOf(useJUnit5);
+    return boolValue != null && boolValue.booleanValue();
   }
 
   public static boolean checkVersion(String[] args, PrintStream printStream) {
@@ -183,9 +199,9 @@ public class JUnitStarter {
     return false;
   }
 
-  private static boolean canWorkWithJUnitVersion(PrintStream printStream, boolean isJUnit4) {
+  private static boolean canWorkWithJUnitVersion(PrintStream printStream, String agentName) {
     try {
-      junitVersionChecks(isJUnit4);
+      junitVersionChecks(agentName);
     } catch (Throwable e) {
       printStream.println("!!! JUnit version 3.8 or later expected:");
       printStream.println();
@@ -198,21 +214,21 @@ public class JUnitStarter {
     return true;
   }
 
-  private static void junitVersionChecks(boolean isJUnit4) throws ClassNotFoundException {
+  private static void junitVersionChecks(String agentName) throws ClassNotFoundException {
     Class.forName("junit.framework.ComparisonFailure");
-    getAgentClass(isJUnit4);
+    getAgentClass(agentName);
     //noinspection UnnecessaryFullyQualifiedName
     new junit.textui.TestRunner().setPrinter(new com.intellij.junit3.JUnit3IdeaTestRunner.MockResultPrinter());
   }
 
   private static int prepareStreamsAndStart(String[] args,
-                                            final boolean isJUnit4,
+                                            final String agentName,
                                             ArrayList listeners,
                                             String name) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
     try {
-      IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
+      IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(agentName).newInstance();
       Object out = SM_RUNNER ? System.out : (Object)new SegmentedOutputStream(System.out);
       Object err = SM_RUNNER ? System.err : (Object)new SegmentedOutputStream(System.err);
       if (!SM_RUNNER) {
@@ -222,7 +238,7 @@ public class JUnitStarter {
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
           final List newArgs = new ArrayList();
-          newArgs.add(String.valueOf(isJUnit4));
+          newArgs.add(agentName);
           newArgs.addAll(listeners);
           PrintStream printOutputStream = SM_RUNNER ? ((PrintStream)out) : ((SegmentedOutputStream)out).getPrintStream();
           PrintStream printErrStream = SM_RUNNER ? ((PrintStream)err) : ((SegmentedOutputStream)err).getPrintStream();
@@ -243,11 +259,8 @@ public class JUnitStarter {
     }
   }
 
-  static Class getAgentClass(boolean isJUnit4) throws ClassNotFoundException {
-    return isJUnit4
-           ? Class.forName("com.intellij.junit4.JUnit4IdeaTestRunner")
-           : Class.forName("com.intellij.junit3.JUnit3IdeaTestRunner");
-
+  static Class getAgentClass(String agentName) throws ClassNotFoundException {
+    return Class.forName(agentName);
   }
 
   public static void printClassesList(List classNames, String packageName, String category, File tempFile) throws IOException {

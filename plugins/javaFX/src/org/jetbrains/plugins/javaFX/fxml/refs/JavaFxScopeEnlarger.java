@@ -26,7 +26,7 @@ import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
 
@@ -51,7 +51,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
     if (containingClass != null) {
       if (element instanceof PsiField && 
           !((PsiField)element).hasModifierProperty(PsiModifier.PUBLIC) && 
-          AnnotationUtil.isAnnotated((PsiField)element, JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, false) || element instanceof PsiParameter) {
+          AnnotationUtil.isAnnotated((PsiField)element, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false) || element instanceof PsiParameter) {
         final Project project = element.getProject();
         final String qualifiedName = containingClass.getQualifiedName();
         if (qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName).isEmpty()) {

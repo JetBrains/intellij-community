@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     myTemporary = temporary;
   }
 
+  @Override
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
     XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
@@ -59,10 +60,11 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     return false;
   }
 
+  @Override
   public void perform(@NotNull final Project project, final AnActionEvent event) {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     // do not toggle more than once on the same line
-    Set<Integer> processedLines = new HashSet<Integer>();
+    Set<Integer> processedLines = new HashSet<>();
     for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
       if (processedLines.add(position.getLine())) {
         XBreakpointUtil.toggleLineBreakpoint(project, position, editor, myTemporary, true);

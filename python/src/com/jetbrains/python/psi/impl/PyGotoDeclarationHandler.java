@@ -18,9 +18,12 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.jetbrains.python.PyUserInitiatedResolvableReference;
 import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * While regular methods are indexed, {@link com.jetbrains.python.codeInsight.PyCustomMember} are not.
  * As result, "go to declaration" failed to resolve reference pointing to another files which leads to bugs like PY-18089.
  * <p>
- * "Go to declaration" is always user-initiated action, so we resolve it manually using best conext
+ * "Go to declaration" is always user-initiated action, so we resolve it manually using best context
  *
  * @author Ilya.Kazakevich
  */
@@ -40,23 +43,41 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
     if (sourceElement == null) {
       return null;
     }
+    final PyResolveContext context = PyResolveContext.noImplicits()
+      .withTypeEvalContext(TypeEvalContext.userInitiated(sourceElement.getProject(), sourceElement.getContainingFile()));
+
     PyReferenceOwner referenceOwner = null;
+    final PsiElement parent = sourceElement.getParent();
     if (sourceElement instanceof PyReferenceOwner) {
       referenceOwner = (PyReferenceOwner)sourceElement;
     }
-    else if (sourceElement.getParent() instanceof PyReferenceOwner) {
-      referenceOwner = (PyReferenceOwner)sourceElement.getParent(); //Reference expression may be parent of IDENTIFIER
+    else if (parent instanceof PyReferenceOwner) {
+      referenceOwner = (PyReferenceOwner)parent; //Reference expression may be parent of IDENTIFIER
     }
-    if (referenceOwner == null) {
-      return null;
+    if (referenceOwner != null) {
+      return referenceOwner.getReference(context).resolve();
     }
+    // If element is not ref owner, it still may have provided references, lets find some
+    final PsiElement element = findProvidedReferenceAndResolve(sourceElement);
+    if (element != null) {
+      return element;
+    }
+    if (parent != null) {
+      return findProvidedReferenceAndResolve(parent);
+    }
+    return null;
+  }
 
-    final PyResolveContext context = PyResolveContext.noImplicits()
-      .withTypeEvalContext(TypeEvalContext.userInitiated(sourceElement.getProject(), sourceElement.getContainingFile()));
-    final PsiElement psiElement = referenceOwner.getReference(context).resolve();
-    if (psiElement == null) {
-      return null;
+  @Nullable
+  private static PsiElement findProvidedReferenceAndResolve(@NotNull final PsiElement sourceElement) {
+    for (final PsiReference reference : sourceElement.getReferences()) {
+      if (reference instanceof PyUserInitiatedResolvableReference) {
+        final PsiElement element = ((PyUserInitiatedResolvableReference)reference).userInitiatedResolve();
+        if (element != null) {
+          return element;
+        }
+      }
     }
-    return psiElement;
+    return null;
   }
 }

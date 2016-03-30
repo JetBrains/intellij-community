@@ -16,8 +16,10 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
@@ -30,20 +32,25 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<T>(this);
 
     final Application application = ApplicationManager.getApplication();
-    if (application.isWriteAccessAllowed()) {
-      result.run();
+    boolean dispatchThread = application.isDispatchThread();
+    if (dispatchThread) {
+      AccessToken token = start(getClass());
+      try {
+        result.run();
+      } finally {
+        token.finish();
+      }
       return result;
     }
 
-    boolean dispatchThread = application.isDispatchThread();
-    if (!dispatchThread && application.isReadAccessAllowed()) {
+    if (application.isReadAccessAllowed()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
-    application.invokeAndWait(new Runnable() {
+    TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, new Runnable() {
       @Override
       public void run() {
-        AccessToken token = application.acquireWriteActionLock(WriteAction.this.getClass());
+        AccessToken token = start(WriteAction.this.getClass());
         try {
           result.run();
         }
@@ -51,7 +58,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
           token.finish();
         }
       }
-    }, ModalityState.defaultModalityState());
+    });
 
     result.throwException();
     return result;
@@ -67,5 +74,23 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @NotNull
   public static AccessToken start(@NotNull Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
+  }
+
+  public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
+    AccessToken token = start();
+    try {
+      action.run();
+    } finally {
+      token.finish();
+    }
+  }
+
+  public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
+    AccessToken token = start();
+    try {
+      return action.compute();
+    } finally {
+      token.finish();
+    }
   }
 }

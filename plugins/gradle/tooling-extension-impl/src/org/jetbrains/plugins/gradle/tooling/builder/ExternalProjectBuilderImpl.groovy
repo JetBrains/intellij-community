@@ -173,10 +173,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     def projectSourceCompatibility
     def projectTargetCompatibility
 
+    //noinspection GrUnresolvedAccess
     if(project.hasProperty('sourceCompatibility') && project.sourceCompatibility instanceof JavaVersion) {
+      //noinspection GrUnresolvedAccess
       projectSourceCompatibility = project.sourceCompatibility.name;
     }
+    //noinspection GrUnresolvedAccess
     if(project.hasProperty('targetCompatibility') && project.targetCompatibility instanceof JavaVersion) {
+      //noinspection GrUnresolvedAccess
       projectTargetCompatibility = project.targetCompatibility.name;
     }
 
@@ -303,10 +307,38 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       }
     }
 
+    cleanupSharedSourceFolders(result)
+
     result
   }
 
+  private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {
+    def mainSourceSet = map[SourceSet.MAIN_SOURCE_SET_NAME]
+    cleanupSharedSourceFolders(map, mainSourceSet, null)
+    cleanupSharedSourceFolders(map, map[SourceSet.TEST_SOURCE_SET_NAME], mainSourceSet)
+  }
+
+  private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> result, ExternalSourceSet sourceSet, ExternalSourceSet toIgnore) {
+    if(!sourceSet) return
+
+    result.entrySet().each {
+      if (!it.value.is(sourceSet) && !it.value.is(toIgnore)) {
+        def customSourceSet = it.value
+        ExternalSystemSourceType.values().each {
+          def customSourceDirectorySet = customSourceSet.sources[it] as ExternalSourceDirectorySet
+          if (customSourceDirectorySet) {
+            def mainSourcesMap = sourceSet.sources
+            mainSourcesMap.values().each {
+              customSourceDirectorySet.srcDirs.removeAll(it.srcDirs)
+            }
+          }
+        }
+      }
+    }
+  }
+
   static <T> T chooseNotNull(T ... params) {
+    //noinspection GrUnresolvedAccess
     params.findResult("", { it })
   }
 
@@ -326,14 +358,17 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 
     try {
       if (filterableTask instanceof ContentFilterable && filterableTask.metaClass.respondsTo(filterableTask, "getMainSpec")) {
+        //noinspection GrUnresolvedAccess
         def properties = filterableTask.getMainSpec().properties
         def copyActions = properties?.allCopyActions ?: properties?.copyActions
 
         if(copyActions) {
           copyActions.each { Action<? super FileCopyDetails> action ->
             if (action.hasProperty('val$filterType') && action.hasProperty('val$properties')) {
+              //noinspection GrUnresolvedAccess
               def filterType = (action?.val$filterType as Class).name
               def filter = [filterType: filterType] as DefaultExternalFilter
+              //noinspection GrUnresolvedAccess
               def props = action?.val$properties
               if (props) {
                 if ('org.apache.tools.ant.filters.ExpandProperties'.equals(filterType) && props['project']) {
@@ -346,8 +381,11 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
               filterReaders << filter
             }
             else if (action.class.simpleName.equals('RenamingCopyAction') && action.hasProperty('transformer')) {
-              if (action.transformer.hasProperty('matcher') && action?.transformer.hasProperty('replacement')) {
-                String pattern = action?.transformer?.matcher.pattern().pattern
+              //noinspection GrUnresolvedAccess
+              if (action.transformer.hasProperty('matcher') && action?.transformer?.hasProperty('replacement')) {
+                //noinspection GrUnresolvedAccess
+                String pattern = action?.transformer?.matcher?.pattern()?.pattern
+                //noinspection GrUnresolvedAccess
                 String replacement = action?.transformer?.replacement
                 def filter = [filterType: 'RenamingCopyFilter'] as DefaultExternalFilter
                 if(pattern && replacement){

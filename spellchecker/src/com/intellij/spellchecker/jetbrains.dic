@@ -103,6 +103,7 @@ const
 constexpr
 contravariant
 controlfile
+coursecreator
 covariant
 cron
 ctrl
@@ -567,6 +568,7 @@ startup
 stateful
 stdarg
 stdlib
+stepic
 stmt
 strictfp
 stringify

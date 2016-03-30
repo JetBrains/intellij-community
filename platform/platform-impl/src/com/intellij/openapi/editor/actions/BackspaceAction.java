@@ -28,12 +28,11 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class BackspaceAction extends EditorAction {
+public class BackspaceAction extends TextComponentEditorAction {
   public BackspaceAction() {
     super(new Handler());
   }

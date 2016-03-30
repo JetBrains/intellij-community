@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -46,17 +47,20 @@ public abstract class Symbol {
   }
 
   public boolean isStatic() {
-    return (myFlags & IndexTree.STATIC) != 0;
+    return BitUtil.isSet(myFlags, IndexTree.STATIC);
   }
 
   public boolean isPackage() {
-    return (myFlags & IndexTree.PACKAGE) != 0;}
+    return BitUtil.isSet(myFlags, IndexTree.PACKAGE);
+  }
 
   public boolean isClass() {
-    return (myFlags & IndexTree.CLASS) != 0;}
+    return BitUtil.isSet(myFlags, IndexTree.CLASS);
+  }
 
   public boolean isMember() {
-    return (myFlags & IndexTree.MEMBER) != 0;}
+    return BitUtil.isSet(myFlags, IndexTree.MEMBER);
+  }
 
   public PackageSymbol pkg() {
     Symbol sym = this;
@@ -117,7 +121,7 @@ public abstract class Symbol {
     }
 
     public boolean isCompiled() {
-      return (myFlags & IndexTree.COMPILED) != 0;
+      return BitUtil.isSet(myFlags, IndexTree.COMPILED);
     }
 
     public ClassSymbol[] members() {

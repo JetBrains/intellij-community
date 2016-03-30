@@ -24,7 +24,7 @@ class JavaPredefinedConfigurations {
       // Expression patterns
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.calls"), "'_Instance?.'MethodCall('_Parameter*)", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.new.expressions"), "new 'Constructor('_Argument*)", EXPRESSION_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.lambdas"), "('_Parameter*) -> ", EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.lambdas"), "('_Parameter*) -> {}", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.field.selections"),"'_Instance?.'Field",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.array.access"),"'_Field['_Index]",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assignments"),"'_Inst = '_Expr",EXPRESSION_TYPE),
@@ -34,6 +34,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.expressions.of.some.type"),"'_Expression:[exprtype( SomeType )]",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.sample.method.invokation.with.constant.argument"),"Integer.parseInt('_a:[script( \"com.intellij.psi.util.PsiUtil.isConstantExpression(__context__)\" )])",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.references"), "'_Qualifier::'methodName", EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.concatenations"), "[exprtype( java\\.lang\\.String )]'_a + '_b+", EXPRESSION_TYPE),
 
       // Operators
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.block.dcls"),"{\n  '_Type+ 'Var+ = '_Init*;\n  '_BlockStatements*;\n}",OPERATOR_TYPE),
@@ -279,8 +280,8 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields.variables.read"),"'Symbol:[read]",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields_variables.with.given.name.pattern.updated"),"'Symbol:[regex( name ) && write]",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"),"('CastType:*[regex( Base )]) '_Expr",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.declarations"),"'_Type:Object|Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )]",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.declarations"),"'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( Integer|Boolean|Long|Character|Short|Byte )]",INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.declarations"),"'_Type:Object|Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )];",INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.declarations"),"'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( Integer|Boolean|Long|Character|Short|Byte )];",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.method.calls"),"'_Instance?.'Call('_BeforeParam*,'_Param:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.method.calls"), "'_Instance?.'Call('_BeforeParam*,'_Param:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.boxing"), "'_expression:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),

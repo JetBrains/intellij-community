@@ -151,7 +151,8 @@
     <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
                         serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
+                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
 
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
@@ -588,6 +589,7 @@
                     serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"/>
     <applicationService serviceInterface="com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns"
                         serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns"/>
+    <filePropertyPusher implementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePusher"/>
 
     <!-- execution -->
     <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
@@ -876,11 +878,9 @@
     <customFoldingProvider implementation="com.intellij.lang.customFolding.NetBeansCustomFoldingProvider"/>
     <customFoldingProvider implementation="com.intellij.lang.customFolding.VisualStudioCustomFoldingProvider"/>
 
-    <completion.contributor language="TEXT" implementationClass="com.intellij.ui.TextFieldWithAutoCompletionContributor"
+    <completion.contributor language="TEXT" implementationClass="com.intellij.util.textCompletion.TextCompletionContributor"
                             order="first, before commitCompletion"/>
-
-    <completion.contributor language="TEXT" implementationClass="com.intellij.util.CompletionContributorForTextField"
-                            order="first, before commitCompletion"/>
+    <lookup.charFilter implementation="com.intellij.util.textCompletion.TextCompletionCharFilter"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.CustomFileTypeCompletionContributor"/>
 

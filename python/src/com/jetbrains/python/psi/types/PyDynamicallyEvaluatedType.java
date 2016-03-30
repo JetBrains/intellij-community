@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
 

@@ -42,7 +42,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   private enum CursorState {EXITED, ENTERED, NIL}
 
-  private static final int CORNER_DRAG_WIDTH = 16;
+  private static final int CORNER_DRAG_WIDTH = 5;
 
   private static final int BORDER_DRAG_THICKNESS = 5;
 
@@ -110,10 +110,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
     if (isCustomDecoration()) {
       uninstallClientDecorations(myRootPane);
-
       myLayoutManager = null;
       myMouseInputListener = null;
-
       myRootPane = null;
     }
   }
@@ -152,10 +150,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         if (myTitleMouseInputListener == null) {
           myTitleMouseInputListener = new TitleMouseInputHandler();
         }
-        myTitlePane
-          .addMouseMotionListener(myTitleMouseInputListener);
-        myTitlePane
-          .addMouseListener(myTitleMouseInputListener);
+        myTitlePane.addMouseMotionListener(myTitleMouseInputListener);
+        myTitlePane.addMouseListener(myTitleMouseInputListener);
       }
       setMaximized();
     }
@@ -204,13 +200,11 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
         Window currWindow = UIUtil.getWindow(parent);
         if (myWindowListener != null) {
-          myCurrentWindow
-            .removeWindowListener(myWindowListener);
+          myCurrentWindow.removeWindowListener(myWindowListener);
           myWindowListener = null;
         }
         if (myWindowComponentListener != null) {
-          myCurrentWindow
-            .removeComponentListener(myWindowComponentListener);
+          myCurrentWindow.removeComponentListener(myWindowComponentListener);
           myWindowComponentListener = null;
         }
         if (currWindow != null) {
@@ -254,16 +248,13 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
                     return;
                   }
 
-                  if (!myWindow.isShowing()
-                      || !myWindow.isDisplayable()) {
+                  if (!myWindow.isShowing() || !myWindow.isDisplayable()) {
                     currentRootPaneGC = null;
                     return;
                   }
 
-                  GraphicsEnvironment ge = GraphicsEnvironment
-                    .getLocalGraphicsEnvironment();
-                  GraphicsDevice[] gds = ge
-                    .getScreenDevices();
+                  GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                  GraphicsDevice[] gds = ge.getScreenDevices();
                   if (gds.length == 1) {
                     return;
                   }
@@ -304,8 +295,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     if (myWindow != null) {
       myWindow.removeWindowListener(myWindowListener);
       myWindowListener = null;
-      myWindow
-        .removeComponentListener(myWindowComponentListener);
+      myWindow.removeComponentListener(myWindowComponentListener);
       myWindowComponentListener = null;
     }
     root.removeHierarchyListener(myHierarchyListener);
@@ -362,8 +352,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     }
 
     if (myWindow != null) {
-      myWindow.setCursor(Cursor
-                                .getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      myWindow.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
     myWindow = null;
   }
@@ -398,18 +387,15 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     if (Registry.is("darcula.fix.maximized.frame.bounds")) return;
 
     Component tla = myRootPane.getTopLevelAncestor();
-    GraphicsConfiguration gc = (currentRootPaneGC != null) ? currentRootPaneGC
-                                                           : tla.getGraphicsConfiguration();
+    GraphicsConfiguration gc = (currentRootPaneGC != null) ? currentRootPaneGC : tla.getGraphicsConfiguration();
     Rectangle screenBounds = gc.getBounds();
     screenBounds.x = 0;
     screenBounds.y = 0;
     Insets screenInsets = ScreenUtil.getScreenInsets(gc);
-    Rectangle maxBounds = new Rectangle(
-      (screenBounds.x + screenInsets.left),
-      (screenBounds.y + screenInsets.top), screenBounds.width
-                                           - ((screenInsets.left + screenInsets.right)),
-      screenBounds.height
-      - ((screenInsets.top + screenInsets.bottom)));
+    Rectangle maxBounds = new Rectangle(screenBounds.x + screenInsets.left,
+                                        screenBounds.y + screenInsets.top,
+                                        screenBounds.width - (screenInsets.left + screenInsets.right),
+                                        screenBounds.height - (screenInsets.top + screenInsets.bottom));
     if (tla instanceof JFrame) {
       ((JFrame)tla).setMaximizedBounds(maxBounds);
     }
@@ -492,9 +478,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         }
       }
 
-      return new Dimension(Math.max(Math.max(cpWidth, mbWidth), tpWidth)
-                           + i.left + i.right, cpHeight + mbHeight + tpHeight + i.top
-                                               + i.bottom);
+      return new Dimension(max(cpWidth, mbWidth, tpWidth) + i.left + i.right, cpHeight + mbHeight + tpHeight + i.top + i.bottom);
     }
 
     public Dimension minimumLayoutSize(Container parent) {
@@ -526,10 +510,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
           mbHeight = mbd.height;
         }
       }
-      if ((root.getWindowDecorationStyle() != JRootPane.NONE)
-          && (root.getUI() instanceof DarculaRootPaneUI)) {
-        JComponent titlePane = ((DarculaRootPaneUI)root.getUI())
-          .getTitlePane();
+      if ((root.getWindowDecorationStyle() != JRootPane.NONE) && (root.getUI() instanceof DarculaRootPaneUI)) {
+        JComponent titlePane = ((DarculaRootPaneUI)root.getUI()).getTitlePane();
         if (titlePane != null) {
           tpd = titlePane.getMinimumSize();
           if (tpd != null) {
@@ -539,9 +521,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         }
       }
 
-      return new Dimension(Math.max(Math.max(cpWidth, mbWidth), tpWidth)
-                           + i.left + i.right, cpHeight + mbHeight + tpHeight + i.top
-                                               + i.bottom);
+      return new Dimension(max(cpWidth, mbWidth, tpWidth) + i.left + i.right, cpHeight + mbHeight + tpHeight + i.top + i.bottom);
     }
 
     public Dimension maximumLayoutSize(Container target) {
@@ -571,10 +551,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         }
       }
 
-      if ((root.getWindowDecorationStyle() != JRootPane.NONE)
-          && (root.getUI() instanceof DarculaRootPaneUI)) {
-        JComponent titlePane = ((DarculaRootPaneUI)root.getUI())
-          .getTitlePane();
+      if ((root.getWindowDecorationStyle() != JRootPane.NONE) && (root.getUI() instanceof DarculaRootPaneUI)) {
+        JComponent titlePane = ((DarculaRootPaneUI)root.getUI()).getTitlePane();
         if (titlePane != null) {
           tpd = titlePane.getMaximumSize();
           if (tpd != null) {
@@ -584,12 +562,12 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         }
       }
 
-      int maxHeight = Math.max(Math.max(cpHeight, mbHeight), tpHeight);
+      int maxHeight = max(cpHeight, mbHeight, tpHeight);
       if (maxHeight != Integer.MAX_VALUE) {
         maxHeight = cpHeight + mbHeight + tpHeight + i.top + i.bottom;
       }
 
-      int maxWidth = Math.max(Math.max(cpWidth, mbWidth), tpWidth);
+      int maxWidth = max(cpWidth, mbWidth, tpWidth);
 
       if (maxWidth != Integer.MAX_VALUE) {
         maxWidth += i.left + i.right;
@@ -613,10 +591,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         root.getGlassPane().setBounds(i.left, i.top, w, h);
       }
 
-      if ((root.getWindowDecorationStyle() != JRootPane.NONE)
-          && (root.getUI() instanceof DarculaRootPaneUI)) {
-        JComponent titlePane = ((DarculaRootPaneUI)root.getUI())
-          .getTitlePane();
+      if ((root.getWindowDecorationStyle() != JRootPane.NONE) && (root.getUI() instanceof DarculaRootPaneUI)) {
+        JComponent titlePane = ((DarculaRootPaneUI)root.getUI()).getTitlePane();
         if (titlePane != null) {
           Dimension tpd = titlePane.getPreferredSize();
           if (tpd != null) {
@@ -708,9 +684,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
       int frameState = (f != null) ? f.getExtendedState() : 0;
 
-      if ((getTitlePane() != null)
-          && getTitlePane().contains(
-        convertedDragWindowOffset)) {
+      if ((getTitlePane() != null) && getTitlePane().contains(convertedDragWindowOffset)) {
         if ((((f != null) && ((frameState & Frame.MAXIMIZED_BOTH) == 0)) || (d != null))
             && (dragWindowOffset.y >= BORDER_DRAG_THICKNESS)
             && (dragWindowOffset.x >= BORDER_DRAG_THICKNESS)
@@ -726,8 +700,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         dragOffsetY = dragWindowOffset.y;
         dragWidth = w.getWidth();
         dragHeight = w.getHeight();
-        dragCursor = getCursor(calculateCorner(w,
-                                                              dragWindowOffset.x, dragWindowOffset.y));
+        dragCursor = getCursor(calculateCorner(w, dragWindowOffset.x, dragWindowOffset.y));
       }
     }
 
@@ -773,8 +746,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
       }
     }
 
-    private void adjust(Rectangle bounds, Dimension min, int deltaX,
-                        int deltaY, int deltaWidth, int deltaHeight) {
+    private void adjust(Rectangle bounds, Dimension min, int deltaX, int deltaY, int deltaWidth, int deltaHeight) {
       bounds.x += deltaX;
       bounds.y += deltaY;
       bounds.width += deltaWidth;
@@ -807,8 +779,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         try {
           windowPt = (Point)AccessController
             .doPrivileged(getLocationAction);
-          windowPt.x = windowPt.x - dragOffsetX;
-          windowPt.y = windowPt.y - dragOffsetY;
+          windowPt.x -= dragOffsetX;
+          windowPt.y -= dragOffsetY;
           w.setLocation(windowPt);
         }
         catch (PrivilegedActionException e) {
@@ -821,42 +793,28 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
         switch (dragCursor) {
           case Cursor.E_RESIZE_CURSOR:
-            adjust(r, min, 0, 0, pt.x
-                                      + (dragWidth - dragOffsetX) - r.width, 0);
+            adjust(r, min, 0, 0, pt.x + (dragWidth - dragOffsetX) - r.width, 0);
             break;
           case Cursor.S_RESIZE_CURSOR:
-            adjust(r, min, 0, 0, 0, pt.y
-                                         + (dragHeight - dragOffsetY) - r.height);
+            adjust(r, min, 0, 0, 0, pt.y + (dragHeight - dragOffsetY) - r.height);
             break;
           case Cursor.N_RESIZE_CURSOR:
-            adjust(r, min, 0, pt.y - dragOffsetY, 0,
-                        -(pt.y - dragOffsetY));
+            adjust(r, min, 0, pt.y - dragOffsetY, 0, -(pt.y - dragOffsetY));
             break;
           case Cursor.W_RESIZE_CURSOR:
-            adjust(r, min, pt.x - dragOffsetX, 0,
-                        -(pt.x - dragOffsetX), 0);
+            adjust(r, min, pt.x - dragOffsetX, 0, -(pt.x - dragOffsetX), 0);
             break;
           case Cursor.NE_RESIZE_CURSOR:
-            adjust(r, min, 0, pt.y - dragOffsetY, pt.x
-                                                            + (dragWidth - dragOffsetX) - r.width,
-                        -(pt.y - dragOffsetY));
+            adjust(r, min, 0, pt.y - dragOffsetY, pt.x + (dragWidth - dragOffsetX) - r.width, -(pt.y - dragOffsetY));
             break;
           case Cursor.SE_RESIZE_CURSOR:
-            adjust(r, min, 0, 0, pt.x
-                                      + (dragWidth - dragOffsetX) - r.width,
-                        pt.y + (dragHeight - dragOffsetY)
-                        - r.height);
+            adjust(r, min, 0, 0, pt.x + (dragWidth - dragOffsetX) - r.width, pt.y + (dragHeight - dragOffsetY) - r.height);
             break;
           case Cursor.NW_RESIZE_CURSOR:
-            adjust(r, min, pt.x - dragOffsetX, pt.y
-                                                         - dragOffsetY, -(pt.x - dragOffsetX),
-                        -(pt.y - dragOffsetY));
+            adjust(r, min, pt.x - dragOffsetX, pt.y - dragOffsetY, -(pt.x - dragOffsetX), -(pt.y - dragOffsetY));
             break;
           case Cursor.SW_RESIZE_CURSOR:
-            adjust(r, min, pt.x - dragOffsetX, 0,
-                        -(pt.x - dragOffsetX), pt.y
-                                                    + (dragHeight - dragOffsetY)
-                                                    - r.height);
+            adjust(r, min, pt.x - dragOffsetX, 0, -(pt.x - dragOffsetX), pt.y + (dragHeight - dragOffsetY) - r.height);
             break;
           default:
             break;
@@ -908,19 +866,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
       int state = f.getExtendedState();
       if (windowTitlePane.contains(convertedPoint)) {
-        if (((ev.getClickCount() % 2) == 0)
-            && ((ev.getModifiers() & InputEvent.BUTTON1_MASK) != 0)) {
-          if (f.isResizable()) {
-            if ((state & Frame.MAXIMIZED_BOTH) != 0) {
-              setMaximized();
-              f.setExtendedState(state & ~Frame.MAXIMIZED_BOTH);
-            }
-            else {
-              setMaximized();
-              f.setExtendedState(state | Frame.MAXIMIZED_BOTH);
-            }
-          }
-        }
+        handleMaximize(ev, f, state);
       }
     }
 
@@ -1026,19 +972,31 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
       int state = f.getExtendedState();
       if ((getTitlePane() != null) && getTitlePane().contains(convertedPoint)) {
-        if (((e.getClickCount() % 2) == 0) && ((e.getModifiers() & InputEvent.BUTTON1_MASK) != 0)) {
-          if (f.isResizable()) {
-            if ((state & Frame.MAXIMIZED_BOTH) != 0) {
-              setMaximized();
-              f.setExtendedState(state & ~Frame.MAXIMIZED_BOTH);
-            }
-            else {
-              setMaximized();
-              f.setExtendedState(state | Frame.MAXIMIZED_BOTH);
-            }
-          }
+        handleMaximize(e, f, state);
+      }
+    }
+  }
+
+  private void handleMaximize(MouseEvent e, Frame f, int state) {
+    if (((e.getClickCount() % 2) == 0) && ((e.getModifiers() & InputEvent.BUTTON1_MASK) != 0)) {
+      if (f.isResizable()) {
+        if ((state & Frame.MAXIMIZED_BOTH) != 0) {
+          setMaximized();
+          f.setExtendedState(state & ~Frame.MAXIMIZED_BOTH);
+        }
+        else {
+          setMaximized();
+          f.setExtendedState(state | Frame.MAXIMIZED_BOTH);
         }
       }
     }
+  }
+
+  private static int max(int a, int b, int...others) {
+    int result = Math.max(a, b);
+    for (int other : others) {
+      result = Math.max(result, other);
+    }
+    return result;
   }
 }

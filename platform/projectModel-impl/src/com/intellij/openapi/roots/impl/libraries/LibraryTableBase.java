@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,11 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -205,13 +209,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myModel.writeExternal(element);
   }
 
-  /**
-   * @deprecated to be removed in IDEA 15 (please use ModifiableModel base interface directly)
-   */
-  public interface ModifiableModelEx extends ModifiableModel {
-  }
-
-  public class LibraryModel implements ModifiableModelEx, JDOMExternalizable, Listener, Disposable {
+  public class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
     private final ArrayList<Library> myLibraries = new ArrayList<Library>();
     private volatile Map<String, Library> myLibraryByNameCache;
     private boolean myWritable;
@@ -348,19 +346,11 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException {
-      final List<Library> libraries = ContainerUtil.findAll(myLibraries, new Condition<Library>() {
-        @Override
-        public boolean value(Library library) {
-          return !((LibraryEx)library).isDisposed();
-        }
-      });
+      final List<Library> libraries = ContainerUtil.findAll(myLibraries, library -> !((LibraryEx)library).isDisposed());
 
       // todo: do not sort if project is directory-based
-      ContainerUtil.sort(libraries, new Comparator<Library>() {
-        @Override
-        public int compare(Library o1, Library o2) {
-          return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
-        }
+      ContainerUtil.sort(libraries, (o1, o2) -> {
+        return StringUtil.compare(o1.getName(), o2.getName(), true);
       });
 
       for (final Library library : libraries) {

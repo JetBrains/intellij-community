@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,10 +81,12 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     }
   }
 
+  @Override
   public int getPriority() {
     return 0;
   }
 
+  @Override
   @Nullable
   public XBreakpoint<?> findBreakpoint(@NotNull final Project project, @NotNull final Document document, final int offset) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
@@ -114,6 +116,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     return null;
   }
 
+  @Override
   public void onDialogClosed(final Project project) {
   }
 

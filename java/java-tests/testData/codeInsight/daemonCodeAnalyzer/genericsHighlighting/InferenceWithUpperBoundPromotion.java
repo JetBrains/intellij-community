@@ -7,7 +7,7 @@ class NestedGenericGoodCodeIsRed {
         Number num = null;
         satisfiesAllOf(isPositive(), isEqualTo(num));
 
-        this.<Number>satisfiesAllOf<error descr="'satisfiesAllOf(NestedGenericGoodCodeIsRed.Predicate<? super java.lang.Number>, NestedGenericGoodCodeIsRed.Predicate<? super java.lang.Number>)' in 'NestedGenericGoodCodeIsRed' cannot be applied to '(NestedGenericGoodCodeIsRed.Predicate<java.lang.Number>, NestedGenericGoodCodeIsRed.Predicate<java.lang.Integer>)'">(isPositive(), isEqualTo(10))</error>;
+        this.<Number>satisfiesAllOf(isPositive(), <error descr="'satisfiesAllOf(NestedGenericGoodCodeIsRed.Predicate<? super java.lang.Number>, NestedGenericGoodCodeIsRed.Predicate<? super java.lang.Number>)' in 'NestedGenericGoodCodeIsRed' cannot be applied to '(NestedGenericGoodCodeIsRed.Predicate<java.lang.Number>, NestedGenericGoodCodeIsRed.Predicate<java.lang.Integer>)'">isEqualTo(10)</error>);
     }
 
 

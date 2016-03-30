@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       return;
     }
 
-    List<Configurable> configurables = new SmartList<Configurable>();
+    List<Configurable> configurables = new SmartList<>();
     configurables.add(new DataViewsConfigurable());
 
     DebuggerConfigurableProvider[] providers = DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions();
@@ -201,7 +201,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       Collection<? extends Configurable> providerConfigurables = provider.getConfigurables(category);
       if (!providerConfigurables.isEmpty()) {
         if (configurables == null) {
-          configurables = new SmartList<Configurable>();
+          configurables = new SmartList<>();
         }
         configurables.addAll(providerConfigurables);
       }

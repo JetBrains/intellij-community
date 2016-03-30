@@ -99,6 +99,17 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final PsiExpression unboxedExpression = arguments[0];
+      final Object value = ExpressionUtils.computeConstantExpression(unboxedExpression);
+      if (value != null) {
+        if (value == Boolean.TRUE) {
+          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.TRUE");
+          return;
+        }
+        else if (value == Boolean.FALSE) {
+          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.FALSE");
+          return;
+        }
+      }
       final String replacementText = getUnboxedExpressionText(unboxedExpression, boxedType);
       if (replacementText == null) {
         return;

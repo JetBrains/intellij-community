@@ -83,7 +83,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     final List<NamedScope> predefinedScopes = new ArrayList<NamedScope>();
     final CustomScopesProvider[] scopesProviders = CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject);
     for (CustomScopesProvider scopesProvider : scopesProviders) {
-      predefinedScopes.addAll(scopesProvider.getCustomScopes());
+      predefinedScopes.addAll(scopesProvider.getFilteredScopes());
     }
     return predefinedScopes;
   }
@@ -94,7 +94,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     for (CustomScopesProvider scopesProvider : scopesProviders) {
       final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx
                                ? ((CustomScopesProviderEx)scopesProvider).getCustomScope(name)
-                               : CustomScopesProviderEx.findPredefinedScope(name, scopesProvider.getCustomScopes());
+                               : CustomScopesProviderEx.findPredefinedScope(name, scopesProvider.getFilteredScopes());
       if (scope != null) {
         return scope;
       }

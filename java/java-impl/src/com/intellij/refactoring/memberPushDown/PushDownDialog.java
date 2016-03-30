@@ -117,9 +117,7 @@ public class PushDownDialog extends RefactoringDialog {
 
     JavaRefactoringSettings.getInstance().PUSH_DOWN_PREVIEW_USAGES = isPreviewUsages();
 
-    invokeRefactoring (new PushDownProcessor(
-            getProject(), getSelectedMemberInfos(), myClass,
-            new DocCommentPolicy(getJavaDocPolicy())));
+    invokeRefactoring(new PushDownProcessor(myClass, getSelectedMemberInfos(), new DocCommentPolicy(getJavaDocPolicy())));
   }
 
   private class MyMemberInfoModel extends UsedByDependencyMemberInfoModel<PsiMember, PsiClass, MemberInfo> {

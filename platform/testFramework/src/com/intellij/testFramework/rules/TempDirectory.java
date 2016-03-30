@@ -16,6 +16,7 @@
 package com.intellij.testFramework.rules;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.Description;
@@ -27,7 +28,8 @@ import java.io.IOException;
 import static org.junit.Assert.assertTrue;
 
 /**
- * A clone of {@link TemporaryFolder} with no symlinks in a temporary directory path and better directory name.
+ * A clone of {@link TemporaryFolder} with no symlinks in a temporary directory path, better directory name,
+ * and more convenient {@linkplain #newFile(String)} / {@linkplain #newFolder(String)} methods.
  */
 public class TempDirectory extends TemporaryFolder {
   private String myName = null;
@@ -35,7 +37,7 @@ public class TempDirectory extends TemporaryFolder {
 
   @Override
   public Statement apply(Statement base, Description description) {
-    myName = FileUtil.sanitizeFileName(description.getMethodName(), false);
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.getMethodName(), false), true);
     return super.apply(base, description);
   }
 
@@ -69,5 +71,23 @@ public class TempDirectory extends TemporaryFolder {
     }
 
     return myRoot;
+  }
+
+  /** Allows subdirectories in a directory name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
+  @Override
+  public File newFolder(String directoryName) throws IOException {
+    File dir = new File(getRoot(), directoryName);
+    if (dir.exists()) throw new IOException("Already exists: " + dir);
+    if (!dir.mkdirs()) throw new IOException("Cannot create: " + dir);
+    return dir;
+  }
+
+  /** Allows subdirectories in a file name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
+  @Override
+  public File newFile(String fileName) throws IOException {
+    File file = new File(getRoot(), fileName), parent = file.getParentFile();
+    if (file.exists()) throw new IOException("Already exists: " + file);
+    if (!(parent.isDirectory() || parent.mkdirs()) || !file.createNewFile()) throw new IOException("Cannot create: " + file);
+    return file;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,12 @@ import java.util.Enumeration;
 /**
  * @author nik
  */
-class CheckboxTreeHelper {
-  static final CheckboxTreeBase.CheckPolicy DEFAULT_POLICY = new CheckboxTreeBase.CheckPolicy(true, true, false, true);
+public class CheckboxTreeHelper {
+  public static final CheckboxTreeBase.CheckPolicy DEFAULT_POLICY = new CheckboxTreeBase.CheckPolicy(true, true, false, true);
   private final CheckboxTreeBase.CheckPolicy myCheckPolicy;
   private final EventDispatcher<CheckboxTreeListener> myEventDispatcher;
 
-  CheckboxTreeHelper(CheckboxTreeBase.CheckPolicy checkPolicy, EventDispatcher<CheckboxTreeListener> dispatcher) {
+  public CheckboxTreeHelper(@NotNull CheckboxTreeBase.CheckPolicy checkPolicy, @NotNull EventDispatcher<CheckboxTreeListener> dispatcher) {
     myCheckPolicy = checkPolicy;
     myEventDispatcher = dispatcher;
   }

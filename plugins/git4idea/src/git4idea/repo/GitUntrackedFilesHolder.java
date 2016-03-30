@@ -102,7 +102,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final Object LOCK = new Object();
   private final GitRepositoryManager myRepositoryManager;
 
-  GitUntrackedFilesHolder(@NotNull GitRepository repository) {
+  GitUntrackedFilesHolder(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myProject = repository.getProject();
     myRepository = repository;
     myRoot = repository.getRoot();
@@ -112,7 +112,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    myRepositoryFiles = GitRepositoryFiles.getInstance(repository.getGitDir());
+    myRepositoryFiles = gitFiles;
   }
 
   void setupVfsListener(@NotNull Project project) {

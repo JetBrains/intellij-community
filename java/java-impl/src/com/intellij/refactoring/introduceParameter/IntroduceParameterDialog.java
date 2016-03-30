@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 public class IntroduceParameterDialog extends RefactoringDialog {
@@ -234,7 +235,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myCbCollapseToLambda = new NonFocusableCheckBox(RefactoringBundle.message("introduce.parameter.convert.lambda"));
     final PsiAnonymousClass anonymClass = myExpression instanceof PsiNewExpression ? ((PsiNewExpression)myExpression).getAnonymousClass() 
                                                                                    : null;
-    myCbCollapseToLambda.setVisible(anonymClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymClass, false));
+    myCbCollapseToLambda.setVisible(anonymClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymClass, false, Collections.emptySet()));
     myCbCollapseToLambda.setSelected(PropertiesComponent.getInstance(myProject).getBoolean(INTRODUCE_PARAMETER_LAMBDA));
     gbConstraints.gridy++;
     panel.add(myCbCollapseToLambda, gbConstraints);
@@ -287,12 +288,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(parameterInitializer, selectedType);
       if (lambda != null) {
         final PsiParameter[] lambdaParameters = ((PsiLambdaExpression)lambda).getParameterList().getParameters();
-        final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(((PsiLambdaExpression)lambda).getBody(), lambdaParameters, selectedType);
-        if (toConvertCall != null) {
-          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, selectedType, lambdaParameters);
-          if (methodReferenceText != null) {
-            lambda = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(methodReferenceText, lambda);
-          }
+        final String methodReferenceText = LambdaCanBeMethodReferenceInspection.convertToMethodReference(((PsiLambdaExpression)lambda).getBody(), lambdaParameters, selectedType, null);
+        if (methodReferenceText != null) {
+          lambda = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(methodReferenceText, lambda);
         }
 
         processor.setParameterInitializer(lambda);

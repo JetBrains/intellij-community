@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Comparing;
@@ -31,7 +32,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -44,24 +45,23 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createInfoMessage;
-
 /**
  * @author nik
  */
-public class XVariablesView extends XVariablesViewBase {
+public class XVariablesView extends XVariablesViewBase implements DataProvider {
   public static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
   public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
-  private final JComponent myComponent;
+  private final JPanel myComponent;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
-    myComponent = new MyPanel();
+    myComponent = new BorderLayoutPanel();
     myComponent.add(super.getPanel());
+    DataManager.registerDataProvider(myComponent, this);
   }
 
   @Override
-  public JComponent getPanel() {
+  public JPanel getPanel() {
     return myComponent;
   }
 
@@ -100,28 +100,42 @@ public class XVariablesView extends XVariablesViewBase {
     tree.updateEditor();
   }
 
+  protected void addEmptyMessage(XValueContainerNode root) {
+    XDebugSession session = getSession(getPanel());
+    if (session != null) {
+      if (!session.isStopped() && session.isPaused()) {
+        root.setInfoMessage("Frame is not available", null);
+      }
+      else {
+        XDebugProcess debugProcess = session.getDebugProcess();
+        root.setInfoMessage(debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
+      }
+    }
+  }
+
   @Override
   protected void clear() {
     XDebuggerTree tree = getTree();
     tree.setSourcePosition(null);
     clearInlineData(tree);
 
-    XDebuggerTreeNode node;
-    XDebugSession session = getSession(getPanel());
-    if (session == null || (!session.isStopped() && session.isPaused())) {
-      node = createInfoMessage(tree, "Frame is not available");
-    }
-    else {
-      XDebugProcess debugProcess = session.getDebugProcess();
-      node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
-    }
-    tree.setRoot(node, true);
+    XValueContainerNode root = createNewRootNode(null);
+    addEmptyMessage(root);
     super.clear();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return getCurrentFile(getTree());
+    }
+    return null;
   }
 
   public static class InlineVariablesInfo {
     private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData
-      = new THashMap<Pair<VirtualFile, Integer>, Set<Entry>>();
+      = new THashMap<>();
 
     @Nullable
     public List<XValueNodeImpl> get(@NotNull VirtualFile file, int line) {
@@ -142,7 +156,7 @@ public class XVariablesView extends XVariablesViewBase {
         Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
         Set<Entry> entries = myData.get(key);
         if (entries == null) {
-          entries = new TreeSet<Entry>();
+          entries = new TreeSet<>();
           myData.put(key, entries);
         }
         entries.add(new Entry(position.getOffset(), node));
@@ -184,17 +198,6 @@ public class XVariablesView extends XVariablesViewBase {
       public int hashCode() {
         return myNode.hashCode();
       }
-    }
-  }
-
-  private class MyPanel extends BorderLayoutPanel implements DataProvider {
-    @Nullable
-    @Override
-    public Object getData(@NonNls String dataId) {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return getCurrentFile(getTree());
-      }
-      return null;
     }
   }
 }

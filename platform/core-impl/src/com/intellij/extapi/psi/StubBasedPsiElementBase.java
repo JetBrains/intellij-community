@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.PsiLock;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -280,12 +278,20 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @Override
   public PsiManagerEx getManager() {
+    Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project != null) {
+      return (PsiManagerEx)PsiManager.getInstance(project);
+    }
     return (PsiManagerEx)getContainingFile().getManager();
   }
 
   @Override
   @NotNull
   public Project getProject() {
+    Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project != null) {
+      return project;
+    }
     return getContainingFile().getProject();
   }
 

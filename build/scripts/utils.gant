@@ -499,7 +499,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     archs += "<string>${it}</string>"
   }
   archs +="</array>\n"
-  
+
   String urlSchemes = ""
   if (args.urlSchemes != null) {
     urlSchemes += """
@@ -542,7 +542,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@help_id@@", value: helpId)
     replacefilter(token: "@@url_schemes@@", value: urlSchemes)
     replacefilter(token: "@@archs@@", value: archs)
-    replacefilter(token: "@@min_osx@@", value: ifNull(args.min_osx, "10.6"))
+    replacefilter(token: "@@min_osx@@", value: ifNull(args.min_osx, "10.8"))
   }
 
   if (executable != "idea") {
@@ -706,7 +706,7 @@ binding.setVariable("patchPropertiesFile", { String target, Map args = [:] ->
   }
 
   String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
-  String settings_dir = args.system_selector.replaceFirst("\\d+", "")
+  String settings_dir = args.system_selector.replaceFirst("\\d+(\\.\\d+)?", "")
   ant.replace(file: file) {
     replacefilter(token: "@@product_uc@@", value: product_uc)
     replacefilter(token: "@@settings_dir@@", value: settings_dir)
@@ -884,21 +884,30 @@ private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
   requireProperty("jdk.win", "jdk1.8")
+  requireProperty("jdk.custom.win", "false")
   requireProperty("jdk.mac", "openjdk.1.8")
   requireProperty("jdk.linux", "openjdk.1.8")
 
   if (new File("${home}/build/jdk").exists()) {
+    def jdkDir = new File("${home}/build/jdk/win")
     if (p("jdk.win") != "false") {
-      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
+      setProperty("winJDK", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
       extractRedistJre(winJDK, "${paths.sandbox}/jdk.win/jre")
     }
-    def customJdkDir = new File("${home}/build/jdk/mac/custom")
-    if (p("jdk.mac") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
-      setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, p("jdk.mac"), ".tar.gz"))
+    jdkDir = new File("${home}/build/jdk/win/custom")
+    if (p("jdk.custom.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.custom.win"), "x32.tar.gz"))
+      extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.custom.win.x32")
+      setProperty("winCustomJDKx64", getPathToBundledJDK(jdkDir, p("jdk.custom.win"), "x64.tar.gz"))
+      extractRedistJre(winCustomJDKx64, "${paths.sandbox}/jdk.custom.win.x64")
     }
-    customJdkDir = new File("${home}/build/jdk/linux/custom")
-    if (p("jdk.linux") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
-      setProperty("linuxJDK", getPathToBundledJDK(customJdkDir, p("jdk.linux"), ".tar.gz"))
+    jdkDir = new File("${home}/build/jdk/mac/custom")
+    if (p("jdk.mac") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("macCustomJDK", getPathToBundledJDK(jdkDir, p("jdk.mac"), ".tar.gz"))
+    }
+    jdkDir = new File("${home}/build/jdk/linux/custom")
+    if (p("jdk.linux") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("linuxJDK", getPathToBundledJDK(jdkDir, p("jdk.linux"), ".tar.gz"))
       extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux")
     }
   }
@@ -909,7 +918,7 @@ binding.setVariable("getPathToBundledJDK", { File jdkDir, String prefix, String 
   getChildren(jdkDir).each {
     if (it.getName().startsWith(prefix) && it.getName().endsWith(ext)) {
       JdkFileName = it.getAbsolutePath()
-      if (ext == ".tar.gz") {
+      if (ext.endsWith(".tar.gz")) {
         def OriginalJdkFileName = JdkFileName.substring(0, JdkFileName.length() - 3)
         JdkFileName = JdkFileName.substring(0, JdkFileName.length() - 7) + "_${buildNumber}.tar"
         if (new File(JdkFileName).exists()) { ant.delete(file: JdkFileName) }
@@ -1099,12 +1108,17 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, 
 
 binding.setVariable("extractRedistJre", { String jdk_file_name, String destination  ->
   def jre_redist = "${destination}"
-  ant.mkdir(dir: jre_redist)
-  if (jdk_file_name.endsWith(".tar")) {
-    ant.untar(dest: jre_redist, src: "${jdk_file_name}")
-  }
-  else {
-    ant.unzip(dest: jre_redist, src: "${jdk_file_name}")
+  def jdkArchive = new File(jdk_file_name)
+  if (jdkArchive.exists()) {
+    ant.mkdir(dir: jre_redist)
+    if (jdk_file_name.endsWith(".tar")) {
+      ant.untar(dest: jre_redist, src: "${jdk_file_name}")
+    }
+    else {
+      ant.unzip(dest: jre_redist, src: "${jdk_file_name}")
+    }
+  } else {
+     projectBuilder.error("${jdk_file_name} doesn't exist.")
   }
 })
 

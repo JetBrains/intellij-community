@@ -26,7 +26,7 @@
 
   <target name="compile" depends="init,clean">
     <mkdir dir="${out}"/>
-    <javac srcdir="${src}" destdir="${out}" source="1.6" target="1.6" encoding="UTF-8" debug="true" includeantruntime="false"/>
+    <javac srcdir="${src}" destdir="${out}" source="1.8" target="1.8" encoding="UTF-8" debug="true" includeantruntime="false"/>
   </target>
 
   <target name="dist" depends="init,compile">
@@ -39,7 +39,7 @@
 
   <target name="test-compile" depends="init,compile">
     <mkdir dir="${test-out}"/>
-    <javac srcdir="${test-src}" destdir="${test-out}" source="1.6" target="1.6" encoding="UTF-8" debug="true" includeantruntime="false">
+    <javac srcdir="${test-src}" destdir="${test-out}" source="1.8" target="1.8" encoding="UTF-8" debug="true" includeantruntime="false">
       <classpath path="${out}"/>
       <classpath refid="junit"/>
     </javac>

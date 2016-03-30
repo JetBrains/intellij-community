@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPropertiesSubPanel<B> {
+public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
   private JCheckBox mySuspendCheckBox;
   private JRadioButton mySuspendAll;
   private JRadioButton mySuspendThread;
@@ -47,7 +47,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   private Delegate myDelegate;
 
   @Override
-  public void init(Project project, final XBreakpointManager breakpointManager, @NotNull B breakpoint) {
+  public void init(Project project, final XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint) {
     super.init(project, breakpointManager, breakpoint);
 
     mySuspendCheckBox.addActionListener(new ActionListener() {

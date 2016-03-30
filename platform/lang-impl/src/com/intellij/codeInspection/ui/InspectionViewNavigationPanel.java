@@ -30,31 +30,64 @@ import java.awt.*;
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionViewNavigationPanel extends JPanel {
+public class InspectionViewNavigationPanel extends JPanel implements InspectionTreeLoadingProgressAware {
+  private final InspectionTreeNode myNode;
+  private final InspectionTree myTree;
+  private final JPanel myLinks;
+  private int myShownChildrenCount;
+
   public InspectionViewNavigationPanel(InspectionTreeNode node, InspectionTree tree) {
+    myNode = node;
+    myTree = tree;
     setLayout(new BorderLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
-    final String titleLabelText = getTitleText(node instanceof InspectionRootNode, true);
+    setBorder(IdeBorderFactory.createEmptyBorder(18, 12, 0, 0));
+    final String titleLabelText = getTitleText(myNode instanceof InspectionRootNode, true);
     add(new JBLabel(titleLabelText), BorderLayout.NORTH);
-    final JPanel links = new JPanel();
-    links.setLayout(new BoxLayout(links, BoxLayout.Y_AXIS));
-    links.add(Box.createVerticalStrut(JBUI.scale(10)));
-    add(BorderLayout.CENTER, links);
-    for (int i = 0; i < node.getChildCount(); i++) {
-      final TreeNode child = node.getChildAt(i);
-      final LinkLabel link = new LinkLabel(child.toString(), null) {
-        @Override
-        public void doClick() {
-          TreeUtil.selectInTree((DefaultMutableTreeNode)child, true, tree);
-        }
-      };
-      link.setBorder(IdeBorderFactory.createEmptyBorder(1, 17, 3, 1));
-      links.add(link);
-    }
+    myLinks = new JPanel();
+    myLinks.setLayout(new BoxLayout(myLinks, BoxLayout.Y_AXIS));
+
+    add(BorderLayout.CENTER, myLinks);
+    resetChildrenNavigation();
+  }
+
+  @Override
+  public void updateLoadingProgress() {
+    resetChildrenAndRepaint();
+  }
+
+  @Override
+  public void treeLoaded() {
+    resetChildrenAndRepaint();
   }
 
   @NotNull
   public static String getTitleText(boolean addGroupWord, boolean addColon) {
-    return "Select inspection " + (addGroupWord ? "group" : "") + " to see problems" + (addColon ? ":" : ".");
+    return "Select inspection" + (addGroupWord ? " group " : " ") + "to see problems" + (addColon ? ":" : ".");
+  }
+
+  private void resetChildrenNavigation() {
+    final int currentChildrenCount = myNode.getChildCount();
+    if (myShownChildrenCount != currentChildrenCount) {
+      myLinks.removeAll();
+      myLinks.add(Box.createVerticalStrut(JBUI.scale(10)));
+      for (int i = 0; i < currentChildrenCount; i++) {
+        final TreeNode child = myNode.getChildAt(i);
+        final LinkLabel link = new LinkLabel(child.toString(), null) {
+          @Override
+          public void doClick() {
+            TreeUtil.selectInTree((DefaultMutableTreeNode)child, true, myTree);
+          }
+        };
+        link.setBorder(IdeBorderFactory.createEmptyBorder(1, 17, 3, 1));
+        myLinks.add(link);
+      }
+      myShownChildrenCount = currentChildrenCount;
+    }
+  }
+
+  private void resetChildrenAndRepaint() {
+    resetChildrenNavigation();
+    revalidate();
+    repaint();
   }
 }

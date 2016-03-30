@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindFileByUrl() throws Exception {
+  public void testFindFileByUrl() throws IOException {
     File file1 = new File(PathManagerEx.getTestDataPath());
     file1 = new File(file1, "vfs");
     file1 = new File(file1, "findFileByUrl");
@@ -78,6 +78,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
     File file3 = new File(file1, "1.txt");
     file0 = VfsUtil.findFileByURL(file3.toURI().toURL());
+    assertNotNull(file0);
     String content = VfsUtilCore.loadText(file0);
     assertNotNull(file0);
     assertFalse(file0.isDirectory());
@@ -85,7 +86,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindRelativeFile() throws Exception {
+  public void testFindRelativeFile() throws IOException {
     File ioTestDataDir = new File(PathManagerEx.getTestDataPath());
     VirtualFile testDataDir = LocalFileSystem.getInstance().findFileByIoFile(ioTestDataDir);
     assertNotNull(testDataDir);
@@ -100,7 +101,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testRelativePath() throws Exception {
+  public void testRelativePath() {
     File root = new File(PathManagerEx.getTestDataPath());
     File testRoot = new File(new File(root, "vfs"), "relativePath");
     VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(testRoot);

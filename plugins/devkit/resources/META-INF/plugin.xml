@@ -76,7 +76,7 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <localInspection shortName="ComponentRegistrationProblems"
-                      key="inspections.registration.problems.name"
+                     key="inspections.registration.problems.name"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
@@ -92,6 +92,12 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection"/>
+    <localInspection language="JAVA"
+                     groupKey="inspections.group.name"
+                     displayName="Default StubBasedPsiElementBase.getParent() implementation"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.StubBasedPsiElementBaseGetParentInspection"/>
 
     <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
                      groupKey="inspections.group.name"
@@ -127,7 +133,7 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection"/>
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection" />
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"/>
     <localInspection language="JAVA" shortName="StatefulEp" displayName="Stateful Extension"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
@@ -141,6 +147,12 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="false" isInternal="true"
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"/>
+    <localInspection language="JAVA" shortName="QuickFixGetFamilyNameViolation"
+                     displayName="QuickFix's getFamilyName() implementation must not depend on a specific context"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspection"/>
 
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>

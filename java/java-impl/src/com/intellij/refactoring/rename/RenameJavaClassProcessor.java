@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   public static void findSubmemberHidesMemberCollisions(final PsiClass aClass, final String newName, final List<UsageInfo> result) {
     if (aClass.getParent() instanceof PsiClass) {
       PsiClass parent = (PsiClass)aClass.getParent();
-      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent, true).findAll();
+      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent).findAll();
       for (PsiClass inheritor : inheritors) {
         if (newName.equals(inheritor.getName())) {
           final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);

@@ -16,9 +16,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -121,12 +119,12 @@ public class LineStatusTracker {
   }
 
   @CalledInAwt
-  public void initialize(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
+  public void setBaseRevision(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
     myApplication.assertIsDispatchThread();
 
     synchronized (myLock) {
       try {
-        if (myInitialized || myReleased) return;
+        if (myReleased) return;
         if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
 
         myBaseRevisionNumber = baseRevisionNumber;
@@ -387,9 +385,8 @@ public class LineStatusTracker {
   }
 
   private void markFileUnchanged() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
+    // later to avoid saving inside document change event processing.
+    TransactionGuard.getInstance().submitTransactionLater(myProject, () -> {
         FileDocumentManager.getInstance().saveDocument(myDocument);
         boolean stillEmpty;
         synchronized (myLock) {
@@ -399,7 +396,6 @@ public class LineStatusTracker {
           // file was modified, and now it's not -> dirty local change
           myVcsDirtyScopeManager.fileDirty(myVirtualFile);
         }
-      }
     });
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -31,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -40,11 +40,11 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author peter
@@ -52,7 +52,7 @@ import java.util.List;
 public class EditorNotificationsImpl extends EditorNotifications {
   private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
   private static final Key<WeakReference<ProgressIndicator>> CURRENT_UPDATES = Key.create("CURRENT_UPDATES");
-  private static final BoundedTaskExecutor ourExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
   private final MergingUpdateQueue myUpdateMerger;
 
   public EditorNotificationsImpl(Project project) {
@@ -81,39 +81,36 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   @Override
   public void updateNotifications(@NotNull final VirtualFile file) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ProgressIndicator indicator = getCurrentProgress(file);
-        if (indicator != null) {
-          indicator.cancel();
-        }
-        file.putUserData(CURRENT_UPDATES, null);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      ProgressIndicator indicator = getCurrentProgress(file);
+      if (indicator != null) {
+        indicator.cancel();
+      }
+      file.putUserData(CURRENT_UPDATES, null);
 
-        if (myProject.isDisposed() || !file.isValid()) {
-          return;
-        }
+      if (myProject.isDisposed() || !file.isValid()) {
+        return;
+      }
 
-        indicator = new ProgressIndicatorBase();
-        final ReadTask task = createTask(indicator, file);
-        if (task == null) return;
+      indicator = new ProgressIndicatorBase();
+      final ReadTask task = createTask(indicator, file);
+      if (task == null) return;
 
-        file.putUserData(CURRENT_UPDATES, new WeakReference<ProgressIndicator>(indicator));
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          ReadTask.Continuation continuation = task.performInReadAction(indicator);
-          if (continuation != null) {
-            continuation.getAction().run();
-          }
+      file.putUserData(CURRENT_UPDATES, new WeakReference<>(indicator));
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        ReadTask.Continuation continuation = task.performInReadAction(indicator);
+        if (continuation != null) {
+          continuation.getAction().run();
         }
-        else {
-          ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, ourExecutor, task);
-        }
+      }
+      else {
+        ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, ourExecutor, task);
       }
     });
   }
 
   @Nullable
-  private ReadTask createTask(final ProgressIndicator indicator, @NotNull final VirtualFile file) {
+  private ReadTask createTask(@NotNull final ProgressIndicator indicator, @NotNull final VirtualFile file) {
     final FileEditor[] editors = FileEditorManager.getInstance(myProject).getAllEditors(file);
     if (editors.length == 0) return null;
 
@@ -144,26 +141,18 @@ public class EditorNotificationsImpl extends EditorNotifications {
         for (final FileEditor editor : editors) {
           for (final Provider<?> provider : providers) {
             final JComponent component = provider.createNotificationPanel(file, editor);
-            updates.add(new Runnable() {
-              @Override
-              public void run() {
-                updateNotification(editor, provider.getKey(), component);
-              }
-            });
+            updates.add(() -> updateNotification(editor, provider.getKey(), component));
           }
         }
 
-        return new Continuation(new Runnable() {
-          @Override
-          public void run() {
-            if (!isOutdated()) {
-              file.putUserData(CURRENT_UPDATES, null);
-              for (Runnable update : updates) {
-                update.run();
-              }
+        return new Continuation(() -> {
+          if (!isOutdated()) {
+            file.putUserData(CURRENT_UPDATES, null);
+            for (Runnable update : updates) {
+              update.run();
             }
           }
-        });
+        }, ModalityState.any());
       }
 
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
 public class XmlEmmetParser extends EmmetParser {
@@ -57,23 +58,23 @@ public class XmlEmmetParser extends EmmetParser {
   private boolean hasTagContext = false;
   private final Stack<String> tagLevel = new Stack<String>();
 
-  private static final Map<String, String> parentChildTagMapping = new HashMap<String, String>() {{
-    put("p", "span");
-    put("ul", "li");
-    put("ol", "li");
-    put("table", "tr");
-    put("tr", "td");
-    put("tbody", "tr");
-    put("thead", "tr");
-    put("tfoot", "tr");
-    put("colgroup", "col");
-    put("select", "option");
-    put("optgroup", "option");
-    put("audio", "source");
-    put("video", "source");
-    put("object", "param");
-    put("map", "area");
-  }};
+  private static final Map<String, String> parentChildTagMapping = ContainerUtil.newHashMap(
+    pair("p", "span"),
+    pair("ul", "li"),
+    pair("ol", "li"),
+    pair("table", "tr"),
+    pair("tr", "td"),
+    pair("tbody", "tr"),
+    pair("thead", "tr"),
+    pair("tfoot", "tr"),
+    pair("colgroup", "col"),
+    pair("select", "option"),
+    pair("optgroup", "option"),
+    pair("audio", "source"),
+    pair("video", "source"),
+    pair("object", "param"),
+    pair("map", "area"));
+
   private boolean isHtml;
 
   public XmlEmmetParser(List<ZenCodingToken> tokens,

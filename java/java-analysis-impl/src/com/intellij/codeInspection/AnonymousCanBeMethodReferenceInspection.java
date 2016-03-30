@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -25,12 +26,18 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.RedundantCastUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.Collections;
 
 /**
  * User: anna
  */
 public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance("#" + AnonymousCanBeMethodReferenceInspection.class.getName());
+
+  public boolean reportNotAnnotatedInterfaces = true;
 
   @Nls
   @NotNull
@@ -57,6 +64,12 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
     return "Anonymous2MethodRef";
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Report when interface is not annotated with @FunctionalInterface", this, "reportNotAnnotatedInterfaces");
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -64,7 +77,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
       @Override
       public void visitAnonymousClass(PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
-        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true)) {
+        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true, reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
           final PsiCallExpression callExpression =
@@ -116,11 +129,8 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           if (methods.length != 1) return;
 
           final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
-          final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection
-            .canBeMethodReferenceProblem(methods[0].getBody(), parameters, anonymousClass.getBaseClassType(), anonymousClass.getParent());
-          if (callExpression == null) return;
           final String methodRefText =
-            LambdaCanBeMethodReferenceInspection.createMethodReferenceText(callExpression, anonymousClass.getBaseClassType(), parameters);
+            LambdaCanBeMethodReferenceInspection.convertToMethodReference(methods[0].getBody(), parameters, anonymousClass.getBaseClassType(), anonymousClass.getParent());
 
           if (methodRefText != null) {
             final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();

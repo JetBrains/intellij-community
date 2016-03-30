@@ -15,21 +15,23 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 public class UserNameRegex implements Function<String, String> {
-  public static final UserNameRegex INSTANCE = new UserNameRegex();
+  @NotNull public static final UserNameRegex BASIC_INSTANCE = new UserNameRegex(false);
+  @NotNull public static final UserNameRegex EXTENDED_INSTANCE = new UserNameRegex(true);
+  @NotNull private static final char[] BASIC_REGEX_CHARS = new char[]{'.', '^', '$', '*', '[', ']'};
+  @NotNull public static final char[] EXTENDED_REGEX_CHARS = new char[]{'.', '^', '$', '*', '+', '-', '?', '(', ')', '[', ']', '{', '}', '|'};
+  private final boolean myExtended;
 
-  private UserNameRegex(){}
+  private UserNameRegex(boolean extended) {
+    myExtended = extended;
+  }
 
   @Override
   public String fun(String s) {
-    return "^" +
-           s +
-           "( <.*>)?$|^<" +
-           s +
-           "@.*>$|^" +
-           s +
-           "@.*$"; // either exact user name with any email or no name with exact email (on any domain)
+    return "^" + StringUtil.escapeChars(StringUtil.escapeBackSlashes(s), myExtended ? EXTENDED_REGEX_CHARS : BASIC_REGEX_CHARS) + "$";
   }
 }

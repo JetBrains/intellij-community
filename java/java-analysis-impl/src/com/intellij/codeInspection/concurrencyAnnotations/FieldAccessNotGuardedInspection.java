@@ -15,11 +15,14 @@
  */
 package com.intellij.codeInspection.concurrencyAnnotations;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +64,10 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
+      final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
+      if (parent instanceof PsiSynchronizedStatement) {
+        return;
+      }
       final PsiElement referent = expression.resolve();
       if (!(referent instanceof PsiField)) {
         return;
@@ -70,16 +77,23 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
       if (guard == null) {
         return;
       }
+      final PsiExpression guardExpression;
+      try {
+        guardExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(guard, field);
+      } catch (IncorrectOperationException ignore) {
+        return;
+      }
       final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-      if (containingMethod != null && JCiPUtil.isGuardedBy(containingMethod, guard)) {
-        return;
-      }
-      if (containingMethod != null && containingMethod.isConstructor()) {
-        return;
-      }
-      if ("this".equals(guard)) {
-        if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+      if (containingMethod != null) {
+        if (JCiPUtil.isGuardedBy(containingMethod, guard) || containingMethod.isConstructor()) {
           return;
+        }
+        if (containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED) && guardExpression instanceof PsiThisExpression) {
+          final PsiThisExpression thisExpression = (PsiThisExpression)guardExpression;
+          final PsiClass aClass = getClassFromThisExpression(thisExpression, field);
+          if (aClass == null || aClass.equals(containingMethod.getContainingClass())) {
+            return;
+          }
         }
       }
 
@@ -108,14 +122,87 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
         if (syncStatement == null) {
           break;
         }
-        final PsiExpression lockExpression = syncStatement.getLockExpression();
-        if (lockExpression != null && lockExpression.getText().equals(guard))    //TODO: this isn't quite right,
-        {
-          return;
+        final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(syncStatement.getLockExpression());
+        if (lockExpression == null) {
+          continue;
+        }
+        if (guardExpression instanceof PsiThisExpression) {
+          if (lockExpression instanceof PsiThisExpression) {
+            final PsiThisExpression thisExpression1 = (PsiThisExpression)guardExpression;
+            final PsiThisExpression thisExpression2 = (PsiThisExpression)lockExpression;
+            final PsiClass aClass1 = getClassFromThisExpression(thisExpression1, field);
+            final PsiClass aClass2 = getClassFromThisExpression(thisExpression2, expression);
+            if (aClass1 == null || aClass1.equals(aClass2)) {
+              return;
+            }
+          }
+          else if (lockExpression instanceof PsiReferenceExpression) {
+            final PsiExpression qualifierExpression = expression.getQualifierExpression();
+            if (qualifierExpression != null && PsiEquivalenceUtil.areElementsEquivalent(lockExpression, qualifierExpression)) {
+              return;
+            }
+          }
+        }
+        else if (guardExpression instanceof PsiReferenceExpression && lockExpression instanceof PsiReferenceExpression) {
+          final PsiReferenceExpression referenceExpression1 = (PsiReferenceExpression)guardExpression;
+          final PsiReferenceExpression referenceExpression2 = (PsiReferenceExpression)lockExpression;
+          final PsiElement target1 = referenceExpression1.resolve();
+          final PsiElement target2 = referenceExpression2.resolve();
+          if (target1 == null || target1.equals(target2)) {
+            final PsiExpression lockQualifier = referenceExpression2.getQualifierExpression();
+            if (referenceExpression1.getQualifierExpression() == null && lockQualifier != null) {
+              final PsiExpression qualifierExpression = expression.getQualifierExpression();
+              if (qualifierExpression != null && PsiEquivalenceUtil.areElementsEquivalent(lockQualifier, qualifierExpression)) {
+                return;
+              }
+            } else {
+              return;
+            }
+          }
+        }
+        else if (guardExpression instanceof PsiMethodCallExpression && lockExpression instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression methodCallExpression1 = (PsiMethodCallExpression)guardExpression;
+          final PsiMethodCallExpression methodCallExpression2 = (PsiMethodCallExpression)lockExpression;
+          if (methodCallExpression2.getArgumentList().getExpressions().length == 0) {
+            final PsiMethod method1 = methodCallExpression1.resolveMethod();
+            final PsiMethod method2 = methodCallExpression2.resolveMethod();
+            if (method1 == null || method1.equals(method2)) {
+              final PsiReferenceExpression methodExpression2 = methodCallExpression2.getMethodExpression();
+              final PsiExpression qualifierExpression1 = expression.getQualifierExpression();
+              final PsiExpression qualifierExpression2 = methodExpression2.getQualifierExpression();
+              if (qualifierExpression1 == null && qualifierExpression2 == null) {
+                return;
+              }
+              if (qualifierExpression1 != null && qualifierExpression2 != null &&
+                  PsiEquivalenceUtil.areElementsEquivalent(qualifierExpression1, qualifierExpression2)) {
+                return;
+              }
+            }
+          }
+        }
+        else if (guardExpression instanceof PsiClassObjectAccessExpression && lockExpression instanceof PsiClassObjectAccessExpression) {
+          final PsiClassObjectAccessExpression classObjectAccessExpression1 = (PsiClassObjectAccessExpression)guardExpression;
+          final PsiClassObjectAccessExpression classObjectAccessExpression2 = (PsiClassObjectAccessExpression)lockExpression;
+          final PsiClass aClass1 = PsiUtil.resolveClassInClassTypeOnly(classObjectAccessExpression1.getOperand().getType());
+          final PsiClass aClass2 = PsiUtil.resolveClassInClassTypeOnly(classObjectAccessExpression2.getOperand().getType());
+          if (aClass1 == null || aClass1.equals(aClass2)) {
+            return;
+          }
         }
         check = syncStatement;
       }
       myHolder.registerProblem(expression, "Access to field <code>#ref</code> outside of declared guards #loc");
+    }
+
+    private static PsiClass getClassFromThisExpression(PsiThisExpression thisExpression, PsiElement context) {
+      final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
+      if (qualifier == null) {
+        return PsiTreeUtil.getParentOfType(context, PsiClass.class);
+      }
+      else {
+        final PsiElement target = qualifier.resolve();
+        return target instanceof PsiClass ? (PsiClass)target : null;
+      }
     }
 
     @Nullable

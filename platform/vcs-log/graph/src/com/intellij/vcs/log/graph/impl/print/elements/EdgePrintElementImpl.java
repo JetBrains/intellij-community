@@ -105,5 +105,4 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
     result = 31 * result + (myHasArrow ? 1 : 0);
     return result;
   }
-
 }

@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -52,7 +53,7 @@ public enum LanguageLevel {
     .build();
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON34;
+  private static final LanguageLevel DEFAULT3 = PYTHON35;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
@@ -156,6 +157,12 @@ public enum LanguageLevel {
       return ((PyFile) containingFile).getLanguageLevel();
     }
     return getDefault();
+  }
+
+  @NotNull
+  public static LanguageLevel getLatest() {
+    //noinspection ConstantConditions
+    return ArrayUtil.getLastElement(values());
   }
 
   @Override

@@ -83,7 +83,9 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
-    if (c == '@' && file instanceof PsiJavaFile) {
+    if (!(file instanceof PsiJavaFile)) return Result.CONTINUE;
+
+    if (c == '@') {
       autoPopupJavadocLookup(project, editor);
     }
     else if (c == '#' || c == '.') {
@@ -94,16 +96,13 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     //important to calculate before inserting charTyped
     myJavaLTTyped = '<' == c &&
-                    file instanceof PsiJavaFile &&
                     !(file instanceof JspFile) &&
                     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                     PsiUtil.isLanguageLevel5OrHigher(file) &&
                     isAfterClassLikeIdentifierOrDot(offsetBefore, editor);
 
     if ('>' == c) {
-      if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
-          CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-               PsiUtil.isLanguageLevel5OrHigher(file)) {
+      if (!(file instanceof JspFile) && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && PsiUtil.isLanguageLevel5OrHigher(file)) {
         if (handleJavaGT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE)) return Result.STOP;
       }
     }

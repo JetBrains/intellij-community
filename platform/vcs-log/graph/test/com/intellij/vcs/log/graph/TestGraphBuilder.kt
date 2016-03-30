@@ -257,20 +257,18 @@ class TestPermanentGraphInfo(
     }
   }
 
-  object colorManager : GraphColorManager<Int> {
-    override fun getColorOfBranch(headCommit: Int): Int = headCommit
-
-    override fun getColorOfFragment(headCommit: Int?, magicIndex: Int): Int = magicIndex
-
-    override fun compareHeads(head1: Int, head2: Int): Int = head1.compareTo(head2)
-  }
-
   override fun getPermanentCommitsInfo() = commitInfo
-  override fun getPermanentLinearGraph() : PermanentLinearGraphImpl = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
+  override fun getLinearGraph() : PermanentLinearGraphImpl = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
   override fun getPermanentGraphLayout() = graphLayout
   override fun getBranchNodeIds() = branchNodes
+}
 
-  override fun getGraphColorManager() = colorManager
+class TestColorManager : GraphColorManager<Int> {
+  override fun getColorOfBranch(headCommit: Int): Int = headCommit
+
+  override fun getColorOfFragment(headCommit: Int?, magicIndex: Int): Int = magicIndex
+
+  override fun compareHeads(head1: Int, head2: Int): Int = head1.compareTo(head2)
 }
 
 class TestLinearController(val graph: LinearGraph) : LinearGraphController {
@@ -279,4 +277,4 @@ class TestLinearController(val graph: LinearGraph) : LinearGraphController {
   override fun performLinearGraphAction(action: LinearGraphController.LinearGraphAction) = throw UnsupportedOperationException()
 }
 
-fun LinearGraph.asVisibleGraph(): VisibleGraph<Int> = VisibleGraphImpl(TestLinearController(this), TestPermanentGraphInfo(this))
+fun LinearGraph.asVisibleGraph(): VisibleGraph<Int> = VisibleGraphImpl(TestLinearController(this), TestPermanentGraphInfo(this), TestColorManager())

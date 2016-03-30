@@ -18,10 +18,11 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -65,6 +66,11 @@ public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedT
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_7;
+    return LanguageLevel.JDK_1_8;
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

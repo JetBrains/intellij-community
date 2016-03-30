@@ -130,7 +130,21 @@ public class PythonSdkUpdater implements StartupActivity {
     if (!updateLocalSdkPaths(sdk, sdkModificator)) {
       return false;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+
+    final Application application = ApplicationManager.getApplication();
+
+    if (application.isUnitTestMode()) {
+      /**
+       * All actions we take after this line are dedicated to skeleton update process.
+       * Not all tests do need them.
+       * To find test API that updates skeleton, find usage of following method:
+       * {@link PySkeletonRefresher#refreshSkeletonsOfSdk(Project, Component, String, Sdk)}
+       */
+      return true;
+    }
+
+    application.invokeLater(new Runnable() {
       @Override
       public void run() {
         synchronized (ourLock) {

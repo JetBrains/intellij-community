@@ -121,7 +121,7 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       final PsiEllipsisType ellipsisType = (PsiEllipsisType)type1;
       final PsiType arrayType = ellipsisType.toArrayType();
       if (checkArray) {
-        if (arrayType.equals(type) || !arrayType.isAssignableFrom(type)) {
+        if (type.isAssignableFrom(arrayType) || !arrayType.isAssignableFrom(type)) {
           return;
         }
       }

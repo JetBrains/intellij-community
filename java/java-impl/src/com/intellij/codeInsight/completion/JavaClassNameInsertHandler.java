@@ -72,8 +72,9 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
 
-    if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null && shouldInsertFqnInJavadoc(item, file, project)) {
-      context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), getJavadocQualifiedName(psiClass));
+    String qname = psiClass.getQualifiedName();
+    if (qname != null && PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null && shouldInsertFqnInJavadoc(item, file, project)) {
+      context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), qname);
       return;
     }
 
@@ -120,11 +121,6 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (fillTypeArgs && context.getCompletionChar() != '(') {
       JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refEnd));
     }
-  }
-
-  private static String getJavadocQualifiedName(PsiClass psiClass) {
-    PsiClass containingClass = psiClass.getContainingClass();
-    return containingClass != null ? getJavadocQualifiedName(containingClass) + "#" + psiClass.getName() : psiClass.getQualifiedName();
   }
 
   private static boolean shouldInsertFqnInJavadoc(@NotNull JavaPsiClassReferenceElement item,

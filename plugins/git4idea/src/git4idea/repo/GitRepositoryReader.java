@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,20 +62,19 @@ class GitRepositoryReader {
   @NonNls private static final String REFS_HEADS_PREFIX = "refs/heads/";
   @NonNls private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
 
-  @NotNull private final File          myGitDir;         // .git/
   @NotNull private final File          myHeadFile;       // .git/HEAD
   @NotNull private final File          myRefsHeadsDir;   // .git/refs/heads/
   @NotNull private final File          myRefsRemotesDir; // .git/refs/remotes/
   @NotNull private final File          myPackedRefsFile; // .git/packed-refs
+  @NotNull private final GitRepositoryFiles myGitFiles;
 
   GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
-    myGitDir = new File(FileUtil.toSystemDependentName(gitFiles.getGitDirPath()));
-    DvcsUtil.assertFileExists(myGitDir, ".git directory not found in " + myGitDir);
-    myHeadFile = new File(FileUtil.toSystemDependentName(gitFiles.getHeadPath()));
-    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found in " + myGitDir);
-    myRefsHeadsDir = new File(FileUtil.toSystemDependentName(gitFiles.getRefsHeadsPath()));
-    myRefsRemotesDir = new File(FileUtil.toSystemDependentName(gitFiles.getRefsRemotesPath()));
-    myPackedRefsFile = new File(FileUtil.toSystemDependentName(gitFiles.getPackedRefsPath()));
+    myGitFiles = gitFiles;
+    myHeadFile = gitFiles.getHeadFile();
+    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found at " + myHeadFile);
+    myRefsHeadsDir = gitFiles.getRefsHeadsFile();
+    myRefsRemotesDir = gitFiles.getRefsRemotesFile();
+    myPackedRefsFile = gitFiles.getPackedRefsPath();
   }
 
   @NotNull
@@ -87,11 +87,7 @@ class GitRepositoryReader {
 
     GitLocalBranch currentBranch;
     String currentRevision;
-    if (!headInfo.isBranch) {
-      currentBranch = null;
-      currentRevision = headInfo.content;
-    }
-    else if (!localBranches.isEmpty()) {
+    if (!headInfo.isBranch || !localBranches.isEmpty()) {
       currentBranch = findCurrentBranch(headInfo, state, localBranches.keySet());
       currentRevision = getCurrentRevision(headInfo, currentBranch == null ? null : localBranches.get(currentBranch));
     }
@@ -102,6 +98,9 @@ class GitRepositoryReader {
     else {
       currentBranch = null;
       currentRevision = null;
+    }
+    if (currentBranch == null && currentRevision == null) {
+      LOG.error("Couldn't identify neither current branch nor current revision. .git/HEAD content: [" + headInfo.content + "]");
     }
     return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
   }
@@ -158,21 +157,20 @@ class GitRepositoryReader {
       currentBranch = headInfo.content;
     }
     else if (state == Repository.State.REBASING) {
-      currentBranch = readRebaseDirBranchFile("rebase-apply");
+      currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseApplyDir());
       if (currentBranch == null) {
-        currentBranch = readRebaseDirBranchFile("rebase-merge");
+        currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseMergeDir());
       }
     }
     return addRefsHeadsPrefixIfNeeded(currentBranch);
   }
 
   @Nullable
-  private String readRebaseDirBranchFile(@NonNls String rebaseDirName) {
-    File rebaseDir = new File(myGitDir, rebaseDirName);
+  private static String readRebaseDirBranchFile(@NonNls File rebaseDir) {
     if (rebaseDir.exists()) {
       File headName = new File(rebaseDir, "head-name");
       if (headName.exists()) {
-        return DvcsUtil.tryLoadFileOrReturn(headName, null);
+        return DvcsUtil.tryLoadFileOrReturn(headName, null, CharsetToolkit.UTF8);
       }
     }
     return null;
@@ -187,17 +185,11 @@ class GitRepositoryReader {
   }
 
   private boolean isMergeInProgress() {
-    File mergeHead = new File(myGitDir, "MERGE_HEAD");
-    return mergeHead.exists();
+    return myGitFiles.getMergeHeadFile().exists();
   }
 
   private boolean isRebaseInProgress() {
-    File f = new File(myGitDir, "rebase-apply");
-    if (f.exists()) {
-      return true;
-    }
-    f = new File(myGitDir, "rebase-merge");
-    return f.exists();
+    return myGitFiles.getRebaseApplyDir().exists() || myGitFiles.getRebaseMergeDir().exists();
   }
 
   @NotNull
@@ -206,7 +198,7 @@ class GitRepositoryReader {
       return Collections.emptyMap();
     }
     try {
-      String content = DvcsUtil.tryLoadFile(myPackedRefsFile);
+      String content = DvcsUtil.tryLoadFile(myPackedRefsFile, CharsetToolkit.UTF8);
       return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), new Function<String, Pair<String, String>>() {
         @Override
         public Pair<String, String> fun(String line) {
@@ -328,7 +320,7 @@ class GitRepositoryReader {
   private HeadInfo readHead() {
     String headContent;
     try {
-      headContent = DvcsUtil.tryLoadFile(myHeadFile);
+      headContent = DvcsUtil.tryLoadFile(myHeadFile, CharsetToolkit.UTF8);
     }
     catch (RepoStateException e) {
       LOG.error(e);

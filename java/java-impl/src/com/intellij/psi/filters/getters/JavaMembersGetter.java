@@ -44,8 +44,8 @@ public class JavaMembersGetter extends MembersGetter {
   }
 
   public void addMembers(boolean searchInheritors, final Consumer<LookupElement> results) {
+    addConstantsFromTargetClass(results, searchInheritors);
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
-      addConstantsFromTargetClass(results, searchInheritors);
       addConstantsFromReferencedClassesInSwitch(results);
     }
 

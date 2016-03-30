@@ -18,7 +18,6 @@ package com.siyeh.ipp.annotation;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
@@ -67,8 +66,7 @@ class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
     }
     final Project project = element.getProject();
     final Collection<PsiMethod> overridingMethods =
-      OverridingMethodsSearch.search(method,
-                                     GlobalSearchScope.allScope(project), true).findAll();
+      OverridingMethodsSearch.search(method).findAll();
     if (overridingMethods.isEmpty()) {
       return false;
     }

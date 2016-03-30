@@ -26,14 +26,15 @@ import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,17 +42,20 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SequentialModalProgressTask;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 /**
  * @author max
  */
-public class QuickFixAction extends AnAction {
+public class QuickFixAction extends AnAction implements CustomComponentAction {
   private static final Logger LOG = Logger.getInstance("#" + QuickFixAction.class.getName());
 
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
@@ -302,6 +306,32 @@ public class QuickFixAction extends AnAction {
       if (operationStatus.hasReadonlyFiles()) return false;
     }
     return true;
+  }
+
+  @Override
+  public JComponent createCustomComponent(Presentation presentation) {
+    final JButton button = new JButton(presentation.getText());
+    Icon icon = presentation.getIcon();
+    if (icon == null) {
+      icon = AllIcons.Actions.CreateFromUsage;
+    }
+    button.setEnabled(presentation.isEnabled());
+    button.setIcon(IconLoader.getTransparentIcon(icon, 0.75f));
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        actionPerformed(AnActionEvent.createFromAnAction(QuickFixAction.this,
+                                                         event,
+                                                         ActionPlaces.UNKNOWN,
+                                                         DataManager.getInstance().getDataContext(button)));
+        return true;
+      }
+    }.installOn(button);
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(7, 0, 8, 0));
+    panel.add(button);
+    return panel;
   }
 
   private class PerformFixesTask extends PerformFixesModalTask {

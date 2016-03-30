@@ -11,10 +11,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
 public class CCPushLesson extends DumbAwareAction {

@@ -1,0 +1,1 @@
+print "first is {<ref>}, second is {}".format(*[1, 2])

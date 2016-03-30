@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -36,6 +29,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
@@ -44,6 +38,9 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextUtil;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 public class InvocationExprent extends Exprent {
 
@@ -69,16 +66,22 @@ public class InvocationExprent extends Exprent {
   private String invokeDynamicClassSuffix;
   private int invocationTyp = INVOKE_VIRTUAL;
   private List<Exprent> lstParameters = new ArrayList<Exprent>();
+  private List<PooledConstant> bootstrapArguments;
 
   public InvocationExprent() {
     super(EXPRENT_INVOCATION);
   }
 
-  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamicInvocationType, Set<Integer> bytecodeOffsets) {
+  public InvocationExprent(int opcode,
+                           LinkConstant cn,
+                           List<PooledConstant> bootstrapArguments,
+                           ListStack<Exprent> stack,
+                           Set<Integer> bytecodeOffsets) {
     this();
 
     name = cn.elementname;
     classname = cn.classname;
+    this.bootstrapArguments = bootstrapArguments;
 
     switch (opcode) {
       case CodeConstants.opc_invokestatic:
@@ -115,6 +118,15 @@ public class InvocationExprent extends Exprent {
     }
 
     if (opcode == CodeConstants.opc_invokedynamic) {
+      int dynamicInvocationType = -1;
+      if (bootstrapArguments != null) {
+        if (bootstrapArguments.size() > 1) { // INVOKEDYNAMIC is used not only for lambdas
+          PooledConstant link = bootstrapArguments.get(1);
+          if (link instanceof LinkConstant) {
+            dynamicInvocationType = ((LinkConstant)link).index1;
+          }
+        }
+      }
       if (dynamicInvocationType == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic) {
         isStatic = true;
       }
@@ -154,6 +166,7 @@ public class InvocationExprent extends Exprent {
     ExprProcessor.copyEntries(lstParameters);
 
     addBytecodeOffsets(expr.bytecode);
+    bootstrapArguments = expr.getBootstrapArguments();
   }
 
   @Override
@@ -211,20 +224,20 @@ public class InvocationExprent extends Exprent {
     else {
 
       if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
-        VarExprent instvar = (VarExprent)instance;
-        VarVersionPair varpaar = new VarVersionPair(instvar);
+        VarExprent instVar = (VarExprent)instance;
+        VarVersionPair varPair = new VarVersionPair(instVar);
 
-        VarProcessor vproc = instvar.getProcessor();
-        if (vproc == null) {
-          MethodWrapper current_meth = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-          if (current_meth != null) {
-            vproc = current_meth.varproc;
+        VarProcessor varProc = instVar.getProcessor();
+        if (varProc == null) {
+          MethodWrapper currentMethod = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+          if (currentMethod != null) {
+            varProc = currentMethod.varproc;
           }
         }
 
         String this_classname = null;
-        if (vproc != null) {
-          this_classname = vproc.getThisVars().get(varpaar);
+        if (varProc != null) {
+          this_classname = varProc.getThisVars().get(varPair);
         }
 
         if (this_classname != null) {
@@ -321,7 +334,7 @@ public class InvocationExprent extends Exprent {
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
-      if (sigFields == null) {
+      if (sigFields == null || sigFields.get(i) == null) {
         if (!firstParameter) {
           buf.append(", ");
         }
@@ -492,46 +505,42 @@ public class InvocationExprent extends Exprent {
     return invokeDynamicClassSuffix;
   }
 
+  public List<PooledConstant> getBootstrapArguments() {
+    return bootstrapArguments;
+  }
+
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
-  
-  public boolean match(MatchNode matchNode, MatchEngine engine) {
 
-    if(!super.match(matchNode, engine)) {
+  @Override
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
-    
-    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+
+    for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
       RuleValue value = rule.getValue();
-      
-      switch(rule.getKey()) {
-      case EXPRENT_INVOCATION_PARAMETER:
-        if(value.isVariable()) {
-          if(value.parameter < lstParameters.size()) {
-            if(!engine.checkAndSetVariableValue(value.value.toString(), lstParameters.get(value.parameter))) {
-              return false;
-            }
-          } else {
-            return false;
-          }
-        }
-        break;
-      case EXPRENT_INVOCATION_CLASS:
-        if(!value.value.equals(this.classname)) {
+
+      MatchProperties key = rule.getKey();
+      if (key == MatchProperties.EXPRENT_INVOCATION_PARAMETER) {
+        if (value.isVariable() && (value.parameter >= lstParameters.size() ||
+                                   !engine.checkAndSetVariableValue(value.value.toString(), lstParameters.get(value.parameter)))) {
           return false;
         }
-        break;
-      case EXPRENT_INVOCATION_SIGNATURE:
-        if(!value.value.equals(this.name + this.stringDescriptor)) {
-          return false;
-        }
-        break;
       }
-      
+      else if (key == MatchProperties.EXPRENT_INVOCATION_CLASS) {
+        if (!value.value.equals(this.classname)) {
+          return false;
+        }
+      }
+      else if (key == MatchProperties.EXPRENT_INVOCATION_SIGNATURE) {
+        if (!value.value.equals(this.name + this.stringDescriptor)) {
+          return false;
+        }
+      }
     }
-    
+
     return true;
   }
-
 }

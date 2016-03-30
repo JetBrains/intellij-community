@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,8 +70,20 @@ public class ChangesUtil {
     return revision == null ? null : revision.getFile();
   }
 
-  public static AbstractVcs getVcsForChange(Change change, final Project project) {
+  @Nullable
+  public static AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
+  }
+
+  @NotNull
+  public static Set<AbstractVcs> getAffectedVcses(@NotNull Collection<Change> changes, @NotNull final Project project) {
+    return ContainerUtil.map2SetNotNull(changes, new NullableFunction<Change, AbstractVcs>() {
+      @Nullable
+      @Override
+      public AbstractVcs fun(@NotNull Change change) {
+        return getVcsForChange(change, project);
+      }
+    });
   }
 
   public static AbstractVcs getVcsForFile(VirtualFile file, Project project) {
@@ -91,7 +104,7 @@ public class ChangesUtil {
     @NotNull private final Set<String> myDuplicatesControlSet = new HashSet<String>();
 
     public void add(@NotNull FilePath file) {
-      final String path = file.getIOFile().getAbsolutePath();
+      final String path = file.getPath();
       if (! myDuplicatesControlSet.contains(path)) {
         myResult.add(file);
         myDuplicatesControlSet.add(path);

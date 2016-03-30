@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.intellij.xdebugger.stepping;
 
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,11 +38,17 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
   public abstract List<Variant> computeSmartStepVariants(@NotNull XSourcePosition position);
 
   /**
-   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
+   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSuspendContext)}
    * when <code>variant</code> function/method is reached
    * @param variant selected variant
    */
-  public abstract void startStepInto(@NotNull Variant variant);
+  public void startStepInto(@NotNull Variant variant) {
+    throw new AbstractMethodError();
+  }
+
+  public void startStepInto(@NotNull Variant variant, @Nullable XSuspendContext context) {
+    startStepInto(variant);
+  }
 
   /**
    * @return title for popup which will be shown to select method/function

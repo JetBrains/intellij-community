@@ -73,9 +73,13 @@ public class GeneralCommandLineTest {
     }
   }
 
+  protected GeneralCommandLine createCommandLine(String... command) {
+    return new GeneralCommandLine(command);
+  }
+
   @Test
   public void printCommandLine() {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine commandLine = createCommandLine();
     commandLine.setExePath("e x e path");
     commandLine.addParameter("with space");
     commandLine.addParameter("\"quoted\"");
@@ -106,7 +110,7 @@ public class GeneralCommandLineTest {
     }
 
     try {
-      String output = execAndGetOutput(new GeneralCommandLine(script.getPath()));
+      String output = execAndGetOutput(createCommandLine(script.getPath()));
       assertEquals(mark + "\n", StringUtil.convertLineSeparators(output));
     }
     finally {
@@ -156,7 +160,7 @@ public class GeneralCommandLineTest {
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG);
     File script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*");
     try {
-      GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "call", script.getAbsolutePath());
+      GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "call", script.getAbsolutePath());
       commandLine.addParameters(ARGUMENTS);
       String output = execHelper(pair(commandLine, command.second));
       checkParamPassing(output, ARGUMENTS);
@@ -181,7 +185,7 @@ public class GeneralCommandLineTest {
     assumeTrue(SystemInfo.isWindows);
 
     String string = "http://localhost/wtf?a=b&c=d";
-    String echo = ExecUtil.execAndReadLine(new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/c", "echo", string));
+    String echo = ExecUtil.execAndReadLine(createCommandLine(ExecUtil.getWindowsShellName(), "/c", "echo", string));
     assertEquals('"' + string + '"', echo);
   }
 
@@ -193,7 +197,7 @@ public class GeneralCommandLineTest {
     for (String scriptExt : new String[]{".cmd", ".bat"}) {
       File script = ExecUtil.createTempExecutableScript(scriptPrefix, scriptExt, "@echo %1\n");
       String param = "a&b";
-      GeneralCommandLine commandLine = new GeneralCommandLine(script.getAbsolutePath(), param);
+      GeneralCommandLine commandLine = createCommandLine(script.getAbsolutePath(), param);
       String text = commandLine.getPreparedCommandLine(Platform.WINDOWS);
       assertEquals(commandLine.getExePath() + "\n" + StringUtil.wrapWithDoubleQuote(param), text);
       try {
@@ -211,14 +215,14 @@ public class GeneralCommandLineTest {
     assumeTrue(SystemInfo.isWindows);
 
     String param = "a&b";
-    GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", param);
+    GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", param);
     String output = execAndGetOutput(commandLine);
     assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
   }
 
   @Test
   public void hackyEnvMap() {
-    Map<String, String> env = new GeneralCommandLine().getEnvironment();
+    Map<String, String> env = createCommandLine().getEnvironment();
 
     //noinspection ConstantConditions
     env.putAll(null);
@@ -268,21 +272,22 @@ public class GeneralCommandLineTest {
 
 
   private static String execAndGetOutput(GeneralCommandLine commandLine) throws ExecutionException {
-    commandLine.setRedirectErrorStream(true);
     ProcessOutput output = ExecUtil.execAndGetOutput(commandLine);
-    String stdout = output.getStdout();
-    assertEquals("Command:\n" + commandLine.getCommandLineString() + "\nOutput:\n" + stdout, 0, output.getExitCode());
-    return stdout;
+    int ec = output.getExitCode();
+    if (ec != 0) {
+      fail("Command:\n" + commandLine.getCommandLineString() + "\nStdOut:\n" + output.getStdout() + "\nStdErr:\n" + output.getStderr());
+    }
+    return output.getStdout();
   }
 
-  private static Pair<GeneralCommandLine, File> makeHelperCommand(@Nullable File copyTo,
-                                                                  @MagicConstant(stringValues = {CommandTestHelper.ARG, CommandTestHelper.ENV}) String mode,
-                                                                  String... args) throws IOException, URISyntaxException {
+  private Pair<GeneralCommandLine, File> makeHelperCommand(@Nullable File copyTo,
+                                                           @MagicConstant(stringValues = {CommandTestHelper.ARG, CommandTestHelper.ENV}) String mode,
+                                                           String... args) throws IOException, URISyntaxException {
     String className = CommandTestHelper.class.getName();
     URL url = GeneralCommandLine.class.getClassLoader().getResource(className.replace(".", "/") + ".class");
     assertNotNull(url);
 
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine commandLine = createCommandLine();
     commandLine.setExePath(System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java"));
 
     String encoding = System.getProperty("file.encoding");
@@ -311,15 +316,13 @@ public class GeneralCommandLineTest {
 
     commandLine.addParameters(mode, CommandTestHelper.OUT, out.getPath());
     commandLine.addParameters(args);
-    commandLine.setRedirectErrorStream(true);
 
     return pair(commandLine, out);
   }
 
   private static String execHelper(Pair<GeneralCommandLine, File> pair) throws IOException, ExecutionException {
     try {
-      ProcessOutput output = ExecUtil.execAndGetOutput(pair.first);
-      assertEquals("Command:\n" + pair.first.getCommandLineString() + "\nOutput:\n" + output.getStdout(), 0, output.getExitCode());
+      execAndGetOutput(pair.first);
       return FileUtil.loadFile(pair.second, CommandTestHelper.ENC);
     }
     finally {

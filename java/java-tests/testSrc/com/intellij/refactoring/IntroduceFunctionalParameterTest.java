@@ -16,12 +16,11 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -69,6 +68,10 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
     doTest();
   }
 
+  public void testPartialString() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -97,15 +100,7 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
       myEditor.getSettings().setVariableInplaceRenameEnabled(false);
       final SelectionModel selectionModel = getEditor().getSelectionModel();
       if (selectionModel.hasSelection()) {
-        final int selectionStart = selectionModel.getSelectionStart();
-        final int selectionEnd = selectionModel.getSelectionEnd();
-        PsiElement[] elements = CodeInsightUtil.findStatementsInRange(getFile(), selectionStart, selectionEnd);
-        if (elements.length == 0) {
-          final PsiExpression expression = CodeInsightUtil.findExpressionInRange(getFile(), selectionStart, selectionEnd);
-          if (expression != null) {
-            elements = new PsiElement[] {expression};
-          }
-        }
+        PsiElement[] elements = ExtractMethodHandler.getElements(getProject(), getEditor(), getFile());
         new IntroduceParameterHandler().introduceStrategy(getProject(), getEditor(), getFile(), elements);
       }
       checkResultByFile("/refactoring/introduceFunctionalParameter/after" + getTestName(false) + ".java");

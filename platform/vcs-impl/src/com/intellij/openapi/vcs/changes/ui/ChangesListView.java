@@ -262,16 +262,24 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
-        if (path.getPathCount() > 1) {
-          ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
-          if (tag == null || firstNode.getUserObject() == tag) {
-            ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-            files.addAll(node.getAllFilesUnder());
-          }
+        if (isUnderTag(path, tag)) {
+          ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
+          files.addAll(node.getAllFilesUnder());
         }
       }
     }
     return ContainerUtil.newArrayList(files);
+  }
+
+  static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
+    boolean result = false;
+
+    if (path.getPathCount() > 1) {
+      ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
+      result = tag == null || firstNode.getUserObject() == tag;
+    }
+
+    return result;
   }
 
   @NotNull
@@ -280,12 +288,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
-        if (path.getPathCount() > 1) {
-          ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
-          if (tag == null || firstNode.getUserObject() == tag) {
-            ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-            files.addAll(node.getAllFilePathsUnder());
-          }
+        if (isUnderTag(path, tag)) {
+          ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
+          files.addAll(node.getAllFilePathsUnder());
         }
       }
     }
@@ -297,13 +302,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
-        if (path.getPathCount() > 1) {
-          ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
-          if (firstNode.getUserObject() == TreeModelBuilder.LOCALLY_DELETED_NODE) {
-            ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-            final List<LocallyDeletedChange> objectsUnder = node.getAllObjectsUnder(LocallyDeletedChange.class);
-            files.addAll(objectsUnder);
-          }
+        if (isUnderTag(path, TreeModelBuilder.LOCALLY_DELETED_NODE)) {
+          ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
+          files.addAll(node.getAllObjectsUnder(LocallyDeletedChange.class));
         }
       }
     }

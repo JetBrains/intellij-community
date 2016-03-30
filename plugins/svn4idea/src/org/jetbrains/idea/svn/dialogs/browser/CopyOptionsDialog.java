@@ -71,10 +71,10 @@ public class CopyOptionsDialog extends DialogWrapper {
     createUI();
 
     if (copy) {
-      myTargetURL.setForeground(FileStatus.COLOR_ADDED);
+      myTargetURL.setForeground(FileStatus.ADDED.getColor());
       setOKButtonText("Copy");
     } else {
-      myTargetURL.setForeground(FileStatus.COLOR_MODIFIED);
+      myTargetURL.setForeground(FileStatus.MODIFIED.getColor());
       setOKButtonText("Move");
     }
 

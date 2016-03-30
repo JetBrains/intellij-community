@@ -20,22 +20,24 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -43,6 +45,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.Processor;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +60,9 @@ import java.util.List;
  * @author peter
  */
 class EventLogConsole {
+  private static final Key<String> GROUP_ID = Key.create("GROUP_ID");
+  private static final Key<String> NOTIFICATION_ID = Key.create("NOTIFICATION_ID");
+
   private final NotNullLazyValue<Editor> myLogEditor = new NotNullLazyValue<Editor>() {
     @NotNull
     @Override
@@ -99,7 +105,8 @@ class EventLogConsole {
     editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();
-        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_POPUP, createPopupActions(actionManager, clearLog));
+        DefaultActionGroup actions = createPopupActions(actionManager, clearLog, editor, event);
+        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_POPUP, actions);
         final MouseEvent mouseEvent = event.getMouseEvent();
         menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
       }
@@ -107,12 +114,81 @@ class EventLogConsole {
     return editor;
   }
 
-  private DefaultActionGroup createPopupActions(ActionManager actionManager, ClearLogAction action) {
+  private static DefaultActionGroup createPopupActions(ActionManager actionManager,
+                                                       ClearLogAction action,
+                                                       EditorEx editor,
+                                                       EditorMouseEvent event) {
     AnAction[] children = ((ActionGroup)actionManager.getAction(IdeActions.GROUP_CONSOLE_EDITOR_POPUP)).getChildren(null);
-    DefaultActionGroup group = new DefaultActionGroup(children);
+    DefaultActionGroup group = new DefaultActionGroup();
+    addConfigureNotificationAction(editor, event, group);
+    group.addAll(children);
     group.addSeparator();
     group.add(action);
     return group;
+  }
+
+  private static void addConfigureNotificationAction(@NotNull EditorEx editor,
+                                                     @NotNull EditorMouseEvent event,
+                                                     @NotNull DefaultActionGroup actions) {
+    LogicalPosition position = editor.xyToLogicalPosition(event.getMouseEvent().getPoint());
+    if (EditorUtil.inVirtualSpace(editor, position)) {
+      return;
+    }
+    int offset = editor.logicalPositionToOffset(position);
+    editor.getMarkupModel().processRangeHighlightersOverlappingWith(offset, offset, new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(RangeHighlighterEx rangeHighlighter) {
+        String groupId = GROUP_ID.get(rangeHighlighter);
+        if (groupId != null) {
+          addConfigureNotificationAction(actions, groupId);
+          return false;
+        }
+        return true;
+      }
+    });
+  }
+
+  private static void addConfigureNotificationAction(@NotNull DefaultActionGroup actions, @NotNull String groupId) {
+    DefaultActionGroup displayTypeGroup = new DefaultActionGroup("Notification Display Type", true);
+    NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
+    NotificationDisplayType current = settings.getDisplayType();
+
+    for (NotificationDisplayType type : NotificationDisplayType.values()) {
+      if (type != NotificationDisplayType.TOOL_WINDOW ||
+          NotificationsConfigurationImpl.getInstanceImpl().hasToolWindowCapability(groupId)) {
+        displayTypeGroup.add(new DisplayTypeAction(settings, type, current));
+      }
+    }
+
+    actions.add(displayTypeGroup);
+    actions.addSeparator();
+  }
+
+  private static class DisplayTypeAction extends ToggleAction {
+    private final NotificationSettings mySettings;
+    private final NotificationDisplayType myType;
+    private final NotificationDisplayType myCurrent;
+
+    public DisplayTypeAction(@NotNull NotificationSettings settings,
+                             @NotNull NotificationDisplayType type,
+                             @NotNull NotificationDisplayType current) {
+      super(type.getTitle());
+      mySettings = settings;
+      myType = type;
+      myCurrent = current;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myType == myCurrent;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      if (state) {
+        NotificationsConfigurationImpl.getInstanceImpl().changeSettings(mySettings.withDisplayType(myType));
+      }
+    }
   }
 
   void doPrintNotification(final Notification notification) {
@@ -144,7 +220,10 @@ class EventLogConsole {
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
     int layer = HighlighterLayer.CARET_ROW + 1;
-    editor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter =
+      editor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+    GROUP_ID.set(highlighter, notification.getGroupId());
+    NOTIFICATION_ID.set(highlighter, notification.id);
 
     for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
       final RangeHighlighter rangeHighlighter = myHyperlinkSupport.getValue()
@@ -215,6 +294,22 @@ class EventLogConsole {
 
   public Editor getConsoleEditor() {
     return myLogEditor.getValue();
+  }
+
+  public void showNotification(@NotNull final String id) {
+    final EditorEx editor = (EditorEx)getConsoleEditor();
+    editor.getMarkupModel()
+      .processRangeHighlightersOverlappingWith(0, editor.getDocument().getTextLength(), new Processor<RangeHighlighterEx>() {
+        @Override
+        public boolean process(RangeHighlighterEx rangeHighlighter) {
+          if (id.equals(NOTIFICATION_ID.get(rangeHighlighter))) {
+            editor.getCaretModel().moveToOffset(rangeHighlighter.getStartOffset());
+            editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
+            return false;
+          }
+          return true;
+        }
+      });
   }
 
   @Nullable

@@ -527,6 +527,30 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(before, after);
   }
 
+  public void testDoNotMergeCommentLines() {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+
+    doClassTest(
+      "/**\n" +
+      " * Some comment\n" +
+      " * 2016\n" +
+      " * Date: Mar 03, 2016\n" +
+      " *\n" +
+      " */\n" +
+      "     public class TestCase {\n" +
+      "}",
+      
+      "/**\n" +
+      " * Some comment\n" +
+      " * 2016\n" +
+      " * Date: Mar 03, 2016\n" +
+      " */\n" +
+      "public class TestCase {\n" +
+      "}"
+    );
+  }
+
   public void testSeeTagAlignment() throws Exception {
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;

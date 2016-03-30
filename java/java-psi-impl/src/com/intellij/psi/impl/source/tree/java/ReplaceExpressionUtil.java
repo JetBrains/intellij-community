@@ -64,7 +64,7 @@ public class ReplaceExpressionUtil {
     else if (i == JavaElementType.POSTFIX_EXPRESSION) {
       return priority <= parentPriority;
     }
-    else if (i == JavaElementType.REFERENCE_EXPRESSION) {
+    else if (i == JavaElementType.REFERENCE_EXPRESSION || i == JavaElementType.METHOD_REF_EXPRESSION) {
       return priority < parentPriority;
     }
     else if (i == JavaElementType.METHOD_CALL_EXPRESSION) {
@@ -87,8 +87,7 @@ public class ReplaceExpressionUtil {
              i == JavaElementType.THIS_EXPRESSION ||
              i == JavaElementType.SUPER_EXPRESSION ||
              i == JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION ||
-             i == JavaElementType.LAMBDA_EXPRESSION ||
-             i == JavaElementType.METHOD_REF_EXPRESSION ) {
+             i == JavaElementType.LAMBDA_EXPRESSION) {
       return false;
     }
 

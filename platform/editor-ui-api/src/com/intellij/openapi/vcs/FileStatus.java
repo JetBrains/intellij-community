@@ -22,42 +22,38 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public interface FileStatus {
-  Color COLOR_NOT_CHANGED = null; // deliberately null, do not use hardcoded Color.BLACK
-  Color COLOR_NOT_CHANGED_RECURSIVE = new Color(138, 164, 200);
-  Color COLOR_NOT_CHANGED_IMMEDIATE = new Color(50, 100, 180);
+  /**
+   * @deprecated Use FileStatus.getColor() instead
+   */
+  @Deprecated Color COLOR_NOT_CHANGED = null; // deliberately null, do not use hardcoded Color.BLACK
+  @Deprecated Color COLOR_NOT_CHANGED_RECURSIVE = new Color(138, 164, 200);
+  @Deprecated Color COLOR_NOT_CHANGED_IMMEDIATE = new Color(50, 100, 180);
+  @Deprecated Color COLOR_MERGE = new Color(117, 3, 220);
+  @Deprecated Color COLOR_MODIFIED = new Color(0, 50, 160);
+  @Deprecated Color COLOR_MISSING = Gray._97;
+  @Deprecated Color COLOR_ADDED = new Color(10, 119, 0);
+  @Deprecated Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
+  @Deprecated Color COLOR_HIJACKED = Color.ORANGE.darker();
+  @Deprecated Color COLOR_SWITCHED = new Color(8, 151, 143);
+  @Deprecated Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
-  Color COLOR_MERGE = new Color(117, 3, 220);
-  Color COLOR_MODIFIED = new Color(0, 50, 160);
-  Color COLOR_MISSING = Gray._97;
-  Color COLOR_ADDED = new Color(10, 119, 0);
-  Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
-  Color COLOR_HIJACKED = Color.ORANGE.darker();
-  Color COLOR_SWITCHED = new Color(8, 151, 143);
-  Color COLOR_UNKNOWN = new Color(153, 51, 0);
-
-  FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"), COLOR_NOT_CHANGED);
-  FileStatus NOT_CHANGED_IMMEDIATE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_IMMEDIATE", VcsBundle.message(
-    "file.status.name.up.to.date.immediate.children"), COLOR_NOT_CHANGED_IMMEDIATE);
-  FileStatus NOT_CHANGED_RECURSIVE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_RECURSIVE", VcsBundle.message(
-    "file.status.name.up.to.date.recursive.children"), COLOR_NOT_CHANGED_RECURSIVE);
-  FileStatus DELETED = FileStatusFactory.getInstance().createFileStatus("DELETED", VcsBundle.message("file.status.name.deleted"), COLOR_MISSING);
-  FileStatus MODIFIED = FileStatusFactory.getInstance().createFileStatus("MODIFIED", VcsBundle.message("file.status.name.modified"), COLOR_MODIFIED);
-  FileStatus ADDED = FileStatusFactory.getInstance().createFileStatus("ADDED", VcsBundle.message("file.status.name.added"), COLOR_ADDED);
-  FileStatus MERGE = FileStatusFactory.getInstance().createFileStatus("MERGED", VcsBundle.message("file.status.name.merged"), COLOR_MERGE);
-  FileStatus UNKNOWN = FileStatusFactory.getInstance().createFileStatus("UNKNOWN", VcsBundle.message("file.status.name.unknown"), COLOR_UNKNOWN);
-  FileStatus IGNORED = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_IGNORED", VcsBundle.message("file.status.name.ignored"), new Color(114, 114, 56));
-  FileStatus HIJACKED = FileStatusFactory.getInstance().createFileStatus("HIJACKED", VcsBundle.message("file.status.name.hijacked"), COLOR_HIJACKED);
-  FileStatus MERGED_WITH_CONFLICTS = FileStatusFactory.getInstance()
-   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"), Color.red);
-  FileStatus MERGED_WITH_BOTH_CONFLICTS = FileStatusFactory.getInstance()
-   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.both.conflicts"), Color.red);
-  FileStatus MERGED_WITH_PROPERTY_CONFLICTS = FileStatusFactory.getInstance()
-   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS", VcsBundle.message("file.status.name.merged.with.property.conflicts"), Color.red);
-  FileStatus DELETED_FROM_FS = FileStatusFactory.getInstance()
-   .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", VcsBundle.message("file.status.name.deleted.from.file.system"),
-                     new Color(119, 56, 149));
-  FileStatus SWITCHED = FileStatusFactory.getInstance().createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"), COLOR_SWITCHED);
-  FileStatus OBSOLETE = FileStatusFactory.getInstance().createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.obsolete"), COLOR_OUT_OF_DATE);
+  FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"));
+  FileStatus NOT_CHANGED_IMMEDIATE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_IMMEDIATE", VcsBundle.message("file.status.name.up.to.date.immediate.children"));
+  FileStatus NOT_CHANGED_RECURSIVE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_RECURSIVE", VcsBundle.message("file.status.name.up.to.date.recursive.children"));
+  FileStatus DELETED = FileStatusFactory.getInstance().createFileStatus("DELETED", VcsBundle.message("file.status.name.deleted"));
+  FileStatus MODIFIED = FileStatusFactory.getInstance().createFileStatus("MODIFIED", VcsBundle.message("file.status.name.modified"));
+  FileStatus ADDED = FileStatusFactory.getInstance().createFileStatus("ADDED", VcsBundle.message("file.status.name.added"));
+  FileStatus MERGE = FileStatusFactory.getInstance().createFileStatus("MERGED", VcsBundle.message("file.status.name.merged"));
+  FileStatus UNKNOWN = FileStatusFactory.getInstance().createFileStatus("UNKNOWN", VcsBundle.message("file.status.name.unknown"));
+  FileStatus IGNORED = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_IGNORED", VcsBundle.message("file.status.name.ignored"));
+  FileStatus HIJACKED = FileStatusFactory.getInstance().createFileStatus("HIJACKED", VcsBundle.message("file.status.name.hijacked"));
+  FileStatus MERGED_WITH_CONFLICTS = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"));
+  FileStatus MERGED_WITH_BOTH_CONFLICTS = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.both.conflicts"));
+  FileStatus MERGED_WITH_PROPERTY_CONFLICTS = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS", VcsBundle.message("file.status.name.merged.with.property.conflicts"));
+  FileStatus DELETED_FROM_FS = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", VcsBundle.message("file.status.name.deleted.from.file.system"));
+  FileStatus SWITCHED = FileStatusFactory.getInstance().createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"));
+  FileStatus OBSOLETE = FileStatusFactory.getInstance().createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.obsolete"));
+  FileStatus SUPPRESSED = FileStatusFactory.getInstance().createFileStatus("SUPPRESSED", VcsBundle.message("file.status.name.suppressed"));
 
   String getText();
 

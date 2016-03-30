@@ -16,7 +16,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
-import com.jetbrains.edu.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -47,12 +47,6 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
   @Override
   public String getName() {
     return "Educational";
-  }
-
-  @Nullable
-  @Override
-  public Object showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
-    return null;
   }
 
   @Nullable

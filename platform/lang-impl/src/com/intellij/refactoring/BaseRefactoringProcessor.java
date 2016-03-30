@@ -543,7 +543,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      LOG.info(new Exception());
+      LOG.error("Refactorings should not be started inside write action\n because they start progress inside and any read action from the progress task would cause the deadlock", new Exception());
       DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
         @Override
         public void run() {

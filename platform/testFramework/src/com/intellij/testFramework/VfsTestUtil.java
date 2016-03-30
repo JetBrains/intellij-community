@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.PathUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -39,8 +46,7 @@ import java.io.IOException;
 public class VfsTestUtil {
   public static final Key<String> TEST_DATA_FILE_PATH = Key.create("TEST_DATA_FILE_PATH");
 
-  private VfsTestUtil() {
-  }
+  private VfsTestUtil() { }
 
   public static VirtualFile createFile(final VirtualFile root, final String relativePath) {
     return createFile(root, relativePath, "");
@@ -149,5 +155,40 @@ public class VfsTestUtil {
                   "     path " + suffixPath + "\n" +
                   "real path " + realSuffixPath);
     }
+  }
+
+  @NotNull
+  public static List<VFileEvent> getEvents(@NotNull Runnable action) {
+    List<VFileEvent> allEvents = new ArrayList<>();
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        allEvents.addAll(events);
+      }
+    });
+    try {
+      action.run();
+    }
+    finally {
+      connection.disconnect();
+    }
+
+    return allEvents;
+  }
+
+  @NotNull
+  public static List<String> print(@NotNull List<? extends VFileEvent> events) {
+    return events.stream().map(VfsTestUtil::print).collect(Collectors.toList());
+  }
+
+  private static String print(VFileEvent e) {
+    char type = '?';
+    if (e instanceof VFileCreateEvent) type = 'C';
+    else if (e instanceof VFileDeleteEvent) type = 'D';
+    else if (e instanceof VFileContentChangeEvent) type = 'U';
+    else if (e instanceof VFilePropertyChangeEvent) type = 'P';
+    return type + " : " + e.getPath();
   }
 }

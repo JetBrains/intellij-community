@@ -76,7 +76,7 @@ public class DescriptorTree {
     }
 
     List<NodeDescriptor> children = myChildrenMap.get(parent);
-    return children != null ? children : Collections.<NodeDescriptor>emptyList();
+    return children != null ? children : Collections.emptyList();
   }
 
   public void dfst(DFSTWalker walker) {

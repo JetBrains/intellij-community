@@ -961,22 +961,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           (new DocumentationCollector() {
             @Override
             public String getDocumentation() throws Exception {
-              //noinspection deprecation
-              if (url.startsWith(DocumentationManagerProtocol.DOC_ELEMENT_PROTOCOL)) {
-                final List<String> urls = ApplicationManager.getApplication().runReadAction(
-                  new NullableComputable<List<String>>() {
-                    @Override
-                    public List<String> compute() {
-                      final DocumentationProvider provider = getProviderFromElement(psiElement);
-                      return provider.getUrlFor(psiElement, getOriginalElement(psiElement));
-                    }
-                  }
-                );
-                String url1 = urls != null && !urls.isEmpty() ? urls.get(0) : url;
-                BrowserUtil.browse(url1);
-                return "";
-              }
-              else if (BrowserUtil.isAbsoluteURL(url)) {
+              if (BrowserUtil.isAbsoluteURL(url)) {
                 BrowserUtil.browse(url);
                 return "";
               }

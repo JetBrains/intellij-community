@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -37,7 +37,7 @@ public class PushDownConflicts {
   private final MultiMap<PsiElement, String> myConflicts;
 
 
-  public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos) {
+  public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos, MultiMap<PsiElement, String> conflicts) {
     myClass = aClass;
 
     myMovedMembers = new HashSet<PsiMember>();
@@ -52,7 +52,7 @@ public class PushDownConflicts {
       }
     }
 
-    myConflicts = new MultiMap<PsiElement, String>();
+    myConflicts = conflicts;
   }
 
   public boolean isAnyConflicts() {
@@ -70,9 +70,20 @@ public class PushDownConflicts {
         child.accept(new UsedMovedMembersConflictsCollector(child));
       }
     }
+
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
+    if (annotation != null && myMovedMembers.contains(LambdaUtil.getFunctionalInterfaceMethod(myClass))) {
+      myConflicts.putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
+    }
   }
 
-  public void checkTargetClassConflicts(final PsiClass targetClass, final boolean checkStatic, final PsiElement context) {
+  public void checkTargetClassConflicts(final PsiElement targetElement, final boolean checkStatic, final PsiElement context) {
+    if (targetElement instanceof PsiFunctionalExpression) {
+      myConflicts.putValue(targetElement, RefactoringBundle.message("functional.interface.broken"));
+      return;
+    }
+
+    final PsiClass targetClass = targetElement instanceof PsiClass ? (PsiClass)targetElement : null;
     if (targetClass != null) {
       for (final PsiMember movedMember : myMovedMembers) {
         checkMemberPlacementInTargetClassConflict(targetClass, movedMember);

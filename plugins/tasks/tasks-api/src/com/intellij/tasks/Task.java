@@ -33,15 +33,29 @@ public abstract class Task {
   /**
    * Global unique task identifier, e.g. IDEA-00001. It's important that its format is consistent with
    * {@link TaskRepository#extractId(String)}, because otherwise task won't be updated on its activation.
+   * Note that this ID is used to find issues and to compare them, so (ideally) it has to be unique.
+   * 
+   * In some cases task server doesn't offer such global ID (but, for instance, pair (project-name, per-project-id) instead) or it's not
+   * what users want to see in UI (e.g. notorious <tt>id</tt> and <tt>iid</tt> in Gitlab). In this case you should generate artificial ID 
+   * for internal usage and implement {@link #getPresentableId()}.
    *
    * @return unique global ID as described
    *
-   * @see com.intellij.tasks.TaskRepository#extractId(String)
-   * @see com.intellij.tasks.TaskManager#activateTask(Task, boolean)
+   * @see #getPresentableId()
+   * @see TaskRepository#extractId(String)
+   * @see TaskManager#activateTask(Task, boolean)
    */
   @NotNull
   public abstract String getId();
 
+
+  /**
+   * @return ID in the form that is suitable for commit messages, dialogs, completion items, etc.
+   */
+  @NotNull
+  public String getPresentableId() {
+    return getId();
+  }
   /**
    * Short task description.
    * @return description
@@ -100,7 +114,7 @@ public abstract class Task {
   public final String toString() {
     String text;
     if (isIssue()) {
-      text = getId() + ": " + getSummary();
+      text = getPresentableId() + ": " + getSummary();
     } else {
       text = getSummary();
     }

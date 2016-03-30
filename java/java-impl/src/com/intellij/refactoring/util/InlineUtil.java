@@ -72,6 +72,10 @@ public class InlineUtil {
 
     ChangeContextUtil.encodeContextInfo(initializer, false);
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
+
+    PsiThisExpression thisAccessExpr = createThisExpression(manager, thisClass, refParent);
+
+    expr = (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
     PsiType exprType = expr.getType();
     if (exprType != null && (!varType.equals(exprType) && (varType instanceof PsiPrimitiveType || exprType instanceof PsiPrimitiveType)
                              || !TypeConversionUtil.isAssignable(varType, exprType)
@@ -164,9 +168,7 @@ public class InlineUtil {
 
     ChangeContextUtil.clearContextInfo(initializer);
 
-    PsiThisExpression thisAccessExpr = createThisExpression(manager, thisClass, refParent);
-
-    return (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
+    return expr;
   }
 
   private static PsiExpression surroundWithCast(PsiVariable variable, PsiExpression expr, PsiExpression expression) {
@@ -293,6 +295,11 @@ public class InlineUtil {
   }
 
   private static boolean isSafeToFlatten(PsiCall callExpression, PsiMethod oldRefMethod, PsiExpression[] arrayElements) {
+    for (PsiExpression arrayElement : arrayElements) {
+      if (arrayElement instanceof PsiArrayInitializerExpression) {
+        return false;
+      }
+    }
     PsiCall copy = (PsiCall)callExpression.copy();
     PsiExpressionList copyArgumentList = copy.getArgumentList();
     LOG.assertTrue(copyArgumentList != null);

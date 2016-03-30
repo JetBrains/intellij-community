@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,11 +103,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  private static boolean isNotInstanceModifier(final PsiModifierList list2) {
-    return list2.hasModifierProperty(PsiModifier.STATIC) ||
-           list2.hasModifierProperty(PsiModifier.ABSTRACT);
-  }
-
   @Override
   public final void visitModifierList(final PsiModifierList list) {
     final PsiModifierList list2 = (PsiModifierList)myMatchingVisitor.getElement();
@@ -138,17 +133,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
               boolean matchedOne = false;
 
               for (PsiAnnotationMemberValue v : ((PsiArrayInitializerMemberValue)value).getInitializers()) {
-                @PsiModifier.ModifierConstant String name = StringUtil.stripQuotesAroundValue(v.getText());
-                if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
-                  if (isNotInstanceModifier(list2)) {
-                    myMatchingVisitor.setResult(false);
-                    return;
-                  }
-                  else {
-                    matchedOne = true;
-                  }
-                }
-                else if (list2.hasModifierProperty(name)) {
+                if (annotationValueMatchesModifierList(list2, v)) {
                   matchedOne = true;
                   break;
                 }
@@ -160,14 +145,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
               }
             }
             else {
-              @PsiModifier.ModifierConstant String name = StringUtil.stripQuotesAroundValue(value.getText());
-              if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
-                if (isNotInstanceModifier(list2)) {
-                  myMatchingVisitor.setResult(false);
-                  return;
-                }
-              }
-              else if (!list2.hasModifierProperty(name)) {
+              if (!annotationValueMatchesModifierList(list2, value)) {
                 myMatchingVisitor.setResult(false);
                 return;
               }
@@ -178,12 +156,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
 
-      myMatchingVisitor.setResult(set.isEmpty() || myMatchingVisitor
-        .matchInAnyOrder(set.toArray(new PsiAnnotation[set.size()]), list2.getAnnotations()));
+      myMatchingVisitor.setResult(set.isEmpty() ||
+                                  myMatchingVisitor.matchInAnyOrder(set.toArray(new PsiAnnotation[set.size()]), list2.getAnnotations()));
     }
     else {
       myMatchingVisitor.setResult(true);
     }
+  }
+
+  private static boolean annotationValueMatchesModifierList(PsiModifierList list2, PsiAnnotationMemberValue value) {
+    @PsiModifier.ModifierConstant final String name = StringUtil.unquoteString(value.getText());
+    if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
+      return !list2.hasModifierProperty(PsiModifier.STATIC) && !list2.hasModifierProperty(PsiModifier.ABSTRACT) &&
+             list2.getParent() instanceof PsiMember;
+    }
+    return list2.hasModifierProperty(name) && (!PsiModifier.PACKAGE_LOCAL.equals(name) || list2.getParent() instanceof PsiMember);
   }
 
   @Override

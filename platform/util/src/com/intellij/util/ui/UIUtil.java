@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -107,27 +108,10 @@ public class UIUtil {
      */
     if (!(SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block"))) return;
 
-    String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
-
-    Properties properties = new Properties();
-    try {
-      File propsFile = new File(System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties");
-      FileInputStream in = new FileInputStream(propsFile);
-      properties.load(in);
-      in.close();
-    } catch (Exception ignore) {
-    }
-    if (!properties.isEmpty()) {
-      String classNames = System.getProperty("javax.accessibility.assistive_technologies");
-      if (classNames == null) {
-        // If the system property is not set, Toolkit will try to use the properties file.
-        classNames = properties.getProperty("assistive_technologies", null);
-        if (classNames != null && classNames.contains(ATK_WRAPPER)) {
-          // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
-          System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-          LOG.info(ATK_WRAPPER + " is blocked, see IDEA-149219");
-        }
-      }
+    if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
+      // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
+      System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
+      LOG.info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
   }
 
@@ -306,6 +290,8 @@ public class UIUtil {
   };
 
   private static volatile Pair<String, Integer> ourSystemFontData = null;
+
+  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
@@ -1803,6 +1789,10 @@ public class UIUtil {
   }
 
   public static void drawImage(Graphics g, Image image, int x, int y, ImageObserver observer) {
+    drawImage(g, image, x, y, -1, -1, observer);
+  }
+
+  public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
     if (image instanceof JBHiDPIScaledImage) {
       final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(observer), image.getHeight(observer));
       newG.scale(0.5, 0.5);
@@ -1810,11 +1800,20 @@ public class UIUtil {
       if (img == null) {
         img = image;
       }
-      newG.drawImage(img, 0, 0, observer);
+      if (width == -1 && height == -1) {
+        newG.drawImage(img, 0, 0, observer);
+      }
+      else {
+        newG.drawImage(img, 0, 0, width * 2, height * 2, 0, 0, width * 2, height * 2, observer);
+      }
       //newG.scale(1, 1);
       newG.dispose();
-    } else {
+    }
+    else if (width == -1 && height == -1) {
       g.drawImage(image, x, y, observer);
+    }
+    else {
+      g.drawImage(image, x, y, x + width, y + height, 0, 0, width, height, observer);
     }
   }
 
@@ -2060,7 +2059,7 @@ public class UIUtil {
     return null;
   }
 
-  public static <T extends JComponent> T findParentByClass(@NotNull Component c, Class<T> cls) {
+  public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
     for (Component component = c; component != null; component = component.getParent()) {
       if (cls.isAssignableFrom(component.getClass())) {
         @SuppressWarnings({"unchecked"}) final T t = (T)component;
@@ -2526,9 +2525,36 @@ public class UIUtil {
     }
   }
 
+  private static String systemLaFClassName;
+
+  public static String getSystemLookAndFeelClassName() {
+    if (systemLaFClassName != null) {
+      return systemLaFClassName;
+    }
+    else if (SystemInfo.isLinux) {
+      // Normally, GTK LaF is considered "system" when:
+      // 1) Gnome session is run
+      // 2) gtk lib is available
+      // Here we weaken the requirements to only 2) and force GTK LaF
+      // installation in order to let it properly scale default font
+      // based on Xft.dpi value.
+      try {
+        String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+        Class cls = Class.forName(name);
+        LookAndFeel laf = (LookAndFeel)cls.newInstance();
+        if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
+          return systemLaFClassName = name;
+        }
+      }
+      catch (Exception ignore) {
+      }
+    }
+    return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
+  }
+
   public static void initDefaultLAF() {
     try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
       initSystemFontData();
     }
     catch (Exception ignore) {}
@@ -2537,16 +2563,36 @@ public class UIUtil {
   public static void initSystemFontData() {
     if (ourSystemFontData != null) return;
 
+    // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
-    if (SystemInfo.isWindows) {
+
+    Float forcedScale = null;
+    if (Registry.is("ide.ui.scale.override")) {
+      forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
+    }
+    else if (SystemInfo.isLinux && !SystemInfo.isJetbrainsJvm) {
+      // With Oracle JDK: derive scale from X server DPI
+      float scale = getScreenScale();
+      if (scale > 1f) {
+        forcedScale = Float.valueOf(scale);
+      }
+      // Or otherwise leave the detected font. It's undetermined if it's scaled or not.
+      // If it is (likely with GTK DE), then the UI scale will be derived from it,
+      // if it's not, then IDEA will start unscaled. This lets the users of GTK DEs
+      // not to bother about X server DPI settings. Users of other DEs (like KDE)
+      // will have to set X server DPI to meet their display.
+    }
+    else if (SystemInfo.isWindows) {
       //noinspection HardCodedStringLiteral
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-      if (winFont != null) font = winFont;
+      if (winFont != null) {
+        font = winFont; // comes scaled
+      }
     }
-    else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
-      // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
-      // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
-      font = JBFont.create(font);
+    if (forcedScale != null) {
+      // With forced scale, we derive font from a hard-coded value as we cannot be sure
+      // the system font comes unscaled.
+      font = font.deriveFont(DEF_SYSTEM_FONT_SIZE * forcedScale.floatValue());
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
   }
@@ -2554,6 +2600,22 @@ public class UIUtil {
   @Nullable
   public static Pair<String, Integer> getSystemFontData() {
     return ourSystemFontData;
+  }
+
+  private static float getScreenScale() {
+    int dpi = 96;
+    try {
+      dpi = Toolkit.getDefaultToolkit().getScreenResolution();
+    } catch (HeadlessException e) {
+    }
+    float scale = 1f;
+    if (dpi < 120) scale = 1f;
+    else if (dpi < 144) scale = 1.25f;
+    else if (dpi < 168) scale = 1.5f;
+    else if (dpi < 192) scale = 1.75f;
+    else scale = 2f;
+
+    return scale;
   }
 
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
@@ -3619,5 +3681,38 @@ public class UIUtil {
       if ("mini".equals(property)) return ComponentStyle.MINI;
     }
     return ComponentStyle.REGULAR;
+  }
+
+  /**
+   * KeyEvents for specified keystrokes would be redispatched to target component
+   */
+  public static void redirectKeystrokes(@NotNull Disposable disposable,
+                                        @NotNull final JComponent source,
+                                        @NotNull final JComponent target,
+                                        @NotNull final KeyStroke... keyStrokes) {
+    final KeyAdapter keyAdapter = new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
+        for (KeyStroke stroke : keyStrokes) {
+          if (!stroke.isOnKeyRelease() && stroke.equals(keyStrokeForEvent)) target.dispatchEvent(e);
+        }
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
+        for (KeyStroke stroke : keyStrokes) {
+          if (stroke.isOnKeyRelease() && stroke.equals(keyStrokeForEvent)) target.dispatchEvent(e);
+        }
+      }
+    };
+    source.addKeyListener(keyAdapter);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        source.removeKeyListener(keyAdapter);
+      }
+    });
   }
 }

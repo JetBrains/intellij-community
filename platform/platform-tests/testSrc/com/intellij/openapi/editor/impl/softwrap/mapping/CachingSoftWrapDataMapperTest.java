@@ -214,12 +214,6 @@ public class CachingSoftWrapDataMapperTest {
           return offsetToLogical((Integer)invocation.getParameter(0));
         }
       });
-      allowing(myEditor).offsetToLogicalPosition(with(any(int.class)), with(equal(false))); will(new CustomAction("offset2logical()") {
-        @Override
-        public Object invoke(Invocation invocation) throws Throwable {
-          return offsetToSoftWrapUnawareLogical((Integer)invocation.getParameter(0));
-        }
-      });
 
       // Soft wrap painter.
       allowing(painter).getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP); will(returnValue(SOFT_WRAP_DRAWING_WIDTH));

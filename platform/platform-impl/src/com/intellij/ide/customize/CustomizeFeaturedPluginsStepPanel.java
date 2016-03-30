@@ -30,10 +30,9 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -48,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
   private static final int COLS = 3;
-  private static final ExecutorService ourService = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 4);
+  private static final ExecutorService ourService = AppExecutorUtil.createBoundedApplicationPoolExecutor(4);
 
   public final AtomicBoolean myCanceled = new AtomicBoolean(false);
   private final PluginGroups myPluginGroups;
@@ -107,9 +106,9 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       final boolean isVIM = PluginGroups.IDEA_VIM_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
 
       JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + title + "</h2></body></html>");
-      JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;\">" + topic + "</h4></body></html>");
+      JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;color:#808080;font-weight:bold;\">" + topic + "</h4></body></html>");
 
-      JLabel descriptionLabel = createHTMLLabel("<i>" + description + "</i>");
+      JLabel descriptionLabel = createHTMLLabel(description);
       JLabel warningLabel = null;
       if (isVIM) {
         warningLabel = createHTMLLabel("Recommended only if you are<br> familiar with Vim.");
@@ -234,6 +233,8 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
           indicator.cancel();
         }
       }, null);
+      gbc.insets.left = installButton.getInsets().left / 2;
+      gbc.insets.right = installButton.getInsets().right / 2;
       gbc.insets.bottom = -5;
       groupPanel.add(titleLabel, gbc);
       gbc.insets.bottom = SMALL_GAP;
@@ -245,6 +246,8 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       if (warningLabel != null) {
         Insets insetsBefore = gbc.insets;
         gbc.insets = new Insets(0, -10, SMALL_GAP, -10);
+        gbc.insets.left += insetsBefore.left;
+        gbc.insets.right += insetsBefore.right;
         JPanel warningPanel = new JPanel(new BorderLayout());
         warningPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
         warningPanel.add(warningLabel);
@@ -253,17 +256,21 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
         gbc.insets = insetsBefore;
       }
 
-      gbc.insets.bottom = 0;
+      gbc.insets.bottom = gbc.insets.left = gbc.insets.right = 0;
       groupPanel.add(buttonWrapper, gbc);
       gridPanel.add(groupPanel);
+    }
+    while (gridPanel.getComponentCount() < 4) {
+      gridPanel.add(Box.createVerticalBox());
     }
     int cursor = 0;
     Component[] components = gridPanel.getComponents();
     int rowCount = components.length / COLS;
     for (Component component : components) {
       ((JComponent)component).setBorder(
-        new CompoundBorder(new CustomLineBorder(ColorUtil.withAlpha(JBColor.foreground(), .2), 0, 0, cursor / 3 < rowCount ? 1 : 0,
-                                                cursor % COLS != COLS - 1 ? 1 : 0) {
+        new CompoundBorder(new CustomLineBorder(ColorUtil.withAlpha(JBColor.foreground(), .2), 0, 0,
+                                                cursor / 3 < rowCount && (!(component instanceof Box)) ? 1 : 0,
+                                                cursor % COLS != COLS - 1 && (!(component instanceof Box)) ? 1 : 0) {
           @Override
           protected Color getColor() {
             return ColorUtil.withAlpha(JBColor.foreground(), .2);

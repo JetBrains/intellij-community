@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,6 +254,27 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
     }
     return null;
+  }
+
+  @Override
+  public Collection<String> findConflicts(PsiElement element, PsiElement[] elements, UsageInfo[] usages) {
+    String methodRefFound = null;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && (element instanceof PsiMethod || element instanceof PsiParameter)) {
+      for (UsageInfo usage : usages) {
+        final PsiElement refElement = usage.getElement();
+        if (refElement instanceof PsiMethodReferenceExpression) {
+          methodRefFound = RefactoringBundle.message("expand.method.reference.warning");
+          break;
+        }
+      }
+    }
+    if (methodRefFound != null) {
+      Collection<String> result = new ArrayList<>();
+      result.add(methodRefFound);
+      result.addAll(super.findConflicts(element, elements, usages));
+      return result;
+    }
+    return super.findConflicts(element, elements, usages);
   }
 
   public Collection<String> findConflicts(@NotNull final PsiElement element, @NotNull final PsiElement[] allElementsToDelete) {
@@ -609,7 +630,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       return findConstructorUsages(psiMethod, references, usages, allElementsToDelete);
     }
     final PsiMethod[] overridingMethods =
-            removeDeletedMethods(OverridingMethodsSearch.search(psiMethod, true).toArray(PsiMethod.EMPTY_ARRAY),
+            removeDeletedMethods(OverridingMethodsSearch.search(psiMethod).toArray(PsiMethod.EMPTY_ARRAY),
                                  allElementsToDelete);
 
     findFunctionalExpressions(usages, ArrayUtil.prepend(psiMethod, overridingMethods));

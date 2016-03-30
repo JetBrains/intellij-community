@@ -1,4 +1,4 @@
-// "Replace with <>" "false"
+// "Replace with <>" "true"
 class Test {
 
     void test() {

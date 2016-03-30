@@ -26,7 +26,10 @@ import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -53,14 +56,9 @@ public class ZipHandler extends ArchiveHandler {
     }
 
     @Override
-    protected void disposeAccessor(final ZipFile fileAccessor) {
+    protected void disposeAccessor(final ZipFile fileAccessor) throws IOException {
       // todo: ZipFile isn't disposable for Java6, replace the code below with 'disposeCloseable(fileAccessor);'
-      disposeCloseable(new Closeable() {
-        @Override
-        public void close() throws IOException {
-          fileAccessor.close();
-        }
-      });
+      fileAccessor.close();
     }
 
     @Override

@@ -132,9 +132,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     else if (me.getID() == MouseEvent.MOUSE_MOVED) {
       if (c == myCurrentComponent || c == myQueuedComponent) {
         if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
-          if (hideCurrent(me, null, null)) {
-            maybeShowFor(c, me);
-          }
+          maybeShowFor(c, me);
         }
         else {
           if (!myCurrentTipIsCentered) {
@@ -154,8 +152,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
-      if (c == myCurrentComponent) {
-        hideCurrent(me, null, null);
+      boolean clickOnTooltip = myCurrentTipUi != null && myCurrentTipUi == JBPopupFactory.getInstance().getParentBalloonFor(c);
+      if (c == myCurrentComponent || clickOnTooltip) {
+        hideCurrent(me, null, null, null, !clickOnTooltip);
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
@@ -312,6 +311,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setPositionChangeYShift(tooltip.getPositionChangeY())
       .setHideOnKeyOutside(!tooltip.isExplicitClose())
       .setHideOnAction(!tooltip.isExplicitClose())
+      .setRequestFocus(tooltip.isRequestFocus())
       .setLayer(tooltip.getLayer());
     tooltip.getTipComponent().setForeground(fg);
     tooltip.getTipComponent().setBorder(new EmptyBorder(1, 3, 2, 3));

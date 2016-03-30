@@ -869,16 +869,25 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals("public static   MyType my   = 1;", buildStringToFindForIndicesFromRegExp("public static (@A)? MyType my\\w+?  = 1;", myProject));
     assertEquals(" Foo ", buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
     assertEquals("", buildStringToFindForIndicesFromRegExp("foo|bar", myProject));
+    assertEquals(" Exit Foo Bar Baz", buildStringToFindForIndicesFromRegExp("\\nExit\\tFoo\\rBar\\fBaz", myProject));
+    assertEquals(" Foo Bar Baz Exit", buildStringToFindForIndicesFromRegExp("\\012Foo\\u000ABar\\x0ABaz\\aExit", myProject));
+    assertEquals(" Foo Bar BazCooBoo", buildStringToFindForIndicesFromRegExp("\\1Foo\\sBar\\DBaz\\QCoo\\E\\QBoo", myProject));
   }
 
   public void testCreateFileMaskCondition() {
-    final Condition<String> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
+    Condition<String> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
     assertTrue(condition.value("Bar.java"));
     assertTrue(!condition.value("Bar.javac"));
     assertTrue(!condition.value("Foo.java"));
     assertTrue(!condition.value("Foo.jav"));
     assertTrue(!condition.value("Foo.min.js"));
     assertTrue(condition.value("Foo.js"));
+
+    condition = createFileMaskCondition("!Foo.java");
+    assertTrue(condition.value("Bar.java"));
+    assertTrue(!condition.value("Foo.java"));
+    assertTrue(condition.value("Foo.js"));
+    assertTrue(condition.value("makefile"));
   }
 
   public void testRegExpSearchDoesCheckCancelled() throws InterruptedException {

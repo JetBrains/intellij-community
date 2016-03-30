@@ -47,10 +47,33 @@ import java.util.List;
 import java.util.Set;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
-  OfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor descriptor,
+  OfflineProblemDescriptorNode(RefEntity refEntity,
+                               CommonProblemDescriptor descriptor,
                                @NotNull LocalInspectionToolWrapper toolWrapper,
-                               @NotNull InspectionToolPresentation presentation) {
-    super(descriptor, toolWrapper, presentation);
+                               @NotNull InspectionToolPresentation presentation,
+                               OfflineProblemDescriptor offlineDescriptor) {
+    super(refEntity, descriptor, toolWrapper, presentation);
+    if (descriptor == null) {
+      setUserObject(offlineDescriptor);
+    }
+  }
+
+  static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
+                                             @NotNull LocalInspectionToolWrapper toolWrapper,
+                                             @NotNull InspectionToolPresentation presentation) {
+    final RefEntity refElement = createRefElement(offlineDescriptor, presentation);
+    final CommonProblemDescriptor descriptor = createDescriptor(refElement, offlineDescriptor, toolWrapper, presentation);
+    return new OfflineProblemDescriptorNode(refElement, descriptor, toolWrapper, presentation, offlineDescriptor);
+  }
+
+  @Override
+  public boolean isValid() {
+    return true;
+  }
+
+  @Override
+  public FileStatus getNodeStatus() {
+    return FileStatus.NOT_CHANGED;
   }
 
   private static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
@@ -65,77 +88,49 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     return PsiUtilCore.toPsiElementArray(result);
   }
 
-  @Override
   @Nullable
-  public RefEntity getElement() {
-    if (userObject instanceof CommonProblemDescriptor) {
-      return myElement;
-    }
-    if (userObject == null) {
-      return null;
-    }
-    myElement = ((OfflineProblemDescriptor)userObject).getRefElement(myPresentation.getContext().getRefManager());
-    return myElement;
+  private static RefEntity createRefElement(OfflineProblemDescriptor descriptor, InspectionToolPresentation presentation) {
+    return descriptor.getRefElement(presentation.getContext().getRefManager());
   }
 
-  @Override
   @Nullable
-  public CommonProblemDescriptor getDescriptor() {
-    if (userObject == null) return null;
-    if (userObject instanceof CommonProblemDescriptor) {
-      return (CommonProblemDescriptor)userObject;
-    }
+  private static CommonProblemDescriptor createDescriptor(@Nullable RefEntity element,
+                                                          @NotNull OfflineProblemDescriptor offlineDescriptor,
+                                                          @NotNull LocalInspectionToolWrapper toolWrapper,
+                                                          @NotNull InspectionToolPresentation presentation) {
 
-    final InspectionManager inspectionManager = InspectionManager.getInstance(myPresentation.getContext().getProject());
-    final OfflineProblemDescriptor offlineProblemDescriptor = (OfflineProblemDescriptor)userObject;
-    final RefEntity element = getElement();
-    if (myToolWrapper instanceof LocalInspectionToolWrapper) {
-      if (element instanceof RefElement) {
-        final PsiElement psiElement = ((RefElement)element).getElement();
-        if (psiElement != null) {
-          ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(new Computable<ProblemDescriptor>() {
-            @Override
-            public ProblemDescriptor compute() {
-              return runLocalTool(psiElement, inspectionManager, offlineProblemDescriptor);
-            }
-          }, new DaemonProgressIndicator());
-          if (descriptor != null) return descriptor;
-        }
+    final InspectionManager inspectionManager = InspectionManager.getInstance(presentation.getContext().getProject());
+    final OfflineProblemDescriptor offlineProblemDescriptor = offlineDescriptor;
+    if (element instanceof RefElement) {
+      final PsiElement psiElement = ((RefElement)element).getElement();
+      if (psiElement != null) {
+        ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(new Computable<ProblemDescriptor>() {
+          @Override
+          public ProblemDescriptor compute() {
+            return runLocalTool(psiElement, inspectionManager, offlineProblemDescriptor, toolWrapper);
+          }
+        }, new DaemonProgressIndicator());
+        if (descriptor != null) return descriptor;
       }
-      setUserObject(null);
       return null;
     }
     final List<String> hints = offlineProblemDescriptor.getHints();
-    if (element instanceof RefElement) {
-      final PsiElement psiElement = ((RefElement)element).getElement();
-      if (psiElement == null) return null;
-      ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(psiElement, offlineProblemDescriptor.getDescription(),
-                                                                               (LocalQuickFix)null,
-                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
-      final LocalQuickFix[] quickFixes = getFixes(descriptor, hints);
-      if (quickFixes != null) {
-        descriptor = inspectionManager.createProblemDescriptor(psiElement, offlineProblemDescriptor.getDescription(), false, quickFixes,
-                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      }
-      setUserObject(descriptor);
-      return descriptor;
-    }
     CommonProblemDescriptor descriptor =
       inspectionManager.createProblemDescriptor(offlineProblemDescriptor.getDescription(), (QuickFix)null);
-    final QuickFix[] quickFixes = getFixes(descriptor, hints);
+    final QuickFix[] quickFixes = getFixes(descriptor, hints, presentation);
     if (quickFixes != null) {
       descriptor = inspectionManager.createProblemDescriptor(offlineProblemDescriptor.getDescription(), quickFixes);
     }
-    setUserObject(descriptor);
     return descriptor;
   }
 
-  private ProblemDescriptor runLocalTool(@NotNull PsiElement psiElement,
-                                         @NotNull InspectionManager inspectionManager,
-                                         @NotNull OfflineProblemDescriptor offlineProblemDescriptor) {
+  private static ProblemDescriptor runLocalTool(@NotNull PsiElement psiElement,
+                                                @NotNull InspectionManager inspectionManager,
+                                                @NotNull OfflineProblemDescriptor offlineProblemDescriptor,
+                                                @NotNull LocalInspectionToolWrapper toolWrapper) {
     PsiFile containingFile = psiElement.getContainingFile();
     final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
-    final LocalInspectionTool localTool = ((LocalInspectionToolWrapper)myToolWrapper).getTool();
+    final LocalInspectionTool localTool = toolWrapper.getTool();
     final int startOffset = psiElement.getTextRange().getStartOffset();
     final int endOffset = psiElement.getTextRange().getEndOffset();
     LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
@@ -154,7 +149,6 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
         final PsiNamedElement member = localTool.getProblemElement(descriptor.getPsiElement());
         if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
           if (curIdx == idx) {
-            setUserObject(descriptor);
             return descriptor;
           }
           curIdx++;
@@ -166,40 +160,24 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   }
 
   @Nullable
-  private LocalQuickFix[] getFixes(@NotNull CommonProblemDescriptor descriptor, List<String> hints) {
+  private static LocalQuickFix[] getFixes(@NotNull CommonProblemDescriptor descriptor, List<String> hints, InspectionToolPresentation presentation) {
     final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(hints == null ? 1 : hints.size());
     if (hints == null) {
-      addFix(descriptor, fixes, null);
+      addFix(descriptor, fixes, null, presentation);
     }
     else {
       for (String hint : hints) {
-        addFix(descriptor, fixes, hint);
+        addFix(descriptor, fixes, hint, presentation);
       }
     }
     return fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]);
   }
 
-  private void addFix(@NotNull CommonProblemDescriptor descriptor, final List<LocalQuickFix> fixes, String hint) {
-    final IntentionAction intentionAction = myPresentation.findQuickFixes(descriptor, hint);
+  private static void addFix(@NotNull CommonProblemDescriptor descriptor, final List<LocalQuickFix> fixes, String hint, InspectionToolPresentation presentation) {
+    final IntentionAction intentionAction = presentation.findQuickFixes(descriptor, hint);
     if (intentionAction instanceof QuickFixWrapper) {
       fixes.add(((QuickFixWrapper)intentionAction).getFix());
     }
   }
 
-  @Override
-  public boolean isValid() {
-    return true;
-  }
-
-  @Override
-  public FileStatus getNodeStatus() {
-    return FileStatus.NOT_CHANGED;
-  }
-
-  public String toString() {
-    if (userObject instanceof OfflineProblemDescriptor) {
-      return ((OfflineProblemDescriptor)userObject).getDescription();
-    }
-    return super.toString();
-  }
 }

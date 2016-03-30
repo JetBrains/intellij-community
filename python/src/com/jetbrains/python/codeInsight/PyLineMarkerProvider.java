@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,7 +232,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
   private static void collectInheritingClasses(final PyClass element, final Collection<LineMarkerInfo> result) {
     if (PyClassInheritorsSearch.search(element, false).findFirst() != null) {
       result
-        .add(new LineMarkerInfo<PyClass>(element, element.getTextOffset(), AllIcons.Gutter.OverridenMethod, Pass.UPDATE_OVERRIDEN_MARKERS,
+        .add(new LineMarkerInfo<PyClass>(element, element.getTextOffset(), AllIcons.Gutter.OverridenMethod, Pass.UPDATE_OVERRIDDEN_MARKERS,
                                          ourSubclassTooltipProvider, ourSubclassNavigator));
     }
   }
@@ -264,7 +264,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       if (candidates.isEmpty()) break;
     }
     for (PyFunction func : overridden) {
-      result.add(new LineMarkerInfo<PyFunction>(func, func.getTextOffset(), AllIcons.Gutter.OverridenMethod, Pass.UPDATE_OVERRIDEN_MARKERS,
+      result.add(new LineMarkerInfo<PyFunction>(func, func.getTextOffset(), AllIcons.Gutter.OverridenMethod, Pass.UPDATE_OVERRIDDEN_MARKERS,
                                                 ourOverridingMethodTooltipProvider,
                                                 ourOverridingMethodNavigator));
     }

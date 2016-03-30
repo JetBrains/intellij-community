@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,9 +295,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           jar("common-javaFX-plugin.jar") {
             module("common-javaFX-plugin")
           }
+          fileset(dir: "${home}/plugins/javaFX/lib", includes: "SceneBuilderKit-8.1.1.jar");
         }
-
-        fileset(dir: "${home}/plugins/javaFX/FxBuilderEmbedder/lib", includes: "embedder.jar");
       }
     }
 
@@ -472,6 +471,12 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     layoutPlugin("junit", "junit", "idea-junit") {
       jar("junit-rt.jar") {
         module("junit_rt")
+      }
+      jar("junit5-rt.jar") {
+        module("junit5_rt")
+      }
+      fileset(dir: "$home/plugins/junit5_rt/lib") {
+        include(name: "*.jar")
       }
     }
 
@@ -931,7 +936,6 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         include(name: "log4j.jar")
         include(name: "jgoodies-forms.jar")
         include(name: "ecj*.jar")
-        include(name: "jsr166e.jar")
         include(name: "netty-all-*.jar")
         include(name: "snappy-in-java-*.jar")
       }
@@ -956,7 +960,6 @@ def layout_core(String home, String target) {
       module("util")
       module("core-api")
       module("core-impl")
-      module("boot")
       module("extensions")
       module("java-psi-api")
       module("java-psi-impl")

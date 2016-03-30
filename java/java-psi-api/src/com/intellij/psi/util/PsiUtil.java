@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -23,6 +24,7 @@ import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -61,6 +63,10 @@ public final class PsiUtil extends PsiUtilCore {
   public static final int ACCESS_LEVEL_PACKAGE_LOCAL = 2;
   public static final int ACCESS_LEVEL_PRIVATE = 1;
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
+
+  private static final Set<String> IGNORED_NAMES = ContainerUtil.newTroveSet(
+    "ignore", "ignore1", "ignore2", "ignore3", "ignore4", "ignore5",
+    "ignored", "ignored1", "ignored2", "ignored3", "ignored4", "ignored5");
 
   private PsiUtil() {}
 
@@ -760,6 +766,9 @@ public final class PsiUtil extends PsiUtilCore {
     return null;
   }
 
+  /**
+   * Applies capture conversion to the type in context
+   */
   @NotNull
   public static PsiType captureToplevelWildcards(@NotNull final PsiType type, @NotNull final PsiElement context) {
     if (type instanceof PsiClassType) {
@@ -804,6 +813,38 @@ public final class PsiUtil extends PsiUtilCore {
       return captureToplevelWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
     }
 
+    return type;
+  }
+
+  /**
+   * Opens top level captured wildcards and remap them according to the context.
+   * The only valid purpose: allow to speculate on non-physical expressions about types, e.g. to detect redundant casts with 'wildcards'
+   */
+  public static PsiType recaptureWildcards(PsiType type, PsiElement context) {
+    if (type instanceof PsiClassType) {
+      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      final PsiClass aClass = resolveResult.getElement();
+      if (aClass != null) {
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+
+        PsiSubstitutor resultSubstitution = null;
+        for (PsiTypeParameter parameter : substitutor.getSubstitutionMap().keySet()) {
+          final PsiType substitute = substitutor.substitute(parameter);
+          if (substitute instanceof PsiCapturedWildcardType) {
+            if (resultSubstitution == null) resultSubstitution = substitutor;
+            resultSubstitution = resultSubstitution.put(parameter, ((PsiCapturedWildcardType)substitute).getWildcard());
+          }
+        }
+
+        if (resultSubstitution != null) {
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+          return captureToplevelWildcards(factory.createType(aClass, resultSubstitution), context);
+        }
+      }
+    }
+    else if (type instanceof PsiArrayType) {
+      return recaptureWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
+    }
     return type;
   }
 
@@ -1098,8 +1139,8 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiParameter && element.getParent() instanceof PsiCatchSection;
   }
 
-  public static boolean isIgnoredName(@Nullable final String name) {
-    return "ignore".equals(name) || "ignored".equals(name);
+  public static boolean isIgnoredName(@Nullable String name) {
+    return name != null && IGNORED_NAMES.contains(name);
   }
 
   @Nullable
@@ -1241,4 +1282,282 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
   }
+
+  public static class NullPsiClass extends NullPsiElement implements PsiClass {
+    @Nullable
+    @Override
+    public ItemPresentation getPresentation() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiDocComment getDocComment() {
+      throw createException();
+    }
+
+    @Override
+    public boolean hasTypeParameters() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiModifierList getModifierList() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public String getName() {
+      throw createException();
+    }
+
+    @Override
+    public boolean isDeprecated() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiTypeParameterList getTypeParameterList() {
+      throw createException();
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      throw createException();
+    }
+
+    @Override
+    public boolean canNavigate() {
+      throw createException();
+    }
+
+    @Override
+    public boolean hasModifierProperty(@PsiModifier.ModifierConstant @NonNls @NotNull String name) {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiTypeParameter[] getTypeParameters() {
+      throw createException();
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public String getQualifiedName() {
+      throw createException();
+    }
+
+    @Override
+    public boolean isInterface() {
+      throw createException();
+    }
+
+    @Override
+    public boolean isAnnotationType() {
+      throw createException();
+    }
+
+    @Override
+    public boolean isEnum() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiReferenceList getExtendsList() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiReferenceList getImplementsList() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiClassType[] getExtendsListTypes() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiClassType[] getImplementsListTypes() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiClass getSuperClass() {
+      throw createException();
+    }
+
+    @Override
+    public PsiClass[] getInterfaces() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiClass[] getSupers() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiClassType[] getSuperTypes() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiField[] getFields() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiMethod[] getMethods() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiMethod[] getConstructors() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiClass[] getInnerClasses() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiClassInitializer[] getInitializers() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiField[] getAllFields() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiMethod[] getAllMethods() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiClass[] getAllInnerClasses() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiField findFieldByName(@NonNls String name, boolean checkBases) {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls String name, boolean checkBases) {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getLBrace() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getRBrace() {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiIdentifier getNameIdentifier() {
+      throw createException();
+    }
+
+    @Override
+    public PsiElement getScope() {
+      throw createException();
+    }
+
+    @Override
+    public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
+      throw createException();
+    }
+
+    @Override
+    public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
+      throw createException();
+    }
+
+    @Nullable
+    @Override
+    public PsiClass getContainingClass() {
+      throw createException();
+    }
+
+    @NotNull
+    @Override
+    public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+      throw createException();
+    }
+
+    @Override
+    public PsiElement setName(@NonNls @NotNull String name) {
+      throw createException();
+    }
+  }
+
+  public static final PsiClass NULL_PSI_CLASS = new NullPsiClass();
 }

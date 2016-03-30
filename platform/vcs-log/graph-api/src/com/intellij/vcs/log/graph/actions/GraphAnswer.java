@@ -30,6 +30,8 @@ public interface GraphAnswer<Id> {
   @Nullable
   Id getCommitToJump();
 
+  boolean doJump();
+
   @Nullable
   Runnable getGraphUpdater();
 }

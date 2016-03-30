@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RemoteDesktopDetector;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
@@ -403,8 +404,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     private MyDialog(IdeGlassPaneEx pane, DialogWrapper wrapper, Project project) {
       setLayout(new BorderLayout());
       setOpaque(false);
-      setBorder(BorderFactory.createEmptyBorder(ShadowBorderPainter.TOP_SIZE, ShadowBorderPainter.SIDE_SIZE,
-          ShadowBorderPainter.BOTTOM_SIZE, ShadowBorderPainter.SIDE_SIZE));
+      setBorder(BorderFactory.createEmptyBorder(AllIcons.Ide.Shadow.Top.getIconHeight(), AllIcons.Ide.Shadow.Left.getIconWidth(),
+                                                AllIcons.Ide.Shadow.Bottom.getIconHeight(), AllIcons.Ide.Shadow.Right.getIconWidth()));
 
       myPane = pane;
       myDialogWrapper = new WeakReference<DialogWrapper>(wrapper);

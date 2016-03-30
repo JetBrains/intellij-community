@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -18,7 +19,8 @@ public class IpnbHeadingPanel extends IpnbEditablePanel<JBLabel, IpnbHeadingCell
   }
 
   private String renderCellText() {
-    return "<html><body><h" + myCell.getLevel() + ">" + myCell.getSourceAsString() + "</h" + myCell.getLevel() +
+    return "<html><body><h" + myCell.getLevel() + " style=\"font-size: " + EditorColorsManager
+      .getInstance().getGlobalScheme().getEditorFontSize() + ";\">" + myCell.getSourceAsString() + "</h" + myCell.getLevel() +
            "></body></html>";
   }
 

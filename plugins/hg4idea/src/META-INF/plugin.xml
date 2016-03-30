@@ -44,13 +44,6 @@
                     serviceImplementation="org.zmlx.hg4idea.HgRootsHandler"/>
   </extensions>
 
-  <project-components>
-    <component>
-      <interface-class>org.zmlx.hg4idea.HgRepositoryWatcher</interface-class>
-      <implementation-class>org.zmlx.hg4idea.HgRepositoryWatcher</implementation-class>
-    </component>
-  </project-components>
-
   <actions>
     <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository">
       <add-to-group group-id="Vcs.Import"/>

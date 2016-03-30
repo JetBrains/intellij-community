@@ -43,6 +43,7 @@
     <highlightRangeExtension implementation="com.jetbrains.python.validation.DumbAwareHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
@@ -92,6 +93,8 @@
     <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
                     serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"
                   />
+
+    <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
 
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
@@ -182,6 +185,11 @@
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention</className>
       <category>Python</category>
     </intentionAction>
 
@@ -375,6 +383,8 @@
     <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" displayName="PEP 8 naming convention violation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyAssignmentToLoopOrWithParameterInspection" suppressId="PyAssignmentToLoopOrWithParameter" displayName="Assignment to 'for' loop or 'with' statement parameter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAssignmentToLoopOrWithParameterInspection"/>
 
+    <localInspection language="Python" shortName="PyMissingTypeHintsInspection" suppressId="PyMissingTypeHints" displayName="Missing type hinting for function definition" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingTypeHintsInspection"/>
+
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
@@ -442,6 +452,7 @@
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyClassProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFileProcessor" order="first"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyLiteralExpressionProcessor"/>
 
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyContainingFileRenamerFactory"/>
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyInheritorRenameFactory"/>
@@ -612,6 +623,7 @@
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
     <extensionPoint qualifiedName="Pythonid.testLocator" interface="com.jetbrains.python.testing.PythonTestLocator"/>
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension"/>
     <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider" interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"/>
   </extensionPoints>
 
@@ -631,6 +643,8 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.DumbAwareHighlightingAnnotator"/>
 
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
+    <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubType"/>
+
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>

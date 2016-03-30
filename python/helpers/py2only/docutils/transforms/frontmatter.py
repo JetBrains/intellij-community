@@ -1,4 +1,4 @@
-# $Id: frontmatter.py 5618 2008-07-28 08:37:32Z strank $
+# $Id: frontmatter.py 7595 2013-01-21 17:33:56Z milde $
 # Author: David Goodger, Ueli Schlaepfer <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -22,7 +22,6 @@ Transforms related to the front matter of a document or a section
 __docformat__ = 'reStructuredText'
 
 import re
-
 from docutils import nodes, utils
 from docutils.transforms import TransformError, Transform
 
@@ -50,13 +49,24 @@ class TitlePromoter(Transform):
 
         `node` is normally a document.
         """
+        # Type check
+        if not isinstance(node, nodes.Element):
+            raise TypeError, 'node must be of Element-derived type.'
+
         # `node` must not have a title yet.
         assert not (len(node) and isinstance(node[0], nodes.title))
         section, index = self.candidate_index(node)
         if index is None:
             return None
+
         # Transfer the section's attributes to the node:
-        node.attributes.update(section.attributes)
+        # NOTE: Change second parameter to False to NOT replace
+        #       attributes that already exist in node with those in
+        #       section
+        # NOTE: Remove third parameter to NOT copy the 'source'
+        #       attribute from section
+        node.update_all_atts_concatenating(section, True, True)
+
         # setup_child is called automatically for all nodes.
         node[:] = (section[:1]        # section title
                    + node[:index]     # everything that was in the
@@ -82,18 +92,23 @@ class TitlePromoter(Transform):
                 <subtitle>
                 ...
         """
+        # Type check
+        if not isinstance(node, nodes.Element):
+            raise TypeError, 'node must be of Element-derived type.'
+
         subsection, index = self.candidate_index(node)
         if index is None:
             return None
         subtitle = nodes.subtitle()
-        # Transfer the subsection's attributes to the new subtitle:
-        # This causes trouble with list attributes!  To do: Write a
-        # test case which catches direct access to the `attributes`
-        # dictionary and/or write a test case which shows problems in
-        # this particular case.
-        subtitle.attributes.update(subsection.attributes)
-        # We're losing the subtitle's attributes here!  To do: Write a
-        # test case which shows this behavior.
+
+        # Transfer the subsection's attributes to the new subtitle
+        # NOTE: Change second parameter to False to NOT replace
+        #       attributes that already exist in node with those in
+        #       section
+        # NOTE: Remove third parameter to NOT copy the 'source'
+        #       attribute from section
+        subtitle.update_all_atts_concatenating(subsection, True, True)
+
         # Transfer the contents of the subsection's title to the
         # subtitle:
         subtitle[:] = subsection[0][:]

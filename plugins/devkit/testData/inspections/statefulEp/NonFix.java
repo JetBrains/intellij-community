@@ -9,4 +9,8 @@ public class NonFix {
     r =null;
     p = pf = null;
   }
+  
+  public static class Ext2 {
+    
+  }
 }

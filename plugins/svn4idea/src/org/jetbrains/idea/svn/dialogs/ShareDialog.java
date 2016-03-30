@@ -175,6 +175,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     return myCreateStandard.isSelected();
   }
 
+  @NotNull
   public String getCommitText() {
     return myCommitMessage.getComment();
   }

@@ -28,7 +28,7 @@ public class GraphLayoutImpl implements GraphLayout {
   @NotNull private final List<Integer> myHeadNodeIndex;
   @NotNull private final int[] myStartLayoutIndexForHead;
 
-  GraphLayoutImpl(@NotNull int[] layoutIndex, @NotNull List<Integer> headNodeIndex, @NotNull int[] startLayoutIndexForHead) {
+  public GraphLayoutImpl(@NotNull int[] layoutIndex, @NotNull List<Integer> headNodeIndex, @NotNull int[] startLayoutIndexForHead) {
     myLayoutIndex = CompressedIntList.newInstance(layoutIndex);
     myHeadNodeIndex = headNodeIndex;
     myStartLayoutIndexForHead = startLayoutIndexForHead;

@@ -23,7 +23,6 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.StateStorageBase
-import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -36,21 +35,19 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.systemIndependentPath
 import gnu.trove.THashMap
 import org.jdom.Element
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Path
 
-open class DirectoryBasedStorage(private val dir: Path,
-                                 private val splitter: StateSplitter,
-                                 private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
-  private @Volatile var virtualFile: VirtualFile? = null
+abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val splitter: StateSplitter,
+                                         protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
+  protected var componentName: String? = null
 
-  private var componentName: String? = null
+  protected abstract val virtualFile: VirtualFile?
 
-  fun setVirtualDir(dir: VirtualFile?) {
-    virtualFile = dir
-  }
+  override fun loadData() = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
+
+  override fun startExternalization(): StateStorage.ExternalizationSession? = null
 
   override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>) {
     // todo reload only changed file, compute diff
@@ -89,15 +86,26 @@ open class DirectoryBasedStorage(private val dir: Path,
     return state
   }
 
-  override fun loadData() = StateMap.fromMap(DirectoryStorageUtil.loadFrom(getVirtualFile(), pathMacroSubstitutor))
+  override fun hasState(storageData: StateMap, componentName: String) = storageData.hasStates()
+}
 
-  private fun getVirtualFile(): VirtualFile? {
-    var result = virtualFile
-    if (result == null) {
-      result = LocalFileSystem.getInstance().findFileByPath(dir.systemIndependentPath)
-      virtualFile = result
+open class DirectoryBasedStorage(private val dir: Path,
+                                 @Suppress("DEPRECATION") splitter: StateSplitter,
+                                 pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
+  private @Volatile var cachedVirtualFile: VirtualFile? = null
+
+  override val virtualFile: VirtualFile?
+    get() {
+      var result = cachedVirtualFile
+      if (result == null) {
+        result = LocalFileSystem.getInstance().findFileByPath(dir.systemIndependentPath)
+        cachedVirtualFile = result
+      }
+      return result
     }
-    return result
+
+  internal fun setVirtualDir(dir: VirtualFile?) {
+    cachedVirtualFile = dir
   }
 
   override fun startExternalization(): StateStorage.ExternalizationSession? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
@@ -159,7 +167,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     override fun save() {
       val stateMap = StateMap.fromMap(copiedStorageData!!)
 
-      var dir = storage.getVirtualFile()
+      var dir = storage.virtualFile
       if (copiedStorageData!!.isEmpty()) {
         if (dir != null && dir.exists()) {
           deleteFile(this, dir)
@@ -170,7 +178,7 @@ open class DirectoryBasedStorage(private val dir: Path,
 
       if (dir == null || !dir.isValid) {
         dir = createDir(storage.dir, this)
-        storage.virtualFile = dir
+        storage.cachedVirtualFile = dir
       }
 
       if (!dirtyFileNames.isEmpty) {
@@ -192,7 +200,7 @@ open class DirectoryBasedStorage(private val dir: Path,
 
         var element: Element? = null
         try {
-          element = states.getElement(fileName, null)
+          element = states.getElement(fileName) ?: continue
           storage.pathMacroSubstitutor?.collapsePaths(element)
 
           storeElement.setAttribute(FileStorageCoreUtil.NAME, storage.componentName!!)
@@ -218,11 +226,11 @@ open class DirectoryBasedStorage(private val dir: Path,
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {
-            try {
+            if (file.isWritable) {
               file.delete(this)
             }
-            catch (e: FileNotFoundException) {
-              throw ReadOnlyModificationException(file, e, null)
+            else {
+              throw ReadOnlyModificationException(file, null)
             }
           }
         }
@@ -233,8 +241,6 @@ open class DirectoryBasedStorage(private val dir: Path,
   private fun setStorageData(newStates: StateMap) {
     storageDataRef.set(newStates)
   }
-
-  override fun hasState(storageData: StateMap, componentName: String) = storageData.hasStates()
 }
 
 private val NON_EXISTENT_FILE_DATA = Pair.create<ByteArray, String>(null, SystemProperties.getLineSeparator())

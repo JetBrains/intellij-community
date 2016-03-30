@@ -27,7 +27,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
@@ -41,6 +40,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Property;
@@ -59,7 +59,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -74,13 +77,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private final XDebuggerWatchesManager myWatchesManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
-  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<XDebugSessionImpl>();
+  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
     myWatchesManager = new XDebuggerWatchesManager();
-    mySessions = new LinkedHashMap<ProcessHandler, XDebugSessionImpl>();
+    mySessions = new LinkedHashMap<>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
     MessageBusConnection messageBusConnection = messageBus.connect();
@@ -247,12 +250,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       if (descriptor != null) {
         // in test-mode RunContentWithExecutorListener.contentRemoved events are not sent (see RunContentManagerImpl.showRunContent)
         // so we make sure the mySessions and mySessionData are cleared correctly when session is disposed
-        Disposer.register(descriptor, new Disposable() {
-          @Override
-          public void dispose() {
-            mySessions.remove(session.getDebugProcess().getProcessHandler());
-          }
-        });
+        Disposer.register(descriptor, () -> mySessions.remove(session.getDebugProcess().getProcessHandler()));
       }
 
       if (!myProject.isDisposed() && !ApplicationManager.getApplication().isUnitTestMode() && XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
@@ -307,12 +305,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       final XDebugProcess process = session.getDebugProcess();
       if (processClass.isInstance(process)) {
         if (list == null) {
-          list = new SmartList<T>();
+          list = new SmartList<>();
         }
         list.add(processClass.cast(process));
       }
     }
-    return list == null ? Collections.<T>emptyList() : list;
+    return ContainerUtil.notNullize(list);
   }
 
   @Override

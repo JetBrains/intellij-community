@@ -63,15 +63,19 @@ public class Replacer {
   public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern, boolean createPhysicalFile,
                             FileType sourceFileType, Language sourceDialect) {
     this.options = options;
-    this.options.getMatchOptions().setSearchPattern(what);
+    final MatchOptions matchOptions = this.options.getMatchOptions();
+    matchOptions.setSearchPattern(what);
     this.options.setReplacement(by);
     replacementBuilder=null;
     context = null;
     replaceHandler = null;
 
-    this.options.getMatchOptions().clearVariableConstraints();
-    MatcherImplUtil.transform(this.options.getMatchOptions());
+    matchOptions.clearVariableConstraints();
+    MatcherImplUtil.transform(matchOptions);
 
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
+    assert profile != null;
+    profile.checkSearchPattern(project, matchOptions);
     checkSupportedReplacementPattern(project, options);
 
     Matcher matcher = new Matcher(project);
@@ -91,18 +95,16 @@ public class Replacer {
         lastElement = elements[elements.length-1];
         parent = firstElement.getParent();
 
-        this.options.getMatchOptions().setScope(
-          new LocalSearchScope(parent)
-        );
+        matchOptions.setScope(new LocalSearchScope(parent));
       } else {
         parent = ((LocalSearchScope)options.getMatchOptions().getScope()).getScope()[0];
         firstElement = parent.getFirstChild();
         lastElement = parent.getLastChild();
       }
 
-      this.options.getMatchOptions().setResultIsContextMatch(true);
+      matchOptions.setResultIsContextMatch(true);
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
-      matcher.testFindMatches(sink, this.options.getMatchOptions());
+      matcher.testFindMatches(sink, matchOptions);
 
       final List<ReplacementInfo> resultPtrList = new ArrayList<ReplacementInfo>();
 

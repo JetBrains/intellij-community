@@ -93,9 +93,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                     @NotNull final InspectionTreeNode parentNode,
                                     final boolean showStructure,
                                     @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems,
-                                    DefaultTreeModel model) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
@@ -114,11 +112,13 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       }
       entities.addAll(moduleProblems);
     }
-    List<InspectionTreeNode> list = buildTree(context, contents, false, toolWrapper, computeContainer, showStructure);
-
-    for (InspectionTreeNode node : list) {
-      merge(model, node, toolNode, true);
-    }
+    buildTree(context,
+              contents,
+              false,
+              toolWrapper,
+              computeContainer,
+              showStructure,
+              node -> merge(node, toolNode, true));
 
     if (presentation.isOldProblemsIncluded()) {
       final Map<RefEntity, CommonProblemDescriptor[]> oldProblems = presentation.getOldProblemElements();
@@ -129,20 +129,22 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         }
       };
 
-      list = buildTree(context, presentation.getOldContent(), true, toolWrapper, computeContainer, showStructure);
-
-      for (InspectionTreeNode node : list) {
-        merge(model, node, toolNode, true);
-      }
+      buildTree(context,
+                presentation.getOldContent(),
+                true,
+                toolWrapper,
+                computeContainer,
+                showStructure,
+                node -> merge(node, toolNode, true));
     }
-    merge(model, toolNode, parentNode, false);
+    merge(toolNode, parentNode, false);
   }
 
   @Override
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                   @NotNull final InspectionToolWrapper toolWrapper,
                                   @NotNull final UserObjectContainer container,
-                                  @NotNull final InspectionPackageNode pNode,
+                                  @NotNull final InspectionTreeNode pNode,
                                   final boolean canPackageRepeat) {
     final RefElementContainer refElementDescriptor = (RefElementContainer)container;
     final RefEntity refElement = refElementDescriptor.getUserObject();
@@ -156,15 +158,15 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
           if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
             continue;
           }
-          elemNode.add(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation));
+          insertByIndex(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation), elemNode);
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }
         }
     }
     else {
-      if (canPackageRepeat) {
-        final Set<RefEntity> currentElements = presentation.getContent().get(pNode.getPackageName());
+      if (canPackageRepeat && pNode instanceof InspectionPackageNode) {
+        final Set<RefEntity> currentElements = presentation.getContent().get(((InspectionPackageNode) pNode).getPackageName());
         if (currentElements != null) {
           final Set<RefEntity> currentEntities = new HashSet<RefEntity>(currentElements);
           if (RefUtil.contains(refElement, currentEntities)) return;

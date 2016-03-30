@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,3 +65,5 @@ inline fun <T, R> List<T>.computeOrNull(processor: (T) -> R): R? {
   }
   return null
 }
+
+fun <T> List<T>?.nullize() = if (isNullOrEmpty()) null else this

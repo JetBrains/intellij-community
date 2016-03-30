@@ -29,7 +29,7 @@ public class MavenServerUtil {
 
   static {
     Properties res = new Properties();
-    res.putAll(System.getProperties());
+    res.putAll((Properties)System.getProperties().clone());
     
     for (Iterator<Object> itr = res.keySet().iterator(); itr.hasNext(); ) {
       String propertyName = itr.next().toString();

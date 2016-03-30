@@ -25,10 +25,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +54,8 @@ public class Alarm implements Disposable {
 
   private volatile boolean myDisposed;
 
-  private final List<Request> myRequests = new SmartList<Request>(); // guarded by LOCK
-  private final List<Request> myPendingRequests = new SmartList<Request>(); // guarded by LOCK
+  private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
+  private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
 
@@ -68,7 +70,9 @@ public class Alarm implements Disposable {
       myDisposed = true;
       cancelAllRequests();
 
-      myExecutorService.shutdownNow();
+      if (myThreadToUse != ThreadToUse.SWING_THREAD) {
+        myExecutorService.shutdownNow();
+      }
     }
   }
 
@@ -123,7 +127,12 @@ public class Alarm implements Disposable {
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
 
-    myExecutorService = // have to restrict the number of running tasks because otherwise the (implicit) contract of
+    myExecutorService = threadToUse == ThreadToUse.SWING_THREAD ?
+                        // pass straight to EDT
+                        EdtExecutorService.getScheduledExecutorInstance() :
+
+                        // or pass to app pooled thread.
+                        // have to restrict the number of running tasks because otherwise the (implicit) contract of
                         // "addRequests with the same delay are executed in order" will be broken
                         AppExecutorUtil.createBoundedScheduledExecutorService(1);
 
@@ -258,7 +267,7 @@ public class Alarm implements Disposable {
         return;
       }
 
-      requests = new SmartList<Pair<Request, Runnable>>();
+      requests = new SmartList<>();
       for (Request request : myRequests) {
         Runnable existingTask = request.cancel();
         if (existingTask != null) {
@@ -274,13 +283,14 @@ public class Alarm implements Disposable {
       }
       request.first.run();
     }
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @TestOnly
   void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     List<Request> requests;
     synchronized (LOCK) {
-      requests = new ArrayList<Request>(myRequests);
+      requests = new ArrayList<>(myRequests);
     }
 
     for (Request request : requests) {
@@ -357,12 +367,9 @@ public class Alarm implements Disposable {
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
-              EdtInvocationManager.getInstance().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  if (!myDisposed) {
-                    QueueProcessor.runSafely(task);
-                  }
+              EdtInvocationManager.getInstance().invokeLater(() -> {
+                if (!myDisposed) {
+                  QueueProcessor.runSafely(task);
                 }
               });
             }
@@ -385,9 +392,6 @@ public class Alarm implements Disposable {
           if (app == null) {
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(scheduledTask);
-          }
-          else if (app.isDispatchThread() && app.getCurrentModalityState().equals(myModalityState)) {
-            scheduledTask.run();
           }
           else {
             app.invokeLater(scheduledTask, myModalityState);

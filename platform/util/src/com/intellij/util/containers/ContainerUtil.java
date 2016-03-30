@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
-import com.intellij.util.Function;
 import gnu.trove.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1537,7 +1536,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> Collection<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+  public static <T> List<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
     List<T> result = new ArrayList<T>();
     for (T t : collection1) {
       if (collection2.contains(t)) {
@@ -2367,6 +2366,16 @@ public class ContainerUtil extends ContainerUtilRt {
     return i < 0 ? null : (U)list.get(i);
   }
 
+  @Contract(pure = true)
+  public static <T, U extends T> int lastIndexOfInstance(@NotNull List<T> list, @NotNull final Class<U> clazz) {
+    return lastIndexOf(list, new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return clazz.isInstance(t);
+      }
+    });
+  }
+
   @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<T> list, @NotNull final T object) {
     return indexOf(list, new Condition<T>() {
@@ -2398,7 +2407,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return emptyList();
@@ -2489,6 +2498,12 @@ public class ContainerUtil extends ContainerUtilRt {
     //noinspection deprecation
     return new ConcurrentLongObjectHashMap<V>();
   }
+  @NotNull
+  @Contract(pure=true)
+  public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap(int initialCapacity) {
+    //noinspection deprecation
+    return new ConcurrentLongObjectHashMap<V>(initialCapacity);
+  }
 
   @NotNull
   @Contract(pure=true)
@@ -2512,6 +2527,14 @@ public class ContainerUtil extends ContainerUtilRt {
                                                                              @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
     //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
+                                                                             float loadFactor,
+                                                                             int concurrencyLevel,
+                                                                             @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    return new ConcurrentSoftKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @NotNull
@@ -2690,6 +2713,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = "null -> true", pure = true)
   public static <T> boolean isEmpty(Collection<T> collection) {
     return collection == null || collection.isEmpty();
+  }
+
+  @Contract(value = "null -> true", pure = true)
+  public static boolean isEmpty(Map map) {
+    return map == null || map.isEmpty();
   }
 
   @NotNull

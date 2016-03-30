@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -186,7 +187,7 @@ public class CommittedChangesBrowser extends JPanel {
   }
 
   public void dispose() {
-    myChangesView.dispose();
+    Disposer.dispose(myChangesView);
   }
 
   public void setModel(CommittedChangesTableModel tableModel) {

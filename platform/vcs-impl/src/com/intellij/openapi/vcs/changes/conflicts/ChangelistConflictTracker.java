@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -34,6 +33,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
@@ -79,26 +79,18 @@ public class ChangelistConflictTracker {
     myCheckSet = new HashSet<VirtualFile>();
 
     final Application application = ApplicationManager.getApplication();
-    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, myProject);
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (application.runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return application.isDisposed() || myProject.isDisposed() || !myProject.isOpen();
-          }
-        })) {
-          return;
-        }
-        final Set<VirtualFile> localSet;
-        synchronized (myCheckSetLock) {
-          localSet = new HashSet<VirtualFile>();
-          localSet.addAll(myCheckSet);
-          myCheckSet.clear();
-        }
-        checkFiles(localSet);
+    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
+    final Runnable runnable = () -> {
+      if (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen()) {
+        return;
       }
+      final Set<VirtualFile> localSet;
+      synchronized (myCheckSetLock) {
+        localSet = new HashSet<VirtualFile>();
+        localSet.addAll(myCheckSet);
+        myCheckSet.clear();
+      }
+      checkFiles(localSet);
     };
     myDocumentListener = new DocumentAdapter() {
       @Override

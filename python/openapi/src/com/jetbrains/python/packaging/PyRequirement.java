@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class PyRequirement {
   private static final Pattern NAME = Pattern.compile("\\s*(\\w(\\w|[-.])*)\\s*(.*)");
   private static final Pattern VERSION_SPEC = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+)");
   private static final Pattern EDITABLE_EGG = Pattern.compile("\\s*(-e)?\\s*([^#]*)(#egg=(.*))?");
-  private static final Pattern RECURSIVE_REQUIREMENT = Pattern.compile("\\s*-r\\s+(.*)");
+  private static final Pattern RECURSIVE_REQUIREMENT = Pattern.compile("^-r\\s*(.*)");
   private static final Pattern VCS_PATH = Pattern.compile(".*/([^/]+)/?");
 
   public enum Relation {
@@ -253,7 +253,7 @@ public class PyRequirement {
    *
    * @param line requirement to parse
    * @return requirement
-   * @throws java.lang.IllegalArgumentException if line can't be parsed
+   * @throws IllegalArgumentException if line can't be parsed
    */
   @NotNull
   public static PyRequirement fromStringGuaranteed(@NotNull final String line) {
@@ -304,7 +304,7 @@ public class PyRequirement {
   }
 
   @NotNull
-  public static List<PyRequirement> parse(@NotNull VirtualFile file, @NotNull Set<VirtualFile> visited) {
+  private static List<PyRequirement> parse(@NotNull VirtualFile file, @NotNull Set<VirtualFile> visited) {
     if (!visited.contains(file)) {
       visited.add(file);
       final Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -339,9 +339,9 @@ public class PyRequirement {
   }
 
   @NotNull
-  private static List<PyRequirement> parseRecursiveRequirement(@NotNull String line, @NotNull VirtualFile anchor,
+  private static List<PyRequirement> parseRecursiveRequirement(@NotNull String trimmedLine, @NotNull VirtualFile anchor,
                                                                @NotNull Set<VirtualFile> visited) {
-    final Matcher matcher = RECURSIVE_REQUIREMENT.matcher(line);
+    final Matcher matcher = RECURSIVE_REQUIREMENT.matcher(trimmedLine);
     if (matcher.matches()) {
       final String fileName = FileUtil.toSystemIndependentName(matcher.group(1));
       final VirtualFile dir = anchor.getParent();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
  * @author Dennis.Ushakov
  */
 public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
-  private static final String NDASH = new String(new byte[]{-30, -128, -109}, CharsetToolkit.UTF8_CHARSET);
+  private static final String N_DASH = new String(new byte[]{-30, -128, -109}, CharsetToolkit.UTF8_CHARSET);
   private static final String COPY = new String(new byte[]{-62, -82}, CharsetToolkit.UTF8_CHARSET);
 
   public void testSimpleHtml() {
@@ -35,7 +35,7 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testVeryWide() {
-    doTest(NDASH, "html", "&ndash;");
+    doTest(N_DASH, "html", "&ndash;");
   }
 
   public void testWide() {
@@ -43,7 +43,7 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testAttributeValue() {
-    doTest("<a alt='" + NDASH + "'></a>", "html", "<a alt='&ndash;'></a>");
+    doTest("<a alt='" + N_DASH + "'></a>", "html", "<a alt='&ndash;'></a>");
   }
 
   public void testTag() {
@@ -91,14 +91,11 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest(String text, final String extension, final String expected) {
-    final String finalText = !text.contains("<selection>") ? "<selection>" + text + "</selection>" : text;
-    PlatformTestUtil.withEncoding("UTF8", new Runnable() {
-      @Override
-      public void run() {
-        myFixture.configureByText(getTestName(true) + "." + extension, finalText);
-        myFixture.performEditorAction("EscapeEntities");
-        myFixture.checkResult(expected);
-      }
+    String finalText = !text.contains("<selection>") ? "<selection>" + text + "</selection>" : text;
+    PlatformTestUtil.withEncoding("UTF8", () -> {
+      myFixture.configureByText(getTestName(true) + "." + extension, finalText);
+      myFixture.performEditorAction("EscapeEntities");
+      myFixture.checkResult(expected);
     });
   }
 }

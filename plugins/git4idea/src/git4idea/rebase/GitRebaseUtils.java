@@ -23,14 +23,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryFiles;
 import git4idea.stash.GitChangesSaver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +40,8 @@ import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * The utilities related to rebase functionality
@@ -176,12 +176,14 @@ public class GitRebaseUtils {
   /**
    * Checks if the rebase is in the progress for the specified git root
    *
+   *
+   * @param project
    * @param root the git root
    * @return true if the rebase directory presents in the root
    */
   @Deprecated
-  public static boolean isRebaseInTheProgress(VirtualFile root) {
-    return getRebaseDir(root) != null;
+  public static boolean isRebaseInTheProgress(@NotNull Project project, @NotNull VirtualFile root) {
+    return getRebaseDir(project, root) != null;
   }
 
   /**
@@ -191,13 +193,13 @@ public class GitRebaseUtils {
    * @return the rebase directory or null if it does not exist.
    */
   @Nullable
-  private static File getRebaseDir(@NotNull VirtualFile root) {
-    File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
-    File f = new File(gitDir, GitRepositoryFiles.REBASE_APPLY);
+  private static File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
+    GitRepository repository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root));
+    File f = repository.getRepositoryFiles().getRebaseApplyDir();
     if (f.exists()) {
       return f;
     }
-    f = new File(gitDir, GitRepositoryFiles.REBASE_MERGE);
+    f = repository.getRepositoryFiles().getRebaseMergeDir();
     if (f.exists()) {
       return f;
     }
@@ -207,12 +209,14 @@ public class GitRebaseUtils {
   /**
    * Get rebase directory
    *
+   *
+   * @param project
    * @param root the vcs root
    * @return the commit information or null if no commit information could be detected
    */
   @Nullable
-  public static CommitInfo getCurrentRebaseCommit(@NotNull VirtualFile root) {
-    File rebaseDir = getRebaseDir(root);
+  public static CommitInfo getCurrentRebaseCommit(@NotNull Project project, @NotNull VirtualFile root) {
+    File rebaseDir = getRebaseDir(project, root);
     if (rebaseDir == null) {
       LOG.warn("No rebase dir found for " + root.getPath());
       return null;

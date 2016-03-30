@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class MarkerType {
-
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
   @NotNull private final String myDebugName;
@@ -161,8 +160,7 @@ public class MarkerType {
   }
   @Nullable
   private static String calculateOverridingSiblingMethodTooltip(@NotNull PsiMethod method) {
-    Pair<PsiMethod, PsiClass> pair =
-      FindSuperElementsHelper.getSiblingInheritedViaSubClass(method, FindSuperElementsHelper.createSubClassCache());
+    Pair<PsiMethod, PsiClass> pair = FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method);
     if (pair == null) return null;
     PsiMethod superMethod = pair.getFirst();
     PsiClass subClass = pair.getSecond();
@@ -248,7 +246,7 @@ public class MarkerType {
 
   private static String getOverriddenMethodTooltip(@NotNull PsiMethod method) {
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
-    OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
+    OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
 
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
@@ -288,7 +286,7 @@ public class MarkerType {
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(collectProcessor));
+        OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<PsiMethod>(collectProcessor));
         if (isAbstract && collectProcessor.getCollection().size() < 2) {
           final PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
             @Override
@@ -340,7 +338,7 @@ public class MarkerType {
   // Used in Kotlin, please don't make private
   public static String getSubclassedClassTooltip(@NotNull PsiClass aClass) {
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5, new THashSet<PsiClass>());
-    ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+    ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
 
     if (processor.isOverflow()) {
       return aClass.isInterface()
@@ -381,7 +379,7 @@ public class MarkerType {
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
+        ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
         if (collectProcessor.getCollection().size() < 2) {
           FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(collectExprProcessor));
         }
@@ -469,7 +467,7 @@ public class MarkerType {
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
-      OverridingMethodsSearch.search(myMethod, true).forEach(
+      OverridingMethodsSearch.search(myMethod).forEach(
         new CommonProcessors.CollectProcessor<PsiMethod>() {
           @Override
           public boolean process(PsiMethod psiMethod) {

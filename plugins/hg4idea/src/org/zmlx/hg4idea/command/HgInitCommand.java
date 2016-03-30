@@ -22,7 +22,7 @@ public class HgInitCommand {
     myProject = project;
   }
 
-  public void execute(@NotNull VirtualFile repositoryRoot,final HgCommandResultHandler resultHandler) {
+  public void executeAsynchronously(@NotNull VirtualFile repositoryRoot, final HgCommandResultHandler resultHandler) {
     final List<String> args = new ArrayList<String>(1);
     args.add(repositoryRoot.getPath());
     final HgCommandExecutor executor = new HgCommandExecutor(myProject, repositoryRoot.getPath());

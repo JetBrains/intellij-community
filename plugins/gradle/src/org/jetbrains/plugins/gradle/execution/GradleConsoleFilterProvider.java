@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,18 @@ package org.jetbrains.plugins.gradle.execution;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.RegexpFilter;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.CachedValueImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,17 +41,29 @@ public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
     return new Filter[]{
       new GradleConsoleFilter(project),
       new RegexpFilter(project, RegexpFilter.FILE_PATH_MACROS + ":" + RegexpFilter.LINE_MACROS) {
+        private CachedValue<Boolean> myIsGradleProject = new CachedValueImpl<Boolean>(
+          () -> CachedValueProvider.Result.create(isGradleProject(), ProjectRootModificationTracker.getInstance(project)));
+
         @Override
         public Result applyFilter(String line, int entireLength) {
+          if (line == null || !FileUtil.isAbsolutePlatformIndependent(line)) return null;
+          if (Boolean.FALSE.equals(myIsGradleProject.getValue())) return null;
           Result result = super.applyFilter(line, entireLength);
           if (result == null) return null;
           Pattern pattern = getPattern();
-          Matcher matcher = pattern.matcher(line);
-          if (!matcher.find()) return result;
+          Matcher matcher = pattern.matcher(StringUtil.newBombedCharSequence(line, 100));
+          if (!matcher.lookingAt()) return result;
           int lineStart = entireLength - line.length();
           int start = lineStart + matcher.start();
           int end = lineStart + matcher.end();
           return new Result(start, end, result.getFirstHyperlinkInfo());
+        }
+
+        private boolean isGradleProject() {
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return true;
+          }
+          return false;
         }
       },
     };

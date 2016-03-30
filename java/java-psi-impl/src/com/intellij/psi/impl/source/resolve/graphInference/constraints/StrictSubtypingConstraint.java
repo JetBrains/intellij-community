@@ -150,8 +150,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
             final PsiType tSubstituted = tSubstitutor.substitute(parameter);
             final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(parameter);
             if (tSubstituted == null ^ sSubstituted == null) {
-              session.setErased();
-              return true;
+              return false;
             }
             constraints.add(new SubtypingConstraint(tSubstituted, sSubstituted));
           }

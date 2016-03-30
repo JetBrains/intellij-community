@@ -23,9 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -592,7 +590,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
           .showInBestPositionFor(ctx);
       }
       else {
-        action.actionPerformed(actionEvent);
+        ActionUtil.performActionDumbAware(action, actionEvent);
       }
 
       if (Registry.is("actionSystem.fixLostTyping")) {
@@ -870,17 +868,15 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
+      ApplicationManager.getApplication().invokeLater(
+        () -> ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
           final AnActionEvent event =
             new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                               ActionManager.getInstance(), 0);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
             ActionUtil.performActionDumbAware(action, event);
           }
-        }
-      });
+        }));
     }
 
     @Override

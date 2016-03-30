@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MessageType;
@@ -22,15 +23,18 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.util.Alarm;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
@@ -55,6 +59,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private final Project myProject;
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
+  private static final int MAX_ATTEMPTS = 10;
 
   public IpnbConnectionManager(final Project project) {
     myProject = project;
@@ -68,7 +73,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     final IpnbFileEditor fileEditor = codePanel.getFileEditor();
     final VirtualFile virtualFile = fileEditor.getVirtualFile();
     final String path = virtualFile.getPath();
-    if (!myKernels.containsKey(path)) {
+    if (!hasConnection(path)) {
       startConnection(codePanel, fileEditor, path);
     }
     else {
@@ -84,35 +89,27 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
+  public boolean hasConnection(String path) {
+    return myKernels.containsKey(path);
+  }
+
   private void startConnection(@NotNull final IpnbCodePanel codePanel, final IpnbFileEditor fileEditor, final String path) {
-    String url = IpnbSettings.getInstance(myProject).getURL();
-    if (StringUtil.isEmptyOrSpaces(url)) {
-      url = IpnbSettings.DEFAULT_URL;
-    }
+    String url = getURL();
 
     boolean connectionStarted = startConnection(codePanel, path, url, false);
     if (!connectionStarted) {
-      final String finalUrl = url;
-      url = showDialogUrl(url);
-      if (url == null) return;
-      IpnbSettings.getInstance(myProject).setURL(url);
 
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
-          final boolean serverStarted = startIpythonServer(finalUrl, fileEditor);
+          final boolean serverStarted = startIpythonServer(url, fileEditor);
           if (!serverStarted) {
             return;
           }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
-              new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
-                @Override
-                public void run() {
-                  startConnection(codePanel, path, finalUrl, true);
-                }
-              }, 3000);
+              startConnection(codePanel, path, url, true);
             }
           });
         }
@@ -120,38 +117,51 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  @Nullable
-  private static String showDialogUrl(@NotNull final String initialUrl) {
-    final String url = Messages.showInputDialog("IPython Notebook URL:", "Start IPython Notebook", null, initialUrl,
-                                                new InputValidator() {
-                                                  @Override
-                                                  public boolean checkInput(String inputString) {
-                                                    try {
-                                                      final URI uri = new URI(inputString);
-                                                      if (uri.getPort() == -1 || StringUtil.isEmptyOrSpaces(uri.getHost())) {
-                                                        return false;
-                                                      }
-                                                    }
-                                                    catch (URISyntaxException e) {
-                                                      return false;
-                                                    }
-                                                    return !inputString.isEmpty();
-                                                  }
+  private String getURL() {
+    String url = IpnbSettings.getInstance(myProject).getURL();
+    return StringUtil.isEmptyOrSpaces(url) ? IpnbSettings.DEFAULT_URL : url;
+  }
 
-                                                  @Override
-                                                  public boolean canClose(String inputString) {
-                                                    return true;
-                                                  }
-                                                });
+  @Nullable
+  public static String showDialogUrl(@NotNull final String initialUrl) {
+    final String url = UIUtil.invokeAndWaitIfNeeded(new Computable<String>() {
+      @Override
+      public String compute() {
+        return Messages.showInputDialog("Jupyter Notebook URL:", "Start Jupyter Notebook", null, initialUrl,
+                                 new InputValidator() {
+                                   @Override
+                                   public boolean checkInput(String inputString) {
+                                     try {
+                                       final URI uri = new URI(inputString);
+                                       if (uri.getPort() == -1 || StringUtil.isEmptyOrSpaces(uri.getHost())) {
+                                         return false;
+                                       }
+                                     }
+                                     catch (URISyntaxException e) {
+                                       return false;
+                                     }
+                                     return !inputString.isEmpty();
+                                   }
+
+                                   @Override
+                                   public boolean canClose(String inputString) {
+                                     return true;
+                                   }
+                                 });
+      }
+    });
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
-  private boolean startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
+  public boolean startConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
                                   final boolean showNotification) {
     try {
+      final boolean[] connectionOpened = {false};
       final IpnbConnectionListenerBase listener = new IpnbConnectionListenerBase() {
         @Override
         public void onOpen(@NotNull IpnbConnection connection) {
+          connectionOpened[0] = true;
+          if (codePanel == null) return;
           final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
           myUpdateMap.put(messageId, codePanel);
         }
@@ -171,7 +181,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
           if (!myUpdateMap.containsKey(parentMessageId)) return;
           final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
           if (payload != null) {
-            //noinspection unchecked
             cell.updatePanel(payload, null);
           }
         }
@@ -179,21 +188,26 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
       try {
         final IpnbConnection connection = getConnection(codePanel, urlString, listener);
+        int countAttempt = 0;
+        while (!connectionOpened[0] && countAttempt < MAX_ATTEMPTS) {
+          countAttempt += 1;
+          TimeoutUtil.sleep(1000);
+        }
         myKernels.put(path, connection);
       }
       catch (URISyntaxException e) {
-        if (showNotification) {
+        if (showNotification && codePanel != null) {
           showWarning(codePanel.getFileEditor(),
-                      "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+                      "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
                       new IpnbSettingsAdapter());
-          LOG.warn("IPython Notebook connection refused: " + e.getMessage());
+          LOG.warn("Jupyter Notebook connection refused: " + e.getMessage());
         }
         return false;
       }
     }
     catch (IOException e) {
       if (showNotification) {
-        LOG.warn("IPython Notebook connection refused: " + e.getMessage());
+        LOG.warn("Jupyter Notebook connection refused: " + e.getMessage());
       }
       return false;
     }
@@ -201,17 +215,17 @@ public final class IpnbConnectionManager implements ProjectComponent {
   }
 
   @NotNull
-  private static IpnbConnection getConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String urlString,
+  private static IpnbConnection getConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String urlString,
                                               @NotNull final IpnbConnectionListenerBase listener)
     throws IOException, URISyntaxException {
-    if (!IpnbParser.isIpythonNewFormat(codePanel.getFileEditor().getVirtualFile())) {
+    if (codePanel != null && !IpnbParser.isIpythonNewFormat(codePanel.getFileEditor().getVirtualFile())) {
       return new IpnbConnection(urlString, listener);
     }
     return new IpnbConnectionV3(urlString, listener);
   }
 
   public void interruptKernel(@NotNull final String filePath) {
-    if (!myKernels.containsKey(filePath)) return;
+    if (!hasConnection(filePath)) return;
     final IpnbConnection connection = myKernels.get(filePath);
     try {
       connection.interrupt();
@@ -223,7 +237,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
   }
 
   public void reloadKernel(@NotNull final String filePath) {
-    if (!myKernels.containsKey(filePath)) return;
+    if (!hasConnection(filePath)) return;
     final IpnbConnection connection = myKernels.get(filePath);
     try {
       connection.reload();
@@ -247,7 +261,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     });
   }
 
-  private boolean startIpythonServer(@NotNull final String url, @NotNull final IpnbFileEditor fileEditor) {
+  public boolean startIpythonServer(@NotNull final String initUrl, @NotNull final IpnbFileEditor fileEditor) {
     final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());
     if (module == null) return false;
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
@@ -257,17 +271,22 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     try {
       final PyPackage ipythonPackage = PyPackageManager.getInstance(sdk).findPackage("ipython", false);
-      if (ipythonPackage == null) {
-        showWarning(fileEditor, "Add IPython to the interpreter of the current project.", null);
+      final PyPackage jupyterPackage = PyPackageManager.getInstance(sdk).findPackage("jupyter", false);
+      if (ipythonPackage == null && jupyterPackage == null) {
+        showWarning(fileEditor, "Add Jupyter to the interpreter of the current project.", null);
         return false;
       }
     }
     catch (ExecutionException ignored) {
     }
 
+    String url = showDialogUrl(initUrl);
+    if (url == null) return false;
+    IpnbSettings.getInstance(myProject).setURL(url);
+
     final Pair<String, String> hostPort = getHostPortFromUrl(url);
     if (hostPort == null) {
-      showWarning(fileEditor, "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+      showWarning(fileEditor, "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
                   new IpnbSettingsAdapter());
       return false;
     }
@@ -276,14 +295,23 @@ public final class IpnbConnectionManager implements ProjectComponent {
       showWarning(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null);
       return false;
     }
-    String ipython = findIPythonRunner(homePath);
     Map<String, String> env = null;
+    final ArrayList<String> parameters = Lists.newArrayList(homePath);
+    String ipython = findJupyterRunner(homePath);
     if (ipython == null) {
-      ipython = PythonHelper.LOAD_ENTRY_POINT.asParamString();
-      env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
+      ipython = findIPythonRunner(homePath);
+      if (ipython == null) {
+        ipython = PythonHelper.LOAD_ENTRY_POINT.asParamString();
+        env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
+      }
+      parameters.add(ipython);
+      parameters.add("notebook");
     }
+    else {
+      parameters.add(ipython);
+    }
+    parameters.add("--no-browser");
 
-    final ArrayList<String> parameters = Lists.newArrayList(homePath, ipython, "notebook", "--no-browser");
     if (hostPort.getFirst() != null) {
       parameters.add("--ip");
       parameters.add(hostPort.getFirst());
@@ -292,17 +320,28 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath());
+    final String baseDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath();
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(baseDir);
     if (env != null) {
       commandLine.withEnvironment(env);
     }
 
     try {
+      final boolean[] serverStarted = {false};
       final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
         @Override
         protected void doDestroyProcess() {
           super.doDestroyProcess();
+          myKernels.clear();
           UnixProcessManager.sendSigIntToProcessTree(getProcess());
+        }
+
+        @Override
+        public void coloredTextAvailable(@NonNls String text, Key attributes) {
+          super.coloredTextAvailable(text, attributes);
+          if (text.toLowerCase().contains("active kernels")) {
+            serverStarted[0] = true;
+          }
         }
 
         @Override
@@ -311,14 +350,15 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }
       };
       processHandler.setShouldDestroyProcessRecursively(true);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
           new RunContentExecutor(myProject, processHandler)
-            .withTitle("IPython Notebook")
+            .withTitle("Jupyter Notebook")
             .withStop(new Runnable() {
               @Override
               public void run() {
+                myKernels.clear();
                 processHandler.destroyProcess();
                 UnixProcessManager.sendSigIntToProcessTree(processHandler.getProcess());
               }
@@ -334,9 +374,15 @@ public final class IpnbConnectionManager implements ProjectComponent {
                 startIpythonServer(url, fileEditor);
               }
             })
+            .withHelpId("reference.manage.py")
             .run();
         }
       });
+      int countAttempt = 0;
+      while (!serverStarted[0] && countAttempt < MAX_ATTEMPTS) {
+        countAttempt += 1;
+        TimeoutUtil.sleep(1000);
+      }
       return true;
     }
     catch (ExecutionException e) {
@@ -345,8 +391,21 @@ public final class IpnbConnectionManager implements ProjectComponent {
   }
 
   @Nullable
-  private static String findIPythonRunner(String homePath) {
+  @Deprecated
+  private static String findIPythonRunner(@NotNull final String homePath) {
     for (String name : Lists.newArrayList("ipython", "ipython-script.py")) {
+      String runnerPath = PythonSdkType.getExecutablePath(homePath, name);
+      if (runnerPath != null) {
+        return runnerPath;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static String findJupyterRunner(@NotNull final String homePath) {
+    for (String name : Lists.newArrayList("jupyter-notebook", "jupyter")) {
       String runnerPath = PythonSdkType.getExecutablePath(homePath, name);
       if (runnerPath != null) {
         return runnerPath;
@@ -408,7 +467,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
   class IpnbSettingsAdapter extends HyperlinkAdapter {
     @Override
     protected void hyperlinkActivated(HyperlinkEvent e) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "IPython Notebook");
+      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "Jupyter Notebook");
     }
   }
 }

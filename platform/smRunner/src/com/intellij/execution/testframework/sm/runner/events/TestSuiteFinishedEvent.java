@@ -25,7 +25,7 @@ public class TestSuiteFinishedEvent extends TreeNodeEvent {
   }
 
   public TestSuiteFinishedEvent(@NotNull String name) {
-    super(name, -1);
+    super(name, null);
   }
 
   @Override

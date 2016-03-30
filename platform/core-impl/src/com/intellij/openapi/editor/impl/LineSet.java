@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.util.BitUtil;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TByteArrayList;
 import gnu.trove.TIntArrayList;
@@ -172,7 +173,7 @@ public class LineSet{
 
   final boolean isModified(int index) {
     checkLineIndex(index);
-    return !isLastEmptyLine(index) && (myFlags[index] & MODIFIED_MASK) != 0;
+    return !isLastEmptyLine(index) && BitUtil.isSet(myFlags[index], MODIFIED_MASK);
   }
 
   final LineSet setModified(int index) {

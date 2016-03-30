@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import java.awt.event.ActionListener;
  * Time: 9:45
  * To change this template use File | Settings | File Templates.
  */
-public class XBreakpointActionsPanel<B extends XBreakpointBase<?,?,?>> extends XBreakpointPropertiesSubPanel<B> {
+public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   public static final String LOG_EXPRESSION_HISTORY_ID = "breakpointLogExpression";
 
   private JCheckBox myLogMessageCheckBox;
@@ -51,7 +51,7 @@ public class XBreakpointActionsPanel<B extends XBreakpointBase<?,?,?>> extends X
   private JPanel myExpressionPanel;
   private XDebuggerExpressionComboBox myLogExpressionComboBox;
 
-  public void init(Project project, XBreakpointManager breakpointManager, @NotNull B breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
+  public void init(Project project, XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
     init(project, breakpointManager, breakpoint);
     if (debuggerEditorsProvider != null) {
       ActionListener listener = new ActionListener() {

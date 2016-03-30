@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullComputable;
@@ -29,14 +30,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +64,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull private final VcsLogUiImpl myUi;
 
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final VcsLogDataManager myLogDataManager;
   @NotNull private final VcsLogUiProperties myUiProperties;
 
   @NotNull private VcsLogDataPack myDataPack;
@@ -73,11 +76,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final TextFilterModel myTextFilterModel;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
-                               @NotNull VcsLogDataHolder logDataHolder,
+                               @NotNull VcsLogDataManager logDataManager,
                                @NotNull VcsLogUiProperties uiProperties,
                                @NotNull VcsLogDataPack initialDataPack) {
     myUi = ui;
-    myLogDataHolder = logDataHolder;
+    myLogDataManager = logDataManager;
     myUiProperties = uiProperties;
     myDataPack = initialDataPack;
 
@@ -104,7 +107,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         @Override
         public void run() {
           myUi.applyFiltersAndUpdateUi();
-          myBranchFilterModel.onStructureFilterChanged(new HashSet<VirtualFile>(myLogDataHolder.getRoots()), myStructureFilterModel.getFilter());
+          myBranchFilterModel
+            .onStructureFilterChanged(new HashSet<VirtualFile>(myLogDataManager.getRoots()), myStructureFilterModel.getFilter());
         }
       });
     }
@@ -115,7 +119,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   @NotNull
-  public JComponent createTextFilter() {
+  public SearchTextField createTextFilter() {
     final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory(VCS_LOG_TEXT_FILTER_HISTORY) {
       @Override
       protected void onFieldCleared() {
@@ -141,6 +145,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         }
       }
     });
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER);
+    if (!shortcutText.isEmpty()) {
+      textFilter.getTextEditor().setToolTipText("Use " + shortcutText + " to switch between text filter and commits list");
+    }
     return textFilter;
   }
 
@@ -159,7 +167,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new UserFilterPopupComponent(myUiProperties, myLogDataHolder, myUserFilterModel).initUi();
+        return new UserFilterPopupComponent(myUiProperties, myLogDataManager, myUserFilterModel).initUi();
       }
     }));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
@@ -187,8 +195,12 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
                                           filtersFromText.second,
                                           myDateFilterModel.getFilter(),
                                           filtersFromText.first,
-                                          myStructureFilterModel.getFilter() == null ? null : myStructureFilterModel.getFilter().getStructureFilter(),
-                                          myStructureFilterModel.getFilter() == null ? null : myStructureFilterModel.getFilter().getRootFilter());
+                                          myStructureFilterModel.getFilter() == null
+                                          ? null
+                                          : myStructureFilterModel.getFilter().getStructureFilter(),
+                                          myStructureFilterModel.getFilter() == null
+                                          ? null
+                                          : myStructureFilterModel.getFilter().getRootFilter());
   }
 
   @NotNull
@@ -234,11 +246,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  @NotNull
-  public VcsLogUi getLogUi() {
-    return myUi;
-  }
-
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
 
     @NotNull private final Computable<JComponent> myComponentCreator;
@@ -268,7 +275,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     public void onStructureFilterChanged(@NotNull Set<VirtualFile> roots, @Nullable VcsLogFileFilter filter) {
       if (filter == null) {
         myVisibleRoots = null;
-      } else {
+      }
+      else {
         myVisibleRoots = VcsLogUtil.getAllVisibleRoots(roots, filter.getRootFilter(), filter.getStructureFilter());
       }
     }

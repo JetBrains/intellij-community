@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,5 +96,15 @@ public class RenameFix extends InspectionGadgetsFix {
         factory.createRename(elementToRename, m_targetName, m_searchInStrings, m_searchInNonJavaFiles);
       renameRefactoring.run();
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  protected boolean prepareForWriting() {
+    return false;
   }
 }

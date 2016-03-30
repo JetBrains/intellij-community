@@ -80,7 +80,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                 myArgumentsList.getText() + "; " +
                 "file=" + (method == null ? "<unknown>" : method.getContainingFile()));
     }
-    return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, true, new Computable<CandidateInfo>() {
+    return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, false, new Computable<CandidateInfo>() {
       @Override
       public CandidateInfo compute() {
         return guardedOverloadResolution(conflicts);
@@ -741,8 +741,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (myArgumentsList instanceof PsiExpressionList) {
       final PsiExpression[] expressions = ((PsiExpressionList)myArgumentsList).getExpressions();
       if (argId < expressions.length) {
-        final Specifics specific = isFunctionalTypeMoreSpecific(expressions[argId], right, left);
-        return Specifics.FIRST.equals(specific);
+        return isFunctionalTypeMoreSpecific(expressions[argId], right, left);
       }
     }
     return false;
@@ -826,36 +825,31 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  @NotNull
-  private static Specifics isFunctionalTypeMoreSpecific(PsiExpression expr, PsiType sType, PsiType tType) {
+  private static boolean isFunctionalTypeMoreSpecific(PsiExpression expr, PsiType sType, PsiType tType) {
     if (expr instanceof PsiParenthesizedExpression) {
       return isFunctionalTypeMoreSpecific(((PsiParenthesizedExpression)expr).getExpression(), sType, tType);
     }
 
     if (expr instanceof PsiConditionalExpression) {
-      final Specifics thenSpecifics = isFunctionalTypeMoreSpecific(((PsiConditionalExpression)expr).getThenExpression(), sType, tType);
-      final Specifics elseSpecifics = isFunctionalTypeMoreSpecific(((PsiConditionalExpression)expr).getElseExpression(), sType, tType);
-      return thenSpecifics == elseSpecifics ? thenSpecifics : Specifics.NEITHER;
+      return isFunctionalTypeMoreSpecific(((PsiConditionalExpression)expr).getThenExpression(), sType, tType) &&
+             isFunctionalTypeMoreSpecific(((PsiConditionalExpression)expr).getElseExpression(), sType, tType);
     }
 
     if (expr instanceof PsiFunctionalExpression) {
 
       if (expr instanceof PsiLambdaExpression && !((PsiLambdaExpression)expr).hasFormalParameterTypes()) {
-        return Specifics.NEITHER;
+        return false;
       }
       if (expr instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)expr).isExact()) {
-        return Specifics.NEITHER;
+        return false;
       }
 
       if (LambdaUtil.isFunctionalType(sType) && LambdaUtil.isFunctionalType(tType) &&
           !TypeConversionUtil.erasure(tType).isAssignableFrom(sType) &&
           !TypeConversionUtil.erasure(sType).isAssignableFrom(tType)) {
-        final boolean specific12 = InferenceSession.isFunctionalTypeMoreSpecificOnExpression(sType, tType, expr);
-        final boolean specific21 = InferenceSession.isFunctionalTypeMoreSpecificOnExpression(tType, sType, expr);
-        if (specific12 && !specific21) return Specifics.FIRST;
-        if (!specific12 && specific21) return Specifics.SECOND;
+        return InferenceSession.isFunctionalTypeMoreSpecificOnExpression(sType, tType, expr);
       }
     }
-    return Specifics.NEITHER;
+    return false;
   }
 }

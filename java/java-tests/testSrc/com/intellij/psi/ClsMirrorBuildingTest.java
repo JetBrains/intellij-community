@@ -45,6 +45,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testDeprecated() { doTest(); }
   public void testAnnotations() { doTest(); }
   public void testMoreAnnotations() { doTest(); }
+  public void testMemberAnnotations() { doTest(); }
   public void testParameterNames() { doTest(); }
   public void testEmptyEnum() { doTest(); }
   public void test$BuckClass() { doTest(); }
@@ -62,6 +63,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testLocalClass() { doTest(); }
   public void testBounds() { doTest(); }
   public void testGrEnum() { doTest(); }
+  public void testSuspiciousParameterNames() { doTest(); }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options =

@@ -25,5 +25,4 @@ public class VcsLogDataKeys {
   public static final DataKey<VcsLog> VCS_LOG = DataKey.create("Vcs.Log");
   public static final DataKey<VcsLogUi> VCS_LOG_UI = DataKey.create("Vcs.Log.Ui");
   public static final DataKey<VcsLogDataProvider> VCS_LOG_DATA_PROVIDER = DataKey.create("Vcs.Log.DataProvider");
-
 }

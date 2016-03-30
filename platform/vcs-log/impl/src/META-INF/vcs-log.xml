@@ -1,5 +1,4 @@
 <idea-plugin>
-
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.VcsLogHighlighterFactory" area="IDEA_PROJECT"/>
@@ -9,12 +8,15 @@
     <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"/>
 
+    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogManager"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties"
-                    serviceImplementation="com.intellij.vcs.log.data.VcsLogUiProperties"/>
+                    serviceImplementation="com.intellij.vcs.log.data.VcsLogUiPropertiesDeprecated"/>
+    <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogTabsProperties"
+                    serviceImplementation="com.intellij.vcs.log.data.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.impl.VcsRootsRegistry"
@@ -28,7 +30,8 @@
   </extensions>
 
   <actions>
-    <action class="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchAction" id="Vcs.Log.CreatePatch"/>
+    <action class="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchAction" id="Vcs.Log.CreatePatch"
+            use-shortcut-of="ChangesView.CreatePatch"/>
     <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Menu_find"
             use-shortcut-of="Find"
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
@@ -44,7 +47,14 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowBranchesPanelAction" id="Vcs.Log.ShowBranchesPanelAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
+      <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
+    </action>
     <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
+    <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
+    <action class="com.intellij.vcs.log.ui.actions.CloseLogTabAction" id="Vcs.Log.CloseLogTabAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
 
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowBranchesPanelAction"/>
@@ -54,23 +64,42 @@
       <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
     </group>
-    <group id="Vcs.Log.Toolbar">
+    <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
+      <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.GoToRef"/>
+      <group id="Vcs.Log.Toolbar"/>
+      <separator/>
+      <reference ref="Vcs.Log.OpenAnotherTab"/>
+      <reference ref="Vcs.Log.CloseLogTabAction"/>
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
 
-    <group>
+    <group id="Log.KeymapGroup" text="Log">
       <reference ref="Vcs.Log.CreatePatch"/>
-      <reference ref="Vcs.Log.GoToRef"/>
-      <reference ref="Vcs.Log.QuickSettings"/>
-      <reference ref="Vcs.Log.IntelliSortChooser"/>
       <separator/>
+      <reference ref="Vcs.Log.GoToRef"/>
+      <reference ref="Vcs.Log.FocusTextFilter"/>
+      <separator/>
+      <reference ref="Vcs.Log.IntelliSortChooser"/>
+      <reference ref="Vcs.Log.CollapseAll"/>
+      <reference ref="Vcs.Log.ExpandAll"/>
+      <reference ref="Vcs.Log.ShowLongEdges"/>
+      <separator/>
+      <reference ref="Vcs.Log.QuickSettings"/>
+      <reference ref="Vcs.Log.ShowDetailsAction"/>
+      <reference ref="Vcs.Log.ShowRootsColumnAction"/>
+      <reference ref="Vcs.Log.ShowBranchesPanelAction"/>
+      <separator/>
+      <reference ref="Vcs.Log.Refresh"/>
+      <reference ref="Vcs.Log.OpenAnotherTab"/>
+      <reference ref="Vcs.Log.CloseLogTabAction"/>
 
-      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+      <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
   </actions>
 

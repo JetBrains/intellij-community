@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -26,7 +27,10 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
@@ -55,7 +59,10 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DebuggerUIUtil {
@@ -65,29 +72,18 @@ public class DebuggerUIUtil {
   }
 
   public static void enableEditorOnCheck(final JCheckBox checkbox, final JComponent textfield) {
-    checkbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean selected = checkbox.isSelected();
-        textfield.setEnabled(selected);
-      }
+    checkbox.addActionListener(e -> {
+      boolean selected = checkbox.isSelected();
+      textfield.setEnabled(selected);
     });
     textfield.setEnabled(checkbox.isSelected());
   }
 
   public static void focusEditorOnCheck(final JCheckBox checkbox, final JComponent component) {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        component.requestFocus();
-      }
-    };
-    checkbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (checkbox.isSelected()) {
-          SwingUtilities.invokeLater(runnable);
-        }
+    final Runnable runnable = () -> component.requestFocus();
+    checkbox.addActionListener(e -> {
+      if (checkbox.isSelected()) {
+        SwingUtilities.invokeLater(runnable);
       }
     });
   }
@@ -168,12 +164,9 @@ public class DebuggerUIUtil {
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
         .setRequestFocus(false);
       if (callback != null) {
-        builder.setCancelCallback(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            callback.setObsolete();
-            return true;
-          }
+        builder.setCancelCallback(() -> {
+          callback.setObsolete();
+          return true;
         });
       }
     return builder.createPopup();
@@ -185,26 +178,23 @@ public class DebuggerUIUtil {
                                                   final boolean showAllOptions,
                                                   final XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    final XLightBreakpointPropertiesPanel<XBreakpointBase<?, ?, ?>> propertiesPanel =
-      new XLightBreakpointPropertiesPanel<XBreakpointBase<?, ?, ?>>(project, breakpointManager, (XBreakpointBase)breakpoint,
+    final XLightBreakpointPropertiesPanel propertiesPanel =
+      new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
                                                                     showAllOptions);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);
     final Ref<Boolean> moreOptionsRequested = Ref.create(Boolean.FALSE);
 
-    propertiesPanel.setDelegate(new XLightBreakpointPropertiesPanel.Delegate() {
-      @Override
-      public void showMoreOptions() {
-        if (!isLoading.get()) {
-          propertiesPanel.saveProperties();
-        }
-        if (!balloonRef.isNull()) {
-          balloonRef.get().hide();
-        }
-        showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
-        moreOptionsRequested.set(true);
+    propertiesPanel.setDelegate(() -> {
+      if (!isLoading.get()) {
+        propertiesPanel.saveProperties();
       }
+      if (!balloonRef.isNull()) {
+        balloonRef.get().hide();
+      }
+      showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
+      moreOptionsRequested.set(true);
     });
 
     isLoading.set(Boolean.TRUE);
@@ -215,13 +205,10 @@ public class DebuggerUIUtil {
       return;
     }
 
-    Runnable showMoreOptions = new Runnable() {
-      @Override
-      public void run() {
-        propertiesPanel.saveProperties();
-        propertiesPanel.dispose();
-        BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint);
-      }
+    Runnable showMoreOptions = () -> {
+      propertiesPanel.saveProperties();
+      propertiesPanel.dispose();
+      BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint);
     };
 
     final JComponent mainPanel = propertiesPanel.getMainPanel();
@@ -247,12 +234,7 @@ public class DebuggerUIUtil {
     });
 
     breakpointManager.addBreakpointListener(breakpointListener);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        IdeFocusManager.findInstance().requestFocus(mainPanel, true);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstance().requestFocus(mainPanel, true));
   }
 
   public static Balloon showBreakpointEditor(Project project, final JComponent mainPanel,
@@ -294,12 +276,7 @@ public class DebuggerUIUtil {
       }
     };
     component.addComponentListener(moveListener);
-    Disposer.register(balloon, new Disposable() {
-      @Override
-      public void dispose() {
-        component.removeComponentListener(moveListener);
-      }
-    });
+    Disposer.register(balloon, () -> component.removeComponentListener(moveListener));
 
     if (whereToShow == null) {
       balloon.showInCenterOf(component);
@@ -347,25 +324,19 @@ public class DebuggerUIUtil {
 
     @Override
     public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
-      AppUIUtil.invokeOnEdt(new Runnable() {
-        @Override
-        public void run() {
-          myTextArea.setText(fullValue);
-          if (font != null) {
-            myTextArea.setFont(font);
-          }
+      AppUIUtil.invokeOnEdt(() -> {
+        myTextArea.setText(fullValue);
+        if (font != null) {
+          myTextArea.setFont(font);
         }
       });
     }
 
     @Override
     public void errorOccurred(@NotNull final String errorMessage) {
-      AppUIUtil.invokeOnEdt(new Runnable() {
-        @Override
-        public void run() {
-          myTextArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
-          myTextArea.setText(errorMessage);
-        }
+      AppUIUtil.invokeOnEdt(() -> {
+        myTextArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
+        myTextArea.setText(errorMessage);
       });
     }
 
@@ -399,6 +370,11 @@ public class DebuggerUIUtil {
       return ((Getter)promise).get() != null;
     }
     return true;
+  }
+
+  public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {
+    AnAction action = ActionManager.getInstance().getAction(name);
+    action.registerCustomShortcutSet(action.getShortcutSet(), component, parentDisposable);
   }
 
   public static void registerExtraHandleShortcuts(final ListPopupImpl popup, String... actionNames) {

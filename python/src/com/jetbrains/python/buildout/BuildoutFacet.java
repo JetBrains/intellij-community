@@ -123,10 +123,13 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         final BuildoutFacet buildoutFacet = getInstance(module);
         if (buildoutFacet != null) {
-          for (String path : buildoutFacet.getConfiguration().getPaths()) {
-            final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-            if (file != null) {
-              results.add(file);
+          final List<String> paths = buildoutFacet.getConfiguration().getPaths();
+          if (paths != null) {
+            for (String path : paths) {
+              final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+              if (file != null) {
+                results.add(file);
+              }
             }
           }
         }

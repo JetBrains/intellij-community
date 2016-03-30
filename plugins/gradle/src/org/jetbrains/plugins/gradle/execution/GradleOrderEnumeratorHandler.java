@@ -123,16 +123,6 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
 
     if (directorySet.isCompilerOutputPathInherited()) return;
     final String path = directorySet.getOutputDir().getAbsolutePath();
-    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(path);
-    if (virtualFile == null) {
-      if(!directorySet.getOutputDir().exists()){
-        FileUtil.createDirectory(directorySet.getOutputDir());
-      }
-      ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
-      if (app.isDispatchThread() || !app.holdsReadLock()) {
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directorySet.getOutputDir());
-      }
-    }
     result.add(VfsUtilCore.pathToUrl(path));
   }
 }

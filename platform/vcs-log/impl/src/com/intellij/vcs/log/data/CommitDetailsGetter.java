@@ -32,8 +32,7 @@ public class CommitDetailsGetter extends AbstractDataGetter<VcsFullCommitDetails
   @NotNull
   @Override
   protected List<? extends VcsFullCommitDetails> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
-                                                         @NotNull List<String> hashes) throws VcsException {
+                                                             @NotNull List<String> hashes) throws VcsException {
     return logProvider.readFullDetails(root, hashes);
   }
-
 }

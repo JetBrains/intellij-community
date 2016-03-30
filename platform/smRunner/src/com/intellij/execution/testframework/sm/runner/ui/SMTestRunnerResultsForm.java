@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -121,6 +122,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private Alarm myUpdateQueue;
   private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
   private boolean myDisposed = false;
+  private SMTestProxy myLastFailed;
 
   public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
@@ -137,7 +139,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     //Create tests common suite root
     //noinspection HardCodedStringLiteral
-    myTestsRootNode = new SMTestProxy.SMRootTestProxy();
+    myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName());
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
     // Fire selection changed and move focus on SHIFT+ENTER
@@ -400,6 +402,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   public void onTestFailed(@NotNull final SMTestProxy test) {
+    if (Comparing.equal(test, myLastFailed)) return;
+    myLastFailed = test;
     updateOnTestFailed(false);
     if (test.isConfig()) {
       myStartedTestCount++;

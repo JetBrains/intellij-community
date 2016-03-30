@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntIntHashMap;
@@ -56,6 +57,7 @@ import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
@@ -85,8 +87,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final EdtAlarm myFocusedComponentAlarm;
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
-  private final SimpleTimer myTimer = SimpleTimer.newInstance("FocusManager timer");
-  
   private final EdtAlarm myIdleAlarm;
   private final Set<Runnable> myIdleRequests = new LinkedHashSet<Runnable>();
 
@@ -1040,7 +1040,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
 
-  class EdtAlarm {
+  static class EdtAlarm {
     private final Set<EdtRunnable> myRequests = new HashSet<EdtRunnable>();
     
     public void cancelAllRequests() {
@@ -1052,7 +1052,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     public void addRequest(@NotNull EdtRunnable runnable, int delay) {
       myRequests.add(runnable);
-      myTimer.setUp(runnable, delay);
+      EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay, TimeUnit.MILLISECONDS);
     }
   }
 

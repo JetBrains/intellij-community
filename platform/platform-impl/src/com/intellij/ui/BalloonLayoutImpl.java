@@ -17,9 +17,14 @@ package com.intellij.ui;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.notification.Notification;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBInsets;
@@ -100,7 +105,36 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   @Override
   public void add(@NotNull final Balloon balloon, @Nullable Object layoutData) {
-    myBalloons.add(balloon);
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    Balloon merge = merge(layoutData);
+    if (merge == null) {
+      if (NotificationsManagerImpl.newEnabled() &&
+          getVisibleCount() > 0 &&
+          layoutData instanceof BalloonLayoutData &&
+          ((BalloonLayoutData)layoutData).groupId != null) {
+        int index = -1;
+        int count = 0;
+        for (int i = 0, size = myBalloons.size(); i < size; i++) {
+          BalloonLayoutData ld = myLayoutData.get(myBalloons.get(i));
+          if (ld != null && ld.groupId != null) {
+            if (index == -1) {
+              index = i;
+            }
+            count++;
+          }
+        }
+
+        if (count > 0 && count == getVisibleCount()) {
+          remove(myBalloons.get(index));
+        }
+      }
+      myBalloons.add(balloon);
+    }
+    else {
+      int index = myBalloons.indexOf(merge);
+      remove(merge);
+      myBalloons.add(index, balloon);
+    }
     if (layoutData instanceof BalloonLayoutData) {
       BalloonLayoutData balloonLayoutData = (BalloonLayoutData)layoutData;
       balloonLayoutData.closeAll = myCloseAll;
@@ -133,12 +167,64 @@ public class BalloonLayoutImpl implements BalloonLayout {
     balloon.show(myLayeredPane);
   }
 
+  @Nullable
+  private Balloon merge(@Nullable Object data) {
+    String mergeId = null;
+    if (data instanceof String) {
+      mergeId = (String)data;
+    }
+    else if (data instanceof BalloonLayoutData) {
+      mergeId = ((BalloonLayoutData)data).groupId;
+    }
+    if (mergeId != null) {
+      for (Map.Entry<Balloon, BalloonLayoutData> e : myLayoutData.entrySet()) {
+        if (mergeId.equals(e.getValue().groupId)) {
+          return e.getKey();
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public BalloonLayoutData.MergeInfo preMerge(@NotNull Notification notification) {
+    Balloon balloon = merge(notification.getGroupId());
+    if (balloon != null) {
+      BalloonLayoutData layoutData = myLayoutData.get(balloon);
+      if (layoutData != null) {
+        return layoutData.merge();
+      }
+    }
+    return null;
+  }
+
+  public void remove(@NotNull Notification notification) {
+    Balloon balloon = merge(notification.getGroupId());
+    if (balloon != null) {
+      remove(balloon, true);
+    }
+  }
+
+  private void remove(@NotNull Balloon balloon) {
+    remove(balloon, false);
+    balloon.hide(true);
+  }
+
   private void remove(@NotNull Balloon balloon, boolean hide) {
     myBalloons.remove(balloon);
-    myLayoutData.remove(balloon);
+    BalloonLayoutData layoutData = myLayoutData.remove(balloon);
+    if (layoutData != null) {
+      layoutData.groupId = null;
+      layoutData.id = null;
+      layoutData.mergeData = null;
+    }
     if (hide) {
       balloon.hide();
     }
+  }
+
+  private static int getVisibleCount() {
+    return Registry.intValue("ide.new.notification.visible.count", 2);
   }
 
   @NotNull
@@ -162,7 +248,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   private void calculateSize() {
     myWidth = null;
-    if (myLayoutData.isEmpty()) {
+    if (myLayoutData.isEmpty() && !NotificationsManagerImpl.newEnabled()) {
       return;
     }
 
@@ -198,6 +284,11 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
     JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
+
+    if (NotificationsManagerImpl.newEnabled()) {
+      newLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());
+      return;
+    }
 
     if (myLayoutData.isEmpty()) {
       for (int i = 0; i < columns.size(); i++) {
@@ -279,6 +370,24 @@ public class BalloonLayoutImpl implements BalloonLayout {
           }
         }
       }
+    }
+  }
+
+  private void newLayout(List<Balloon> balloons, int startX, int bottomY) {
+    int y = bottomY;
+    ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
+    if (pane != null) {
+      y -= pane.getBottomHeight();
+    }
+    if (myParent instanceof IdeRootPane) {
+      y -= ((IdeRootPane)myParent).getStatusBarHeight();
+    }
+
+    for (Balloon balloon : balloons) {
+      Rectangle bounds = new Rectangle(getSize(balloon));
+      y -= bounds.height;
+      bounds.setLocation(startX - bounds.width, y);
+      balloon.setBounds(bounds);
     }
   }
 

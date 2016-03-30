@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -100,8 +101,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private Rectangle myForcedBounds;
 
-  //private CloseButton myCloseRec;
   private ActionProvider myActionProvider;
+  private List<ActionButton> myActionButtons;
 
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     @Override
@@ -226,8 +227,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     if (!cmp.isShowing()) return true;
     if (cmp instanceof MenuElement) return false;
-    for (ActionButton button : myActionProvider.getActions()) {
-      if (cmp == button) return true;
+    if (myActionButtons != null) {
+      for (ActionButton button : myActionButtons) {
+        if (cmp == button) return true;
+      }
     }
     if (UIUtil.isDescendingFrom(cmp, myComp)) return true;
     if (myComp == null || !myComp.isShowing()) return false;
@@ -265,6 +268,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private boolean myHideOnMouse;
   private final boolean myHideOnKey;
   private final boolean myHideOnAction;
+  private final boolean myRequestFocus;
+  private Component myOriginalFocusOwner;
   private final boolean myEnableButtons;
 
   public BalloonImpl(@NotNull JComponent content,
@@ -291,7 +296,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      boolean shadow,
                      boolean smallVariant,
                      boolean blockClicks,
-                     Layer layer) {
+                     Layer layer,
+                     boolean requestFocus) {
     myBorderColor = borderColor;
     myBorderInsets = borderInsets != null ? borderInsets : new Insets(3, 3, 3, 3);
     myFillColor = fillColor;
@@ -312,6 +318,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myTitle = title;
     myLayer = layer != null ? layer : Layer.normal;
     myBlockClicks = blockClicks;
+    myRequestFocus = requestFocus;
     MnemonicHelper.init(content);
 
     if (!myDialogMode) {
@@ -324,7 +331,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
               myDialogMode = true;
               return true;
             }
-          } else if (component instanceof JCheckBox) {
+          }
+          else if (component instanceof JCheckBox) {
             JCheckBox checkBox = (JCheckBox)component;
             if (checkBox.getMnemonic() >= 0 || checkBox.getDisplayedMnemonicIndex() >= 0) {
               myDialogMode = true;
@@ -356,9 +364,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   @Override
   public void show(final RelativePoint target, final Balloon.Position position) {
-    AbstractPosition pos = getAbstractPositionFor(position);
-
-    show(target, pos);
+    show(target, getAbstractPositionFor(position));
   }
 
   public int getLayer() {
@@ -376,43 +382,23 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   private static AbstractPosition getAbstractPositionFor(Position position) {
-    AbstractPosition pos = BELOW;
     switch (position) {
       case atLeft:
-        pos = AT_LEFT;
-        break;
+        return AT_LEFT;
       case atRight:
-        pos = AT_RIGHT;
-        break;
+        return AT_RIGHT;
       case below:
-        pos = BELOW;
-        break;
+        return BELOW;
       case above:
-        pos = ABOVE;
-        break;
+        return ABOVE;
+      default:
+        return BELOW;
     }
-    return pos;
   }
 
   @Override
   public void show(PositionTracker<Balloon> tracker, Balloon.Position position) {
-    AbstractPosition pos = BELOW;
-    switch (position) {
-      case atLeft:
-        pos = AT_LEFT;
-        break;
-      case atRight:
-        pos = AT_RIGHT;
-        break;
-      case below:
-        pos = BELOW;
-        break;
-      case above:
-        pos = ABOVE;
-        break;
-    }
-
-    show(tracker, pos);
+    show(tracker, getAbstractPositionFor(position));
   }
 
   private Insets getInsetsCopy() {
@@ -437,15 +423,18 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     JDialog dialog = IJSwingUtilities.findParentOfType(comp, JDialog.class);
     if (dialog != null) {
       root = dialog.getRootPane();
-    } else {
+    }
+    else {
       JWindow jwindow = IJSwingUtilities.findParentOfType(comp, JWindow.class);
       if (jwindow != null) {
         root = jwindow.getRootPane();
-      } else {
+      }
+      else {
         JFrame frame = IJSwingUtilities.findParentOfType(comp, JFrame.class);
         if (frame != null) {
           root = frame.getRootPane();
-        } else {
+        }
+        else {
           assert false;
         }
       }
@@ -479,8 +468,23 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         public void run() {
           IdeEventQueue.getInstance().disableInputMethods(BalloonImpl.this);
           originalFocusOwner.set(myFocusManager.getFocusOwner());
-          myFocusManager.requestFocus(glassPane.getProxyComponent(), true).notify(proxyFocusRequest.get());
           focusRequestor.set(myFocusManager.getFurtherRequestor());
+        }
+      });
+    }
+    if (myRequestFocus) {
+      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          return isDisposed();
+        }
+
+        @Override
+        public void run() {
+          myOriginalFocusOwner = myFocusManager.getFocusOwner();
+
+          // Set the focus to "myContent"
+          myFocusManager.requestFocus(getContentToFocus(), true);
         }
       });
     }
@@ -522,7 +526,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     if (myPosition != position) {
-      myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutShift > 0 ? myCalloutShift + positionChangeFix : positionChangeFix);
+      myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane),
+                                                 myCalloutShift > 0 ? myCalloutShift + positionChangeFix : positionChangeFix);
     }
 
     createComponent();
@@ -531,13 +536,15 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     Rectangle rec = myComp.getContentBounds();
 
-    if (myShowPointer && !myPosition.isOkToHavePointer(myTargetPoint, rec, getPointerLength(myPosition), getPointerWidth(myPosition), getArc())) {
+    if (myShowPointer &&
+        !myPosition.isOkToHavePointer(myTargetPoint, rec, getPointerLength(myPosition), getPointerWidth(myPosition), getArc())) {
       myShowPointer = false;
       myComp.removeAll();
       myLayeredPane.remove(myComp);
 
       createComponent();
-      if (!new Rectangle(myLayeredPane.getSize()).contains(new Rectangle(myComp.getSize()))) { // Balloon is bigger than window, don't show it at all.
+      if (!new Rectangle(myLayeredPane.getSize())
+        .contains(new Rectangle(myComp.getSize()))) { // Balloon is bigger than window, don't show it at all.
         myComp.removeAll();
         myLayeredPane.remove(myComp);
         myLayeredPane = null;
@@ -601,6 +608,32 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
   }
 
+  /**
+   * Figure out the component to focus inside the {@link myContent} field.
+   */
+  @NotNull
+  private Component getContentToFocus() {
+    Component focusComponent = myContent;
+    while (true) {
+      // Setting focus to a JScrollPane is not very useful. Better setting focus to the
+      // contained view. This is useful for Tooltip popups, for example.
+      if (focusComponent instanceof JScrollPane) {
+        JViewport viewport = ((JScrollPane)focusComponent).getViewport();
+        if (viewport == null)
+          break;
+        Component child = viewport.getView();
+        if (child == null)
+          break;
+        focusComponent = child;
+        continue;
+      }
+
+      // Done if we can't find anything to dive into
+      break;
+    }
+    return focusComponent;
+  }
+
   private Rectangle getRecForPosition(AbstractPosition position, boolean adjust) {
     Dimension size = getContentSizeFor(position);
     Rectangle rec = new Rectangle(new Point(0, 0), size);
@@ -617,7 +650,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private Dimension getContentSizeFor(AbstractPosition position) {
     Dimension size = myContent.getPreferredSize();
-    JBInsets.addTo(size, position.createBorder(this).getBorderInsets());
+    if (myShadowBorderProvider == null) {
+      JBInsets.addTo(size, position.createBorder(this).getBorderInsets());
+    }
     return size;
   }
 
@@ -650,11 +685,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       };
 
       myActionProvider = new ActionProvider() {
-        private ActionButton myCloseButton = new CloseButton(listener);
+        private ActionButton myCloseButton;
 
         @NotNull
         @Override
-        public List<ActionButton> getActions() {
+        public List<ActionButton> createActions() {
+          myCloseButton = new CloseButton(listener);
           return Collections.singletonList(myCloseButton);
         }
 
@@ -667,7 +703,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           Icon icon = getCloseButton();
           int iconWidth = icon.getIconWidth();
           int iconHeight = icon.getIconHeight();
-          Rectangle r = new Rectangle(lpBounds.x + lpBounds.width - iconWidth + (int)(iconWidth * 0.3), lpBounds.y - (int)(iconHeight * 0.3), iconWidth, iconHeight);
+          Rectangle r =
+            new Rectangle(lpBounds.x + lpBounds.width - iconWidth + (int)(iconWidth * 0.3), lpBounds.y - (int)(iconHeight * 0.3), iconWidth,
+                          iconHeight);
 
           Insets border = getShadowBorderInsets();
           r.x -= border.left;
@@ -755,6 +793,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     void paintShadow(@NotNull JComponent component, @NotNull Graphics g);
 
     void paintBorder(@NotNull Rectangle bounds, @NotNull Graphics2D g);
+
+    void paintPointingShape(@NotNull Rectangle bounds, @NotNull Point pointTarget, @NotNull Position position, @NotNull Graphics2D g);
   }
 
   @Override
@@ -765,7 +805,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   @Override
   public void showInCenterOf(JComponent component) {
     final Dimension size = component.getSize();
-    show(new RelativePoint(component, new Point(size.width/2, size.height/2)), Balloon.Position.above);
+    show(new RelativePoint(component, new Point(size.width / 2, size.height / 2)), Balloon.Position.above);
   }
 
   public void show(JLayeredPane pane, @Nullable Rectangle bounds) {
@@ -843,7 +883,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   int getPointerWidth(AbstractPosition position) {
     if (myDialogMode) {
       return position.isTopBottomPointer() ? DIALOG_TOPBOTTOM_POINTER_WIDTH : DIALOG_POINTER_WIDTH;
-    } else {
+    }
+    else {
       return position.isTopBottomPointer() ? TOPBOTTOM_POINTER_WIDTH : POINTER_WIDTH;
     }
   }
@@ -859,7 +900,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   static int getPointerLength(AbstractPosition position, boolean dialogMode) {
     if (dialogMode) {
       return position.isTopBottomPointer() ? DIALOG_TOPBOTTOM_POINTER_LENGTH : DIALOG_POINTER_LENGTH;
-    } else {
+    }
+    else {
       return position.isTopBottomPointer() ? TOPBOTTOM_POINTER_LENGTH : POINTER_LENGTH;
     }
   }
@@ -892,6 +934,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       @Override
       public void run() {
         myFadedOut = true;
+        if (myRequestFocus) {
+          if (myOriginalFocusOwner != null) {
+            myFocusManager.requestFocus(myOriginalFocusOwner, false);
+          }
+        }
 
         for (JBPopupListener each : myListeners) {
           each.onClosed(new LightweightWindowEvent(BalloonImpl.this, ok));
@@ -905,14 +952,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     Toolkit.getDefaultToolkit().removeAWTEventListener(myAwtActivityListener);
     if (myLayeredPane != null) {
       myLayeredPane.removeComponentListener(myComponentListener);
-      Disposer.register(ApplicationManager.getApplication(), this); // to be safe if Application suddenly exits and animation wouldn't have a chance to complete
 
-      runAnimation(false, myLayeredPane, new Runnable() {
-        @Override
-        public void run() {
-          disposeRunnable.run();
-        }
-      });
+      runAnimation(false, myLayeredPane, disposeRunnable);
     }
     else {
       disposeRunnable.run();
@@ -929,7 +970,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
   }
 
-  protected void onDisposed() { }
+  protected void onDisposed() {
+  }
 
   @Override
   public void addListener(@NotNull JBPopupListener listener) {
@@ -1006,7 +1048,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                                       Rectangle forcedBounds,
                                       Dimension preferredSize,
                                       boolean showPointer,
-                                      Point point, Insets containerInsets) {
+                                      Point point,
+                                      Insets containerInsets) {
 
       Rectangle bounds = forcedBounds;
 
@@ -1030,6 +1073,22 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       if (balloon.myShadowBorderProvider != null) {
         balloon.myShadowBorderProvider.paintBorder(bounds, g);
+        if (balloon.myShowPointer) {
+          Position position;
+          if (this == ABOVE) {
+            position = Position.above;
+          }
+          else if (this == BELOW) {
+            position = Position.below;
+          }
+          else if (this == AT_LEFT) {
+            position = Position.atLeft;
+          }
+          else {
+            position = Position.atRight;
+          }
+          balloon.myShadowBorderProvider.paintPointingShape(bounds, pointTarget, position, g);
+        }
         cfg.restore();
         return;
       }
@@ -1085,7 +1144,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                                               final BalloonImpl balloon);
 
     public boolean isOkToHavePointer(Point targetPoint, Rectangle bounds, int pointerLength, int pointerWidth, int arc) {
-      if (bounds.x < targetPoint.x && bounds.x + bounds.width > targetPoint.x && bounds.y < targetPoint.y && bounds.y + bounds.height < targetPoint.y) return false;
+      if (bounds.x < targetPoint.x &&
+          bounds.x + bounds.width > targetPoint.x &&
+          bounds.y < targetPoint.y &&
+          bounds.y + bounds.height > targetPoint.y) {
+        return false;
+      }
 
       Rectangle pointless = getPointlessContentRec(bounds, pointerLength);
 
@@ -1189,7 +1253,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected Shape getPointingShape(final Rectangle bounds, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingConstants.TOP);
-      shaper.line(balloon.getPointerWidth(this) / 2, balloon.getPointerLength(this)).toRightCurve().roundRightDown().toBottomCurve().roundLeftDown()
+      shaper.line(balloon.getPointerWidth(this) / 2, balloon.getPointerLength(this)).toRightCurve().roundRightDown().toBottomCurve()
+        .roundLeftDown()
         .toLeftCurve().roundLeftUp().toTopCurve().roundUpRight()
         .lineTo(pointTarget.x - balloon.getPointerWidth(this) / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y);
       shaper.close();
@@ -1252,7 +1317,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingConstants.BOTTOM);
       shaper.line(-balloon.getPointerWidth(this) / 2, -balloon.getPointerLength(this) + 1);
       shaper.toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown().toBottomCurve().line(0, 2)
-        .roundLeftDown().lineTo(pointTarget.x + balloon.getPointerWidth(this) / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y)
+        .roundLeftDown().lineTo(pointTarget.x + balloon.getPointerWidth(this) / 2, shaper.getCurrent().y)
+        .lineTo(pointTarget.x, pointTarget.y)
         .close();
 
 
@@ -1312,7 +1378,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected Shape getPointingShape(final Rectangle bounds, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingConstants.LEFT);
-      shaper.line(balloon.getPointerLength(this), -balloon.getPointerWidth(this) / 2).toTopCurve().roundUpRight().toRightCurve().roundRightDown()
+      shaper.line(balloon.getPointerLength(this), -balloon.getPointerWidth(this) / 2).toTopCurve().roundUpRight().toRightCurve()
+        .roundRightDown()
         .toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp()
         .lineTo(shaper.getCurrent().x, pointTarget.y + balloon.getPointerWidth(this) / 2).lineTo(pointTarget.x, pointTarget.y).close();
 
@@ -1373,7 +1440,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected Shape getPointingShape(final Rectangle bounds, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingConstants.RIGHT);
-      shaper.lineTo((int)bounds.getMaxX() - shaper.getTargetDelta(SwingConstants.RIGHT) - 1, pointTarget.y + balloon.getPointerWidth(this) / 2);
+      shaper
+        .lineTo((int)bounds.getMaxX() - shaper.getTargetDelta(SwingConstants.RIGHT) - 1, pointTarget.y + balloon.getPointerWidth(this) / 2);
       shaper.toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown()
         .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth(this) / 2).lineTo(pointTarget.x, pointTarget.y).close();
       return shaper.getShape();
@@ -1382,7 +1450,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   public interface ActionProvider {
     @NotNull
-    List<ActionButton> getActions();
+    List<ActionButton> createActions();
 
     void layout(@NotNull Rectangle bounds);
   }
@@ -1390,12 +1458,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public class ActionButton extends NonOpaquePanel {
     private final Icon myIcon;
     private final Icon myHoverIcon;
+    private final String myHint;
     private final Consumer<MouseEvent> myListener;
     protected final BaseButtonBehavior myButton;
 
-    public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @NotNull Consumer<MouseEvent> listener) {
+    public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @Nullable String hint, @NotNull Consumer<MouseEvent> listener) {
       myIcon = icon;
       myHoverIcon = hoverIcon;
+      myHint = hint;
       myListener = listener;
 
       myButton = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
@@ -1417,10 +1487,18 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       if (hasPaint()) {
         if (myHoverIcon != null && myButton.isHovered()) {
           paintIcon(g, myHoverIcon);
+          showHint(true);
         }
         else {
           paintIcon(g, myIcon);
+          showHint(false);
         }
+      }
+    }
+
+    private void showHint(boolean show) {
+      if (myHint != null) {
+        ActionMenu.showDescriptionInStatusBar(true, this, show ? myHint : null);
       }
     }
 
@@ -1435,7 +1513,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private class CloseButton extends ActionButton {
     private CloseButton(@NotNull Consumer<MouseEvent> listener) {
-      super(getCloseButton(), null, listener);
+      super(getCloseButton(), null, null, listener);
       setVisible(myEnableButtons);
     }
 
@@ -1479,8 +1557,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myContent.setOpaque(false);
 
       add(myContent);
-
-
     }
 
     public Rectangle getContentBounds() {
@@ -1527,7 +1603,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     private void paintChildrenImpl(Graphics g) {
       // Paint to an image without alpha to preserve fonts subpixel antialiasing
       @SuppressWarnings("UndesirableClassUsage")
-      BufferedImage image = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+      BufferedImage image = UIUtil.createImage(getWidth(), getHeight(),
+                                               BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
       Graphics2D imageGraphics = image.createGraphics();
       //noinspection UseJBColor
       imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
@@ -1616,7 +1693,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         shape = myBalloon.myPosition.getPointingShape(bounds, pointTarget, myBalloon);
       }
       else {
-        shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - 1, bounds.height - 1, myBalloon.getArc(), myBalloon.getArc());
+        shape =
+          new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - 1, bounds.height - 1, myBalloon.getArc(), myBalloon.getArc());
       }
       return shape.contains(x, y);
     }
@@ -1640,15 +1718,19 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         return;
       }
 
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          for (ActionButton button : myActionProvider.getActions()) {
-            disposeButton(button);
+      final List<ActionButton> buttons = myActionButtons;
+      myActionButtons = null;
+      if (buttons != null) {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            for (ActionButton button : buttons) {
+              disposeButton(button);
+            }
           }
-        }
-      });
+        });
+      }
     }
 
     public void setAlpha(float alpha) {
@@ -1666,7 +1748,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
 
       if (getParent() != null) {
-        for (ActionButton button : myActionProvider.getActions()) {
+        if (myActionButtons == null) {
+          myActionButtons = myActionProvider.createActions();
+        }
+
+        for (ActionButton button : myActionButtons) {
           if (button.getParent() == null) {
             myLayeredPane.add(button);
             myLayeredPane.setLayer(button, JLayeredPane.DRAG_LAYER);
@@ -1676,7 +1762,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       if (isVisible()) {
         Rectangle lpBounds = SwingUtilities.convertRectangle(getParent(), bounds, myLayeredPane);
-        lpBounds = myPosition.getPointlessContentRec(lpBounds, myBalloon.getPointerLength(myPosition));
+        lpBounds = myPosition
+          .getPointlessContentRec(lpBounds, myBalloon.myShadowBorderProvider == null ? myBalloon.getPointerLength(myPosition) : 0);
         myActionProvider.layout(lpBounds);
       }
 
@@ -1692,8 +1779,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     public void repaintButton() {
-      for (ActionButton button : myActionProvider.getActions()) {
-        button.repaint();
+      if (myActionButtons != null) {
+        for (ActionButton button : myActionButtons) {
+          button.repaint();
+        }
       }
     }
   }

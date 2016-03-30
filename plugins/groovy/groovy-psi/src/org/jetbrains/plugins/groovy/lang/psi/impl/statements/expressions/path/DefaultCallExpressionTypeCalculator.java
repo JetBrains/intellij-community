@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,17 +177,15 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     }
     else if ("ncurry".equals(resolved.getName())) {
       final GrArgumentList argList = callExpression.getArgumentList();
-      if (argList != null) {
-        final GrExpression[] arguments = argList.getExpressionArguments();
-        if (arguments.length > 0) {
-          final GrExpression first = arguments[0];
-          if (first instanceof GrLiteral) {
-            final Object value = ((GrLiteral)first).getValue();
-            if (value instanceof Integer) {
-              final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false);
-              if (argTypes != null) {
-                return ((GrClosureType)qType).curry(ArrayUtil.remove(argTypes, 0), (Integer)value, callExpression);
-              }
+      final GrExpression[] arguments = argList.getExpressionArguments();
+      if (arguments.length > 0) {
+        final GrExpression first = arguments[0];
+        if (first instanceof GrLiteral) {
+          final Object value = ((GrLiteral)first).getValue();
+          if (value instanceof Integer) {
+            final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false);
+            if (argTypes != null) {
+              return ((GrClosureType)qType).curry(ArrayUtil.remove(argTypes, 0), (Integer)value, callExpression);
             }
           }
         }

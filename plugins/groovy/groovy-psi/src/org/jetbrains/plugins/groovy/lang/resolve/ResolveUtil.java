@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -1052,12 +1053,32 @@ public class ResolveUtil {
     }, state, null, place);
   }
 
-  public static boolean isClassReference(@NotNull GrReferenceExpression ref) {
+  public static boolean resolvesToClass(@Nullable PsiElement expression) {
+    if (!(expression instanceof GrQualifiedReference)) return false;
+    return isClassReference(expression) || ((GrQualifiedReference)expression).resolve() instanceof PsiClass;
+  }
+
+  public static boolean isClassReference(@NotNull PsiElement expression) {
+    if (!(expression instanceof GrReferenceExpression)) return false;
+    GrReferenceExpression ref = (GrReferenceExpression)expression;
     GrExpression qualifier = ref.getQualifier();
     return "class".equals(ref.getReferenceName()) &&
            qualifier instanceof GrReferenceExpression &&
            ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass &&
            !org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isThisReference(qualifier);
+  }
+
+  @Nullable
+  public static PsiType unwrapClassType(@Nullable PsiType type) {
+    if (!(type instanceof PsiClassType)) return null;
+
+    PsiClass psiClass = ((PsiClassType)type).resolve();
+    if (psiClass == null || !CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) return null;
+
+    final PsiType[] params = ((PsiClassType)type).getParameters();
+    if (params.length != 1) return null;
+
+    return params[0];
   }
 
   private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {

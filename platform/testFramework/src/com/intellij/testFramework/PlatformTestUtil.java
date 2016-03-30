@@ -39,6 +39,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
@@ -49,6 +50,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
@@ -80,8 +84,8 @@ import java.util.jar.JarFile;
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
-  private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
+  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -385,8 +389,15 @@ public class PlatformTestUtil {
     return print(tree, false);
   }
 
-  public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
-    Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString());
+  public static void updateRecursively(@NotNull AbstractTreeNode<?> node) {
+    node.update();
+    for (AbstractTreeNode child : node.getChildren()) {
+      updateRecursively(child);
+    }
+  }
+
+  public static void assertTreeStructureEquals(@NotNull AbstractTreeStructure treeStructure, @NotNull String expected) {
+    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString().trim());
   }
 
   public static void invokeNamedAction(final String actionId) {
@@ -861,18 +872,9 @@ public class PlatformTestUtil {
     GCUtil.tryGcSoftlyReachableObjects();
   }
 
-  public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {
-    withEncoding(encoding, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        r.run();
-      }
-    });
-  }
-
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
-    Charset oldCharset = Charset.defaultCharset();
     try {
+      Charset oldCharset = Charset.defaultCharset();
       try {
         patchSystemFileEncoding(encoding);
         r.run();
@@ -916,5 +918,22 @@ public class PlatformTestUtil {
     catch (ExecutionException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  public static List<WebReference> collectWebReferences(@NotNull PsiElement element) {
+    List<WebReference> refs = new ArrayList<>();
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        for (PsiReference ref : element.getReferences()) {
+          if (ref instanceof WebReference) {
+            refs.add((WebReference)ref);
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+    return refs;
   }
 }

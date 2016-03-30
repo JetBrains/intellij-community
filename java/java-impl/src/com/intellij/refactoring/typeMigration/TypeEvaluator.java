@@ -447,6 +447,11 @@ public class TypeEvaluator {
     return migrationTtype;
   }
 
+  @Nullable
+  public <T> T getSettings(Class<T> aClass) {
+    return myRules.getConversionSettings(aClass);
+  }
+
   private class SubstitutorBuilder {
     private final Map<PsiTypeParameter, PsiType> myMapping;
     private final PsiMethod myMethod;

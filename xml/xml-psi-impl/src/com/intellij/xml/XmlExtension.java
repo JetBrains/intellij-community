@@ -164,6 +164,10 @@ public abstract class XmlExtension {
     return false;
   }
 
+  public boolean shouldBeInserted(final XmlAttributeDescriptor descriptor) {
+    return descriptor.isRequired();
+  }
+
   public boolean isCustomTagAllowed(final XmlTag tag) {
     return false;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,6 +193,20 @@ public class UpdateStrategyTest {
     BuildInfo build = result.getNewBuildInSelectedChannel();
     assertNotNull(build);
     assertEquals("143.888", build.getNumber().toString());
+  }
+
+  @Test
+  public void testCrossingParallelCampaignsInChannel() {
+    BuildNumber currentBuild = BuildNumber.fromString("IU-143.888");
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(15, currentBuild, InfoReader.read("idea-2eap.xml"), settings, customization);
+
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo build = result.getNewBuildInSelectedChannel();
+    assertNotNull(build);
+    assertEquals("144.888", build.getNumber().toString());
   }
 
   private static class TestUpdateSettings implements UserUpdateSettings {

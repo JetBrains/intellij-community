@@ -25,5 +25,4 @@ public interface PermanentGraphBuilder<Id> {
 
   @NotNull
   PermanentGraph<Id> build(@NotNull List<GraphCommit<Id>> commits);
-
 }

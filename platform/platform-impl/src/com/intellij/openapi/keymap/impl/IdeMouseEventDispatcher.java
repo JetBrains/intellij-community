@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -213,6 +214,10 @@ public final class IdeMouseEventDispatcher {
 
     if (c == null) { // do nothing if component doesn't contains specified point
       return false;
+    }
+
+    if (c instanceof MouseShortcutPanel || c.getParent() instanceof MouseShortcutPanel) {
+      return false; // forward mouse processing to the special shortcut panel
     }
 
     if (isHorizontalScrolling(c, e)) {

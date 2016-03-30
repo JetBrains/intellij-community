@@ -181,6 +181,7 @@ public class FindInProjectUtil {
       }
     }
 
+    if (pattern.isEmpty()) pattern = PatternUtil.convertToRegex("*");
     final String finalPattern = pattern;
     final String finalNegativePattern = negativePattern;
 
@@ -413,7 +414,11 @@ public class FindInProjectUtil {
 
         @Override
         public String fun(PsiElement element) {
-          return regExpCharPsiClass.isInstance(element) ? element.getText() : " ";
+          if(regExpCharPsiClass.isInstance(element)) {
+            String text = element.getText();
+            if (!text.startsWith("\\")) return text;
+          }
+          return " ";
         }
       }, "");
     } finally {

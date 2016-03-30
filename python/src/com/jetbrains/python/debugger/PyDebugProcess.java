@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -104,7 +105,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private PyPositionConverter myPositionConverter;
   private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
-  private PyStackFrame myStackFrameBeforeResume;
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
 
@@ -156,18 +156,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       @Override
       public void detached() {
         detachDebuggedProcess();
-      }
-    });
-
-    session.addSessionListener(new XDebugSessionAdapter() {
-      @Override
-      public void beforeSessionResume() {
-        if (session.getCurrentStackFrame() instanceof PyStackFrame) {
-          myStackFrameBeforeResume = (PyStackFrame)session.getCurrentStackFrame();
-        }
-        else {
-          myStackFrameBeforeResume = null;
-        }
       }
     });
   }
@@ -384,24 +372,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void startStepOver() {
-    passToCurrentThread(ResumeOrStepCommand.Mode.STEP_OVER);
+  public void startStepOver(@Nullable XSuspendContext context) {
+    passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_OVER);
   }
 
   @Override
-  public void startStepInto() {
-    passToCurrentThread(ResumeOrStepCommand.Mode.STEP_INTO);
+  public void startStepInto(@Nullable XSuspendContext context) {
+    passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_INTO);
   }
 
-  public void startStepIntoMyCode() {
+  public void startStepIntoMyCode(@Nullable XSuspendContext context) {
     if (!checkCanPerformCommands()) return;
     getSession().sessionResumed();
-    passToCurrentThread(ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
+    passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
   }
 
   @Override
-  public void startStepOut() {
-    passToCurrentThread(ResumeOrStepCommand.Mode.STEP_OUT);
+  public void startStepOut(@Nullable XSuspendContext context) {
+    passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_OUT);
   }
 
   public void startSmartStepInto(String functionName) {
@@ -419,7 +407,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void resume() {
+  public void resume(@Nullable XSuspendContext context) {
     passToAllThreads(ResumeOrStepCommand.Mode.RESUME);
   }
 
@@ -439,10 +427,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  private void passToCurrentThread(final ResumeOrStepCommand.Mode mode) {
+  private void passToCurrentThread(@Nullable XSuspendContext context, final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
     if (isConnected()) {
-      String threadId = threadIdBeforeResumeOrStep();
+      String threadId = threadIdBeforeResumeOrStep(context);
 
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
         if (threadId == null || threadId.equals(suspendedThread.getId())) {
@@ -454,13 +442,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Nullable
-  private String threadIdBeforeResumeOrStep() {
-    String threadId = null;
-    if (myStackFrameBeforeResume != null) {
-      threadId = myStackFrameBeforeResume.getThreadId();
+  private static String threadIdBeforeResumeOrStep(@Nullable XSuspendContext context) {
+    if (context instanceof PySuspendContext) {
+      return ((PySuspendContext)context).getActiveExecutionStack().getThreadId();
     }
-
-    return threadId;
+    else {
+      return null;
+    }
   }
 
   protected boolean isConnected() {
@@ -486,7 +474,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void runToPosition(@NotNull final XSourcePosition position) {
+  public void runToPosition(@NotNull final XSourcePosition position, @Nullable XSuspendContext context) {
     dropFrameCaches();
     if (isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convertToPython(position);
@@ -509,7 +497,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       }
       myDebugger.setTempBreakpoint(type, pyPosition.getFile(), pyPosition.getLine());
 
-      passToCurrentThread(ResumeOrStepCommand.Mode.RESUME);
+      passToCurrentThread(context, ResumeOrStepCommand.Mode.RESUME);
     }
   }
 

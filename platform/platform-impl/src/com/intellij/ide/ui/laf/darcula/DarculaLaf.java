@@ -149,7 +149,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   private static void applySystemFonts(UIDefaults defaults) {
     try {
-      String fqn = UIManager.getSystemLookAndFeelClassName();
+      String fqn = UIUtil.getSystemLookAndFeelClassName();
       Object systemLookAndFeel = Class.forName(fqn).newInstance();
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);

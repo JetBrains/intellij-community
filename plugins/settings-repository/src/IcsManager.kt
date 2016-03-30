@@ -224,10 +224,6 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     private set
 
   override fun beforeApplicationLoaded(application: Application, configPath: String) {
-    if (application.isUnitTestMode) {
-      return
-    }
-
     val customPath = System.getProperty("ics.settingsRepository")
     val pluginSystemDir = if (customPath == null) Paths.get(configPath, "settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
     icsManager = IcsManager(pluginSystemDir)

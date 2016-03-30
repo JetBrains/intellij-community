@@ -870,7 +870,6 @@ public abstract class InplaceRefactoring {
     public void templateFinished(Template template, final boolean brokenOff) {
       boolean bind = false;
       try {
-        super.templateFinished(template, brokenOff);
         if (!brokenOff) {
           bind = performRefactoring();
         } else {

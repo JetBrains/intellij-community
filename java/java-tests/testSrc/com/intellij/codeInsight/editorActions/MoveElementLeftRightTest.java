@@ -80,6 +80,32 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
                           "@SomeAnnotation(p2 = \"2\", p1=<caret>1) class C {}");
   }
 
+  public void testMoveThrowsExceptions() throws Exception {
+    doTestFromLeftToRight("class C { void m() throws RuntimeExceptio<caret>n, Exception {} }",
+                          "class C { void m() throws Exception, RuntimeExceptio<caret>n {} }");
+  }
+
+  public void testMoveImplementsClause() throws Exception {
+    doTestFromLeftToRight("class C implements Cl<caret>oneable, java.io.Serializable {}",
+                          "class C implements java.io.Serializable, Cl<caret>oneable {}");
+  }
+
+  public void testMoveMulticatch() throws Exception {
+    doTestFromLeftToRight("class C { void m() { try {} catch (Runtime<caret>Exception | Exception e) {}",
+                          "class C { void m() { try {} catch (Exception | Runtime<caret>Exception e) {}");
+  }
+
+  public void testMoveTryResource() throws Exception {
+    doTestFromLeftToRight("class C { void m(AutoCloseable a) { try (Auto<caret>Closeable b = a; AutoCloseable c = null) {} } }",
+                          "class C { void m(AutoCloseable a) { try (AutoCloseable c = null; Auto<caret>Closeable b = a) {} } }");
+  }
+
+  public void testMovePolyadicExpressionOperand() throws Exception {
+    doTestFromLeftToRight("class C { int i = <caret>1 + 2 + 3; }",
+                          "class C { int i = 2 + <caret>1 + 3; }",
+                          "class C { int i = 2 + 3 + <caret>1; }");
+  }
+
   @Override
   protected void configureEditor(String contents) throws Exception {
     init(contents, TestFileType.JAVA);

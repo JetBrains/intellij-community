@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
     final GrClosableBlock[] closureArguments = getClosureArguments();
     final int i = ArrayUtil.find(closureArguments, closure);
     GrArgumentList argList = getArgumentList();
-    assert argList!=null;
 
     if (argList.getText().isEmpty()) {
       argList = (GrArgumentList)argList.replace(GroovyPsiElementFactory.getInstance(getProject()).createArgumentList());

@@ -55,5 +55,4 @@ public interface VcsLogFilterCollection {
 
   @NotNull
   List<VcsLogDetailsFilter> getDetailsFilters();
-
 }

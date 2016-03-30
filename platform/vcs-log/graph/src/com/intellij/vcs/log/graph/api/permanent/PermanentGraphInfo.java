@@ -15,9 +15,8 @@
  */
 package com.intellij.vcs.log.graph.api.permanent;
 
-import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.GraphLayout;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -28,14 +27,11 @@ public interface PermanentGraphInfo<CommitId> {
   PermanentCommitsInfo<CommitId> getPermanentCommitsInfo();
 
   @NotNull
-  PermanentLinearGraphImpl getPermanentLinearGraph();
+  LinearGraph getLinearGraph();
 
   @NotNull
   GraphLayout getPermanentGraphLayout();
 
   @NotNull
   Set<Integer> getBranchNodeIds();
-
-  @NotNull
-  GraphColorManager<CommitId> getGraphColorManager();
 }

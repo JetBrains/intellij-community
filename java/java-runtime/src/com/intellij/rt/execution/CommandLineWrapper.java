@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.rt.execution;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -109,7 +112,7 @@ public class CommandLineWrapper {
   }
 
   private static void ensureAccess(Object reflectionObject) {
-    // need to call setAccessible here in order to be able to launch package-local classes
+    // need to call setAccessible here in order to be able to launch package-private classes
     // calling setAccessible() via reflection because the method is missing from java version 1.1.x
     final Class aClass = reflectionObject.getClass();
     try {

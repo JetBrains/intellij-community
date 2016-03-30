@@ -53,10 +53,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -73,7 +75,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements IdeFrame {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
   private static final String WELCOME_TITLE = "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
   private final BalloonLayout myBalloonLayout;
@@ -87,7 +89,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       @Override
       public void addNotify() {
         super.addNotify();
-        rootPane.remove(getProxyComponent());
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -175,6 +176,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
   public static JBColor getSeparatorColor() {
     return new JBColor(Gray.xEC, new Color(72, 75, 78));
+  }
+
+  @Override
+  public AccessibleContext getCurrentAccessibleContext() {
+    return accessibleContext;
   }
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {

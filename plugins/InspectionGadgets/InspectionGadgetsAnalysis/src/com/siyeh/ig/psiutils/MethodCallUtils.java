@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -235,19 +236,19 @@ public class MethodCallUtils {
     return copy.resolveMethod();
   }
 
-  public static boolean isSuperMethodCall(@NotNull PsiMethodCallExpression expression, @NotNull String methodName) {
+  public static boolean isSuperMethodCall(@NotNull PsiMethodCallExpression expression, @NotNull PsiMethod method) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    @NonNls final String name = methodExpression.getReferenceName();
-    if (!methodName.equals(name)) {
+    final PsiExpression target = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+    if (!(target instanceof PsiSuperExpression)) {
       return false;
     }
-    final PsiExpression target = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
-    return target instanceof PsiSuperExpression;
+    final PsiMethod targetMethod = expression.resolveMethod();
+    return targetMethod != null && MethodSignatureUtil.areSignaturesEqual(targetMethod, method);
   }
 
-  public static boolean containsSuperMethodCall(@NotNull String methodName, @NotNull PsiElement context) {
-    final SuperCallVisitor visitor = new SuperCallVisitor(methodName);
-    context.accept(visitor);
+  public static boolean containsSuperMethodCall(@NotNull PsiMethod method) {
+    final SuperCallVisitor visitor = new SuperCallVisitor(method);
+    method.accept(visitor);
     return visitor.isSuperCallFound();
   }
 
@@ -300,11 +301,11 @@ public class MethodCallUtils {
 
   private static class SuperCallVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final String myMethodName;
+    private final PsiMethod myMethod;
     private boolean mySuperCallFound;
 
-    public SuperCallVisitor(@NotNull String methodName) {
-      this.myMethodName = methodName;
+    public SuperCallVisitor(@NotNull PsiMethod method) {
+      this.myMethod = method;
     }
 
     @Override
@@ -330,7 +331,7 @@ public class MethodCallUtils {
         return;
       }
       super.visitMethodCallExpression(expression);
-      if (isSuperMethodCall(expression, myMethodName)) {
+      if (isSuperMethodCall(expression, myMethod)) {
         mySuperCallFound = true;
       }
     }

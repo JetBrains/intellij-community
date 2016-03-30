@@ -15,12 +15,11 @@
  */
 package com.intellij.internal;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class ToggleDumbModeAction extends AnAction implements DumbAware {
+public class ToggleDumbModeAction extends DumbAwareAction {
   private volatile boolean myDumb = false;
 
   public void actionPerformed(final AnActionEvent e) {

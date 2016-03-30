@@ -16,6 +16,7 @@
 
 package com.intellij.history.integration.ui.views;
 
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.IdeaGateway;
@@ -25,9 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.diff.DiffDialogHints;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
@@ -142,7 +141,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return new ChangesTreeList<Change>(myProject, Collections.<Change>emptyList(), false, false, null, null) {
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> cc, ChangeNodeDecorator changeNodeDecorator) {
-        return new TreeModelBuilder(myProject, false).buildModel(cc, changeNodeDecorator);
+        return new TreeModelBuilder(myProject, isShowFlatten()).buildModel(cc, changeNodeDecorator);
       }
 
       @Override

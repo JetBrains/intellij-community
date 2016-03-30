@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.PairFunction;
@@ -73,7 +74,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     //noinspection HardCodedStringLiteral
-    fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
+    fragment.putUserData(KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
     fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, new PairFunction<PsiExpression, CompletionParameters, PsiType>() {
       public PsiType fun(PsiExpression expression, CompletionParameters parameters) {
         if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
@@ -128,5 +129,11 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   @Override
   public EvaluatorBuilder getEvaluatorBuilder() {
     return EvaluatorBuilderImpl.getInstance();
+  }
+
+  public static final Key<String> KEY = Key.create("DefaultCodeFragmentFactory.KEY");
+
+  public static boolean isDebuggerFile(PsiFile file) {
+    return file.getUserData(KEY) != null || file.getUserData(DebuggerExpressionComboBox.KEY) != null;
   }
 }

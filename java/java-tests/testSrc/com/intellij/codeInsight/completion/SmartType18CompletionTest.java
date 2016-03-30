@@ -153,6 +153,13 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  public void testInsideNewExpressionWithDiamondAndOverloadConstructors() throws Exception {
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 1);
+    myFixture.type('\n');
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
   public void testCollectorsToList() {
     doTest(false);
   }
@@ -174,5 +181,10 @@ public void testConvertToObjectStream() {
       }
     }
     checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
+  public void testOnlyCompatibleTypes() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
   }
 }

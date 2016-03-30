@@ -68,7 +68,7 @@ public class TestFailedEvent extends TreeNodeEvent {
                          @Nullable String comparisonFailureActualText,
                          @Nullable String comparisonFailureExpectedText) {
     this(testName,
-         -1,
+         null,
          localizedFailureMessage,
          stackTrace,
          testError,
@@ -79,7 +79,7 @@ public class TestFailedEvent extends TreeNodeEvent {
   }
 
   public TestFailedEvent(@Nullable String testName,
-                         int id,
+                         @Nullable String id,
                          @NotNull String localizedFailureMessage,
                          @Nullable String stackTrace,
                          boolean testError,

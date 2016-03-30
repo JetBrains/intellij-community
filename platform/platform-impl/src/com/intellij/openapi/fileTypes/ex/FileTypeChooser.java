@@ -149,6 +149,14 @@ public class FileTypeChooser extends DialogWrapper {
     return type;
   }
 
+  /**
+   * Speculates if file with newName would have known file type
+   */
+  @Nullable
+  public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile parent, @NotNull String newName, @Nullable Project project) {
+    return getKnownFileTypeOrAssociate(new FakeVirtualFile(parent, newName), project);
+  }
+
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull String fileName) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();

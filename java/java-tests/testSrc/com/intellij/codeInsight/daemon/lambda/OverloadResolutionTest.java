@@ -204,6 +204,27 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testIDEA151823() throws Exception {
+    doTest();
+  }
+
+  public void testTypeCalculationOfQualifierShouldNotDependOnOverloadResolutionOfContainingMethodCall() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA153076() throws Exception {
+    doTest();
+  }
+
+  //java 8 error
+  public void testNotPotentiallyCompatibleMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testSpecificFunctionalInterfaces() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

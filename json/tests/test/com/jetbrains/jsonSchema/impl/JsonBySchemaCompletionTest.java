@@ -2,9 +2,11 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
+import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -109,7 +111,7 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
     final PsiElement element = file.findElementAt(position);
     Assert.assertNotNull(element);
 
-    final JsonSchemaObject schemaObject = new JsonSchemaReader().read(new StringReader(schema));
+    final JsonSchemaObject schemaObject = new JsonSchemaReader(Pair.create(SchemaType.userSchema, "tslint.json")).read(new StringReader(schema), null);
     Assert.assertNotNull(schemaObject);
 
     final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element);

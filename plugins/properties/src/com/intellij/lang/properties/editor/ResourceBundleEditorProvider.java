@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -42,12 +41,7 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file){
     if (file instanceof ResourceBundleAsVirtualFile) return true;
     if (!file.isValid()) return false;
-    PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        return PsiManager.getInstance(project).findFile(file);
-      }
-    });
+    PsiFile psiFile = ApplicationManager.getApplication().runReadAction((Computable<PsiFile>)() -> PsiManager.getInstance(project).findFile(file));
     PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles().size() > 1;
   }
@@ -71,18 +65,9 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
   }
 
   @Override
-  public void disposeEditor(@NotNull FileEditor editor) {
-    Disposer.dispose(editor);
-  }
-
-  @Override
   @NotNull
   public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     return new ResourceBundleEditor.ResourceBundleEditorState(null);
-  }
-
-  @Override
-  public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element element){
   }
 
   @Override

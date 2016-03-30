@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -52,7 +53,10 @@ import git4idea.changes.GitCommittedChangeList;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.*;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
@@ -83,8 +87,13 @@ public class GitUtil {
     }
   };
 
+  public static final String HEAD = "HEAD";
+  public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
+  public static final String MERGE_HEAD = "MERGE_HEAD";
+
   private static final String SUBMODULE_REPO_PATH_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
+  private static final String HEAD_FILE = "HEAD";
 
   /**
    * A private constructor to suppress instance creation
@@ -103,11 +112,11 @@ public class GitUtil {
     File dotGit = new File(rootDir, DOT_GIT);
     if (!dotGit.exists()) return null;
     if (dotGit.isDirectory()) {
-      boolean headExists = new File(dotGit, GitRepositoryFiles.HEAD).exists();
+      boolean headExists = new File(dotGit, HEAD_FILE).exists();
       return headExists ? dotGit : null;
     }
 
-    String content = DvcsUtil.tryLoadFileOrReturn(dotGit, null);
+    String content = DvcsUtil.tryLoadFileOrReturn(dotGit, null, CharsetToolkit.UTF8);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
     return findSubmoduleRepositoryDir(rootDir.getPath(), pathToDir);
@@ -128,7 +137,7 @@ public class GitUtil {
       return null;
     }
     if (dotGit.isDirectory()) {
-      boolean headExists = dotGit.findChild(GitRepositoryFiles.HEAD) != null;
+      boolean headExists = dotGit.findChild(HEAD_FILE) != null;
       return headExists ? dotGit : null;
     }
 

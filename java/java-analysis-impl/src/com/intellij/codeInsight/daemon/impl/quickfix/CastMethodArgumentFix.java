@@ -62,7 +62,7 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
     }
 
     @Override
-    public boolean areTypesConvertible(PsiType exprType, PsiType parameterType, final PsiElement context) {
+    public boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, @NotNull final PsiElement context) {
       if (exprType instanceof PsiClassType && parameterType instanceof PsiPrimitiveType) {
         parameterType = ((PsiPrimitiveType)parameterType).getBoxedType(context); //unboxing from type of cast expression will take place at runtime
         if (parameterType == null) return false;

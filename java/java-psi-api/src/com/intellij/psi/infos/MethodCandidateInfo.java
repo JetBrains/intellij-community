@@ -110,6 +110,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   public int getPertinentApplicabilityLevel() {
     if (myPertinentApplicabilityLevel == 0) {
       myPertinentApplicabilityLevel = getPertinentApplicabilityLevelInner();
+      pullInferenceErrorMessagesFromSubexpressions();
     }
     return myPertinentApplicabilityLevel;
   }
@@ -294,7 +295,9 @@ public class MethodCandidateInfo extends CandidateInfo{
          if (!stackStamp.mayCacheNow() ||
              isOverloadCheck() ||
              !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
-             getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent())) {
+             getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent()) ||
+             LambdaUtil.isLambdaParameterCheck()
+           ) {
           return inferredSubstitutor;
         }
 
@@ -473,6 +476,41 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
     }
     return errorMessage;
+  }
+
+  private void pullInferenceErrorMessagesFromSubexpressions() {
+    if (myPertinentApplicabilityLevel == ApplicabilityLevel.NOT_APPLICABLE && myArgumentList instanceof PsiExpressionList) {
+      String errorMessage = null;
+      for (PsiExpression expression : ((PsiExpressionList)myArgumentList).getExpressions()) {
+        final String message = clearErrorMessageInSubexpressions(expression);
+        if (message != null) {
+          errorMessage = message;
+        }
+      }
+      if (errorMessage != null) {
+        setInferenceError(errorMessage);
+      }
+    }
+  }
+
+  private static String clearErrorMessageInSubexpressions(PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiConditionalExpression) {
+      String message = clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getThenExpression());
+      if (message != null) {
+        return message;
+      }
+      return clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getElseExpression());
+    }
+    else if (expression instanceof PsiCallExpression) {
+      final JavaResolveResult result = ((PsiCallExpression)expression).resolveMethodGenerics();
+      if (result instanceof MethodCandidateInfo) {
+        final String message = ((MethodCandidateInfo)result).getInferenceErrorMessage();
+        ((MethodCandidateInfo)result).setInferenceError(null);
+        return message;
+      }
+    }
+    return null;
   }
   
   public CurrentCandidateProperties createProperties() {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
@@ -118,6 +120,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "Module 'foo' not found");
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testInvalidProjectModel() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -290,6 +293,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root);
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedDependencies() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -342,6 +346,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                    "Unresolved dependency: 'zzz:zzz:jar:3'");
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedPomTypeDependency() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -458,6 +463,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getModules(root).get(2));
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedExtensionsAfterImport() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -477,6 +483,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "Unresolved build extension: 'xxx:yyy:1'");
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedExtensionsAfterResolve() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -543,6 +550,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getRootProjects().get(0));
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedBuildExtensionsInModules() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -601,6 +609,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                    "Unresolved build extension: 'zzz:zzz:1'");
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedPlugins() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -642,6 +651,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getRootProjects().get(0));
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedPluginsAsExtensions() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

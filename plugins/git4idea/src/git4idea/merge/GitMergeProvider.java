@@ -49,6 +49,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static git4idea.GitUtil.CHERRY_PICK_HEAD;
+import static git4idea.GitUtil.MERGE_HEAD;
+
 /**
  * Merge-changes provider for Git, used by IDEA internal 3-way merge tool
  */
@@ -147,12 +150,12 @@ public class GitMergeProvider implements MergeProvider2 {
     }
     else {
       try {
-        return GitRevisionNumber.resolve(myProject, root, "MERGE_HEAD");
+        return GitRevisionNumber.resolve(myProject, root, MERGE_HEAD);
       }
       catch (VcsException e) {
         LOG.info("Couldn't resolve the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
         try {
-          return GitRevisionNumber.resolve(myProject, root, "CHERRY_PICK_HEAD");
+          return GitRevisionNumber.resolve(myProject, root, CHERRY_PICK_HEAD);
         }
         catch (VcsException e1) {
           LOG.info("Couldn't resolve neither MERGE_HEAD, nor the CHERRY_PICK_HEAD in " + root, e1);
@@ -181,7 +184,8 @@ public class GitMergeProvider implements MergeProvider2 {
       String m = e.getMessage().trim();
       if (m.startsWith("fatal: ambiguous argument ")
           || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))
-          || (m.contains("is in the index, but not at stage "))) {
+          || (m.contains("is in the index, but not at stage ")
+          || (m.contains("bad revision")))) {
         return ArrayUtil.EMPTY_BYTE_ARRAY;
       }
       else {

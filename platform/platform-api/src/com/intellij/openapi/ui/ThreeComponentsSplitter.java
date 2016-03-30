@@ -71,6 +71,67 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   private boolean myShowDividerControls;
   private int myDividerZone;
 
+  private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
+
+    @Override
+    public Component getComponentAfter(Container aContainer, Component aComponent) {
+      if (aComponent == myFirstComponent) {
+        return findChildToFocus(myInnerComponent);
+      }
+      if (aComponent == myInnerComponent) {
+        return findChildToFocus(myLastComponent);
+      }
+      return findChildToFocus(myFirstComponent);
+    }
+
+    @Override
+    public Component getComponentBefore(Container aContainer, Component aComponent) {
+      if (aComponent == myInnerComponent) {
+        return findChildToFocus(myFirstComponent);
+      }
+      if (aComponent == myLastComponent) {
+        return findChildToFocus(myInnerComponent);
+      }
+      return findChildToFocus(myFirstComponent);
+    }
+
+    @Override
+    public Component getFirstComponent(Container aContainer) {
+      return findChildToFocus(myFirstComponent);
+    }
+
+    @Override
+    public Component getLastComponent(Container aContainer) {
+      return findChildToFocus(myLastComponent);
+    }
+
+    @Override
+    public Component getDefaultComponent(Container aContainer) {
+      return findChildToFocus(myInnerComponent);
+    }
+
+    Component findChildToFocus (Component component) {
+
+      if (component instanceof JPanel) {
+        JPanel container = (JPanel)component;
+        final FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+
+        if (policy == null) {
+          return container;
+        }
+
+        final Component defaultComponent = policy.getDefaultComponent(container);
+        if (defaultComponent == null) {
+          return container;
+        }
+        return policy.getDefaultComponent(container);
+      }
+
+      return component;
+
+    }
+
+  }
 
   /**
    * Creates horizontal split with proportion equals to .5f
@@ -97,6 +158,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myFirstDivider.setBackground(bg);
       myLastDivider.setBackground(bg);
     }
+    setFocusCycleRoot(true);
+    setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+    setFocusable(false);
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
@@ -687,7 +751,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       if (MouseEvent.MOUSE_DRAGGED == e.getID() && myWasPressedOnMe) {
         myDragging = true;
         setCursor(getResizeCursor());
-        myGlassPane.setCursor(getResizeCursor(), myListener);
+
+        if (myGlassPane != null) {
+          myGlassPane.setCursor(getResizeCursor(), myListener);
+        }
 
         myPoint = SwingUtilities.convertPoint(this, e.getPoint(), ThreeComponentsSplitter.this);
         final int size = getOrientation() ? ThreeComponentsSplitter.this.getHeight() : ThreeComponentsSplitter.this.getWidth();

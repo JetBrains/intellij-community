@@ -32,8 +32,11 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.GenerateToStringClassFilter;
@@ -169,7 +172,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
     public static class MemberChooserHeaderPanel extends JPanel {
         private MemberChooser<PsiElementClassMember> chooser;
-        private final JComboBox comboBox;
+        private final JComboBox<TemplateResource> comboBox;
 
         public void setChooser(MemberChooser chooser) {
             this.chooser = chooser;
@@ -184,7 +187,20 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             final JButton settingsButton = new JButton("Settings");
             settingsButton.setMnemonic(KeyEvent.VK_S);
 
-            comboBox = new ComboBox(all);
+            comboBox = new ComboBox<>(all);
+            final JavaPsiFacade instance = JavaPsiFacade.getInstance(clazz.getProject());
+            final GlobalSearchScope resolveScope = clazz.getResolveScope();
+            final ListCellRendererWrapper<TemplateResource> renderer = new ListCellRendererWrapper<TemplateResource>() {
+              @Override
+              public void customize(JList list, TemplateResource value, int index, boolean selected, boolean hasFocus) {
+                setText(value.getName());
+                final String className = value.getClassName();
+                if (className != null && instance.findClass(className, resolveScope) == null) {
+                  setForeground(JBColor.RED);
+                }
+              }
+            };
+            comboBox.setRenderer(renderer);
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());

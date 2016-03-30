@@ -19,7 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -89,10 +92,11 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    myDelegate.findConflicts(refUsages.get(), conflicts);
+    final UsageInfo[] usageInfos = refUsages.get();
+    myDelegate.findConflicts(usageInfos, conflicts);
     
     if (!conflicts.isEmpty())  {
-      return showConflicts(conflicts, null);
+      return showConflicts(conflicts, usageInfos);
     }
 
     if (myRenameProcessor == null || myRenameProcessor.preprocessUsages(refUsages)) {

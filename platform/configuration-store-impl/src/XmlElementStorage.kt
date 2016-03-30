@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.loadElement
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
@@ -67,7 +68,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   protected open fun dataLoadedFromProvider(element: Element?) {
   }
 
-  private fun loadDataFromProvider() = JDOMUtil.load(provider!!.read(fileSpec, roamingType))
+  private fun loadDataFromProvider() = provider!!.read(fileSpec, roamingType)?.let { loadElement(it) }
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
@@ -75,7 +76,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   }
 
   fun setDefaultState(element: Element) {
-    element.setName(rootElementName)
+    element.name = rootElementName
     storageDataRef.set(loadState(element))
   }
 
@@ -200,7 +201,7 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
 
   val rootElement = Element(rootElementName)
   for (componentName in states.keys()) {
-    val element = states.getElement(componentName, newLiveStates)
+    val element = states.getElement(componentName, newLiveStates) ?: continue
     // name attribute should be first
     val elementAttributes = element.attributes
     if (elementAttributes.isEmpty()) {
@@ -213,7 +214,7 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
         elementAttributes.add(0, nameAttribute)
       }
       else {
-        nameAttribute.setValue(componentName)
+        nameAttribute.value = componentName
         if (elementAttributes.get(0) != nameAttribute) {
           elementAttributes.remove(nameAttribute)
           elementAttributes.add(0, nameAttribute)
@@ -231,7 +232,7 @@ internal fun Element.normalizeRootName(): Element {
     LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
     detach()
   }
-  setName(FileStorageCoreUtil.COMPONENT)
+  name = FileStorageCoreUtil.COMPONENT
   return this
 }
 

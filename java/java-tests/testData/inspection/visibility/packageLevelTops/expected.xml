@@ -3,7 +3,7 @@
   <problem>
     <file>PackageLevelServer.java</file>
     <line>3</line>
-    <description>package local</description>
+    <description>package-private</description>
   </problem>
 </problems>
 

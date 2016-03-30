@@ -159,7 +159,7 @@
     <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
-    <group id="Diff.KeymapGroup" text="Diff">
+    <group id="Diff.KeymapGroup" text="Diff \&amp;\&amp; Merge">
       <action id="Diff.ShowDiff" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Diff"/> <!-- CommonShortcuts.getDiff() -->
       <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff"/>
       <action id="CompareFileWithEditor" class="com.intellij.diff.actions.CompareFileWithEditorAction"/>
@@ -172,10 +172,14 @@
       <action id="Diff.ShowSettingsPopup" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show Diff Settings Popup..."/>
       <action id="Diff.ShowInExternalTool" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.ExternalToolsSmall"
               text="Show Diff in External Tool"/>
+      <separator/>
 
       <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="AllIcons.Actions.MoveDown"/>
       <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="AllIcons.Actions.MoveUp"/>
+      <action id="Diff.NextConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveDown"/>
+      <action id="Diff.PreviousConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveUp"/>
       <action id="GotoChangedFile" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ShowAsTree"/>
+      <separator/>
 
       <action id="Diff.ApplyLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowRight"/>
       <action id="Diff.ApplyRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Arrow"/>
@@ -196,8 +200,6 @@
     <group id="Diff.EditorGutterPopupMenu"/>
 
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
-
-    <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction"/>
 
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
 
@@ -379,6 +381,8 @@
         <separator/>
       </group>
 
+      <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
+
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
         <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
@@ -389,6 +393,7 @@
           <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
           <action id="HideSideWindows" class="com.intellij.ide.actions.HideSideWindowsAction"/>
           <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
+          <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction" use-shortcut-of="PinActiveTab"/>
           <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
           <action id="MaximizeToolWindow" class="com.intellij.openapi.wm.impl.MaximizeToolWindowAction"/>
@@ -411,7 +416,7 @@
         <group id="EditorTabsGroup" popup="true">
           <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
           <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
-          <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
+          <action id="PinActiveEditorTab" class="com.intellij.ide.actions.PinActiveTabAction$EW" use-shortcut-of="PinActiveTab"/>
           <action id="TabList" class="com.intellij.ide.actions.TabListAction"/>
           <separator/>
           <group id="CloseEditorsGroup">
@@ -548,7 +553,7 @@
       <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
       <action id="OpenEditorInOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.OpenEditorInOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>
-      <reference ref="PinActiveTab"/>
+      <reference ref="PinActiveEditorTab"/>
       <reference ref="TabsPlacementGroup"/>
       <reference ref="TabsAlphabeticalMode"/>
       <reference ref="AddNewTabToTheEndMode"/>
@@ -616,10 +621,10 @@
       <action id="FileChooser.NewFolder" class="com.intellij.openapi.fileChooser.actions.NewFolderAction"
         icon="AllIcons.Actions.NewFolder"/>
       <action id="FileChooser.Delete" class="com.intellij.openapi.fileChooser.actions.FileDeleteAction"
-        icon="AllIcons.Actions.Delete"/>
+        icon="AllIcons.Actions.Delete" use-shortcut-of="$Delete"/>
       <separator/>
       <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
-        icon="AllIcons.Actions.Refresh"/>
+        icon="AllIcons.Actions.Refresh" use-shortcut-of="Synchronize"/>
       <separator/>
       <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
         icon="AllIcons.Actions.ShowHiddens"/>
@@ -697,6 +702,7 @@
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />
+        <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction" text="Test ColorBlindness" />
         <action id="TreeExpandAll" internal="true" class="com.intellij.internal.tree.ExpandAll" text="Expand Tree" />
         <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction" text="LaF Defaults">
           <abbreviation value="laf"/>

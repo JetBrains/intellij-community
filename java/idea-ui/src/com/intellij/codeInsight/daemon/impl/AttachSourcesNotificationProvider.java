@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
+import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -178,10 +178,9 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   @Nullable
   private static String getClassFileInfo(VirtualFile file) {
     try {
-      byte[] data = file.contentsToByteArray();
+      byte[] data = file.contentsToByteArray(false);
       if (data.length > 8) {
-        DataInputStream stream = new DataInputStream(new ByteArrayInputStream(data));
-        try {
+        try (DataInputStream stream = new DataInputStream(new ByteArrayInputStream(data))) {
           if (stream.readInt() == 0xCAFEBABE) {
             int minor = stream.readUnsignedShort();
             int major = stream.readUnsignedShort();
@@ -190,9 +189,6 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
             if (level != null) info.append(" (").append(level.getName()).append(')');
             return info.toString();
           }
-        }
-        finally {
-          stream.close();
         }
       }
     }
@@ -305,10 +301,9 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       Library firstLibrary = libraries.get(0).getLibrary();
       VirtualFile[] roots = firstLibrary != null ? firstLibrary.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
       VirtualFile[] candidates = FileChooser.chooseFiles(descriptor, myProject, roots.length == 0 ? null : PathUtil.getLocalFile(roots[0]));
-      final VirtualFile[] files = PathUIUtils.scanAndSelectDetectedJavaSourceRoots(myParentComponent, candidates);
-      if (files.length == 0) {
-        return ActionCallback.REJECTED;
-      }
+      if (candidates.length == 0) return ActionCallback.REJECTED;
+      VirtualFile[] files = LibrarySourceRootDetectorUtil.scanAndSelectDetectedJavaSourceRoots(myParentComponent, candidates);
+      if (files.length == 0) return ActionCallback.REJECTED;
 
       final Map<Library, LibraryOrderEntry> librariesToAppendSourcesTo = new HashMap<Library, LibraryOrderEntry>();
       for (LibraryOrderEntry library : libraries) {

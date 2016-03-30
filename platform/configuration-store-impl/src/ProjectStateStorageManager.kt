@@ -22,7 +22,10 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
 
-class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl("project", macroSubstitutor, project) {
+// extended in upsource
+open class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
+                                      private val project: ProjectImpl,
+                                      useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl("project", macroSubstitutor, if (useVirtualFileTracker) project else null) {
   companion object {
     val VERSION_OPTION = "version"
   }

@@ -68,6 +68,7 @@ public abstract class JspManager implements IBaseJspManager {
 
   public abstract String[] getPossibleTldUris(@NotNull Module module);
 
+  @NotNull
   public abstract Collection<XmlFile> getPossibleTldFiles(@NotNull Module module);
 
   @Nullable

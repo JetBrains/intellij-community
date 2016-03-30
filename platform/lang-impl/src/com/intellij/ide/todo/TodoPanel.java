@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
 
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, FindInProjectUtil.setupViewPresentation(false, new FindModel()));
-    myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     Disposer.register(this, myUsagePreviewPanel);
     myUsagePreviewPanel.setVisible(mySettings.showPreview);
 
@@ -230,7 +229,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   protected JComponent createCenterComponent() {
-    final Splitter splitter = new Splitter(false);
+    Splitter splitter = new OnePixelSplitter(false);
     splitter.setSecondComponent(myUsagePreviewPanel);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
     return splitter;

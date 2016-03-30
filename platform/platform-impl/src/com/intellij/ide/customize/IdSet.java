@@ -49,6 +49,9 @@ class IdSet {
       //noinspection ConstantConditions
       myTitle = pluginGroups.findPlugin(myIds[0]).getName();
     }
+    if (myIds.length == 0 && myTitle != null) {
+      myTitle = null;
+    }
     if (myTitle != null) {
       for (String skipWord : BLACK_LIST) {
         myTitle = myTitle.replaceAll(skipWord, "");

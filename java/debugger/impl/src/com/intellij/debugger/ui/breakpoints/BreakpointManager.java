@@ -25,7 +25,10 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,8 +77,8 @@ import java.util.Map;
 public class BreakpointManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
 
-  @NonNls private static final String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
-  @NonNls private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
+  @NonNls private static final String MASTER_BREAKPOINT_TAG_NAME = "master_breakpoint";
+  @NonNls private static final String SLAVE_BREAKPOINT_TAG_NAME = "slave_breakpoint";
   @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
   @NonNls private static final String DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME = "default_condition_enabled";
 
@@ -144,19 +147,16 @@ public class BreakpointManager {
   }
 
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
-    DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
-      @Override
-      public void run() {
-        XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
-        if (xBreakpoint instanceof XLineBreakpointImpl) {
-          RangeHighlighter highlighter = ((XLineBreakpointImpl)xBreakpoint).getHighlighter();
-          if (highlighter != null) {
-            GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
-            if (renderer != null) {
-              DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
-                myProject, editor, breakpoint.myXBreakpoint, renderer
-              );
-            }
+    DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+      XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
+      if (xBreakpoint instanceof XLineBreakpointImpl) {
+        RangeHighlighter highlighter = ((XLineBreakpointImpl)xBreakpoint).getHighlighter();
+        if (highlighter != null) {
+          GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+          if (renderer != null) {
+            DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
+              myProject, editor, breakpoint.myXBreakpoint, renderer
+            );
           }
         }
       }
@@ -178,7 +178,7 @@ public class BreakpointManager {
       typeCls = JavaExceptionBreakpointType.class;
     }
     if (typeCls != null) {
-      XBreakpointType<XBreakpoint<?>, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
+      XBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
       ((XBreakpointManagerImpl)getXBreakpointManager()).getBreakpointDefaults(type).setSuspendPolicy(Breakpoint.transformSuspendPolicy(defaults.getSuspendPolicy()));
     }
   }
@@ -241,25 +241,20 @@ public class BreakpointManager {
   @NotNull
   public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName, final String packageName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final JavaExceptionBreakpointType type = (JavaExceptionBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<ExceptionBreakpoint>() {
-      @Override
-      public ExceptionBreakpoint compute() {
-        XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
-          .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName, packageName));
-        Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
-        if (javaBreakpoint instanceof ExceptionBreakpoint) {
-          ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)javaBreakpoint;
-          exceptionBreakpoint.setQualifiedName(exceptionClassName);
-          exceptionBreakpoint.setPackageName(packageName);
-          addBreakpoint(exceptionBreakpoint);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("ExceptionBreakpoint Added");
-          }
-          return exceptionBreakpoint;
-        }
-        return null;
+    final JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
+    return ApplicationManager.getApplication().runWriteAction((Computable<ExceptionBreakpoint>)() -> {
+      XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
+        .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName, packageName));
+      Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
+      if (javaBreakpoint instanceof ExceptionBreakpoint) {
+        ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)javaBreakpoint;
+        exceptionBreakpoint.setQualifiedName(exceptionClassName);
+        exceptionBreakpoint.setPackageName(packageName);
+        addBreakpoint(exceptionBreakpoint);
+        LOG.debug("ExceptionBreakpoint Added");
+        return exceptionBreakpoint;
       }
+      return null;
     });
   }
 
@@ -279,14 +274,9 @@ public class BreakpointManager {
   private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B,?>> typeCls, Document document, final int lineIndex) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<XLineBreakpoint>() {
-      @Override
-      public XLineBreakpoint compute() {
-        return XDebuggerManager.getInstance(myProject).getBreakpointManager()
-          .addLineBreakpoint((XLineBreakpointType)type, file.getUrl(), lineIndex,
-                             ((XLineBreakpointType)type).createBreakpointProperties(file, lineIndex));
-      }
-    });
+    return ApplicationManager.getApplication().runWriteAction((Computable<XLineBreakpoint>)() -> XDebuggerManager.getInstance(myProject).getBreakpointManager()
+      .addLineBreakpoint((XLineBreakpointType)type, file.getUrl(), lineIndex,
+                         ((XLineBreakpointType)type).createBreakpointProperties(file, lineIndex)));
   }
 
   /**
@@ -317,107 +307,98 @@ public class BreakpointManager {
       doRead(parentNode);
     }
     else {
-      myStartupManager.registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          doRead(parentNode);
-        }
-      });
+      myStartupManager.registerPostStartupActivity(() -> doRead(parentNode));
     }
   }
 
   private void doRead(@NotNull final Element parentNode) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public void run() {
-        final Map<String, Breakpoint> nameToBreakpointMap = new THashMap<>();
-        try {
-          final List groups = parentNode.getChildren();
-          for (final Object group1 : groups) {
-            final Element group = (Element)group1;
-            if (group.getName().equals(RULES_GROUP_NAME)) {
-              continue;
-            }
-            // skip already converted
-            if (group.getAttribute(CONVERTED_PARAM) != null) {
-              continue;
-            }
-            final String categoryName = group.getName();
-            final Key<Breakpoint> breakpointCategory = BreakpointCategory.lookup(categoryName);
-            final String defaultPolicy = group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME);
-            final boolean conditionEnabled = Boolean.parseBoolean(group.getAttributeValue(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, "true"));
-            setBreakpointDefaults(breakpointCategory, new BreakpointDefaults(defaultPolicy, conditionEnabled));
-            Element anyExceptionBreakpointGroup;
-            if (!AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.equals(breakpointCategory)) {
-              // for compatibility with previous format
-              anyExceptionBreakpointGroup = group.getChild(AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.toString());
-              //final BreakpointFactory factory = BreakpointFactory.getInstance(breakpointCategory);
-              //if (factory != null) {
-                for (Element breakpointNode : group.getChildren("breakpoint")) {
-                  //Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
-                  Breakpoint breakpoint = createBreakpoint(categoryName, breakpointNode);
-                  breakpoint.readExternal(breakpointNode);
-                  nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);
-                }
-              //}
-            }
-            else {
-              anyExceptionBreakpointGroup = group;
-            }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final Map<String, Breakpoint> nameToBreakpointMap = new THashMap<>();
+      try {
+        final List groups = parentNode.getChildren();
+        for (final Object group1 : groups) {
+          final Element group = (Element)group1;
+          if (group.getName().equals(RULES_GROUP_NAME)) {
+            continue;
+          }
+          // skip already converted
+          if (group.getAttribute(CONVERTED_PARAM) != null) {
+            continue;
+          }
+          final String categoryName = group.getName();
+          final Key<Breakpoint> breakpointCategory = BreakpointCategory.lookup(categoryName);
+          final String defaultPolicy = group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME);
+          final boolean conditionEnabled = Boolean.parseBoolean(group.getAttributeValue(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, "true"));
+          setBreakpointDefaults(breakpointCategory, new BreakpointDefaults(defaultPolicy, conditionEnabled));
+          Element anyExceptionBreakpointGroup;
+          if (!AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.equals(breakpointCategory)) {
+            // for compatibility with previous format
+            anyExceptionBreakpointGroup = group.getChild(AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.toString());
+            //final BreakpointFactory factory = BreakpointFactory.getInstance(breakpointCategory);
+            //if (factory != null) {
+              for (Element breakpointNode : group.getChildren("breakpoint")) {
+                //Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
+                Breakpoint breakpoint = createBreakpoint(categoryName, breakpointNode);
+                breakpoint.readExternal(breakpointNode);
+                nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);
+              }
+            //}
+          }
+          else {
+            anyExceptionBreakpointGroup = group;
+          }
 
-            if (anyExceptionBreakpointGroup != null) {
-              final Element breakpointElement = group.getChild("breakpoint");
-              if (breakpointElement != null) {
-                XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-                JavaExceptionBreakpointType type = (JavaExceptionBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
-                XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = manager.getDefaultBreakpoint(type);
-                Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
-                if (breakpoint != null) {
-                  breakpoint.readExternal(breakpointElement);
-                  addBreakpoint(breakpoint);
-                }
+          if (anyExceptionBreakpointGroup != null) {
+            final Element breakpointElement = group.getChild("breakpoint");
+            if (breakpointElement != null) {
+              XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
+              JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
+              XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = manager.getDefaultBreakpoint(type);
+              Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
+              if (breakpoint != null) {
+                breakpoint.readExternal(breakpointElement);
+                addBreakpoint(breakpoint);
               }
             }
           }
         }
-        catch (InvalidDataException ignored) {
-        }
-
-        final Element rulesGroup = parentNode.getChild(RULES_GROUP_NAME);
-        if (rulesGroup != null) {
-          final List<Element> rules = rulesGroup.getChildren("rule");
-          for (Element rule : rules) {
-            // skip already converted
-            if (rule.getAttribute(CONVERTED_PARAM) != null) {
-              continue;
-            }
-            final Element master = rule.getChild(MASTER_BREAKPOINT_TAGNAME);
-            if (master == null) {
-              continue;
-            }
-            final Element slave = rule.getChild(SLAVE_BREAKPOINT_TAGNAME);
-            if (slave == null) {
-              continue;
-            }
-            final Breakpoint masterBreakpoint = nameToBreakpointMap.get(master.getAttributeValue("name"));
-            if (masterBreakpoint == null) {
-              continue;
-            }
-            final Breakpoint slaveBreakpoint = nameToBreakpointMap.get(slave.getAttributeValue("name"));
-            if (slaveBreakpoint == null) {
-              continue;
-            }
-
-            boolean leaveEnabled = "true".equalsIgnoreCase(rule.getAttributeValue("leaveEnabled"));
-            XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
-            dependentBreakpointManager.setMasterBreakpoint(slaveBreakpoint.myXBreakpoint, masterBreakpoint.myXBreakpoint, leaveEnabled);
-            //addBreakpointRule(new EnableBreakpointRule(BreakpointManager.this, masterBreakpoint, slaveBreakpoint, leaveEnabled));
-          }
-        }
-
-        DebuggerInvocationUtil.invokeLater(myProject, BreakpointManager.this::updateBreakpointsUI);
       }
+      catch (InvalidDataException ignored) {
+      }
+
+      final Element rulesGroup = parentNode.getChild(RULES_GROUP_NAME);
+      if (rulesGroup != null) {
+        final List<Element> rules = rulesGroup.getChildren("rule");
+        for (Element rule : rules) {
+          // skip already converted
+          if (rule.getAttribute(CONVERTED_PARAM) != null) {
+            continue;
+          }
+          final Element master = rule.getChild(MASTER_BREAKPOINT_TAG_NAME);
+          if (master == null) {
+            continue;
+          }
+          final Element slave = rule.getChild(SLAVE_BREAKPOINT_TAG_NAME);
+          if (slave == null) {
+            continue;
+          }
+          final Breakpoint masterBreakpoint = nameToBreakpointMap.get(master.getAttributeValue("name"));
+          if (masterBreakpoint == null) {
+            continue;
+          }
+          final Breakpoint slaveBreakpoint = nameToBreakpointMap.get(slave.getAttributeValue("name"));
+          if (slaveBreakpoint == null) {
+            continue;
+          }
+
+          boolean leaveEnabled = "true".equalsIgnoreCase(rule.getAttributeValue("leaveEnabled"));
+          XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
+          dependentBreakpointManager.setMasterBreakpoint(slaveBreakpoint.myXBreakpoint, masterBreakpoint.myXBreakpoint, leaveEnabled);
+          //addBreakpointRule(new EnableBreakpointRule(BreakpointManager.this, masterBreakpoint, slaveBreakpoint, leaveEnabled));
+        }
+      }
+
+      DebuggerInvocationUtil.invokeLater(myProject, this::updateBreakpointsUI);
     });
 
     myUIProperties.clear();
@@ -462,12 +443,7 @@ public class BreakpointManager {
 
   private <B extends XBreakpoint<?>> XBreakpoint createXBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint>() {
-      @Override
-      public XBreakpoint compute() {
-        return XDebuggerManager.getInstance(myProject).getBreakpointManager().addBreakpoint((XBreakpointType)type, type.createProperties());
-      }
-    });
+    return ApplicationManager.getApplication().runWriteAction((Computable<XBreakpoint>)() -> XDebuggerManager.getInstance(myProject).getBreakpointManager().addBreakpoint((XBreakpointType)type, type.createProperties()));
   }
 
   private <B extends XBreakpoint<?>> XLineBreakpoint createXLineBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls,
@@ -503,11 +479,8 @@ public class BreakpointManager {
     if (breakpoint == null) {
       return;
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint);
     });
   }
 
@@ -523,17 +496,12 @@ public class BreakpointManager {
 
   @NotNull
   public List<Breakpoint> getBreakpoints() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<Breakpoint>>() {
+    return ApplicationManager.getApplication().runReadAction((Computable<List<Breakpoint>>)() -> ContainerUtil.mapNotNull(getXBreakpointManager().getAllBreakpoints(), new Function<XBreakpoint<?>, Breakpoint>() {
       @Override
-      public List<Breakpoint> compute() {
-        return ContainerUtil.mapNotNull(getXBreakpointManager().getAllBreakpoints(), new Function<XBreakpoint<?>, Breakpoint>() {
-          @Override
-          public Breakpoint fun(XBreakpoint<?> xBreakpoint) {
-            return getJavaBreakpoint(xBreakpoint);
-          }
-        });
+      public Breakpoint fun(XBreakpoint<?> xBreakpoint) {
+        return getJavaBreakpoint(xBreakpoint);
       }
-    });
+    }));
   }
 
   @Nullable

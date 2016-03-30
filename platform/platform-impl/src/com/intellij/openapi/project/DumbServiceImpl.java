@@ -18,11 +18,9 @@ package com.intellij.openapi.project;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
@@ -36,6 +34,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.AppIcon;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
@@ -188,7 +187,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return;
     }
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) {
@@ -251,7 +250,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           }, ModalityState.any(), myProject.getDisposed());
         }
       }
-    });
+    };
+    if (application.isDispatchThread()) {
+      runnable.run();
+    } else {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> TransactionGuard.submitTransaction(runnable));
+    }
   }
 
   @Nullable
@@ -324,6 +329,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
         try {
           runnable.run();
+        }
+        catch (ProcessCanceledException e) {
+          LOG.error("Task canceled: " + runnable, new Attachment("pce.trace", ExceptionUtil.getThrowableText(e)));
         }
         catch (Throwable e) {
           LOG.error("Error executing task " + runnable, e);
@@ -530,16 +538,25 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private static void invokeAndWaitIfNeeded(Runnable runnable) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
+      return;
     }
-    else {
-      try {
-        SwingUtilities.invokeAndWait(runnable);
-      }
-      catch (InterruptedException ignore) {
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+
+    Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    //todo remove invokeLater when transactions are executed in "any" modality state
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(
+      () -> TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.ANY_CHANGE, () -> {
+        try {
+          runnable.run();
+        } finally {
+          semaphore.up();
+        }
+      }));
+    try {
+      semaphore.waitFor();
+    }
+    catch (ProcessCanceledException ignore) {
     }
   }
 

@@ -25,11 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ public class AppUIUtil {
   }
 
   public static void registerBundledFonts() {
-    if (Registry.is("ide.register.bundled.fonts")) {
+    if (SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
       registerFont("/fonts/Inconsolata.ttf");
       registerFont("/fonts/SourceCodePro-Regular.ttf");
       registerFont("/fonts/SourceCodePro-Bold.ttf");

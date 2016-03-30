@@ -10,12 +10,16 @@ import os
 import sys
 import traceback
 
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_pop, dict_contains, \
+    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
+    clear_cached_thread_id
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
-from _pydev_imps import _pydev_threading as threading
-from _pydev_imps import _pydev_time as time, _pydev_thread
+from _pydev_imps._pydev_saved_modules import threading
+from _pydev_imps._pydev_saved_modules import time
+from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_io, pydevd_vm_type, pydevd_tracing
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle import pydevd_vars
@@ -28,9 +32,6 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_pop, dict_contains, \
-    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
-    clear_cached_thread_id
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
@@ -202,8 +203,8 @@ class PyDB:
         self.break_on_caught_exceptions = {}
 
         self.ready_to_run = False
-        self._main_lock = _pydev_thread.allocate_lock()
-        self._lock_running_thread_ids = _pydev_thread.allocate_lock()
+        self._main_lock = thread.allocate_lock()
+        self._lock_running_thread_ids = thread.allocate_lock()
         self._py_db_command_thread_event = threading.Event()
         CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
         self._finish_debugging_session = False
@@ -1131,7 +1132,7 @@ def settrace(
 
 
 
-_set_trace_lock = _pydev_thread.allocate_lock()
+_set_trace_lock = thread.allocate_lock()
 
 def _locked_settrace(
         host,

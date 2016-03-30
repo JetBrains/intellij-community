@@ -50,6 +50,9 @@ public abstract class PyTestTask {
   public void after() throws Exception {
   }
 
+  public void doFinally() {
+  }
+
   public void useNormalTimeout() {
   }
 

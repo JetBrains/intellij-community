@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class XFramesView extends XDebugView {
   private int mySelectedFrameIndex;
   private Rectangle myVisibleRect;
   private boolean myListenersEnabled;
-  private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
+  private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<>();
   private final ActionToolbarImpl myToolbar;
   private final Wrapper myThreadsPanel;
   private boolean myThreadsCalculated = false;
@@ -326,7 +326,7 @@ public class XFramesView extends XDebugView {
     private StackFramesListBuilder(final XExecutionStack executionStack, XDebugSession session) {
       myExecutionStack = executionStack;
       mySession = session;
-      myStackFrames = new ArrayList<XStackFrame>();
+      myStackFrames = new ArrayList<>();
     }
 
     @Override

@@ -200,8 +200,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     val filePath = expandMacros(collapsedPath)
     @Suppress("DEPRECATION")
     if (stateSplitter != StateSplitter::class.java && stateSplitter != StateSplitterEx::class.java) {
-      val storage = MyDirectoryStorage(this, Paths.get(filePath), ReflectionUtil.newInstance(stateSplitter))
-      virtualFileTracker?.put(filePath, storage)
+      val storage = createDirectoryBasedStorage(filePath, collapsedPath, ReflectionUtil.newInstance(stateSplitter))
+      if (storage is StorageVirtualFileTracker.TrackedStorage) {
+        virtualFileTracker?.put(filePath, storage)
+      }
       return storage
     }
 
@@ -210,12 +212,18 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     val effectiveRoamingType = if (roamingType == RoamingType.DEFAULT && collapsedPath == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
-    val storage = MyFileStorage(this, File(filePath), collapsedPath, rootTagName, effectiveRoamingType, getMacroSubstitutor(collapsedPath), streamProvider)
-    if (isUseVfsListener == ThreeState.YES) {
+    val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType)
+    if (isUseVfsListener == ThreeState.YES && storage is StorageVirtualFileTracker.TrackedStorage) {
       virtualFileTracker?.put(filePath, storage)
     }
     return storage
   }
+
+  protected open fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType): StateStorage
+      = MyFileStorage(this, File(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), streamProvider)
+
+  protected open fun createDirectoryBasedStorage(path: String, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage
+      = MyDirectoryStorage(this, Paths.get(path), splitter)
 
   private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: Path, @Suppress("DEPRECATION") splitter: StateSplitter) :
     DirectoryBasedStorage(file, splitter, storageManager.pathMacroSubstitutor), StorageVirtualFileTracker.TrackedStorage

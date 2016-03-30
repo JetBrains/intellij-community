@@ -36,6 +36,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -90,12 +91,15 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.areEqualLineSeparators;
 
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
@@ -296,9 +300,7 @@ public class DiffUtil {
     }.setCopyable(true);
     label.setForeground(UIUtil.getInactiveTextColor());
 
-    JPanel panel = new CenteredPanel(label);
-    panel.setBorder(JBUI.Borders.empty(5));
-    return panel;
+    return new CenteredPanel(label, JBUI.Borders.empty(5));
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -377,23 +379,8 @@ public class DiffUtil {
     List<DiffContent> contents = request.getContents();
     List<String> titles = request.getContentTitles();
 
-    List<Charset> charsets = ContainerUtil.map(contents, new Function<DiffContent, Charset>() {
-      @Override
-      public Charset fun(DiffContent content) {
-        if (content instanceof EmptyContent) return null;
-        return ((DocumentContent)content).getCharset();
-      }
-    });
-    List<LineSeparator> separators = ContainerUtil.map(contents, new Function<DiffContent, LineSeparator>() {
-      @Override
-      public LineSeparator fun(DiffContent content) {
-        if (content instanceof EmptyContent) return null;
-        return ((DocumentContent)content).getLineSeparator();
-      }
-    });
-
-    boolean equalCharsets = isEqualElements(charsets);
-    boolean equalSeparators = isEqualElements(separators);
+    boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(contents);
+    boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(contents);
 
     List<JComponent> result = new ArrayList<JComponent>(contents.size());
 
@@ -420,20 +407,6 @@ public class DiffUtil {
     if (title != null) components.add(title);
     components.addAll(notifications);
     return createStackedComponents(components, TITLE_GAP);
-  }
-
-  private static boolean isEqualElements(@NotNull List elements) {
-    for (int i = 0; i < elements.size(); i++) {
-      for (int j = i + 1; j < elements.size(); j++) {
-        if (!isEqualElements(elements.get(i), elements.get(j))) return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean isEqualElements(@Nullable Object element1, @Nullable Object element2) {
-    if (element1 == null || element2 == null) return true;
-    return element1.equals(element2);
   }
 
   @Nullable
@@ -1287,12 +1260,17 @@ public class DiffUtil {
     }
   }
 
-  private static class CenteredPanel extends JPanel {
+  public static class CenteredPanel extends JPanel {
     private final JComponent myComponent;
 
     public CenteredPanel(@NotNull JComponent component) {
       myComponent = component;
       add(component);
+    }
+
+    public CenteredPanel(@NotNull JComponent component, @NotNull Border border) {
+      this(component);
+      setBorder(border);
     }
 
     @Override

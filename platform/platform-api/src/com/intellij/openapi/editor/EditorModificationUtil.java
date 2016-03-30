@@ -63,14 +63,6 @@ public class EditorModificationUtil {
     });
   }
 
-  /**
-   * Does nothing currently.
-   * 
-   * @deprecated Use {@link #deleteSelectedText(Editor)} to delete all selected fragments. To be removed in IDEA 16. 
-   */
-  public static void deleteBlockSelection(Editor editor) {
-  }
-
   public static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
     int caretColumn = editor.getCaretModel().getLogicalPosition().column;
     editor.getSelectionModel().setBlockSelection(new LogicalPosition(startLine, caretColumn), new LogicalPosition(endLine, caretColumn));
@@ -314,15 +306,6 @@ public class EditorModificationUtil {
     }
 
     return buf.toString();
-  }
-
-  /**
-   * @deprecated Use an appropriate <code>insertStringAtCaret</code> method instead. To be removed in IDEA 16.
-   */
-  public static void typeInStringAtCaretHonorBlockSelection(final Editor editor, final String str, final boolean toProcessOverwriteMode)
-    throws ReadOnlyFragmentModificationException
-  {
-    insertStringAtCaret(editor, str, toProcessOverwriteMode, true);
   }
 
   public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str) {

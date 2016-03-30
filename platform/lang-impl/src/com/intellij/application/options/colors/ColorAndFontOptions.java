@@ -1064,6 +1064,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         descriptor.apply(scheme);
       }
+      
+      if (scheme instanceof AbstractColorsScheme) {
+        ((AbstractColorsScheme)scheme).setSaveNeeded(true);
+      }
     }
 
     @Override

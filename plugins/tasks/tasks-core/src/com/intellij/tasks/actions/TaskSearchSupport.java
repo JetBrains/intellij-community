@@ -56,7 +56,7 @@ public class TaskSearchSupport {
     final Matcher matcher = getMatcher(pattern);
     return ContainerUtil.mapNotNull(tasks, new NullableFunction<Task, Task>() {
       public Task fun(Task task) {
-        return matcher.matches(task.getId()) || matcher.matches(task.getSummary()) ? task : null;
+        return matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null;
       }
     });
   }

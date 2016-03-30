@@ -25,6 +25,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,7 +50,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
 
   protected final JPanel myPanel;
   protected final JCheckBox myAmend;
-  @Nullable private String myPreviousMessage;
+  @NotNull private final String myPreviousMessage;
   @Nullable private String myAmendedMessage;
   @NotNull protected final CheckinProjectPanel myCheckinPanel;
   @Nullable  private  Map<VirtualFile, String> myMessagesForRoots;
@@ -140,8 +141,8 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
   }
 
   private void substituteCommitMessage(@NotNull String newMessage) {
-    myPreviousMessage = myCheckinPanel.getCommitMessage();
-    if (!myPreviousMessage.trim().equals(newMessage.trim())) {
+    if (!StringUtil.equalsIgnoreWhitespaces(myPreviousMessage, newMessage)) {
+      VcsConfiguration.getInstance(myCheckinPanel.getProject()).saveCommitMessage(myPreviousMessage);
       myCheckinPanel.setCommitMessage(newMessage);
     }
   }

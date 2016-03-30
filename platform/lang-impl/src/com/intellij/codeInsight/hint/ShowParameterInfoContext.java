@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -48,6 +48,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private final int myParameterListStart;
   private PsiElement myHighlightedElement;
   private Object[] myItems;
+  private boolean myRequestFocus;
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
                                     final PsiFile file, int offset, int parameterListStart) {
@@ -108,7 +109,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {
     final Object[] itemsToShow = getItemsToShow();
     if (itemsToShow == null || itemsToShow.length == 0) return;
-    showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler);
+    showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler, myRequestFocus);
   }
 
   private static void showParameterHint(final PsiElement element,
@@ -117,12 +118,14 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         final Project project,
                                         @Nullable PsiElement highlighted,
                                         final int elementStart,
-                                        final ParameterInfoHandler handler) {
+                                        final ParameterInfoHandler handler,
+                                        final boolean requestFocus) {
     if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
 
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
     final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler);
     component.setParameterOwner(element);
+    component.setRequestFocus(requestFocus);
     if (highlighted != null) {
       component.setHighlightedParameter(highlighted);
     }
@@ -135,23 +138,21 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final ShowParameterInfoHandler.BestLocationPointProvider provider = new MyBestLocationPointProvider(editor);
     final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.UNDER);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (editor.isDisposed() || DumbService.isDumb(project)) return;
+    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+      if (editor.isDisposed() || DumbService.isDumb(project)) return;
 
-        final Document document = editor.getDocument();
-        if (document.getTextLength() < elementStart) return;
+      final Document document = editor.getDocument();
+      if (document.getTextLength() < elementStart) return;
 
-        HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
-        hintHint.setExplicitClose(true);
+      HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
+      hintHint.setExplicitClose(true);
+      hintHint.setRequestFocus(requestFocus);
 
-        Editor editorToShow = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-        // is case of injection we need to calculate position for EditorWindow
-        // also we need to show the hint in the main editor because of intention bulb
-        hintManager.showEditorHint(hint, editorToShow, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
-        new ParameterInfoController(project, editor, elementStart, hint, handler, provider);
-      }
+      Editor editorToShow = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      // is case of injection we need to calculate position for EditorWindow
+      // also we need to show the hint in the main editor because of intention bulb
+      hintManager.showEditorHint(hint, editorToShow, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
+      new ParameterInfoController(project, editor, elementStart, hint, handler, provider);
     });
   }
 
@@ -160,9 +161,10 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                      PsiElement highlighted,
                                      Object[] candidates,
                                      int offset,
-                                     ParameterInfoHandler handler
+                                     ParameterInfoHandler handler,
+                                     boolean requestFocus
                                      ) {
-    showParameterHint(list, editor, candidates, project, candidates.length > 1 ? highlighted : null, offset, handler);
+    showParameterHint(list, editor, candidates, project, candidates.length > 1 ? highlighted : null, offset, handler, requestFocus);
   }
 
   /**
@@ -223,6 +225,14 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     int aboveSpace = p2.y;
     return aboveSpace > underSpace ? new Pair<Point, Short>(new Point(p2.x, 0), HintManager.UNDER) : new Pair<Point, Short>(p1,
                                                                                                                             HintManager.ABOVE);
+  }
+
+  public void setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
   }
 
   static class MyBestLocationPointProvider implements ShowParameterInfoHandler.BestLocationPointProvider {

@@ -259,17 +259,17 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
                                                                                boolean replaceAllOccurrences) {
     EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.noneOf(GrIntroduceFieldSettings.Init.class);
 
-    if (context.getExpression() != null ||
-        context.getVar() != null && context.getVar().getInitializerGroovy() != null ||
-        context.getStringPart() != null) {
-      result.add(GrIntroduceFieldSettings.Init.FIELD_DECLARATION);
-    }
-
     if (!(context.getScope() instanceof GroovyScriptClass || context.getScope() instanceof GroovyFileBase)) {
+      if (context.getExpression() != null ||
+          context.getVar() != null && context.getVar().getInitializerGroovy() != null ||
+          context.getStringPart() != null) {
+        result.add(GrIntroduceFieldSettings.Init.FIELD_DECLARATION);
+      }
       result.add(GrIntroduceFieldSettings.Init.CONSTRUCTOR);
     }
 
     PsiElement scope = context.getScope();
+    if (scope instanceof GroovyScriptClass) scope = scope.getContainingFile();
 
     if (replaceAllOccurrences || context.getExpression() != null) {
       PsiElement[] occurrences = replaceAllOccurrences ? context.getOccurrences() : new PsiElement[]{context.getExpression()};

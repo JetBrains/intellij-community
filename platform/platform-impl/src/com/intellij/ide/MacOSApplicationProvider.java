@@ -25,6 +25,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,15 +37,22 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.color.ColorSpace;
+import java.awt.color.ICC_ColorSpace;
+import java.awt.color.ICC_Profile;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 /**
  * @author max
  */
 public class MacOSApplicationProvider implements ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
   private static final Callback IMPL = new Callback() {
     @SuppressWarnings("unused")
     public void callback(ID self, String selector) {
@@ -59,6 +67,12 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       });
     }
   };
+  
+  private final ColorSpace genericRgbColorSpace;
+  
+  public static MacOSApplicationProvider getInstance() {
+    return ApplicationManager.getApplication().getComponent(MacOSApplicationProvider.class);
+  }
 
   public MacOSApplicationProvider() {
     if (SystemInfo.isMac) {
@@ -66,8 +80,23 @@ public class MacOSApplicationProvider implements ApplicationComponent {
         Worker.initMacApplication();
       }
       catch (Throwable t) {
-        Logger.getInstance(MacOSApplicationProvider.class).warn(t);
+        LOG.warn(t);
       }
+      genericRgbColorSpace = initializeNativeColorSpace();
+    }
+    else {
+      genericRgbColorSpace = null;
+    }
+  }
+
+  private static ColorSpace initializeNativeColorSpace() {
+    try (InputStream is = new FileInputStream("/System/Library/ColorSync/Profiles/Generic RGB Profile.icc")) {
+      ICC_Profile profile = ICC_Profile.getInstance(is);
+      return new ICC_ColorSpace(profile);
+    }
+    catch (Throwable e) {
+      LOG.warn("Couldn't load generic RGB color profile", e);
+      return null;
     }
   }
 
@@ -82,6 +111,11 @@ public class MacOSApplicationProvider implements ApplicationComponent {
 
   @Override
   public void disposeComponent() { }
+
+  @Nullable
+  public ColorSpace getGenericRgbColorSpace() {
+    return genericRgbColorSpace;
+  }
 
   private static class Worker {
     @SuppressWarnings("deprecation")

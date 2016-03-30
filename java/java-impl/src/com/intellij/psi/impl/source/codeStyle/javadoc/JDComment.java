@@ -71,7 +71,7 @@ public class JDComment {
 
     if (!isNull(myDescription)) {
       sb.append(prefix);
-      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix));
+      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix, false));
 
       if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_DESCRIPTION) {
         sb.append(prefix);

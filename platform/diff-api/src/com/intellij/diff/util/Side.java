@@ -129,6 +129,13 @@ public enum Side {
     return isLeft() ? region.first : region.second;
   }
 
+  @Nullable
+  public static <T> Side fromValue(@NotNull List<? extends T> list, @Nullable T value) {
+    assert list.size() == 2;
+    int index = list.indexOf(value);
+    return index != -1 ? fromIndex(index) : null;
+  }
+
   //
   // Fragments
   //

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,16 +88,13 @@ public class VariableAccessUtils {
         final PsiClass aClass = PsiUtil.getTopLevelClass(variable);
         return variableIsAssigned(variable, aClass);
       }
-      return !ReferencesSearch.search(variable, variable.getUseScope()).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          if (!(element instanceof PsiExpression)) {
-            return true;
-          }
-          final PsiExpression expression = (PsiExpression)element;
-          return !PsiUtil.isAccessedForWriting(expression);
+      return !ReferencesSearch.search(variable, variable.getUseScope()).forEach(reference -> {
+        final PsiElement element = reference.getElement();
+        if (!(element instanceof PsiExpression)) {
+          return true;
         }
+        final PsiExpression expression = (PsiExpression)element;
+        return !PsiUtil.isAccessedForWriting(expression);
       });
     }
     final PsiElement context =
@@ -248,7 +245,7 @@ public class VariableAccessUtils {
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      return mayEvaluateToVariable(qualifier, variable, builderPattern);
+      return mayEvaluateToVariable(qualifier, variable, true);
     }
     return evaluatesToVariable(expression, variable);
   }
@@ -291,7 +288,7 @@ public class VariableAccessUtils {
       final PsiPrefixExpression prefixExpression =
         (PsiPrefixExpression)expression;
       final IElementType tokenType = prefixExpression.getOperationTokenType();
-      if (incremented ? !tokenType.equals(JavaTokenType.PLUSPLUS) : !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+      if (!tokenType.equals(incremented ? JavaTokenType.PLUSPLUS : JavaTokenType.MINUSMINUS)) {
         return false;
       }
       final PsiExpression operand = prefixExpression.getOperand();
@@ -301,7 +298,7 @@ public class VariableAccessUtils {
       final PsiPostfixExpression postfixExpression =
         (PsiPostfixExpression)expression;
       final IElementType tokenType = postfixExpression.getOperationTokenType();
-      if (incremented ? !tokenType.equals(JavaTokenType.PLUSPLUS) : !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+      if (!tokenType.equals(incremented ? JavaTokenType.PLUSPLUS : JavaTokenType.MINUSMINUS)) {
         return false;
       }
       final PsiExpression operand = postfixExpression.getOperand();
@@ -326,7 +323,7 @@ public class VariableAccessUtils {
           (PsiBinaryExpression)rhs;
         final IElementType binaryTokenType =
           binaryExpression.getOperationTokenType();
-        if (incremented ? binaryTokenType != JavaTokenType.PLUS : binaryTokenType != JavaTokenType.MINUS) {
+        if (binaryTokenType != (incremented ? JavaTokenType.PLUS : JavaTokenType.MINUS)) {
           return false;
         }
         final PsiExpression lOperand = binaryExpression.getLOperand();
@@ -342,7 +339,7 @@ public class VariableAccessUtils {
           }
         }
       }
-      else if (incremented ? tokenType == JavaTokenType.PLUSEQ : tokenType == JavaTokenType.MINUSEQ) {
+      else if (tokenType == (incremented ? JavaTokenType.PLUSEQ : JavaTokenType.MINUSEQ)) {
         if (ExpressionUtils.isOne(rhs)) {
           return true;
         }
@@ -351,9 +348,8 @@ public class VariableAccessUtils {
     return false;
   }
 
-  static boolean variableIsAssignedBeforeReference(
-    @NotNull PsiReferenceExpression referenceExpression,
-    @Nullable PsiElement context) {
+  public static boolean variableIsAssignedBeforeReference(@NotNull PsiReferenceExpression referenceExpression,
+                                                          @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }
@@ -362,8 +358,7 @@ public class VariableAccessUtils {
       return false;
     }
     final PsiVariable variable = (PsiVariable)target;
-    return variableIsAssignedAtPoint(variable, context,
-                                     referenceExpression);
+    return variableIsAssignedAtPoint(variable, context, referenceExpression);
   }
 
   public static boolean variableIsAssignedAtPoint(
@@ -428,7 +423,7 @@ public class VariableAccessUtils {
 
   private static class VariableCollectingVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final Set<PsiVariable> usedVariables = new HashSet<PsiVariable>();
+    private final Set<PsiVariable> usedVariables = new HashSet<>();
 
     @Override
     public void visitReferenceExpression(

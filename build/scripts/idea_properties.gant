@@ -44,8 +44,8 @@ def getProperties(String home, String buildNumber) {
     def String systemSelector() { "IdeaIC${p("component.version.major")}" }
 
     def String macAppRoot() {
-      isEap() ? "IntelliJ IDEA ${p("component.version.major")} CE EAP.app/Contents"
-              : "IntelliJ IDEA ${p("component.version.major")} CE.app/Contents"
+      isEap() ? "IntelliJ IDEA ${p("component.version.major")}.${p("component.version.minor")} CE EAP.app/Contents"
+              : "IntelliJ IDEA CE.app/Contents"
     }
 
     def String winAppRoot() { "" }

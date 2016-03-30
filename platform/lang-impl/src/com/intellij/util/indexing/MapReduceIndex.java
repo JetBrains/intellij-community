@@ -26,17 +26,20 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.*;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -55,15 +58,16 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final DataExternalizer<Value> myValueExternalizer;
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
   private final boolean myIsPsiBackedIndex;
+  private final IndexExtension<Key, Value, Input> myExtension;
+  private final AtomicBoolean myIsBufferingMode = new AtomicBoolean();
+  private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<Collection<Key>>();
 
-  private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, ByteSequence> myContents;
   private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
+  private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, String> myIndexingTrace;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-
-  private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
   private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
     @Override
@@ -77,28 +81,126 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   });
 
-  public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
-                        DataIndexer<Key, Value, Input> indexer,
+  public MapReduceIndex(IndexExtension<Key, Value, Input> extension,
                         @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    this(indexId, indexer, storage, null, null, false);
+    myIndexId = extension.getName();
+    myExtension = extension;
+    myIndexer = extension.getIndexer();
+    myStorage = storage;
+    myHasSnapshotMapping = extension instanceof FileBasedIndexExtension &&
+                           ((FileBasedIndexExtension<Key, Value>)extension).hasSnapshotMapping() &&
+                           IdIndex.ourSnapshotMappingsEnabled;
+
+    mySnapshotIndexExternalizer = createInputsIndexExternalizer(extension, myIndexId, extension.getKeyDescriptor());
+    myValueExternalizer = extension.getValueExternalizer();
+    myContents = createContentsIndex();
+    myIsPsiBackedIndex = extension instanceof PsiDependentIndex;
+
+    if (myHasSnapshotMapping) {
+      myInputsSnapshotMapping = createInputSnapshotMapping();
+    }
+    myInputsIndex = /*myHasSnapshotMapping ? null :*/ createInputsIndex();
+    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
+      myIndexingTrace = createIndexingTrace();
+    }
+
+    if (storage instanceof MemoryIndexStorage) {
+      ((MemoryIndexStorage)storage).addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
+        @Override
+        public void bufferingStateChanged(boolean newState) {
+          myIsBufferingMode.set(newState);
+        }
+
+        @Override
+        public void memoryStorageCleared() {
+          synchronized (myInMemoryKeys) {
+            myInMemoryKeys.clear();
+          }
+        }
+      });
+    }
   }
 
-  public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
-                        DataIndexer<Key, Value, Input> indexer,
-                        @NotNull IndexStorage<Key, Value> storage,
-                        DataExternalizer<Collection<Key>> snapshotIndexExternalizer,
-                        DataExternalizer<Value> valueDataExternalizer,
-                        boolean psiBasedIndex
-                        ) throws IOException {
-    myIndexId = indexId;
-    myIndexer = indexer;
-    myStorage = storage;
-    myHasSnapshotMapping = snapshotIndexExternalizer != null;
+  private static <K> DataExternalizer<Collection<K>> createInputsIndexExternalizer(IndexExtension<K, ?, ?> extension,
+                                                                           ID<K, ?> indexId,
+                                                                           KeyDescriptor<K> keyDescriptor) {
+    DataExternalizer<Collection<K>> externalizer;
+    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
+      externalizer = ((CustomInputsIndexFileBasedIndexExtension<K>)extension).createExternalizer();
+    } else {
+      externalizer = new InputIndexDataExternalizer<K>(keyDescriptor, indexId);
+    }
+    return externalizer;
+  }
 
-    mySnapshotIndexExternalizer = snapshotIndexExternalizer;
-    myValueExternalizer = valueDataExternalizer;
-    myContents = createContentsIndex();
-    myIsPsiBackedIndex = psiBasedIndex;
+  @NotNull
+  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull IndexExtension <K, ?, ?> extension,
+                                                                                      @NotNull MemoryIndexStorage<K, ?> storage)
+    throws IOException {
+    ID<K, ?> indexId = extension.getName();
+    KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
+    final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
+    final AtomicBoolean isBufferingMode = new AtomicBoolean();
+    final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
+
+    // Important! Update IdToDataKeysIndex depending on the sate of "buffering" flag from the MemoryStorage.
+    // If buffering is on, all changes should be done in memory (similar to the way it is done in memory storage).
+    // Otherwise data in IdToDataKeysIndex will not be in sync with the 'main' data in the index on disk and index updates will be based on the
+    // wrong sets of keys for the given file. This will lead to unpredictable results in main index because it will not be
+    // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
+
+    final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
+      indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension, indexId, keyDescriptor)
+    ) {
+
+      @Override
+      protected Collection<K> doGet(Integer integer) throws IOException {
+        if (isBufferingMode.get()) {
+          final Collection<K> collection = tempMap.get(integer);
+          if (collection != null) {
+            return collection;
+          }
+        }
+        return super.doGet(integer);
+      }
+
+      @Override
+      protected void doPut(Integer integer, @Nullable Collection<K> ks) throws IOException {
+        if (isBufferingMode.get()) {
+          tempMap.put(integer, ks == null ? Collections.<K>emptySet() : ks);
+        }
+        else {
+          super.doPut(integer, ks);
+        }
+      }
+
+      @Override
+      protected void doRemove(Integer integer) throws IOException {
+        if (isBufferingMode.get()) {
+          tempMap.put(integer, Collections.<K>emptySet());
+        }
+        else {
+          super.doRemove(integer);
+        }
+      }
+    };
+
+    storage.addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
+      @Override
+      public void bufferingStateChanged(boolean newState) {
+        synchronized (map) {
+          isBufferingMode.set(newState);
+        }
+      }
+
+      @Override
+      public void memoryStorageCleared() {
+        synchronized (map) {
+          tempMap.clear();
+        }
+      }
+    });
+    return map;
   }
 
   private PersistentHashMap<Integer, ByteSequence> createContentsIndex() throws IOException {
@@ -315,32 +417,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  public void setInputIdToDataKeysIndex(Factory<PersistentHashMap<Integer, Collection<Key>>> factory) throws IOException {
-    myInputsIndexFactory = factory;
-    if (myHasSnapshotMapping) {
-      myInputsSnapshotMapping = createInputSnapshotMapping();
-    }
-    myInputsIndex = createInputsIndex();
-    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
-      myIndexingTrace = createIndexingTrace();
-    }
-  }
-
-  @Nullable
-  private PersistentHashMap<Integer, Collection<Key>> createInputsIndex() throws IOException {
-    Factory<PersistentHashMap<Integer, Collection<Key>>> factory = myInputsIndexFactory;
-    if (factory != null) {
-      try {
-        return factory.create();
-      }
-      catch (RuntimeException e) {
-        if (e.getCause() instanceof IOException) {
-          throw (IOException)e.getCause();
-        }
-        throw e;
-      }
-    }
-    return null;
+  protected PersistentHashMap<Integer, Collection<Key>> createInputsIndex() throws IOException {
+    return createIdToDataKeysIndex(myExtension, (MemoryIndexStorage<Key, ?>)myStorage);
   }
 
   private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
@@ -395,7 +473,12 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
     }
 
-    if (data == null) data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
+    if (data == null) {
+      data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
+      if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+        checkValuesHaveProperEqualsAndHashCode(data);
+      }
+    }
 
     if (hashId != null && !havePersistentData) {
       boolean saved = savePersistentData(data, hashId, skippedReadingPersistentDataButMayHaveIt);
@@ -485,7 +568,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             @Override
             public Collection<Key> compute() {
               try {
-                Collection<Key> oldKeys = myInputsIndex.get(inputId);
+                Collection<Key> oldKeys = readInputKeys(inputId);
                 if (oldKeys == null) {
                   return keysForGivenInputId.compute();
                 }
@@ -507,7 +590,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         @Override
         public Collection<Key> compute() {
           try {
-            Collection<Key> oldKeys = myInputsIndex.get(inputId);
+            Collection<Key> oldKeys = readInputKeys(inputId);
             return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
           }
           catch (IOException e) {
@@ -546,6 +629,64 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         return Boolean.TRUE;
       }
     };
+  }
+
+  private Collection<Key> readInputKeys(int inputId) throws IOException {
+    boolean inMemory = myStorage instanceof MemoryIndexStorage && ((MemoryIndexStorage)myStorage).isBufferingEnabled();
+
+    if (DebugAssertions.DEBUG) {
+      DebugAssertions.assertTrue(inMemory == myIsBufferingMode.get());
+    }
+    if (inMemory) {
+      synchronized (myInMemoryKeys) {
+        Collection<Key> keys = myInMemoryKeys.get(inputId);
+        if (keys != null) {
+          if (myInputsIndex != null && DebugAssertions.DEBUG) {
+            DebugAssertions.assertTrue(equals(keys, myInputsIndex.get(inputId)));
+          }
+          return keys;
+        }
+      }
+    }
+    if (myHasSnapshotMapping) {
+      if (myInputsIndex != null && DebugAssertions.DEBUG) {
+        DebugAssertions.assertTrue(equals(null, myInputsIndex.get(inputId)));
+      }
+      return null;
+    }
+    return myInputsIndex.get(inputId);
+  }
+
+  private static <Key> boolean equals(Collection<Key> keys, Collection<Key> keys2) {
+    if (keys == null && keys2 == null) return true;
+    if (keys == null || keys2 == null || keys.size() != keys2.size()) return false;
+    return new HashSet<Key>(keys).equals(new HashSet<>(keys2));
+  }
+
+  private void checkValuesHaveProperEqualsAndHashCode(Map<Key, Value> data) {
+    for(Map.Entry<Key, Value> e: data.entrySet()) {
+      final Value value = e.getValue();
+      if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
+        LOG.error("Index " + myIndexId.toString() + " violates equals / hashCode contract for Value parameter");
+      }
+
+      if (myValueExternalizer != null) {
+        try {
+          final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
+          DataOutputStream outputStream = new DataOutputStream(out);
+          myValueExternalizer.save(outputStream, value);
+          outputStream.close();
+          final Value deserializedValue =
+            myValueExternalizer.read(new DataInputStream(new UnsyncByteArrayInputStream(out.getInternalBuffer(), 0, out.size())));
+
+          if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
+            LOG.error("Index " + myIndexId.toString() + " violates equals / hashCode contract for Value parameter");
+          }
+        } catch (IOException ex) {
+          LOG.error(ex);
+        }
+      }
+    }
   }
 
   private StringBuilder buildDiff(Map<Key, Value> data, Map<Key, Value> contentData) {
@@ -706,10 +847,21 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     @Override
     public void save(int inputId) throws IOException {
-      if (myHasSnapshotMapping && !((MemoryIndexStorage)getStorage()).isBufferingEnabled()) {
+      boolean physical = !(myStorage instanceof MemoryIndexStorage) || !((MemoryIndexStorage)myStorage).isBufferingEnabled();
+      Set<Key> newKeys = newData.keySet();
+
+      if (DebugAssertions.DEBUG) {
+        DebugAssertions.assertTrue(!physical == myIsBufferingMode.get());
+      }
+      if (myIsBufferingMode.get()) {
+        synchronized (myInMemoryKeys) {
+          myInMemoryKeys.put(inputId, newKeys);
+        }
+      }
+
+      if (myHasSnapshotMapping && physical) {
         myInputsSnapshotMapping.put(inputId, savedInputId);
       } else if (myInputsIndex != null) {
-        final Set<Key> newKeys = newData.keySet();
         if (newKeys.size() > 0) {
           myInputsIndex.put(inputId, newKeys);
         }

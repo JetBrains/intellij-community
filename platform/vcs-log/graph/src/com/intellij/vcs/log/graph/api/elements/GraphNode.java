@@ -59,5 +59,4 @@ public final class GraphNode implements GraphElement {
     result = 31 * result + myType.hashCode();
     return result;
   }
-
 }

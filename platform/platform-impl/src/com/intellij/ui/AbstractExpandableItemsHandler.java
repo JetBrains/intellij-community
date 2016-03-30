@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,9 +352,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     Point location = new Point(visMaxX, cellBounds.y);
     SwingUtilities.convertPointToScreen(location, myComponent);
 
-    Rectangle screen = !Registry.is("ide.expansion.hints.on.all.screens")
-                       ? ScreenUtil.getScreenRectangle(location)
-                       : ScreenUtil.getAllScreensRectangle();
+    Rectangle screen = getScreenRectangle(location);
 
     int borderWidth = isPaintBorder() ? 1 : 0;
     int width = Math.min(screen.width + screen.x - location.x - borderWidth, cellMaxX - visMaxX);
@@ -385,6 +383,12 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myTipComponent.setBorder(border);
     myTipComponent.setPreferredSize(size);
     return location;
+  }
+
+  public static Rectangle getScreenRectangle(Point location) {
+    return !Registry.is("ide.expansion.hints.on.all.screens")
+                         ? ScreenUtil.getScreenRectangle(location)
+                         : ScreenUtil.getAllScreensRectangle();
   }
 
   protected boolean isPaintBorder() {

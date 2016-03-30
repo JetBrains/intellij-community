@@ -77,13 +77,11 @@ public abstract class PerformFixesModalTask implements SequentialTask {
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null) {
       for (QuickFix fix : fixes) {
-        if (fix instanceof IntentionAction) {
-          if (!((IntentionAction)fix).startInWriteAction()) {
-            runInReadAction[0] = true;
-          } else {
-            runInReadAction[0] = false;
-            break;
-          }
+        if (!fix.startInWriteAction()) {
+          runInReadAction[0] = true;
+        } else {
+          runInReadAction[0] = false;
+          break;
         }
       }
     }

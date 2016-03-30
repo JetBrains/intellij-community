@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.BitUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,22 +73,22 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   }
 
   private static boolean isEnumConst(final byte flags) {
-    return (flags & ENUM_CONST) != 0;
+    return BitUtil.isSet(flags, ENUM_CONST);
   }
 
   @Override
   public boolean isDeprecated() {
-    return (myFlags & DEPRECATED) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED);
   }
 
   @Override
   public boolean hasDeprecatedAnnotation() {
-    return (myFlags & DEPRECATED_ANNOTATION) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED_ANNOTATION);
   }
 
   @Override
   public boolean hasDocComment() {
-    return (myFlags & HAS_DOC_COMMENT) != 0;
+    return BitUtil.isSet(myFlags, HAS_DOC_COMMENT);
   }
 
   @Override

@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.textarea.TextComponentEditor;
+import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public abstract class TextComponentEditorAction extends EditorAction {
     if (editor != null) return editor;
     final Object data = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (data instanceof JTextComponent) {
-      return new TextComponentEditor(CommonDataKeys.PROJECT.getData(dataContext), (JTextComponent) data);
+      return new TextComponentEditorImpl(CommonDataKeys.PROJECT.getData(dataContext), (JTextComponent) data);
     }
     return null;
   }

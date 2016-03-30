@@ -31,6 +31,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -117,7 +119,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
   }
 
   private static void removeFieldsReferencedFromInitializers(final PsiClass aClass, final Set<PsiField> candidates) {
-    aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+    aClass.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
         if (method.isConstructor()) {
@@ -135,6 +137,10 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
             }
           }
         }
+        final PsiDocComment docComment = method.getDocComment();
+        if (docComment != null) {
+          docComment.accept(this);
+        }
         //do not go inside method
       }
 
@@ -145,15 +151,26 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiElement resolved = expression.resolve();
+        excludeFieldCandidate(expression);
+
+        super.visitReferenceExpression(expression);
+      }
+
+      @Override
+      public void visitDocTagValue(PsiDocTagValue value) {
+        excludeFieldCandidate(value.getReference());
+        super.visitDocTagValue(value);
+      }
+
+      private void excludeFieldCandidate(PsiReference ref) {
+        if (ref == null) return;
+        final PsiElement resolved = ref.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
           if (aClass.equals(field.getContainingClass())) {
             candidates.remove(field);
           }
         }
-
-        super.visitReferenceExpression(expression);
       }
     });
   }

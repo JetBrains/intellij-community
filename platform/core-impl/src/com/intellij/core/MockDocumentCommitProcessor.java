@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.core;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author nik
 */
-class MockDocumentCommitProcessor extends DocumentCommitProcessor {
+class MockDocumentCommitProcessor implements DocumentCommitProcessor {
   @Override
-  public void commitSynchronously(@NotNull Document document, @NotNull Project project) {
+  public void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile) {
   }
 
   @Override

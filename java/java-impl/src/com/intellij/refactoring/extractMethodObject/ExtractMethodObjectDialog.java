@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.openapi.application.AcceptNestedTransactions;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
@@ -45,6 +47,7 @@ import java.awt.event.ActionListener;
 import java.util.Enumeration;
 
 
+@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class ExtractMethodObjectDialog extends DialogWrapper implements AbstractExtractDialog {
   private final Project myProject;
   private final PsiType myReturnType;

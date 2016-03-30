@@ -68,7 +68,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ViewOfflineResultsAction extends AnAction implements DumbAware {
+public class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
   @NonNls private static final String XML_EXTENSION = "xml";
 
@@ -222,12 +222,12 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     context.setExternalProfile(inspectionProfile);
     context.setCurrentScope(scope);
     context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
-    final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, context,
+    final InspectionResultsView view = new InspectionResultsView(context,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
-    context.addView(view, title);
+    context.addView(view, title, true);
     return view;
   }
 }

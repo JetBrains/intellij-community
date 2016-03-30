@@ -16,11 +16,13 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,23 +31,28 @@ import java.awt.*;
  * @author max
  */
 public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
-  private final boolean myShowFlatten;
+  private final Getter<Boolean> myShowFlatten;
   private final Project myProject;
   private final IssueLinkRenderer myIssueLinkRenderer;
   private final boolean myHighlightProblems;
 
   public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten, final boolean highlightProblems) {
-    myShowFlatten = showFlatten;
+  //todo review all usages and try to use new one with Getter instead of 2 instances with final property flag
+    this(project, () -> showFlatten, highlightProblems);
+  }
+
+  public ChangesBrowserNodeRenderer(final Project project, final Getter<Boolean> showFlattenGetter, final boolean highlightProblems) {
+    myShowFlatten = showFlattenGetter;
     myProject = project;
     myHighlightProblems = highlightProblems;
     myIssueLinkRenderer = new IssueLinkRenderer(project, this);
   }
 
   public boolean isShowFlatten() {
-    return myShowFlatten;
+    return myShowFlatten.get();
   }
 
-  public void customizeCellRenderer(JTree tree,
+  public void customizeCellRenderer(@NotNull JTree tree,
                                     Object value,
                                     boolean selected,
                                     boolean expanded,
@@ -56,7 +63,6 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     node.render(this, selected, expanded, hasFocus);
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
   }
-
 
   protected void appendFileName(final VirtualFile vFile, final String fileName, final Color color) {
     if (myProject.isDefault()) {

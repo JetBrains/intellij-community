@@ -27,6 +27,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -268,24 +271,14 @@ public class AbstractPopup implements JBPopup {
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton("Open as Tool Window", 
                          AllIcons.General.AutohideOff, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffInactive),
-          new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-              pinCallback.process(AbstractPopup.this);
-            }
-          }
-        ));
+          e -> pinCallback.process(this)
+        ), JBUI.Borders.empty(4));
       }
       else if (cancelButton != null) {
-        myCaption.setButtonComponent(new InplaceButton(cancelButton, new ActionListener() {
-          @Override
-          public void actionPerformed(final ActionEvent e) {
-            cancel();
-          }
-        }));
+        myCaption.setButtonComponent(new InplaceButton(cancelButton, e -> cancel()), JBUI.Borders.empty(4));
       }
       else if (commandButton != null) {
-        myCaption.setButtonComponent(commandButton);
+        myCaption.setButtonComponent(commandButton, null);
       }
     }
     else {
@@ -707,7 +700,11 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public boolean isVisible() {
-    return myPopup != null;
+    if (myPopup == null) return false;
+    Window window = myPopup.getWindow();
+    if (window != null && window.isShowing()) return true;
+    if (LOG.isDebugEnabled()) LOG.debug("window hidden, popup's state: " + myState);
+    return false;
   }
 
   @Override
@@ -757,6 +754,19 @@ public class AbstractPopup implements JBPopup {
 
     if (myForcedSize != null) {
       sizeToSet = myForcedSize;
+    }
+
+    if (myLocateWithinScreen) {
+      Dimension size = sizeToSet != null ? sizeToSet : myContent.getPreferredSize();
+      Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
+      if (size.width > screen.width) {
+        size.width = screen.width;
+        sizeToSet = size;
+      }
+      if (size.height > screen.height) {
+        size.height = screen.height;
+        sizeToSet = size;
+      }
     }
 
     if (sizeToSet != null) {
@@ -1392,19 +1402,25 @@ public class AbstractPopup implements JBPopup {
 
     if (myFinalRunnable != null) {
       final ActionCallback typeAheadDone = new ActionCallback();
-      Runnable runFinal = new Runnable() {
-        @Override
-        public void run() {
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
+
+      ModalityState modalityState = ModalityState.current();
+      Runnable finalRunnable = myFinalRunnable;
+
+      getFocusManager().doWhenFocusSettlesDown(() -> {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(myFinalRunnable);
+          SwingUtilities.invokeLater(() -> {
+            if (ModalityState.current().equals(modalityState)) {
+              ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
+            }
+            // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
+            // And we don't want finalRunnable to perform potentially destructive actions
+            //   in the context of a suddenly appeared modal dialog.
+          });
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
           myFinalRunnable = null;
-        }
-      };
-
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
-      getFocusManager().doWhenFocusSettlesDown(runFinal);
+      });
     }
 
     if (LOG.isDebugEnabled()) {

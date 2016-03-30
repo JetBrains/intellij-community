@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.navigation.actions;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
@@ -29,6 +30,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,11 +41,14 @@ import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -51,8 +56,10 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,7 +91,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {
       int offset = editor.getCaretModel().getOffset();
-      PsiElement[] elements = findAllTargetElements(project, editor, offset);
+      PsiElement[] elements = underModalProgress(project, "Resolving Reference...", () -> findAllTargetElements(project, editor, offset));
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
       if (elements.length != 1) {
@@ -114,6 +121,20 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     finally {
       DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
+  }
+
+  public static <T> T underModalProgress(@NotNull Project project,
+                                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                         @NotNull Computable<T> computable) throws ProcessCanceledException {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+      try {
+        return ApplicationManager.getApplication().runReadAction(computable);
+      }
+      finally {
+        DumbService.getInstance(project).setAlternativeResolveEnabled(false);
+      }
+    }, progressTitle, true, project);
   }
 
   public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
@@ -169,8 +190,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
 
     if (elements == null || elements.length == 0) {
-      final Collection<PsiElement> candidates = suggestCandidates(reference);
-      elements = PsiUtilCore.toPsiElementArray(candidates);
+      elements = reference == null ? PsiElement.EMPTY_ARRAY
+                                   : PsiUtilCore.toPsiElementArray(
+                                     underModalProgress(reference.getElement().getProject(), "Resolving Reference...",
+                                                        () -> suggestCandidates(reference)));
     }
 
     if (elements.length == 1) {
@@ -213,12 +236,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   @Nullable
+  @TestOnly
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
     final PsiElement[] targets = findAllTargetElements(project, editor, offset);
     return targets.length == 1 ? targets[0] : null;
   }
 
   @NotNull
+  @VisibleForTesting
   public static PsiElement[] findAllTargetElements(Project project, Editor editor, int offset) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return PsiElement.EMPTY_ARRAY;

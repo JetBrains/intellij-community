@@ -29,10 +29,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -1298,15 +1295,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
     final Presentation presentation = action.getTemplatePresentation().clone();
 
-    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
+    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
+      () -> ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
         final DataContext context = getContextBy(contextComponent);
 
         AnActionEvent event = new AnActionEvent(
           inputEvent, context,
           place != null ? place : ActionPlaces.UNKNOWN,
-          presentation, ActionManagerImpl.this,
+          presentation, this,
           inputEvent.getModifiersEx()
         );
 
@@ -1346,7 +1342,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         result.setDone();
         queueActionPerformedEvent(action, context, event);
       }
-    });
+    ));
   }
 
   private class MyTimer extends Timer implements ActionListener {

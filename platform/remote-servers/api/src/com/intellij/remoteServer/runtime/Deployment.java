@@ -28,6 +28,9 @@ public interface Deployment {
   DeploymentRuntime getRuntime();
 
   @Nullable
+  DeploymentRuntime getParentRuntime();
+
+  @Nullable
   DeploymentTask<?> getDeploymentTask();
 
   @NotNull
@@ -37,7 +40,4 @@ public interface Deployment {
 
   @NotNull
   ServerConnection<?> getConnection();
-
-  @Nullable
-  String getGroup();
 }

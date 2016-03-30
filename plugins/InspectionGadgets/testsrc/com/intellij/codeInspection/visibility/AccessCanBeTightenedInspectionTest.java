@@ -27,7 +27,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "class C {\n" +
            "    final int /*Access can be private*/fd/**/ = 0;\n" +
            "    /*Access can be private*/public/**/ int fd2;\n" +
-           "    /*Access can be package local*/public/**/ int forSubClass;\n" +
+           "    /*Access can be package-private*/public/**/ int forSubClass;\n" +
            "    @Override\n" +
            "    public int hashCode() {\n" +
            "      return fd + fd2;\n" + // use field
@@ -58,7 +58,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "@interface Ann{ String value(); }\n" +
            "@Ann(value = C.VAL\n)" +
            "class C {\n" +
-           "    /*Access can be package local*/public/**/ static final String VAL = \"xx\";\n" +
+           "    /*Access can be package-private*/public/**/ static final String VAL = \"xx\";\n" +
            "}");
   }
 
@@ -113,6 +113,17 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
   public void testDoNotSuggestPrivateIfInExtendsOrImplements() {
     doTest("abstract class C implements Comparable<C.Inner> {\n" +
            "  static class Inner {\n" +
+           "  }\n"+
+           "}");
+  }
+
+  public void testDoNotSuggestPrivateForAbstractIDEA151875() {
+    doTest("class C {\n" +
+           "  abstract static class Inner {\n" +
+           "    abstract void foo();\n"+
+           "  }\n" +
+           "  void f(Inner i) {\n" +
+           "    i.foo();\n" +
            "  }\n"+
            "}");
   }

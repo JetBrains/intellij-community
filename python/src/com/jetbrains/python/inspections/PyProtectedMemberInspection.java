@@ -93,7 +93,7 @@ public class PyProtectedMemberInspection extends PyInspection {
 
     private boolean isImportFromTheSamePackage(PyReferenceExpression importSource) {
       PsiDirectory directory = importSource.getContainingFile().getContainingDirectory();
-      if (PyUtil.isPackage(directory, true, importSource.getContainingFile()) &&
+      if (directory != null && PyUtil.isPackage(directory, true, importSource.getContainingFile()) &&
           directory.getName().equals(importSource.getName())) {
         return true;
       }

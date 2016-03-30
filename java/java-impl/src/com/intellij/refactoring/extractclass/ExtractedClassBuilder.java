@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.util.Function;
@@ -101,7 +100,7 @@ class ExtractedClassBuilder {
   }
 
 
-  public String buildBeanClass() {
+  public String buildBeanClass(boolean normalizeDeclaration) {
     if (requiresBackPointer) {
       calculateBackpointerName();
     }
@@ -153,7 +152,7 @@ class ExtractedClassBuilder {
       }
       out.append(' ' + backPointerName + ";");
     }
-    outputFieldsAndInitializers(out);
+    outputFieldsAndInitializers(out, normalizeDeclaration);
     if (hasEnumConstants()) {
       final String fieldName = getValueFieldName();
       out.append("\n").append("private ").append(myEnumParameterType.getCanonicalText()).append(" ").append(fieldName).append(";\n");
@@ -256,7 +255,7 @@ class ExtractedClassBuilder {
   }
 
 
-  private void outputFieldsAndInitializers(final StringBuffer out) {
+  private void outputFieldsAndInitializers(final StringBuffer out, boolean normalizeDeclaration) {
     if (hasEnumConstants()) {
       out.append(StringUtil.join(enumConstantFields, new Function<PsiField, String>() {
         public String fun(PsiField field) {
@@ -274,6 +273,9 @@ class ExtractedClassBuilder {
 
     final List<PsiClassInitializer> remainingInitializers = new ArrayList<PsiClassInitializer>(initializers);
     for (final PsiField field : fields) {
+      if (normalizeDeclaration) {
+        field.normalizeDeclaration();
+      }
       final Iterator<PsiClassInitializer> initializersIterator = remainingInitializers.iterator();
       final int fieldOffset = field.getTextRange().getStartOffset();
       while (initializersIterator.hasNext()) {

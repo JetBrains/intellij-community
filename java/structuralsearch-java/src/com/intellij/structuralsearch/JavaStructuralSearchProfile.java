@@ -170,9 +170,15 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public PsiElement getPresentableElement(PsiElement element) {
-    if (element instanceof PsiJavaCodeReferenceElement) {
+    if (element instanceof PsiReferenceExpression) {
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiTypeElement) {
+      if (parent instanceof PsiMethodCallExpression) {
+        return parent;
+      }
+    }
+    else if (element instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnnotation) {
         return parent;
       }
     }
@@ -407,13 +413,35 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       @Override
       public void visitErrorElement(PsiErrorElement element) {
         super.visitErrorElement(element);
-        //final PsiElement parent = element.getParent();
-        //if (parent != myCurrent || !"';' expected".equals(element.getErrorDescription())) {
-        //  throw new MalformedPatternException(element.getErrorDescription());
-        //}
+        final PsiElement parent = element.getParent();
+        final String errorDescription = element.getErrorDescription();
+        if (parent instanceof PsiClass && "Identifier expected".equals(errorDescription)) {
+          // other class content variable.
+          return;
+        }
+        if (parent instanceof PsiTryStatement && "'catch' or 'finally' expected".equals(errorDescription)) {
+          // searching for naked try allowed
+          return;
+        }
+        if (parent == myCurrent) {
+          // search for expression, type, annotation or symbol
+          if ("';' expected".equals(errorDescription)) {
+            // expression
+            return;
+          }
+          if ("Identifier or type expected".equals(errorDescription)) {
+            // annotation
+            return;
+          }
+          if ("Identifier expected".equals(errorDescription)) {
+            // type
+            return;
+          }
+        }
+        throw new MalformedPatternException(errorDescription);
       }
 
-      public void setCurrent(PsiElement current) {
+      void setCurrent(PsiElement current) {
         myCurrent = current;
       }
     }
@@ -423,7 +451,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final NodeIterator nodes = compiledPattern.getNodes();
     while (nodes.hasNext()) {
       final PsiElement current = nodes.current();
-      visitor.setCurrent(nodeCount == 1 && current instanceof PsiExpressionStatement ? current : null);
+      visitor.setCurrent((nodeCount == 1 && (current instanceof PsiExpressionStatement|| current instanceof PsiDeclarationStatement))
+                         ? current : null);
       current.accept(visitor);
       nodes.advance();
     }

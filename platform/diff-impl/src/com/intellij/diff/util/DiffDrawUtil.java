@@ -210,17 +210,6 @@ public class DiffDrawUtil {
     };
   }
 
-  private static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
-                                            @NotNull TextDiffType type,
-                                            boolean ignoredFoldingOutline,
-                                            boolean resolved,
-                                            boolean isEmptyRange,
-                                            boolean isLastLine) {
-    DiffLineMarkerRenderer renderer = new DiffLineMarkerRenderer(highlighter, type, ignoredFoldingOutline, resolved,
-                                                                 isEmptyRange, isLastLine);
-    highlighter.setLineMarkerRenderer(renderer);
-  }
-
   private static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter,
                                                 @NotNull TextDiffType type) {
     highlighter.setCustomRenderer(new DiffEmptyHighlighterRenderer(type));
@@ -256,8 +245,9 @@ public class DiffDrawUtil {
 
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
-                                                         boolean ignored, boolean resolved) {
-    return new LineHighlighterBuilder(editor, startLine, endLine, type).withIgnored(ignored).withResolved(resolved).done();
+                                                         boolean ignored, boolean resolved, boolean hideWithoutLineNumbers) {
+    return new LineHighlighterBuilder(editor, startLine, endLine, type).withIgnored(ignored).withResolved(resolved)
+      .withHideWithoutLineNumbers(hideWithoutLineNumbers).done();
   }
 
   @NotNull
@@ -323,6 +313,7 @@ public class DiffDrawUtil {
 
     private boolean ignored = false;
     private boolean resolved = false;
+    private boolean hideWithoutLineNumbers = false;
 
     private LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
       this.editor = editor;
@@ -343,6 +334,11 @@ public class DiffDrawUtil {
       return this;
     }
 
+    public LineHighlighterBuilder withHideWithoutLineNumbers(boolean hideWithoutLineNumbers) {
+      this.hideWithoutLineNumbers = hideWithoutLineNumbers;
+      return this;
+    }
+
     @NotNull
     public List<RangeHighlighter> done() {
       boolean isEmptyRange = startLine == endLine;
@@ -358,7 +354,8 @@ public class DiffDrawUtil {
       RangeHighlighter highlighter = editor.getMarkupModel()
         .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, HighlighterTargetArea.LINES_IN_RANGE);
 
-      installGutterRenderer(highlighter, type, ignored, resolved, isEmptyRange, isLastLine);
+      highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, ignored, resolved,
+                                                                   hideWithoutLineNumbers, isEmptyRange, isLastLine));
 
       if (stripeAttributes == null) return Collections.singletonList(highlighter);
 

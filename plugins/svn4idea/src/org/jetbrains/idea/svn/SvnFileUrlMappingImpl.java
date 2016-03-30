@@ -113,7 +113,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   @Nullable
-  public String getLocalPath(final String url) {
+  public File getLocalPath(@NotNull String url) {
     synchronized (myMonitor) {
       final String rootUrl = getUrlRootForUrl(url);
       if (rootUrl == null) {
@@ -124,12 +124,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         return null;
       }
 
-      return fileByUrl(parentInfo.getIoFile().getAbsolutePath(), rootUrl, url).getAbsolutePath();
+      return new File(parentInfo.getIoFile(), url.substring(rootUrl.length()));
     }
-  }
-
-  public static File fileByUrl(final String parentPath, final String parentUrl, final String childUrl) {
-    return new File(parentPath, childUrl.substring(parentUrl.length()));
   }
 
   @Nullable

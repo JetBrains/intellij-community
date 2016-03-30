@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 /**
  * @author nik
  */
@@ -68,12 +66,9 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   protected void attachNotificationTo(final Content content) {
     if (myConsole instanceof ObservableConsoleView) {
       ObservableConsoleView observable = (ObservableConsoleView)myConsole;
-      observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
-        @Override
-        public void contentAdded(final Collection<ConsoleViewContentType> types) {
-          if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.NORMAL_OUTPUT)) {
-            content.fireAlert();
-          }
+      observable.addChangeListener(types -> {
+        if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.NORMAL_OUTPUT)) {
+          content.fireAlert();
         }
       }, content);
       RunProfile profile = getRunProfile();
@@ -97,18 +92,15 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   public void select() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myRunContentDescriptor != null) {
-          ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
-            .getToolWindowByDescriptor(myRunContentDescriptor);
-          Content content = myRunContentDescriptor.getAttachedContent();
-          if (toolWindow == null || content == null) return;
-          ContentManager manager = toolWindow.getContentManager();
-          if (ArrayUtil.contains(content, manager.getContents()) && !manager.isSelected(content)) {
-            manager.setSelectedContent(content);
-          }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myRunContentDescriptor != null) {
+        ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
+          .getToolWindowByDescriptor(myRunContentDescriptor);
+        Content content = myRunContentDescriptor.getAttachedContent();
+        if (toolWindow == null || content == null) return;
+        ContentManager manager = toolWindow.getContentManager();
+        if (ArrayUtil.contains(content, manager.getContents()) && !manager.isSelected(content)) {
+          manager.setSelectedContent(content);
         }
       }
     });
@@ -117,32 +109,26 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   public void toFront(boolean focus, @Nullable final Runnable onShowCallback) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myRunContentDescriptor != null) {
-          ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
-            .getToolWindowByDescriptor(myRunContentDescriptor);
-          if (toolWindow != null) {
-            if (!toolWindow.isVisible()) {
-              toolWindow.show(onShowCallback);
-            }
-            //noinspection ConstantConditions
-            toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myRunContentDescriptor != null) {
+        ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
+          .getToolWindowByDescriptor(myRunContentDescriptor);
+        if (toolWindow != null) {
+          if (!toolWindow.isVisible()) {
+            toolWindow.show(onShowCallback);
           }
+          //noinspection ConstantConditions
+          toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
         }
       }
     });
 
     if (focus) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
-          ProjectUtil.focusProjectWindow(myProject, focusWnd);
-          if (!focusWnd) {
-            AppIcon.getInstance().requestAttention(myProject, true);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+        ProjectUtil.focusProjectWindow(myProject, focusWnd);
+        if (!focusWnd) {
+          AppIcon.getInstance().requestAttention(myProject, true);
         }
       });
     }

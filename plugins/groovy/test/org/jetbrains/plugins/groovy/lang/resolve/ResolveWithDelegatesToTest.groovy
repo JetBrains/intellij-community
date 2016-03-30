@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -643,9 +643,9 @@ foo([1:'ab', 2:'cde']) {
 public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 0) Closure c) {}
 
 foo([1:'ab', 2:'cde']) {
-  sub<caret>string(1)
+  int<caret>Value(1)
 }
-''', 'String')
+''', 'Integer')
   }
 
   void testDelegateAndDelegatesTo() {

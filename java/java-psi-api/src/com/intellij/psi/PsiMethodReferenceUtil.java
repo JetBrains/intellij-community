@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.*;
@@ -119,13 +120,10 @@ public class PsiMethodReferenceUtil {
           }
 
           methodReturnType = subst.substitute(methodReturnType);
-          if (methodReturnType != null) {
-            methodReturnType = PsiUtil.captureToplevelWildcards(methodReturnType, expression);
-          }
         }
       }
       else if (resolve instanceof PsiClass) {
-        if (resolve == JavaPsiFacade.getElementFactory(expression.getProject()).getArrayClass(PsiUtil.getLanguageLevel(resolve))) {
+        if (PsiEquivalenceUtil.areElementsEquivalent(resolve, JavaPsiFacade.getElementFactory(expression.getProject()).getArrayClass(PsiUtil.getLanguageLevel(expression)))) {
           final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
           if (typeParameters.length == 1) {
             final PsiType arrayComponentType = subst.substitute(typeParameters[0]);
@@ -144,6 +142,8 @@ public class PsiMethodReferenceUtil {
         }
         methodReturnType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass, subst);
       }
+
+      methodReturnType = PsiUtil.captureToplevelWildcards(methodReturnType, expression);
 
       if (TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) {
         return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel.scopes
 
 import com.intellij.psi.SyntheticElement
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.dsl.toplevel.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -32,10 +33,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.meth
 /**
  * @author ilyas
  */
+@CompileStatic
 abstract class Scope {
   abstract List<ContextFilter> createFilters(Map args)
 }
 
+@CompileStatic
 class ClassScope extends Scope {
   private final String namePattern
 
@@ -44,33 +47,28 @@ class ClassScope extends Scope {
   }
 
   List<ContextFilter> createFilters(Map args) {
+    def result = []
     if (namePattern) {
       def match = string().matches(namePattern)
-      return [new PlaceContextFilter(psiElement().inside(
-        or(
-          psiClass().withQualifiedName(match),
-          psiClass().withName(match))))]
+      result << new PlaceContextFilter(psiElement().inside(or(
+        psiClass().withQualifiedName(match),
+        psiClass().withName(match))
+      ))
     }
-    return []
+    return result
   }
-
-
 }
 
+@CompileStatic
 class ClosureScope extends Scope {
-  private final boolean isArg
-
+  final boolean arg
   final String methodName
   final String annotationName
 
   ClosureScope(Map args) {
-    isArg = args?.isArgument
+    arg = args?.isArgument
     methodName = args?.methodName
     annotationName = args?.annotationName
-  }
-
-  def isArg() {
-    isArg
   }
 
   List<ContextFilter> createFilters(Map args) {
@@ -114,19 +112,14 @@ class ClosureScope extends Scope {
 
 }
 
+@CompileStatic
 class ScriptScope extends Scope {
   final String namePattern
   final String extension
 
   ScriptScope(Map args) {
-    if (args) {
-      if (args.name) {
-        namePattern = args.name
-      }
-      else if (args.extension) {
-        extension = args.extension
-      }
-    }
+    namePattern = args?.name
+    extension = args?.extension
   }
 
   List<ContextFilter> createFilters(Map args) {
@@ -152,18 +145,17 @@ class ScriptScope extends Scope {
 
 }
 
+@CompileStatic
 class AnnotatedScope extends Scope {
   final String annoQName
 
-  def AnnotatedScope(Map args) {
-    if (args && args.ctype) {
-      annoQName = args.ctype
-    }
+  AnnotatedScope(Map args) {
+    annoQName = args?.ctype
   }
 
   List<ContextFilter> createFilters(Map args) {
-    annoQName ? [new AnnotatedContextFilter(annoQName)] : []
+    def result = []
+    if (annoQName) result << new AnnotatedContextFilter(annoQName)
+    result
   }
-
-
 }

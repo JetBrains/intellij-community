@@ -46,8 +46,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @NotNull private final TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull private final List<RangeHighlighter> myInnerHighlighters = new ArrayList<RangeHighlighter>();
 
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
@@ -59,8 +57,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private final boolean[] myResolved = new boolean[2];
   private boolean myOnesideAppliedConflict;
 
-  @Nullable private List<MergeWordFragment> myInnerFragments;
-  private boolean myInnerFragmentsDamaged;
+  @Nullable private List<MergeWordFragment> myInnerFragments; // warning: might be out of date
 
   @CalledInAwt
   public TextMergeChange(@NotNull MergeLineFragment fragment, int index, @NotNull TextMergeViewer viewer) {
@@ -73,93 +70,25 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myStartLine = myFragment.getStartLine(ThreeSide.BASE);
     myEndLine = myFragment.getEndLine(ThreeSide.BASE);
 
-    installHighlighter();
+    reinstallHighlighters();
   }
 
   @CalledInAwt
   public void destroy() {
-    destroyHighlighter();
-    destroyInnerHighlighter();
+    destroyHighlighters();
+    destroyOperations();
+    destroyInnerHighlighters();
   }
 
   @CalledInAwt
-  private void installHighlighter() {
-    assert myHighlighters.isEmpty();
+  public void reinstallHighlighters() {
+    destroyHighlighters();
+    installHighlighters();
 
-    createHighlighter(ThreeSide.BASE);
-    if (getType().isLeftChange()) createHighlighter(ThreeSide.LEFT);
-    if (getType().isRightChange()) createHighlighter(ThreeSide.RIGHT);
-
-    doInstallActionHighlighters();
-  }
-
-  @CalledInAwt
-  private void installInnerHighlighter() {
-    assert myInnerHighlighters.isEmpty();
-
-    createInnerHighlighter(ThreeSide.BASE);
-    if (getType().isLeftChange()) createInnerHighlighter(ThreeSide.LEFT);
-    if (getType().isRightChange()) createInnerHighlighter(ThreeSide.RIGHT);
-  }
-
-  @CalledInAwt
-  private void destroyHighlighter() {
-    for (RangeHighlighter highlighter : myHighlighters) {
-      highlighter.dispose();
-    }
-    myHighlighters.clear();
-
-    for (MyGutterOperation operation : myOperations) {
-      operation.dispose();
-    }
-    myOperations.clear();
-  }
-
-  @CalledInAwt
-  private void destroyInnerHighlighter() {
-    for (RangeHighlighter highlighter : myInnerHighlighters) {
-      highlighter.dispose();
-    }
-    myInnerHighlighters.clear();
-  }
-
-  @CalledInAwt
-  public void doReinstallHighlighter() {
-    destroyHighlighter();
-    installHighlighter();
-
-    if (!myInnerFragmentsDamaged) {
-      destroyInnerHighlighter();
-      installInnerHighlighter();
-    }
+    destroyOperations();
+    installOperations();
 
     myViewer.repaintDividers();
-  }
-
-  private void createHighlighter(@NotNull ThreeSide side) {
-    Editor editor = side.select(myViewer.getEditors());
-
-    TextDiffType type = getDiffType();
-    boolean resolved = isResolved(side);
-    int startLine = getStartLine(side);
-    int endLine = getEndLine(side);
-
-    boolean ignored = !resolved && myInnerFragments != null;
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, resolved));
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, resolved));
-  }
-
-  private void createInnerHighlighter(@NotNull ThreeSide side) {
-    if (isResolved(side)) return;
-    if (myInnerFragments == null) return;
-
-    Editor editor = myViewer.getEditor(side);
-    int start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset();
-    for (MergeWordFragment fragment : myInnerFragments) {
-      int innerStart = start + fragment.getStartOffset(side);
-      int innerEnd = start + fragment.getEndOffset(side);
-      myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, getDiffType()));
-    }
   }
 
   //
@@ -174,9 +103,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   void setResolved(@NotNull Side side, boolean value) {
     myResolved[side.getIndex()] = value;
 
-    markInnerFragmentsDamaged();
     if (isResolved()) {
-      destroyInnerHighlighter();
+      destroyInnerHighlighters();
     }
     else {
       // Destroy only resolved side to reduce blinking
@@ -205,6 +133,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myOnesideAppliedConflict = true;
   }
 
+  @Override
   public boolean isResolved(@NotNull ThreeSide side) {
     switch (side) {
       case LEFT:
@@ -246,16 +175,27 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myEndLine = value;
   }
 
-  public void markInnerFragmentsDamaged() {
-    myInnerFragmentsDamaged = true;
+  @NotNull
+  @Override
+  protected Editor getEditor(@NotNull ThreeSide side) {
+    return myViewer.getEditor(side);
+  }
+
+  @Nullable
+  @Override
+  protected List<MergeWordFragment> getInnerFragments() {
+    return myInnerFragments;
   }
 
   @CalledInAwt
   public void setInnerFragments(@Nullable List<MergeWordFragment> innerFragments) {
-    myInnerFragmentsDamaged = false;
     if (myInnerFragments == null && innerFragments == null) return;
     myInnerFragments = innerFragments;
-    doReinstallHighlighter();
+
+    reinstallHighlighters();
+
+    destroyInnerHighlighters();
+    installInnerHighlighters();
   }
 
   //
@@ -288,11 +228,20 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   // Gutter actions
   //
 
-  private void doInstallActionHighlighters() {
+  @CalledInAwt
+  private void installOperations() {
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.IGNORE));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.IGNORE));
+  }
+
+  @CalledInAwt
+  private void destroyOperations() {
+    for (MyGutterOperation operation : myOperations) {
+      operation.dispose();
+    }
+    myOperations.clear();
   }
 
   @Nullable

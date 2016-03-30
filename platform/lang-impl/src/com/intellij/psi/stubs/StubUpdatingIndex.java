@@ -230,7 +230,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   @NotNull
   @Override
-  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final ID<Integer, SerializedStubTree> indexId, @NotNull final FileBasedIndex owner, @NotNull IndexStorage<Integer, SerializedStubTree> storage)
+  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final FileBasedIndexExtension<Integer, SerializedStubTree> extension,
+                                                                                            @NotNull IndexStorage<Integer, SerializedStubTree> storage)
     throws StorageException, IOException {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
@@ -246,7 +247,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         }
       });
     }
-    return new MyIndex(indexId, storage, getIndexer());
+    return new MyIndex(extension, storage);
   }
 
   private static void updateStubIndices(@NotNull final Collection<StubIndexKey> indexKeys,
@@ -277,9 +278,9 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
     private StubIndexImpl myStubIndex;
 
-    public MyIndex(final ID<Integer, SerializedStubTree> indexId, final IndexStorage<Integer, SerializedStubTree> storage, final DataIndexer<Integer, SerializedStubTree, FileContent> indexer)
+    public MyIndex(FileBasedIndexExtension<Integer, SerializedStubTree> extension, IndexStorage<Integer, SerializedStubTree> storage)
       throws StorageException, IOException {
-      super(indexId, indexer, storage);
+      super(extension, storage);
       checkNameStorage();
     }
 
@@ -287,9 +288,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     public void flush() throws StorageException {
       final StubIndexImpl stubIndex = getStubIndex();
       try {
-        for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
-          stubIndex.flush(key);
-        }
+        stubIndex.flush();
       }
       finally {
         super.flush();

@@ -439,9 +439,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
   private class MyMouseMotionListener extends MouseMotionAdapter {
     private int myLastSelectedIndex = -2;
+    private Point myLastMouseLocation;
+
+    private boolean isMouseMoved(Point location) {
+      if (myLastMouseLocation == null) {
+        myLastMouseLocation = location;
+        return false;
+      }
+      return !myLastMouseLocation.equals(location);
+    }
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      if (!isMouseMoved(e.getLocationOnScreen())) return;
+
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 

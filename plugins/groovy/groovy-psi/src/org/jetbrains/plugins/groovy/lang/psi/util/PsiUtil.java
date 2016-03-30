@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
@@ -65,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -82,6 +84,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
@@ -1156,7 +1159,7 @@ public class PsiUtil {
   public static boolean isExpressionUsed(PsiElement expr) {
     while (expr.getParent() instanceof GrParenthesizedExpression) expr = expr.getParent();
 
-    final PsiElement parent = expr.getParent();
+    PsiElement parent = expr.getParent();
     if (parent instanceof GrBinaryExpression ||
         parent instanceof GrUnaryExpression ||
         parent instanceof GrConditionalExpression ||
@@ -1169,9 +1172,30 @@ public class PsiUtil {
         parent instanceof GrAssertStatement ||
         parent instanceof GrThrowStatement ||
         parent instanceof GrSwitchStatement ||
-        parent instanceof GrVariable) {
+        parent instanceof GrVariable ||
+        parent instanceof GrWhileStatement) {
       return true;
     }
+
+    if (parent instanceof GrReferenceExpression) {
+      if (ResolveUtil.isClassReference(parent)) {
+        parent = parent.getParent();
+      }
+      if (parent instanceof GrReferenceExpression) {
+        PsiElement resolved = ((GrReferenceExpression)parent).resolve();
+        if (resolved instanceof PsiMember) {
+          PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
+          return containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName());
+        }
+      }
+      return true;
+    }
+
+    if (parent instanceof GrTraditionalForClause) {
+      GrTraditionalForClause forClause = (GrTraditionalForClause)parent;
+      return expr == forClause.getCondition();
+    }
+
     return isReturnStatement(expr);
   }
 
@@ -1437,5 +1461,22 @@ public class PsiUtil {
     PsiElement next = PsiTreeUtil.prevLeaf(e);
     while (next != null && next.getNode().getElementType() == TokenType.WHITE_SPACE) next = PsiTreeUtil.prevLeaf(next);
     return next;
+  }
+
+  @Nullable
+  public static Object getLabelValue(@Nullable GrArgumentLabel label) {
+    if (label == null) return null;
+    final PsiElement element = label.getNameElement();
+    if (element instanceof GrExpression) {
+      final Object value = JavaPsiFacade.getInstance(label.getProject()).getConstantEvaluationHelper().computeConstantExpression(element);
+      if (value != null) return value;
+    }
+
+    final IElementType elemType = element.getNode().getElementType();
+    if (GroovyTokenTypes.mIDENT == elemType || TokenSets.KEYWORDS.contains(elemType)) {
+      return element.getText();
+    }
+
+    return GrLiteralImpl.getLiteralValue(element);
   }
 }

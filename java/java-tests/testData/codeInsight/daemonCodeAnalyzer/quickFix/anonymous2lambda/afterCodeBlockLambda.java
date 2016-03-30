@@ -1,7 +1,7 @@
 // "Replace with lambda" "true"
 class A {
   {
-    bar(() -> foo());
+    bar((ThrowableComputable<String, Exception>) () -> foo());
   }
 
   private <T> void bar(ThrowableComputable<T, Exception> throwableComputable) {}

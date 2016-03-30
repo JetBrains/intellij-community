@@ -42,9 +42,13 @@ public abstract class PyIntentionTestCase extends PyTestCase {
     }
   }
 
-  protected void doIntentionTest(final String hint) {
+  protected void doIntentionTest(final String hint, String ... files) {
     final String testFileName = getTestName(true);
-    myFixture.configureByFile(testFileName + ".py");
+    if (files.length>0) {
+      myFixture.configureByFiles(files);
+    } else {
+      myFixture.configureByFile(testFileName + ".py");
+    }
     final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);

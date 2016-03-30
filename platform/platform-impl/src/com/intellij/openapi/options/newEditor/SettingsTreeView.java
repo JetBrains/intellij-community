@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,12 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
@@ -27,10 +31,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
-import com.intellij.ui.treeStructure.CachingSimpleNode;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
@@ -89,6 +91,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
     .setRestartTimerOnAdd(true);
 
   private Configurable myQueuedConfigurable;
+  private boolean myPaintInternalInfo;
 
   SettingsTreeView(SettingsFilter filter, ConfigurableGroup... groups) {
     myFilter = filter;
@@ -158,6 +161,8 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
     });
     if (!Registry.is("ide.scroll.new.layout")) {
       myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+    }
+    if (!Registry.is("ide.scroll.background.auto")) {
       myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
       myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
       myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
@@ -187,6 +192,17 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
         select(node == null ? null : node.myConfigurable);
       }
     });
+    if (ApplicationManager.getApplication().isInternal()) {
+      new HeldDownKeyListener() {
+        @Override
+        protected void heldKeyTriggered(JComponent component, boolean pressed) {
+          myPaintInternalInfo = pressed;
+          SettingsTreeView.this.setMinimumSize(null);
+          // an easy way to repaint the tree
+          ((Tree)component).setCellRenderer(new MyRenderer());
+        }
+      }.installOn(myTree);
+    }
 
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
@@ -253,8 +269,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
   @Nullable
   Project findConfigurableProject(@Nullable Configurable configurable) {
     if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-      return wrapper.getExtensionPoint().getProject();
+      return getProjectFromWrapper((ConfigurableWrapper)configurable);
     }
     return findConfigurableProject(findNode(configurable));
   }
@@ -264,8 +279,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
     if (node != null) {
       Configurable configurable = node.myConfigurable;
       if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        return wrapper.getExtensionPoint().getProject();
+        return getProjectFromWrapper((ConfigurableWrapper)configurable);
       }
       SimpleNode parent = node.getParent();
       if (parent instanceof MyNode) {
@@ -273,6 +287,15 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
       }
     }
     return null;
+  }
+  
+  @Nullable
+  private static Project getProjectFromWrapper(@NotNull ConfigurableWrapper wrapper) {
+    Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, wrapper);
+    if (wrapped != null && !wrapped.isProjectLevel()) {
+      return null;
+    }
+    return wrapper.getExtensionPoint().getProject();
   }
 
   private static int getLeftMargin(int level) {
@@ -479,13 +502,14 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
   }
 
   private final class MyRenderer extends JPanel implements TreeCellRenderer {
-    private final JLabel myTextLabel = new ErrorLabel();
+    private final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
     private final JLabel myNodeIcon = new JLabel();
     private final JLabel myProjectIcon = new JLabel();
 
     public MyRenderer() {
       super(new BorderLayout(ICON_GAP, 0));
       myNodeIcon.setName(NODE_ICON);
+      myTextLabel.setOpaque(false);
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
       add(BorderLayout.EAST, myProjectIcon);
@@ -505,7 +529,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
     private class MyAccessibleContext extends JPanel.AccessibleJPanel {
       @Override
       public String getAccessibleName() {
-        return myTextLabel.getText();
+        return myTextLabel.getCharSequence(true).toString();
       }
     }
 
@@ -516,20 +540,15 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
                                                   boolean leaf,
                                                   int row,
                                                   boolean focused) {
-      myTextLabel.setFont(UIUtil.getLabelFont());
+      myTextLabel.clear();
       setPreferredSize(null);
 
       MyNode node = extractNode(value);
-      if (node == null) {
-        myTextLabel.setText(value.toString());
-      }
-      else {
-        myTextLabel.setText(node.myDisplayName);
-        // show groups in bold
-        if (myRoot == node.getParent()) {
-          myTextLabel.setFont(myTree.getFont());
-        }
-      }
+      boolean isGroup = node != null && myRoot == node.getParent();
+      String name = node != null ? node.myDisplayName : String.valueOf(value);
+      myTextLabel.append(name, isGroup ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myTextLabel.setFont(isGroup ? myTree.getFont() : UIUtil.getLabelFont());
+
       // update font color for modified configurables
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : FOREGROUND);
       if (!selected && node != null) {
@@ -590,6 +609,17 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
         }
       }
       myNodeIcon.setIcon(nodeIcon);
+      if (node != null && myPaintInternalInfo) {
+        String id = node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getId() :
+                    node.myConfigurable instanceof SearchableConfigurable ? ((SearchableConfigurable)node.myConfigurable).getId() :
+                    node.myConfigurable.getClass().getSimpleName();
+        PluginDescriptor plugin = node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getExtensionPoint().getPluginDescriptor() : null;
+        String pluginId = plugin == null ? null : plugin.getPluginId().getIdString();
+        String pluginName = pluginId == null || PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId)? null :
+                            plugin instanceof IdeaPluginDescriptor ? ((IdeaPluginDescriptor)plugin).getName() : pluginId;
+        myTextLabel.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
+        myTextLabel.append(pluginName == null ? id : id + " (" + pluginName + ")", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
+      }
       // calculate minimum size
       if (node != null && tree.isVisible()) {
         int width = getLeftMargin(node.myLevel) + getPreferredSize().width;

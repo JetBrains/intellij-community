@@ -584,8 +584,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
   public void testReplaceParameter() {
     String s1 = "class A { void b(int c, int d, int e) {} }";
-    String s2 = "int d";
-    String s3 = "int d2";
+    String s2 = "int d;";
+    String s3 = "int d2;";
     String expectedResult = "class A { void b(int c, int d2, int e) {} }";
 
     actualResult = replacer.testReplace(s1,s2,s3,options);
@@ -1294,7 +1294,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "  private int c = 2;\n" +
                 "}";
 
-    String s2 = "@Modifier(\"PackageLocal\") '_Type '_Instance = '_Init?;";
+    String s2 = "@Modifier(\"packageLocal\") '_Type '_Instance = '_Init?;";
     String s3 = "public $Type$ $Instance$ = $Init$;";
 
     String expectedResult = "class A {\n" +
@@ -1869,8 +1869,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       final String expected2 = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
       assertEquals("don't add broken static imports", expected2, replacer.testReplace(in2, what, by, options, true));
 
-      final String by2 = "new java.util.AbstractMap.SimpleEntry(\"\", \"\")";
-      final String expected3 = "import static java.util.AbstractMap.SimpleEntry;class X {{ new SimpleEntry(\"\", \"\"); }}";
+      final String by2 = "new java.util.Map.Entry() {}";
+      final String expected3 = "import static java.util.Map.Entry;class X {{ new Entry() {}; }}";
       assertEquals("", expected3, replacer.testReplace(in, what, by2, options, true));
 
       final String in3 = "import java.util.Collections;" +
@@ -1889,6 +1889,24 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                                "  }" +
                                "}";
       assertEquals("don't break references with type parameters", expected4, replacer.testReplace(in3, what3, by3, options, true));
+
+      final String in4 = "import java.util.Collections;\n" +
+                         "public class X {\n" +
+                         "    void some() {\n" +
+                         "        System.out.println(1);\n" +
+                         "        boolean b = Collections.eq(null, null);\n" +
+                         "    }\n" +
+                         "}";
+      final String what4 = "System.out.println(1);";
+      final String by4 = "System.out.println(2);";
+      final String expected5 = "import java.util.Collections;import static java.lang.System.out;\n" +
+                               "public class X {\n" +
+                               "    void some() {\n" +
+                               "        out.println(2);\n" +
+                               "        boolean b = Collections.eq(null, null);\n" +
+                               "    }\n" +
+                               "}";
+      assertEquals("don't add static import to inaccessible members", expected5, replacer.testReplace(in4, what4, by4, options, true));
     } finally {
       options.setToUseStaticImport(save);
     }
@@ -2176,12 +2194,12 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "     final int x = 5;\n" +
                 "  }\n" +
                 "}";
-    String s2 = "final '_type 'var = '_init?";
-    String s3 = "$type$ $var$ = $init$";
+    String s2 = "final '_type 'var = '_init?;";
+    String s3 = "$type$ $var$ = $init$;";
 
     String expected = "class Foo {\n" +
                       "  void foo(int i, int i2, int i3) {\n" +
-                      "     int x = 5\n" +
+                      "     int x = 5;\n" +
                       "  }\n" +
                       "}";
 
@@ -2427,5 +2445,27 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  }\n" +
                  "}\n",
                  replacer.testReplace(in, what2, by2, options));
+  }
+
+  public void testReplaceMethodWithoutBody() {
+    final String in = "abstract class A {\n" +
+                      "  abstract void a();\n" +
+                      "}";
+    final String what = "void '_a();";
+    final String by = "void $a$(int i);";
+    assertEquals("abstract class A {\n" +
+                 "  abstract void a(int i);\n" +
+                 "}", replacer.testReplace(in, what, by, options));
+  }
+
+  public void testReplaceParameterWithComment() {
+    final String in = "class A {\n" +
+                      "  void a(int b) {}\n" +
+                      "}";
+    final String what = "int '_a = '_b{0,1};";
+    final String by = "final long /*!*/ $a$ = $b$;";
+    assertEquals("class A {\n" +
+                 "  void a(final long /*!*/ b) {}\n" +
+                 "}", replacer.testReplace(in, what, by, options));
   }
 }

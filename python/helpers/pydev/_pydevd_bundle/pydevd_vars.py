@@ -7,7 +7,7 @@ from types import * #@UnusedWildImport
 
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import *
-from _pydev_imps import _pydev_thread
+from _pydev_imps._pydev_saved_modules import thread
 
 try:
     from StringIO import StringIO
@@ -15,7 +15,7 @@ except ImportError:
     from io import StringIO
 import sys #@Reimport
 
-from _pydev_imps import _pydev_threading as threading
+from _pydev_imps._pydev_saved_modules import threading
 import traceback
 from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, quote, execfile
@@ -68,7 +68,7 @@ def dump_frames(thread_id):
 # AdditionalFramesContainer
 #===============================================================================
 class AdditionalFramesContainer:
-    lock = _pydev_thread.allocate_lock()
+    lock = thread.allocate_lock()
     additional_frames = {} #dict of dicts
 
 

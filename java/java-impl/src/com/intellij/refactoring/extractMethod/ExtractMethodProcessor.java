@@ -1013,7 +1013,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
+    myExtractedMethod = addExtractedMethod(newMethod);
     if (isNeedToChangeCallContext() && myNeedChangeContext) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
@@ -1021,6 +1021,10 @@ public class ExtractMethodProcessor implements MatchProvider {
         methodExpression.setQualifierExpression(RefactoringChangeUtil.createThisExpression(myManager, myTargetClass));
       }
     }
+  }
+
+  protected PsiMethod addExtractedMethod(PsiMethod newMethod) {
+    return (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
   }
 
   @Nullable
@@ -1728,6 +1732,22 @@ public class ExtractMethodProcessor implements MatchProvider {
         myExtractedMethod = suggester.getExtractedMethod();
         myMethodCall      = suggester.getMethodCall();
         myVariableDatum   = suggester.getVariableData();
+
+        final List<PsiVariable> outputVariables = new ArrayList<>();
+        for (PsiReturnStatement statement : PsiUtil.findReturnStatements(myExtractedMethod)) {
+          final PsiExpression returnValue = statement.getReturnValue();
+          if (returnValue instanceof PsiReferenceExpression) {
+            final PsiElement resolve = ((PsiReferenceExpression)returnValue).resolve();
+            if (resolve instanceof PsiLocalVariable) {
+              outputVariables.add((PsiVariable)resolve);
+            }
+          }
+        }
+
+        if (outputVariables.size() == 1) {
+          myOutputVariable = outputVariables.get(0);
+        }
+
         return null;
       }
     }

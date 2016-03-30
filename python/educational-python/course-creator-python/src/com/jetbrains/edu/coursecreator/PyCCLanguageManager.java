@@ -3,7 +3,7 @@ package com.jetbrains.edu.coursecreator;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.learning.core.EduNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ public class PyCCLanguageManager implements CCLanguageManager {
     if (!extension.equals("py")) {
       return null;
     }
-    return getInternalTemplateByName(project, "task.answer.py");
+    return getInternalTemplateByName(project, "task.py");
   }
 
   @Nullable

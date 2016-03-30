@@ -150,6 +150,14 @@ public class BuildFSState {
                 continue files_loop;
               }
             }
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Unprocessed changes detected for target " + target +
+                        "; file: " + file.getPath() +
+                        "; targetBuildStart=" + targetBuildStart +
+                        "; eventRegistrationStamp=" + getEventRegistrationStamp(file) +
+                        "; lastModified=" + FileSystemUtil.lastModified(file)
+              );
+            }
             return true;
           }
         }

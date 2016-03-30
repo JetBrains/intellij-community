@@ -139,5 +139,4 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
       return myTree[node];
     }
   }
-
 }

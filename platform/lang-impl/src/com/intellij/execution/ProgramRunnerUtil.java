@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,20 +99,17 @@ public class ProgramRunnerUtil {
         environment.assignNewExecutionId();
       }
       if (DumbService.isDumb(project) && Registry.is("dumb.aware.run.configurations")) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (project.isDisposed()) {
-              return;
-            }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (project.isDisposed()) {
+            return;
+          }
 
-            final String toolWindowId = environment.getExecutor().getToolWindowId();
-            ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-            if (toolWindowManager.canShowNotification(toolWindowId)) {
-              //noinspection SSBasedInspection
-              toolWindowManager.notifyByBalloon(toolWindowId, MessageType.INFO,
-                                                "Some actions may not work as expected if you start a Run/debug configuration while indexing is in progress.");
-            }
+          final String toolWindowId = environment.getExecutor().getToolWindowId();
+          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+          if (toolWindowManager.canShowNotification(toolWindowId)) {
+            //noinspection SSBasedInspection
+            toolWindowManager.notifyByBalloon(toolWindowId, MessageType.INFO,
+                                              "Some actions may not work as expected if you start a Run/debug configuration while indexing is in progress.");
           }
         });
 

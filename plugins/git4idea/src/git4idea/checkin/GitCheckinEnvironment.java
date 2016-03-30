@@ -16,14 +16,11 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,16 +34,23 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
+import com.intellij.util.textCompletion.TextCompletionProvider;
+import com.intellij.util.textCompletion.TextFieldWithCompletion;
+import com.intellij.util.textCompletion.ValuesCompletionProvider;
+import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -59,7 +63,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NonNls;
@@ -72,6 +75,8 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitCheckinEnvironment implements CheckinEnvironment {
   private static final Logger log = Logger.getInstance(GitCheckinEnvironment.class.getName());
@@ -88,7 +93,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private Boolean myNextCommitIsPushed = null; // The push option of the next commit
   private Date myNextCommitAuthorDate;
 
-  public GitCheckinEnvironment(@NotNull Project project, @NotNull final VcsDirtyScopeManager dirtyScopeManager, final GitVcsSettings settings) {
+  public GitCheckinEnvironment(@NotNull Project project,
+                               @NotNull final VcsDirtyScopeManager dirtyScopeManager,
+                               final GitVcsSettings settings) {
     myProject = project;
     myDirtyScopeManager = dirtyScopeManager;
     mySettings = settings;
@@ -112,15 +119,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
-      VirtualFile mergeMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_MERGE_MSG);
-      VirtualFile squashMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_SQUASH_MSG);
+      GitRepository repository = assertNotNull(manager.getRepositoryForRoot(root));
+      File mergeMsg = repository.getRepositoryFiles().getMergeMessageFile();
+      File squashMsg = repository.getRepositoryFiles().getSquashMessageFile();
       try {
-        if (mergeMsg == null && squashMsg == null) {
+        if (!mergeMsg.exists() && !squashMsg.exists()) {
           continue;
         }
         String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
-        if (mergeMsg != null) {
+        if (mergeMsg.exists()) {
           messages.add(loadMessage(mergeMsg, encoding));
         }
         else {
@@ -136,8 +145,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return DvcsUtil.joinMessagesOrNull(messages);
   }
 
-  private static String loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
-    return FileUtil.loadFile(new File(messageFile.getPath()), encoding);
+  private static String loadMessage(@NotNull File messageFile, @NotNull String encoding) throws IOException {
+    return FileUtil.loadFile(messageFile, encoding);
   }
 
   public String getHelpId() {
@@ -246,14 +255,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Preform a merge commit
    *
-   *
-   * @param project     a project
-   * @param root        a vcs root
-   * @param added       added files
-   * @param removed     removed files
-   * @param messageFile a message file for commit
-   * @param author      an author
-   * @param exceptions  the list of exceptions to report
+   * @param project          a project
+   * @param root             a vcs root
+   * @param added            added files
+   * @param removed          removed files
+   * @param messageFile      a message file for commit
+   * @param author           an author
+   * @param exceptions       the list of exceptions to report
    * @param partialOperation
    * @return true if merge commit was successful
    */
@@ -281,7 +289,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return false;
     }
     String rootPath = root.getPath();
-    for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {
+    for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens(); ) {
       String line = lines.nextToken().trim();
       if (line.length() == 0) {
         continue;
@@ -361,7 +369,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   /**
    * Check if commit has failed due to unfinished merge or cherry-pick.
-   *
    *
    * @param ex an exception to examine
    * @return true if exception means that there is a partial commit during merge
@@ -616,19 +623,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @NotNull
     private EditorTextField createTextField(@NotNull Project project, @NotNull List<String> list) {
-      TextFieldWithAutoCompletionListProvider<String> completionProvider = new TextFieldWithAutoCompletion.StringsCompletionProvider(list, null);
-      return new TextFieldWithAutoCompletion<String>(project, completionProvider, true, null) {
-        @Override
-        protected EditorEx createEditor() {
-          EditorEx editor = super.createEditor();
-          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, true);
-          EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-          if (customization != null) {
-            customization.customize(editor);
-          }
-          return editor;
-        }
-      };
+      TextCompletionProvider completionProvider =
+        new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), list);
+      return new TextFieldWithCompletion(project, completionProvider, "", true, true, true);
     }
 
     @Override
@@ -661,7 +658,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return ContainerUtil.map(userRegistry.getUsers(), new Function<VcsUser, String>() {
         @Override
         public String fun(VcsUser user) {
-          return user.getName() + " <" + user.getEmail() + ">";
+          return VcsUserUtil.toExactString(user);
         }
       });
     }
@@ -698,7 +695,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Object data = list.getData();
       if (data instanceof VcsFullCommitDetails) {
         VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
-        String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
+        String author = VcsUserUtil.toExactString(commit.getAuthor());
         myAuthorField.setText(author);
         myAuthorDate = new Date(commit.getAuthorTime());
       }

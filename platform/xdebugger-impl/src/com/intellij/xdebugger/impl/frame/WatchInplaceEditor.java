@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
@@ -36,13 +37,15 @@ import javax.swing.*;
 public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
   private final XWatchesView myWatchesView;
-  @Nullable private final WatchNode myOldNode;
+  private final WatchNode myOldNode;
   private WatchEditorSessionListener mySessionListener;
 
   public WatchInplaceEditor(@NotNull WatchesRootNode rootNode,
-                            @Nullable XDebugSession session, XWatchesView watchesView, final WatchNode node,
-                            @NonNls final String historyId,
-                            final @Nullable WatchNode oldNode) {
+                            @Nullable XDebugSession session,
+                            XWatchesView watchesView,
+                            WatchNode node,
+                            @NonNls String historyId,
+                            @Nullable WatchNode oldNode) {
     super((XDebuggerTreeNode)node, historyId);
     myRootNode = rootNode;
     myWatchesView = watchesView;
@@ -62,11 +65,11 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   public void cancelEditing() {
     if (!isShown()) return;
     super.cancelEditing();
-    int index = myRootNode.removeChildNode(getNode());
-    if (myOldNode != null && index != -1) {
-      myWatchesView.addWatchExpression(myOldNode.getExpression(), index, false);
+    int index = myRootNode.getIndex(getNode());
+    if (myOldNode == null && index != -1) {
+      myRootNode.removeChildNode(getNode());
     }
-    getTree().setSelectionRow(index);
+    TreeUtil.selectNode(myTree, getNode());
   }
 
   @Override
@@ -78,7 +81,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     if (!XDebuggerUtilImpl.isEmptyExpression(expression) && index != -1) {
       myWatchesView.addWatchExpression(expression, index, false);
     }
-    getTree().setSelectionRow(index);
+    TreeUtil.selectNode(myTree, getNode());
   }
 
   @Override
@@ -89,7 +92,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     }
   }
 
-  private class WatchEditorSessionListener extends XDebugSessionAdapter {
+  private class WatchEditorSessionListener implements XDebugSessionListener {
     private final XDebugSession mySession;
 
     public WatchEditorSessionListener(@NotNull XDebugSession session) {
@@ -106,12 +109,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     }
 
     private void cancel() {
-      AppUIUtil.invokeOnEdt(new Runnable() {
-        @Override
-        public void run() {
-          cancelEditing();
-        }
-      });
+      AppUIUtil.invokeOnEdt(WatchInplaceEditor.this::cancelEditing);
     }
 
     @Override

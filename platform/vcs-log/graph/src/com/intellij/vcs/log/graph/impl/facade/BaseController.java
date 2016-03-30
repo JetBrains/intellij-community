@@ -40,6 +40,6 @@ public class BaseController extends CascadeController {
   @NotNull
   @Override
   public LinearGraph getCompiledGraph() {
-    return myPermanentGraphInfo.getPermanentLinearGraph();
+    return myPermanentGraphInfo.getLinearGraph();
   }
 }

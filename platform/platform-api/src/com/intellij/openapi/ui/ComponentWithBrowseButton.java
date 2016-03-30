@@ -36,6 +36,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +72,13 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     add(wrapWithoutResize(myBrowseButton), BorderLayout.EAST);
 
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
-
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
     if (ApplicationManager.getApplication() != null) {  // avoid crash at design time
       new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
+    }
+    if (ScreenReader.isActive()) {
+      myBrowseButton.setFocusable(true);
+      myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
     }
   }
 

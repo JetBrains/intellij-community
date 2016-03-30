@@ -16,10 +16,10 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
@@ -30,7 +30,10 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -41,24 +44,19 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +179,9 @@ public class CodeCompletionHandlerBase {
       }
     };
     if (autopopup) {
-      CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+      try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
+        CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+      }
       CompletionAssertions.checkEditorValid(editor);
       if (!restarted && shouldSkipAutoPopup(editor, initializationContext[0].getFile())) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
@@ -461,40 +461,22 @@ public class CodeCompletionHandlerBase {
     CompletionAssertions.checkEditorValid(initContext.getEditor());
 
     final PsiFile originalFile = initContext.getFile();
-    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(originalFile.getProject());
-    final PsiFile hostFile = manager.getTopLevelFile(originalFile);
+    final PsiFile hostFile = InjectedLanguageManager.getInstance(originalFile.getProject()).getTopLevelFile(originalFile);
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
     final OffsetMap hostMap = translateOffsetMapToHost(originalFile, hostFile, hostEditor, initContext.getOffsetMap());
 
-    final PsiFile[] hostCopy = {null};
-    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        hostCopy[0] = createFileCopy(hostFile, initContext.getStartOffset(), initContext.getSelectionEndOffset());
-      }
-    });
-
-    final Document copyDocument = hostCopy[0].getViewProvider().getDocument();
+    final PsiFile hostCopy = createFileCopy(hostFile);
+    final Document copyDocument = hostCopy.getViewProvider().getDocument();
     assert copyDocument != null : "no document";
     final OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument);
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            String dummyIdentifier = initContext.getDummyIdentifier();
-            if (StringUtil.isEmpty(dummyIdentifier)) return;
-
-            int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
-            int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
-            copyDocument.replaceString(startOffset, endOffset, dummyIdentifier);
-          }
-        });
-      }
-    });
+    String dummyIdentifier = initContext.getDummyIdentifier();
+    if (!StringUtil.isEmpty(dummyIdentifier)) {
+      int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
+      int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+      copyDocument.replaceString(startOffset, endOffset, dummyIdentifier);
+    }
     CompletionAssertions.checkEditorValid(initContext.getEditor());
 
     final Project project = originalFile.getProject();
@@ -508,21 +490,18 @@ public class CodeCompletionHandlerBase {
 
       final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
 
-      CompletionAutoPopupHandler.runLaterWithCommitted(project, copyDocument, new Runnable() {
-        @Override
-        public void run() {
-          if (phase.checkExpired()) {
-            Disposer.dispose(translator);
-            return;
-          }
-          doComplete(initContext, hasModifiers, invocationCount, hostCopy[0], hostMap, translator);
+      AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+        if (phase.checkExpired()) {
+          Disposer.dispose(translator);
+          return;
         }
+        doComplete(initContext, hasModifiers, invocationCount, hostCopy, hostMap, translator);
       });
     }
     else {
       PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
 
-      doComplete(initContext, hasModifiers, invocationCount, hostCopy[0], hostMap, translator);
+      doComplete(initContext, hasModifiers, invocationCount, hostCopy, hostMap, translator);
     }
   }
 
@@ -652,20 +631,18 @@ public class CodeCompletionHandlerBase {
 
   private static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
     if (laterRunnable != null) {
-      final Runnable runnable1 = new Runnable() {
-        @Override
-        public void run() {
-          if (!indicator.getProject().isDisposed()) {
-            laterRunnable.run();
-          }
-          indicator.disposeIndicator();
+      final Runnable runnable1 = () -> {
+        if (!indicator.getProject().isDisposed()) {
+          laterRunnable.run();
         }
+        indicator.disposeIndicator();
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         runnable1.run();
       }
       else {
-        ApplicationManager.getApplication().invokeLater(runnable1);
+        ApplicationManager.getApplication().invokeLater(
+          () -> TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, runnable1));
       }
     }
     else {
@@ -746,7 +723,7 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private static final Key<SoftReference<Trinity<PsiFile, Document, Long>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
+  private static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   private static boolean isCopyUpToDate(Document document, @NotNull PsiFile file) {
     if (!file.isValid()) {
@@ -758,28 +735,16 @@ public class CodeCompletionHandlerBase {
     return current != null && current.getViewProvider().getPsi(file.getLanguage()) == file;
   }
 
-  private static PsiFile createFileCopy(PsiFile file, long caret, long selEnd) {
+  private static PsiFile createFileCopy(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     boolean mayCacheCopy = file.isPhysical() &&
                            // we don't want to cache code fragment copies even if they appear to be physical
                            virtualFile != null && virtualFile.isInLocalFileSystem();
-    long combinedOffsets = caret + (selEnd << 32);
     if (mayCacheCopy) {
-      final Trinity<PsiFile, Document, Long> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
+      final Pair<PsiFile, Document> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
       if (cached != null && cached.first.getClass().equals(file.getClass()) && isCopyUpToDate(cached.second, cached.first)) {
         final PsiFile copy = cached.first;
-        if (copy.getViewProvider().getModificationStamp() > file.getViewProvider().getModificationStamp() && 
-            cached.third.longValue() != combinedOffsets) {
-          // the copy PSI might have some caches that are not cleared on its modification because there are no events in the copy
-          //   so, clear all the caches
-          // hopefully it's a rare situation that the user invokes completion in different parts of the file 
-          //   without modifying anything physical in between
-          ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
-        }
         final Document document = cached.second;
-        assert document != null;
-        file.putUserData(FILE_COPY_KEY, new SoftReference<Trinity<PsiFile,Document, Long>>(Trinity.create(copy, document, combinedOffsets)));
-
         Document originalDocument = file.getViewProvider().getDocument();
         assert originalDocument != null;
         assert originalDocument.getTextLength() == file.getTextLength() : originalDocument;
@@ -792,7 +757,7 @@ public class CodeCompletionHandlerBase {
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();
       assert document != null;
-      file.putUserData(FILE_COPY_KEY, new SoftReference<Trinity<PsiFile,Document, Long>>(Trinity.create(copy, document, combinedOffsets)));
+      file.putUserData(FILE_COPY_KEY, new SoftReference<>(Pair.create(copy, document)));
     }
     return copy;
   }

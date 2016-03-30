@@ -48,3 +48,24 @@ class CC extends A {
     new X();
   }
 }
+class SuperCall {
+  void some() {
+  }
+}
+class S2 extends SuperCall {
+  @Override
+  void <warning descr="Method 'some()' is identical to its super method">some</warning>() {
+    super.some();
+  }
+}
+class B {
+  int some() {
+    return 1;
+  }
+}
+class C extends B {
+  @Override
+  int <warning descr="Method 'some()' is identical to its super method">some</warning>() {
+    return super.some();
+  }
+}

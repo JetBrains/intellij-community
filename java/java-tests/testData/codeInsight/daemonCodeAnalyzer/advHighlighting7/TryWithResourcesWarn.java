@@ -23,4 +23,9 @@ class C {
       System.out.println(r);
     }
   }
+
+  void m3() throws Exception {
+    try (MyResource ignore = new MyResource(); MyResource ignored = new MyResource()) { }
+    try (MyResource ignore1 = new MyResource(); MyResource ignored2 = new MyResource()) { }
+  }
 }

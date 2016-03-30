@@ -189,11 +189,13 @@ public class JavaTestGenerator implements TestGenerator {
                                     boolean generateBefore,
                                     boolean generateAfter) throws IncorrectOperationException {
     final Set<String> existingNames = new HashSet<String>();
+    PsiMethod anchor = null;
     if (generateBefore && descriptor.findSetUpMethod(targetClass) == null) {
-      generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, sourceClass, editor, null, existingNames);
+      anchor = generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, sourceClass, editor, null, existingNames, null);
     }
+
     if (generateAfter && descriptor.findTearDownMethod(targetClass) == null) {
-      generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, sourceClass, editor, null, existingNames);
+      anchor = generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, sourceClass, editor, null, existingNames, anchor);
     }
 
     final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor,
@@ -207,7 +209,7 @@ public class JavaTestGenerator implements TestGenerator {
     }));
 
     for (MemberInfo m : methods) {
-      generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, sourceClass, editor, m.getMember().getName(), existingNames);
+      anchor = generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, sourceClass, editor, m.getMember().getName(), existingNames, anchor);
     }
   }
 
@@ -221,16 +223,17 @@ public class JavaTestGenerator implements TestGenerator {
     });
   }
 
-  private static void generateMethod(TestIntegrationUtils.MethodKind methodKind,
-                                     TestFramework descriptor,
-                                     PsiClass targetClass,
-                                     @Nullable PsiClass sourceClass,
-                                     Editor editor,
-                                     @Nullable String name, 
-                                     Set<String> existingNames) {
-    PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass));
+  private static PsiMethod generateMethod(TestIntegrationUtils.MethodKind methodKind,
+                                          TestFramework descriptor,
+                                          PsiClass targetClass,
+                                          @Nullable PsiClass sourceClass,
+                                          Editor editor,
+                                          @Nullable String name,
+                                          Set<String> existingNames, PsiMethod anchor) {
+    PsiMethod method = (PsiMethod)targetClass.addAfter(TestIntegrationUtils.createDummyMethod(targetClass), anchor);
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, sourceClass, method, name, true, existingNames);
+    return method;
   }
 
   @Override

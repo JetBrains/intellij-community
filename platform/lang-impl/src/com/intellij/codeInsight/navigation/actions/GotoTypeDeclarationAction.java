@@ -69,7 +69,8 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {
       int offset = editor.getCaretModel().getOffset();
-      PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
+      PsiElement[] symbolTypes = GotoDeclarationAction.underModalProgress(project, "Resolving Reference...",
+                                                                          () -> findSymbolTypes(editor, offset));
       if (symbolTypes == null || symbolTypes.length == 0) return;
       if (symbolTypes.length == 1) {
         navigate(project, symbolTypes[0]);
@@ -109,7 +110,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   @Nullable
-  public static PsiElement[] findSymbolTypes(@NotNull Editor editor, int offset) {
+  private static PsiElement[] findSymbolTypes(@NotNull Editor editor, int offset) {
     PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor,
                                                                                      TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
                                                                                      TargetElementUtil.ELEMENT_NAME_ACCEPTED |

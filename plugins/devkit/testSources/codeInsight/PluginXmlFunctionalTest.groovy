@@ -285,6 +285,9 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testIconAttribute() {
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }");
+    myFixture.addClass("package foo; public class FooAction extends com.intellij.openapi.actionSystem.AnAction { }");
+
     myFixture.addClass("package icons; " +
                        "public class MyIcons {" +
                        "  public static final javax.swing.Icon MyCustomIcon = null; " +

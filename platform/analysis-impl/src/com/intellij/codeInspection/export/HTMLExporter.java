@@ -59,7 +59,11 @@ public class HTMLExporter {
 
   public void createPage(RefEntity element) throws IOException {
     final String currentFileName = fileNameForElement(element);
-    StringBuffer buf = new StringBuffer("<html><body>");
+    StringBuffer buf = new StringBuffer("<html>" +
+                                        "<head>\n" +
+                                        "<link rel=\"stylesheet\" type=\"text/css\" href=\"../inspection-report-style.css\">\n" +
+                                        "</head>" +
+                                        "<body>");
     appendNavBar(buf, element);
     myComposer.composeWithExporter(buf, element, this);
     buf.append("</body></html>");

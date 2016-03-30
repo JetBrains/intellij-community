@@ -63,6 +63,10 @@ public class ConstraintsInferenceMiscTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testExceptionConstraintsWithProperAndNonProperThrows() throws Exception {
+    doTest(false);
+  }
+
   private void doTest(final boolean checkWarnings) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }

@@ -24,6 +24,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,6 +35,7 @@ import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
@@ -46,7 +48,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -114,6 +115,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   private final DiffRequestPanel myDiffPanel;
   private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
   private final JEditorPane myComments;
+  private final CurrentRevision myCurrentRevision;
 
   private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
@@ -161,7 +163,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
 
-    myRevisions.add(new CurrentRevision(file, LOCAL_REVISION_NUMBER));
+    myCurrentRevision = new CurrentRevision(file, LOCAL_REVISION_NUMBER);
+    myRevisions.add(myCurrentRevision);
     myRevisions.addAll(session.getRevisionList());
 
     myBlocks.addAll(Collections.<Block>nCopies(myRevisions.size(), null));
@@ -211,12 +214,11 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     popupActions.add(new MyDiffLocalAction());
     popupActions.add(ShowAllAffectedGenericAction.getInstance());
     popupActions.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
-    myList.addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UPDATE_POPUP, popupActions);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    });
+    PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+
+    for (AnAction action : popupActions.getChildren(null)) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), mySplitter);
+    }
 
     setTitle(title);
     setComponent(mySplitter);
@@ -243,7 +245,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     return myCachedContents.getContentOf(revision);
   }
 
-  private void loadContentsFor(final VcsFileRevision[] revisions) throws VcsException {
+  private void loadContentsFor(final VcsFileRevision... revisions) throws VcsException {
     myCachedContents.loadContentsFor(revisions);
   }
 
@@ -268,7 +270,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
         newItems = myRevisions;
       }
 
-      List<VcsFileRevision> oldSelection = getSelectedRevisions();
+      IntPair range = getSelectedRevisionsRange();
+      List<VcsFileRevision> oldSelection = myRevisions.subList(range.val1, range.val2);
 
       myListModel.setItems(newItems);
 
@@ -286,17 +289,12 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   @NotNull
-  private List<VcsFileRevision> getSelectedRevisions() {
-    int minIndex = myList.getSelectionModel().getMinSelectionIndex();
-    int maxIndex = myList.getSelectionModel().getMaxSelectionIndex();
-    VcsFileRevision minRevision = minIndex != -1 ? myList.getRow(minIndex) : null;
-    VcsFileRevision maxRevision = maxIndex != -1 ? myList.getRow(maxIndex) : null;
-    int startIndex = myRevisions.indexOf(minRevision);
-    int endIndex = myRevisions.indexOf(maxRevision);
-
-    return startIndex != -1 && endIndex != -1 ?
-           myRevisions.subList(startIndex, endIndex + 1) :
-           Collections.<VcsFileRevision>emptyList();
+  private IntPair getSelectedRevisionsRange() {
+    List<VcsFileRevision> selection = myList.getSelectedObjects();
+    if (selection.isEmpty()) return new IntPair(0, 0);
+    int startIndex = myRevisions.indexOf(ContainerUtil.getFirstItem(selection));
+    int endIndex = myRevisions.indexOf(ContainerUtil.getLastItem(selection));
+    return new IntPair(startIndex, endIndex + 1);
   }
 
   private int getNearestVisibleRevision(@Nullable VcsFileRevision anchor) {
@@ -333,20 +331,16 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
   private void updateDiff() {
     if (myIsDisposed || myIsDuringUpdate) return;
-    List<VcsFileRevision> selected = myList.getSelectedObjects();
-    if (selected.isEmpty()) {
-      myDiffPanel.setRequest(NoDiffRequest.INSTANCE);
-    }
-    else if (selected.size() == 1) {
-      VcsFileRevision revision = selected.get(0);
-      int index = myRevisions.indexOf(revision);
-      myDiffPanel.setRequest(createDiffRequest(index + 1, index));
+
+    DiffRequest request;
+    if (myList.getSelectedRowCount() == 0) {
+      request = NoDiffRequest.INSTANCE;
     }
     else {
-      VcsFileRevision revision1 = selected.get(0);
-      VcsFileRevision revision2 = selected.get(selected.size() - 1);
-      myDiffPanel.setRequest(createDiffRequest(myRevisions.indexOf(revision2) + 1, myRevisions.indexOf(revision1)));
+      IntPair range = getSelectedRevisionsRange();
+      request = createDiffRequest(range.val2, range.val1); // leastRecent -> mostRecent
     }
+    myDiffPanel.setRequest(request);
   }
 
   @NotNull
@@ -422,15 +416,9 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       VcsFileRevision selectedObject = myList.getSelectedObject();
       return selectedObject instanceof CurrentRevision ? null : selectedObject;
     }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
-      List<VcsFileRevision> objects = myList.getSelectedObjects();
-      List<VcsRevisionNumber> revisionNumbers = ContainerUtil.mapNotNull(objects, new Function<VcsFileRevision, VcsRevisionNumber>() {
-        @Override
-        public VcsRevisionNumber fun(VcsFileRevision revision) {
-          return revision instanceof CurrentRevision ? null : revision.getRevisionNumber();
-        }
-      });
-      return ArrayUtil.toObjectArray(revisionNumbers, VcsRevisionNumber.class);
+    else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
+      List<VcsFileRevision> revisions = ContainerUtil.filter(myList.getSelectedObjects(), Conditions.notEqualTo(myCurrentRevision));
+      return ArrayUtil.toObjectArray(revisions, VcsFileRevision.class);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
@@ -442,6 +430,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private void ensureBlocksCreated(int requiredIndex) throws VcsException {
+    loadContentsFor(myRevisions.get(requiredIndex));
+
     for (int i = 0; i <= requiredIndex; i++) {
       if (myBlocks.get(i) == null) {
         myBlocks.set(i, createBlock(i));
@@ -476,33 +466,27 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   private class MyDiffAction extends DumbAwareAction {
     public MyDiffAction() {
       super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"), AllIcons.Actions.Diff);
+      setShortcutSet(CommonShortcuts.getDiff());
     }
 
     public void update(final AnActionEvent e) {
       e.getPresentation().setEnabled(myList.getSelectedRowCount() > 1 ||
-                                     myList.getSelectedRowCount() == 1 && myList.getSelectedRow() != 0);
+                                     myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myCurrentRevision);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      int minIndex = myList.getSelectionModel().getMinSelectionIndex();
-      int maxIndex = myList.getSelectionModel().getMaxSelectionIndex();
-      if (minIndex == -1 || maxIndex == -1) return;
+      IntPair range = getSelectedRevisionsRange();
 
-      VcsFileRevision minRevision = myList.getRow(minIndex);
-      VcsFileRevision maxRevision = myList.getRow(maxIndex);
-      int startIndex = myRevisions.indexOf(minRevision);
-      int endIndex = myRevisions.indexOf(maxRevision);
-      if (startIndex == -1 || endIndex == -1) return;
+      VcsFileRevision beforeRevision = range.val2 < myRevisions.size() ? myRevisions.get(range.val2) : VcsFileRevision.NULL;
+      VcsFileRevision afterRevision = myRevisions.get(range.val1);
 
-      VcsFileRevision revision = myRevisions.get(startIndex);
-      VcsFileRevision prevRevision = endIndex + 1 < myRevisions.size() ? myRevisions.get(endIndex + 1) : VcsFileRevision.NULL;
       FilePath filePath = VcsUtil.getFilePath(myFile);
 
-      if (startIndex != endIndex) {
-        getDiffHandler().showDiffForTwo(myProject, filePath, prevRevision, revision);
+      if (range.val2 - range.val1 > 1) {
+        getDiffHandler().showDiffForTwo(myProject, filePath, beforeRevision, afterRevision);
       }
       else {
-        getDiffHandler().showDiffForOne(e, myProject, filePath, prevRevision, revision);
+        getDiffHandler().showDiffForOne(e, myProject, filePath, beforeRevision, afterRevision);
       }
     }
   }
@@ -512,20 +496,20 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       super(VcsBundle.message("show.diff.with.local.action.text"),
             VcsBundle.message("show.diff.with.local.action.description"),
             AllIcons.Actions.DiffWithCurrent);
+      setShortcutSet(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal").getShortcutSet());
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(myList.getSelectedRowCount() == 1 && myList.getSelectedRow() != 0);
+      e.getPresentation().setEnabled(myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myCurrentRevision);
     }
 
     public void actionPerformed(AnActionEvent e) {
       VcsFileRevision revision = myList.getSelectedObject();
       if (revision == null) return;
 
-      VcsFileRevision localRevision = myRevisions.get(0);
       FilePath filePath = VcsUtil.getFilePath(myFile);
 
-      getDiffHandler().showDiffForTwo(myProject, filePath, revision, localRevision);
+      getDiffHandler().showDiffForTwo(myProject, filePath, revision, myCurrentRevision);
     }
   }
 

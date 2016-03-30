@@ -139,7 +139,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract Component getFocusOwner();
 
   /**
-   * Runs runnable for whicj <code>DataContext</code> will no be computed from the current focus owner,
+   * Runs runnable for which <code>DataContext</code> will no be computed from the current focus owner,
    * but used the given one
    */
   public abstract void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable);

@@ -121,6 +121,7 @@
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuilderStrategySupport"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.ExternalBuilderStrategySupport"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.InitializerBuilderStrategySupport"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.bindable.BindableTransformContributor"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
@@ -533,8 +534,6 @@
 
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
-    <attachSourcesProvider implementation="org.jetbrains.plugins.groovy.ivy.IvyAttachSourceProvider"/>
-
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
                          displayName="Groovy Compiler" parentId="project.propCompiler"/>
     <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
@@ -800,6 +799,10 @@
                      displayName="Java-style property access"
                      groupName="Style" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
+                     displayName="Change to operator"
+                     groupName="Style" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessToStaticFieldLockedOnInstance"
                      displayName="Access to static field locked on instance data"
                      groupName="Threading issues" enabledByDefault="true" level="WARNING"

@@ -21,13 +21,25 @@ FunctionEnd
 
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "${PRODUCT_EXE_FILE}"
-  ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
-  ${If} $R0 == ${PRODUCT_EXE_FILE}
-    call searchJava64
-    ${If} $3 != ""
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" "${PRODUCT_EXE_FILE_64}"
+  ${StrRep} $0 ${PRODUCT_EXE_FILE} "64.exe" ".exe"
+  ${If} $0 == ${PRODUCT_EXE_FILE}
+    StrCpy $R0 "32-bit launcher"
+    StrCpy $R1 "64-bit launcher"
+  ${Else}
+    ;there is only one launcher and it is 64-bit.
+    StrCpy $R0 "64-bit launcher"
+    StrCpy $R1 ""
+  ${EndIf}
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" $R0
+
+  ${If} $R1 != ""
+    ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
+    ${If} $R0 == ${PRODUCT_EXE_FILE}
+      call searchJava64
+      ${If} $3 != ""
+        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
+        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
+      ${EndIf}
     ${EndIf}
   ${EndIf}
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association

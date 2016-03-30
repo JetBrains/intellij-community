@@ -40,8 +40,7 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
           status,
           statusText,
           runtime,
-          deploymentTask,
-          instance.getDeploymentGroup(deploymentTask.getSource(), deploymentTask.getConfiguration()));
+          deploymentTask);
     myServerInstance = instance;
   }
 

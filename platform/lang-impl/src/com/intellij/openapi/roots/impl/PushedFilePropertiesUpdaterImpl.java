@@ -22,6 +22,8 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
@@ -49,7 +51,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -408,20 +409,12 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
   private static void reloadPsi(final VirtualFile file, final Project project) {
     final FileManagerImpl fileManager = (FileManagerImpl)((PsiManagerEx)PsiManager.getInstance(project)).getFileManager();
     if (fileManager.findCachedViewProvider(file) != null) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          if (project.isDisposed()) {
-            return;
-          }
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              fileManager.forceReload(file);
-            }
-          });
-        }
-      });
+      Runnable runnable = () -> WriteAction.run(() -> fileManager.forceReload(file));
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        runnable.run();
+      } else {
+        TransactionGuard.submitTransaction(project, runnable);
+      }
     }
   }
 }

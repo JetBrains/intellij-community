@@ -36,7 +36,7 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor>{
   }
 
   protected WatchItemDescriptor createDescriptorImpl(@NotNull final Project project) {
-    return new WatchItemDescriptor(project, myText, myValue);
+    return myValue == null ? new WatchItemDescriptor(project, myText) : new WatchItemDescriptor(project, myText, myValue);
   }
 
   public boolean equals(final Object object) {

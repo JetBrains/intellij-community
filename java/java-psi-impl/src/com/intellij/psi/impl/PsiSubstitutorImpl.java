@@ -16,6 +16,9 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
@@ -136,11 +139,17 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0;
   }
 
+  private static RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
       // First bound
-      return substitute(extendsTypes[0]);
+      return ourGuard.doPreventingRecursion(extendsTypes[0], true, new Computable<PsiType>() {
+        @Override
+        public PsiType compute() {
+          return substitute(extendsTypes[0]);
+        }
+      });
     }
     // Object
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());

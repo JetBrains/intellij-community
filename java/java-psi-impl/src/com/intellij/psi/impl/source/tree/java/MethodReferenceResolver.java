@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -72,7 +73,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
             }
           }
           ClassCandidateInfo candidateInfo = null;
-          final boolean isArray = containingClass == JavaPsiFacade.getElementFactory(reference.getProject()).getArrayClass(PsiUtil.getLanguageLevel(containingClass));
+          final boolean isArray = PsiEquivalenceUtil.areElementsEquivalent(containingClass, JavaPsiFacade.getElementFactory(reference.getProject()).getArrayClass(PsiUtil.getLanguageLevel(reference)));
           if (signature == null ||
               !isArray && (containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass, reference)) && signature.getParameterTypes().length == 0 ||
               isArray && arrayCreationSignature(signature)) {

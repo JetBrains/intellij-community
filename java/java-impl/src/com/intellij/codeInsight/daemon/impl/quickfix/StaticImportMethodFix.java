@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -105,12 +106,10 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
     @Override
     protected boolean isApplicable(PsiMethod method, PsiElement place) {
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
       final PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
-      PsiSubstitutor substitutorForMethod = resolveHelper
-        .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
-                            argumentList.getExpressions(),
-                            PsiSubstitutor.EMPTY, place.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
+      final MethodCandidateInfo candidateInfo =
+        new MethodCandidateInfo(method, PsiSubstitutor.EMPTY, false, false, argumentList, null, argumentList.getExpressionTypes(), null);
+      PsiSubstitutor substitutorForMethod = candidateInfo.getSubstitutor();
       if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
         final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
         final PsiType expectedType = getExpectedType();

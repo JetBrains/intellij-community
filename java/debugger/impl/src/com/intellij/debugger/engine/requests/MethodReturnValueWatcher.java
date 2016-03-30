@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.MethodExitEvent;
@@ -67,9 +64,7 @@ public class MethodReturnValueWatcher  {
     }
     try {
       if (Registry.is("debugger.watch.return.speedup") && Comparing.equal(myEntryMethod, event.method())) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Now watching all");
-        }
+        LOG.debug("Now watching all");
         enableEntryWatching(true);
         createExitRequest().enable();
       }
@@ -117,6 +112,9 @@ public class MethodReturnValueWatcher  {
 
         enableEntryWatching(false);
       }
+    }
+    catch (VMDisconnectedException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);

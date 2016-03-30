@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
@@ -494,13 +495,21 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @Override
     @Nullable
     public AnAction getClickAction() {
-      return new RemoveBreakpointGutterIconAction(XBreakpointBase.this);
+      if (Registry.is("debugger.click.disable.breakpoints")) {
+        return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
+      } else {
+        return new RemoveBreakpointGutterIconAction(XBreakpointBase.this);
+      }
     }
 
     @Override
     @Nullable
     public AnAction getMiddleButtonClickAction() {
-      return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
+      if (!Registry.is("debugger.click.disable.breakpoints")) {
+        return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
+      } else {
+        return new RemoveBreakpointGutterIconAction(XBreakpointBase.this);
+      }
     }
 
     @Nullable

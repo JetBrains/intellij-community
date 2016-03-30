@@ -63,6 +63,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.ExceptionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -557,11 +558,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     @Override
-    public void threadAction() {
+    public void threadAction(@NotNull SuspendContextImpl suspendContext) {
       final DebuggerTreeNodeImpl node = getNode();
       ValueDescriptorImpl descriptor = (ValueDescriptorImpl)node.getDescriptor();
       try {
-        final NodeRenderer renderer = descriptor.getRenderer(getSuspendContext().getDebugProcess());
+        final NodeRenderer renderer = descriptor.getRenderer(suspendContext.getDebugProcess());
         renderer.buildChildren(descriptor.getValue(), this, getDebuggerContext().createEvaluationContext());
       }
       catch (ObjectCollectedException e) {

@@ -336,7 +336,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         final StackFrame stackFrame = getStackFrame();
-        return stackFrame != null? stackFrame.getArgumentValues() : Collections.<Value>emptyList();
+        return stackFrame != null? stackFrame.getArgumentValues() : Collections.emptyList();
       }
       catch (InternalException e) {
         // From Oracle's forums:

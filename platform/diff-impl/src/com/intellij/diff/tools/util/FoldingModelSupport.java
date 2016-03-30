@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -73,11 +74,13 @@ public class FoldingModelSupport {
     myCount = myEditors.length;
     myShouldUpdateLineNumbers = new boolean[myCount];
 
-    if (myCount > 1) {
-      for (int i = 0; i < myCount; i++) {
+    MyDocumentListener documentListener = new MyDocumentListener();
+    for (int i = 0; i < myCount; i++) {
+      if (myCount > 1) {
         myEditors[i].getFoldingModel().addListener(new MyFoldingListener(i), disposable);
         myEditors[i].getGutterComponentEx().setLineNumberConvertor(getLineConvertor(i));
       }
+      myEditors[i].getDocument().addDocumentListener(documentListener, disposable);
     }
   }
 
@@ -202,7 +205,7 @@ public class FoldingModelSupport {
   }
 
   @Nullable
-  private static FoldRegion addFolding(@NotNull EditorEx editor, int start, int end, boolean expanded) {
+  public static FoldRegion addFolding(@NotNull EditorEx editor, int start, int end, boolean expanded) {
     DocumentEx document = editor.getDocument();
     final int startOffset = document.getLineStartOffset(start);
     final int endOffset = document.getLineEndOffset(end - 1);
@@ -274,12 +277,15 @@ public class FoldingModelSupport {
   // Line numbers
   //
 
-  public void onDocumentChanged(@NotNull DocumentEvent e) {
-    if (StringUtil.indexOf(e.getOldFragment(), '\n') != -1 ||
-        StringUtil.indexOf(e.getNewFragment(), '\n') != -1) {
-      for (int i = 0; i < myCount; i++) {
-        if (myEditors[i].getDocument() == e.getDocument()) {
-          myShouldUpdateLineNumbers[i] = true;
+  private class MyDocumentListener extends DocumentAdapter {
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      if (StringUtil.indexOf(e.getOldFragment(), '\n') != -1 ||
+          StringUtil.indexOf(e.getNewFragment(), '\n') != -1) {
+        for (int i = 0; i < myCount; i++) {
+          if (myEditors[i].getDocument() == e.getDocument()) {
+            myShouldUpdateLineNumbers[i] = true;
+          }
         }
       }
     }
@@ -419,10 +425,6 @@ public class FoldingModelSupport {
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {
       DiffDividerDrawUtil.paintSeparators(gg, divider.getWidth(), myEditors[myLeft], myEditors[myRight], this);
-    }
-
-    public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
-      DiffDividerDrawUtil.paintSeparatorsOnScrollbar(gg, width, myEditors[myLeft], myEditors[myRight], this);
     }
   }
 

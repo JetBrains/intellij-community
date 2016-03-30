@@ -236,19 +236,6 @@ public class VfsUtil extends VfsUtilCore {
     return virtualFile;
   }
 
-  /**
-   * Converts VsfUrl info java.net.URL.
-   *
-   * @param vfsUrl VFS url (as constructed by VfsFile.getUrl())
-   * @return converted URL or null if error has occured
-   * @deprecated Use {@link VfsUtilCore#convertToURL(String)} instead. To be removed in IDEA 16.
-   */
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @Nullable
-  public static URL convertToURL(@NotNull String vfsUrl) {
-    return VfsUtilCore.convertToURL(vfsUrl);
-  }
-
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
     VirtualFile curDir = toDir;

@@ -12,10 +12,7 @@ class Test {
     SuperFoo<String> ls = foo(<error descr="no instance(s) of type variable(s)  exist so that String conforms to Number
 inference variable R has incompatible bounds:
  equality constraints: String
-upper bounds: Object, Number
-inference variable X has incompatible bounds:
- equality constraints: R
-upper bounds: Number">() -> new Foo<>()</error>);
+upper bounds: Object, Number">() -> new Foo<>()</error>);
     SuperFoo<Integer> li = foo(() -> new Foo<>());
     SuperFoo<?> lw = foo(() -> new Foo<>());
 }

@@ -170,6 +170,12 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
 
     @Override
+    protected void addProfile(InspectionProfileImpl model, InspectionProfileImpl profile) {
+      super.addProfile(model, profile);
+      ((DefaultComboBoxModel)myProfilesCombo.getModel()).addElement(model);
+    }
+
+    @Override
     protected void applyRootProfile(@NotNull String name, boolean isProjectLevel) {
       for (int i = 0; i < myProfilesCombo.getItemCount(); i++) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfilesCombo.getItemAt(i);

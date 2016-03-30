@@ -23,24 +23,24 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Vector;
 
-public class ComboBoxWithWidePopup extends JComboBox {
+public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
 
   private boolean myLayingOut = false;
   private int myMinLength = 20;
 
-  public ComboBoxWithWidePopup(final ComboBoxModel aModel) {
+  public ComboBoxWithWidePopup(final ComboBoxModel<E> aModel) {
     super(aModel);
 
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
-  public ComboBoxWithWidePopup(final Object[] items) {
+  public ComboBoxWithWidePopup(final E[] items) {
     super(items);
 
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
-  public ComboBoxWithWidePopup(final Vector<?> items) {
+  public ComboBoxWithWidePopup(@SuppressWarnings("UseOfObsoleteCollectionType") final Vector<E> items) {
     super(items);
 
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
@@ -92,18 +92,18 @@ public class ComboBoxWithWidePopup extends JComboBox {
     return getPreferredSize();
   }
 
-  private class AdjustingListCellRenderer implements ListCellRenderer {
-    private final ListCellRenderer myOldRenderer;
+  private class AdjustingListCellRenderer implements ListCellRenderer<E> {
+    private final ListCellRenderer<? super E> myOldRenderer;
     private final ComboBoxWithWidePopup myComboBox;
 
-    public AdjustingListCellRenderer(ComboBoxWithWidePopup comboBox, ListCellRenderer oldRenderer) {
+    public AdjustingListCellRenderer(ComboBoxWithWidePopup<E> comboBox, ListCellRenderer<? super E> oldRenderer) {
       myComboBox = comboBox;
       myOldRenderer = oldRenderer;
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Object _value = value;
+    public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
+      E _value = value;
       if (index == -1 && _value instanceof String && !myComboBox.isValid()) {
         int minLength = getMinLength();
 
@@ -112,7 +112,8 @@ public class ComboBoxWithWidePopup extends JComboBox {
 
         if (size.width == 0) {
           if (stringValue.length() > minLength) {
-            _value = stringValue.substring(0, minLength);
+            //noinspection unchecked
+            _value = (E)stringValue.substring(0, minLength);
           }
         }
       }

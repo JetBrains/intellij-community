@@ -623,14 +623,6 @@ public abstract class AbstractLayoutCodeProcessor {
       TextRange range = TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
       ranges.add(range);
     }
-    else if (selectionModel.hasBlockSelection()) {
-      int[] starts = selectionModel.getBlockSelectionStarts();
-      int[] ends = selectionModel.getBlockSelectionEnds();
-      for (int i = 0; i < starts.length; i++) {
-        ranges.add(TextRange.create(starts[i], ends[i]));
-      }
-    }
-
     return ranges;
   }
 

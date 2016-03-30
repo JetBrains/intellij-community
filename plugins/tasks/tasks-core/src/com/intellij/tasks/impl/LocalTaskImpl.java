@@ -57,6 +57,7 @@ public class LocalTaskImpl extends LocalTask {
 
   private String myProject = null;
   private String myNumber = "";
+  private String myPresentableId = "";
 
   private boolean myIssue = false;
   private TaskRepository myRepository = null;
@@ -161,6 +162,7 @@ public class LocalTaskImpl extends LocalTask {
 
     myProject = issue.getProject();
     myNumber = issue.getNumber();
+    myPresentableId = issue.getPresentableId();
   }
 
   public void setId(String id) {
@@ -393,5 +395,16 @@ public class LocalTaskImpl extends LocalTask {
 
   public void setProject(@Nullable String project) {
     myProject = project;
+  }
+
+  public void setPresentableId(@NotNull String presentableId) {
+    myPresentableId = presentableId;
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableId() {
+    // Use global ID for compatibility
+    return StringUtil.isEmpty(myPresentableId) ? getId() : myPresentableId;
   }
 }

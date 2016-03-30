@@ -70,13 +70,13 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   public TwosideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
 
-    new MyFocusOppositePaneAction(true).setupAction(myPanel);
-    new MyFocusOppositePaneAction(false).setupAction(myPanel);
+    new MyFocusOppositePaneAction(true).install(myPanel);
+    new MyFocusOppositePaneAction(false).install(myPanel);
 
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
-    new MyOpenInEditorWithMouseAction().register(getEditors());
+    new MyOpenInEditorWithMouseAction().install(getEditors());
 
     myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
 
@@ -338,9 +338,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
     protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
-      Side side = null;
-      if (editor == getEditor(Side.LEFT)) side = Side.LEFT;
-      if (editor == getEditor(Side.RIGHT)) side = Side.RIGHT;
+      Side side = Side.fromValue(getEditors(), editor);
       if (side == null) return null;
 
       int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));

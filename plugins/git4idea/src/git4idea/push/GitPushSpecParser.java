@@ -17,14 +17,13 @@ package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static git4idea.repo.GitRepositoryFiles.HEAD;
 
 class GitPushSpecParser {
   private static final Logger LOG = Logger.getInstance(GitPushSpecParser.class);
@@ -60,7 +59,7 @@ class GitPushSpecParser {
 
     source = GitBranchUtil.stripRefsPrefix(source);
     sourceBranch = GitBranchUtil.stripRefsPrefix(sourceBranch);
-    if (source.equals(HEAD) || source.equals(sourceBranch)) return target;
+    if (source.equals(GitUtil.HEAD) || source.equals(sourceBranch)) return target;
 
     if (source.endsWith("*")) {
       String sourceWoStar = source.substring(0, source.length() - 1);

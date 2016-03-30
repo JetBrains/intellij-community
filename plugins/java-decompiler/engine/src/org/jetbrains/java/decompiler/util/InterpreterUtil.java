@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -31,27 +30,11 @@ public class InterpreterUtil {
 
   public static final int[] EMPTY_INT_ARRAY = new int[0];
 
-  private static final int CHANNEL_WINDOW_SIZE = IS_WINDOWS ? 64 * 1024 * 1024 - (32 * 1024) : 64 * 1024 * 1024;  // magic number for Windows
   private static final int BUFFER_SIZE = 16 * 1024;
 
-  public static void copyFile(File in, File out) throws IOException {
-    FileInputStream inStream = new FileInputStream(in);
-    try {
-      FileOutputStream outStream = new FileOutputStream(out);
-      try {
-        FileChannel inChannel = inStream.getChannel();
-        FileChannel outChannel = outStream.getChannel();
-        long size = inChannel.size(), position = 0;
-        while (position < size) {
-          position += inChannel.transferTo(position, CHANNEL_WINDOW_SIZE, outChannel);
-        }
-      }
-      finally {
-        outStream.close();
-      }
-    }
-    finally {
-      inStream.close();
+  public static void copyFile(File source, File target) throws IOException {
+    try (FileInputStream in = new FileInputStream(source); FileOutputStream out = new FileOutputStream(target)) {
+      copyStream(in, out);
     }
   }
 
@@ -64,28 +47,35 @@ public class InterpreterUtil {
   }
 
   public static byte[] getBytes(ZipFile archive, ZipEntry entry) throws IOException {
-    return readAndClose(archive.getInputStream(entry), (int)entry.getSize());
+    try (InputStream stream = archive.getInputStream(entry)) {
+      return readBytes(stream, (int)entry.getSize());
+    }
   }
 
   public static byte[] getBytes(File file) throws IOException {
-    return readAndClose(new FileInputStream(file), (int)file.length());
+    try (FileInputStream stream = new FileInputStream(file)) {
+      return readBytes(stream, (int)file.length());
+    }
   }
 
-  private static byte[] readAndClose(InputStream stream, int length) throws IOException {
-    try {
-      byte[] bytes = new byte[length];
-      int n = 0, off = 0;
-      while (n < length) {
-        int count = stream.read(bytes, off + n, length - n);
-        if (count < 0) {
-          throw new IOException("premature end of stream");
-        }
-        n += count;
+  public static byte[] readBytes(InputStream stream, int length) throws IOException {
+    byte[] bytes = new byte[length];
+
+    int n = 0, off = 0;
+    while (n < length) {
+      int count = stream.read(bytes, off + n, length - n);
+      if (count < 0) {
+        throw new IOException("premature end of stream");
       }
-      return bytes;
+      n += count;
     }
-    finally {
-      stream.close();
+
+    return bytes;
+  }
+
+  public static void discardBytes(InputStream stream, int length) throws IOException {
+    if (stream.skip(length) != length) {
+      throw new IOException("premature end of stream");
     }
   }
 

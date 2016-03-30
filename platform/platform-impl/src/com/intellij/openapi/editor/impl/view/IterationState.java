@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -211,8 +212,7 @@ public class IterationState {
                                                               return (!onlyFullLine || 
                                                                       ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) && 
                                                                      (!onlyFontAffecting ||
-                                                                      ex.getTextAttributes() != null && 
-                                                                      ex.getTextAttributes().getFontType() != Font.PLAIN);
+                                                                      EditorUtil.attributesImpactFontStyle(ex.getTextAttributes()));
                                                             }
                                                           });
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);

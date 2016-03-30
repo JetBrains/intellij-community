@@ -69,7 +69,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     String title = ApplicationBundle.message("launcher.script.title");
     String prompt =
       "<html>You can create a launcher script to enable opening files and projects in " +
-      ApplicationNamesInfo.getInstance().getProductName() + " from the command line.<br>" +
+      ApplicationNamesInfo.getInstance().getFullProductName() + " from the command line.<br>" +
       "Please specify the name of the script and the path where it should be created:</html>";
     String path = Messages.showInputDialog(project, prompt, title, null, defaultScriptPath(), null);
     if (path == null) {

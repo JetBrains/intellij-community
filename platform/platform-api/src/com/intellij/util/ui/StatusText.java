@@ -47,6 +47,7 @@ public abstract class StatusText {
   protected final SimpleColoredComponent myComponent = new SimpleColoredComponent();
   private final List<ActionListener> myClickListeners = new ArrayList<ActionListener>();
   private boolean myHasActiveClickListeners; // calculated field for performance optimization
+  private boolean myShowAboveCenter = true;
 
   protected StatusText(JComponent owner) {
     this();
@@ -137,8 +138,17 @@ public abstract class StatusText {
 
     Dimension size = myComponent.getPreferredSize();
     int x = (ownerRec.width - size.width) / 2;
-    int y = (ownerRec.height - size.height) / 3;
+    int y = (ownerRec.height - size.height) / (isShowAboveCenter() ? 3 : 2);
     return new Rectangle(x, y, size.width, size.height);
+  }
+
+  public final boolean isShowAboveCenter() {
+    return myShowAboveCenter;
+  }
+
+  public final StatusText setShowAboveCenter(boolean showAboveCenter) {
+    myShowAboveCenter = showAboveCenter;
+    return this;
   }
 
   @NotNull

@@ -368,7 +368,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   private int doAdjustLineIndentByOffset(@NotNull PsiFile file, int offset) {
-    return new CodeStyleManagerRunnable<Integer>(this, FormattingMode.ADJUST_INDENT) {
+    final Integer result = new CodeStyleManagerRunnable<Integer>(this, FormattingMode.ADJUST_INDENT) {
       @Override
       protected Integer doPerform(int offset, TextRange range) {
         return FormatterEx.getInstanceEx().adjustLineIndent(myModel, mySettings, myIndentOptions, offset, mySignificantRange);
@@ -381,9 +381,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
       @Override
       protected Integer adjustResultForInjected(Integer result, DocumentWindow documentWindow) {
-        return documentWindow.hostToInjected(result);
+        return result != null ? documentWindow.hostToInjected(result)
+                              : null;
       }
-    }.perform(file, offset, null, offset);
+    }.perform(file, offset, null, null);
+    
+    return result != null ? result : offset;
   }
 
   @Override

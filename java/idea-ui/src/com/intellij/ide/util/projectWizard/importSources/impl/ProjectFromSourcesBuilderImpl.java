@@ -21,7 +21,6 @@ import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
-import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -217,7 +216,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
             final Module module;
             if (moduleDescriptor.isReuseExistingElement()) {
               final ExistingModuleLoader moduleLoader =
-                ImportImlMode.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
+                ExistingModuleLoader.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
               module = moduleLoader.createModule(moduleModel);
             }
             else {

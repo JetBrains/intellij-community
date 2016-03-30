@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
@@ -163,16 +164,16 @@ public class HgHistoryUtil {
       for (String file : revision.getDeletedFiles()) {
         changes.add(createChange(project, root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
       }
-      for (Map.Entry<String, String> copiedFile : revision.getCopiedFiles().entrySet()) {
-        changes
-          .add(createChange(project, root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
+      for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
+        changes.add(createChange(project, root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber,
+                                 HgChangeProvider.RENAMED));
       }
 
       vcsFullCommitDetailsList.add(factory.createFullDetails(factory.createHash(vcsRevisionNumber.getChangeset()), parentsHash,
                                                              revision.getRevisionDate().getTime(), root,
                                                              vcsRevisionNumber.getSubject(),
-                                                             vcsRevisionNumber.getAuthor(), vcsRevisionNumber.getEmail(),
-                                                             vcsRevisionNumber.getCommitMessage(), vcsRevisionNumber.getAuthor(),
+                                                             vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail(),
+                                                             vcsRevisionNumber.getCommitMessage(), vcsRevisionNumber.getName(),
                                                              vcsRevisionNumber.getEmail(), revision.getRevisionDate().getTime(),
                                                              new ThrowableComputable<Collection<Change>, Exception>() {
                                                                @Override

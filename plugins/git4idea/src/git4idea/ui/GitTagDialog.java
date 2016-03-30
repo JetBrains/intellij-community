@@ -23,7 +23,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitUtil;
@@ -207,7 +206,7 @@ public class GitTagDialog extends DialogWrapper {
                                                          "Created tag " + myTagNameTextField.getText() + " successfully.");
         GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
         if (repository != null) {
-          VfsUtil.markDirtyAndRefresh(true, true, false, repository.getGitDir());
+          repository.getRepositoryFiles().refresh(true);
         }
         else {
           LOG.error("No repository registered for root: " + getGitRoot());

@@ -26,7 +26,7 @@ import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -71,13 +71,25 @@ public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
 
   @NotNull
   @Override
-  protected Collection<String> getAllBranches(@NotNull GitRepository repository) {
-    return ContainerUtil.map(repository.getBranches().getLocalBranches(), new Function<GitLocalBranch, String>() {
+  protected Iterable<TaskInfo> getAllBranches(@NotNull GitRepository repository) {
+    List<TaskInfo> list = ContainerUtil.map(repository.getBranches().getLocalBranches(), new Function<GitBranch, TaskInfo>() {
       @Override
-      public String fun(GitLocalBranch branch) {
-        return branch.getName();
+      public TaskInfo fun(GitBranch branch) {
+        return new TaskInfo(branch.getName(), Collections.singleton(repository.getPresentableUrl()));
       }
     });
+    list.addAll(ContainerUtil.map(repository.getBranches().getLocalBranches(), new Function<GitBranch, TaskInfo>() {
+      @Override
+      public TaskInfo fun(GitBranch branch) {
+        return new TaskInfo(branch.getName(), Collections.singleton(repository.getPresentableUrl())) {
+          @Override
+          public boolean isRemote() {
+            return true;
+          }
+        };
+      }
+    }));
+    return list;
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -118,10 +119,10 @@ public class WizardContext extends UserDataHolderBase {
     if (myProjectFileDirectory != null) {
       return myProjectFileDirectory;
     }
-    //final String lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
-    //if (lastProjectLocation != null) {
-    //  return lastProjectLocation.replace('/', File.separatorChar);
-    //}
+    final String lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
+    if (lastProjectLocation != null) {
+      return lastProjectLocation.replace('/', File.separatorChar);
+    }
     final String userHome = SystemProperties.getUserHome();
     //noinspection HardCodedStringLiteral
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();

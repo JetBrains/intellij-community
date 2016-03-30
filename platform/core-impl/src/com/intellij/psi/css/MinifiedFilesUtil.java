@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,15 +100,15 @@ public class MinifiedFilesUtil {
           }
         }
 
+        if (tokenLength > 0 && noWSRequireAfterTokenSet.contains(lastTokenType)) {
+          unneededWhitespaceCount++;
+        }
+
         if (lexer.getTokenText().contains("\n")) {
           if (lineLength > MIN_LINE_LENGTH) {
             break;
           }
           lineLength = 0;
-        }
-
-        if (" ".equals(lexer.getTokenText()) && noWSRequireAfterTokenSet.contains(lastTokenType)) {
-          unneededWhitespaceCount++;
         }
       }
       else {

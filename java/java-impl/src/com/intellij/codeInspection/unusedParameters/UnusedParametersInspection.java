@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
             if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
               final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
               if (unusedParameters.isEmpty()) return;
-              PsiMethod[] derived = OverridingMethodsSearch.search(psiMethod, true).toArray(PsiMethod.EMPTY_ARRAY);
+              PsiMethod[] derived = OverridingMethodsSearch.search(psiMethod).toArray(PsiMethod.EMPTY_ARRAY);
               for (final RefParameter refParameter : unusedParameters) {
                 if (refMethod.isAbstract() && derived.length == 0) {
                   refParameter.parameterReferenced(false);

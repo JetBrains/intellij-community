@@ -121,7 +121,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
-    new MyOpenInEditorWithMouseAction().register(getEditors());
+    new MyOpenInEditorWithMouseAction().install(getEditors());
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
 
@@ -385,7 +385,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
         clearDiffPresentation();
-        if (isContentsEqual) myPanel.addNotification(DiffNotifications.createEqualContents());
+        if (isContentsEqual) {
+          boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
+          boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
+          myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
+        }
 
         TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
         myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
@@ -596,7 +600,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         // but this will greatly increase complexity, so let's wait if it's actually required by users
         markStateIsOutOfDate();
 
-        myFoldingModel.onDocumentChanged(e);
         scheduleRediff();
 
         myDuringTwosideDocumentModification = false;
@@ -640,7 +643,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     markStateIsOutOfDate();
     markSuppressEditorTyping();
 
-    myFoldingModel.onDocumentChanged(e);
     scheduleRediff();
   }
 
@@ -1074,7 +1076,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   private class MyReadOnlyLockAction extends TextDiffViewerUtil.ReadOnlyLockAction {
     public MyReadOnlyLockAction() {
       super(getContext());
-      init();
+      applyDefaults();
     }
 
     @Override

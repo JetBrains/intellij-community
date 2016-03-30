@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +31,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  */
 public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
   private final T myCall;
-  private final PsiType[] myArgTypes;
+  private final NullableLazyValue<PsiType[]> myArgTypes = new NullableLazyValue<PsiType[]>() {
+    @Nullable
+    @Override
+    protected PsiType[] compute() {
+      return inferArgTypes();
+    }
+  };
 
   protected CallInfoBase(T call) {
     myCall = call;
-    myArgTypes = inferArgTypes();
   }
 
   @Nullable
@@ -49,7 +55,7 @@ public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
   @Nullable
   @Override
   public PsiType[] getArgumentTypes() {
-    return myArgTypes;
+    return myArgTypes.getValue();
   }
 
   @NotNull

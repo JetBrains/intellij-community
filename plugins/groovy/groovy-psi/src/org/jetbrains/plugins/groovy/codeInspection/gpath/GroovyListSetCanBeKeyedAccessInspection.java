@@ -84,7 +84,6 @@ public class GroovyListSetCanBeKeyedAccessInspection extends BaseInspection {
       final GrReferenceExpression invokedExpression = (GrReferenceExpression) referenceName.getParent();
       final GrMethodCallExpression callExpression = (GrMethodCallExpression) invokedExpression.getParent();
       final GrArgumentList argumentList = callExpression.getArgumentList();
-      assert argumentList != null;
       final GrExpression[] args = argumentList.getExpressionArguments();
       replaceExpression(callExpression, invokedExpression.getQualifierExpression().getText() +
           '[' + args[0].getText() + "]=" + args[1].getText());
@@ -96,9 +95,6 @@ public class GroovyListSetCanBeKeyedAccessInspection extends BaseInspection {
     public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrArgumentList args = grMethodCallExpression.getArgumentList();
-      if (args == null) {
-        return;
-      }
       if (args.getExpressionArguments().length != 2) {
         return;
       }

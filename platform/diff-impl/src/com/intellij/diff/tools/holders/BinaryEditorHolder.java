@@ -129,7 +129,7 @@ public class BinaryEditorHolder extends EditorHolder {
         Project project = context.getProject();
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
         VirtualFile file = ((FileContent)content).getFile();
-
+        if (!file.isValid()) return false;
         return FileEditorProviderManager.getInstance().getProviders(project, file).length != 0;
       }
       return false;

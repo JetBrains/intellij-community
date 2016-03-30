@@ -25,13 +25,13 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,7 +47,7 @@ public class FileContentQueue {
 
   private static final int ourTasksNumber =
     SystemProperties.getBooleanProperty("idea.allow.parallel.file.reading", true) ? CacheUpdateRunner.indexingThreadCount() : 1;
-  private static final ExecutorService ourExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, ourTasksNumber);
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(ourTasksNumber);
 
   // Unbounded (!)
   private final LinkedBlockingDeque<FileContent> myLoadedContents = new LinkedBlockingDeque<FileContent>();
@@ -59,40 +59,59 @@ public class FileContentQueue {
   private volatile long myBytesBeingProcessed;
   private volatile boolean myLargeSizeRequested;
   private final Object myProceedWithProcessingLock = new Object();
+  private final BlockingQueue<VirtualFile> myFilesQueue;
+  private final ProgressIndicator myProgressIndicator;
+  private static final Deque<FileContentQueue> ourContentLoadingQueues = new LinkedBlockingDeque<>();
 
-  public void queue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
+  public FileContentQueue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
     int numberOfFiles = files.size();
-    if (numberOfFiles == 0) return;
     myContentsToLoad.set(numberOfFiles);
-
     // ABQ is more memory efficient for significant number of files (e.g. 500K)
-    final BlockingQueue<VirtualFile> filesQueue = new ArrayBlockingQueue<VirtualFile>(numberOfFiles, false, files);
+    myFilesQueue = numberOfFiles > 0 ? new ArrayBlockingQueue<VirtualFile>(numberOfFiles, false, files) : null;
+    myProgressIndicator = indicator;
+  }
+
+  public void startLoading() {
+    if (myContentsToLoad.get() == 0) return;
+
     for (int i = 0; i < ourTasksNumber; ++i) {
+      ourContentLoadingQueues.addLast(this);
       Runnable task = new Runnable() {
         @Override
         public void run() {
-          VirtualFile file = filesQueue.poll();
-          if (file == null) return;
-          try {
-            indicator.checkCanceled();
-            myLoadedContents.offer(loadContent(file, indicator));
-            // With loop contents of second / remaining projects will start loading only after finishing loading contents from first project.
-            // With resubmit loading of contents of second/remaining projects will also proceed
-            ourExecutor.submit(this);
-          }
-          catch (ProcessCanceledException e) {
-            // Do nothing, exit the thread.
-          }
-          catch (InterruptedException e) {
-            LOG.error(e);
-          }
-          finally {
-            myContentsToLoad.addAndGet(-1);
+          FileContentQueue contentQueue = ourContentLoadingQueues.pollFirst();
+          while (contentQueue != null) {
+            if (contentQueue.loadNextContent()) {
+              ourContentLoadingQueues.addLast(contentQueue);
+            }
+            if (myContentsToLoad.get() == 0) {
+              return;
+            }
+            contentQueue = ourContentLoadingQueues.pollFirst();
           }
         }
       };
       ourExecutor.submit(task);
     }
+  }
+
+  private boolean loadNextContent() {
+    VirtualFile file = myFilesQueue.poll();
+    if (file == null || myProgressIndicator.isCanceled()) return false;
+    try {
+      myProgressIndicator.checkCanceled();
+      myLoadedContents.offer(loadContent(file, myProgressIndicator));
+    }
+    catch (ProcessCanceledException e) {
+      return false;
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+    finally {
+      myContentsToLoad.addAndGet(-1);
+    }
+    return true;
   }
 
   private FileContent loadContent(@NotNull VirtualFile file, @NotNull ProgressIndicator indicator) throws InterruptedException {

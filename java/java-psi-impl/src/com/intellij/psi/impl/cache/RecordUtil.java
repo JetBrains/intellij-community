@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.BitUtil;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +132,7 @@ public class RecordUtil {
       }
     }
 
-    if ((packed & ModifierFlags.DEFENDER_MASK) != 0) {
+    if (BitUtil.isSet(packed, ModifierFlags.DEFENDER_MASK)) {
       packed &= ~ModifierFlags.ABSTRACT_MASK;
     }
 

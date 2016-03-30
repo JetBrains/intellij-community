@@ -69,6 +69,7 @@ public interface PsiReference {
    * Returns the element which is the target of the reference.
    *
    * @return the target element, or null if it was not possible to resolve the reference to a valid target.
+   * @see PsiPolyVariantReference#multiResolve(boolean)
    */
   @Nullable PsiElement resolve();
 

@@ -33,9 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitShelveChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);
   private final ShelveChangesManager myShelveManager;
@@ -68,7 +65,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
       }
       if (! changes.isEmpty()) {
         final ShelvedChangeList list = GitShelveUtils.shelveChanges(myProject, myShelveManager, changes,
-                                                                    myStashMessage + " [" + entry.getKey() + "]", exceptions, false);
+                                                                    myStashMessage + " [" + entry.getKey() + "]", exceptions, false, true);
         myShelvedLists.put(entry.getKey(), list);
       }
     }

@@ -40,7 +40,7 @@ public class BranchFilterController extends CascadeController {
 
   private void updateCollapsedGraph() {
     UnsignedBitSet initVisibility =
-      ReachableNodes.getReachableNodes(myPermanentGraphInfo.getPermanentLinearGraph(), myIdsOfVisibleBranches);
+      ReachableNodes.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), myIdsOfVisibleBranches);
     myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 

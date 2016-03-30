@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.find.findUsages;
 
 import com.intellij.psi.PsiElement;
@@ -21,10 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FindUsagesUtil {
-  private FindUsagesUtil() {
-  }
+  private FindUsagesUtil() { }
 
   public static boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement element, boolean isSingleFile, @Nullable FindUsagesHandler handler) {
-    return !isSingleFile && handler != null && handler.isSearchForTextOccurencesAvailable(element, isSingleFile);
+    return !isSingleFile && handler != null && handler.isSearchForTextOccurrencesAvailable(element, false);
   }
 }

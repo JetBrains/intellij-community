@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,11 @@ public class BitUtil {
     return (flags & mask) == mask;
   }
 
-  private static void assertOneBitMask(long mask) {
-    assert (mask & (mask - 1)) == 0 : "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
+  public static void assertOneBitMask(long mask) {
+    assert (mask & mask - 1) == 0 : "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
-
-  public static boolean notSet(final int value, final int mask) {
-    return (value & mask) != mask;
+  public static void assertOneBitMask(int mask) {
+    assertOneBitMask(mask & 0xffffffffL);
   }
 
   /**
@@ -55,6 +54,11 @@ public class BitUtil {
     assertOneBitMask(mask);
     return setBit ? value | mask : value & ~mask;
   }
+
+  public static int clear(int value, int mask) {
+    return set(value, mask, false);
+  }
+
   /**
    * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
    */

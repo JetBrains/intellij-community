@@ -144,7 +144,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         command.setFiles(selectedFiles);
       }
       try {
-        command.execute();
+        command.executeInCurrentThread();
       }
       catch (HgCommandException e) {
         exceptions.add(new VcsException(e));
@@ -176,7 +176,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     HgStatusCommand statusCommand =
       new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
-    Set<HgChange> allChangedFilesInRepo = statusCommand.execute(repo);
+    Set<HgChange> allChangedFilesInRepo = statusCommand.executeInCurrentThread(repo);
 
     Set<HgFile> filesNotIncluded = new HashSet<HgFile>();
 
@@ -222,11 +222,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       }
       filesWithRoots.add(new HgFile(vcsRoot, filePath));
     }
-    new Task.Backgroundable(myProject, "Removing files...") {
+    new Task.Backgroundable(myProject, "Removing Files...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        HgRemoveCommand command = new HgRemoveCommand(myProject);
-        command.execute(filesWithRoots);
+        new HgRemoveCommand(myProject).executeInCurrentThread(filesWithRoots);
       }
     }.queue();
     return null;

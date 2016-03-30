@@ -30,12 +30,14 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testInheritUnrelatedDefaults() { doTest(true, false); }
   public void testExtensionMethods() { doTest(false, false); }
   public void testInheritDefaultMethodInInterface() { doTest(false, false); }
+  public void testCheckForFunctionalInterfaceCandidatesWhenOverrideEquivalentMethodsAreFoundInSuperInterfaces() { doTest(false, false);}
   public void testStaticMethodsInFunctionalInterface() { doTest(false, false); }
   public void testCyclicSubstitutor() { doTest(false, false); }
   public void testThisAccessibility() { doTest(false, false); }
   public void testStaticMethodCalls() { doTest(false, false); }
   public void testStaticMethodCallsAndOverloadResolution() { doTest(false, false); }
   public void testDefaultMethodOverrideEquivalentObject() { doTest(false, false); }
+  public void testDefaultMethodOverrideAbstract() { doTest(false, false); }
   public void testModifierNativeInInterface() { doTest(false, false); }
   public void testStaticMethods() { doTest(false, false); }
   public void testFinalStaticDefaultMethods() { doTest(false, false); }
@@ -55,6 +57,14 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
 
   public void testInheritanceOfStaticMethodFromDefault() throws Exception {
     doTest();
+  }
+
+  public void testUnrelatedDefaultsOverriddenWithConcreteMethodNonEmptySubstitutor() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testUnrelatedDefaultsWithTypeParameter() throws Exception {
+    doTest(false, false);
   }
 
   public void testStaticMethodAccessibleBothThroughStaticImportAndInheritance() throws Exception {

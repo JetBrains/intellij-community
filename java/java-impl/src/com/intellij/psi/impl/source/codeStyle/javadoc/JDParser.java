@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.codeStyle.javadoc;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -280,6 +279,18 @@ public class JDParser {
     return removeWhiteSpacesFrom(token).toLowerCase().equals(SELF_CLOSED_P_TAG);
   }
   
+  private static boolean hasLineLongerThan(String str, int maxLength) {
+    if (str == null) return false;
+
+    for (String s : str.split("\n")) {
+      if (s.length() > maxLength) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+  
 
   @NotNull
   private static String removeWhiteSpacesFrom(@NotNull final String token) {
@@ -520,12 +531,14 @@ public class JDParser {
     },
   };
 
-  /**
-   * @see JDParser#formatJDTagDescription(String, CharSequence, boolean, int)
-   */
   @NotNull
   protected StringBuilder formatJDTagDescription(@Nullable String s, @NotNull CharSequence prefix) {
     return formatJDTagDescription(s, prefix, false, 0);
+  }
+  
+  @NotNull
+  protected StringBuilder formatJDTagDescription(@Nullable String s, @NotNull CharSequence prefix, boolean wrapLinesShorterRightMargin) {
+    return formatJDTagDescription(s, prefix, false, 0, wrapLinesShorterRightMargin);
   }
 
   private static boolean lineHasUnclosedPreTag(@NotNull String line) {
@@ -536,6 +549,14 @@ public class JDParser {
     return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > StringUtil.getOccurrenceCount(line, PRE_TAG_START);
   }
 
+  @NotNull
+  protected StringBuilder formatJDTagDescription(@Nullable String str,
+                                                 @NotNull CharSequence prefix,
+                                                 boolean firstLineShorter,
+                                                 int firstLinePrefixLength) {
+    return formatJDTagDescription(str, prefix, firstLineShorter, firstLinePrefixLength, true);
+  }
+  
   /**
    * Returns formatted JavaDoc tag description, according to selected configuration
    * @param str JavaDoc tag description
@@ -548,15 +569,20 @@ public class JDParser {
   protected StringBuilder formatJDTagDescription(@Nullable String str,
                                                  @NotNull CharSequence prefix,
                                                  boolean firstLineShorter,
-                                                 int firstLinePrefixLength)
+                                                 int firstLinePrefixLength,
+                                                 boolean isWrapLinesShorterRightMargin)
   {
-    int rightMargin = mySettings.getRightMargin(JavaLanguage.INSTANCE);
+    final int rightMargin = mySettings.getRightMargin(JavaLanguage.INSTANCE);
+    final int maxCommentLength = rightMargin - prefix.length();
+    
     StringBuilder sb = new StringBuilder();
     List<String> list;
-
+    
+    boolean canWrap = isWrapLinesShorterRightMargin || hasLineLongerThan(str, maxCommentLength);
+    
     //If wrap comments selected, comments should be wrapped by the right margin
-    if (mySettings.WRAP_COMMENTS) {
-      list = toArrayWrapping(str, rightMargin - prefix.length());
+    if (mySettings.WRAP_COMMENTS && canWrap) {
+      list = toArrayWrapping(str, maxCommentLength);
 
       if (firstLineShorter
           && list != null && !list.isEmpty()
@@ -575,7 +601,7 @@ public class JDParser {
         }
 
         //getting all another lines according to their prefix
-        List<String> subList = toArrayWrapping(str, rightMargin - prefix.length());
+        List<String> subList = toArrayWrapping(str, maxCommentLength);
 
         //removing pre tag
         if (unclosedPreTag && subList != null && !subList.isEmpty()) {

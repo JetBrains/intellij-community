@@ -93,6 +93,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         try {
           if (myConsoleView != null) {
             disposeConsole();
+            myCommunication.waitForTerminate();
           }
           PyConsoleTask.super.tearDown();
         }
@@ -150,7 +151,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     setProcessCanTerminate(false);
 
     PydevConsoleRunner consoleRunner =
-      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, getWorkingFolder(), Maps.<String, String>newHashMap(), new String[]{}) {
+      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, getWorkingFolder(), Maps.<String, String>newHashMap(), PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
+                             new String[]{}) {
         @Override
         protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
           myContentDescriptorRef.set(contentDescriptor);

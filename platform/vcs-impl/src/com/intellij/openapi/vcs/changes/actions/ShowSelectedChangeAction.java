@@ -31,7 +31,7 @@ import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -121,7 +121,7 @@ public class ShowSelectedChangeAction extends ShowChangeAbstractAction {
       myChain = chain;
       myDiffViewer = diffViewer;
 
-      setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       setChangesToDisplay(changes);
     }
 

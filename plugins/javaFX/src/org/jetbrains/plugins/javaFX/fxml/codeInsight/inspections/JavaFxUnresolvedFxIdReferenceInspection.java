@@ -37,11 +37,11 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInTagDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxFieldIdReferenceProvider;
 
 /**
@@ -98,13 +98,13 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
   private static PsiClass checkClass(XmlTag tag) {
     if (tag != null) {
       final XmlElementDescriptor descriptor = tag.getDescriptor();
-      if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+      if (descriptor instanceof JavaFxClassTagDescriptorBase) {
         final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof PsiClass) {
           return (PsiClass)declaration;
         }
-      } else if (descriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
-        final XmlTag includedRoot = JavaFxDefaultPropertyElementDescriptor.getIncludedRoot(tag);
+      } else if (descriptor instanceof JavaFxBuiltInTagDescriptor) {
+        final XmlTag includedRoot = JavaFxBuiltInTagDescriptor.getIncludedRoot(tag);
         if (includedRoot != null && !includedRoot.equals(tag)) {
           return checkClass(includedRoot);
         }
@@ -155,7 +155,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
         if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) visibility = PsiModifier.PRIVATE;
         VisibilityUtil.setVisibility(modifierList, visibility);
         if (!PsiModifier.PUBLIC.equals(visibility)) {
-          modifierList.addAnnotation(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION);
+          modifierList.addAnnotation(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION);
         }
       }
 

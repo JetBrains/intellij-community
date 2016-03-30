@@ -23,6 +23,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,15 +80,10 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
         public void run() {
           PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
 
-          // dumb mode should start before post-startup activities
-          // only when queueTask is called from UI thread, we can guarantee that
-          // when the method returns, the application has entered dumb mode
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              if (!project.isDisposed() && FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-                DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
-              }
+          // schedule dumb mode start after the read action we're currently in
+          TransactionGuard.submitTransaction(project, () -> {
+            if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
+              DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
             }
           });
 

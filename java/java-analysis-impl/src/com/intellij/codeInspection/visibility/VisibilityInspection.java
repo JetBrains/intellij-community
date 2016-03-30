@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,9 +62,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   public boolean SUGGEST_PRIVATE_FOR_INNERS = false;
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
-  private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", "private");
-  private static final String CAN_BE_PACKAGE_LOCAL = InspectionsBundle.message("inspection.visibility.compose.suggestion", "package local");
-  private static final String CAN_BE_PROTECTED = InspectionsBundle.message("inspection.visibility.compose.suggestion", "protected");
+  private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
+  private static final String CAN_BE_PACKAGE_LOCAL = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
+  private static final String CAN_BE_PROTECTED = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
 
   private class OptionsPanel extends JPanel {
     private final JCheckBox myPackageLocalForMembersCheckbox;
@@ -204,16 +205,16 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
         if (access.equals(PsiModifier.PRIVATE)) {
           message = CAN_BE_PRIVATE;
-          quickFixName += PsiModifier.PRIVATE;
+          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
         }
         else {
           if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
             message = CAN_BE_PACKAGE_LOCAL;
-            quickFixName += "package local";
+            quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
           }
           else {
             message = CAN_BE_PROTECTED;
-            quickFixName += PsiModifier.PROTECTED;
+            quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
           }
         }
         return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,

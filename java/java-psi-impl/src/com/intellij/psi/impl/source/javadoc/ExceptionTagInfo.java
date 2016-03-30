@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -31,6 +30,22 @@ class ExceptionTagInfo implements JavadocTagInfo {
 
   public ExceptionTagInfo(@NonNls String name) {
     myName = name;
+  }
+
+  @Override
+  public String getName() {
+    return myName;
+  }
+
+  @Override
+  public boolean isInline() {
+    return false;
+  }
+
+  @Override
+  public boolean isValidInContext(PsiElement element) {
+    if (!(element instanceof PsiMethod)) return false;
+    return true;
   }
 
   @Override
@@ -90,28 +105,7 @@ class ExceptionTagInfo implements JavadocTagInfo {
   }
 
   @Override
-  public String getName() {
-    return myName;
-  }
-
-  @Override
-  public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
   public PsiReference getReference(PsiDocTagValue value) {
     return null;
-  }
-
-  @Override
-  public boolean isValidInContext(PsiElement element) {
-    if (!(element instanceof PsiMethod)) return false;
-    return true;
-  }
-
-  @Override
-  public boolean isInline() {
-    return false;
   }
 }

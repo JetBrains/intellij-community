@@ -21,8 +21,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.stepic.CourseInfo;
-import com.jetbrains.edu.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

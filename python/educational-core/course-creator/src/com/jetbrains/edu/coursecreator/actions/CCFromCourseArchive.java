@@ -22,12 +22,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.jetbrains.edu.EduDocumentListener;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.core.EduDocumentListener;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -134,29 +134,11 @@ public class CCFromCourseArchive extends DumbAwareAction {
     final TaskFile taskFile = taskFileEntry.getValue();
     VirtualFile file = userFileDir.findChild(name);
     assert file != null;
-    String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
-    VirtualFile answerFile = answerFileDir.findChild(answerFileName);
-    if (answerFile != null) {
-      try {
-        answerFile.delete(project);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    try {
-      answerFile = userFileDir.createChildData(project, answerFileName);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    if (answerFile == null) return;
-
     final Document originDocument = FileDocumentManager.getInstance().getDocument(file);
     if (originDocument == null) {
       return;
     }
-    final Document document = FileDocumentManager.getInstance().getDocument(answerFile);
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {

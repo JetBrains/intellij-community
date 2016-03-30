@@ -17,6 +17,8 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -35,6 +37,7 @@ import java.util.*;
  * Date: 7/17/12
  */
 public class LambdaUtil {
+  public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
   public static ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<Map<PsiElement, PsiType>>();
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
 
@@ -213,11 +216,23 @@ public class LambdaUtil {
   public static List<HierarchicalMethodSignature> findFunctionCandidates(PsiClass psiClass) {
     if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
       final List<HierarchicalMethodSignature> methods = new ArrayList<HierarchicalMethodSignature>();
+      final Map<MethodSignature, Set<PsiMethod>> overrideEquivalents = PsiSuperMethodUtil.collectOverrideEquivalents(psiClass);
       final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
       for (HierarchicalMethodSignature signature : visibleSignatures) {
         final PsiMethod psiMethod = signature.getMethod();
         if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) continue;
+        final Set<PsiMethod> equivalentMethods = overrideEquivalents.get(signature);
+        if (equivalentMethods != null && equivalentMethods.size() > 1) {
+          boolean hasNonAbstractOverrideEquivalent = false;
+          for (PsiMethod method : equivalentMethods) {
+            if (!method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(method, psiMethod)) {
+              hasNonAbstractOverrideEquivalent = true;
+              break;
+            }
+          }
+          if (hasNonAbstractOverrideEquivalent) continue;
+        }
         if (!overridesPublicObjectMethod(signature)) {
           methods.add(signature);
         }
@@ -665,6 +680,10 @@ public class LambdaUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isLambdaParameterCheck() {
+    return !ourParameterGuard.currentStack().isEmpty();
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

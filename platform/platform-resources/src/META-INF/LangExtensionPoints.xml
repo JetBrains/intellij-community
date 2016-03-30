@@ -305,6 +305,8 @@
                     interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider"
                     area="IDEA_PROJECT"/>
 
+    <extensionPoint name="customScopesFilter" interface="com.intellij.psi.search.scope.packageSet.CustomScopesFilter"/>
+
     <extensionPoint name="scopeDescriptorProvider" interface="com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider"/>
     <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 
@@ -373,6 +375,9 @@
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
     <extensionPoint name="refactoring.invertBoolean" interface="com.intellij.refactoring.invertBoolean.InvertBooleanDelegate"/>
+    <extensionPoint name="refactoring.pushDown" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.memberPushDown.PushDownDelegate"/>
+    </extensionPoint>
     <extensionPoint name="refactoring.moveDirectoryWithClassesHelper"
                     interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper"/>
 
@@ -744,6 +749,11 @@
     <extensionPoint name="moveLeftRightHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" 
             implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler"/>
+    </extensionPoint>
+
+    <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass"
+            implements="com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper"/>
     </extensionPoint>
 
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -25,6 +26,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
@@ -58,8 +60,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,13 +76,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -127,7 +129,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
   private final ConcurrentMap<LookupElement, CompletionSorterImpl> myItemSorters =
-    ContainerUtil.createConcurrentWeakMap(ContainerUtil.<LookupElement>identityStrategy());
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<Runnable>();
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
@@ -150,24 +152,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
 
-    myAdvertiserChanges.offer(new Runnable() {
-      @Override
-      public void run() {
-        myLookup.getAdvertiser().clearAdvertisements();
-      }
-    });
+    myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
     myLookup.setArranger(new CompletionLookupArranger(parameters, this));
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
 
-    myLookupManagerListener = new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getNewValue() != null) {
-          LOG.error("An attempt to change the lookup during completion, phase = " + CompletionServiceImpl.getCompletionPhase());
-        }
+    myLookupManagerListener = evt -> {
+      if (evt.getNewValue() != null) {
+        LOG.error("An attempt to change the lookup during completion, phase = " + CompletionServiceImpl.getCompletionPhase());
       }
     };
     LookupManager.getInstance(getProject()).addPropertyChangeListener(myLookupManagerListener);
@@ -419,12 +413,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myCount++;
 
     if (myCount == 1) {
-      new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this).addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myFreezeSemaphore.up();
-        }
-      }, 300);
+      JobScheduler.getScheduler().schedule(myFreezeSemaphore::up, 300, TimeUnit.MILLISECONDS);
     }
     myQueue.queue(myUpdate);
   }
@@ -481,13 +470,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void disposeIndicator() {
-    // our offset map should be disposed under write action, so that duringCompletion (read action) won't access it after disposing
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(CompletionProgressIndicator.this);
-      }
-    });
+    Disposer.dispose(this);
   }
 
   @TestOnly
@@ -510,42 +493,39 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myQueue.cancelAllUpdates();
     myFreezeSemaphore.up();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-        if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != CompletionProgressIndicator.this) return;
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+      if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != this) return;
 
-        LOG.assertTrue(!getProject().isDisposed(), "project disposed");
+      LOG.assertTrue(!getProject().isDisposed(), "project disposed");
 
-        if (myEditor.isDisposed()) {
-          myLookup.hideLookup(false);
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-          return;
+      if (myEditor.isDisposed()) {
+        myLookup.hideLookup(false);
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        return;
+      }
+
+      if (myEditor instanceof EditorWindow) {
+        LOG.assertTrue(((EditorWindow)myEditor).getInjectedFile().isValid(), "injected file !valid");
+        LOG.assertTrue(((DocumentWindow)myEditor.getDocument()).isValid(), "docWindow !valid");
+      }
+      PsiFile file = myLookup.getPsiFile();
+      LOG.assertTrue(file == null || file.isValid(), "file !valid");
+
+      myLookup.setCalculating(false);
+
+      if (myCount == 0) {
+        myLookup.hideLookup(false);
+        if (!isAutopopupCompletion()) {
+          final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+          LOG.assertTrue(current == null, current + "!=" + this);
+
+          handleEmptyLookup(!((CompletionPhase.BgCalculation)phase).modifiersChanged);
         }
-
-        if (myEditor instanceof EditorWindow) {
-          LOG.assertTrue(((EditorWindow)myEditor).getInjectedFile().isValid(), "injected file !valid");
-          LOG.assertTrue(((DocumentWindow)myEditor.getDocument()).isValid(), "docWindow !valid");
-        }
-        PsiFile file = myLookup.getPsiFile();
-        LOG.assertTrue(file == null || file.isValid(), "file !valid");
-
-        myLookup.setCalculating(false);
-
-        if (myCount == 0) {
-          myLookup.hideLookup(false);
-          if (!isAutopopupCompletion()) {
-            final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-            LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
-
-            handleEmptyLookup(!((CompletionPhase.BgCalculation)phase).modifiersChanged);
-          }
-        }
-        else {
-          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this));
-          updateLookup();
-        }
+      }
+      else {
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
+        updateLookup();
       }
     }, myQueue.getModalityState());
   }
@@ -697,21 +677,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     phase.ignoreCurrentDocumentChange();
 
     final Project project = getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        CompletionAutoPopupHandler.runLaterWithCommitted(project, myEditor.getDocument(), new Runnable() {
-          @Override
-          public void run() {
-            if (phase.checkExpired()) return;
+    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+      if (phase.checkExpired()) return;
 
-            CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
-                                                        isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(),
-                                                        true);
-          }
-        });
-      }
-    }, project.getDisposed());
+      CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
+                                                  isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(),
+                                                  true);
+    });
   }
 
   @Override
@@ -750,16 +722,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private static LightweightHint showErrorHint(Project project, Editor editor, String text) {
     final LightweightHint[] result = {null};
-    final EditorHintListener listener = new EditorHintListener() {
-      @Override
-      public void hintShown(final Project project, final LightweightHint hint, final int flags) {
-        result[0] = hint;
-      }
-    };
+    final EditorHintListener listener = (project1, hint, flags) -> result[0] = hint;
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, listener);
     assert text != null;
-    HintManager.getInstance().showErrorHint(editor, text, HintManager.UNDER);
+    HintManager.getInstance().showErrorHint(editor, StringUtil.escapeXml(text), HintManager.UNDER);
     connection.disconnect();
     return result[0];
   }
@@ -784,12 +751,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     boolean sync = ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup;
     final CompletionThreading strategy = sync ? new SyncCompletion() : new AsyncCompletion();
 
-    strategy.startThread(ProgressWrapper.wrap(this), new Runnable() {
-      @Override
-      public void run() {
-        scheduleAdvertising();
-      }
-    });
+    strategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
     final WeighingDelegate weigher = strategy.delegateWeighing(this);
 
     class CalculateItems implements Runnable {
@@ -822,12 +784,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void addAdvertisement(@NotNull final String text, @Nullable final Color bgColor) {
-    myAdvertiserChanges.offer(new Runnable() {
-      @Override
-      public void run() {
-        myLookup.addAdvertisement(text, bgColor);
-      }
-    });
+    myAdvertiserChanges.offer(() -> myLookup.addAdvertisement(text, bgColor));
 
     myQueue.queue(myUpdate);
   }

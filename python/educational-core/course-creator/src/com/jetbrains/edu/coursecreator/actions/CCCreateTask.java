@@ -14,15 +14,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.StudyItem;
-import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import icons.EducationalIcons;
+import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   public static final String TITLE = "Create New " + EduNames.TASK_TITLED;
 
   public CCCreateTask() {
-    super(EduNames.TASK_TITLED, TITLE, EducationalIcons.Task);
+    super(EduNames.TASK_TITLED, TITLE, InteractiveLearningIcons.Task);
   }
 
 

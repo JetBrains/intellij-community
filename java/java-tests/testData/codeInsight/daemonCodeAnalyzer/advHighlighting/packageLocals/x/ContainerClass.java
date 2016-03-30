@@ -1,4 +1,4 @@
-// package local class in the middle
+// package-private class in the middle
 
 package x;
 class ComponentClass {

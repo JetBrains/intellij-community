@@ -34,7 +34,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract
-  implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll {
+  implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
   private CodeStyleSchemesPanel myRootSchemesPanel;
   private CodeStyleSchemesModel myModel;
@@ -321,6 +321,11 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       result.addAll(panel.processListOptions());
     }
     return result;
+  }
+
+  @Override
+  public boolean isProjectLevel() {
+    return myModel != null && myModel.isUsePerProjectSettings();
   }
 
   private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoMargin, NoScroll, OptionsContainingConfigurable {

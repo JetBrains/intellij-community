@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -398,6 +399,10 @@ public final class HttpRequests {
         url = "https:" + url.substring(5);
       }
 
+      if (url.startsWith("https:") && ApplicationManager.getApplication() != null) {
+        CertificateManager.getInstance();
+      }
+
       URLConnection connection;
       if (!builder.myUseProxy) {
         connection = new URL(url).openConnection(Proxy.NO_PROXY);
@@ -437,7 +442,7 @@ public final class HttpRequests {
       if (connection instanceof HttpURLConnection) {
         int responseCode = ((HttpURLConnection)connection).getResponseCode();
 
-        if (responseCode < 200 || responseCode >= 300) {
+        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
           ((HttpURLConnection)connection).disconnect();
 
           if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {

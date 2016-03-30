@@ -40,12 +40,25 @@ public abstract class PriorityActionWrapper extends LocalQuickFixAndIntentionAct
   }
 
   @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return fix.isAvailable(project, file, startElement, endElement);
+  }
+
+  @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     fix.invoke(project, file, editor, startElement, endElement);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return fix.startInWriteAction();
   }
 
   @NotNull

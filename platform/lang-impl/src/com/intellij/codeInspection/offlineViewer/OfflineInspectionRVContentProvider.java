@@ -77,10 +77,13 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
             final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
             final RefEntity element = descriptorNode.getElement();
             selectedElements.add(element);
-            CommonProblemDescriptor[] quickFixes = actions.get(element);
-            actions.put(element, quickFixes == null ?
-                                 new CommonProblemDescriptor[]{descriptorNode.getDescriptor()} :
-                                 DefaultInspectionToolPresentation.mergeDescriptors(quickFixes, new CommonProblemDescriptor[]{descriptorNode.getDescriptor()}));
+            CommonProblemDescriptor[] descriptors = actions.get(element);
+            final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
+            final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
+                                                                                   : new CommonProblemDescriptor[]{descriptor};
+            actions.put(element, descriptors == null ?
+                                 descriptorAsArray :
+                                 DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
           }
           else if (node instanceof RefElementNode) {
             selectedElements.add(((RefElementNode)node).getElement());
@@ -110,8 +113,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
                                     @NotNull final InspectionTreeNode parentNode,
                                     final boolean showStructure,
                                     @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems,
-                                    final DefaultTreeModel model) {
+                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
@@ -122,11 +124,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
             return new OfflineProblemDescriptorContainer(descriptor);
           }
         };
-      final List<InspectionTreeNode> list = buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure);
-      for (InspectionTreeNode node : list) {
-        toolNode.add(node);
-      }
       parentNode.add(toolNode);
+      buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure, toolNode::add);
     }
   }
 
@@ -172,13 +171,15 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                   @NotNull final InspectionToolWrapper toolWrapper,
                                   @NotNull final UserObjectContainer container,
-                                  @NotNull final InspectionPackageNode packageNode,
+                                  @NotNull final InspectionTreeNode packageNode,
                                   final boolean canPackageRepeat) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final RefElementNode elemNode = addNodeToParent(container, presentation, packageNode);
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      elemNode.add(new OfflineProblemDescriptorNode(((OfflineProblemDescriptorContainer)container).getUserObject(),
-                                                    (LocalInspectionToolWrapper)toolWrapper, presentation));
+      final OfflineProblemDescriptorNode child =
+        OfflineProblemDescriptorNode.create(((OfflineProblemDescriptorContainer)container).getUserObject(),
+                                            (LocalInspectionToolWrapper)toolWrapper, presentation);
+      insertByIndex(child, elemNode);
     }
   }
 

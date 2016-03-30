@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
 /**
  * @author Max Medvedev
@@ -116,7 +116,7 @@ public class JavaStylePropertiesUtil {
     }
 
     GrArgumentList args = call.getArgumentList();
-    if (args == null || args.getExpressionArguments().length != 1 || PsiImplUtil.hasNamedArguments(args)) {
+    if (args.getExpressionArguments().length != 1 || PsiImplUtil.hasNamedArguments(args)) {
       return false;
     }
 
@@ -146,7 +146,7 @@ public class JavaStylePropertiesUtil {
     }
 
     GrArgumentList args = call.getArgumentList();
-    if (args == null || args.getAllArguments().length != 0) {
+    if (args.getAllArguments().length != 0) {
       return false;
     }
 

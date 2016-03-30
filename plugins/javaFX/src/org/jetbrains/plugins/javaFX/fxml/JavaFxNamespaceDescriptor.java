@@ -16,8 +16,8 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxRootTagDescriptor;
 
 import java.util.ArrayList;
 
@@ -31,18 +31,17 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
   @Nullable
   @Override
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
-    final String name = tag.getName();
-
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag != null) {
       final XmlElementDescriptor descriptor = parentTag.getDescriptor();
       return descriptor != null ? descriptor.getElementDescriptor(tag, parentTag) : null;
     }
 
-    if (FxmlConstants.FX_ROOT.equals(tag.getName())) {
-      return new JavaFxDefaultPropertyElementDescriptor(name, tag);
+    final String name = tag.getName();
+    if (FxmlConstants.FX_ROOT.equals(name)) {
+      return new JavaFxRootTagDescriptor(tag);
     }
-    return new JavaFxClassBackedElementDescriptor(name, tag);
+    return new JavaFxClassTagDescriptor(name, tag);
   }
 
   @NotNull
@@ -50,13 +49,13 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable XmlDocument document) {
     if (document != null) {
       final Project project = document.getProject();
-      final PsiClass paneClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_SCENE_LAYOUT_PANE, GlobalSearchScope.allScope(project));
+      final PsiClass paneClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_SCENE_LAYOUT_PANE, GlobalSearchScope.allScope(project));
       if (paneClass != null) {
         final ArrayList<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
         ClassInheritorsSearch.search(paneClass, paneClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
           @Override
           public boolean process(PsiClass psiClass) {
-            result.add(new JavaFxClassBackedElementDescriptor(psiClass.getName(), psiClass));
+            result.add(new JavaFxClassTagDescriptor(psiClass.getName(), psiClass));
             return true;
           }
         });

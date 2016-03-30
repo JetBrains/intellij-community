@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 public class VcsLogProperties {
   public static class VcsLogProperty<T> {
     private final T defaultValue;
+
     private VcsLogProperty(@NotNull T defaultValue) {
       this.defaultValue = defaultValue;
     }

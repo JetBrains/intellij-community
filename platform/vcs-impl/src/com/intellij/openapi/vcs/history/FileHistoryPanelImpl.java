@@ -27,8 +27,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -88,7 +88,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -398,12 +397,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     listener.installOn(myDualView.getTreeView());
     setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
+    myPopupActions = createPopupActions();
+
     createDualView();
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(isStaticEmbedded);
     }
-
-    myPopupActions = createPopupActions();
 
     myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
       public void finished() {
@@ -596,22 +595,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private void createDualView() {
     myDualView.setShowGrid(true);
-    myDualView.getTreeView().addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionPopupMenu popupMenu = ActionManager.getInstance()
-          .createActionPopupMenu(ActionPlaces.UPDATE_POPUP, myPopupActions);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    });
-
-    myDualView.getFlatView().addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionPopupMenu popupMenu = ActionManager.getInstance()
-          .createActionPopupMenu(ActionPlaces.UPDATE_POPUP, myPopupActions);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    });
-
+    PopupHandler.installPopupHandler(myDualView.getTreeView(), myPopupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(myDualView.getFlatView(), myPopupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
     myDualView.requestFocus();
 
     myDualView.addListSelectionListener(new ListSelectionListener() {
@@ -1030,11 +1015,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     private String createGetActionTitle(final VcsFileRevision revision) {
-      return VcsBundle.message("action.name.for.file.get.version", getIOFile().getAbsolutePath(), revision.getRevisionNumber());
-    }
-
-    private File getIOFile() {
-      return myFilePath.getIOFile();
+      return VcsBundle.message("action.name.for.file.get.version", myFilePath.getPath(), revision.getRevisionNumber());
     }
 
     private void write(byte[] revision) throws IOException {
@@ -1057,7 +1038,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     private void writeContentToIOFile(byte[] revisionContent) throws IOException {
-      FileUtil.writeToFile(getIOFile(), revisionContent);
+      FileUtil.writeToFile(myFilePath.getIOFile(), revisionContent);
     }
 
     private void writeContentToDocument(final Document document, byte[] revisionContent) throws IOException {
@@ -1076,6 +1057,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public MyAnnotateAction() {
       super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"), AllIcons.Actions.Annotate);
       setShortcutSet(ActionManager.getInstance().getAction("Annotate").getShortcutSet());
+    }
+
+    @Nullable
+    @Override
+    protected Editor getEditor(@NotNull AnActionEvent e) {
+      VirtualFile virtualFile = getVirtualFile();
+      if (virtualFile == null) return null;
+
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      if (editor != null) {
+        VirtualFile editorFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+        if (Comparing.equal(editorFile, virtualFile)) return editor;
+      }
+
+      FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(virtualFile);
+      if (fileEditor instanceof TextEditor) {
+        return ((TextEditor)fileEditor).getEditor();
+      }
+      return null;
     }
 
     @Nullable

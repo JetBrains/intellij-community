@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
@@ -50,12 +49,7 @@ import java.util.Comparator;
  * @author nik
  */
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
-  public static final Comparator<XValueNodeImpl> COMPARATOR = new Comparator<XValueNodeImpl>() {
-    @Override
-    public int compare(XValueNodeImpl o1, XValueNodeImpl o2) {
-      return StringUtil.naturalCompare(o1.getName(), o2.getName());
-    }
-  };
+  public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   private static final int MAX_NAME_LENGTH = 100;
 
@@ -104,8 +98,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     // extra check for obsolete nodes - tree root was changed
     // too dangerous to put this into isObsolete - it is called from anywhere, not only EDT
     if (isObsolete()) return;
-    XDebuggerTreeNode root = getTree().getRoot();
-    if (root != null && !TreeUtil.isAncestor(root, this)) return;
 
     setIcon(icon);
     myValuePresentation = valuePresentation;
@@ -153,12 +145,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       };
 
       if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-        getValueContainer().computeSourcePosition(new XNavigatable() {
-          @Override
-          public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-            callback.computed(sourcePosition);
-          }
-        });
+        getValueContainer().computeSourcePosition(callback::computed);
       }
     }
     catch (Exception ignore) {
@@ -167,12 +154,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   @Override
   public void setFullValueEvaluator(@NotNull final XFullValueEvaluator fullValueEvaluator) {
-    invokeNodeUpdate(new Runnable() {
-      @Override
-      public void run() {
-        myFullValueEvaluator = fullValueEvaluator;
-        fireNodeChanged();
-      }
+    invokeNodeUpdate(() -> {
+      myFullValueEvaluator = fullValueEvaluator;
+      fireNodeChanged();
     });
   }
 

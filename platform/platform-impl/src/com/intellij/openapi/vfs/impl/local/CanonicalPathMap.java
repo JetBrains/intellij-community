@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,18 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.concurrency.Futures;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -66,25 +58,15 @@ class CanonicalPathMap {
   }
 
   private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
-    final Map<String, String> resolvedPaths = ContainerUtil.newConcurrentMap();
+    Map<String, String> result = ContainerUtil.newConcurrentMap();
 
-    final BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
-    Futures.invokeAll(JBIterable.from(recursiveRoots).append(flatRoots).transform(new Function<String, Future<?>>() {
-      @Override
-      public Future<?> fun(final String root) {
-        return executor.submit(new Runnable() {
-          @Override
-          public void run() {
-            String canonicalPath = FileSystemUtil.resolveSymLink(root);
-            if (canonicalPath != null) {
-              resolvedPaths.put(root, canonicalPath);
-            }
-          }
-        });
-      }
-    }).toList());
+    List<String> roots = ContainerUtil.concat(Arrays.asList(recursiveRoots, flatRoots));
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(roots, null, false, false, root -> {
+      ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result);
+      return true;
+    });
 
-    return resolvedPaths;
+    return result;
   }
 
   private static List<String> mapPaths(Map<String, String> resolvedPaths, List<String> paths, Collection<Pair<String, String>> mapping) {
@@ -139,7 +121,7 @@ class CanonicalPathMap {
    * of the recursive root because if the root itself was changed, we need to know about it.
    */
   @NotNull
-  public Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact, boolean fastPath) {
+  public Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact) {
     if (myFlatWatchRoots.isEmpty() && myRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
     Collection<String> affectedPaths = applyMapping(reportedPath);
@@ -147,8 +129,6 @@ class CanonicalPathMap {
 
     ext:
     for (String path : affectedPaths) {
-      if (fastPath && !changedPaths.isEmpty()) break;
-
       for (String root : myFlatWatchRoots) {
         if (FileUtil.namesEqual(path, root)) {
           changedPaths.add(path);
@@ -178,7 +158,7 @@ class CanonicalPathMap {
       }
     }
 
-    if (!fastPath && changedPaths.isEmpty() && LOG.isDebugEnabled()) {
+    if (changedPaths.isEmpty() && LOG.isDebugEnabled()) {
       LOG.debug("Not watchable, filtered: " + reportedPath);
     }
 

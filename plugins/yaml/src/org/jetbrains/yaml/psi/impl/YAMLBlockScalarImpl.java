@@ -12,6 +12,8 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
+  protected static final int DEFAULT_CONTENT_INDENT = 2;
+  
   public YAMLBlockScalarImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -63,7 +65,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
     return result;
   }
 
-  private int locateIndent() {
+  protected int locateIndent() {
     int number = 0;
     for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == getContentType()) {

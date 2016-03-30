@@ -11,10 +11,9 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.learning.courseFormat.UserTest;
-import com.jetbrains.edu.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,15 +125,29 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
       StudyStatus taskFileStatus = getStatus(taskFile);
       if (taskFileStatus == StudyStatus.Unchecked) {
         task.setStatus(StudyStatus.Unchecked);
+        removeObsoleteTaskStatus(task);
         return StudyStatus.Unchecked;
       }
       if (taskFileStatus == StudyStatus.Failed) {
         task.setStatus(StudyStatus.Failed);
+        removeObsoleteTaskStatus(task);
         return StudyStatus.Failed;
       }
     }
     task.setStatus(StudyStatus.Solved);
+    removeObsoleteTaskStatus(task);
     return StudyStatus.Solved;
+  }
+  
+  private void removeObsoleteTaskStatus(Task task) {
+    for (TaskFile taskFile: task.taskFiles.values()) {
+      myTaskStatusMap.remove(taskFile);
+      
+      for (AnswerPlaceholder answerPlaceholder: taskFile.getAnswerPlaceholders()) {
+        myStudyStatusMap.remove(answerPlaceholder);
+      }
+    }
+    
   }
 
   private StudyStatus getStatus(@NotNull final TaskFile file) {

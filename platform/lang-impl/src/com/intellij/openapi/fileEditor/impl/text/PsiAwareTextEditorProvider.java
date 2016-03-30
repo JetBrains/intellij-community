@@ -22,8 +22,6 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -156,20 +154,10 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     // Folding
     final CodeFoldingState foldState = state.getFoldingState();
     if (project != null && foldState != null) {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-          editor.getFoldingModel().runBatchFoldingOperation(
-            new Runnable() {
-              @Override
-              public void run() {
-                CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState);
-              }
-            }
-          );
-        }
-      }.execute();
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      editor.getFoldingModel().runBatchFoldingOperation(
+        () -> CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState)
+      );
     }
   }
 

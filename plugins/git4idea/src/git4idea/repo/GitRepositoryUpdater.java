@@ -23,14 +23,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.Function;
 import com.intellij.util.concurrency.QueueProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
@@ -45,18 +49,23 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   @Nullable private final VirtualFile myRemotesDir;
   @Nullable private final VirtualFile myHeadsDir;
   @Nullable private final VirtualFile myTagsDir;
-  @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
+  @Nullable private final Set<LocalFileSystem.WatchRequest> myWatchRequests;
 
-  GitRepositoryUpdater(@NotNull GitRepository repository) {
+  GitRepositoryUpdater(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myRepository = repository;
-    VirtualFile gitDir = repository.getGitDir();
-    myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
+    Collection<String> rootPaths = ContainerUtil.map(gitFiles.getRootDirs(), new Function<VirtualFile, String>() {
+      @Override
+      public String fun(VirtualFile file) {
+        return file.getPath();
+      }
+    });
+    myWatchRequests = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
 
-    myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
-    visitSubDirsInVfs(gitDir);
-    myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
-    myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
-    myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsPath());
+    myRepositoryFiles = gitFiles;
+    visitSubDirsInVfs();
+    myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsFile());
+    myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesFile());
+    myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsFile());
 
     Project project = repository.getProject();
     myUpdateQueue = new QueueProcessor<Object>(new DvcsUtil.Updater(repository), project.getDisposed());
@@ -71,9 +80,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   @Override
   public void dispose() {
-    if (myWatchRequest != null) {
-      LocalFileSystem.getInstance().removeWatchedRoot(myWatchRequest);
-    }
+    LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
     if (myMessageBusConnection != null) {
       myMessageBusConnection.disconnect();
     }
@@ -128,8 +135,10 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     }
   }
 
-  private void visitSubDirsInVfs(@NotNull VirtualFile gitDir) {
-    gitDir.getChildren();
+  private void visitSubDirsInVfs() {
+    for (VirtualFile rootDir : myRepositoryFiles.getRootDirs()) {
+      rootDir.getChildren();
+    }
     for (String path : myRepositoryFiles.getDirsToWatch()) {
       DvcsUtil.ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     }

@@ -2,9 +2,13 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
@@ -39,5 +43,13 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
     ipnbFilePanel.revalidate();
     ipnbFilePanel.repaint();
     ipnbFilePanel.requestFocus();
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final DataContext context = e.getDataContext();
+    final IpnbFileEditor editor = IpnbFileEditor.DATA_KEY.getData(context);
+    final Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(editor != null);
   }
 }

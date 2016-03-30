@@ -596,7 +596,11 @@ public class PluginManagerCore {
           // check for missing optional dependency
           IdeaPluginDescriptor dep = idToDescriptorMap.get(dependentPluginId);
           if (dep != null) {
-            plugins.add(dep.getPluginId());
+            //if 'dep' refers to a module we need to add the real plugin containing this module only if it's still enabled, otherwise the graph will be inconsistent
+            PluginId realPluginId = dep.getPluginId();
+            if (idToDescriptorMap.containsKey(realPluginId)) {
+              plugins.add(realPluginId);
+            }
           }
         }
         return plugins.iterator();

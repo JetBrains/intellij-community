@@ -71,7 +71,7 @@ public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection 
     @Override
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
-      if (!aClass.isInterface() || AnnotationUtil.isAnnotated(aClass, "java.lang.FunctionalInterface", false)) {
+      if (!aClass.isInterface() || AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false)) {
         return;
       }
       if (LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {

@@ -38,7 +38,7 @@ public class BranchActionGroupPopup extends PopupFactoryImpl.ActionGroupPopup {
   public BranchActionGroupPopup(@NotNull String title, @NotNull Project project,
                                 @NotNull Condition<AnAction> preselectActionCondition, @NotNull ActionGroup actions) {
     super(title, actions, SimpleDataContext.getProjectContext(project), false, false, true, false, null, -1,
-          preselectActionCondition, null);
+          preselectActionCondition, null, true);
   }
 
   @Override

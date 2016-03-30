@@ -24,7 +24,7 @@
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
-    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.YAMLScalar"
+    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
                              implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
   </extensions>
 

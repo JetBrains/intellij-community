@@ -38,7 +38,7 @@ public class IpnbFileType implements FileType {
 
   @NotNull
   public String getDescription() {
-    return "IPython Notebook";
+    return "Jupyter Notebook";
   }
 
   @NotNull

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter
 
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.refactoring.IntroduceParameterRefactoring
 import gnu.trove.TIntArrayList
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -27,7 +26,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceP
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author Max Medvedev
  */
@@ -59,11 +57,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
         }
       }
     }
+    handler.invoke myFixture.project, myFixture.editor, myFixture.file, null
+    doPostponedFormatting(myFixture.project)
 
-    WriteCommandAction.runWriteCommandAction project, {
-      handler.invoke myFixture.project, myFixture.editor, myFixture.file, null
-      doPostponedFormatting(myFixture.project)
-    }
     myFixture.checkResult after
   }
 

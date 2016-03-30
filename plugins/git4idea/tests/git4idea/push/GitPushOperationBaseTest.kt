@@ -56,9 +56,7 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     myGitRepositoryManager.updateAllRepositories()
   }
 
-  override fun getDebugLogCategories(): Collection<String> {
-    return listOf("#" + GitPushOperation::class.java.name)
-  }
+  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)
 
   protected fun setupRepositories(repoRoot: String, parentName: String, broName: String): Trinity<GitRepository, File, File> {
     val parentRepo = createParentRepo(parentName)

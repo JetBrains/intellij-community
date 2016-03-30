@@ -34,13 +34,13 @@ import java.nio.ByteBuffer;
  * @author yole
  */
 public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
-  private final ContentRevision myContentRevision;
+  @NotNull private final ContentRevision myContentRevision;
   private byte[] myContent;
   private boolean myContentLoadFailed;
 
   private static final WeakHashMap<ContentRevision, ContentRevisionVirtualFile> ourMap = new WeakHashMap<ContentRevision, ContentRevisionVirtualFile>();
 
-  public static ContentRevisionVirtualFile create(ContentRevision contentRevision) {
+  public static ContentRevisionVirtualFile create(@NotNull ContentRevision contentRevision) {
     synchronized(ourMap) {
       ContentRevisionVirtualFile revisionVirtualFile = ourMap.get(contentRevision);
       if (revisionVirtualFile == null) {
@@ -51,7 +51,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
     }
   }
 
-  private ContentRevisionVirtualFile(ContentRevision contentRevision) {
+  private ContentRevisionVirtualFile(@NotNull ContentRevision contentRevision) {
     super(contentRevision.getFile().getPath(), VcsFileSystem.getInstance());
     myContentRevision = contentRevision;
     setCharset(CharsetToolkit.UTF8_CHARSET);
@@ -117,5 +117,10 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
     catch (ProcessCanceledException ex) {
       myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
     }
+  }
+
+  @NotNull
+  public ContentRevision getContentRevision() {
+    return myContentRevision;
   }
 }

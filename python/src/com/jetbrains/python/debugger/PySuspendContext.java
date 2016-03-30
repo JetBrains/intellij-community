@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.util.Collection;
 
 public class PySuspendContext extends XSuspendContext {
 
-  private final XExecutionStack myActiveStack;
+  private final PyExecutionStack myActiveStack;
   private PyDebugProcess myDebugProcess;
 
   public PySuspendContext(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo) {
@@ -33,10 +33,12 @@ public class PySuspendContext extends XSuspendContext {
   }
 
   @Override
-  public XExecutionStack getActiveExecutionStack() {
+  @NotNull
+  public PyExecutionStack getActiveExecutionStack() {
     return myActiveStack;
   }
 
+  @NotNull
   @Override
   public XExecutionStack[] getExecutionStacks() {
     final Collection<PyThreadInfo> threads = myDebugProcess.getThreads();

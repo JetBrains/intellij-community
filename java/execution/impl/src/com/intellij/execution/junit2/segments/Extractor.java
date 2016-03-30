@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.io.InputStream;
@@ -33,6 +32,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -45,7 +45,7 @@ public class Extractor implements Disposable {
   private final SegmentedInputStream myStream;
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
-  private final SequentialTaskExecutor myExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {

@@ -352,7 +352,7 @@ public abstract class TaskRepository {
   @Nullable
   public String getTaskComment(@NotNull Task task) {
     return isShouldFormatCommitMessage()
-           ? myCommitMessageFormat.replace("{id}", task.getId()).replace("{summary}", task.getSummary())
+           ? myCommitMessageFormat.replace("{id}", task.getPresentableId()).replace("{summary}", task.getSummary())
            : null;
   }
 

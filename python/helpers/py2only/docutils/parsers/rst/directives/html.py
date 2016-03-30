@@ -1,4 +1,4 @@
-# $Id: html.py 4667 2006-07-12 21:40:56Z wiemann $
+# $Id: html.py 7320 2012-01-19 22:33:02Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,6 +8,7 @@ Directives for typically HTML-specific constructs.
 
 __docformat__ = 'reStructuredText'
 
+import sys
 from docutils import nodes, utils
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import states
@@ -40,8 +41,7 @@ class MetaBody(states.SpecializedBody):
             line = self.state_machine.line
             msg = self.reporter.info(
                   'No content for meta tag "%s".' % name,
-                  nodes.literal_block(line, line),
-                  line=self.state_machine.abs_line_number())
+                  nodes.literal_block(line, line))
             return msg, blank_finish
         tokens = name.split()
         try:
@@ -57,8 +57,7 @@ class MetaBody(states.SpecializedBody):
                 line = self.state_machine.line
                 msg = self.reporter.error(
                       'Error parsing meta tag attribute "%s": %s.'
-                      % (token, detail), nodes.literal_block(line, line),
-                      line=self.state_machine.abs_line_number())
+                      % (token, detail), nodes.literal_block(line, line))
                 return msg, blank_finish
         self.document.note_pending(pending)
         return pending, blank_finish
@@ -75,7 +74,7 @@ class Meta(Directive):
         node = nodes.Element()
         new_line_offset, blank_finish = self.state.nested_list_parse(
             self.content, self.content_offset, node,
-            initial_state='MetaBody', blank_finish=1,
+            initial_state='MetaBody', blank_finish=True,
             state_machine_kwargs=self.SMkwargs)
         if (new_line_offset - self.content_offset) != len(self.content):
             # incomplete parse of block?

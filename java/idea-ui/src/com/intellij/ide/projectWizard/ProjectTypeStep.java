@@ -24,7 +24,6 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
 import com.intellij.ide.util.newProjectWizard.WizardDelegate;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
@@ -48,6 +47,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
+import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
@@ -272,6 +272,24 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
+  public static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context) {
+    ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
+    final MultiMap<TemplatesGroup, ProjectTemplate> groups = new MultiMap<TemplatesGroup, ProjectTemplate>();
+    for (ProjectTemplatesFactory factory : factories) {
+      for (String group : factory.getGroups()) {
+        ProjectTemplate[] templates = factory.createTemplates(group, context);
+        List<ProjectTemplate> values = Arrays.asList(templates);
+        if (!values.isEmpty()) {
+          Icon icon = factory.getGroupIcon(group);
+          String parentGroup = factory.getParentGroup(group);
+          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group), parentGroup, group, null);
+          groups.putValues(templatesGroup, values);
+        }
+      }
+    }
+    return groups;
+  }
+
   private boolean isFrameworksMode() {
     return FRAMEWORKS_CARD.equals(myCurrentCard) && getSelectedBuilder().equals(myContext.getProjectBuilder());
   }
@@ -299,7 +317,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       }
     }
 
-    MultiMap<TemplatesGroup, ProjectTemplate> map = CreateFromTemplateMode.getTemplatesMap(context);
+    MultiMap<TemplatesGroup, ProjectTemplate> map = getTemplatesMap(context);
     myTemplatesMap.putAllValues(map);
 
     for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
@@ -652,6 +670,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       myWizard.getSequence().setType(builder.getBuilderId());
     }
     myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
+    myWizard.updateWizardButtons();
   }
 
   @TestOnly

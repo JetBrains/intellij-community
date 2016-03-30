@@ -77,6 +77,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
 /**
@@ -206,8 +207,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           }
         }
         else {
-          sourceSetData.setProductionModuleId(getInternalModuleName(gradleModule, "main"));
           if ("test".equals(sourceSet.getName())) {
+            sourceSetData.setProductionModuleId(getInternalModuleName(gradleModule, "main"));
             final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
             if (testsArtifacts != null) {
               artifacts.addAll(testsArtifacts);
@@ -399,10 +400,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
       assert sourceSetMap != null;
 
+      final Map<String, String> artifactsMap = ideProject.getUserData(CONFIGURATION_ARTIFACTS);
+      assert artifactsMap != null;
+
       processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<GradleSourceSetData> dataNode, @NotNull ExternalSourceSet sourceSet) {
-          buildDependencies(sourceSetMap, dataNode, sourceSet.getDependencies(), ideProject);
+          buildDependencies(sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
         }
       });
 
@@ -573,9 +577,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                     @Nullable String debuggerSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
     if (!StringUtil.isEmpty(debuggerSetup)) {
+      final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
       final String[] lines = {
         "gradle.taskGraph.beforeTask { Task task ->",
-        "    if (task instanceof JavaForkOptions) {",
+        "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
         "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib') && !it?.startsWith('-Xrunjdwp')}",
         "        jvmArgs << '" + debuggerSetup.trim() + '\'',
         "        task.jvmArgs jvmArgs",

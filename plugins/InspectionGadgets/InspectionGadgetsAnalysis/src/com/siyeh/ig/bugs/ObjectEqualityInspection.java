@@ -145,7 +145,7 @@ public class ObjectEqualityInspection extends BaseInspection {
       progressManager.runProcess(new Runnable() {
         @Override
         public void run() {
-          ClassInheritorsSearch.search(aClass, scope, true, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+          ClassInheritorsSearch.search(aClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
         }
       }, null);
       if (processor.isOverflow()) {

@@ -16,8 +16,7 @@
 
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.OptionsConstants;
-import com.intellij.ide.BrowserUtil;
+import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -31,10 +30,7 @@ import com.intellij.ui.FontComboBox;
 import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +51,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
       return UISettings.getShadowInstance().EDITOR_AA_TYPE;
     }
   };
-  private static final String HELP_URL = "https://confluence.jetbrains.com/display/IDEADEV/Support+for+Ligatures+in+Editor";
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -66,7 +61,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private final FontComboBox myPrimaryCombo = new FontComboBox();
   private final JCheckBox myUseSecondaryFontCheckbox = new JCheckBox(ApplicationBundle.message("secondary.font"));
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
-  private final JLabel myLigaturesInfoLinkLabel;
   private final FontComboBox mySecondaryCombo = new FontComboBox();
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
@@ -101,13 +95,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
                    SwingConstants.LEFT), "newline, sx 5");
     add(myUseSecondaryFontCheckbox, "newline, ax right");
     add(mySecondaryCombo, "sgx b");
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
     myEnableLigaturesCheckbox.setBorder(null);
-    panel.add(myEnableLigaturesCheckbox);
-    myLigaturesInfoLinkLabel = new LinkLabel<>(ApplicationBundle.message("ligatures.more.info"), null, (LinkListener<Void>)(aSource, aLinkData) -> BrowserUtil.browse(HELP_URL));
-    myLigaturesInfoLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
-    panel.add(myLigaturesInfoLinkLabel);
-    add(panel, "newline, sx 2");
+    add(myEnableLigaturesCheckbox, "newline, sx 2");
 
     myOnlyMonospacedCheckBox.setBorder(null);
     myUseSecondaryFontCheckbox.setBorder(null);
@@ -129,15 +118,11 @@ public class FontOptions extends JPanel implements OptionsPanel{
       mySecondaryCombo.setEnabled(myUseSecondaryFontCheckbox.isSelected());
       syncFontFamilies();
     });
-    ItemListener itemListener = e -> {
-      if (e.getStateChange() == ItemEvent.SELECTED) {
-        syncFontFamilies();
-      }
-    };
+    ItemListener itemListener = this::syncFontFamilies;
     myPrimaryCombo.addItemListener(itemListener);
     mySecondaryCombo.addItemListener(itemListener);
 
-    ActionListener actionListener = e -> syncFontFamilies();
+    ActionListener actionListener = this::syncFontFamilies;
     myPrimaryCombo.addActionListener(actionListener);
     mySecondaryCombo.addActionListener(actionListener);
 
@@ -161,7 +146,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         try {
           int value = Integer.parseInt(myEditorFontSizeField.getText());
           value += (up ? 1 : -1);
-          value = Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE, Math.max(OptionsConstants.MIN_EDITOR_FONT_SIZE, value));
+          value = Math.min(EditorFontsConstants.getMaxEditorFontSize(), Math.max(EditorFontsConstants.getMinEditorFontSize(), value));
           myEditorFontSizeField.setText(String.valueOf(value));
         }
         catch (NumberFormatException ignored) {
@@ -188,7 +173,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         try {
           float value = Float.parseFloat(myLineSpacingField.getText());
           value += (up ? 1 : -1) * .1F;
-          value = Math.min(OptionsConstants.MAX_EDITOR_LINE_SPACING, Math.max(OptionsConstants.MIN_EDITOR_LINE_SPACING, value));
+          value = Math.min(EditorFontsConstants.getMaxEditorLineSpacing(), Math.max(EditorFontsConstants.getMinEditorLineSpacing(), value));
           myLineSpacingField.setText(String.format(Locale.ENGLISH, "%.1f", value));
         }
         catch (NumberFormatException ignored) {
@@ -200,19 +185,35 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   private int getFontSizeFromField() {
     try {
-      return Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE,
-                      Math.max(OptionsConstants.MIN_EDITOR_FONT_SIZE, Integer.parseInt(myEditorFontSizeField.getText())));
+      return Math.min(EditorFontsConstants.getMaxEditorFontSize(),
+                      Math.max(EditorFontsConstants.getMinEditorFontSize(), Integer.parseInt(myEditorFontSizeField.getText())));
     }
     catch (NumberFormatException e) {
-      return OptionsConstants.DEFAULT_EDITOR_FONT_SIZE;
+      return EditorFontsConstants.getDefaultEditorFontSize();
     }
   }
 
   private float getLineSpacingFromField() {
     try {
-       return Math.min(OptionsConstants.MAX_EDITOR_LINE_SPACING, Math.max(OptionsConstants.MIN_EDITOR_LINE_SPACING, Float.parseFloat(myLineSpacingField.getText())));
+       return Math.min(EditorFontsConstants.getMaxEditorLineSpacing(), Math.max(EditorFontsConstants.getMinEditorLineSpacing(), Float.parseFloat(myLineSpacingField.getText())));
     } catch (NumberFormatException e){
-      return OptionsConstants.DEFAULT_EDITOR_LINE_SPACING;
+      return EditorFontsConstants.getDefaultEditorLineSpacing();
+    }
+  }
+
+  /**
+   * Processes an event from {@code FontComboBox}
+   * if it is enabled and its item is selected.
+   *
+   * @param event the event to process
+   */
+  private void syncFontFamilies(AWTEvent event) {
+    Object source = event.getSource();
+    if (source instanceof FontComboBox) {
+      FontComboBox combo = (FontComboBox)source;
+      if (combo.isEnabled() && combo.getSelectedItem() != null) {
+        syncFontFamilies();
+      }
     }
   }
 
@@ -229,13 +230,13 @@ public class FontOptions extends JPanel implements OptionsPanel{
       if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
         fontPreferences.addFontFamily(primaryFontFamily);
       }
-      fontPreferences.register(primaryFontFamily, JBUI.scale(fontSize));
+      fontPreferences.register(primaryFontFamily, fontSize);
     }
     if (secondaryFontFamily != null) {
       if (!FontPreferences.DEFAULT_FONT_NAME.equals(secondaryFontFamily)){
         fontPreferences.addFontFamily(secondaryFontFamily);
       }
-      fontPreferences.register(secondaryFontFamily, JBUI.scale(fontSize));
+      fontPreferences.register(secondaryFontFamily, fontSize);
     }
     updateDescription(true);
   }
@@ -282,7 +283,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
     myEnableLigaturesCheckbox.setEnabled(!readOnly);
-    myLigaturesInfoLinkLabel.setEnabled(!readOnly);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;

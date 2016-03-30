@@ -58,18 +58,6 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
   }
 
   @Override
-  @NotNull
-  public final T showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
-    GeneratorPeer<T> peer = createPeer();
-    DialogWrapper dialog = new MyDialogWrapper(peer);
-    dialog.show();
-    if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
-      throw new ProcessCanceledException();
-    }
-    return peer.getSettings();
-  }
-
-  @Override
   public abstract void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull T settings, @NotNull Module module);
 
   /**

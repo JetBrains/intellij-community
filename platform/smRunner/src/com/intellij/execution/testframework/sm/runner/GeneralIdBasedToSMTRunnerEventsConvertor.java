@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,7 @@ import java.util.Set;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
-  private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
+  private final HashMap<String, Node> myNodeByIdMap = new HashMap<>();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
@@ -45,7 +45,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
                                                   @NotNull String testFrameworkName) {
     super(project, testFrameworkName);
     myTestsRootProxy = testsRootProxy;
-    myTestsRootNode = new Node(0, null, testsRootProxy);
+    myTestsRootNode = new Node(TreeNodeEvent.ROOT_NODE_ID, null, testsRootProxy);
     myNodeByIdMap.put(myTestsRootNode.getId(), myTestsRootNode);
   }
 
@@ -169,12 +169,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
   @Nullable
   private Node findValidParentNode(@NotNull BaseStartedNodeEvent startedNodeEvent) {
-    int parentId = startedNodeEvent.getParentId();
-    if (parentId < 0) {
-      logProblem("Parent node id should be non-negative: " + startedNodeEvent + ".", true);
+    String parentId = startedNodeEvent.getParentId();
+    if (parentId == null) {
+      logProblem("Parent node id should be defined: " + startedNodeEvent + ".", true);
       return null;
     }
-    Node parentNode = myNodeByIdMap.get(startedNodeEvent.getParentId());
+    Node parentNode = myNodeByIdMap.get(parentId);
     if (parentNode == null) {
       logProblem("Parent node is undefined for " + startedNodeEvent + ".", true);
       return null;
@@ -336,9 +336,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   private boolean validateNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
-    int nodeId = treeNodeEvent.getId();
-    if (nodeId <= 0) {
-      logProblem("Node id should be positive: " + treeNodeEvent + ".", true);
+    String nodeId = treeNodeEvent.getId();
+    if (nodeId == null || nodeId.equals(TreeNodeEvent.ROOT_NODE_ID)) {
+      logProblem("Node id should be initialized: " + treeNodeEvent + ".", true);
       return false;
     }
     return true;
@@ -353,7 +353,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   @Nullable
-  public SMTestProxy findProxyById(int id) {
+  public SMTestProxy findProxyById(@NotNull String id) {
     Node node = myNodeByIdMap.get(id);
     return node != null ? node.getProxy() : null;
   }
@@ -413,19 +413,20 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   private static class Node {
-    private final int myId;
+    private final String myId;
     private final Node myParentNode;
     private final SMTestProxy myProxy;
     private State myState;
 
-    Node(int id, @Nullable Node parentNode, @NotNull SMTestProxy proxy) {
+    Node(@Nullable String id, @Nullable Node parentNode, @NotNull SMTestProxy proxy) {
       myId = id;
       myParentNode = parentNode;
       myProxy = proxy;
       myState = State.NOT_RUNNING;
     }
 
-    public int getId() {
+    @Nullable
+    public String getId() {
       return myId;
     }
 
@@ -472,7 +473,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
     @Override
     public int hashCode() {
-      return myId;
+      return myId != null ? myId.hashCode() : -1;
     }
 
     @Override

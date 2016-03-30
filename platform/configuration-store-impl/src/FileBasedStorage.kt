@@ -25,7 +25,6 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.StorageUtil
-import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
@@ -42,7 +41,6 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.ByteBuffer
 
@@ -198,29 +196,25 @@ private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, co
 
 private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
   LOG.debug { "Save ${file.presentableUrl}" }
-  runWriteAction {  ->
-    try {
-      val out = file.getOutputStream(requestor)
-      try {
-        if (prependXmlProlog) {
-          out.write(XML_PROLOG)
-          out.write(lineSeparator.separatorBytes)
-        }
-        if (content is Element) {
-          JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
-        }
-        else {
-          (content as BufferExposingByteArrayOutputStream).writeTo(out)
-        }
+
+  if (!file.isWritable) {
+    // may be element is not long-lived, so, we must write it to byte array
+    val byteArray = if (content is Element) content.toBufferExposingByteArray(lineSeparator.separatorString) else (content as BufferExposingByteArrayOutputStream)
+    throw ReadOnlyModificationException(file, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
+  }
+
+  runWriteAction {
+    file.getOutputStream(requestor).use { out ->
+      if (prependXmlProlog) {
+        out.write(XML_PROLOG)
+        out.write(lineSeparator.separatorBytes)
       }
-      finally {
-        out.close()
+      if (content is Element) {
+        JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
       }
-    }
-    catch (e: FileNotFoundException) {
-      // may be element is not long-lived, so, we must write it to byte array
-      val byteArray = if (content is Element) content.toBufferExposingByteArray(lineSeparator.separatorString) else (content as BufferExposingByteArrayOutputStream)
-      throw ReadOnlyModificationException(file, e, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
+      else {
+        (content as BufferExposingByteArrayOutputStream).writeTo(out)
+      }
     }
   }
 }
@@ -255,11 +249,11 @@ private fun deleteFile(file: File, requestor: Any, virtualFile: VirtualFile?) {
     }
   }
   else if (virtualFile.exists()) {
-    try {
+    if (virtualFile.isWritable) {
       deleteFile(requestor, virtualFile)
     }
-    catch (e: FileNotFoundException) {
-      throw ReadOnlyModificationException(virtualFile, e, StateStorage.SaveSession { deleteFile(requestor, virtualFile) })
+    else {
+      throw ReadOnlyModificationException(virtualFile, StateStorage.SaveSession { deleteFile(requestor, virtualFile) })
     }
   }
 }
@@ -267,3 +261,5 @@ private fun deleteFile(file: File, requestor: Any, virtualFile: VirtualFile?) {
 fun deleteFile(requestor: Any, virtualFile: VirtualFile) {
   runWriteAction { virtualFile.delete(requestor) }
 }
+
+internal class ReadOnlyModificationException(val file: VirtualFile, val session: StateStorage.SaveSession?) : RuntimeException()

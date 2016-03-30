@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,12 @@ public class JBScrollPane extends JScrollPane {
   @Deprecated
   public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
 
+  @Deprecated
+  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new RoundThumbPainter(2, .2f, .3f, Gray.x00);
+
+  @Deprecated
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .10f, .05f, Gray.xFF);
+
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
@@ -111,6 +117,15 @@ public class JBScrollPane extends JScrollPane {
       }
     }
     return color;
+  }
+
+  static Color getViewBackground(JScrollPane pane) {
+    if (pane == null) return null;
+    JViewport viewport = pane.getViewport();
+    if (viewport == null) return null;
+    Component view = viewport.getView();
+    if (view == null) return null;
+    return view.getBackground();
   }
 
   public static JScrollPane findScrollPane(Component c) {
@@ -312,10 +327,8 @@ public class JBScrollPane extends JScrollPane {
     @Override
     public void updateUI() {
       ScrollBarUI ui = getUI();
-      if (ui instanceof AbstractScrollBarUI) return;
-      setUI(!SystemInfo.isMac && Registry.is("ide.scroll.new.layout")
-            ? new DefaultScrollBarUI()
-            : ButtonlessScrollBarUI.createNormal());
+      if (ui instanceof DefaultScrollBarUI) return;
+      setUI(JBScrollBar.createUI(this));
     }
 
     @Override
@@ -390,14 +403,7 @@ public class JBScrollPane extends JScrollPane {
 
     private void updateColor(Component c) {
       if (!(c instanceof JScrollPane)) return;
-
-      JViewport vp = ((JScrollPane)c).getViewport();
-      if (vp == null) return;
-
-      Component view = vp.getView();
-      if (view == null) return;
-
-      lineColor = view.getBackground();
+      lineColor = getViewBackground((JScrollPane)c);
     }
   }
 
@@ -729,7 +735,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     private void adjustForVSB(Rectangle bounds, Insets insets, Rectangle vsbBounds, boolean vsbOpaque, boolean vsbOnLeft) {
-      vsbBounds.width = min(bounds.width, vsb.getPreferredSize().width);
+      vsbBounds.width = !vsb.isEnabled() ? 0 : min(bounds.width, vsb.getPreferredSize().width);
       if (vsbOnLeft) {
         vsbBounds.x = bounds.x - insets.left/* + vsbBounds.width*/;
         if (vsbOpaque) bounds.x += vsbBounds.width;
@@ -741,7 +747,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     private void adjustForHSB(Rectangle bounds, Insets insets, Rectangle hsbBounds, boolean hsbOpaque, boolean hsbOnTop) {
-      hsbBounds.height = min(bounds.height, hsb.getPreferredSize().height);
+      hsbBounds.height = !hsb.isEnabled() ? 0 : min(bounds.height, hsb.getPreferredSize().height);
       if (hsbOnTop) {
         hsbBounds.y = bounds.y - insets.top/* + hsbBounds.height*/;
         if (hsbOpaque) bounds.y += hsbBounds.height;
@@ -785,10 +791,10 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private static class AlphaPainter implements RegionPainter<Float> {
+  private static class AlphaPainter extends RegionPainter.Alpha {
     private final float myBase;
     private final float myDelta;
-    private final Color myFillColor;
+    final Color myFillColor;
 
     private AlphaPainter(float base, float delta, Color fill) {
       myBase = base;
@@ -796,28 +802,38 @@ public class JBScrollPane extends JScrollPane {
       myFillColor = fill;
     }
 
-    Composite newComposite(float alpha) {
-      return AlphaComposite.SrcOver.derive(alpha);
-    }
-
-    void paint(Graphics2D g, int x, int y, int width, int height) {
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
       g.setColor(myFillColor);
       g.fillRect(x, y, width, height);
     }
 
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
-      if (value != null) {
-        float alpha = myBase + myDelta * value;
-        if (alpha > 0) {
-          Composite old = g.getComposite();
-          g.setComposite(alpha < 1
-                         ? newComposite(alpha)
-                         : AlphaComposite.SrcOver);
-          paint(g, x, y, width, height);
-          g.setComposite(old);
-        }
-      }
+    protected float getAlpha(Float value) {
+      return value != null ? myBase + myDelta * value : 0;
+    }
+  }
+
+  private static class RoundThumbPainter extends AlphaPainter {
+    private final int myBorder;
+
+    private RoundThumbPainter(int border, float base, float delta, Color fill) {
+      super(base, delta, fill);
+      myBorder = border;
+    }
+
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
+      Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+      width -= myBorder + myBorder;
+      height -= myBorder + myBorder;
+
+      int arc = Math.min(width, height);
+      g.setColor(myFillColor);
+      g.fillRoundRect(x + myBorder, y + myBorder, width, height, arc, arc);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }
   }
 
@@ -830,7 +846,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     @Override
-    void paint(Graphics2D g, int x, int y, int width, int height) {
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
       super.paint(g, x + 1, y + 1, width - 2, height - 2);
       g.setColor(myDrawColor);
       if (Registry.is("ide.scroll.thumb.border.rounded")) {
@@ -851,8 +867,10 @@ public class JBScrollPane extends JScrollPane {
     }
 
     @Override
-    Composite newComposite(float alpha) {
-      return new SubtractComposite(alpha);
+    protected Composite getComposite(float alpha) {
+      return alpha < 1
+             ? new SubtractComposite(alpha)
+             : AlphaComposite.SrcOver;
     }
   }
 

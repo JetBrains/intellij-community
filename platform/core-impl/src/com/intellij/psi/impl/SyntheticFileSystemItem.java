@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SyntheticFileSystemItem extends PsiElementBase implements PsiFileSystemItem {
-  public static final Logger LOG = Logger.getInstance("#" + SyntheticFileSystemItem.class.getPackage().getName());
+  private static final Logger LOG = Logger.getInstance("#" + SyntheticFileSystemItem.class.getPackage().getName());
 
   protected final Project myProject;
   protected final PsiManager myManager;

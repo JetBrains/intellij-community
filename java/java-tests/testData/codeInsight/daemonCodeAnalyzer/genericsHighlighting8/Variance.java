@@ -61,7 +61,7 @@ class VarianceTesting {
 
 class SuperTester <U> {
      void go(Acceptor<? super U> acceptor, U u) {
-          acceptor.accept<error descr="'accept(SuperTester<capture<? super U>>, capture<? super U>)' in 'SuperTester.Acceptor' cannot be applied to '(SuperTester<U>, U)'">(this, u)</error>;
+          acceptor.accept(<error descr="'accept(SuperTester<capture<? super U>>, capture<? super U>)' in 'SuperTester.Acceptor' cannot be applied to '(SuperTester<U>, U)'">this</error>, u);
      }
 
      static class Acceptor <V> {
@@ -87,7 +87,7 @@ class CaptureTest {
    }
 
    void foo (Class<? extends Emum<CaptureTest>> clazz) {
-     Emum.valueOf<error descr="'valueOf(java.lang.Class<T>, java.lang.String)' in 'CaptureTest.Emum' cannot be applied to '(java.lang.Class<capture<? extends CaptureTest.Emum<CaptureTest>>>, java.lang.String)'">(clazz, "CCC")</error>;
+     Emum.valueOf(<error descr="'valueOf(java.lang.Class<T>, java.lang.String)' in 'CaptureTest.Emum' cannot be applied to '(java.lang.Class<capture<? extends CaptureTest.Emum<CaptureTest>>>, java.lang.String)'">clazz</error>, "CCC");
    }
 }
 

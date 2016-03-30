@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -36,12 +36,10 @@ public abstract class GrCallImpl extends GroovyPsiElementImpl implements GrCall 
     super(node);
   }
 
+  @Nullable
   @Override
   public GrArgumentList getArgumentList() {
-    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrArgumentList) return (GrArgumentList)cur;
-    }
-    return null;
+    return findChildByClass(GrArgumentList.class);
   }
 
   @Override

@@ -430,7 +430,7 @@ public class ExternalDiffToolUtil {
 
     @Override
     public void cleanup() {
-      myLocalFile.delete();
+      FileUtil.delete(myLocalFile);
     }
   }
 }

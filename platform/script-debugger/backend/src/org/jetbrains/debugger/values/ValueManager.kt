@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Obsolescent
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.rejectedPromise
-import org.jetbrains.debugger.Vm
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -48,8 +47,7 @@ abstract class ValueManager() : Obsolescent {
   companion object {
     val OBSOLETE_CONTEXT_PROMISE = rejectedPromise<Any?>(AsyncPromise.OBSOLETE_ERROR)
 
+    @Suppress("CAST_NEVER_SUCCEEDS")
     fun <T> reject() = OBSOLETE_CONTEXT_PROMISE as Promise<T>
   }
 }
-
-abstract class VmAwareValueManager<VM : Vm>(final val vm: VM) : ValueManager()

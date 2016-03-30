@@ -90,7 +90,7 @@ public class ProcessListUtil {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine(command));
       int exitCode = processOutput.getExitCode();
       if (exitCode != 0) {
-        LOG.error("Cannot get process list, 'ps' exited with code " + exitCode + ", stdout:\n" 
+        LOG.error("Cannot get process list, 'ps' exited with code " + exitCode + ", stdout:\n"
                   + processOutput.getStdout()
                   + "\nstderr:\n"
                   + processOutput.getStderr());
@@ -98,7 +98,7 @@ public class ProcessListUtil {
       output = processOutput.getStdout();
     }
     catch (ExecutionException e) {
-      LOG.error("Cannot get process list", e);                                                                                                                                                                                                   
+      LOG.error("Cannot get process list", e);
       return null;
     }
     return parser.fun(output);
@@ -110,7 +110,7 @@ public class ProcessListUtil {
 
     File[] processes = proc.listFiles();
     if (processes == null) {
-      LOG.error("Cannot read /proc, not mounted?");                                                                                                                                                                                                   
+      LOG.error("Cannot read /proc, not mounted?");
       return null;
     }
 
@@ -137,9 +137,22 @@ public class ProcessListUtil {
       }
       if (cmdline.isEmpty()) continue;
 
+      String executablePath = null;
+
+      try {
+        File exe = new File(each, "exe");
+        if (!exe.getAbsolutePath().equals(exe.getCanonicalPath())) {
+          executablePath = exe.getCanonicalPath();
+        }
+      }
+      catch (IOException e) {
+        // couldn't resolve symlink
+      }
+
       result.add(new ProcessInfo(pid, StringUtil.join(cmdline, " "),
                                  PathUtil.getFileName(cmdline.get(0)),
-                                 StringUtil.join(cmdline.subList(1, cmdline.size()), " ")
+                                 StringUtil.join(cmdline.subList(1, cmdline.size()), " "),
+                                 executablePath
       ));
     }
     return result;
@@ -192,7 +205,7 @@ public class ProcessListUtil {
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.substring(command.length()).trim();
 
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args));
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command));
     }
     return result;
   }
@@ -219,16 +232,21 @@ public class ProcessListUtil {
     for (int i = 1; i < lines.length; i++) {
       String line = lines[i];
 
-      int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
-      if (pid == -1) continue;
+      try {
+        int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
+        if (pid == -1) continue;
 
-      String state = line.substring(statStart, userStart).trim();
-      if (state.contains("Z")) continue; // zombie
+        String state = line.substring(statStart, userStart).trim();
+        if (state.contains("Z")) continue; // zombie
 
-      String user = line.substring(userStart, commandStart).trim();
-      String commandLine = line.substring(commandStart).trim();
+        String user = line.substring(userStart, commandStart).trim();
+        String commandLine = line.substring(commandStart).trim();
 
-      result.add(new MacProcessInfo(pid, commandLine, user, state));
+        result.add(new MacProcessInfo(pid, commandLine, user, state));
+      }
+      catch (Exception e) {
+        LOG.error("Can't parse line '" + line + "'", e);
+      }
     }
     return result;
   }
@@ -249,7 +267,7 @@ public class ProcessListUtil {
 
   @Nullable
   static List<ProcessInfo> getProcessList_WindowsWMIC() {
-    return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline"),
+    return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline,ExecutablePath"),
                               new NullableFunction<String, List<ProcessInfo>>() {
                                 @Nullable
                                 @Override
@@ -272,16 +290,22 @@ public class ProcessListUtil {
     int pidStart = header.indexOf("ProcessId");
     if (pidStart == -1) return null;
 
+    int executablePathStart = header.indexOf("ExecutablePath");
+    if (executablePathStart == -1) return null;
+
+
     for (int i = 1; i < lines.length; i++) {
       String line = lines[i];
 
       int pid = StringUtil.parseInt(line.substring(pidStart, line.length()).trim(), -1);
       if (pid == -1 || pid == 0) continue;
 
+      String executablePath = line.substring(executablePathStart, pidStart).trim();
+
       String name = line.substring(0, commandLineStart).trim();
       if (name.isEmpty()) continue;
 
-      String commandLine = line.substring(commandLineStart, pidStart).trim();
+      String commandLine = line.substring(commandLineStart, executablePathStart).trim();
       String args = "";
 
       if (commandLine.isEmpty()) {
@@ -294,7 +318,7 @@ public class ProcessListUtil {
         }
       }
 
-      result.add(new ProcessInfo(pid, commandLine, name, args));
+      result.add(new ProcessInfo(pid, commandLine, name, args, executablePath));
     }
     return result;
   }

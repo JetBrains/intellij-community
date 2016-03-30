@@ -497,7 +497,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     if (task.isIssue()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
-          ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getId()) {
+          ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
 
             public void run(@NotNull ProgressIndicator indicator) {
               updateIssue(task.getId());

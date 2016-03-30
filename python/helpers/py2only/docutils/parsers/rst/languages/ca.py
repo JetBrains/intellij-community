@@ -1,4 +1,4 @@
-# $Id: ca.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: ca.py 7119 2011-09-02 13:00:23Z milde $
 # Author: Ivan Vilata i Balaguer <ivan@selidor.net>
 # Copyright: This module has been placed in the public domain.
 
@@ -19,6 +19,7 @@ directives = {
       # language-dependent: fixed
       u'atenci\u00F3': 'attention',
       u'compte': 'caution',
+      u'code (translation required)': 'code',
       u'perill': 'danger',
       u'error': 'error',
       u'suggeriment': 'hint',
@@ -45,6 +46,7 @@ directives = {
       u'taula-llista': 'list-table',
       #'qa': 'questions',
       #'faq': 'questions',
+      u'math (translation required)': 'math',
       u'meta': 'meta',
       #'imagemap': 'imagemap',
       u'imatge': 'image',
@@ -83,6 +85,7 @@ roles = {
     u'ab': 'abbreviation',
     u'acr\u00F2nim': 'acronym',
     u'ac': 'acronym',
+    u'code (translation required)': 'code',
     u'\u00EDndex': 'index',
     u'i': 'index',
     u'sub\u00EDndex': 'subscript',
@@ -102,6 +105,7 @@ roles = {
     u'\u00E8mfasi': 'emphasis',
     u'destacat': 'strong',
     u'literal': 'literal',
+    u'math (translation required)': 'math',
     u'refer\u00E8ncia-amb-nom': 'named-reference',
     u'refer\u00E8ncia-nom': 'named-reference',
     u'refer\u00E8ncia-an\u00F2nima': 'anonymous-reference',

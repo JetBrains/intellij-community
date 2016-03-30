@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.Gray;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGrayQuickFix;
@@ -63,7 +62,7 @@ public class UseGrayInspection extends DevKitInspectionBase {
           final PsiExpression r = expressions[0];
           final PsiExpression g = expressions[1];
           final PsiExpression b = expressions[2];
-          if (r instanceof PsiLiteralExpression 
+          if (r instanceof PsiLiteralExpression
             && g instanceof PsiLiteralExpression
             && b instanceof PsiLiteralExpression) {
             final Object red = JavaConstantExpressionEvaluator.computeConstantExpression(r, false);
@@ -97,13 +96,6 @@ public class UseGrayInspection extends DevKitInspectionBase {
       }
     }
     return null;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Using new Color(a,a,a)";
   }
 
   @NotNull

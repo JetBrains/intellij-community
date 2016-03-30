@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.OrderAware;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -28,12 +27,11 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Encapsulates functionality of importing external system module to the intellij project.
@@ -67,18 +65,7 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
 
           final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
           if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
-            final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-            final String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
-
-            final DataNode<ModuleData> found = ContainerUtil.find(toImport, new Condition<DataNode<ModuleData>>() {
-              @Override
-              public boolean value(DataNode<ModuleData> node) {
-                final ModuleData moduleData = node.getData();
-                return moduleData.getId().equals(projectId) && moduleData.getLinkedExternalProjectPath().equals(projectPath);
-              }
-            });
-
-            if (found == null || !FileUtil.pathsEqual(module.getModuleFilePath(), found.getData().getModuleFilePath())) {
+            if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
               orphanIdeModules.add(module);
             }
           }

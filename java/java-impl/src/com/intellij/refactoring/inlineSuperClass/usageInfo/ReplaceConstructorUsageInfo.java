@@ -38,8 +38,10 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     final PsiMethod[] constructors = targetClasses[0].getConstructors();
     final PsiMethod constructor = element.resolveConstructor();
     if (constructor == null) {
-      if (constructors.length == 1 && constructors[0].getParameterList().getParametersCount() > 0 || constructors.length > 1) {
-        myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
+      if (element.getArgumentList() != null) {
+        if (constructors.length == 1 && constructors[0].getParameterList().getParametersCount() > 0 || constructors.length > 1) {
+          myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
+        }
       }
     } else {
       final PsiParameter[] superParameters = constructor.getParameterList().getParameters();

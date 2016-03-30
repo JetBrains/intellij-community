@@ -32,7 +32,7 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 
 public class ThreesideBinaryDiffViewer extends ThreesideDiffViewer<BinaryEditorHolder> {
-  private final TransferableFileEditorStateSupport myTransferableStateSupport;
+  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
 
   public ThreesideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);

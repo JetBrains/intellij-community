@@ -19,9 +19,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+
 public interface VcsRootsRegistry {
-  int getId(@NotNull VirtualFile root);
+  int getId(@NotNull VirtualFile root) throws IOException;
 
   @Nullable
-  VirtualFile getRootById(int id);
+  VirtualFile getRootById(int id) throws IOException;
 }

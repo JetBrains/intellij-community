@@ -30,9 +30,10 @@ import java.util.Set;
  */
 public class ScalaModelData extends AbstractExternalEntityData {
   private static final long serialVersionUID = 1L;
+  private static final int PROCESSING_AFTER_BUILTIN_SERVICES = ProjectKeys.TASK.getProcessingWeight() + 1;
 
   @NotNull
-  public static final Key<ScalaModelData> KEY = Key.create(ScalaModelData.class, ProjectKeys.LIBRARY_DEPENDENCY.getProcessingWeight() + 1);
+  public static final Key<ScalaModelData> KEY = Key.create(ScalaModelData.class, PROCESSING_AFTER_BUILTIN_SERVICES);
   private Set<File> scalaClasspath;
   private Set<File> zincClasspath;
   private ScalaCompileOptionsData scalaCompileOptions;

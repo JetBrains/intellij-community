@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class CreateAssertIntentionTest extends IPPTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.addClass("package org.junit;" +
-                       "class Assert {" +
+                       "public class Assert {" +
                        "  public static void assertTrue(java.lang.String message, boolean condition) {}" +
                        "  public static void assertNotNull(boolean condition) {}" +
                        "}");
@@ -56,7 +56,8 @@ public class CreateAssertIntentionTest extends IPPTestCase {
     myFixture.addClass("package junit.framework;" +
                        "public abstract class TestCase {" +
                        "  static public void assertTrue(boolean condition) {}" +
-                       "  static public void assertFalse(boolean condition) {}"
+                       "  static public void assertFalse(boolean condition) {}" +
+                       "}"
     );
   }
 }

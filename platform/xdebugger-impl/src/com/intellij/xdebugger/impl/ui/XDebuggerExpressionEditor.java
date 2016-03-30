@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -44,11 +45,12 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   private XExpression myExpression;
 
   public XDebuggerExpressionEditor(Project project,
-                                   XDebuggerEditorsProvider debuggerEditorsProvider,
+                                   @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
                                    @Nullable @NonNls String historyId,
                                    @Nullable XSourcePosition sourcePosition,
                                    @NotNull XExpression text,
-                                   final boolean multiline) {
+                                   final boolean multiline,
+                                   boolean editorFont) {
     super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myExpression = XExpressionImpl.changeMode(text, getMode());
     myEditorTextField =
@@ -72,8 +74,10 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         return super.getData(dataId);
       }
     };
-    myEditorTextField.setFontInheritedFromLAF(false);
-    myEditorTextField.setFont(EditorUtil.getEditorFont());
+    if (editorFont) {
+      myEditorTextField.setFontInheritedFromLAF(false);
+      myEditorTextField.setFont(EditorUtil.getEditorFont());
+    }
     myComponent = addChooseFactoryLabel(myEditorTextField, multiline);
   }
 
@@ -103,6 +107,11 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   public JComponent getPreferredFocusedComponent() {
     final Editor editor = myEditorTextField.getEditor();
     return editor != null ? editor.getContentComponent() : null;
+  }
+
+  public void setEnabled(boolean enable) {
+    if (enable == myComponent.isEnabled()) return;
+    UIUtil.setEnabled(myComponent, enable, true);
   }
 
   @Nullable

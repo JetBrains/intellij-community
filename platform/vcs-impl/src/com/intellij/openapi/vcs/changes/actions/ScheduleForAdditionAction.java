@@ -67,7 +67,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       public boolean value(FileStatus status) {
         return isStatusForAddition(status);
       }
-    });
+    }, null);
   }
 
   private boolean thereAreUnversionedFiles(AnActionEvent e) {

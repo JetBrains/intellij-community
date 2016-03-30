@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
-import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,16 +27,19 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class XDebuggerToggleActionHandler extends DebuggerToggleActionHandler {
+  @Override
   public final boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     return isEnabled(session, event);
   }
 
+  @Override
   public boolean isSelected(@NotNull final Project project, final AnActionEvent event) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     return isSelected(session, event);
   }
 
+  @Override
   public void setSelected(@NotNull final Project project, final AnActionEvent event, final boolean state) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     setSelected(session, event, state);

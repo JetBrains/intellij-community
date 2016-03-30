@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,14 +27,16 @@ public interface VcsLogHashMap {
 
   int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
 
-  @NotNull
+  @Nullable
   CommitId getCommitId(int commitIndex);
 
   /**
-   * Iterates over known commid id to find the first one which satisfies given condition.
+   * Iterates over known commit ids to find the first one which satisfies given condition.
    *
    * @return
    */
   @Nullable
   CommitId findCommitId(@NotNull Condition<CommitId> condition);
+
+  void flush();
 }

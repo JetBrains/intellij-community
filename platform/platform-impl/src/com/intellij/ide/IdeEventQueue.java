@@ -21,9 +21,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -47,6 +45,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +70,7 @@ import java.util.Set;
  */
 public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
+  private static TransactionGuardImpl ourTransactionGuard;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -355,7 +355,10 @@ public class IdeEventQueue extends EventQueue {
   private static boolean appIsLoaded() {
     if (ourAppIsLoaded) return true;
     boolean loaded = IdeaApplication.isLoaded();
-    if (loaded) ourAppIsLoaded = true;
+    if (loaded) {
+      ourAppIsLoaded = true;
+      ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+    }
     return loaded;
   }
 
@@ -379,10 +382,13 @@ public class IdeEventQueue extends EventQueue {
 
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
+    if (myIsInInputEvent) {
+      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+    }
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    try {
+    try (AccessToken ignored = ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(myIsInInputEvent)) {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {
@@ -533,8 +539,6 @@ public class IdeEventQueue extends EventQueue {
     }
 
     myEventCount++;
-    
-    traceClipboardEvents(e);
 
     if (processAppActivationEvents(e)) return;
 
@@ -656,40 +660,6 @@ public class IdeEventQueue extends EventQueue {
     }
     else {
       defaultDispatchEvent(e);
-    }
-  }
-
-  private static final Field ourInvocationEventRunnableAccessor;
-  
-  static {
-    Field field = null;
-    if (Registry.is("trace.clipboard.events") && SystemInfo.isJavaVersionAtLeast("1.8.0_60")) {
-      try {
-        field = InvocationEvent.class.getDeclaredField("runnable");
-        field.setAccessible(true);
-      }
-      catch (Exception e) {
-        LOG.warn("Error creating accessor for java.awt.event.InvocationEvent.runnable field", e);
-      }
-    }
-    ourInvocationEventRunnableAccessor = field;
-  }
-  
-  private static void traceClipboardEvents(AWTEvent e) {
-    if (ourInvocationEventRunnableAccessor != null && e instanceof InvocationEvent && e.getClass().getName().equals("sun.awt.PeerEvent")) {
-      try {
-        Object r = ourInvocationEventRunnableAccessor.get(e);
-        if (r != null) {
-          String className = r.getClass().getName();
-          // This check for event constructed in SunClipboard.lostOwnershipLater() (known to work with JDK 8u60) 
-          if (className.contains("sun.awt.datatransfer.SunClipboard") && className.contains("Lambda")) {
-            LOG.info("Clipboard has been set by other application");
-          }
-        }
-      }
-      catch (Exception ex) {
-        LOG.warn("Error accessing java.awt.event.InvocationEvent.runnable field");
-      }
     }
   }
 

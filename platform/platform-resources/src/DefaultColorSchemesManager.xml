@@ -14,7 +14,7 @@
       <option name="NOTIFICATION_BACKGROUND" value="ffffcc" />
       <option name="SELECTED_INDENT_GUIDE" value="c8c8c8"/>
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
-      <option name="LINE_NUMBERS_COLOR" value="800000"/>
+      <option name="LINE_NUMBERS_COLOR" value="999999"/>
       <option name="ANNOTATIONS_COLOR" value="000080" />
       <option name="ANNOTATIONS_MERGED_COLOR" value="008080" />
       <option name="CARET_COLOR" value="0"/>
@@ -32,6 +32,27 @@
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
       <option name="DIFF_SEPARATORS_BOTTOM_BORDER"/>
+
+      <option name="FILESTATUS_ADDED" value="0a7700"/>
+      <option name="FILESTATUS_DELETED" value="616161"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="773895"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="727238"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS" value="ff0000"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_CONFLICTS" value="ff0000"/>
+      <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS" value="ff0000"/>
+      <option name="FILESTATUS_MERGED" value="7503dc"/>
+      <option name="FILESTATUS_MODIFIED" value="0032a0"/>
+      <option name="FILESTATUS_NOT_CHANGED" value=""/>
+      <option name="FILESTATUS_NOT_CHANGED_IMMEDIATE" value="3264b4"/>
+      <option name="FILESTATUS_NOT_CHANGED_RECURSIVE" value="8aa4c8"/>
+      <option name="FILESTATUS_UNKNOWN" value="993300"/>
+      <option name="FILESTATUS_addedOutside" value="0eaa00"/>
+      <option name="FILESTATUS_changelistConflict" value="ff0000"/>
+      <option name="FILESTATUS_modifiedOutside" value="0047e4"/>
+      <option name="FILESTATUS_HIJACKED" value="b28c00"/>
+      <option name="FILESTATUS_OBSOLETE" value="7c7c00"/>
+      <option name="FILESTATUS_SWITCHED" value="08978f"/>
+      <option name="FILESTATUS_SUPPRESSED" value=""/>
     </colors>
 
     <attributes>
@@ -1011,7 +1032,7 @@
       <option name="FILESTATUS_modifiedOutside" value="6897bb" />
       <option name="GUTTER_BACKGROUND" value="313335" />
       <option name="INDENT_GUIDE" value="373737" />
-      <option name="LINE_NUMBERS_COLOR" value="888888" />
+      <option name="LINE_NUMBERS_COLOR" value="606366" />
       <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
       <option name="MODIFIED_LINES_COLOR" value="374752" deuteranopia="333a4c" protanopia="333a4c"/>
       <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
@@ -1784,132 +1805,6 @@
         <value>
           <option name="FOREGROUND" value="6d9cbe" />
         </value>
-      </option>
-      <option name="SCOPE_KEY_All">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_CIDR">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_CVS plugin">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Changed Files">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Default">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Evaluation fixes.">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_IDEA Test Sources">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_IDEA sources">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_JDK">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_JavaEE openapi">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Non-Project Files">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Problems">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Production">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Project Files">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Ruby">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Tests">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_Weblogic sources">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_community">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_community except testdata">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_copyright">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_evaluation">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_everywhere except JavaEE">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_everywhere except junit4">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_flask plugin">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_foreach debugging">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_foreach debugging ">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_gdb device timeout on start">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_idea openapi">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_ignore">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_introduce typedef">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_javascript">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_junit 4 features">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_libraries.except.jdk">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_lldb-92">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_platform API">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_psi">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_runtime.classes">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_stl">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_svnPlugins">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_type name construction">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_types resolve">
-        <value />
-      </option>
-      <option name="SCOPE_KEY_util-rt">
-        <value />
       </option>
       <option name="SEARCH_RESULT_ATTRIBUTES">
         <value>

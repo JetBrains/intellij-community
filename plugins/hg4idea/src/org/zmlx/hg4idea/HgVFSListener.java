@@ -153,7 +153,7 @@ public class HgVFSListener extends VcsVFSListener {
         HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).unknown(true).ignored(true).build(myProject);
         for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sortedSourceFilesByRepos.entrySet()) {
           Set<HgChange> changes =
-            statusCommand.execute(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<VirtualFile, FilePath>() {
+            statusCommand.executeInCurrentThread(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<VirtualFile, FilePath>() {
               @Override
               public FilePath fun(VirtualFile virtualFile) {
                 return VcsUtil.getFilePath(virtualFile);
@@ -181,13 +181,13 @@ public class HgVFSListener extends VcsVFSListener {
 
         // add for all files at once
         if (!adds.isEmpty()) {
-          new HgAddCommand(myProject).execute(adds);
+          new HgAddCommand(myProject).executeInCurrentThread(adds);
         }
 
         // copy needs to be run for each file separately
         if (!copies.isEmpty()) {
-          for(Map.Entry<VirtualFile, VirtualFile> copy : copies.entrySet()) {
-            new HgCopyCommand(myProject).execute(copy.getKey(), copy.getValue());
+          for (Map.Entry<VirtualFile, VirtualFile> copy : copies.entrySet()) {
+            new HgCopyCommand(myProject).executeInCurrentThread(copy.getKey(), copy.getValue());
           }
         }
 
@@ -301,7 +301,7 @@ public class HgVFSListener extends VcsVFSListener {
     }
 
     if (!deletes.isEmpty()) {
-      new HgRemoveCommand(myProject).execute(deletes);
+      new HgRemoveCommand(myProject).executeInCurrentThread(deletes);
     }
 
     for (HgFile file : deletes) {

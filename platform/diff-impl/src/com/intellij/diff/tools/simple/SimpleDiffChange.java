@@ -239,20 +239,11 @@ public class SimpleDiffChange {
     public GutterIconRenderer createRenderer() {
       myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
 
-      boolean isEditable = DiffUtil.isEditable(myViewer.getEditor(mySide));
       boolean isOtherEditable = DiffUtil.isEditable(myViewer.getEditor(mySide.other()));
       boolean isAppendable = myFragment.getStartLine1() != myFragment.getEndLine1() &&
                              myFragment.getStartLine2() != myFragment.getEndLine2();
 
-      if (isOtherEditable && isEditable) {
-        if (myCtrlPressed && isAppendable) {
-          return createAppendRenderer(mySide);
-        }
-        else {
-          return createApplyRenderer(mySide);
-        }
-      }
-      else if (isOtherEditable) {
+      if (isOtherEditable) {
         if (myCtrlPressed && isAppendable) {
           return createAppendRenderer(mySide);
         }

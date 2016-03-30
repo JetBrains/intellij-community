@@ -15,11 +15,13 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -56,7 +58,9 @@ public class PackageWrapper {
   }
 
   public boolean exists() {
-    return JavaPsiFacade.getInstance(myManager.getProject()).findPackage(myQualifiedName) != null;
+    final Project project = myManager.getProject();
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(myQualifiedName);
+    return aPackage != null && aPackage.getDirectories(GlobalSearchScope.projectScope(project)).length > 0;
   }
 
   @NotNull

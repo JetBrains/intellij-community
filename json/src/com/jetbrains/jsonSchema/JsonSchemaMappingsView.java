@@ -1,6 +1,7 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ModalityState;
@@ -29,6 +30,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,15 +47,21 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
-public class JsonSchemaMappingsView {
+public class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
+  private final Runnable myTreeUpdater;
   private TableView<JsonSchemaMappingsConfigurationBase.Item> myTableView;
   private ToolbarDecorator myDecorator;
   private JComponent myComponent;
   private Project myProject;
   private TextFieldWithBrowseButton mySchemaField;
+  private JEditorPane myError;
+  private String myErrorText;
+  private JBLabel myErrorIcon;
+  private boolean myInitialized;
 
-  public JsonSchemaMappingsView(Project project) {
+  public JsonSchemaMappingsView(Project project, Runnable treeUpdater) {
+    myTreeUpdater = treeUpdater;
     createUI(project);
   }
 
@@ -74,25 +82,53 @@ public class JsonSchemaMappingsView {
               ++ cnt;
             }
             myTableView.getListTableModel().fireTableDataChanged();
+            myTreeUpdater.run();
           }
         }
       })
       .setAddAction(new MyAddActionButtonRunnable(project))
       .disableUpDownActions();
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    final JPanel wrapper2 = new JPanel(new BorderLayout());
+
     mySchemaField = new TextFieldWithBrowseButton();
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     attachNavigateToSchema();
+    myError = SwingHelper.createHtmlLabel("Warning: conflicting mappings. <a href=\"#\">Show details</a>", null, new Consumer<String>() {
+      @Override
+      public void consume(String s) {
+        final BalloonBuilder builder = JBPopupFactory.getInstance().
+          createHtmlTextBalloonBuilder(myErrorText, UIUtil.getBalloonWarningIcon(), MessageType.WARNING.getPopupBackground(), null);
+        builder.setDisposable(JsonSchemaMappingsView.this);
+        builder.setHideOnClickOutside(true);
+        builder.setCloseButtonEnabled(true);
+        builder.createBalloon().showInCenterOf(myError);
+      }
+    });
+
+    final FormBuilder builder = FormBuilder.createFormBuilder();
     final JBLabel label = new JBLabel("JSON schema file:");
-    wrapper2.add(label, BorderLayout.WEST);
-    label.setBorder(JBUI.Borders.empty(0,0,0,10));
-    wrapper2.add(mySchemaField, BorderLayout.CENTER);
-    wrapper2.setBorder(JBUI.Borders.empty(0, 10, 10, 10));
-    wrapper.add(wrapper2, BorderLayout.NORTH);
-    wrapper.add(myDecorator.createPanel(), BorderLayout.CENTER);
-    myComponent = wrapper;
+    builder.addLabeledComponent(label, mySchemaField);
+    label.setBorder(JBUI.Borders.empty(0,10,0,10));
+    mySchemaField.setBorder(JBUI.Borders.empty(0, 0, 0, 10));
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.setBorder(JBUI.Borders.empty(0, 10, 0, 10));
+    myErrorIcon = new JBLabel(UIUtil.getBalloonWarningIcon());
+    wrapper.add(myErrorIcon, BorderLayout.WEST);
+    wrapper.add(myError, BorderLayout.CENTER);
+    builder.addComponent(wrapper);
+    builder.addComponentFillVertically(myDecorator.createPanel(), 5);
+
+    myComponent = builder.getPanel();
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  public void setError(final String text) {
+    myErrorText = text;
+    myError.setVisible(text != null);
+    myErrorIcon.setVisible(text != null);
   }
 
   private void attachNavigateToSchema() {
@@ -115,36 +151,18 @@ public class JsonSchemaMappingsView {
   }
 
   public List<JsonSchemaMappingsConfigurationBase.Item> getData() {
-    final List<JsonSchemaMappingsConfigurationBase.Item> items = myTableView.getListTableModel().getItems();
-    /*final List<JsonSchemaMappingsConfigurationBase.Item> copy = new ArrayList<JsonSchemaMappingsConfigurationBase.Item>();
-    for (JsonSchemaMappingsConfigurationBase.Item item : items) {
-      if (myProject != null && myProject.getBasePath() != null && !item.isPattern()) {
-        final String relativePath = FileUtil.getRelativePath(new File(myProject.getBasePath()), new File(item.getPath()));
-        copy.add(new JsonSchemaMappingsConfigurationBase.Item(relativePath, item.isPattern(), item.isDirectory()));
-      } else {
-        copy.add(new JsonSchemaMappingsConfigurationBase.Item(item.getPath(), item.isPattern(), item.isDirectory()));
-      }
-    }*/
-    return items;
+    return myTableView.getListTableModel().getItems();
   }
 
   public void setItems(String schemaFilePath, final List<JsonSchemaMappingsConfigurationBase.Item> data) {
-    /*final ArrayList<JsonSchemaMappingsConfigurationBase.Item> copy = new ArrayList<JsonSchemaMappingsConfigurationBase.Item>();
-    if (myProject != null && myProject.getBasePath() != null) {
-      for (JsonSchemaMappingsConfigurationBase.Item item : copy) {
-        if (item.isPattern()) {
-          copy.add(new JsonSchemaMappingsConfigurationBase.Item(new File(myProject.getBasePath(), item.getPath()).getPath(),
-                                                                item.isPattern(), item.isDirectory()));
-        } else {
-          copy.addAll(data);
-        }
-      }
-    } else {
-      copy.addAll(data);
-    }*/
+    myInitialized = true;
     mySchemaField.setText(schemaFilePath);
     myTableView.setModelAndUpdateColumns(
       new ListTableModel<JsonSchemaMappingsConfigurationBase.Item>(createColumns(), new ArrayList<JsonSchemaMappingsConfigurationBase.Item>(data)));
+  }
+
+  public boolean isInitialized() {
+    return myInitialized;
   }
 
   public String getSchemaSubPath() {
@@ -157,8 +175,7 @@ public class JsonSchemaMappingsView {
         @Nullable
         @Override
         public String valueOf(JsonSchemaMappingsConfigurationBase.Item item) {
-          final String prefix = item.isPattern() ? "Pattern: " : (item.isDirectory() ? "Directory: " : "File: ");
-          return prefix + item.getPath();
+          return item.getPresentation();
         }
       }
     };
@@ -271,16 +288,19 @@ public class JsonSchemaMappingsView {
         final JsonSchemaMappingsConfigurationBase.Item item =
           new JsonSchemaMappingsConfigurationBase.Item(pattern, radioPattern.isSelected(), radioDirectory.isSelected());
         myTableView.getListTableModel().addRow(item);
-        //myTableView.getListTableModel().fireTableDataChanged();
+        myTreeUpdater.run();
       }
       Disposer.dispose(alarm);
     }
   }
 
   private static String getRelativePath(@NotNull Project project, @NotNull String text) {
+    text = text.trim();
     if (project.isDefault()) return text;
     if (StringUtil.isEmptyOrSpaces(text)) return text;
-    final String relativePath = FileUtil.getRelativePath(new File(project.getBasePath()), new File(text));
+    final File ioFile = new File(text);
+    if (!ioFile.isAbsolute()) return text;
+    final String relativePath = FileUtil.getRelativePath(new File(project.getBasePath()), ioFile);
     return relativePath == null ? text : relativePath;
   }
 }

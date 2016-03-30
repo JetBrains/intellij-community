@@ -47,13 +47,11 @@ public class RemoveParenthesesFromMethodCallIntention extends Intention {
     final StringBuilder newStatementText = new StringBuilder();
     newStatementText.append(expression.getInvokedExpression().getText()).append(' ');
     final GrArgumentList argumentList = expression.getArgumentList();
-    if (argumentList != null) {
-      final PsiElement leftParen = argumentList.getLeftParen();
-      final PsiElement rightParen = argumentList.getRightParen();
-      if (leftParen != null) leftParen.delete();
-      if (rightParen != null) rightParen.delete();
-      newStatementText.append(argumentList.getText());
-    }
+    final PsiElement leftParen = argumentList.getLeftParen();
+    final PsiElement rightParen = argumentList.getRightParen();
+    if (leftParen != null) leftParen.delete();
+    if (rightParen != null) rightParen.delete();
+    newStatementText.append(argumentList.getText());
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrStatement newStatement = factory.createStatementFromText(newStatementText.toString());
     expression.replaceWithStatement(newStatement);

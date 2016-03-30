@@ -67,6 +67,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
+  public static final Key<Object> FREE_THREADED = Key.create("FREE_THREADED");
   @NotNull private final PsiManager myManager;
   @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
@@ -114,6 +115,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
+    if (virtualFile instanceof LightVirtualFile && !isEventSystemEnabled()) {
+      virtualFile.putUserData(FREE_THREADED, true);
+    }
     myFileType = type;
   }
 
@@ -124,13 +128,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
-    if (file instanceof LightVirtualFile) {
-      final Language language = ((LightVirtualFile)file).getLanguage();
-      if (language != null) {
-        return language;
-      }
-    }
-
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 

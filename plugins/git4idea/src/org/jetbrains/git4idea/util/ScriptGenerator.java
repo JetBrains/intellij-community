@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -136,7 +137,13 @@ public class ScriptGenerator {
     String parametersPassthrough = SystemInfo.isWindows ? " %*" : " \"$@\"";
     String content = title + "\n" + commandLine() + parametersPassthrough + "\n";
     try {
-      return ExecUtil.createTempExecutableScript(myPrefix, SCRIPT_EXT, content);
+      File file = ExecUtil.createTempExecutableScript(myPrefix, SCRIPT_EXT, content);
+      if (SystemInfo.isWindows && file.getPath().contains(" ")) {
+        file = FileUtil.createTempFile(myPrefix, SCRIPT_EXT, true);
+        FileUtil.writeToFile(file, content);
+        FileUtil.setExecutableAttribute(file.getPath(), true);
+      }
+      return file;
     }
     catch (ExecutionException e) {
       throw new IOException("The script providing interactive execution of Git commands couldn't be made executable", e);

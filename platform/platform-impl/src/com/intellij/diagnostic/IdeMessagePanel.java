@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.popup.NotificationPopup;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +92,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       public void run() {
         if (isOtherModalWindowActive()) {
           if (myDialog == null) {
-            JobScheduler.getScheduler().schedule(this, (long)300, TimeUnit.MILLISECONDS);
+            EdtExecutorService.getScheduledExecutorInstance().schedule(this, (long)300, TimeUnit.MILLISECONDS);
           }
           return;
         }
@@ -111,36 +110,32 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   private void _openFatals(@Nullable final LogMessage message) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        myDialog = new IdeErrorsDialog(myMessagePool, message) {
-          public void doOKAction() {
-            super.doOKAction();
-            disposeDialog(this);
-          }
-
-          public void doCancelAction() {
-            super.doCancelAction();
-            disposeDialog(this);
-          }
-
-          @Override
-          protected void updateOnSubmit() {
-            super.updateOnSubmit();
-            updateState(computeState());
-          }
-        };
-
-        myMessagePool.addListener(myDialog);
-        if (!isOtherModalWindowActive()) {
-          myDialog.show();
-        }
-        else {
-          myDialog.close(0);
-          disposeDialog(myDialog);
-        }
+    myDialog = new IdeErrorsDialog(myMessagePool, message) {
+      public void doOKAction() {
+        super.doOKAction();
+        disposeDialog(this);
       }
-    });
+
+      public void doCancelAction() {
+        super.doCancelAction();
+        disposeDialog(this);
+      }
+
+      @Override
+      protected void updateOnSubmit() {
+        super.updateOnSubmit();
+        updateState(computeState());
+      }
+    };
+
+    myMessagePool.addListener(myDialog);
+    if (!isOtherModalWindowActive()) {
+      myDialog.show();
+    }
+    else {
+      myDialog.close(0);
+      disposeDialog(myDialog);
+    }
   }
 
   private void updateState(final IdeFatalErrorsIcon.State state) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -463,14 +462,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   public MergeProvider getMergeProvider() {
-    return null;
-  }
-
-  /**
-   * List of actions that would be added to local changes browser if there are any changes for this VCS
-   */
-  @Nullable
-  public List<AnAction> getAdditionalActionsForLocalChange() {
     return null;
   }
 

@@ -22,8 +22,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.MutableTreeNode;
 
 /**
  * @author max
@@ -34,9 +36,10 @@ public class InspectionRootNode extends InspectionTreeNode {
                                        : IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
   private final Project myProject;
 
-  public InspectionRootNode(Project project) {
+  public InspectionRootNode(Project project, @NotNull InspectionTreeUpdater updater) {
     super(project);
     myProject = project;
+    myUpdater = updater;
   }
 
   public String toString() {
@@ -51,5 +54,9 @@ public class InspectionRootNode extends InspectionTreeNode {
   @Override
   public Icon getIcon(boolean expanded) {
     return APP_ICON;
+  }
+
+  public InspectionTreeUpdater getUpdater() {
+    return myUpdater;
   }
 }

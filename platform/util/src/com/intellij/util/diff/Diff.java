@@ -80,7 +80,7 @@ public class Diff {
   }
 
   @Nullable
-  public static <T> Change buildChanges(@NotNull int[] array1, @NotNull int[] array2) throws FilesTooBigForDiffException {
+  public static Change buildChanges(@NotNull int[] array1, @NotNull int[] array2) throws FilesTooBigForDiffException {
     final int startShift = getStartShift(array1, array2);
     final int endCut = getEndCut(array1, array2, startShift);
 
@@ -140,28 +140,28 @@ public class Diff {
     return builder.getFirstChange();
   }
 
-  private static <T> int getStartShift(final T[] o1, final T[] o2) {
+  private static <T> int getStartShift(@NotNull final T[] o1, @NotNull final T[] o2) {
     final int size = Math.min(o1.length, o2.length);
     int idx = 0;
     for (int i = 0; i < size; i++) {
-      if (! o1[i].equals(o2[i])) break;
-      ++ idx;
+      if (!o1[i].equals(o2[i])) break;
+      ++idx;
     }
     return idx;
   }
 
-  private static <T> int getEndCut(final T[] o1, final T[] o2, final int startShift) {
+  private static <T> int getEndCut(@NotNull final T[] o1, @NotNull final T[] o2, int startShift) {
     final int size = Math.min(o1.length, o2.length) - startShift;
     int idx = 0;
 
     for (int i = 0; i < size; i++) {
-      if (! o1[o1.length - i - 1].equals(o2[o2.length - i - 1])) break;
-      ++ idx;
+      if (!o1[o1.length - i - 1].equals(o2[o2.length - i - 1])) break;
+      ++idx;
     }
     return idx;
   }
 
-  private static int getStartShift(final int[] o1, final int[] o2) {
+  private static int getStartShift(@NotNull final int[] o1, @NotNull final int[] o2) {
     final int size = Math.min(o1.length, o2.length);
     int idx = 0;
     for (int i = 0; i < size; i++) {
@@ -171,7 +171,7 @@ public class Diff {
     return idx;
   }
 
-  private static int getEndCut(final int[] o1, final int[] o2, final int startShift) {
+  private static int getEndCut(@NotNull final int[] o1, @NotNull final int[] o2, final int startShift) {
     final int size = Math.min(o1.length, o2.length) - startShift;
     int idx = 0;
 

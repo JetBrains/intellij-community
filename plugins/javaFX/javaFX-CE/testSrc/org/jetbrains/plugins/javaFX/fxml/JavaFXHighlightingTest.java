@@ -136,8 +136,12 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTestNavigation("injected.MyController", "label", "injected/" + getTestName(true) + ".fxml");
   }
 
+  public void testControllerInExpression() throws Exception{
+    doTest(getTestName(true) + ".fxml", getTestName(false) + ".java", getTestName(false) + "Wrapper.java");
+  }
+
   public void testNamedColor() throws Exception {
-    doTestNavigation(JavaFxCommonClassNames.JAVAFX_SCENE_COLOR, "ORANGE");
+    doTestNavigation(JavaFxCommonNames.JAVAFX_SCENE_COLOR, "ORANGE");
   }
 
   private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
@@ -232,7 +236,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.addClass("package p;\n" +
                        "public class Root extends javafx.scene.layout.GridPane{\n" +
                        "  public Root(@javafx.beans.NamedArg(\"axis\") javafx.scene.Node node ) {\n" +
-                       "    super(node)\n" +
+                       "    super(node);\n" +
                        "  }\n" +
                        "  public javafx.beans.property.Property<javafx.scene.Node> axis;" +
                        "  public void setAxis() {}" + 
@@ -270,6 +274,18 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
 
   public void testScriptSource() throws Exception {
     doTest("s1.js");
+  }
+
+  public void testPropertyNameExpression() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyChainExpression() throws Exception {
+    doTest();
+  }
+
+  public void testIncorrectPropertyExpressionSyntax() throws Exception {
+    doTest();
   }
 
   private void doTest(String additionalPath) {
@@ -342,16 +358,40 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testPropertyTagCompatibleClass() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyTagCompatiblePrimitive() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyTagIncompatibleClass() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyTagIncompatiblePrimitive() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyTagUnrelatedClass() throws Exception {
+    doWarningsTest();
+  }
+
+  public void testPropertyTagUnrelatedPrimitive() throws Exception {
+    doWarningsTest();
+  }
+
   public void testCharsetInInclude() throws Exception {
     myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
                                                  "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
-    myFixture.testHighlighting(true, false, false, getTestName(true) + ".fxml");
+    doWarningsTest();
   }
 
   public void testIncludedForm() throws Exception {
     myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
                                               "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
-    myFixture.testHighlighting(true, false, false, getTestName(true) + ".fxml");
+    doWarningsTest();
   }
   
   public void testInjectedControllerFields() throws Exception {
@@ -366,6 +406,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
 
   private void doTest() throws Exception {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
+  }
+
+  private void doWarningsTest() {
+    myFixture.testHighlighting(true, false, false, getTestName(true) + ".fxml");
   }
 
   @Override

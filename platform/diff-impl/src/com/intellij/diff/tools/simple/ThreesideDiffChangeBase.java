@@ -18,20 +18,26 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.TextDiffType;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.fragments.MergeWordFragment;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ThreesideDiffChangeBase {
-  @NotNull private ConflictType myType;
+  @NotNull private final ConflictType myType;
+
+  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
+  @NotNull protected final List<RangeHighlighter> myInnerHighlighters = new ArrayList<RangeHighlighter>();
 
   public ThreesideDiffChangeBase(@NotNull MergeLineFragment fragment,
                                  @NotNull List<? extends EditorEx> editors,
@@ -45,6 +51,40 @@ public abstract class ThreesideDiffChangeBase {
     myType = calcType(fragment, documents, policy);
   }
 
+  @CalledInAwt
+  protected void installHighlighters() {
+    assert myHighlighters.isEmpty();
+
+    createHighlighter(ThreeSide.BASE);
+    if (getType().isLeftChange()) createHighlighter(ThreeSide.LEFT);
+    if (getType().isRightChange()) createHighlighter(ThreeSide.RIGHT);
+  }
+
+  @CalledInAwt
+  protected void installInnerHighlighters() {
+    assert myInnerHighlighters.isEmpty();
+
+    createInnerHighlighter(ThreeSide.BASE);
+    if (getType().isLeftChange()) createInnerHighlighter(ThreeSide.LEFT);
+    if (getType().isRightChange()) createInnerHighlighter(ThreeSide.RIGHT);
+  }
+
+  @CalledInAwt
+  protected void destroyHighlighters() {
+    for (RangeHighlighter highlighter : myHighlighters) {
+      highlighter.dispose();
+    }
+    myHighlighters.clear();
+  }
+
+  @CalledInAwt
+  protected void destroyInnerHighlighters() {
+    for (RangeHighlighter highlighter : myInnerHighlighters) {
+      highlighter.dispose();
+    }
+    myInnerHighlighters.clear();
+  }
+
   //
   // Getters
   //
@@ -52,6 +92,14 @@ public abstract class ThreesideDiffChangeBase {
   public abstract int getStartLine(@NotNull ThreeSide side);
 
   public abstract int getEndLine(@NotNull ThreeSide side);
+
+  public abstract boolean isResolved(@NotNull ThreeSide side);
+
+  @NotNull
+  protected abstract Editor getEditor(@NotNull ThreeSide side);
+
+  @Nullable
+  protected abstract List<MergeWordFragment> getInnerFragments();
 
   @NotNull
   public TextDiffType getDiffType() {
@@ -156,6 +204,38 @@ public abstract class ThreesideDiffChangeBase {
 
   private static boolean isIntervalEmpty(@NotNull MergeLineFragment fragment, @NotNull ThreeSide side) {
     return fragment.getStartLine(side) == fragment.getEndLine(side);
+  }
+
+  //
+  // Highlighters
+  //
+
+  protected void createHighlighter(@NotNull ThreeSide side) {
+    Editor editor = getEditor(side);
+
+    TextDiffType type = getDiffType();
+    int startLine = getStartLine(side);
+    int endLine = getEndLine(side);
+
+    boolean resolved = isResolved(side);
+    boolean ignored = !resolved && getInnerFragments() != null;
+    boolean shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT);
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, resolved, shouldHideWithoutLineNumbers));
+    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, resolved));
+  }
+
+  protected void createInnerHighlighter(@NotNull ThreeSide side) {
+    List<MergeWordFragment> innerFragments = getInnerFragments();
+    if (isResolved(side)) return;
+    if (innerFragments == null) return;
+
+    Editor editor = getEditor(side);
+    int start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset();
+    for (MergeWordFragment fragment : innerFragments) {
+      int innerStart = start + fragment.getStartOffset(side);
+      int innerEnd = start + fragment.getEndOffset(side);
+      myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, getDiffType()));
+    }
   }
 
   //

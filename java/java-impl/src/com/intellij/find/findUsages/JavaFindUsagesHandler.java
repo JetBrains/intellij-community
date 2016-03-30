@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   @NotNull
   private static PsiElement[] getParameterElementsToSearch(@NotNull PsiParameter parameter, @NotNull PsiMethod method) {
-    PsiMethod[] overrides = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
+    PsiMethod[] overrides = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     for (int i = 0; i < overrides.length; i++) {
       final PsiElement navigationElement = overrides[i].getNavigationElement();
       if (navigationElement instanceof PsiMethod) {
@@ -223,7 +223,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+  protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return !isSingleFile &&
            new JavaNonCodeSearchElementDescriptionProvider().getElementDescription(psiElement, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
   }

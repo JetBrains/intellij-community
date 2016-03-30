@@ -73,10 +73,8 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
@@ -643,6 +641,136 @@ public abstract class PluginManagerMain implements Disposable {
     Set<String> descriptionSet = new HashSet<String>(search);
     descriptionSet.removeAll(words);
     return descriptionSet.isEmpty();
+  }
+
+  public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
+                                                                 List<PluginNode> list) {
+    final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
+    final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
+    for (PluginNode node : list) {
+      final PluginId pluginId = node.getPluginId();
+      if (pluginEnabler.isDisabled(pluginId)) {
+        disabled.add(node);
+      }
+      final List<PluginId> depends = node.getDepends();
+      if (depends != null) {
+        final Set<PluginId> optionalDeps = new HashSet<PluginId>(Arrays.asList(node.getOptionalDependentPluginIds()));
+        for (PluginId dependantId : depends) {
+          if (optionalDeps.contains(dependantId)) continue;
+          final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
+          if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
+            disabledDependants.add(pluginDescriptor);
+          }
+        }
+      }
+    }
+
+    if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
+      String message = "";
+      if (disabled.size() == 1) {
+        message += "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled.";
+      }
+      else if (!disabled.isEmpty()) {
+        message += "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
+          @Override
+          public String fun(IdeaPluginDescriptor pluginDescriptor) {
+            return pluginDescriptor.getName();
+          }
+        }, ", ") + " are disabled.";
+      }
+
+      if (!disabledDependants.isEmpty()) {
+        message += "<br>";
+        message += "Updated plugin" + (list.size() > 1 ? "s depend " : " depends ") + "on disabled";
+        if (disabledDependants.size() == 1) {
+          message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
+        }
+        else {
+          message += " plugins " + StringUtil.join(disabledDependants, new Function<IdeaPluginDescriptor, String>() {
+            @Override
+            public String fun(IdeaPluginDescriptor pluginDescriptor) {
+              return pluginDescriptor.getName();
+            }
+          }, ", ") + ".";
+        }
+      }
+      message += " Disabled plugins " + (disabled.isEmpty() ? "and plugins which depend on disabled " :"") + "won't be activated after restart.";
+
+      int result;
+      if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
+        result =
+          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), CommonBundle.getWarningTitle(), "Enable all",
+                                         "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
+                                         Messages.getQuestionIcon());
+        if (result == Messages.CANCEL) return false;
+      }
+      else {
+        message += "<br>Would you like to enable ";
+        if (!disabled.isEmpty()) {
+          message += "updated plugin" + (disabled.size() > 1 ? "s" : "");
+        }
+        else {
+          //noinspection SpellCheckingInspection
+          message += "plugin dependenc" + (disabledDependants.size() > 1 ? "ies" : "y");
+        }
+        message += "?";
+        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
+        if (result == Messages.NO) return false;
+      }
+
+      if (result == Messages.YES) {
+        disabled.addAll(disabledDependants);
+        pluginEnabler.enablePlugins(disabled);
+      }
+      else if (result == Messages.NO && !disabled.isEmpty()) {
+        pluginEnabler.enablePlugins(disabled);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  public interface PluginEnabler {
+    void enablePlugins(Set<IdeaPluginDescriptor> disabled);
+
+    boolean isDisabled(PluginId pluginId);
+
+    class HEADLESS implements PluginEnabler {
+      @Override
+      public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
+        for (IdeaPluginDescriptor descriptor : disabled) {
+          PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
+        }
+      }
+
+      @Override
+      public boolean isDisabled(PluginId pluginId) {
+        return isDisabled(pluginId.getIdString());
+      }
+
+      public boolean isDisabled(String pluginId) {
+        return PluginManagerCore.getDisabledPlugins().contains(pluginId);
+      }
+    }
+
+    class UI implements PluginEnabler {
+      @NotNull
+      private final InstalledPluginsTableModel pluginsModel;
+
+      public UI(@NotNull InstalledPluginsTableModel model) {
+        pluginsModel = model;
+      }
+
+      @Override
+      public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
+        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
+      }
+
+      @Override
+      public boolean isDisabled(PluginId pluginId) {
+        return pluginsModel.isDisabled(pluginId);
+      }
+    }
   }
 
   public static void notifyPluginsUpdated(@Nullable Project project) {

@@ -8,8 +8,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,10 @@ public class CCTreeStructureProvider implements TreeStructureProvider, DumbAware
       Project project = node.getProject();
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
+          String name = ((PsiDirectory)node.getValue()).getName();
+          if (CCUtils.GENERATED_FILES_FOLDER.equals(name)) {
+            continue;
+          }
           PsiDirectory directory = (PsiDirectory)node.getValue();
           nodes.add(new CCDirectoryNode(project, directory, settings));
           continue;
@@ -40,8 +45,12 @@ public class CCTreeStructureProvider implements TreeStructureProvider, DumbAware
           if (virtualFile == null) {
             continue;
           }
-          if (CCProjectService.getInstance(project).isTaskFile(virtualFile)
-              || virtualFile.getName().contains(EduNames.WINDOWS_POSTFIX)) {
+          if (virtualFile.getName().contains(EduNames.WINDOWS_POSTFIX)) {
+            continue;
+          }
+
+          if (virtualFile.getParent().getName().contains(EduNames.TASK) && !CCProjectService.getInstance(project).isTaskFile(virtualFile)) {
+            nodes.add(new CCStudentInvisibleFileNode(project, ((PsiFileNode)node).getValue(), settings));
             continue;
           }
         }

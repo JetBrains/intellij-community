@@ -36,15 +36,17 @@ public class MavenModuleMap {
 
   private MavenModuleMap() {
     String path = System.getProperty(PATHS_FILE_PROPERTY);
-    if(path != null) {
+    if (path != null) {
       try {
         BufferedInputStream in = new BufferedInputStream(new FileInputStream(path));
         try {
           myMap.load(in);
-        } finally {
+        }
+        finally {
           in.close();
         }
-      } catch(IOException e) {
+      }
+      catch (IOException e) {
         // XXX log
       }
     }
@@ -56,13 +58,9 @@ public class MavenModuleMap {
 
   public boolean resolveToModule(Artifact artifact) {
     String extension = artifact.getArtifactHandler().getExtension();
-    if ("jar".equals(extension) && "test-jar".equals(artifact.getType())) {
-      extension = "test-jar";
-    }
+    File file = findArtifact(artifact.getGroupId(), artifact.getArtifactId(), extension, artifact.getType(), artifact.getBaseVersion());
 
-    File file = findArtifact(artifact.getGroupId(), artifact.getArtifactId(), extension, artifact.getBaseVersion());
-
-    if(file == null) {
+    if (file == null) {
       return false;
     }
 
@@ -71,20 +69,24 @@ public class MavenModuleMap {
     return true;
   }
 
-  public File findArtifact(String groupId, String artifactId, String type, String baseVersion) {
+  public File findArtifact(String groupId, String artifactId, String extension, String classifier, String baseVersion) {
+    String type = extension;
+    if ("jar".equals(type) && classifier != null && !classifier.isEmpty()) {
+      type = "tests".equals(classifier) || "test-jar".equals(classifier) ? "test-jar" : classifier;
+    }
+
     String key = groupId + ':' + artifactId + ':' + type + ':' + baseVersion;
     String value = myMap.getProperty(key);
 
-    if(value == null || value.length() == 0) {
+    if (value == null || value.length() == 0) {
       return null;
     }
 
     File file = new File(value);
-    if(!file.exists()) {
+    if (!file.exists()) {
       return null;
     }
 
     return file;
   }
-
 }

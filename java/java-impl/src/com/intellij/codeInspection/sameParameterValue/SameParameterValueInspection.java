@@ -69,7 +69,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionsBundle.message("inspection.same.parameter.fix.family.name");
     }
 
     @Override

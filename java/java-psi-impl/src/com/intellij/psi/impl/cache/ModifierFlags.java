@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.cache;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.BitUtil;
 import gnu.trove.TObjectIntHashMap;
 
 /**
@@ -72,6 +73,6 @@ public final class ModifierFlags {
   public static boolean hasModifierProperty(String name, int mask) {
     int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
     assert flag != 0 : name;
-    return (mask & flag) != 0;
+    return BitUtil.isSet(mask, flag);
   }
 }

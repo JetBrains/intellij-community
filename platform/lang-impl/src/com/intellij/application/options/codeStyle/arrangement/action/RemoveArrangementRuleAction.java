@@ -33,6 +33,7 @@ public class RemoveArrangementRuleAction extends AbstractArrangementRuleAction i
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.remove.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.remove.description"));
     getTemplatePresentation().setIcon(IconUtil.getRemoveIcon());
+    setEnabledInModalContext(true);
   }
 
   @Override

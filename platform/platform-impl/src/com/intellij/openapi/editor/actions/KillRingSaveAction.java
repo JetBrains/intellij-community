@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.ide.KillRingTransferable;
 
 /**
@@ -61,13 +62,18 @@ public class KillRingSaveAction extends TextComponentEditorAction {
       }
       KillRingUtil.copyToKillRing(editor, start, end, false);
       if (myRemove) {
-        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
+        DocumentRunnable runnable = new DocumentRunnable(editor.getDocument(), editor.getProject()) {
           @Override
           public void run() {
             editor.getDocument().deleteString(start, end);
           }
-        });
-      } 
+        };
+        if (editor instanceof TextComponentEditor) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().runWriteAction(runnable);
+        }
+      }
     }
   }
 }

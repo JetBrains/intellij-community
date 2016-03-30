@@ -15,10 +15,9 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,10 +29,11 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
+import com.intellij.util.textCompletion.ValuesCompletionProvider;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
@@ -46,8 +46,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -72,7 +74,7 @@ public class GoToHashOrRefPopup {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
     myTextField =
-      new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(project, variants, roots, colorManager, comparator)) {
+      new TextFieldWithProgress(project, new VcsRefCompletionProvider(project, variants, roots, colorManager, comparator)) {
         @Override
         public void onOk() {
           if (myFuture == null) {
@@ -154,47 +156,64 @@ public class GoToHashOrRefPopup {
     myPopup.showInCenterOf(anchor);
   }
 
-  private class VcsRefCompletionProvider extends TextFieldWithAutoCompletionListProvider<VcsRef> {
-    @NotNull private final Project myProject;
-    @NotNull private final VcsLogColorManager myColorManager;
-    @NotNull private final Comparator<VcsRef> myReferenceComparator;
-    @NotNull private final Map<VirtualFile, String> myCachedRootNames = ContainerUtil.newHashMap();
+  private class VcsRefCompletionProvider extends ValuesCompletionProvider<VcsRef> {
 
     public VcsRefCompletionProvider(@NotNull Project project,
                                     @NotNull Collection<VcsRef> variants,
                                     @NotNull Collection<VirtualFile> roots,
                                     @NotNull VcsLogColorManager colorManager,
                                     @NotNull Comparator<VcsRef> comparator) {
-      super(variants);
+      super(new VcsRefDescriptor(project, colorManager, comparator, roots), variants);
+    }
+
+    @NotNull
+    @Override
+    protected Collection<? extends VcsRef> getValues(@NotNull String prefix, @NotNull CompletionResultSet result) {
+      return ContainerUtil.filter(myValues, new Condition<VcsRef>() {
+        @Override
+        public boolean value(VcsRef vcsRef) {
+          return result.getPrefixMatcher().prefixMatches(vcsRef.getName());
+        }
+      });
+    }
+  }
+
+  private class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
+    @NotNull private final Project myProject;
+    @NotNull private final VcsLogColorManager myColorManager;
+    @NotNull private final Comparator<VcsRef> myReferenceComparator;
+    @NotNull private final Map<VirtualFile, String> myCachedRootNames = ContainerUtil.newHashMap();
+
+    private VcsRefDescriptor(@NotNull Project project,
+                             @NotNull VcsLogColorManager manager,
+                             @NotNull Comparator<VcsRef> comparator,
+                             @NotNull Collection<VirtualFile> roots) {
       myProject = project;
-      myColorManager = colorManager;
+      myColorManager = manager;
       myReferenceComparator = comparator;
+
       for (VirtualFile root : roots) {
         String text = VcsImplUtil.getShortVcsRootName(myProject, root);
         myCachedRootNames.put(root, text);
       }
     }
 
+    @NotNull
     @Override
     public LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
       LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
       if (myColorManager.isMultipleRoots()) {
         lookupBuilder = lookupBuilder
-          .withTypeText(getTypeText(item), new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)),
+          .withTypeText(getTypeText(item),
+                        new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)),
                         true);
       }
       return lookupBuilder;
     }
 
-    @Nullable
-    @Override
-    protected Icon getIcon(@NotNull VcsRef item) {
-      return null;
-    }
-
     @NotNull
     @Override
-    protected String getLookupString(@NotNull VcsRef item) {
+    public String getLookupString(@NotNull VcsRef item) {
       return item.getName();
     }
 
@@ -243,29 +262,6 @@ public class GoToHashOrRefPopup {
           });
         }
       };
-    }
-
-    @NotNull
-    @Override
-    public Collection<VcsRef> getItems(String prefix, boolean cached, CompletionParameters parameters) {
-      if (prefix == null) {
-        return Collections.emptyList();
-      }
-
-      List<VcsRef> items = new ArrayList<VcsRef>(getMatched(myVariants, prefix));
-      Collections.sort(items, this);
-
-      return items;
-    }
-
-    private List<VcsRef> getMatched(@NotNull Collection<VcsRef> refs, @NotNull String prefix) {
-      final PlainPrefixMatcher prefixMatcher = new PlainPrefixMatcher(prefix);
-      return ContainerUtil.filter(refs, new Condition<VcsRef>() {
-        @Override
-        public boolean value(VcsRef vcsRef) {
-          return prefixMatcher.prefixMatches(vcsRef.getName());
-        }
-      });
     }
   }
 }

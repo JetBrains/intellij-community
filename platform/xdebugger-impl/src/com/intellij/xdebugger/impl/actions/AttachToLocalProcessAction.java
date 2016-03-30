@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -50,7 +49,10 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.InputEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class AttachToLocalProcessAction extends AnAction {
   private static final Key<LinkedHashMap<String, HistoryItem>> HISTORY_KEY = Key.create("AttachToLocalProcessAction.HISTORY_KEY");
@@ -82,23 +84,20 @@ public class AttachToLocalProcessAction extends AnAction {
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     final JList mainList = ((ListPopupImpl)popup).getList();
 
-    ListSelectionListener listener = new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent event) {
-        if (event.getValueIsAdjusting()) return;
+    ListSelectionListener listener = event -> {
+      if (event.getValueIsAdjusting()) return;
 
-        Object item = ((JList)event.getSource()).getSelectedValue();
+      Object item = ((JList)event.getSource()).getSelectedValue();
 
-        // if a sub-list is closed, fallback to the selected value from the main list 
-        if (item == null) {
-          item = mainList.getSelectedValue();
-        }
+      // if a sub-list is closed, fallback to the selected value from the main list
+      if (item == null) {
+        item = mainList.getSelectedValue();
+      }
 
-        if (item instanceof AttachItem) {
-          String debuggerName = ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName();
-          debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
-          ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.adText", debuggerName));
-        }
+      if (item instanceof AttachItem) {
+        String debuggerName = ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName();
+        debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
+        ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.adText", debuggerName));
       }
     };
     popup.addListSelectionListener(listener);
@@ -113,13 +112,12 @@ public class AttachToLocalProcessAction extends AnAction {
   public static List<AttachItem> collectAttachItems(@NotNull final Project project, 
                                                     @NotNull ProcessInfo[] processList,
                                                     @NotNull XLocalAttachDebuggerProvider... providers) {
-    MultiMap<XLocalAttachGroup, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> groupWithItems
-      = new MultiMap<XLocalAttachGroup, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>();
+    MultiMap<XLocalAttachGroup, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> groupWithItems = new MultiMap<>();
     
     UserDataHolderBase dataHolder = new UserDataHolderBase();
     for (ProcessInfo eachInfo : processList) {
 
-      MultiMap<XLocalAttachGroup, XLocalAttachDebugger> groupsWithDebuggers = new MultiMap<XLocalAttachGroup, XLocalAttachDebugger>();
+      MultiMap<XLocalAttachGroup, XLocalAttachDebugger> groupsWithDebuggers = new MultiMap<>();
       for (XLocalAttachDebuggerProvider eachProvider : providers) {
         groupsWithDebuggers.putValues(eachProvider.getAttachGroup(), eachProvider.getAvailableDebuggers(project, eachInfo, dataHolder));
       }
@@ -127,29 +125,19 @@ public class AttachToLocalProcessAction extends AnAction {
       for (XLocalAttachGroup eachGroup : groupsWithDebuggers.keySet()) {
         Collection<XLocalAttachDebugger> debuggers = groupsWithDebuggers.get(eachGroup);
         if (!debuggers.isEmpty()) {
-          groupWithItems.putValue(eachGroup, Pair.create(eachInfo, new ArrayList<XLocalAttachDebugger>(debuggers)));
+          groupWithItems.putValue(eachGroup, Pair.create(eachInfo, new ArrayList<>(debuggers)));
         }
       }
     }
 
-    ArrayList<XLocalAttachGroup> sortedGroups = new ArrayList<XLocalAttachGroup>(groupWithItems.keySet());
-    Collections.sort(sortedGroups, new Comparator<XLocalAttachGroup>() {
-      @Override
-      public int compare(XLocalAttachGroup a, XLocalAttachGroup b) {
-        return a.getOrder() - b.getOrder();
-      }
-    });
+    ArrayList<XLocalAttachGroup> sortedGroups = new ArrayList<>(groupWithItems.keySet());
+    Collections.sort(sortedGroups, (a, b) -> a.getOrder() - b.getOrder());
 
-    List<AttachItem> currentItems = new ArrayList<AttachItem>();
+    List<AttachItem> currentItems = new ArrayList<>();
     for (final XLocalAttachGroup eachGroup : sortedGroups) {
       List<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> sortedItems
-        = new ArrayList<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>(groupWithItems.get(eachGroup));
-      Collections.sort(sortedItems, new Comparator<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>() {
-        @Override
-        public int compare(Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>> a, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>> b) {
-          return eachGroup.compare(project, a.first, b.first);
-        }
-      });
+        = new ArrayList<>(groupWithItems.get(eachGroup));
+      Collections.sort(sortedItems, (a, b) -> eachGroup.compare(project, a.first, b.first));
 
       boolean first = true;
       for (Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>> eachItem : sortedItems) {
@@ -158,7 +146,7 @@ public class AttachToLocalProcessAction extends AnAction {
       }
     }
 
-    List<AttachItem> currentHistoryItems = new ArrayList<AttachItem>();
+    List<AttachItem> currentHistoryItems = new ArrayList<>();
     List<HistoryItem> history = getHistory(project);
     for (int i = history.size() - 1; i >= 0; i--) {
       HistoryItem eachHistoryItem = history.get(i);
@@ -194,7 +182,7 @@ public class AttachToLocalProcessAction extends AnAction {
   public static void addToHistory(@NotNull Project project, @NotNull AttachItem item) {
     LinkedHashMap<String, HistoryItem> history = project.getUserData(HISTORY_KEY);
     if (history == null) {
-      project.putUserData(HISTORY_KEY, history = new LinkedHashMap<String, HistoryItem>());
+      project.putUserData(HISTORY_KEY, history = new LinkedHashMap<>());
     }
     ProcessInfo processInfo = item.getProcessInfo();
     history.remove(processInfo.getCommandLine());
@@ -208,8 +196,8 @@ public class AttachToLocalProcessAction extends AnAction {
   @NotNull
   public static List<HistoryItem> getHistory(@NotNull Project project) {
     LinkedHashMap<String, HistoryItem> history = project.getUserData(HISTORY_KEY);
-    return history == null ? Collections.<HistoryItem>emptyList()
-                           : Collections.unmodifiableList(new ArrayList<HistoryItem>(history.values()));
+    return history == null ? Collections.emptyList()
+                           : Collections.unmodifiableList(new ArrayList<>(history.values()));
   }
 
   public static class HistoryItem {
@@ -296,11 +284,8 @@ public class AttachToLocalProcessAction extends AnAction {
       mySelectedDebugger = selectedDebugger;
 
       if (debuggers.size() > 1) {
-        mySubItems = ContainerUtil.map(debuggers, new Function<XLocalAttachDebugger, AttachItem>() {
-          @Override
-          public AttachItem fun(XLocalAttachDebugger debugger) {
-            return new AttachItem(myGroup, false, myProcessInfo, Collections.singletonList(debugger));
-          }
+        mySubItems = ContainerUtil.map(debuggers, debugger -> {
+          return new AttachItem(myGroup, false, myProcessInfo, Collections.singletonList(debugger));
         });
       }
       else {

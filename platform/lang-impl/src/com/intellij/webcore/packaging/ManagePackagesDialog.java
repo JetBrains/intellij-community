@@ -336,7 +336,9 @@ public class ManagePackagesDialog extends DialogWrapper {
           application.invokeLater(new Runnable() {
             @Override
             public void run() {
-              Messages.showErrorDialog(myMainPanel, "Error loading package list:" + e.getMessage(), "Packages");
+              if (myMainPanel.isShowing()) {
+                Messages.showErrorDialog(myMainPanel, "Error loading package list:" + e.getMessage(), "Packages");
+              }
               setDownloadStatus(false);
             }
           }, ModalityState.any());

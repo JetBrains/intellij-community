@@ -4,7 +4,7 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 

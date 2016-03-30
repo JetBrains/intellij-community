@@ -77,7 +77,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private final AtomicBoolean myUpdating = new AtomicBoolean(false);
   private JBTable myTable;
   public String DECORATOR = "DIFF_TABLE_DECORATOR";
-  public volatile AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
+  public final AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
   private Updater myUpdater;
   private List<DirDiffModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private TableSelectionConfig mySelectionConfig;
@@ -149,7 +149,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     else {
       selectFirstRow();
     }
-    myPanel.focusTable();
     myPanel.update(true);
   }
 
@@ -913,7 +912,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         myUpdater.start();
       } else {
         myUpdater = null;
-        myPanel.focusTable();
       }
     }
   }

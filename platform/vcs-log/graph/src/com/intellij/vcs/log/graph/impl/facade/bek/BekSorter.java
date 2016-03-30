@@ -94,5 +94,4 @@ public class BekSorter {
     BekBranchMerger bekBranchMerger = new BekBranchMerger(branches.first, branches.second, myTimestampGetter);
     return bekBranchMerger.getResult();
   }
-
 }

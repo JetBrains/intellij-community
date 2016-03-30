@@ -103,24 +103,26 @@ public class StackTraceLine {
     final int dollarIndex = className.indexOf('$');
     if (dollarIndex != -1) className = className.substring(0, dollarIndex);
     PsiClass psiClass = findClass(project, className, lineNumber);
-    if (psiClass == null || (psiClass.getNavigationElement() instanceof PsiCompiledElement)) return null;
-    psiClass = (PsiClass)psiClass.getNavigationElement();
-    final PsiMethod psiMethod = getMethodAtLine(psiClass, methodName, lineNumber);
-    if (psiMethod != null) {
-      return new MethodLineLocation(project, psiMethod, PsiLocation.fromPsiElement(psiClass), lineNumber);
+    PsiElement navElement = psiClass == null ? null : psiClass.getNavigationElement();
+    if (psiClass == null || navElement instanceof PsiCompiledElement) return null;
+
+    if (navElement instanceof PsiClass) {
+      final PsiMethod psiMethod = getMethodAtLine((PsiClass)navElement, methodName, lineNumber);
+      if (psiMethod != null) {
+        return new MethodLineLocation(project, psiMethod, PsiLocation.fromPsiElement((PsiClass)navElement), lineNumber);
+      }
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   private static PsiClass findClass(final Project project, final String className, final int lineNumber) {
     if (project == null) return null;
     final PsiManager psiManager = PsiManager.getInstance(project);
     PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className, GlobalSearchScope.allScope(project));
-    if (psiClass == null || (psiClass.getNavigationElement() instanceof PsiCompiledElement)) return null;
-    psiClass = (PsiClass)psiClass.getNavigationElement();
-    final PsiFile psiFile = psiClass.getContainingFile();
+    PsiElement navElement = psiClass == null ? null : psiClass.getNavigationElement();
+    if (psiClass == null || navElement instanceof PsiCompiledElement) return null;
+
+    final PsiFile psiFile = navElement.getContainingFile();
     return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offsetOfLine(psiFile, lineNumber)), PsiClass.class, false);
   }
 

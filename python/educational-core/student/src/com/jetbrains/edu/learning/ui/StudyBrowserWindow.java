@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
+import com.jetbrains.edu.learning.StudyPluginConfigurator;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -124,16 +124,21 @@ class StudyBrowserWindow extends JFrame {
     });
   }
 
-  public void loadContent(@NotNull final String content, StudyToolWindowConfigurator configurator) {
-    String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
-    Platform.runLater(()-> {
+  public void loadContent(@NotNull final String content, @Nullable StudyPluginConfigurator configurator) {
+    if (configurator == null) {
+      Platform.runLater(() -> myEngine.loadContent(content));
+    }
+    else {
+      String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
+      Platform.runLater(() -> {
         updateLookWithProgressBarIfNeeded();
-        myEngine.loadContent(withCodeHighlighting);        
+        myEngine.loadContent(withCodeHighlighting);
       });
+    }
   }
 
   @Nullable
-  private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyToolWindowConfigurator configurator) {
+  private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyPluginConfigurator configurator) {
     String template = null;
     InputStream stream = getClass().getResourceAsStream("/code-mirror/template.html");
     try {
@@ -160,9 +165,9 @@ class StudyBrowserWindow extends JFrame {
     int fontSize = editorColorsScheme.getEditorFontSize();
     
     template = template.replace("${font_size}", String.valueOf(fontSize- 2));
-    template = template.replace("${highlight_mode}", getClass().getResource("/code-mirror/clike.js").toExternalForm());
     template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
-    template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());
+    template = template.replace("${language_script}", configurator.getLanguageScriptUrl());
+    template = template.replace("${default_mode}", configurator.getDefaultHighlightingMode());
     template = template.replace("${runmode}", getClass().getResource("/code-mirror/runmode.js").toExternalForm());
     template = template.replace("${colorize}", getClass().getResource("/code-mirror/colorize.js").toExternalForm());
     template = template.replace("${javascript}", getClass().getResource("/code-mirror/javascript.js").toExternalForm());
@@ -174,7 +179,6 @@ class StudyBrowserWindow extends JFrame {
       template = template.replace("${css_oldcodemirror}", getClass().getResource("/code-mirror/codemirror-old.css").toExternalForm());
       template = template.replace("${css_codemirror}", getClass().getResource("/code-mirror/codemirror.css").toExternalForm());
     }
-    template = template.replace("${default-mode}", configurator.getDefaultHighlightingMode());
     template = template.replace("${code}", content);
 
     return template;

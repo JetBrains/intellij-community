@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author nik
@@ -61,23 +62,21 @@ public class XDebuggerTreeState {
   private void addChildren(final XDebuggerTree tree, final NodeInfo nodeInfo, final XDebuggerTreeNode treeNode) {
     if (tree.isExpanded(treeNode.getPath())) {
       List<? extends XDebuggerTreeNode> children = treeNode.getLoadedChildren();
-      if (children != null) {
-        nodeInfo.myExpanded = true;
-        for (XDebuggerTreeNode child : children) {
-          final TreePath path = child.getPath();
-          final Rectangle bounds = tree.getPathBounds(path);
-          if (bounds != null) {
-            Rectangle treeVisibleRect =
-              tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
-            if (treeVisibleRect.contains(bounds)) {
-              myLastVisibleNodeRect = bounds;
-            }
+      nodeInfo.myExpanded = true;
+      for (XDebuggerTreeNode child : children) {
+        TreePath path = child.getPath();
+        Rectangle bounds = tree.getPathBounds(path);
+        if (bounds != null) {
+          Rectangle treeVisibleRect =
+            tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
+          if (treeVisibleRect.contains(bounds)) {
+            myLastVisibleNodeRect = bounds;
           }
-          NodeInfo childInfo = createNode(child, tree.isPathSelected(path));
-          if (childInfo != null) {
-            nodeInfo.addChild(childInfo);
-            addChildren(tree, childInfo, child);
-          }
+        }
+        NodeInfo childInfo = createNode(child, tree.isPathSelected(path));
+        if (childInfo != null) {
+          nodeInfo.addChild(childInfo);
+          addChildren(tree, childInfo, child);
         }
       }
     }
@@ -99,7 +98,7 @@ public class XDebuggerTreeState {
     private final String myValue;
     private boolean myExpanded;
     private final boolean mySelected;
-    private Map<String, NodeInfo> myChildren;
+    private MultiMap<String, NodeInfo> myChildren; // MultiMap to allow several nodes with the same name
 
     public NodeInfo(final String name, final String value, boolean selected) {
       myName = name;
@@ -109,9 +108,9 @@ public class XDebuggerTreeState {
 
     public void addChild(@NotNull NodeInfo child) {
       if (myChildren == null) {
-        myChildren = new THashMap<String, NodeInfo>();
+        myChildren = new MultiMap<>();
       }
-      myChildren.put(child.myName, child);
+      myChildren.putValue(child.myName, child);
     }
 
     public boolean isExpanded() {
@@ -128,7 +127,15 @@ public class XDebuggerTreeState {
 
     @Nullable
     public NodeInfo removeChild(String name) {
-      return myChildren != null ? myChildren.remove(name) : null;
+      if (myChildren == null) {
+        return null;
+      }
+      Collection<NodeInfo> infos = myChildren.get(name);
+      NodeInfo item = ContainerUtil.getFirstItem(infos);
+      if (item != null) {
+        infos.remove(item);
+      }
+      return item;
     }
   }
 }

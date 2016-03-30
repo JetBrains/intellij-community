@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -29,10 +30,7 @@ import com.intellij.codeInspection.export.HTMLExportUtil;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.ui.InspectionNode;
-import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
@@ -53,7 +51,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.Language;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +73,8 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   @NonNls private static final String PROBLEMS = "problems";
   @NonNls private static final String HTML = "HTML";
   @NonNls private static final String XML = "XML";
+  @NonNls private static final String CSS = "p.problem-description-group {color: %s; font-weight:bold;}";
+
 
   public ExportHTMLAction(final InspectionResultsView view) {
     super(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.Actions.Export);
@@ -161,7 +163,10 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
   private void dupm2XML(final String outputDirectoryName) {
     try {
-      new File(outputDirectoryName).mkdirs();
+      final File outputDir = new File(outputDirectoryName);
+      if (!outputDir.exists() && !outputDir.mkdirs()) {
+        throw new IOException("Cannot create \'" + outputDir + "\'");
+      }
       final InspectionTreeNode root = myView.getTree().getRoot();
       final IOException[] ex = new IOException[1];
       TreeUtil.traverse(root, new TreeUtil.Traverse() {
@@ -175,13 +180,31 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
             final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
             for (InspectionToolWrapper wrapper : toolWrappers) {
               InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-              presentation.exportResults(problems);
+              if (!toolNode.isResolved(myView.getExcludedManager())) {
+                final Set<RefEntity> excludedEntities = new HashSet<>();
+                final Set<CommonProblemDescriptor> excludedDescriptors = new HashSet<>();
+                TreeUtil.traverse(toolNode, o -> {
+                  InspectionTreeNode n = (InspectionTreeNode)o;
+                  if (n.isResolved(myView.getExcludedManager())) {
+                    if (n instanceof RefElementNode) {
+                      excludedEntities.add(((RefElementNode)n).getElement());
+                    }
+                    if (n instanceof ProblemDescriptionNode) {
+                      excludedDescriptors.add(((ProblemDescriptionNode)n).getDescriptor());
+                    }
+                  }
+                  return true;
+                });
+                presentation.exportResults(problems, excludedEntities, excludedDescriptors);
+              }
             }
             PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
             try {
-              JDOMUtil.writeDocument(new Document(problems),
-                                     outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
-                                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+              if (problems.getContentSize() != 0) {
+                JDOMUtil.writeDocument(new Document(problems),
+                                       outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
+                                       CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+              }
             }
             catch (IOException e) {
               ex[0] = e;
@@ -257,6 +280,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+      presentation.updateContent();
       final Map<String, Set<RefEntity>> toolContent = presentation.getContent();
       content.putAll(toolContent);
     }
@@ -274,7 +298,11 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       List<RefEntity> packageContent = new ArrayList<RefEntity>(content.get(packageName));
       Collections.sort(packageContent, RefEntityAlphabeticalComparator.getInstance());
       StringBuffer contentIndex = new StringBuffer();
-      contentIndex.append("<html><body>");
+      contentIndex.append("<html>" +
+                          "<head>\n" +
+                          "<link rel=\"stylesheet\" type=\"text/css\" href=\"inspection-report-style.css\">\n" +
+                          "</head>" +
+                          "<body>");
       for (RefEntity refElement : packageContent) {
         refElement = refElement.getRefManager().getRefinedElement(refElement);
         contentIndex.append("<a HREF=\"");
@@ -288,6 +316,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
       contentIndex.append("</body></html>");
       HTMLExportUtil.writeFile(exporter.getRootFolder(), packageName + "-index.html", contentIndex, myView.getProject());
+      HTMLExportUtil.writeFile(exporter.getRootFolder(), "inspection-report-style.css", String.format(CSS, UIUtil.isUnderDarcula() ? "#A5C25C" : "#005555"), myView.getProject());
     }
 
     final Set<RefModule> modules = new HashSet<RefModule>();

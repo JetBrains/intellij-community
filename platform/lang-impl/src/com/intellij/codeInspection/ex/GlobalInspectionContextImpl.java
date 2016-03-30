@@ -32,6 +32,7 @@ import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTreeState;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -42,6 +43,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PathMacroManager;
@@ -91,15 +93,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
   private final NotNullLazyValue<ContentManager> myContentManager;
-  private InspectionResultsView myView;
+  private volatile InspectionResultsView myView;
   private Content myContent;
+  private volatile boolean myViewClosed = true;
+  private volatile boolean mySingleInspectionRun;
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
+  private InspectionTreeState myTreeState;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
     super(project);
-
     myUIOptions = AnalysisUIOptions.getInstance(project).copy();
     myContentManager = contentManager;
   }
@@ -109,8 +113,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return myContentManager.getValue();
   }
 
-  public synchronized void addView(@NotNull InspectionResultsView view, @NotNull String title) {
-    if (myContent != null) return;
+  public void setTreeState(InspectionTreeState treeState) {
+    myTreeState = treeState;
+  }
+
+  public synchronized void addView(@NotNull InspectionResultsView view,
+                                   @NotNull String title,
+                                   boolean isOffline) {
+    LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void contentRemoved(ContentManagerEvent event) {
@@ -124,6 +134,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
 
     myView = view;
+    if (!isOffline) {
+      myView.setUpdating(true);
+    }
+    if (myTreeState != null) {
+      myView.getTree().setTreeState(myTreeState);
+    }
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
 
     myContent.setDisposer(myView);
@@ -138,7 +154,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   public void addView(@NotNull InspectionResultsView view) {
     addView(view, view.getCurrentProfileName() == null
                   ? InspectionsBundle.message("inspection.results.title")
-                  : InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
+                  : InspectionsBundle.message(mySingleInspectionRun ?
+                                              "inspection.results.for.inspection.toolwindow.title" :
+                                              "inspection.results.for.profile.toolwindow.title",
+                                              view.getCurrentProfileName()), false);
 
   }
 
@@ -235,7 +254,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             try {
               InspectionToolWrapper toolWrapper = state.getTool();
               InspectionToolPresentation presentation = getPresentation(toolWrapper);
-              presentation.exportResults(element, refEntity);
+              presentation.exportResults(element, refEntity, Collections.emptySet());
             }
             catch (Throwable e) {
               LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
@@ -314,8 +333,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   protected void launchInspections(@NotNull final AnalysisScope scope) {
-    myUIOptions = AnalysisUIOptions.getInstance(getProject()).copy();
-    myView = new InspectionResultsView(getProject(), getCurrentProfile(), scope, this, new InspectionRVContentProviderImpl(getProject()));
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myUIOptions = AnalysisUIOptions.getInstance(getProject()).copy();
+    }
+    myViewClosed = false;
     super.launchInspections(scope);
   }
 
@@ -333,14 +354,26 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       public void run() {
         LOG.info("Code inspection finished");
 
+        final InspectionResultsView view;
+        if (myView == null) {
+          view = new InspectionResultsView(GlobalInspectionContextImpl.this,
+                                           new InspectionRVContentProviderImpl(getProject()));
+        } else {
+          view = null;
+        }
+        if (!(myView == null ? view : myView).hasProblems() && !getUIOptions().SHOW_ONLY_DIFF) {
+          NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
+          close(true);
+          if (view != null) {
+            Disposer.dispose(view);
+          }
+        }
+        else if (view != null) {
+          view.update();
+          addView(view);
+        }
         if (myView != null) {
-          if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
-            close(true);
-          }
-          else {
-            addView(myView);
-          }
+          myView.setUpdating(false);
         }
       }
     });
@@ -372,7 +405,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
 
-    if (runGlobalToolsOnly) return;
+    if (runGlobalToolsOnly || (localTools.isEmpty() && globalSimpleTools.isEmpty())) return;
 
     final Set<VirtualFile> localScopeFiles = scope.toSearchScope() instanceof LocalSearchScope ? new THashSet<VirtualFile>() : null;
     for (Tools tools : globalSimpleTools) {
@@ -574,7 +607,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     if (virtualFile == null) return null;
     if (isBinary(file)) return null; //do not inspect binary files
 
-    if (myView == null && !headlessEnvironment) {
+    if (myViewClosed && !headlessEnvironment) {
       throw new ProcessCanceledException();
     }
 
@@ -595,7 +628,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || isOfflineInspections, "Must not run under read action, too unresponsive");
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
 
-    final boolean canBeExternalUsages = scope.getScopeType() != AnalysisScope.PROJECT;
+    final boolean canBeExternalUsages = !(scope.getScopeType() == AnalysisScope.PROJECT && scope.isIncludeTestSource());
     for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {
         final InspectionToolWrapper toolWrapper = state.getTool();
@@ -615,8 +648,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             @Override
             public void run() {
               tool.runInspection(scope, inspectionManager, GlobalInspectionContextImpl.this, toolPresentation);
-              //skip phase when we are sure that scope already contains everything
-              if (canBeExternalUsages &&
+              //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
+              if ((canBeExternalUsages || tool.getAdditionalJobs() != null) &&
                   tool.queryExternalUsagesRequests(inspectionManager, GlobalInspectionContextImpl.this, toolPresentation)) {
                 needRepeatSearchRequest.add(toolWrapper);
               }
@@ -648,6 +681,29 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
       }
     }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final InspectionResultsView view = createViewIfNeed();
+      if (!view.isDisposed()) {
+        ReadAction.run(() -> view.addTools(globalTools));
+      }
+    }
+  }
+
+  @NotNull
+  public InspectionResultsView createViewIfNeed() {
+    if (myView == null) {
+      LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
+      return  UIUtil.invokeAndWaitIfNeeded(() -> {
+        InspectionResultsView newView = getView();
+        if (newView != null) {
+          return newView;
+        }
+        newView = new InspectionResultsView(this, new InspectionRVContentProviderImpl(getProject()));
+        addView(newView);
+        return newView;
+      });
+    }
+    return myView;
   }
 
   private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
@@ -764,18 +820,22 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   public void close(boolean noSuspisiousCodeFound) {
-    if (!noSuspisiousCodeFound && (myView == null || myView.isRerun())) return;
+    if (!noSuspisiousCodeFound) {
+      if (myView.isRerun()) {
+        myViewClosed = true;
+        myView = null;
+      }
+      if (myView == null) {
+        return;
+      }
+    }
     AnalysisUIOptions.getInstance(getProject()).save(myUIOptions);
     if (myContent != null) {
       final ContentManager contentManager = getContentManager();
       contentManager.removeContent(myContent, true);
     }
+    myViewClosed = true;
     myView = null;
-    super.close(noSuspisiousCodeFound);
-  }
-
-  @Override
-  public void cleanup() {
     ((InspectionManagerEx)InspectionManager.getInstance(getProject())).closeRunningContext(this);
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
@@ -783,12 +843,20 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         getPresentation(toolWrapper).finalCleanup();
       }
     }
+    super.close(noSuspisiousCodeFound);
+  }
+
+  @Override
+  public void cleanup() {
+    if (myView != null) {
+      myView.setUpdating(false);
+    }
     super.cleanup();
   }
 
   public void refreshViews() {
     if (myView != null) {
-      myView.updateView(false);
+      myView.getTree().queueUpdate();
     }
   }
 
@@ -838,6 +906,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                        @NotNull final Project project,
                        @Nullable final Runnable postRunnable,
                        @Nullable final String commandName) {
+    setCurrentScope(scope);
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
@@ -955,5 +1024,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   private static boolean isBinary(@NotNull PsiFile file) {
     return file instanceof PsiBinaryFile || file.getFileType().isBinary();
+  }
+
+  public boolean isViewClosed() {
+    return myViewClosed;
+  }
+
+  public void setSingleInspectionRun(boolean singleInspectionRun) {
+    mySingleInspectionRun = singleInspectionRun;
+  }
+
+  public boolean isSingleInspectionRun() {
+    return mySingleInspectionRun;
   }
 }

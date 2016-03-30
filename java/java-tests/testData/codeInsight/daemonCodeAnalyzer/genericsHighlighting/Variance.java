@@ -61,7 +61,7 @@ class VarianceTesting {
 
 class SuperTester <U> {
      void go(Acceptor<? super U> acceptor, U u) {
-          acceptor.accept<error descr="'accept(SuperTester<capture<? super U>>, capture<? super U>)' in 'SuperTester.Acceptor' cannot be applied to '(SuperTester<U>, U)'">(this, u)</error>;
+          acceptor.accept(<error descr="'accept(SuperTester<capture<? super U>>, capture<? super U>)' in 'SuperTester.Acceptor' cannot be applied to '(SuperTester<U>, U)'">this</error>, u);
      }
 
      static class Acceptor <V> {
@@ -142,7 +142,7 @@ class S1 {
     }
 
     void bar(List<? extends S1> k) {
-        f<error descr="'f(java.util.List<capture<? extends S1>>, capture<? extends S1>)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">(k,  k.get(0))</error>;
+        f(k,  <error descr="'f(java.util.List<capture<? extends S1>>, capture<? extends S1>)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">k.get(0)</error>);
     }
 }
 
@@ -152,7 +152,7 @@ class S2 {
     }
 
     void bar(List<? extends S2> k) {
-        f<error descr="'f(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
+        f(k, <error descr="'f(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">k</error>);
     }
 }
 
@@ -214,7 +214,7 @@ public static void foo(List<? extends Foo> foos) {
 class OtherBug1 {
   public static void foo(List<? super Foo> foos) {
     final Comparator<Foo> comparator = createComparator();
-    Collections.sort<error descr="'sort(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<? super capture<? super OtherBug1.Foo>>)' in 'java.util.Collections' cannot be applied to '(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<OtherBug1.Foo>)'">(foos, comparator)</error>;
+    Collections.sort(foos, <error descr="'sort(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<? super capture<? super OtherBug1.Foo>>)' in 'java.util.Collections' cannot be applied to '(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<OtherBug1.Foo>)'">comparator</error>);
   }
 
   private static Comparator<Foo> createComparator() {

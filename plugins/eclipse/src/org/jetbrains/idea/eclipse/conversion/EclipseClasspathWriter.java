@@ -108,8 +108,12 @@ public class EclipseClasspathWriter {
       }
     }
     else if (entry instanceof ModuleOrderEntry) {
-      Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, '/' + ((ModuleOrderEntry)entry).getModuleName(), classpathRoot);
-      setAttributeIfAbsent(orderEntry, EclipseXml.COMBINEACCESSRULES_ATTR, EclipseXml.FALSE_VALUE);
+      final String path = '/' + ((ModuleOrderEntry)entry).getModuleName();
+      final Element oldElement = getOldElement(EclipseXml.SRC_KIND, path);
+      Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, path, classpathRoot);
+      if (oldElement == null) {
+        setAttributeIfAbsent(orderEntry, EclipseXml.COMBINEACCESSRULES_ATTR, EclipseXml.FALSE_VALUE);
+      }
       setExported(orderEntry, ((ExportableOrderEntry)entry));
     }
     else if (entry instanceof LibraryOrderEntry) {
@@ -246,7 +250,7 @@ public class EclipseClasspathWriter {
   }
 
   private Element addOrderEntry(@NotNull String kind, String path, Element classpathRoot, int index) {
-    Element element = myOldEntries.get(kind + getJREKey(path));
+    Element element = getOldElement(kind, path);
     if (element != null) {
       Element clonedElement = element.clone();
       if (index == -1 || index >= classpathRoot.getContentSize()) {
@@ -270,6 +274,10 @@ public class EclipseClasspathWriter {
       classpathRoot.addContent(index, orderEntry);
     }
     return orderEntry;
+  }
+
+  private Element getOldElement(@NotNull String kind, String path) {
+    return myOldEntries.get(kind + getJREKey(path));
   }
 
   private static String getJREKey(String path) {

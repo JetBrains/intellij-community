@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
  * @author Yura Cangea
  * @version 1.0
  */
-public class RegexpFilter implements Filter {
+public class RegexpFilter implements Filter, DumbAware {
   @NonNls public static final String FILE_PATH_MACROS = "$FILE_PATH$";
   @NonNls public static final String LINE_MACROS = "$LINE$";
   @NonNls public static final String COLUMN_MACROS = "$COLUMN$";
@@ -139,7 +140,7 @@ public class RegexpFilter implements Filter {
 
   @Override
   public Result applyFilter(String line, int entireLength) {
-    Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 1000));
+    Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 100));
     if (!matcher.find()) {
       return null;
     }
@@ -180,7 +181,7 @@ public class RegexpFilter implements Filter {
   @Nullable
   protected HyperlinkInfo createOpenFileHyperlink(String fileName, final int line, final int column) {
     fileName = fileName.replace(File.separatorChar, '/');
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fileName);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPathIfCached(fileName);
     return file != null ? new OpenFileHyperlinkInfo(myProject, file, line, column) : null;
   }
 

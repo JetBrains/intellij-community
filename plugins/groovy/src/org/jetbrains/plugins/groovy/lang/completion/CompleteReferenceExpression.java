@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,12 +167,14 @@ public class CompleteReferenceExpression {
     }
     else {
       if (myRefExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
-        getVariantsFromQualifier(qualifier);
-
-        if (qualifier instanceof GrReferenceExpression &&
-            ("class".equals(((GrReferenceExpression)qualifier).getReferenceName()) || PsiUtil.isThisReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier))) {
+        if (qualifier instanceof GrReferenceExpression && (
+          "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
+          PsiUtil.isThisReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)
+          || ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass
+        )) {
           processIfJavaLangClass(qualifier.getType());
         }
+        getVariantsFromQualifier(qualifier);
       }
       else {
         getVariantsFromQualifierForSpreadOperator(qualifier);

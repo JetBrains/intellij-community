@@ -47,7 +47,7 @@ public class StructuralSearchUtil {
     if (profile == null) {
       return element;
     }
-    return getParentIfIdentifier(profile.getPresentableElement(element));
+    return profile.getPresentableElement(getParentIfIdentifier(element));
   }
 
   private static StructuralSearchProfile[] getNewStyleProfiles() {

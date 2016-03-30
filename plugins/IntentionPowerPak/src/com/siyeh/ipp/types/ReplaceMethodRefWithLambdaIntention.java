@@ -41,8 +41,8 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
   @Override
   protected void processIntention(final Editor editor, @NotNull PsiElement element) {
     final PsiMethodReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
-    LOG.assertTrue(referenceExpression != null);
-    final PsiLambdaExpression expr = LambdaRefactoringUtil.convertMethodReferenceToLambda(referenceExpression, false, true);
+    final PsiLambdaExpression expr = referenceExpression != null ? LambdaRefactoringUtil.convertMethodReferenceToLambda(referenceExpression, false, true) : null;
+    if (expr == null) return;
     final Runnable runnable = new Runnable() {
       public void run() {
         LambdaRefactoringUtil.removeSideEffectsFromLambdaBody(editor, expr);

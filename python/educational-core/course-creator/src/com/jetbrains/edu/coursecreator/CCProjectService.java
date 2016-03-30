@@ -23,16 +23,14 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.EduDocumentListener;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.core.EduDocumentListener;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,8 +70,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     if (task == null) {
       return null;
     }
-    String fileName = getRealTaskFileName(virtualFile.getName());
-    return task.getTaskFile(fileName);
+    return task.getTaskFile(virtualFile.getName());
   }
 
   public void drawAnswerPlaceholders(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor) {
@@ -129,26 +126,9 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     return null;
   }
 
-  public boolean isAnswerFile(VirtualFile file) {
-    Task task = getTask(file);
-    String fileName = getRealTaskFileName(file.getName());
-    return task != null && fileName != null && task.isTaskFile(fileName);
-  }
-
   public boolean isTaskFile(VirtualFile file) {
     Task task = getTask(file);
     return task != null && task.isTaskFile(file.getName());
-  }
-
-  @Nullable
-  public static String getRealTaskFileName(String name) {
-    String nameWithoutExtension = FileUtil.getNameWithoutExtension(name);
-    String extension = FileUtilRt.getExtension(name);
-    if (!nameWithoutExtension.endsWith(".answer")) {
-      return null;
-    }
-    int nameEnd = name.indexOf(".answer");
-    return name.substring(0, nameEnd) + "." + extension;
   }
 
   public static boolean setCCActionAvailable(@NotNull AnActionEvent e) {

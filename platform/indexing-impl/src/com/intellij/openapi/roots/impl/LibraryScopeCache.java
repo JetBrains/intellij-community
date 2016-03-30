@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -195,12 +197,21 @@ public class LibraryScopeCache {
     return scope;
   }
 
-  private GlobalSearchScope calcLibraryUseScope(List<OrderEntry> entries) {
+  @NotNull
+  private GlobalSearchScope calcLibraryUseScope(@NotNull List<OrderEntry> entries) {
     List<GlobalSearchScope> united = ContainerUtil.newArrayList();
     united.add(getLibrariesOnlyScope());
+    Set<Module> modulesInvolved = new THashSet<>(entries.size());
     for (OrderEntry entry : entries) {
-      united.add(GlobalSearchScope.moduleWithDependentsScope(entry.getOwnerModule()));
+      Module ownerModule = entry.getOwnerModule();
+      united.add(GlobalSearchScope.moduleWithDependentsScope(ownerModule));
+      modulesInvolved.add(ownerModule);
     }
+    // optimisation: if the library attached to all modules (often the case with JDK) then replace the 'union of all modules' scope with just 'project'
+    if (modulesInvolved.size() == ModuleManager.getInstance(myProject).getModules().length) {
+      return GlobalSearchScope.allScope(myProject);
+    }
+
     return GlobalSearchScope.union(united.toArray(new GlobalSearchScope[united.size()]));
   }
 

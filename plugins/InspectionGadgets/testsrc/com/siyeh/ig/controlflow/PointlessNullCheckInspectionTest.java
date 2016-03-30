@@ -1,6 +1,8 @@
 package com.siyeh.ig.controlflow;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Unit test for PointlessNullCheckInspection.
@@ -9,10 +11,15 @@ import com.siyeh.ig.IGInspectionTestCase;
  * @author Etienne Studer
  * @author Hamlet D'Arcy
  */
+public class PointlessNullCheckInspectionTest extends LightInspectionTestCase {
 
-public class PointlessNullCheckInspectionTest extends IGInspectionTestCase {
+  public void testPointlessNullCheck() {
+    doTest();
+  }
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/controlflow/pointless_null_check", new PointlessNullCheckInspection());
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new PointlessNullCheckInspection();
   }
 }

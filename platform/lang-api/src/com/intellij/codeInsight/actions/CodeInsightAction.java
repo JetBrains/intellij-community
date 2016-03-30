@@ -18,11 +18,12 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -36,13 +37,13 @@ public abstract class CodeInsightAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      Editor editor = getEditor(e.getDataContext(), project);
+      Editor editor = getEditor(e.getDataContext(), project, false);
       actionPerformedImpl(project, editor);
     }
   }
 
   @Nullable
-  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project) {
+  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
@@ -73,6 +74,15 @@ public abstract class CodeInsightAction extends AnAction {
   }
 
   @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      getEditor(e.getDataContext(), project, false); // ensure documents are committed
+    }
+    super.beforeActionPerformedUpdate(e);
+  }
+
+  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
@@ -83,7 +93,7 @@ public abstract class CodeInsightAction extends AnAction {
     }
 
     final DataContext dataContext = e.getDataContext();
-    Editor editor = getEditor(dataContext, project);
+    Editor editor = getEditor(dataContext, project, true);
     if (editor == null) {
       presentation.setEnabled(false);
       return;

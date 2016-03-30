@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -402,6 +403,7 @@ public class HighlightControlFlowUtil {
   private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass, @NotNull PsiFile containingFile) {
     PsiElement element = psiElement;
     while (element != null) {
+      if (element instanceof PsiLambdaExpression) return false;
       if (element instanceof PsiClass) return !containingFile.getManager().areElementsEquivalent(element, containingClass);
       element = element.getParent();
     }
@@ -778,7 +780,7 @@ public class HighlightControlFlowUtil {
     try {
       final ControlFlow controlFlow = getControlFlowNoConstantEvaluate(body);
       final int completionReasons = ControlFlowUtil.getCompletionReasons(controlFlow, 0, controlFlow.getSize());
-      if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) {
+      if (!BitUtil.isSet(completionReasons, ControlFlowUtil.NORMAL_COMPLETION_REASON)) {
         String description = JavaErrorMessages.message("initializer.must.be.able.to.complete.normally");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(body).descriptionAndTooltip(description).create();
       }

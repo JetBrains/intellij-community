@@ -216,8 +216,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
         return (nodeDescriptor instanceof ServersTreeStructure.RemoteServerNode
-                || nodeDescriptor instanceof ServersTreeStructure.DeploymentNodeImpl
-                || nodeDescriptor instanceof ServersTreeStructure.GroupNode)
+                || nodeDescriptor instanceof ServersTreeStructure.DeploymentNodeImpl)
                && (!myCollapsedTreeNodeValues.contains(((AbstractTreeNode)nodeDescriptor).getValue()));
       }
     };

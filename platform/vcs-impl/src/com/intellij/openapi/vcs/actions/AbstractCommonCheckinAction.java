@@ -17,8 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
@@ -79,9 +78,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   @NotNull
   protected FilePath[] prepareRootsForCommit(@NotNull FilePath[] roots, @NotNull Project project) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().saveAll();
-    }
+    ApplicationManager.getApplication().saveAll();
 
     return filterDescindingFiles(roots, project);
   }

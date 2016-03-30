@@ -16,9 +16,9 @@ public class a12 {
     <error descr="Not a statement">new int[]{1};</error>
     <error descr="Not a statement">new String[]{new String()};</error>
     if (i==1)
-      <error descr="Not a statement">String s00 = "";</error>
+      <error descr="Declaration not allowed here">String s00 = "";</error>
     for (;;)
-      <error descr="Not a statement">String s01 = "";</error>
+      <error descr="Declaration not allowed here">String s01 = "";</error>
 
     
     for (<error descr="Not a statement">1==2,i=3;</error> i<3; <error descr="Not a statement">!(1==2)</error>);

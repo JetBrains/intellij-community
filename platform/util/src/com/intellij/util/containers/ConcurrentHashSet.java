@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,13 +74,13 @@ public class ConcurrentHashSet<K> implements Set<K> {
   }
 
   @Override
-  public boolean add(K o) {
+  public boolean add(@NotNull K o) {
     return map.putIfAbsent(o, Boolean.TRUE) == null;
   }
 
   @Override
-  public boolean remove(Object o) {
-    return map.keySet().remove(o);
+  public boolean remove(@NotNull Object o) {
+    return map.remove(o) != null;
   }
 
   @Override

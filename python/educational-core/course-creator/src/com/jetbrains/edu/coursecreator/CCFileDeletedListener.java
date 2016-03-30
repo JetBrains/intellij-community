@@ -1,14 +1,12 @@
 package com.jetbrains.edu.coursecreator;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.Function;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.coursecreator.actions.CCRunTestsAction;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 
 class CCFileDeletedListener extends VirtualFileAdapter {
@@ -25,9 +23,12 @@ class CCFileDeletedListener extends VirtualFileAdapter {
       return;
     }
     VirtualFile removedFile = event.getFile();
+    if (removedFile.getPath().contains(CCUtils.GENERATED_FILES_FOLDER)) {
+      return;
+    }
     final TaskFile taskFile = CCProjectService.getInstance(myProject).getTaskFile(removedFile);
     if (taskFile != null) {
-      deleteAnswerFile(removedFile, taskFile);
+      deleteTaskFile(removedFile, taskFile);
       return;
     }
     Course course = CCProjectService.getInstance(myProject).getCourse();
@@ -79,21 +80,11 @@ class CCFileDeletedListener extends VirtualFileAdapter {
     lesson.getTaskList().remove(task);
   }
 
-  private void deleteAnswerFile(@NotNull final VirtualFile removedAnswerFile, TaskFile taskFile) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFile taskDir = removedAnswerFile.getParent();
-        if (taskDir != null) {
-          CCRunTestsAction.clearTestEnvironment(taskDir, myProject);
-        }
-      }
-    });
-    String name = CCProjectService.getRealTaskFileName(removedAnswerFile.getName());
+  private static void deleteTaskFile(@NotNull final VirtualFile removedTaskFile, TaskFile taskFile) {
     Task task = taskFile.getTask();
     if (task == null) {
       return;
     }
-    task.getTaskFiles().remove(name);
+    task.getTaskFiles().remove(removedTaskFile.getName());
   }
 }

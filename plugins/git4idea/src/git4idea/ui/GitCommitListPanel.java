@@ -28,6 +28,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import git4idea.GitCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,7 +203,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private static String getAuthor(GitCommit commit) {
-    return commit.getAuthor().getName();
+    return VcsUserUtil.getShortPresentation(commit.getAuthor());
   }
 
   private static String getTime(GitCommit commit) {

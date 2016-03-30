@@ -151,6 +151,11 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-18096
+  public void testNamedTupleBaseClass() {
+    doTest();
+  }
+
   // PY-6803
   public void testPropertyAndFactoryFunction() {
     doTest();

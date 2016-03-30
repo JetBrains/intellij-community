@@ -137,7 +137,8 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
     @Override
     public void edit(@NotNull PySteppingFilter item, @NotNull Function<PySteppingFilter, PySteppingFilter> mutator, boolean isAdd) {
-      String pattern = Messages.showInputDialog(myPanel, "Specify glob pattern",
+      String pattern = Messages.showInputDialog(myPanel,
+                                                "Specify glob pattern ('*', '?' and '[seq]' allowed, semicolon ';' as name separator):",
                                                 "Stepping Filter", null, item.getFilter(),
                                                 new NonEmptyInputValidator());
       if (pattern != null) {

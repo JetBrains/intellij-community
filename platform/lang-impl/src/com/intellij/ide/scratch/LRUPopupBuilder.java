@@ -19,12 +19,19 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -38,10 +45,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Comparator;
+import java.io.IOException;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author gregsh
@@ -62,13 +68,23 @@ public abstract class LRUPopupBuilder<T> {
   private JBIterable<T> myExtraItems = JBIterable.empty();
 
   @NotNull
-  public static ListPopup forFileLanguages(@NotNull Project project, @NotNull final Iterable<VirtualFile> files, @NotNull final PerFileMappings<Language> mappings) {
+  public static ListPopup forFileLanguages(@NotNull Project project, @NotNull Iterable<VirtualFile> files, @NotNull final PerFileMappings<Language> mappings) {
+    final VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
+    Arrays.sort(filesCopy, new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile o1, VirtualFile o2) {
+        return StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive());
+      }
+    });
     return forFileLanguages(project, null, new Consumer<Language>() {
       @Override
-      public void consume(Language t) {
-        for (VirtualFile file : files) {
-          mappings.setMapping(file, t);
-        }
+      public void consume(final Language t) {
+        new WriteCommandAction(project, "Change Language") {
+          @Override
+          protected void run(@NotNull Result result) throws Throwable {
+            changeLanguageWithUndo(project, t, filesCopy, mappings);
+          }
+        }.execute();
       }
     });
   }
@@ -169,13 +185,13 @@ public abstract class LRUPopupBuilder<T> {
       new BaseListPopupStep<T>(myTitle, combinedItems) {
         @NotNull
         @Override
-        public String getTextFor(@NotNull T t) {
-          return getPresentation(t).first;
+        public String getTextFor(T t) {
+          return t == null ? "" : getPresentation(t).first;
         }
 
         @Override
-        public Icon getIconFor(@NotNull T t) {
-          return getPresentation(t).second;
+        public Icon getIconFor(T t) {
+          return t == null ? null : getPresentation(t).second;
         }
 
         @Override
@@ -260,4 +276,47 @@ public abstract class LRUPopupBuilder<T> {
     return getClass().getName() + "/" + myTitle;
   }
 
+
+  private static void changeLanguageWithUndo(@NotNull Project project,
+                                             @NotNull final Language t,
+                                             @NotNull final VirtualFile[] sortedFiles,
+                                             @NotNull final PerFileMappings<Language> mappings) throws UnexpectedUndoException {
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(sortedFiles);
+    if (status.hasReadonlyFiles()) return;
+
+    final Set<VirtualFile> matchedExtensions = ContainerUtil.newLinkedHashSet();
+    final Map<VirtualFile, Language> oldMapping = ContainerUtil.newHashMap();
+    for (VirtualFile file : sortedFiles) {
+      oldMapping.put(file, mappings.getMapping(file));
+      if (ScratchUtil.hasMatchingExtension(project, file)) {
+        matchedExtensions.add(file);
+      }
+    }
+
+    BasicUndoableAction action = new BasicUndoableAction(sortedFiles) {
+      @Override
+      public void undo() throws UnexpectedUndoException {
+        for (VirtualFile file : sortedFiles) {
+          mappings.setMapping(file, oldMapping.get(file));
+        }
+      }
+
+      @Override
+      public void redo() throws UnexpectedUndoException {
+        for (VirtualFile file : sortedFiles) {
+          mappings.setMapping(file, t);
+        }
+      }
+    };
+    action.redo();
+    UndoManager.getInstance(project).undoableActionPerformed(action);
+
+    for (VirtualFile file : matchedExtensions) {
+      try {
+        ScratchUtil.updateFileExtension(project, file);
+      }
+      catch (IOException ignored) {
+      }
+    }
+  }
 }

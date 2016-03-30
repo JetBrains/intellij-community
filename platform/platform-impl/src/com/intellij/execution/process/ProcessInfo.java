@@ -17,6 +17,11 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 
 
 public class ProcessInfo {
@@ -24,6 +29,7 @@ public class ProcessInfo {
 
   private final int myPid;
   @NotNull private final String myCommandLine;
+  @NotNull private final Optional<String> myExecutablePath;
   @NotNull private final String myExecutableName;
   @NotNull private final String myArgs;
 
@@ -33,7 +39,20 @@ public class ProcessInfo {
                      @NotNull String args) {
     myPid = pid;
     myCommandLine = commandLine;
+    myExecutablePath = Optional.empty();
     myExecutableName = executableName;
+    myArgs = args;
+  }
+
+  public ProcessInfo(int pid,
+                     @NotNull String commandLine,
+                     @NotNull String executableName,
+                     @NotNull String args,
+                     @Nullable String executablePath) {
+    myPid = pid;
+    myCommandLine = commandLine;
+    myExecutableName = executableName;
+    myExecutablePath = StringUtil.isNotEmpty(executablePath) ? Optional.of(executablePath) : Optional.empty();
     myArgs = args;
   }
 
@@ -52,6 +71,18 @@ public class ProcessInfo {
   }
 
   @NotNull
+  public Optional<String> getExecutableCannonicalPath() {
+    return myExecutablePath.map(s -> {
+      try {
+        return new File(s).getCanonicalPath();
+      }
+      catch (IOException e) {
+        return s;
+      }
+    });
+  }
+
+  @NotNull
   public String getExecutableDisplayName() {
     return StringUtil.trimEnd(myExecutableName, ".exe", true);
   }
@@ -63,7 +94,8 @@ public class ProcessInfo {
 
   @Override
   public String toString() {
-    return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'";
+    return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'" +
+           (myExecutablePath.isPresent() ? " " + myExecutablePath.get() : "");
   }
 
   @Override
@@ -77,6 +109,7 @@ public class ProcessInfo {
     if (!myExecutableName.equals(info.myExecutableName)) return false;
     if (!myArgs.equals(info.myArgs)) return false;
     if (!myCommandLine.equals(info.myCommandLine)) return false;
+    if (!myExecutablePath.equals(info.myExecutablePath)) return false;
 
     return true;
   }

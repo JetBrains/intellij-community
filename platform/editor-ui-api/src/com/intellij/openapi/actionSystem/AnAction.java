@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -63,6 +64,8 @@ import java.util.List;
  * @see com.intellij.openapi.actionSystem.ActionPlaces
  */
 public abstract class AnAction implements PossiblyDumbAware {
+  private static final Logger LOG = Logger.getInstance(AnAction.class);
+
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
   @NonNls public static final String ourClientProperty = "AnAction.shortcutSet";
 
@@ -74,6 +77,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet();
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
+  private boolean myIsGlobal; // action is registered in ActionManager
 
 
   /**
@@ -149,7 +153,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable final JComponent component, @Nullable Disposable parentDisposable) {
-    myShortcutSet = shortcutSet;
+    setShortcutSet(shortcutSet);
     if (component != null){
       @SuppressWarnings("unchecked")
       List<AnAction> actionList = (List<AnAction>)component.getClientProperty(ourClientProperty);
@@ -160,15 +164,15 @@ public abstract class AnAction implements PossiblyDumbAware {
       if (!actionList.contains(this)){
         actionList.add(this);
       }
-    }
 
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          unregisterCustomShortcutSet(component);
-        }
-      });
+      if (parentDisposable != null) {
+        Disposer.register(parentDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            unregisterCustomShortcutSet(component);
+          }
+        });
+      }
     }
   }
 
@@ -197,7 +201,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public final void copyShortcutFrom(@NotNull AnAction sourceAction) {
-    myShortcutSet = sourceAction.myShortcutSet;
+    setShortcutSet(sourceAction.getShortcutSet());
   }
 
 
@@ -273,6 +277,11 @@ public abstract class AnAction implements PossiblyDumbAware {
   public abstract void actionPerformed(AnActionEvent e);
 
   protected void setShortcutSet(ShortcutSet shortcutSet) {
+    if (myIsGlobal && myShortcutSet != shortcutSet) {
+      LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
+               "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
+               "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+    }
     myShortcutSet = shortcutSet;
   }
 
@@ -324,5 +333,9 @@ public abstract class AnAction implements PossiblyDumbAware {
   @Override
   public String toString() {
     return getTemplatePresentation().toString();
+  }
+
+  void markAsGlobal() {
+    myIsGlobal = true;
   }
 }

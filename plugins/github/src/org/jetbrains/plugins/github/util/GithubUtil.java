@@ -345,26 +345,12 @@ public class GithubUtil {
   public static <T> T computeValueInModal(@NotNull Project project,
                                           @NotNull String caption,
                                           @NotNull final ThrowableConvertor<ProgressIndicator, T, IOException> task) throws IOException {
-    final Ref<T> dataRef = new Ref<T>();
-    final Ref<Throwable> exceptionRef = new Ref<Throwable>();
-    ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          dataRef.set(task.convert(indicator));
-        }
-        catch (Throwable e) {
-          exceptionRef.set(e);
-        }
+    return ProgressManager.getInstance().run(new Task.WithResult<T, IOException>(project, caption, true) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws IOException {
+        return task.convert(indicator);
       }
     });
-    if (!exceptionRef.isNull()) {
-      Throwable e = exceptionRef.get();
-      if (e instanceof IOException) throw ((IOException)e);
-      if (e instanceof RuntimeException) throw ((RuntimeException)e);
-      if (e instanceof Error) throw ((Error)e);
-      throw new RuntimeException(e);
-    }
-    return dataRef.get();
   }
 
   public static <T> T computeValueInModal(@NotNull Project project,
@@ -377,48 +363,25 @@ public class GithubUtil {
                                           @NotNull String caption,
                                           boolean canBeCancelled,
                                           @NotNull final Convertor<ProgressIndicator, T> task) {
-    final Ref<T> dataRef = new Ref<T>();
-    final Ref<Throwable> exceptionRef = new Ref<Throwable>();
-    ProgressManager.getInstance().run(new Task.Modal(project, caption, canBeCancelled) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          dataRef.set(task.convert(indicator));
-        }
-        catch (Throwable e) {
-          exceptionRef.set(e);
-        }
+    return ProgressManager.getInstance().run(new Task.WithResult<T, RuntimeException>(project, caption, canBeCancelled) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) {
+        return task.convert(indicator);
       }
     });
-    if (!exceptionRef.isNull()) {
-      Throwable e = exceptionRef.get();
-      if (e instanceof RuntimeException) throw ((RuntimeException)e);
-      if (e instanceof Error) throw ((Error)e);
-      throw new RuntimeException(e);
-    }
-    return dataRef.get();
   }
 
   public static void computeValueInModal(@NotNull Project project,
                                          @NotNull String caption,
                                          boolean canBeCancelled,
                                          @NotNull final Consumer<ProgressIndicator> task) {
-    final Ref<Throwable> exceptionRef = new Ref<Throwable>();
-    ProgressManager.getInstance().run(new Task.Modal(project, caption, canBeCancelled) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          task.consume(indicator);
-        }
-        catch (Throwable e) {
-          exceptionRef.set(e);
-        }
+    ProgressManager.getInstance().run(new Task.WithResult<Void, RuntimeException>(project, caption, canBeCancelled) {
+      @Override
+      protected Void compute(@NotNull ProgressIndicator indicator) {
+        task.consume(indicator);
+        return null;
       }
     });
-    if (!exceptionRef.isNull()) {
-      Throwable e = exceptionRef.get();
-      if (e instanceof RuntimeException) throw ((RuntimeException)e);
-      if (e instanceof Error) throw ((Error)e);
-      throw new RuntimeException(e);
-    }
   }
 
   public static <T> T runInterruptable(@NotNull final ProgressIndicator indicator,

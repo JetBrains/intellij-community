@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,6 @@ public class GroovyStdTypeCalculators {
     @Override
     public PsiType fun(GrMethodCall methodCall, PsiMethod method) {
       GrArgumentList argumentList = methodCall.getArgumentList();
-      if (argumentList == null) return null;
-
       GrExpression[] arguments = argumentList.getExpressionArguments();
       if (arguments.length == 0) return null;
 

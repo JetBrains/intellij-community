@@ -58,5 +58,4 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       return Collections.emptyList();
     }
   }
-
 }

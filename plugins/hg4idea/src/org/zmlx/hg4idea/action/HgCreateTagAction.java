@@ -34,7 +34,7 @@ public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
     final HgTagDialog dialog = new HgTagDialog(project, repositories, selectedRepo);
     if (dialog.showAndGet()) {
       try {
-        new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName(), reference).execute(new HgCommandResultHandler() {
+        new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName(), reference).executeAsynchronously(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {

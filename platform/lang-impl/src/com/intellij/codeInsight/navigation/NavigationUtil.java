@@ -225,6 +225,7 @@ public final class NavigationUtil {
    */
   @SuppressWarnings("UseJBColor")
   public static TextAttributes patchAttributesColor(TextAttributes attributes, @NotNull TextRange range, @NotNull Editor editor) {
+    if (attributes.getForegroundColor() == null && attributes.getEffectColor() == null) return attributes;
     MarkupModel model = DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), false);
     if (model != null) {
       if (!((MarkupModelEx)model).processRangeHighlightersOverlappingWith(range.getStartOffset(), range.getEndOffset(),

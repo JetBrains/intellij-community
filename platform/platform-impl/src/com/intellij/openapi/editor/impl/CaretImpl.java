@@ -125,6 +125,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     Document doc = myEditor.getDocument();
     if (myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
     savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
+    beforeDocumentChange();
   }
 
   void onBulkDocumentUpdateFinished() {
@@ -142,6 +143,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       releaseBulkCaretMarker();
     }
+    documentChanged();
   }
 
   public void beforeDocumentChange() {
@@ -302,8 +304,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
           // We want to move caret to the first column if it's already located at the first line and 'Up' is pressed.
           newColumnNumber = 0;
-          desiredX = -1;
-          lastColumnNumber = -1;
         }
 
         VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
@@ -316,8 +316,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
             if (lastOffsetColumn > newColumnNumber) {
               newColumnNumber = lastOffsetColumn;
               newLeansRight = true;
-              desiredX = -1;
-              lastColumnNumber = -1;
             }
           }
           if (!editorSettings.isCaretInsideTabs()) {
@@ -588,7 +586,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   private void setLastColumnNumber(int lastColumnNumber) {
     myLastColumnNumber = lastColumnNumber;
-    myEditor.setLastColumnNumber(lastColumnNumber);
   }
 
   private void requestRepaint(VerticalInfo oldCaretInfo) {

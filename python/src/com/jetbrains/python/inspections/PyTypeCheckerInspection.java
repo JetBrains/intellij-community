@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,9 @@ public class PyTypeCheckerInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    if (LOG.isDebugEnabled())
+    if (LOG.isDebugEnabled()) {
       session.putUserData(TIME_KEY, System.nanoTime());
+    }
     return new Visitor(holder, session);
   }
 
@@ -88,18 +89,22 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private void checkCallSite(@Nullable PyCallSiteExpression callSite) {
       final List<PyTypeChecker.AnalyzeCallResults> resultsSet = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
-      final List<Map<PyExpression, Pair<String, ProblemHighlightType>>> problemsSet = new ArrayList<Map<PyExpression, Pair<String, ProblemHighlightType>>>();
+      final List<Map<PyExpression, Pair<String, ProblemHighlightType>>> problemsSet =
+        new ArrayList<Map<PyExpression, Pair<String, ProblemHighlightType>>>();
       for (PyTypeChecker.AnalyzeCallResults results : resultsSet) {
         problemsSet.add(checkMapping(results.getReceiver(), results.getArguments()));
       }
       if (!problemsSet.isEmpty()) {
-        Map<PyExpression, Pair<String, ProblemHighlightType>> minProblems = Collections.min(problemsSet, new Comparator<Map<PyExpression, Pair<String, ProblemHighlightType>>>() {
-          @Override
-          public int compare(Map<PyExpression, Pair<String, ProblemHighlightType>> o1,
-                             Map<PyExpression, Pair<String, ProblemHighlightType>> o2) {
-            return o1.size() - o2.size();
+        Map<PyExpression, Pair<String, ProblemHighlightType>> minProblems = Collections.min(
+          problemsSet,
+          new Comparator<Map<PyExpression, Pair<String, ProblemHighlightType>>>() {
+            @Override
+            public int compare(Map<PyExpression, Pair<String, ProblemHighlightType>> o1,
+                               Map<PyExpression, Pair<String, ProblemHighlightType>> o2) {
+              return o1.size() - o2.size();
+            }
           }
-        });
+        );
         for (Map.Entry<PyExpression, Pair<String, ProblemHighlightType>> entry : minProblems.entrySet()) {
           registerProblem(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());
         }
@@ -109,7 +114,8 @@ public class PyTypeCheckerInspection extends PyInspection {
     @NotNull
     private Map<PyExpression, Pair<String, ProblemHighlightType>> checkMapping(@Nullable PyExpression receiver,
                                                                                @NotNull Map<PyExpression, PyNamedParameter> mapping) {
-      final Map<PyExpression, Pair<String, ProblemHighlightType>> problems = new HashMap<PyExpression, Pair<String, ProblemHighlightType>>();
+      final Map<PyExpression, Pair<String, ProblemHighlightType>> problems =
+        new HashMap<PyExpression, Pair<String, ProblemHighlightType>>();
       final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
       boolean genericsCollected = false;
       for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
@@ -130,7 +136,6 @@ public class PyTypeCheckerInspection extends PyInspection {
         final Pair<String, ProblemHighlightType> problem = checkTypes(paramType, argType, myTypeEvalContext, substitutions);
         if (problem != null) {
           problems.put(arg, problem);
-
         }
       }
       return problems;
@@ -151,13 +156,13 @@ public class PyTypeCheckerInspection extends PyInspection {
             final PyType substitute = PyTypeChecker.substitute(expected, substitutions, context);
             if (substitute != null) {
               quotedExpectedName = String.format("'%s' (matched generic type '%s')",
-                                       PythonDocumentationProvider.getTypeName(substitute, context),
-                                       expectedName);
+                                                 PythonDocumentationProvider.getTypeName(substitute, context),
+                                                 expectedName);
               highlightType = ProblemHighlightType.WEAK_WARNING;
             }
           }
           final String actualName = PythonDocumentationProvider.getTypeName(actual, context);
-          String msg= String.format("Expected type %s, got '%s' instead", quotedExpectedName, actualName);
+          String msg = String.format("Expected type %s, got '%s' instead", quotedExpectedName, actualName);
           if (expected instanceof PyStructuralType) {
             final Set<String> expectedAttributes = ((PyStructuralType)expected).getAttributeNames();
             final Set<String> actualAttributes = getAttributes(actual, context);
@@ -190,8 +195,8 @@ public class PyTypeCheckerInspection extends PyInspection {
     if (type instanceof PyStructuralType) {
       return ((PyStructuralType)type).getAttributeNames();
     }
-    else if (type instanceof PyClassType) {
-      return PyTypeChecker.getClassTypeAttributes((PyClassType)type, true, context);
+    else if (type instanceof PyClassLikeType) {
+      return ((PyClassLikeType)type).getMemberNames(true, context);
     }
     return null;
   }

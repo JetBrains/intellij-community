@@ -23,7 +23,6 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -103,8 +102,7 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
       method = (PsiMethod)grandParent;
     }
     final Collection<PsiMethod> overridingMethods =
-      OverridingMethodsSearch.search(method,
-                                     GlobalSearchScope.allScope(project), true).findAll();
+      OverridingMethodsSearch.search(method).findAll();
     final PsiNameValuePair[] attributes =
       annotation.getParameterList().getAttributes();
     for (PsiMethod overridingMethod : overridingMethods) {

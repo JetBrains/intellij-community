@@ -39,18 +39,18 @@ class SoftWrapModelWindow implements SoftWrapModelEx {
   @NotNull
   @Override
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visual) {
-    return myEditorWindow.visualToLogicalPosition(visual, false);
+    return myEditorWindow.visualToLogicalPosition(visual);
   }
 
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    return myEditorWindow.offsetToLogicalPosition(offset, false);
+    return myEditorWindow.offsetToLogicalPosition(offset);
   }
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition logicalPosition) {
-    return myEditorWindow.logicalPositionToOffset(logicalPosition, false);
+    return myEditorWindow.logicalPositionToOffset(logicalPosition);
   }
 
   @NotNull

@@ -544,6 +544,24 @@ class TestClass {
 ''', false, false, false, CONSTRUCTOR
   }
 
+  void 'test introduce field in script with invalid class name'() {
+    myFixture.configureByText "abcd-efgh.groovy", '''\
+def aaa = "foo"
+def bbb = "bar"
+println(<selection>aaa + bbb</selection>)
+'''
+    performRefactoring(null, false, false, false, CUR_METHOD, false)
+    myFixture.checkResult '''\
+import groovy.transform.Field
+
+@Field f
+def aaa = "foo"
+def bbb = "bar"
+f = aaa + bbb
+println(f)
+'''
+  }
+
   void 'test cannot initialize in current method when introducing from field initializer'() {
     doTestInitInTarget '''
 class A {
@@ -596,6 +614,34 @@ class A {
 ''', EnumSet.of(CONSTRUCTOR, FIELD_DECLARATION, CUR_METHOD), ReplaceChoice.NO
   }
 
+  void 'test can initialize script field in current method only'() {
+    doTestInitInTarget '''
+def a = 1
+def b = 2
+println(<selection>a + b</selection>)
+''', EnumSet.of(CUR_METHOD)
+
+    doTestInitInTarget '''
+def a = 1
+def b = 2
+println(<selection>a + b</selection>)
+''', EnumSet.of(CUR_METHOD), ReplaceChoice.NO
+
+    doTestInitInTarget '''
+def a = 1
+def b = 2
+def c = a + b
+println(<selection>a + b</selection>)
+''', EnumSet.of(CUR_METHOD)
+
+    doTestInitInTarget '''
+def a = 1
+def b = 2
+def c = a + b
+println(<selection>a + b</selection>)
+''', EnumSet.of(CUR_METHOD), ReplaceChoice.NO
+  }
+
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,
                       final boolean declareFinal,
@@ -619,7 +665,6 @@ class A {
     performRefactoring(selectedType, isStatic, removeLocal, declareFinal, initIn, replaceAll)
     myFixture.checkResult(textAfter);
   }
-
 
   private void performRefactoring(String selectedType, boolean isStatic, boolean removeLocal, boolean declareFinal, GrIntroduceFieldSettings.Init initIn, boolean replaceAll) {
     final PsiType type = selectedType == null ? null : JavaPsiFacade.getElementFactory(project).createTypeFromText(selectedType, myFixture.file)

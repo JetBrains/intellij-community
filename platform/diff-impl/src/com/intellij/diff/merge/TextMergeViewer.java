@@ -439,6 +439,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @Override
+    @CalledInAwt
     protected void destroyChangedBlocks() {
       super.destroyChangedBlocks();
       myInnerDiffWorker.stop();
@@ -496,6 +497,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         }
       }
 
+      @CalledInAwt
       public void stop() {
         if (myProgress != null) myProgress.cancel();
         myProgress = null;
@@ -503,6 +505,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myAlarm.cancelAllRequests();
       }
 
+      @CalledInAwt
       private void putChanges(@NotNull Collection<TextMergeChange> changes) {
         for (TextMergeChange change : changes) {
           if (change.isResolved()) continue;
@@ -594,10 +597,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       enterBulkChangeUpdateBlock();
       if (myAllMergeChanges.isEmpty()) return;
 
-      ThreeSide side = null;
-      if (e.getDocument() == getEditor(ThreeSide.LEFT).getDocument()) side = ThreeSide.LEFT;
-      if (e.getDocument() == getEditor(ThreeSide.RIGHT).getDocument()) side = ThreeSide.RIGHT;
-      if (e.getDocument() == getEditor(ThreeSide.BASE).getDocument()) side = ThreeSide.BASE;
+      List<Document> documents = ContainerUtil.map(getEditors(), Editor::getDocument);
+      ThreeSide side = ThreeSide.fromValue(documents, e.getDocument());
       if (side == null) {
         LOG.warn("Unknown document changed");
         return;
@@ -649,8 +650,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myChangesToUpdate.add(change);
       }
       else {
-        change.markInnerFragmentsDamaged();
-        change.doReinstallHighlighter();
+        change.reinstallHighlighters();
         myInnerDiffWorker.scheduleRediff(change);
       }
     }
@@ -667,8 +667,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       if (myBulkChangeUpdateDepth == 0) {
         for (TextMergeChange change : myChangesToUpdate) {
-          change.markInnerFragmentsDamaged();
-          change.doReinstallHighlighter();
+          change.reinstallHighlighters();
         }
         myInnerDiffWorker.scheduleRediff(myChangesToUpdate);
         myChangesToUpdate.clear();
@@ -1421,7 +1420,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   }
 
   private static class MyUndoableAction extends BasicUndoableAction {
-    private final WeakReference<TextMergeViewer> myViewerRef;
+    @NotNull private final WeakReference<TextMergeViewer> myViewerRef;
     @NotNull private final List<TextMergeChange.State> myStates;
     private final boolean myUndo;
 

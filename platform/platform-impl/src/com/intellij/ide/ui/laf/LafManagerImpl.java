@@ -61,9 +61,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.InsetsUIResource;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.synth.Region;
@@ -538,19 +537,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   private static void patchHiDPI(UIDefaults defaults) {
     Object prevScaleVal = defaults.get("hidpi.scaleFactor");
-    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
+    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : JBUI.scale(1f);
 
-    if (prevScale == JBUI.scale(1f)) return;
+    if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent");
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();
-      if (value instanceof DimensionUIResource) {
-        entry.setValue(JBUI.size((DimensionUIResource)value).asUIResource());
-      } else if (value instanceof InsetsUIResource) {
-        entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
+      if (value instanceof Dimension && value instanceof UIResource) {
+        entry.setValue(JBUI.size((Dimension)value).asUIResource());
+      } else if (value instanceof Insets && value instanceof UIResource) {
+        entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
       } else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
           int normValue = (int)((Integer)value / prevScale);
@@ -729,7 +728,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
-      JBUI.setScaleFactor(uiSettings.FONT_SIZE/12f);
+      JBUI.setScaleFactor(uiSettings.FONT_SIZE/UIUtil.DEF_SYSTEM_FONT_SIZE);
       initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
     }
     else {
@@ -745,7 +744,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/12f);
+    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/UIUtil.DEF_SYSTEM_FONT_SIZE);
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {

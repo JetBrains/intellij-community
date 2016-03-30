@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -682,5 +682,17 @@ public class GroovyCompletionUtil {
       position = parent;
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiType getQualifierType(@Nullable PsiElement qualifier) {
+    PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
+    if (ResolveUtil.resolvesToClass(qualifier)) {
+      PsiType type = ResolveUtil.unwrapClassType(qualifierType);
+      if (type != null) {
+        qualifierType = type;
+      }
+    }
+    return qualifierType;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.BitUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,22 +91,22 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   @Override
   public boolean isDeprecated() {
-    return (myFlags & DEPRECATED) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED);
   }
 
   @Override
   public boolean hasDeprecatedAnnotation() {
-    return (myFlags & DEPRECATED_ANNOTATION) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED_ANNOTATION);
   }
 
   @Override
   public boolean isInterface() {
-    return (myFlags & INTERFACE) != 0;
+    return BitUtil.isSet(myFlags, INTERFACE);
   }
 
   @Override
   public boolean isEnum() {
-    return (myFlags & ENUM) != 0;
+    return BitUtil.isSet(myFlags, ENUM);
   }
 
   @Override
@@ -114,7 +115,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   public static boolean isEnumConstInitializer(final byte flags) {
-    return (flags & ENUM_CONSTANT_INITIALIZER) != 0;
+    return BitUtil.isSet(flags, ENUM_CONSTANT_INITIALIZER);
   }
 
   @Override
@@ -123,12 +124,12 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   public static boolean isAnonymous(final byte flags) {
-    return (flags & ANONYMOUS) != 0;
+    return BitUtil.isSet(flags, ANONYMOUS);
   }
 
   @Override
   public boolean isAnnotationType() {
-    return (myFlags & ANON_TYPE) != 0;
+    return BitUtil.isSet(myFlags, ANON_TYPE);
   }
 
   @Override
@@ -155,7 +156,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   @Override
   public boolean isAnonymousInQualifiedNew() {
-    return (myFlags & IN_QUALIFIED_NEW) != 0;
+    return BitUtil.isSet(myFlags, IN_QUALIFIED_NEW);
   }
 
   public byte getFlags() {

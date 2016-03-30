@@ -6,7 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="module" module-name="boot" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
@@ -23,4 +22,3 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
 </module>
-

@@ -124,6 +124,10 @@ public class ObjectStubTree<T extends Stub> {
       } else {
         int lastZero;
         for(lastZero = list.length - 1; lastZero >=0 && list[lastZero] == 0; --lastZero);
+        if (lastZero >= 0 && list[lastZero] == myStubIdx) {
+          // second and subsequent occurrence calls for the same value are no op
+          return;
+        }
         ++lastZero;
 
         if (lastZero == list.length) {

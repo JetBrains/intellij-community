@@ -256,7 +256,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
       else if (method.findSuperMethods().length == 0) {
         if (!ReferencesSearch.search(method).forEach(new AllowedUsagesProcessor(psiClass))) {
-          return "Class cannot be inlined because it has usages of methods not inherited from its superclass or interface";
+          return "Class cannot be inlined because there are usages of its methods not inherited from its superclass or interface";
         }
       }
       if (method.hasModifierProperty(PsiModifier.STATIC)) {

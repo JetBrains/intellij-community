@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -14,9 +13,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -28,7 +27,7 @@ import javax.swing.tree.TreePath;
 import java.util.Map;
 
 
-abstract public class StudyTaskNavigationAction extends DumbAwareAction {
+abstract public class StudyTaskNavigationAction extends StudyToolbarAction {
   public StudyTaskNavigationAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }

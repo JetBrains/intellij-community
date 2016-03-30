@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -432,5 +433,31 @@ public class KeymapUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * @param component    target component to reassign previously mapped action (if any)
+   * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
+   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param condition    one of
+   *                     <ul>
+   *                     <li>JComponent.WHEN_FOCUSED,</li>
+   *                     <li>JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT</li>
+   *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
+   *                     <li>JComponent.UNDEFINED_CONDITION</li>
+   *                     </ul>
+   * @return <code>true</code> if the action is reassigned successfully
+   */
+  public static boolean reassignAction(@NotNull JComponent component,
+                                       @NotNull KeyStroke oldKeyStroke,
+                                       @Nullable KeyStroke newKeyStroke,
+                                       int condition) {
+    ActionListener action = component.getActionForKeyStroke(oldKeyStroke);
+    if (action == null) return false;
+    if (newKeyStroke != null) {
+      component.registerKeyboardAction(action, newKeyStroke, condition);
+    }
+    component.unregisterKeyboardAction(oldKeyStroke);
+    return true;
   }
 }

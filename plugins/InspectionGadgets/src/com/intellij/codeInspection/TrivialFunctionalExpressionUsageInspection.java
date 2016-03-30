@@ -28,6 +28,7 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLocalInspectionTool {
@@ -73,7 +74,7 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
 
       @Override
       public void visitAnonymousClass(final PsiAnonymousClass aClass) {
-        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, false)) {
+        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, false, Collections.emptySet())) {
           final PsiElement newExpression = aClass.getParent();
           doCheckMethodCallOnFunctionalExpression(new Condition<PsiElement>() {
             @Override
@@ -169,7 +170,9 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
           else if (element instanceof PsiMethodReferenceExpression) {
             final PsiLambdaExpression lambdaExpression =
               LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
-            replaceWithLambdaBody(callExpression, lambdaExpression);
+            if (lambdaExpression != null) {
+              replaceWithLambdaBody(callExpression, lambdaExpression);
+            }
           }
         }
         else if (qualifierExpression instanceof PsiNewExpression) {

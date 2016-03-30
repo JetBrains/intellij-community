@@ -47,10 +47,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
@@ -59,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
@@ -69,11 +72,17 @@ import java.util.concurrent.locks.Lock;
 public class StubIndexImpl extends StubIndex implements ApplicationComponent, PersistentStateComponent<StubIndexState> {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<Boolean>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
-  private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new THashMap<StubIndexKey<?,?>, MyIndex<?>>();
-  private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
+
+  private static class AsyncState {
+    private final Map<StubIndexKey<?, ?>, MyIndex<?>> myIndices = new THashMap<StubIndexKey<?, ?>, MyIndex<?>>();
+    private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
+  }
 
   private final StubProcessingHelper myStubProcessingHelper;
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
+  private volatile Future<AsyncState> myStateFuture;
+  private AsyncState myState;
+  private volatile boolean myInitialized;
 
   private StubIndexState myPreviouslyRegistered;
 
@@ -89,11 +98,28 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return (StubIndexImpl)getInstance();
   }
 
-  // todo this seems to be copy-pasted from FileBasedIndex
-  private <K> boolean registerIndexer(@NotNull final StubIndexExtension<K, ?> extension, final boolean forceClean) throws IOException {
+  private AsyncState getAsyncState() {
+    if (!myInitialized) { // memory barrier
+      //throw new IndexNotReadyException();
+      LOG.error("Unexpected initialization problem");
+    }
+    AsyncState state = myState;
+    if (state == null) {
+      try {
+        myState = state = myStateFuture.get();
+      } catch(Throwable t) {
+        throw new RuntimeException(t);
+      }
+    }
+    return state;
+  }
+
+  private static <K> boolean registerIndexer(@NotNull final StubIndexExtension<K, ?> extension, final boolean forceClean, AsyncState state) throws IOException {
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
-    myIndexIdToVersionMap.put(indexKey, version);
+    synchronized (state) {
+      state.myIndexIdToVersionMap.put(indexKey, version);
+    }
     final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
     final boolean versionFileExisted = versionFile.exists();
     final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
@@ -112,17 +138,50 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
+        StubIdExternalizer externalizer = new StubIdExternalizer();
         final MapIndexStorage<K, StubIdList> storage = new MapIndexStorage<K, StubIdList>(
           IndexInfrastructure.getStorageFile(indexKey),
           extension.getKeyDescriptor(),
-          new StubIdExternalizer(),
+          externalizer,
           extension.getCacheSize(),
           false,
           extension instanceof StringStubIndexExtension && ((StringStubIndexExtension)extension).traceKeyHashToVirtualFileMapping()
         );
 
         final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<K, StubIdList>(storage);
-        myIndices.put(indexKey, new MyIndex<K>(memStorage));
+        MyIndex<K> index = new MyIndex<>(new IndexExtension<K, StubIdList, Void>() {
+          @NotNull
+          @Override
+          public ID<K, StubIdList> getName() {
+            return (ID<K, StubIdList>)indexKey;
+          }
+
+          @NotNull
+          @Override
+          public DataIndexer<K, StubIdList, Void> getIndexer() {
+            return inputData -> Collections.emptyMap();
+          }
+
+          @NotNull
+          @Override
+          public KeyDescriptor<K> getKeyDescriptor() {
+            return extension.getKeyDescriptor();
+          }
+
+          @NotNull
+          @Override
+          public DataExternalizer<StubIdList> getValueExternalizer() {
+            return externalizer;
+          }
+
+          @Override
+          public int getVersion() {
+            return extension.getVersion();
+          }
+        }, memStorage);
+        synchronized (state) {
+          state.myIndices.put(indexKey, index);
+        }
         break;
       }
       catch (IOException e) {
@@ -142,6 +201,17 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     LOG.info(e);
     FileUtil.deleteWithRenaming(indexRootDir);
     IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
+  }
+
+  public void flush() throws StorageException {
+    if (!myInitialized) {
+      return;
+    }
+    AsyncState state = getAsyncState();
+    for (StubIndexKey key : getAllStubIndexKeys()) {
+      final MyIndex<?> index = state.myIndices.get(key);
+      index.flush();
+    }
   }
 
   private static class StubIdExternalizer implements DataExternalizer<StubIdList> {
@@ -242,7 +312,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
-    final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
+    final MyIndex<Key> index = (MyIndex<Key>)getAsyncState().myIndices.get(indexKey);
 
     try {
       myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
@@ -304,11 +374,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
-
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
-    final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
+    final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey);
+    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
     try {
+      myAccessValidator.startedProcessingActivityForIndex(indexKey);
       return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
@@ -320,6 +391,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         forceRebuild(e);
       }
       throw e;
+    } finally {
+      myAccessValidator.stoppedProcessingActivityForIndex(indexKey);
     }
     return true;
   }
@@ -365,30 +438,20 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   @Override
   public void initComponent() {
-    try {
-      final boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
+    long started = System.nanoTime();
+    StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
+    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000);
+    started = System.nanoTime();
 
-      StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
-      StringBuilder updated = new StringBuilder();
-      for (StubIndexExtension extension : extensions) {
-        @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, forceClean);
-        if (rebuildRequested) {
-          updated.append(extension).append(' ');
-        }
+    myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization(extensions));
+    LOG.info("stub exts update scheduled:" + (System.nanoTime() - started) / 1000000);
+
+    if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
+      try {
+        myStateFuture.get();
+      } catch (Throwable t) {
+        LOG.error(t);
       }
-      if (updated.length() > 0) {
-        final Throwable e = new Throwable(updated.toString());
-        // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            forceRebuild(e);
-          }
-        }, ModalityState.NON_MODAL);
-      }
-      dropUnregisteredIndices();
-    } catch (IOException ex) {
-      throw new RuntimeException(ex);
     }
   }
 
@@ -400,20 +463,20 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   public void dispose() {
-    for (UpdatableIndex index : myIndices.values()) {
+    for (UpdatableIndex index : getAsyncState().myIndices.values()) {
       index.dispose();
     }
   }
 
   public void setDataBufferingEnabled(final boolean enabled) {
-    for (UpdatableIndex index : myIndices.values()) {
+    for (UpdatableIndex index : getAsyncState().myIndices.values()) {
       final IndexStorage indexStorage = ((MapReduceIndex)index).getStorage();
       ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
   }
 
   public void cleanupMemoryStorage() {
-    for (UpdatableIndex index : myIndices.values()) {
+    for (UpdatableIndex index : getAsyncState().myIndices.values()) {
       final IndexStorage indexStorage = ((MapReduceIndex)index).getStorage();
       index.getWriteLock().lock();
       try {
@@ -427,7 +490,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
 
   public void clearAllIndices() {
-    for (UpdatableIndex index : myIndices.values()) {
+    for (UpdatableIndex index : getAsyncState().myIndices.values()) {
       try {
         index.clear();
       }
@@ -438,9 +501,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  private void dropUnregisteredIndices() {
+  private void dropUnregisteredIndices(AsyncState state) {
     final Set<String> indicesToDrop = new HashSet<String>(myPreviouslyRegistered != null? myPreviouslyRegistered.registeredIndices : Collections.<String>emptyList());
-    for (ID<?, ?> key : myIndices.keySet()) {
+    for (ID<?, ?> key : state.myIndices.keySet()) {
       indicesToDrop.remove(key.toString());
     }
 
@@ -452,7 +515,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   @NotNull
   @Override
   public StubIndexState getState() {
-    return new StubIndexState(myIndices.keySet());
+    return new StubIndexState(getAsyncState().myIndices.keySet());
   }
 
   @Override
@@ -461,21 +524,16 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   public final Lock getWriteLock(StubIndexKey indexKey) {
-    return myIndices.get(indexKey).getWriteLock();
+    return getAsyncState().myIndices.get(indexKey).getWriteLock();
   }
 
-  public Collection<StubIndexKey> getAllStubIndexKeys() {
-    return Collections.<StubIndexKey>unmodifiableCollection(myIndices.keySet());
-  }
-
-  public void flush(StubIndexKey key) throws StorageException {
-    final MyIndex<?> index = myIndices.get(key);
-    index.flush();
+  Collection<StubIndexKey> getAllStubIndexKeys() {
+    return Collections.<StubIndexKey>unmodifiableCollection(getAsyncState().myIndices.keySet());
   }
 
   public <K> void updateIndex(@NotNull StubIndexKey key, int fileId, @NotNull final Map<K, StubIdList> oldValues, @NotNull final Map<K, StubIdList> newValues) {
     try {
-      final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
+      final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(key);
       UpdateData<K, StubIdList> updateData;
 
       if (MapDiffUpdateData.ourDiffUpdateEnabled) {
@@ -512,8 +570,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static class MyIndex<K> extends MapReduceIndex<K, StubIdList, Void> {
-    public MyIndex(final IndexStorage<K, StubIdList> storage) throws IOException {
-      super(null, null, storage);
+    public MyIndex(IndexExtension<K, StubIdList, Void> extension, IndexStorage<K, StubIdList> storage) throws IOException {
+      super(extension, storage);
     }
 
     @Override
@@ -574,7 +632,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     LOG.error(writer.toString());
   }
 
-  private abstract class StubIdListContainerAction implements ValueContainer.ContainerAction<StubIdList> {
+  private static abstract class StubIdListContainerAction implements ValueContainer.ContainerAction<StubIdList> {
     private final IdFilter myIdFilter;
 
     StubIdListContainerAction(@Nullable IdFilter idFilter, @NotNull Project project) {
@@ -590,5 +648,56 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
 
     protected abstract boolean process(int id, StubIdList value);
+  }
+
+  private class StubIndexInitialization extends IndexInfrastructure.DataInitialization<AsyncState> {
+    private final AsyncState state = new AsyncState();
+    private final StringBuilder updated = new StringBuilder();
+    private final StubIndexExtension<?, ?>[] myExtensions;
+    private final boolean myForceClean;
+
+    public StubIndexInitialization(StubIndexExtension<?, ?>[] extensions) {
+      myExtensions = extensions;
+      myForceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
+    }
+
+    @Override
+    protected void prepare() {
+      for (StubIndexExtension extension : myExtensions) {
+        addNestedInitializationTask(new ThrowableRunnable<IOException>() {
+          @Override
+          public void run() throws IOException {
+            @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, myForceClean, state);
+            if (rebuildRequested) {
+              synchronized (updated) {
+                updated.append(extension).append(' ');
+              }
+            }
+          }
+        });
+      }
+    }
+
+    @Override
+    protected void onThrowable(Throwable t) {
+      LOG.error(t);
+    }
+
+    @Override
+    protected AsyncState finish() {
+      if (updated.length() > 0) {
+        final Throwable e = new Throwable(updated.toString());
+        // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            forceRebuild(e);
+          }
+        }, ModalityState.NON_MODAL);
+      }
+      dropUnregisteredIndices(state);
+      myInitialized = true;
+      return state;
+    }
   }
 }

@@ -18,7 +18,6 @@ package com.intellij.util.io;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,15 +45,7 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
   }
 
   protected abstract T createAccessor(K key) throws IOException;
-  protected abstract void disposeAccessor(T fileAccessor);
-
-  protected void disposeCloseable(Closeable fileAccessor) {
-    try {
-      fileAccessor.close();
-    } catch (IOException ex) {
-      throw new RuntimeException(ex);
-    }
-  }
+  protected abstract void disposeAccessor(T fileAccessor) throws IOException;
 
   @NotNull
   public final Handle<T> get(K key) {
@@ -113,7 +104,11 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
 
     public final void release() {
       if (myRefCount.decrementAndGet() == 0) {
-        myOwner.disposeAccessor(myFileAccessor);
+        try {
+          myOwner.disposeAccessor(myFileAccessor);
+        } catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
       }
     }
 

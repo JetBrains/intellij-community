@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #include <dirent.h>
 #include <errno.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,9 +27,9 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#if defined __i386__
+#if defined(__i386__)
 __asm__(".symver memcpy,memcpy@GLIBC_2.0");
-#elif defined __amd64__
+#elif defined(__amd64__)
 __asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
 #endif
 
@@ -43,7 +43,7 @@ typedef struct __watch_node {
   struct __watch_node* parent;
   array* kids;
   int path_len;
-  char path[0];
+  char path[];
 } watch_node;
 
 static int inotify_fd = -1;
@@ -112,12 +112,12 @@ static void read_watch_descriptors_count() {
 }
 
 
-inline void set_inotify_callback(void (* _callback)(const char*, int)) {
+void set_inotify_callback(void (* _callback)(const char*, int)) {
   callback = _callback;
 }
 
 
-inline int get_inotify_fd() {
+int get_inotify_fd() {
   return inotify_fd;
 }
 

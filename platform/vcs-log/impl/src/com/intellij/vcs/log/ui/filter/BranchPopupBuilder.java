@@ -63,7 +63,7 @@ public abstract class BranchPopupBuilder {
                                       @Nullable List<List<String>> recentItems) {
     Groups filteredGroups = new Groups();
     Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();
-    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
+    for (Map.Entry<VirtualFile, Set<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       if (visibleRoots != null && !visibleRoots.contains(root)) continue;
       Collection<VcsRef> refs = entry.getValue();

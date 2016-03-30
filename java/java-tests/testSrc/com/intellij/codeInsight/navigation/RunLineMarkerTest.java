@@ -15,15 +15,19 @@
  */
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.application.options.editor.GutterIconsConfigurable;
+import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -67,5 +71,18 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals("Run 'MainTest.main()'", event.getPresentation().getText());
     list.get(1).update(event);
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
+  }
+
+  public void testConfigurable() throws Exception {
+    GutterIconsConfigurable configurable = new GutterIconsConfigurable();
+    configurable.createComponent();
+    List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
+    Set<String> strings = ContainerUtil.map2Set(descriptors, new Function<GutterIconDescriptor, String>() {
+      @Override
+      public String fun(GutterIconDescriptor descriptor) {
+        return descriptor.getId();
+      }
+    });
+    assertEquals(descriptors.size(), strings.size());
   }
 }

@@ -39,7 +39,7 @@ import static java.util.Collections.singletonList;
 public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolder> {
   public static final Logger LOG = Logger.getInstance(OnesideBinaryDiffViewer.class);
 
-  private final TransferableFileEditorStateSupport myTransferableStateSupport;
+  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
 
   public OnesideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);

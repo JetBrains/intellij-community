@@ -58,7 +58,7 @@ import java.util.Map;
 /**
  * @author Leonid Shalupov
  */
-public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfiguration> extends AbstractRunConfiguration
+public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRunConfiguration> extends AbstractRunConfiguration
   implements LocatableConfiguration, AbstractPythonRunConfigurationParams, CommandLinePatcher {
   /**
    * When passing path to test to runners, you should join parts with this char.
@@ -129,7 +129,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   @NotNull
   @Override
   public final SettingsEditor<T> getConfigurationEditor() {
-    final SettingsEditor<T> runConfigurationEditor = createConfigurationEditor();
+    final SettingsEditor<T> runConfigurationEditor = PythonExtendedConfigurationEditor.create(createConfigurationEditor());
 
     final SettingsEditorGroup<T> group = new SettingsEditorGroup<T>();
 

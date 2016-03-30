@@ -644,4 +644,13 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
   
+  public void testKeepLineBreaksWorks_InsidePolyExpression() {
+    getSettings().KEEP_LINE_BREAKS = false;
+    doMethodTest(
+      "int x = (1 + 2 + 3) *\n" +
+      "        (1 + 2 + 2) * (1 + 2);",
+      "int x = (1 + 2 + 3) * (1 + 2 + 2) * (1 + 2);"
+    );
+  }
+  
 }

@@ -79,7 +79,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   protected abstract Icon getInvalidIcon(boolean isMuted);
 
-  protected abstract Icon getSetIcon(boolean isMuted);
+  protected Icon getSetIcon(boolean isMuted) {
+    return null;
+  }
 
   protected abstract Icon getVerifiedIcon(boolean isMuted);
 

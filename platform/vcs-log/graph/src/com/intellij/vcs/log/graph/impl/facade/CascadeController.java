@@ -74,5 +74,4 @@ public abstract class CascadeController implements LinearGraphController {
   // null mean that this action must be performed by delegateGraphController
   @Nullable
   protected abstract LinearGraphAnswer performAction(@NotNull LinearGraphAction action);
-
 }

@@ -204,6 +204,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testLocalVarUsedInLambdaBody() throws Exception {
+    doTest(true);
+  }
+
   public void testCastAroundLambda() throws Exception {
     doTest(true);
   }
@@ -244,8 +248,20 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testParenthesisAroundInlinedLambda() throws Exception {
+    doTest(true);
+  }
+
   public void testArrayAccessPriority() throws Exception {
     doTest(true);
+  }
+
+  public void testDecodeRefsBeforeCheckingOverRedundantCasts() throws Exception {
+    doTest(true);
+  }
+
+  public void testDontOpenMultidimensionalArrays() throws Exception {
+    doTest(false);
   }
 
   public void testLocalVarInsideLambdaBodyWriteUsage() throws Exception {

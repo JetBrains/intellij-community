@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CollectConsumer;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
@@ -24,9 +25,10 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   private final Project myProject;
   @NotNull private final String mySchemaFilePath;
   @NotNull private final JsonSchemaMappingsConfigurationBase.SchemaInfo mySchema;
-  @Nullable private final Runnable myTree;
+  @Nullable private final Runnable myTreeUpdater;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
+  private String myError;
 
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull JsonSchemaMappingsConfigurationBase.SchemaInfo schema,
@@ -35,7 +37,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
     myProject = project;
     mySchemaFilePath = schemaFilePath;
     mySchema = schema;
-    myTree = updateTree;
+    myTreeUpdater = updateTree;
     myDisplayName = mySchema.getName();
   }
 
@@ -62,7 +64,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   @Override
   public JComponent createOptionsPanel() {
     if (myView == null) {
-      myView = new JsonSchemaMappingsView(myProject);
+      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater);
+      myView.setError(myError);
     }
     return myView.getComponent();
   }
@@ -100,17 +103,11 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
     if (StringUtil.isEmptyOrSpaces(myView.getSchemaSubPath())) throw new ConfigurationException("Schema path is empty");
     final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
     final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
-    try {
-      if (!JsonSchemaReader.isJsonSchema(FileUtil.loadFile(file), collectConsumer)) {
-        final String message;
-        if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
-        else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
-        logErrorForUser(message);
-        throw new ConfigurationException(message);
-      }
-    }
-    catch (IOException e) {
-      final String message = "Can not read JSON schema from file: " + e.getMessage();
+    final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
+    if (service != null && !service.isSchemaFile(file, collectConsumer)) {
+      final String message;
+      if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
+      else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
       logErrorForUser(message);
       throw new ConfigurationException(message);
     }
@@ -130,7 +127,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   public JsonSchemaMappingsConfigurationBase.SchemaInfo getUiSchema() {
     final JsonSchemaMappingsConfigurationBase.SchemaInfo info = new JsonSchemaMappingsConfigurationBase.SchemaInfo();
     info.setApplicationLevel(mySchema.isApplicationLevel());
-    if (myView != null) {
+    if (myView != null && myView.isInitialized()) {
       info.setName(getDisplayName());
       info.setPatterns(myView.getData());
       info.setRelativePathToSchema(myView.getSchemaSubPath());
@@ -144,6 +141,13 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
 
   @Override
   public void disposeUIResources() {
+    if (myView != null) Disposer.dispose(myView);
+  }
 
+  public void setError(String error) {
+    myError = error;
+    if (myView != null) {
+      myView.setError(error);
+    }
   }
 }

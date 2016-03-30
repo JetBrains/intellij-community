@@ -15,7 +15,6 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Collections;
 
 /**
- * TODO: install Gitlab on server and add more functional tests
  * @author Mikhail Golubev
  */
 public class GitlabIntegrationTest extends TaskManagerTestCase {
@@ -48,14 +47,13 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
 
     LocalTaskImpl localTask = new LocalTaskImpl(new GitlabTask(myRepository, issue));
     String changeListComment = TaskUtil.getChangeListComment(localTask);
-    assertEquals("project-1 2 1 Sample title", changeListComment);
+    assertEquals("project-1 2 #2 Sample title", changeListComment);
 
     myRepository.setProjects(Collections.<GitlabProject>emptyList());
     localTask = new LocalTaskImpl(new GitlabTask(myRepository, issue));
     changeListComment = TaskUtil.getChangeListComment(localTask);
     // Project is unknown, so "" is substituted instead
-    assertEquals(" 2 1 Sample title", changeListComment);
-
+    assertEquals(" 2 #2 Sample title", changeListComment);
   }
 
   public void testIssueFilteringByState() throws Exception {
@@ -73,6 +71,25 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     assertFalse(openedIssues[0].isClosed());
     assertEquals("Opened issue #1", openedIssues[0].getSummary());
   }
+
+  // IDEA-136499
+  public void testPresentableId() throws Exception {
+    final GitlabIssue issue = myRepository.fetchIssue(5 /* ID Formatting Tests */, 10);
+    assertNotNull(issue);
+    assertEquals(10, issue.getId());
+    assertEquals(1, issue.getLocalId());
+    assertEquals(5, issue.getProjectId());
+
+    final GitlabTask task = new GitlabTask(myRepository, issue);
+    assertEquals("#1", task.getPresentableId());
+    assertEquals("1", task.getNumber());
+    assertEquals("ID Formatting Tests", task.getProject());
+    assertEquals("10", task.getId());
+    assertEquals("#1: First issue with iid = 1", task.toString());
+    myRepository.setShouldFormatCommitMessage(true);
+    assertEquals("#1 First issue with iid = 1", myRepository.getTaskComment(task));
+  }
+
 
   @Override
   public void setUp() throws Exception {

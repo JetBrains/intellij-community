@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.progress.ProgressManager;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
@@ -45,18 +46,20 @@ public class OffsetMap implements Disposable {
    * -1 if offset wasn't registered or became invalidated due to document changes
    */
   public int getOffset(OffsetKey key) {
-    final RangeMarker marker = myMap.get(key);
-    if (marker == null) return -1;
-    if (!marker.isValid()) {
-      removeOffset(key);
-      return -1;
-    }
+    synchronized (myMap) {
+      final RangeMarker marker = myMap.get(key);
+      if (marker == null) return -1;
+      if (!marker.isValid()) {
+        removeOffset(key);
+        return -1;
+      }
 
-    final int endOffset = marker.getEndOffset();
-    if (marker.getStartOffset() != endOffset) {
-      saveOffset(key, endOffset, false);
+      final int endOffset = marker.getEndOffset();
+      if (marker.getStartOffset() != endOffset) {
+        saveOffset(key, endOffset, false);
+      }
+      return endOffset;
     }
-    return endOffset;
   }
 
   /**
@@ -66,12 +69,14 @@ public class OffsetMap implements Disposable {
    * @param offset offset in the document
    */
   public void addOffset(OffsetKey key, int offset) {
-    if (offset < 0) {
-      removeOffset(key);
-      return;
-    }
+    synchronized (myMap) {
+      if (offset < 0) {
+        removeOffset(key);
+        return;
+      }
 
-    saveOffset(key, offset, true);
+      saveOffset(key, offset, true);
+    }
   }
 
   private void saveOffset(OffsetKey key, int offset, boolean externally) {
@@ -88,37 +93,49 @@ public class OffsetMap implements Disposable {
   }
 
   public void removeOffset(OffsetKey key) {
-    assert !myDisposed;
-    myModified.add(key);
-    RangeMarker old = myMap.get(key);
-    if (old != null) old.dispose();
+    synchronized (myMap) {
+      ProgressManager.checkCanceled();
+      assert !myDisposed;
+      myModified.add(key);
+      RangeMarker old = myMap.get(key);
+      if (old != null) old.dispose();
 
-    myMap.remove(key);
+      myMap.remove(key);
+    }
   }
 
   public List<OffsetKey> getAllOffsets() {
-    assert !myDisposed;
-    return new ArrayList<OffsetKey>(myMap.keySet());
+    synchronized (myMap) {
+      ProgressManager.checkCanceled();
+      assert !myDisposed;
+      return new ArrayList<OffsetKey>(myMap.keySet());
+    }
   }
 
   @Override
   public String toString() {
-    final StringBuilder builder = new StringBuilder("OffsetMap:");
-    for (final OffsetKey key : myMap.keySet()) {
-      builder.append(key).append("->").append(myMap.get(key)).append(";");
+    synchronized (myMap) {
+      final StringBuilder builder = new StringBuilder("OffsetMap:");
+      for (final OffsetKey key : myMap.keySet()) {
+        builder.append(key).append("->").append(myMap.get(key)).append(";");
+      }
+      return builder.toString();
     }
-    return builder.toString();
   }
 
   public boolean wasModified(OffsetKey key) {
-    return myModified.contains(key);
+    synchronized (myMap) {
+      return myModified.contains(key);
+    }
   }
 
   @Override
   public void dispose() {
-    myDisposed = true;
-    for (RangeMarker rangeMarker : myMap.values()) {
-      rangeMarker.dispose();
+    synchronized (myMap) {
+      myDisposed = true;
+      for (RangeMarker rangeMarker : myMap.values()) {
+        rangeMarker.dispose();
+      }
     }
   }
 }

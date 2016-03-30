@@ -5,9 +5,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import org.jetbrains.annotations.NotNull;
 

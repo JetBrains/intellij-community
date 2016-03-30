@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,9 +180,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           public void run() {
             highlight.run();
             progress.checkCanceled();
-            HighlightingSession highlightingSession = HighlightingSessionImpl.getHighlightingSession(file, progress);
             PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder);
-            highlightingVisitor.collectHighlights(file, holder, progress);
+            highlightingVisitor.collectHighlights(holder, progress);
           }
         });
       }
@@ -636,7 +635,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
       }
       if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        myHolder.add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, aClass.getVisibleSignatures(), identifier));
+        myHolder.add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
       }
 
       if (!myHolder.hasErrorResults()) {
@@ -1080,11 +1079,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (resolved instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)resolved;
 
-      final PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-      if (containingClass instanceof PsiAnonymousClass &&
+      final PsiElement containingClass = PsiTreeUtil.getNonStrictParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
+      if ((containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiLambdaExpression) &&
           !PsiTreeUtil.isAncestor(containingClass, variable, false) &&
           !(variable instanceof PsiField)) {
-        if (!PsiTreeUtil.isAncestor(((PsiAnonymousClass) containingClass).getArgumentList(), ref, false)) {
+        if (containingClass instanceof PsiLambdaExpression || !PsiTreeUtil.isAncestor(((PsiAnonymousClass) containingClass).getArgumentList(), ref, false)) {
           myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create());
         }
       }
@@ -1246,7 +1245,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass != null) {
-        myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, qualifierExpression));
+        myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, expression));
       }
     }
   }

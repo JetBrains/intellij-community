@@ -27,19 +27,16 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -134,9 +131,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     });
 
     setFocusTraversalPolicyProvider(true);
-    DelegatingToRootTraversalPolicy policy =
-      SystemInfo.isJavaVersionAtLeast("1.7") ? new Jdk7DelegatingToRootTraversalPolicy() : new DelegatingToRootTraversalPolicy();
-    setFocusTraversalPolicy(policy);
+    setFocusTraversalPolicy(new Jdk7DelegatingToRootTraversalPolicy());
 
     setFont(UIManager.getFont("TextField.font"));
   }
@@ -794,7 +789,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return mySettingsProviders.remove(provider);
   }
 
-  private static class Jdk7DelegatingToRootTraversalPolicy extends DelegatingToRootTraversalPolicy {
+  private static class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
     private boolean invokedFromBeforeOrAfter;
     @Override
     public Component getFirstComponent(Container aContainer) {
@@ -827,17 +822,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     @Override
     public Component getDefaultComponent(Container aContainer) {
       if (invokedFromBeforeOrAfter) return null;     // escape our container
-      return super.getDefaultComponent(aContainer);
-    }
-  }
-
-  private static class DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
-    @Override
-    public Component getDefaultComponent(final Container aContainer) {
-      final Editor editor = aContainer instanceof EditorTextField ? ((EditorTextField)aContainer).getEditor():null;
+      Editor editor = aContainer instanceof EditorTextField ? ((EditorTextField)aContainer).getEditor() : null;
       if (editor != null) return editor.getContentComponent();
       return aContainer;
     }
   }
-
 }

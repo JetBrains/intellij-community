@@ -21,8 +21,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.VisibleAreaEvent;
-import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -91,13 +89,12 @@ public class SoftWrapApplianceManager implements Dumpable {
    * This field holds offset of the text range that is shown at the top-left viewport position. It's used as an anchor
    * during viewport's <code>'y'</code> coordinate adjustment on visual area width change.
    */
-  private int myLastTopLeftCornerOffset = -1;
+  private int myLastTopLeftCornerOffset = 0;
   private int myVerticalScrollBarWidth  = -1;
 
   private VisibleAreaWidthProvider       myWidthProvider;
   private LineWrapPositionStrategy       myLineWrapPositionStrategy;
   private IncrementalCacheUpdateEvent    myEventBeingProcessed;
-  private boolean                        myVisualAreaListenerAttached;
   private boolean                        myCustomIndentUsedLastTime;
   private int                            myCustomIndentValueUsedLastTime;
   private int                            myVisibleAreaWidth;
@@ -116,6 +113,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     myPainter = painter;
     myDataMapper = dataMapper;
     myWidthProvider = new DefaultVisibleAreaWidthProvider(editor);
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> updateLastTopLeftCornerOffset());
   }
 
   public void registerSoftWrapIfNecessary() {
@@ -133,27 +131,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     myLineWrapPositionStrategy = null;
   }
 
-  private void initListenerIfNecessary() {
-    // We can't attach the listener during this object initialization because there is a big chance that the editor is in incomplete
-    // state there (e.g. it's scrolling model is not initialized yet).
-    if (myVisualAreaListenerAttached) {
-      return;
-    }
-    myVisualAreaListenerAttached = true;
-    myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
-      @Override
-      public void visibleAreaChanged(VisibleAreaEvent e) {
-        updateLastTopLeftCornerOffset();
-      }
-    });
-    updateLastTopLeftCornerOffset();
-  }
-
   public void recalculate(IncrementalCacheUpdateEvent e) {
     if (myIsDirty) {
       return;
     }
-    initListenerIfNecessary();
     if (myVisibleAreaWidth <= 0) {
       myIsDirty = true;
       return;
@@ -168,7 +149,6 @@ public class SoftWrapApplianceManager implements Dumpable {
     if (myIsDirty) {
       return;
     }
-    initListenerIfNecessary();
     if (myVisibleAreaWidth <= 0) {
       myIsDirty = true; 
       return;
@@ -211,7 +191,6 @@ public class SoftWrapApplianceManager implements Dumpable {
    *            have information about viewport width)
    */
   private boolean recalculateSoftWraps() {
-    initListenerIfNecessary();
     if (!myIsDirty) {
       return true;
     }
@@ -1115,12 +1094,13 @@ public class SoftWrapApplianceManager implements Dumpable {
 
     @Override
     public int getVisibleAreaWidth() {
+      Insets insets = myEditor.getContentComponent().getInsets();
+      int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
       if (myEditor.isInDistractionFreeMode()) {
         int rightMargin = myEditor.getSettings().getRightMargin(myEditor.getProject());
-        if (rightMargin > 0) return rightMargin * EditorUtil.getPlainSpaceWidth(myEditor);
+        if (rightMargin > 0) width = Math.min(width, rightMargin * EditorUtil.getPlainSpaceWidth(myEditor));
       }
-      Insets insets = myEditor.getContentComponent().getInsets();
-      return Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
+      return width;
     }
   }
 
@@ -1417,7 +1397,7 @@ public class SoftWrapApplianceManager implements Dumpable {
      * @return    <code>true</code> if given <code>'x'</code> coordinate exceeds visual area's right edge; <code>false</code> otherwise
      */
     public boolean exceedsVisualEdge(int x) {
-      return x >= myVisibleAreaWidth;
+      return x > myVisibleAreaWidth || x == myVisibleAreaWidth && !myEditor.myUseNewRendering;
     }
   }
 

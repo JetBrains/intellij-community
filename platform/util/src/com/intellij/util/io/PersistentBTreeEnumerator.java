@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,14 +34,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int DEFAULT_PAGE_SIZE = 32768;
 
   static {
-    int pageSize;
-    try {
-      String property = System.getProperty("idea.btree.page.size");
-      pageSize = property != null ? Integer.parseInt(property, 10):DEFAULT_PAGE_SIZE;
-    } catch (NumberFormatException ex) {
-      pageSize = DEFAULT_PAGE_SIZE;
-    }
-    PAGE_SIZE = pageSize;
+    PAGE_SIZE = SystemProperties.getIntProperty("idea.btree.page.size", DEFAULT_PAGE_SIZE);
   }
 
   private static final int RECORD_SIZE = 4;

@@ -1,4 +1,4 @@
-# $Id: pseudoxml.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: pseudoxml.py 7320 2012-01-19 22:33:02Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -28,4 +28,4 @@ class Writer(writers.Writer):
 
     def supports(self, format):
         """This writer supports all format-specific elements."""
-        return 1
+        return True

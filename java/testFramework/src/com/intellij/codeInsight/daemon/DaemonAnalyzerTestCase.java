@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -333,7 +333,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     TIntArrayList toIgnore = new TIntArrayList();
     if (!doTestLineMarkers()) {
-      toIgnore.add(Pass.UPDATE_OVERRIDEN_MARKERS);
+      toIgnore.add(Pass.UPDATE_OVERRIDDEN_MARKERS);
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
       toIgnore.add(Pass.LINE_MARKERS);
     }
@@ -347,7 +347,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.UPDATE_ALL);
-      toIgnore.add(Pass.UPDATE_OVERRIDEN_MARKERS);
+      toIgnore.add(Pass.UPDATE_OVERRIDDEN_MARKERS);
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
     }
 

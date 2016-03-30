@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.PathManager;
@@ -156,7 +155,6 @@ public class CommandExecutor {
   }
 
   protected void beforeCreateProcess() throws SvnBindException {
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(myCommandLine);
     setupLocale();
     ensureMessageFile();
     ensureTargetsAdded();

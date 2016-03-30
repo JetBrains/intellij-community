@@ -103,5 +103,4 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   public List<VcsLogDetailsFilter> getDetailsFilters() {
     return ContainerUtil.skipNulls(Arrays.asList(myUserFilter, myDateFilter, myTextFilter, myStructureFilter));
   }
-
 }

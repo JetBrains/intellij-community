@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,10 +238,8 @@ public class EachToForIntention extends Intention {
           GrReferenceExpression referenceExpression = (GrReferenceExpression)invokedExpression;
           if ("each".equals(referenceExpression.getReferenceName())) {
             final GrArgumentList argumentList = expression.getArgumentList();
-            if (argumentList != null) {
-              if (PsiImplUtil.hasExpressionArguments(argumentList)) return false;
-              if (PsiImplUtil.hasNamedArguments(argumentList)) return false;
-            }
+            if (PsiImplUtil.hasExpressionArguments(argumentList)) return false;
+            if (PsiImplUtil.hasNamedArguments(argumentList)) return false;
             final GrClosableBlock[] closureArguments = expression.getClosureArguments();
             if (closureArguments.length != 1) return false;
             final GrParameter[] parameters = closureArguments[0].getParameterList().getParameters();

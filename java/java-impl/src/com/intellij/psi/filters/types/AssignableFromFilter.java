@@ -119,7 +119,8 @@ public class AssignableFromFilter implements ElementFilter{
                                                                                       expectedType,
                                                                                       false,
                                                                                       PsiUtil.getLanguageLevel(place));
-      if (substitutionForParameter != PsiType.NULL && !(substitutionForParameter instanceof PsiIntersectionType)) {
+      if (substitutionForParameter != PsiType.NULL && !(substitutionForParameter instanceof PsiIntersectionType) &&
+        PsiUtil.resolveClassInClassTypeOnly(substitutionForParameter) != parameter) {
         return true;
       }
     }

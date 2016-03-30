@@ -181,7 +181,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   /**
-   * make element protected/package local/public suggestion
+   * make element protected/package-private/public suggestion
    */
   static void registerAccessQuickFixAction(@NotNull PsiMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
@@ -243,7 +243,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   private static PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
     if (place instanceof PsiReferenceExpression) {
-      // check for package local classes in the middle
+      // check for package-private classes in the middle
       PsiReferenceExpression expression = (PsiReferenceExpression)place;
       while (true) {
         PsiElement resolved = expression.resolve();
@@ -568,6 +568,7 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     if (expression != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapLongWithMathToIntExactFix(lType, expression));
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithOptionalFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapExpressionFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
     }
@@ -1391,7 +1392,13 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkNotAStatement(@NotNull PsiStatement statement) {
     if (!PsiUtil.isStatement(statement) && !PsiUtilCore.hasErrorElementChild(statement)) {
-      String description = JavaErrorMessages.message("not.a.statement");
+      boolean isDeclarationNotAllowed = false;
+      if (statement instanceof PsiDeclarationStatement) {
+        final PsiElement parent = statement.getParent();
+        isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
+      }
+      
+      String description = JavaErrorMessages.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
     }
     return null;

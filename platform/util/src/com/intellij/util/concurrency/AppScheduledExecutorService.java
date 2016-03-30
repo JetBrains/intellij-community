@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class AppScheduledExecutorService extends SchedulingWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
+  static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   private Consumer<Thread> newThreadListener;
 
   private static class Holder {
@@ -50,7 +51,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       @NotNull
       @Override
       public Thread newThread(@NotNull final Runnable r) {
-        Thread thread = new Thread(r, "ApplicationImpl pooled thread " + counter.incrementAndGet());
+        Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
         thread.setPriority(Thread.NORM_PRIORITY - 1);
 
@@ -79,7 +80,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     error();
   }
 
-  private static List<Runnable> error() {
+  static List<Runnable> error() {
     throw new IncorrectOperationException("You must not call this method on the global app pool");
   }
 
@@ -101,18 +102,24 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   public int getBackendPoolExecutorSize() {
-    return ((ThreadPoolExecutor)backendExecutorService).getPoolSize();
+    return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
+  }
+  void setBackendPoolCorePoolSize(int size) {
+    ((BackendThreadPoolExecutor)backendExecutorService).doSetCorePoolSize(size);
+  }
+  int getBackendPoolCorePoolSize() {
+    return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
     BackendThreadPoolExecutor() {
-      super(1, Integer.MAX_VALUE, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+      super(1, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
     }
 
     @Override
     protected void beforeExecute(Thread t, Runnable r) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Running " + BoundedTaskExecutor.info(r) + " in thread@" + System.identityHashCode(t));
+        LOG.trace("Running " + BoundedTaskExecutor.info(r) + " in " + t+" ("+System.identityHashCode(t)+")");
       }
     }
 
@@ -149,6 +156,10 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     public void setCorePoolSize(int corePoolSize) {
       error();
+    }
+
+    private void doSetCorePoolSize(int corePoolSize) {
+      super.setCorePoolSize(corePoolSize);
     }
 
     @Override

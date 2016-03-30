@@ -146,6 +146,6 @@ public class EdgeStorageWrapper {
   }
 
   public static EdgeStorageWrapper createSimpleEdgeStorage() {
-    return new EdgeStorageWrapper(new EdgeStorage(), Functions.<Integer>id() , Functions.<Integer>id());
+    return new EdgeStorageWrapper(new EdgeStorage(), Functions.<Integer>id(), Functions.<Integer>id());
   }
 }

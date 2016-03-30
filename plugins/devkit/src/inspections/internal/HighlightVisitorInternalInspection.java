@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2016 JetBrains s.r.o.
  *
@@ -28,9 +27,10 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,24 +47,6 @@ public class HighlightVisitorInternalInspection extends BaseJavaBatchLocalInspec
   @Override
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Highlight Visitor Internal";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "HighlightVisitorInternal";
   }
 
   @NotNull

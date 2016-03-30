@@ -64,7 +64,7 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
                                       runnerTitle + " - " + sessionName);
     Disposer.register(this, myContentUI);
 
-    myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), false, project);
+    myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), true, project);
     myViewsContentManager.addDataProvider(this);
     Disposer.register(this, myViewsContentManager);
   }

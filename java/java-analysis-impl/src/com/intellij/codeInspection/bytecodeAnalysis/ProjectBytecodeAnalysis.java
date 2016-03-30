@@ -134,8 +134,10 @@ public class ProjectBytecodeAnalysis {
       return PsiAnnotation.EMPTY_ARRAY;
     }
     catch (EquationsLimitException e) {
-      String externalName = PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
-      LOG.info("Too many equations for " + externalName);
+      if (LOG.isDebugEnabled()) {
+        String externalName = PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
+        LOG.debug("Too many equations for " + externalName);
+      }
       return PsiAnnotation.EMPTY_ARRAY;
     }
     catch (NoSuchAlgorithmException e) {

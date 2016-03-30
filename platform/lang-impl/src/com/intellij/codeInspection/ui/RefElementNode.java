@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Computable;
@@ -47,13 +48,9 @@ public class RefElementNode extends InspectionTreeNode {
     }
   });
 
-  public RefElementNode(@NotNull Object userObject, @NotNull InspectionToolPresentation presentation) {
+  public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myToolPresentation = presentation;
-  }
-
-  public RefElementNode(@NotNull RefElement element, @NotNull InspectionToolPresentation presentation) {
-    this((Object)element, presentation);
   }
 
   public boolean hasDescriptorsUnder() {
@@ -76,7 +73,7 @@ public class RefElementNode extends InspectionTreeNode {
     if (element == null || !element.isValid()) {
       return InspectionsBundle.message("inspection.reference.invalid");
     }
-    return element.getRefManager().getRefinedElement(element).getQualifiedName();
+    return element.getRefManager().getRefinedElement(element).getName();
   }
 
   @Override
@@ -86,21 +83,20 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   @Override
-  public boolean isResolved() {
+  public boolean isResolved(ExcludedInspectionTreeNodesManager excludedManager) {
     return myToolPresentation.isElementIgnored(getElement());
   }
 
-
   @Override
-  public void ignoreElement() {
+  public void ignoreElement(ExcludedInspectionTreeNodesManager excludedManager) {
     myToolPresentation.ignoreCurrentElement(getElement());
-    super.ignoreElement();
+    super.ignoreElement(excludedManager);
   }
 
   @Override
-  public void amnesty() {
+  public void amnesty(ExcludedInspectionTreeNodesManager excludedManager) {
     myToolPresentation.amnesty(getElement());
-    super.amnesty();
+    super.amnesty(excludedManager);
   }
 
   @Override
@@ -124,4 +120,16 @@ public class RefElementNode extends InspectionTreeNode {
     return mySingleDescriptor;
   }
 
+  @Override
+  public RefEntity getContainingFileLocalEntity() {
+    final RefEntity element = getElement();
+    return element instanceof RefElement && !(element instanceof RefDirectory)
+           ? element
+           : super.getContainingFileLocalEntity();
+  }
+
+  @Override
+  public int getProblemCount() {
+    return Math.max(1, super.getProblemCount());
+  }
 }

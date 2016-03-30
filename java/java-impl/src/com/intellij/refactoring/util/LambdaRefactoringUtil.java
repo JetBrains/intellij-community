@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -34,6 +35,7 @@ import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +45,13 @@ import java.util.Map;
 public class LambdaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance("#" + LambdaRefactoringUtil.class.getName());
 
-  @NotNull
+  @Nullable
+  public static PsiExpression convertToMethodCallInLambdaBody(PsiMethodReferenceExpression element) {
+    final PsiLambdaExpression lambdaExpression = convertMethodReferenceToLambda(element, false, true);
+    return lambdaExpression != null ? LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody()) : null;
+  }
+
+  @Nullable
   public static PsiLambdaExpression convertMethodReferenceToLambda(final PsiMethodReferenceExpression referenceExpression,
                                                                    final boolean ignoreCast, 
                                                                    final boolean simplifyToExpressionLambda) {
@@ -51,7 +59,9 @@ public class LambdaRefactoringUtil {
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
     final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
-    LOG.assertTrue(interfaceMethod != null);
+    if (interfaceMethod == null) {
+      return null;
+    }
     final PsiSubstitutor psiSubstitutor = LambdaUtil.getSubstitutor(interfaceMethod, functionalInterfaceResolveResult);
     final MethodSignature signature = interfaceMethod.getSignature(psiSubstitutor);
     final boolean isReceiver;
@@ -121,14 +131,9 @@ public class LambdaRefactoringUtil {
       if (!PsiType.VOID.equals(interfaceMethod.getReturnType())) {
         buf.append("return ");
       }
+      final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(referenceExpression);
       final PsiElement qualifier = referenceExpression.getQualifier();
-      PsiClass containingClass = null;
-      if (resolveElement instanceof PsiMethod) {
-        containingClass = ((PsiMember)resolveElement).getContainingClass();
-        LOG.assertTrue(containingClass != null);
-      } else if (resolveElement instanceof PsiClass) {
-        containingClass = (PsiClass)resolveElement;
-      }
+      PsiClass containingClass = qualifierResolveResult.getContainingClass();
 
       final boolean onArrayRef =
         elementFactory.getArrayClass(PsiUtil.getLanguageLevel(referenceExpression)) == containingClass;
@@ -141,9 +146,13 @@ public class LambdaRefactoringUtil {
           if (qualifier instanceof PsiTypeElement) {
             final PsiJavaCodeReferenceElement referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
             LOG.assertTrue(referenceElement != null);
-            buf.append(referenceElement.getReferenceName()).append(".");
+            if (!PsiTreeUtil.isAncestor(containingClass, referenceExpression, false)) {
+              buf.append(referenceElement.getReferenceName()).append(".");
+            }
           }
-          else if (qualifier != null && !(qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
+          else if (qualifier != null &&
+                   !(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).getQualifier() == null && PsiTreeUtil.isAncestor(containingClass, referenceExpression, false) ||
+                     qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
             buf.append(qualifier.getText()).append(".");
           }
         }

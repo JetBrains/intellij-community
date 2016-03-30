@@ -325,7 +325,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     try {
       URL defaultFileTypesUrl = FileTypeManagerImpl.class.getResource("/defaultFileTypes.xml");
       if (defaultFileTypesUrl != null) {
-        Element defaultFileTypesElement = JDOMUtil.load(URLUtil.openStream(defaultFileTypesUrl));
+        Element defaultFileTypesElement = JdomKt.loadElement(URLUtil.openStream(defaultFileTypesUrl));
         for (Element e : defaultFileTypesElement.getChildren()) {
           //noinspection SpellCheckingInspection
           if ("filetypes".equals(e.getName())) {
@@ -579,16 +579,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (id < 0) return UnknownFileType.INSTANCE;
 
       long flags = packedFlags.get(id);
-      if ((flags & ATTRIBUTES_WERE_LOADED_MASK) == 0) {
+      if (!BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) {
         flags = readFlagsFromCache(file);
         flags = BitUtil.set(flags, ATTRIBUTES_WERE_LOADED_MASK, true);
 
         packedFlags.set(id, flags);
         if (toLog()) {
-          log("F: getOrDetectFromContent("+file.getName()+"): readFlagsFromCache() = "+ readableFlags(flags));
+          log("F: getOrDetectFromContent(" + file.getName() + "): readFlagsFromCache() = " + readableFlags(flags));
         }
       }
-      boolean autoDetectWasRun = (flags & AUTO_DETECT_WAS_RUN_MASK) != 0;
+      boolean autoDetectWasRun = BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK);
       if (autoDetectWasRun) {
         FileType type = textOrBinaryFromCachedFlags(flags);
         if (toLog()) {

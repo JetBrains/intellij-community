@@ -85,6 +85,6 @@ public class BlockTreeNode extends SimpleNode {
 
   @Override
   public boolean isAlwaysLeaf() {
-    return myBlock.isLeaf();
+    return myBlock.isLeaf() && myBlock.getSubBlocks().isEmpty();
   }
 }

@@ -247,45 +247,11 @@ Function VersionSplit
 FunctionEnd
 
 Function OnDirectoryPageLeave
-    StrCpy $IS_UPGRADE_60 "0"
-    ${InstDirState} "$INSTDIR" $R0
-    IntCmp $R0 1 check_build skip_abort skip_abort
-check_build:
-    FileOpen $R1 "$INSTDIR\build.txt" "r"
-    IfErrors do_abort
-    FileRead $R1 $R2
-    FileClose $R1
-    IfErrors do_abort
-    ${VersionSplit} ${MIN_UPGRADE_BUILD} $R3 $R4 $R5
-    ${VersionSplit} ${MAX_UPGRADE_BUILD} $R6 $R7 $R8
-    ${VersionSplit} $R2 $R9 $R2 $R0
-    StrCmp $R9 $R3 0 do_abort
-    IntCmp $R2 $R4 0 do_abort
-    IntCmp $R0 $R5 do_accept do_abort
-
-    StrCmp $R9 $R6 0 do_abort
-    IntCmp $R2 $R7 0 0 do_abort
-    IntCmp $R0 $R8 do_abort do_accept do_abort
-
-do_accept:
-    StrCpy $IS_UPGRADE_60 "1"
-    FileClose $R1
-    Goto skip_abort
-
-do_abort:
   ;check
-  ; - if there are no files into $INSTDIR (recursively) just excepted property files
-  ; - if property files have the same installation time.
+  ; - if there are no files into $INSTDIR (recursively)
   StrCpy $9 "$INSTDIR"
   Call instDirEmpty
-  StrCmp $9 "not empty" abort 0
-  Push "Complete"
-  Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
-  Push "$INSTDIR\bin\idea.properties"
-  ${StrRep} $0 ${PRODUCT_EXE_FILE} ".exe" "64.exe.vmoptions"
-  Push "$INSTDIR\bin\$0"
-  Call compareFileInstallationTime
-  StrCmp $9 "Modified" abort skip_abort
+  StrCmp $9 "not empty" abort skip_abort
 abort:
   MessageBox MB_OK|MB_ICONEXCLAMATION "$(empty_or_upgrade_folder)"
   Abort
@@ -300,6 +266,7 @@ Function instDirEmpty
   Push $2
   ClearErrors
   FindFirst $1 $2 "$9\*.*"
+  IfErrors done 0
 nextElemement:
   ;is the element a folder?
   StrCmp $2 "." getNextElement
@@ -467,17 +434,6 @@ FunctionEnd
 
 
 Function uninstallOldVersion
-  ;check if the uninstalled application is running
-remove_previous_installation:
-  ;prepare a copy of launcher
-  CopyFiles "$3\bin\${PRODUCT_EXE_FILE}" "$3\bin\${PRODUCT_EXE_FILE}_copy"
-  ClearErrors
-  ;copy launcher to itself
-  CopyFiles "$3\bin\${PRODUCT_EXE_FILE}_copy" "$3\bin\${PRODUCT_EXE_FILE}"
-  Delete "$3\bin\${PRODUCT_EXE_FILE}_copy"
-  IfErrors 0 +3
-  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL complete
-  goto complete
   ; uninstallation mode
   !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
   ${If} $9 == "1"
@@ -1035,8 +991,37 @@ complete:
   ${UnStrRep} $2 $2 "/" "\"
 FunctionEnd
 
+Function un.isIDEInUse
+  IfFileExists $R0 0 done
+  CopyFiles $R0 "$R0_copy"
+  ClearErrors
+  Delete $R0"
+  IfFileExists $R0 done
+  CopyFiles "$R0_copy" $R0
+done:
+  Delete "$R0_copy"
+FunctionEnd
+
+
+Function un.checkIfIDEInUse
+remove_previous_installation:
+  StrCpy $R0 "$INSTDIR\IdeaWin32.dll"
+  Call un.isIDEInUse
+  IfErrors remove_dialog 0
+  StrCpy $R0 "$INSTDIR\IdeaWin64.dll"
+  Call un.isIDEInUse
+  IfErrors remove_dialog done
+remove_dialog:
+  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL cancel
+cancel:
+  Abort
+done:
+FunctionEnd
+
 
 Section "Uninstall"
+  ;check if the uninstalled application is running
+  Call un.checkIfIDEInUse
   ; Uninstaller is in the \bin directory, we need upper level dir
   StrCpy $productDir $INSTDIR
   StrCpy $INSTDIR $INSTDIR\..

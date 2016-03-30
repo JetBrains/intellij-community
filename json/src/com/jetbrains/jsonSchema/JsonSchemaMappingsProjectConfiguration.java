@@ -2,8 +2,6 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -76,8 +74,7 @@ public class JsonSchemaMappingsProjectConfiguration extends JsonSchemaMappingsCo
     if (myProject == null || myProject.getBaseDir() == null) return;
 
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : myState.values()) {
-      final String pathToSchema = FileUtil.toSystemIndependentName(info.getRelativePathToSchema());
-      final VirtualFile schemaFile = VfsUtil.findRelativeFile(myProject.getBaseDir(), pathToSchema);
+      final VirtualFile schemaFile = info.getSchemaFile(myProject);
       if (schemaFile != null) mySchemaFiles.put(schemaFile, info);
     }
   }

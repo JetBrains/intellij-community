@@ -32,6 +32,9 @@ public interface UpdatableIndex<Key, Value, Input> extends AbstractIndex<Key,Val
 
   void flush() throws StorageException;
 
+  /**
+   * @param inputId *positive* id of content.
+   */
   @NotNull
   Computable<Boolean> update(int inputId, @Nullable Input content);
 

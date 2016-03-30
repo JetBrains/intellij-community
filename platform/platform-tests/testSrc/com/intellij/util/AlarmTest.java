@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,22 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class AlarmTest extends PlatformTestCase {
   public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
@@ -43,7 +53,7 @@ public class AlarmTest extends PlatformTestCase {
     assertRequestsExecuteSequentially(alarm);
   }
 
-  private static void assertRequestsExecuteSequentially(Alarm alarm) throws InterruptedException, ExecutionException, TimeoutException {
+  private static void assertRequestsExecuteSequentially(@NotNull Alarm alarm) throws InterruptedException, ExecutionException, TimeoutException {
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
     StringBuilder expected = new StringBuilder(N * 4);
@@ -55,9 +65,86 @@ public class AlarmTest extends PlatformTestCase {
     for (int i = 0; i < N; i++) {
       expected.append(i).append(" ");
     }
-    alarm.waitForAllExecuted(100, TimeUnit.SECONDS);
-    UIUtil.dispatchAllInvocationEvents();
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        alarm.waitForAllExecuted(100, TimeUnit.SECONDS);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+    while (!future.isDone()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    future.get();
     assertEquals(0, alarm.getActiveRequestCount());
     assertEquals(expected.toString(), log.toString());
   }
+
+  public void testOneAlarmDoesNotStartTooManyThreads() throws InterruptedException, ExecutionException, TimeoutException {
+    Alarm alarm = new Alarm(getTestRootDisposable());
+    Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
+    AtomicInteger executed = new AtomicInteger();
+    int N = 100000;
+    for (int i = 0; i < N; i++) {
+      alarm.addRequest(executed::incrementAndGet, 100);
+    }
+    while (executed.get() != N) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
+    System.out.println("before: "+before.size()+"; after: "+after.size());
+    assertTrue(Math.abs(before.size() - after.size()) < 10);
+  }
+
+  public void testManyAlarmsDoNotStartTooManyThreads() throws InterruptedException, ExecutionException, TimeoutException {
+    Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
+    AtomicInteger executed = new AtomicInteger();
+    int N = 100000;
+    List<Alarm> alarms = Collections.nCopies(N, "").stream().map(__ -> new Alarm(getTestRootDisposable())).collect(Collectors.toList());
+    alarms.forEach(alarm -> alarm.addRequest(executed::incrementAndGet, 100));
+
+    while (executed.get() != N) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
+    System.out.println("before: "+before.size()+"; after: "+after.size());
+    assertTrue(Math.abs(before.size() - after.size()) < 10);
+  }
+
+  public void testOrderIsPreservedAfterModalitySwitching() {
+    Alarm alarm = new Alarm();
+    StringBuilder sb = new StringBuilder();
+    Object modal = new Object();
+    LaterInvocator.enterModal(modal);
+
+    try {
+      ApplicationManager.getApplication().invokeLater(() -> TimeoutUtil.sleep(10), ModalityState.NON_MODAL);
+      alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
+      alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals("", sb.toString());
+    }
+    finally {
+      LaterInvocator.leaveModal(modal);
+    }
+
+    while (!alarm.isEmpty()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
+    assertEquals("12", sb.toString());
+  }
+
+  public void testFlushImmediately() {
+    Alarm alarm = new Alarm();
+    StringBuilder sb = new StringBuilder();
+
+    alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
+    alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
+    assertEquals("", sb.toString());
+    alarm.flush();
+    assertEquals("12", sb.toString());
+  }
+
 }

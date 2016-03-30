@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 
@@ -10,6 +11,19 @@ from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from docutils.writers.html4css1 import HTMLTranslator, Writer as HTMLWriter
 from docutils.writers import Writer
 
+ENCODING = 'utf-8'
+_stdin = os.fdopen(sys.stdin.fileno(), 'rb')
+_stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+
+
+def read_safe():
+    return _stdin.read().decode(ENCODING)
+
+
+def print_safe(s):
+    _stdout.write(s.encode(ENCODING))
+    _stdout.flush()
+
 
 # Copied from the Sphinx' sources. Docutils doesn't handle "seealso" directives by default.
 class seealso(nodes.Admonition, nodes.Element):
@@ -21,6 +35,7 @@ class SeeAlso(BaseAdmonition):
     An admonition mentioning things to look at as reference.
     """
     node_class = seealso
+
 
 directives.register_directive('seealso', SeeAlso)
 
@@ -224,7 +239,7 @@ class RestHTMLTranslator(HTMLTranslator):
             return HTMLTranslator.visit_problematic(self, node)
 
         directive, text = self._strip_markup(node.astext())
-        if directive[1:-1] in ('exc', 'class'):
+        if directive and directive[1:-1] in ('exc', 'class'):
             self.body.append(self.starttag(node, 'a', '', href='psi_element://#typename#' + text))
             self.body.append(text)
             self.body.append('</a>')
@@ -302,12 +317,9 @@ def format_docstring(docstring):
 
 
 def main(text=None):
-    src = sys.stdin.read() if text is None else text
-
+    src = read_safe() if text is None else text
     html = format_docstring(src)
-
-    sys.stdout.write(html)
-    sys.stdout.flush()
+    print_safe(html)
 
 
 if __name__ == '__main__':

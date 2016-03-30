@@ -121,14 +121,14 @@ public class PluginGroups {
       "com.intellij.spring," +
       "com.intellij.spring.webflow," +
       "com.intellij.spring.ws,com.intellij.aop",
-      "J2EE:com.intellij.javaee.batch," +
+      "Java EE:com.intellij.javaee.batch," +
       "com.intellij.beanValidation," +
       "com.intellij.cdi," +
       "com.intellij.javaee," +
       "com.intellij.jsf," +
       "com.intellij.javaee.extensions," +
       "com.jetbrains.restWebServices," +
-      "Java EE: Web Services (JAX-WS)," +
+      "Web Services (JAX-WS)," +
       "com.intellij.javaee.webSocket," +
       "com.intellij.jsp," +
       "com.intellij.persistence",
@@ -216,11 +216,12 @@ public class PluginGroups {
                         "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
     addVimPlugin(featuredPlugins);
     featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
+    featuredPlugins.put("Angular", "Web Development:Angular 1&2 support:AngularJS");
     featuredPlugins.put("Atlassian Connector",
-                        "Tools Integration:Integration for Atlassian JIRA, Bamboo, Cricible, FishEye:atlassian-idea-plugin");
+                        "Tools Integration:Integration for Atlassian JIRA, Bamboo, Crucible, FishEye:atlassian-idea-plugin");
   }
 
-  protected static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {
+  public static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {
     tree.put("Version Controls", Pair.create(PlatformImplIcons.VersionControls, Arrays.asList(
       "ClearcasePlugin",
       "CVS",
@@ -233,24 +234,28 @@ public class PluginGroups {
     )));
   }
 
-  protected static void addVimPlugin(Map<String, String> featuredPlugins) {
+  public static void addVimPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("IdeaVim", "Editor:Emulates Vim editor:" + IDEA_VIM_PLUGIN_ID);
   }
 
-  protected static void addLuaPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("Lua", "Custom Languages:Lua language integration:Lua");
+  public static void addLuaPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Lua", "Custom Languages:Lua language support:Lua");
   }
 
-  protected static void addMarkdownPlugin(Map<String, String> featuredPlugins) {
+  public static void addGoPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Go", "Custom Languages:Go language support:ro.redeul.google.go");
+  }
+
+  public static void addMarkdownPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("Markdown", "Custom Languages:Markdown language support:org.intellij.plugins.markdown");
   }
 
-  protected static void addConfigurationServerPlugin(Map<String, String> featuredPlugins) {
+  public static void addConfigurationServerPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("Configuration Server",
                         "Team Work:Supports sharing settings between installations of IntelliJ Platform based products used by the same developer on different computers:IdeaServerPlugin");
   }
 
-  protected static void addTeamCityPlugin(Map<String, String> featuredPlugins) {
+  public static void addTeamCityPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("TeamCity Integration",
                         "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:Jetbrains TeamCity Plugin");
   }

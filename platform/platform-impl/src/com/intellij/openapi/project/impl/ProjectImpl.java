@@ -32,6 +32,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -47,6 +48,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.TimedReference;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -309,6 +311,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (!mySavingInProgress.compareAndSet(false, true)) {
       return;
     }
+
+    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
 
     try {
       StoreUtil.save(ServiceKt.getStateStore(this), this);

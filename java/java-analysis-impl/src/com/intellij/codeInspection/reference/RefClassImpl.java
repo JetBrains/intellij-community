@@ -244,6 +244,16 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myDefaultConstructor = defaultConstructor;
   }
 
+  @NotNull
+  @Override
+  public String getQualifiedName() {
+    final PsiClass psiClass = getElement();
+    if (psiClass == null) return super.getQualifiedName();
+    final String qName = psiClass.getQualifiedName();
+    if (qName == null) return super.getQualifiedName();
+    return qName;
+  }
+
   @Override
   public void buildReferences() {
     PsiClass psiClass = getElement();

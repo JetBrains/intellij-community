@@ -698,6 +698,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testUseIntConstantsFromTargetClass() throws Throwable { doTest(); }
+  public void testUseObjectConstantsFromTargetClass() { doTest(); }
   public void testUseIntConstantsFromTargetClassReturnValue() throws Throwable { doTest(); }
   public void testUseIntConstantsFromConstructedClass() throws Throwable { doTest(); }
   public void testUseIntConstantsInPlus() throws Throwable { doTest(); }
@@ -836,7 +837,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testIDEADEV2626() throws Exception {
-    doActionTest();
+    doItemTest();
   }
 
   public void testDontSuggestWildcardGenerics() { doItemTest(); }
@@ -1165,7 +1166,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testLocalClassInExpectedTypeArguments() { doTest(); }
 
-  private void doActionTest() throws Exception {
+  private void doActionTest() {
     configureByTestName();
     checkResultByTestName();
   }
@@ -1231,4 +1232,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   private CommonCodeStyleSettings getCodeStyleSettings() {
     return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
+
+  public void testOnlyCompatibleTypes() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
+  }
+
+  public void testQualifyOuterClassCall() { doActionTest(); }
 }

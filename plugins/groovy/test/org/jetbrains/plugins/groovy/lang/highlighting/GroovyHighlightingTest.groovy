@@ -1971,4 +1971,37 @@ import groovy.transform.Field
 def (,<error descr="Identifier expected">)</error>
 '''
   }
+
+  void 'test no SOE in index property assignment with generic function'() {
+    testHighlighting '''
+class Main {
+
+    static <T> T foo() {}
+
+    static void main(String[] args) {
+        def main = new Main()
+        main[Main] = foo()
+    }
+
+    def putAt(x, String t) {
+        println "Works: $x = $t"
+    }
+}
+'''
+    testHighlighting '''
+class Main {
+
+    static <T> T foo() {}
+
+    static void main(String[] args) {
+        def main = new Main()
+        (main[Main]) = foo()
+    }
+
+    def putAt(x, String t) {
+        println "Works: $x = $t"
+    }
+}
+'''
+  }
 }

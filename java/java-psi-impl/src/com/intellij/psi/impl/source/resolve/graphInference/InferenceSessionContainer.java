@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -81,7 +80,7 @@ public class InferenceSessionContainer {
         if (topLevelCall != null) {
 
           final InferenceSession session;
-          if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty()) {
+          if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() || LambdaUtil.isLambdaParameterCheck()) {
             session = startTopLevelInference(topLevelCall);
           }
           else {
@@ -101,12 +100,14 @@ public class InferenceSessionContainer {
               InferenceSession childSession = new InferenceSession(initialInferenceState);
               final List<String> errorMessages = session.getIncompatibleErrorMessages();
               if (errorMessages != null) {
-                properties.getInfo().setInferenceError(StringUtil.join(errorMessages, "\n"));
                 return childSession.prepareSubstitution();
               }
               return childSession
                 .collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
             }
+          }
+          else if (topLevelCall instanceof PsiMethodCallExpression) {
+            return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent).prepareSubstitution();
           }
         }
       }

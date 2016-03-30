@@ -40,6 +40,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -84,8 +85,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   private void doCommit(@NotNull List<FilePath> committables, String comment, List<VcsException> exception, final Set<String> feedback) {
     //noinspection unchecked
-    Map<Pair<SVNURL, WorkingCopyFormat>, Set<FilePath>> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
-    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Set<FilePath>> entry : map.entrySet()) {
+    MultiMap<Pair<SVNURL, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
+
+    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
       try {
         doCommitOneRepo(entry.getValue(), comment, exception, feedback, entry.getKey().getSecond());
       }

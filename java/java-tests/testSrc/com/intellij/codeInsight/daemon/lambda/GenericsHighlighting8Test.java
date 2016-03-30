@@ -974,4 +974,20 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testCapturedWildcardPassedThroughMethodCallChain() throws Exception {
     doTest();
   }
+
+  public void testIDEA152179() throws Exception {
+    doTest();
+  }
+
+  public void testLooseInvocationContextForProperPrimitiveTypes() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedWarningsInsideIncorporationPhase() throws Exception {
+    doTest();
+  }
+
+  public void testUnifiedSubstitutorUpInTheHierarchy() throws Exception {
+    doTest();
+  }
 }

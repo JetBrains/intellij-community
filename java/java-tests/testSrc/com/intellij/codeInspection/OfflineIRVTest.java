@@ -54,7 +54,7 @@ public class OfflineIRVTest extends TestSourceBasedTestCase {
   private LocalInspectionToolWrapper myToolWrapper;
 
   private static String varMessage(String name) {
-    return InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "<code>"+name+"</code>") + ".";
+    return InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "'" + name + "'");
   }
 
   @Override
@@ -146,7 +146,7 @@ public class OfflineIRVTest extends TestSourceBasedTestCase {
                                            + "      -f()\n"
                                            + "       -D\n"
                                            + "        -b()\n"
-                                           + "         " + InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "'" + "r" + "'") + "\n"
+                                           + "         " + varMessage("r") + "\n"
                                            + "         -anonymous (java.lang.Runnable)\n"
                                            + "          -run()\n"
                                            + "           " + varMessage("i") + "\n"
@@ -167,11 +167,11 @@ public class OfflineIRVTest extends TestSourceBasedTestCase {
                                            + "    " + varMessage("a") + "\n");
     TreeUtil.selectFirstNode(tree);
     final InspectionTreeNode root = (InspectionTreeNode)tree.getLastSelectedPathComponent();
-    root.ignoreElement();
+    root.ignoreElement(myView.getExcludedManager());
     TreeUtil.traverse(root, new TreeUtil.Traverse() {
       @Override
       public boolean accept(final Object node) {
-        assertTrue(((InspectionTreeNode)node).isResolved());
+        assertTrue(((InspectionTreeNode)node).isResolved(myView.getExcludedManager()));
         return true;
       }
     });

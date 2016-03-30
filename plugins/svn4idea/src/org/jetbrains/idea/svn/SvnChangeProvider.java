@@ -25,13 +25,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +47,6 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 import java.io.File;
@@ -56,7 +58,6 @@ import java.util.*;
  */
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
-  public static final String ourDefaultListName = VcsBundle.message("changes.default.changelist.name");
   public static final String PROPERTY_LAYER = "Property";
 
   private static final NotNullFactory<Map<String, File>> NAME_TO_FILE_MAP_FACTORY = new NotNullFactory<Map<String, File>>() {
@@ -208,7 +209,7 @@ public class SvnChangeProvider implements ChangeProvider {
                                  @Nullable VcsDirtyScope dirtyScope) throws SVNException {
     boolean foundRename = false;
     final Status copiedStatus = copiedFile.getStatus();
-    final String copyFromURL = copiedFile.getCopyFromURL();
+    final String copyFromURL = ObjectUtils.assertNotNull(copiedFile.getCopyFromURL());
     final Set<SvnChangedFile> deletedToDelete = new HashSet<SvnChangedFile>();
 
     for (SvnChangedFile deletedFile : context.getDeletedFiles()) {
@@ -246,22 +247,25 @@ public class SvnChangeProvider implements ChangeProvider {
     // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
     // by building a relative url
     if (!foundRename && copiedStatus.getURL() != null) {
-      File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copyFromURL);
-      Status status;
-      try {
-        status = myVcs.getFactory(wcPath).createStatusClient().doStatus(wcPath, false);
-      }
-      catch(SvnBindException ex) {
-        LOG.info(ex);
-        status = null;
-      }
-      if (status != null && status.is(StatusType.STATUS_DELETED)) {
-        final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
-        final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
-        final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-        context.getBuilder().processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
-                                                 SvnUtil.getChangelistName(status), SvnVcs.getKey());
-        foundRename = true;
+      File wcPath = myVcs.getSvnFileUrlMapping().getLocalPath(copyFromURL);
+
+      if (wcPath != null) {
+        Status status;
+        try {
+          status = myVcs.getFactory(wcPath).createStatusClient().doStatus(wcPath, false);
+        }
+        catch (SvnBindException ex) {
+          LOG.info(ex);
+          status = null;
+        }
+        if (status != null && status.is(StatusType.STATUS_DELETED)) {
+          final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
+          final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
+          final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
+          context.getBuilder().processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
+                                                   SvnUtil.getChangelistName(status), SvnVcs.getKey());
+          foundRename = true;
+        }
       }
     }
 
@@ -303,30 +307,6 @@ public class SvnChangeProvider implements ChangeProvider {
     return SvnContentRevision
       .createBaseRevision(myVcs, forDeleted ? VcsUtil.getFilePath(status.getFile(), path.isDirectory()) : path,
                           status.getRevision());
-  }
-
-  @NotNull
-  private static File guessWorkingCopyPath(@NotNull File file, @NotNull SVNURL url, @NotNull String copyFromURL) throws SVNException {
-    String copiedPath = url.getPath();
-    String copyFromPath = SVNURL.parseURIEncoded(copyFromURL).getPath();
-    String commonPathAncestor = SVNPathUtil.getCommonPathAncestor(copiedPath, copyFromPath);
-    int pathSegmentCount = SVNPathUtil.getSegmentsCount(copiedPath);
-    int ancestorSegmentCount = SVNPathUtil.getSegmentsCount(commonPathAncestor);
-    boolean startsWithSlash = file.getAbsolutePath().startsWith("/");
-    List<String> segments = StringUtil.split(file.getPath(), File.separator);
-    List<String> copyFromPathSegments = StringUtil.split(copyFromPath, "/");
-    List<String> resultSegments = new ArrayList<String>();
-    final int keepSegments = segments.size() - pathSegmentCount + ancestorSegmentCount;
-    for(int i=0; i< keepSegments; i++) {
-      resultSegments.add(segments.get(i));
-    }
-    for(int i=ancestorSegmentCount; i<copyFromPathSegments.size(); i++) {
-      resultSegments.add(copyFromPathSegments.get(i));
-    }
-
-    String result = StringUtil.join(resultSegments, "/");
-
-    return new File(startsWithSlash ? SvnUtil.ensureStartSlash(result) : result);
   }
 
   public boolean isModifiedDocumentTrackingRequired() {

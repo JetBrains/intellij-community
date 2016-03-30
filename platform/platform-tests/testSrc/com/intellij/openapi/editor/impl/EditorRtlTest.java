@@ -566,6 +566,13 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkResult("R\tRR<caret>");
   }
   
+  public void testEscapedBackslashInStringLiteral() throws Exception {
+    prepare("class C {\n  String s = \"R\\<caret>\\R\";\n}", TestFileType.JAVA);
+    right();
+    right();
+    checkResult("class C {\n  String s = \"<caret>R\\\\R\";\n}");
+  }
+  
   private void prepareText(String text) throws IOException {
     prepare(text, TestFileType.TEXT);
   }

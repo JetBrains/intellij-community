@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: zh_tw.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: zh_tw.py 7119 2011-09-02 13:00:23Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -20,6 +20,7 @@ directives = {
       # language-dependent: fixed
       'attention (translation required)': 'attention',
       'caution (translation required)': 'caution',
+      'code (translation required)': 'code',
       'danger (translation required)': 'danger',
       'error (translation required)': 'error',
       'hint (translation required)': 'hint',
@@ -45,6 +46,7 @@ directives = {
       #'qa (translation required)': 'questions',
       #'faq (translation required)': 'questions',
       'meta (translation required)': 'meta',
+      'math (translation required)': 'math',
       #'imagemap (translation required)': 'imagemap',
       'image (translation required)': 'image',
       'figure (translation required)': 'figure',
@@ -75,6 +77,7 @@ roles = {
     'ab (translation required)': 'abbreviation',
     'acronym (translation required)': 'acronym',
     'ac (translation required)': 'acronym',
+    u'code (translation required)': 'code',
     'index (translation required)': 'index',
     'i (translation required)': 'index',
     'subscript (translation required)': 'subscript',
@@ -91,6 +94,7 @@ roles = {
     'emphasis (translation required)': 'emphasis',
     'strong (translation required)': 'strong',
     'literal (translation required)': 'literal',
+    'math (translation required)': 'math',
     'named-reference (translation required)': 'named-reference',
     'anonymous-reference (translation required)': 'anonymous-reference',
     'footnote-reference (translation required)': 'footnote-reference',

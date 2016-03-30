@@ -89,11 +89,15 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
+ * Class should be final and singleton since some code checks its instance by ref.
+ *
  * @author yole
  */
-public class PythonSdkType extends SdkType {
+public final class PythonSdkType extends SdkType {
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
@@ -105,18 +109,21 @@ public class PythonSdkType extends SdkType {
   private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
+  public static final Predicate<Sdk> REMOTE_SDK_PREDICATE = new Predicate<Sdk>() {
+    @Override
+    public boolean test(Sdk sdk) {
+      return isRemote(sdk);
+    }
+  };
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
   }
 
-  public PythonSdkType() {
+  private PythonSdkType() {
     super("Python SDK");
   }
 
-  protected PythonSdkType(@NonNls String name) {
-    super(name);
-  }
 
   public Icon getIcon() {
     return PythonIcons.Python.Python;
@@ -794,6 +801,10 @@ public class PythonSdkType extends SdkType {
       }
     }
     return null;
+  }
+
+  public static List<Sdk> getAllLocalCPythons() {
+    return getAllSdks().stream().filter(REMOTE_SDK_PREDICATE.negate()).collect(Collectors.toList());
   }
 
   @Nullable

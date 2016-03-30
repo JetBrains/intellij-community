@@ -3,7 +3,7 @@ package com.jetbrains.edu.coursecreator.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
 import org.jetbrains.annotations.NotNull;
 

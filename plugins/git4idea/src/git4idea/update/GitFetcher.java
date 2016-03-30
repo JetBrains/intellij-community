@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.dvcs.MultiRootMessage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,10 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.vcsUtil.VcsImplUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
@@ -80,15 +79,8 @@ public class GitFetcher {
    */
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
-    GitFetchResult fetchResult = GitFetchResult.success();
-    if (myFetchAll) {
-      fetchResult = fetchAll(repository, fetchResult);
-    }
-    else {
-      return fetchCurrentRemote(repository);
-    }
-
-    VfsUtil.markDirtyAndRefresh(false, true, false, repository.getGitDir());
+    GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
+    repository.getRepositoryFiles().refresh(false);
     return fetchResult;
   }
 
@@ -164,7 +156,8 @@ public class GitFetcher {
   }
 
   @NotNull
-  private GitFetchResult fetchAll(@NotNull GitRepository repository, @NotNull GitFetchResult fetchResult) {
+  private static GitFetchResult fetchAll(@NotNull GitRepository repository) {
+    GitFetchResult fetchResult = GitFetchResult.success();
     for (GitRemote remote : repository.getRemotes()) {
       String url = remote.getFirstUrl();
       if (url == null) {
@@ -263,13 +256,13 @@ public class GitFetcher {
    */
   public boolean fetchRootsAndNotify(@NotNull Collection<GitRepository> roots,
                                      @Nullable String errorNotificationTitle, boolean notifySuccess) {
-    Map<VirtualFile, String> additionalInfo = new HashMap<VirtualFile, String>();
+    MultiRootMessage additionalInfo = new MultiRootMessage(myProject, GitUtil.getRootsFromRepositories(roots), true);
     for (GitRepository repository : roots) {
       LOG.info("fetching " + repository);
       GitFetchResult result = fetch(repository);
       String ai = result.getAdditionalInfo();
       if (!StringUtil.isEmptyOrSpaces(ai)) {
-        additionalInfo.put(repository.getRoot(), ai);
+        additionalInfo.append(repository.getRoot(), ai);
       }
       if (!result.isSuccess()) {
         Collection<Exception> errors = new ArrayList<Exception>(getErrors());
@@ -282,29 +275,11 @@ public class GitFetcher {
       VcsNotifier.getInstance(myProject).notifySuccess("Fetched successfully");
     }
 
-    String addInfo = makeAdditionalInfoByRoot(additionalInfo);
-    if (!StringUtil.isEmptyOrSpaces(addInfo)) {
-      VcsNotifier.getInstance(myProject).notifyMinorInfo("Fetch details", addInfo);
+    if (!additionalInfo.asString().isEmpty()) {
+      VcsNotifier.getInstance(myProject).notifyMinorInfo("Fetch details", additionalInfo.asString());
     }
 
     return true;
-  }
-
-  @NotNull
-  private String makeAdditionalInfoByRoot(@NotNull Map<VirtualFile, String> additionalInfo) {
-    if (additionalInfo.isEmpty()) {
-      return "";
-    }
-    StringBuilder info = new StringBuilder();
-    if (myRepositoryManager.moreThanOneRoot()) {
-      for (Map.Entry<VirtualFile, String> entry : additionalInfo.entrySet()) {
-        info.append(entry.getValue()).append(" in ").append(VcsImplUtil.getShortVcsRootName(myProject, entry.getKey())).append("<br/>");
-      }
-    }
-    else {
-      info.append(additionalInfo.values().iterator().next());
-    }
-    return info.toString();
   }
 
   private static class GitFetchPruneDetector extends GitLineHandlerAdapter {

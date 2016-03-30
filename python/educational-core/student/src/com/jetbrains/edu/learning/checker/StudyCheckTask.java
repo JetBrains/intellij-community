@@ -11,14 +11,16 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.StudyStatus;
-import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.learning.StudyPluginConfigurator;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.stepic.EduStepicConnector;
-import com.jetbrains.edu.stepic.StudySettings;
+import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StudySettings;
 import org.jetbrains.annotations.NotNull;
 
 public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroundable {
@@ -98,6 +100,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     else {
       onTaskFailed(testsOutput);
     }
+    runAfterTaskSolvedActions();
   }
 
   protected void onTaskFailed(StudyTestsOutputParser.TestsOutput testsOutput) {
@@ -110,6 +113,21 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     myTaskManger.setStatus(myTask, StudyStatus.Solved);
     ApplicationManager.getApplication().invokeLater(
       () -> StudyCheckUtils.showTestResultPopUp(testsOutput.getMessage(), MessageType.INFO.getPopupBackground(), myProject));
+  }
+
+  private void runAfterTaskSolvedActions() {
+    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(myProject);
+    if (configurator != null) {
+      StudyAfterCheckAction[] checkActions = configurator.getAfterCheckActions();
+      if (checkActions != null) {
+        for (StudyAfterCheckAction action: checkActions) {
+          action.run(myProject, myTask, myStatusBeforeCheck);
+        }
+      }
+    }
+    else {
+      LOG.warn("No configurator is provided for the plugin");
+    }
   }
 
   protected void postAttemptToStepic(StudyTestsOutputParser.TestsOutput testsOutput) {

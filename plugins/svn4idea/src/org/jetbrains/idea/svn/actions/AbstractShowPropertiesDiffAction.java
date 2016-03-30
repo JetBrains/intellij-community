@@ -179,11 +179,11 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
       final FilePath beforeFilePath = ChangesUtil.getBeforePath(change);
       final FilePath afterFilePath = ChangesUtil.getAfterPath(change);
 
-      final String beforePath = beforeFilePath == null ? "" : beforeFilePath.getIOFile().getAbsolutePath();
-      final String afterPath = afterFilePath == null ? "" : afterFilePath.getIOFile().getAbsolutePath();
+      final String beforePath = beforeFilePath == null ? "" : beforeFilePath.getPath();
+      final String afterPath = afterFilePath == null ? "" : afterFilePath.getPath();
       return SvnBundle.message("action.Subversion.properties.difference.diff.for.move.title", beforePath, afterPath);
     } else {
-      return SvnBundle.message("action.Subversion.properties.difference.diff.title", ChangesUtil.getFilePath(change).getIOFile().getAbsolutePath());
+      return SvnBundle.message("action.Subversion.properties.difference.diff.title", ChangesUtil.getFilePath(change).getPath());
     }
   }
 

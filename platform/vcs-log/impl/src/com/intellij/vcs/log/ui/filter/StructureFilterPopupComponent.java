@@ -92,7 +92,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
                      @Override
                      public String fun(VirtualFile file) {
                        return shorten ? file.getName() : StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH);
-      }
+                     }
                    }, full);
   }
 
@@ -318,7 +318,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       }
       else {
         if ((e.getModifiers() & getMask()) != 0) {
-            setVisibleOnly(myRoot);
+          setVisibleOnly(myRoot);
         }
         else {
           setVisible(myRoot, state);
@@ -337,7 +337,10 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
 
       updateIcon();
       e.getPresentation().setIcon(myIcon);
-      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, KeyEvent.getKeyModifiersText(getMask()) + "+Click to see only \"" + e.getPresentation().getText() + "\"");
+      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, KeyEvent.getKeyModifiersText(getMask()) +
+                                                               "+Click to see only \"" +
+                                                               e.getPresentation().getText() +
+                                                               "\"");
     }
 
     private void updateIcon() {
@@ -407,6 +410,11 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         myFilterModel.setFilter(new VcsLogFileFilter(structureFilter, null));
         myHistory.add(structureFilter);
       }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(e.getProject() != null);
     }
   }
 

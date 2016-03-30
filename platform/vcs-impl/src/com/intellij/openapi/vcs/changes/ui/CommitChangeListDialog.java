@@ -19,9 +19,7 @@ import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,15 +49,13 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
+import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.OnOffListener;
-import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
+import com.intellij.util.ui.*;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,8 +79,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private Splitter mySplitter;
   @Nullable private final JPanel myAdditionalOptionsPanel;
 
-  private final ChangesBrowser myBrowser;
-  private final ChangesBrowserExtender myBrowserExtender;
+  private final ChangesBrowserBase<?> myBrowser;
 
   private CommitLegendPanel myLegend;
   private final MyChangeProcessor myDiffDetails;
@@ -93,6 +88,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
   private final String myActionName;
   private final Project myProject;
+  @NotNull private final VcsConfiguration myVcsConfiguration;
   private final List<CommitExecutor> myExecutors;
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
@@ -234,9 +230,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  public static List<CommitExecutor> collectExecutors(Project project, Collection<Change> changes) {
+  public static List<CommitExecutor> collectExecutors(@NotNull Project project, @NotNull Collection<Change> changes) {
     List<CommitExecutor> result = new ArrayList<CommitExecutor>();
-    for (AbstractVcs<?> vcs : getAffectedVcses(project, changes)) {
+    for (AbstractVcs<?> vcs : ChangesUtil.getAffectedVcses(changes, project)) {
       result.addAll(vcs.getCommitExecutors());
     }
     result.addAll(ChangeListManager.getInstance(project).getRegisteredExecutors());
@@ -273,6 +269,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     super(project, true);
     myCommitContext = new CommitContext();
     myProject = project;
+    myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
     myExecutors = executors;
     myShowVcsCommit = showVcsCommit;
     myVcs = singleVcs;
@@ -289,11 +286,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myIsAlien = isAlien;
     if (isAlien) {
-      AlienChangeListBrowser browser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
-      myBrowser = browser;
-      myBrowserExtender = browser;
+      myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
-      MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), initialSelection, true, true,
+      //noinspection unchecked
+      boolean showUnversioned =
+        myShowVcsCommit && myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT && Registry.is("vcs.unversioned.files.in.commit");
+      MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection, true, true,
                                                                         new Runnable() {
                                                                           @Override
                                                                           public void run() {
@@ -307,7 +305,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                               handler.includedChangesChanged();
                                                                             }
                                                                           }
-                                                                        }) {
+                                                                        }, showUnversioned) {
         @Override
         protected void afterDiffRefresh() {
           myBrowser.rebuildList();
@@ -320,9 +318,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           });
         }
       };
+      browser.addSelectedListChangeListener(new SelectedListChangeListener() {
+        @Override
+        public void selectedListChanged() {
+          updateOnListSelection();
+        }
+      });
       myBrowser = browser;
       myBrowser.setAlwayExpandList(false);
-      myBrowserExtender = browser.getExtender();
     }
     myBrowser.getViewer().addSelectionListener(new Runnable() {
       @Override
@@ -336,18 +339,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     });
 
-    myBrowserExtender.addToolbarActions(this);
-
-    myBrowserExtender.addSelectedListChangeListener(new SelectedListChangeListener() {
-      @Override
-      public void selectedListChanged() {
-        updateOnListSelection();
-      }
-    });
-
     myCommitMessageArea = new CommitMessage(project);
 
-    if (!VcsConfiguration.getInstance(project).CLEAR_INITIAL_COMMIT_MESSAGE) {
+    if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
       setComment(project, initialSelection, comment);
     }
 
@@ -495,7 +489,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       updateComment();
 
       if (StringUtil.isEmptyOrSpaces(myCommitMessageArea.getComment())) {
-        setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
+        setCommitMessage(myVcsConfiguration.LAST_COMMIT_MESSAGE);
         final String messageFromVcs = getInitialMessageFromVcs();
         if (messageFromVcs != null) {
           myCommitMessageArea.setText(messageFromVcs);
@@ -543,7 +537,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateVcsOptionsVisibility() {
-    Collection<AbstractVcs> affectedVcses = getAffectedVcses(myProject, myBrowser.getSelectedChangeList().getChanges());
+    Collection<AbstractVcs> affectedVcses = ChangesUtil.getAffectedVcses(myBrowser.getSelectedChangeList().getChanges(), myProject);
     for (Map.Entry<AbstractVcs, JPanel> entry : myPerVcsOptionsPanels.entrySet()) {
       entry.getValue().setVisible(affectedVcses.contains(entry.getKey()));
     }
@@ -581,6 +575,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   protected void doOKAction() {
+    if (!myIsAlien && !addUnversionedFiles()) return;
     if (!saveDialogState()) return;
     saveComments(true);
     final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
@@ -611,6 +606,32 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     } else {
       callCommit.run();
     }
+  }
+
+  private boolean addUnversionedFiles() {
+    boolean isSuccessful = true;
+    final List<VirtualFile> files = myBrowser.getIncludedUnversionedFiles();
+
+    if (!files.isEmpty()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
+      ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
+      LocalChangeList targetChangeList = (LocalChangeList)myBrowser.getSelectedChangeList();
+      List<VcsException> exceptions =
+        manager.addUnversionedFiles(targetChangeList, files, ChangeListManagerImpl.getDefaultUnversionedFileCondition(),
+                                    new Consumer<List<Change>>() {
+                                      @SuppressWarnings("unchecked")
+                                      @Override
+                                      public void consume(@NotNull List<Change> changes) {
+                                        myBrowser.rebuildList();
+                                        myBrowser.getViewer().excludeChanges((List)files);
+                                        myBrowser.getViewer().includeChanges((List)changes);
+                                      }
+                                    });
+      isSuccessful = exceptions.isEmpty();
+    }
+
+    return isSuccessful;
   }
 
   @NotNull
@@ -768,7 +789,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateComment() {
-    if (VcsConfiguration.getInstance(getProject()).CLEAR_INITIAL_COMMIT_MESSAGE) return;
+    if (myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return;
     final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
     if (list == null || (list.getName().equals(myLastSelectedListName))) {
       return;
@@ -796,7 +817,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public void dispose() {
     myDisposed = true;
-    myBrowser.dispose();
+    Disposer.dispose(myBrowser);
     Disposer.dispose(myCommitMessageArea);
     Disposer.dispose(myOKButtonUpdateAlarm);
     myUpdateButtonsRunnable.cancel();
@@ -827,21 +848,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public boolean isCheckSpelling() {
-    VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-    return configuration == null || configuration.CHECK_COMMIT_MESSAGE_SPELLING;
+    return myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING;
   }
 
   @Override
   public void setCheckSpelling(boolean checkSpelling) {
-    VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-    if (configuration != null) {
-      configuration.CHECK_COMMIT_MESSAGE_SPELLING = checkSpelling;
-    }
+    myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING = checkSpelling;
     myCommitMessageArea.setCheckSpelling(checkSpelling);
   }
 
   private boolean checkComment() {
-    if (VcsConfiguration.getInstance(myProject).FORCE_NON_EMPTY_COMMENT && (getCommitMessage().length() == 0)) {
+    if (myVcsConfiguration.FORCE_NON_EMPTY_COMMENT && (getCommitMessage().length() == 0)) {
       int requestForCheckin = Messages.showYesNoDialog(VcsBundle.message("confirmation.text.check.in.with.empty.comment"),
                                                        VcsBundle.message("confirmation.title.check.in.with.empty.comment"),
                                                        Messages.getWarningIcon());
@@ -923,7 +940,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     saveCommentIntoChangeList();
-    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
+    myVcsConfiguration.saveCommitMessage(getCommitMessage());
     try {
       saveState();
     }
@@ -1008,7 +1025,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
-    myBrowser.getBottomPanel().add(JBUI.Panels.simplePanel().addToRight(myLegend.getComponent()), BorderLayout.SOUTH);
+
+    BorderLayoutPanel bottomPanel = JBUI.Panels.simplePanel().addToRight(myLegend.getComponent());
+    if (myShowVcsCommit && !myIsAlien && Registry.is("vcs.unversioned.files.in.commit")) {
+      bottomPanel.addToLeft(createShowUnversionedFilesLabel());
+    }
+    myBrowser.getBottomPanel().add(bottomPanel, BorderLayout.SOUTH);
 
     JPanel mainPanel;
     if (myAdditionalOptionsPanel != null) {
@@ -1108,23 +1130,27 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myDetailsSplitter.getComponent();
   }
 
+  @NotNull
+  private JComponent createShowUnversionedFilesLabel() {
+    ShowHideUnversionedFilesAction action = new ShowHideUnversionedFilesAction();
+    ActionLink link = new ActionLink(action.getText(myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT), null, action);
+
+    JLabel label = new JLabel(" unversioned files");
+    label.setEnabled(false);
+
+    JPanel panel = SwingHelper.newHorizontalPanel(Component.CENTER_ALIGNMENT, link, label);
+    panel.setFont(JBUI.Fonts.smallFont());
+
+    return panel;
+  }
+
   private void initMainSplitter() {
     mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
   }
 
-  public Collection<AbstractVcs> getAffectedVcses() {
-    if (! myShowVcsCommit) {
-      return Collections.emptySet();
-    }
-    return myBrowserExtender.getAffectedVcses();
-  }
-
-  private static Collection<AbstractVcs> getAffectedVcses(Project project, final Collection<Change> changes) {
-    Set<AbstractVcs> result = new THashSet<AbstractVcs>();
-    for (Change change : changes) {
-      ContainerUtilRt.addIfNotNull(result, ChangesUtil.getVcsForChange(change, project));
-    }
-    return result;
+  @NotNull
+  public Set<AbstractVcs> getAffectedVcses() {
+    return myShowVcsCommit ? myBrowser.getAffectedVcses() : Collections.<AbstractVcs>emptySet();
   }
 
   @Override
@@ -1190,8 +1216,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public boolean vcsIsAffected(String name) {
     // tod +- performance?
     if (! ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name)) return false;
-    final Collection<AbstractVcs> affected = myBrowserExtender.getAffectedVcses();
-    for (AbstractVcs vcs : affected) {
+    for (AbstractVcs vcs : myBrowser.getAffectedVcses()) {
       if (Comparing.equal(vcs.getName(), name)) return true;
     }
     return false;
@@ -1218,6 +1243,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitMessageArea.setText(currentDescription);
   }
 
+  @NotNull
   @Override
   public String getCommitMessage() {
     return myCommitMessageArea.getComment();
@@ -1268,13 +1294,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void updateLegend() {
     if (myDisposed) return;
-    myChangesInfoCalculator.update(myBrowser.getCurrentDisplayedChanges(), myBrowserExtender.getCurrentIncludedChanges());
+    myChangesInfoCalculator.update(myBrowser.getCurrentDisplayedChanges(), getIncludedChanges(), myBrowser.getUnversionedFilesCount(),
+                                   myBrowser.getIncludedUnversionedFiles().size());
     myLegend.update();
   }
 
   @NotNull
   private List<Change> getIncludedChanges() {
-    return myBrowserExtender.getCurrentIncludedChanges();
+    return myBrowser.getCurrentIncludedChanges();
   }
 
   @Override
@@ -1377,18 +1404,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @NotNull
     @Override
     protected List<Change> getSelectedChanges() {
-      return myBrowser.getViewer().getSelectedChanges();
+      return myBrowser.getSelectedChanges();
     }
 
     @NotNull
     @Override
     protected List<Change> getAllChanges() {
-      return myBrowser.getViewer().getChanges();
+      return myBrowser.getAllChanges();
     }
 
     @Override
     protected void selectChange(@NotNull Change change) {
-      myBrowser.select(Collections.singletonList(change));
+      //noinspection unchecked
+      myBrowser.select((List)Collections.singletonList(change));
     }
 
     @Override
@@ -1423,6 +1451,27 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       int optionsWidth = Math.max(Math.min(availableWidth, preferredWidth), myMinOptionsWidth);
       myPanel.setBounds(new Rectangle(0, 0, bounds.width - optionsWidth, bounds.height));
       myOptions.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
+    }
+  }
+
+  private class ShowHideUnversionedFilesAction extends ToggleAction {
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = state;
+      ((MultipleChangeListBrowser)myBrowser).setShowUnversioned(state);
+      myBrowser.rebuildList();
+      ((JLabel)e.getInputEvent().getSource()).setText(getText(state));
+    }
+
+    @NotNull
+    public String getText(boolean showUnversionedState) {
+      return showUnversionedState ? "Hide" : "Show";
     }
   }
 }

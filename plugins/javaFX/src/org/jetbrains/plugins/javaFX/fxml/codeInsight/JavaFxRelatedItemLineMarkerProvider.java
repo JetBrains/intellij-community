@@ -77,8 +77,8 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
           if (targets.isEmpty()) return;
 
           result.add(new RelatedItemLineMarkerInfo<PsiField>(field, field.getNameIdentifier().getTextRange(),
-                                                             AllIcons.FileTypes.Xml, Pass.UPDATE_OVERRIDEN_MARKERS,  null,
-                                                             new JavaFXIdIconNavigationHandler(),  GutterIconRenderer.Alignment.LEFT,
+                                                             AllIcons.FileTypes.Xml, Pass.UPDATE_OVERRIDDEN_MARKERS, null,
+                                                             new JavaFXIdIconNavigationHandler(), GutterIconRenderer.Alignment.LEFT,
                                                              targets));
         }
       }

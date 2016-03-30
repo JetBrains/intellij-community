@@ -147,8 +147,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
-      setEnabled(myPresentation.isEnabled());
       setModel(new MyButtonModel());
+      getModel().setEnabled(myPresentation.isEnabled());
+      setVisible(presentation.isVisible());
       setHorizontalAlignment(LEFT);
       setFocusable(false);
       if (isSmallVariant()) {

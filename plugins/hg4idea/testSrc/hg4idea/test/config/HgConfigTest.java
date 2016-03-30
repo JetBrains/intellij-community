@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -89,10 +88,8 @@ public class HgConfigTest extends HgPlatformTest {
 
   public void testLargeExtensionInClonedRepo() throws IOException {
     cd(myChildRepo);
-    File hgrc = new File(new File(myChildRepo.getPath(), ".hg"), "hgrc");
-    assert hgrc.exists();
-    FileUtil.appendToFile(hgrc, "\n[extensions]\n" +
-                                "largefiles =");
+    appendToHgrc(myChildRepo, "\n[extensions]\n" +
+                              "largefiles =");
     updateRepoConfig(myProject, myChildRepo);
     assertNotNull(HgUtil.getConfig(myProject, myChildRepo, "extensions", "largefiles"));
   }

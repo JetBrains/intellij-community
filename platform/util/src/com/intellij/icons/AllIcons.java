@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -494,6 +494,7 @@ public class AllIcons {
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
     public static final Icon ReadHelp = IconLoader.getIcon("/general/readHelp.png"); // 32x32
+    public static final Icon Recursive = IconLoader.getIcon("/general/recursive.png"); // 12x12
     public static final Icon Remove = IconLoader.getIcon("/general/remove.png"); // 16x16
     public static final Icon Reset = IconLoader.getIcon("/general/reset.png"); // 16x16
     public static final Icon Run = IconLoader.getIcon("/general/run.png"); // 7x10
@@ -1266,6 +1267,18 @@ public class AllIcons {
     public static final Icon Iconify = IconLoader.getIcon("/windows/iconify.png"); // 16x16
     public static final Icon Maximize = IconLoader.getIcon("/windows/maximize.png"); // 16x16
     public static final Icon Minimize = IconLoader.getIcon("/windows/minimize.png"); // 16x16
+    
+    public static class Shadow {
+      public static final Icon Bottom = IconLoader.getIcon("/windows/shadow/bottom.png"); // 1x9
+      public static final Icon BottomLeft = IconLoader.getIcon("/windows/shadow/bottomLeft.png"); // 7x9
+      public static final Icon BottomRight = IconLoader.getIcon("/windows/shadow/bottomRight.png"); // 9x9
+      public static final Icon Left = IconLoader.getIcon("/windows/shadow/left.png"); // 7x1
+      public static final Icon Right = IconLoader.getIcon("/windows/shadow/right.png"); // 9x1
+      public static final Icon Top = IconLoader.getIcon("/windows/shadow/top.png"); // 1x7
+      public static final Icon TopLeft = IconLoader.getIcon("/windows/shadow/topLeft.png"); // 7x7
+      public static final Icon TopRight = IconLoader.getIcon("/windows/shadow/topRight.png"); // 9x7
+
+    }
 
   }
   

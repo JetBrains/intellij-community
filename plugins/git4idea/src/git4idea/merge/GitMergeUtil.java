@@ -29,21 +29,15 @@ import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepositoryFiles;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -179,28 +173,5 @@ public class GitMergeUtil {
         }
       });
     }
-  }
-
-
-  /**
-   * @param root the vcs root
-   * @return the path to merge head file
-   */
-  @Nullable
-  private static File getMergeHead(@NotNull VirtualFile root) {
-    File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
-    File f = new File(gitDir, GitRepositoryFiles.MERGE_HEAD);
-    if (f.exists()) {
-      return f;
-    }
-    return null;
-  }
-
-  /**
-   * @return true if merge is going on for the given git root, false if there is no merge operation in progress.
-   */
-  @Deprecated
-  public static boolean isMergeInProgress(@NotNull VirtualFile root) {
-    return getMergeHead(root) != null;
   }
 }

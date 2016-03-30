@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,24 @@ package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.EventListener;
 import java.util.Set;
 
 public class HeavyProcessLatch {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.HeavyProcessLatch");
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
   private final Set<String> myHeavyProcesses = new THashSet<String>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
+  private final EventDispatcher<HeavyProcessListener> myUIProcessDispatcher = EventDispatcher.create(HeavyProcessListener.class);
+  private volatile Thread myUiActivityThread;
+  private volatile long myPrioritizingDeadLine;
 
   private HeavyProcessLatch() {
   }
@@ -57,14 +63,6 @@ public class HeavyProcessLatch {
         processFinished(operationName);
       }
     };
-  }
-
-  /**
-   * @deprecated use {@link #processStarted(String)} instead
-   */
-  @Deprecated
-  public void processFinished() {
-    processFinished("");
   }
 
   private void processFinished(@NotNull String operationName) {
@@ -94,5 +92,63 @@ public class HeavyProcessLatch {
 
   public void addListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
     myEventDispatcher.addListener(listener, parentDisposable);
+  }
+
+  public void addUIActivityListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
+    myUIProcessDispatcher.addListener(listener, parentDisposable);
+  }
+
+  /**
+   * Gives current event processed on Swing thread higher priority
+   * @see #stopThreadPrioritizing()
+   */
+  public void prioritizeUiActivity() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+
+    // don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
+    // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
+    myPrioritizingDeadLine = System.currentTimeMillis() + 12 * 1000;
+
+    myUiActivityThread = Thread.currentThread();
+    myUIProcessDispatcher.getMulticaster().processStarted();
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        stopThreadPrioritizing();
+      }
+    });
+  }
+
+  /**
+   * Removes priority from Swing thread, if present. Should be invoked before a thread starts waiting for other threads in idle mode,
+   * to ensure those other threads complete ASAP.
+   * @see #prioritizeUiActivity()
+   */
+  public void stopThreadPrioritizing() {
+    myUiActivityThread = null;
+    myUIProcessDispatcher.getMulticaster().processFinished();
+  }
+
+  /**
+   * @return whether there is a prioritized thread, but not the current one
+   */
+  public boolean isInsideLowPriorityThread() {
+    Thread thread = myUiActivityThread;
+    if (thread != null && thread != Thread.currentThread()) {
+      if (System.currentTimeMillis() > myPrioritizingDeadLine) {
+        stopThreadPrioritizing();
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * @return whether there is a prioritized thread currently
+   */
+  public boolean hasPrioritizedThread() {
+    return myUiActivityThread != null;
   }
 }

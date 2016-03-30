@@ -182,9 +182,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
         }
       }
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Request " + toString() + " exited");
-      }
+      LOG.debug("Request " + toString() + " exited");
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
     }
 
@@ -230,8 +228,6 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   public void close() {
     myEvents.close();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Closing evaluation");
-    }
+    LOG.debug("Closing evaluation");
   }
 }

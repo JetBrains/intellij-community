@@ -29,10 +29,7 @@ abstract class NoFormalParamTypeInferenceNeeded {
     Integer zip = zip(a -> zip(<error descr="no instance(s) of type variable(s)  exist so that Object conforms to Integer
 inference variable R has incompatible bounds:
  lower bounds: Object
-upper bounds: Object, Integer
-inference variable R has incompatible bounds:
- lower bounds: Object
-upper bounds: Object, R, Integer">text -> text</error>));
+upper bounds: Object, Integer">text -> text</error>));
   }
 
 }

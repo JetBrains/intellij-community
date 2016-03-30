@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.List;
 public abstract class XWatchesTreeActionBase extends AnAction {
   @NotNull
   public static <T extends TreeNode> List<? extends T> getSelectedNodes(final @NotNull XDebuggerTree tree, Class<T> nodeClass) {
-    List<T> list = new ArrayList<T>();
+    List<T> list = new ArrayList<>();
     TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath selectionPath : selectionPaths) {

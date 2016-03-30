@@ -19,14 +19,13 @@ package com.intellij.tasks.actions;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.VcsType;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskStateCombo;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.ui.TaskDialogPanel;
+import com.intellij.tasks.ui.TaskDialogPanelProvider;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +34,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -44,14 +44,13 @@ public class CloseTaskDialog extends DialogWrapper {
 
   private final Project myProject;
   private final LocalTask myTask;
-  private JCheckBox myCommitChanges;
+  private final List<TaskDialogPanel> myPanels;
+  
   private JPanel myPanel;
   private JLabel myTaskLabel;
-  private JBCheckBox myMergeBranches;
-  private JPanel myVcsPanel;
   private TaskStateCombo myStateCombo;
   private JBCheckBox myUpdateState;
-  private final TaskManagerImpl myTaskManager;
+  private JPanel myAdditionalPanel;
 
   public CloseTaskDialog(Project project, final LocalTask task) {
     super(project, false);
@@ -82,30 +81,26 @@ public class CloseTaskDialog extends DialogWrapper {
       }
     });
 
-    myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
-
-    if (myTaskManager.isVcsEnabled()) {
-      boolean hasChanges = !task.getChangeLists().isEmpty();
-      myCommitChanges.setEnabled(hasChanges);
-      myCommitChanges.setSelected(hasChanges && myTaskManager.getState().commitChanges);
-      if (myTaskManager.getActiveVcs().getType() == VcsType.distributed) {
-        boolean enabled = !task.getBranches(true).isEmpty() && !task.getBranches(false).isEmpty();
-        myMergeBranches.setEnabled(enabled);
-        myMergeBranches.setSelected(enabled && myTaskManager.getState().mergeBranch);
-      }
-      else {
-        myMergeBranches.setVisible(false);
-      }
-    }
-    else {
-      myVcsPanel.setVisible(false);
-    }
-
     myStateCombo.showHintLabel(false);
     if (myUpdateState.isSelected()) {
       myStateCombo.scheduleUpdateOnce();
     }
+    
+    myAdditionalPanel.setLayout(new BoxLayout(myAdditionalPanel, BoxLayout.Y_AXIS));
+    myPanels = TaskDialogPanelProvider.getCloseTaskPanels(project, task);
+    for (TaskDialogPanel panel : myPanels) {
+      myAdditionalPanel.add(panel.getPanel());
+    }
+    
     init();
+  }
+
+  @Override
+  protected void doOKAction() {
+    for (TaskDialogPanel panel : myPanels) {
+      panel.commit();
+    }
+    super.doOKAction();
   }
 
   protected JComponent createCenterPanel() {
@@ -121,25 +116,6 @@ public class CloseTaskDialog extends DialogWrapper {
   @Nullable
   CustomTaskState getCloseIssueState() {
     return myUpdateState.isSelected() ? myStateCombo.getSelectedState() : null;
-  }
-
-  boolean isCommitChanges() {
-    return myCommitChanges.isSelected();
-  }
-
-  boolean isMergeBranch() {
-    return myMergeBranches.isSelected();
-  }
-
-  @Override
-  protected void doOKAction() {
-    if (myCommitChanges.isEnabled()) {
-      myTaskManager.getState().commitChanges = isCommitChanges();
-    }
-    if (myMergeBranches.isEnabled()) {
-      myTaskManager.getState().mergeBranch = isMergeBranch();
-    }
-    super.doOKAction();
   }
 
   private void createUIComponents() {

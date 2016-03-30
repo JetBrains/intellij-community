@@ -23,7 +23,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "IPython Notebook";
+    return "Jupyter Notebook";
   }
 
   @Override

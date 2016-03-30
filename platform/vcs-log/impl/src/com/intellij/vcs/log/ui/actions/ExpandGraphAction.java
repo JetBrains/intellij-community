@@ -22,6 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class ExpandGraphAction extends CollapseOrExpandGraphAction {
+  @NotNull private static final String EXPAND = "Expand";
+
+  public ExpandGraphAction() {
+    super(EXPAND);
+  }
+
   @Override
   protected void executeAction(@NotNull VcsLogUiImpl vcsLogUi) {
     vcsLogUi.expandAll();
@@ -42,6 +48,6 @@ public class ExpandGraphAction extends CollapseOrExpandGraphAction {
   @NotNull
   @Override
   protected String getPrefix() {
-    return "Expand ";
+    return EXPAND + " ";
   }
 }

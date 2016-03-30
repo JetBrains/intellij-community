@@ -19,8 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +53,7 @@ public class ThreadTracker {
   private static final Method getThreads = ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads");
 
   @NotNull
-  private static Collection<Thread> getThreads() {
+  public static Collection<Thread> getThreads() {
     Thread[] threads;
     try {
       // faster than Thread.getAllStackTraces().keySet()
@@ -65,15 +65,11 @@ public class ThreadTracker {
     return ContainerUtilRt.newArrayList(threads);
   }
 
-  private static final Set<String> wellKnownOffenders = new THashSet<String>();
+  private static final Set<String> wellKnownOffenders = new THashSet<>();
   static {
-        wellKnownOffenders.add("Action Updater"); // todo remove
-        wellKnownOffenders.add("Alarm pool(own)");
-        wellKnownOffenders.add("Alarm pool(shared)");
     wellKnownOffenders.add("AWT-EventQueue-");
     wellKnownOffenders.add("AWT-Shutdown");
     wellKnownOffenders.add("AWT-Windows");
-        wellKnownOffenders.add("Change List Updater"); //todo remove
     wellKnownOffenders.add("CompilerThread0");
     wellKnownOffenders.add("Finalizer");
     wellKnownOffenders.add("IDEA Test Case Thread");
@@ -82,14 +78,12 @@ public class ThreadTracker {
     wellKnownOffenders.add("JobScheduler FJ pool ");
     wellKnownOffenders.add("JPS thread pool");
     wellKnownOffenders.add("Keep-Alive-Timer");
-        wellKnownOffenders.add("Low Memory Detector");
     wellKnownOffenders.add("main");
     wellKnownOffenders.add("Monitor Ctrl-Break");
+    wellKnownOffenders.add("Netty ");
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
     wellKnownOffenders.add("Signal Dispatcher");
-    wellKnownOffenders.add("Netty ");
-        wellKnownOffenders.add("timed reference disposer");
     wellKnownOffenders.add("timer-int"); //serverImpl
     wellKnownOffenders.add("timer-sys"); //clientimpl
     wellKnownOffenders.add("TimerQueue");
@@ -105,21 +99,17 @@ public class ThreadTracker {
   public static void longRunningThreadCreated(@NotNull Disposable parentDisposable,
                                               @NotNull final String... threadNamePrefixes) {
     wellKnownOffenders.addAll(Arrays.asList(threadNamePrefixes));
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        wellKnownOffenders.removeAll(Arrays.asList(threadNamePrefixes));
-      }
-    });
+    Disposer.register(parentDisposable, () -> wellKnownOffenders.removeAll(Arrays.asList(threadNamePrefixes)));
   }
 
   @TestOnly
   public void checkLeak() throws AssertionError {
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
+    ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
     try {
       if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
 
-      Collection<Thread> after = new THashSet<Thread>(getThreads());
+      Collection<Thread> after = new THashSet<>(getThreads());
       after.removeAll(before);
 
       for (final Thread thread : after) {
@@ -127,12 +117,7 @@ public class ThreadTracker {
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
         final String name = thread.getName();
-        if (ContainerUtil.exists(wellKnownOffenders, new Condition<String>() {
-          @Override
-          public boolean value(String pattern) {
-            return name.contains(pattern);
-          }
-        })) {
+        if (ContainerUtil.exists(wellKnownOffenders, name::contains)) {
           continue;
         }
 
@@ -153,7 +138,12 @@ public class ThreadTracker {
           continue; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
         }
 
-        String trace = "Thread leaked: " + thread+"; " + thread.getState()+" ("+ thread.isAlive()+")\n--- its stacktrace:\n";
+        if (isIdleApplicationPoolThread(thread, stackTrace)) {
+          continue;
+        }
+
+        @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
+        String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
         for (final StackTraceElement stackTraceElement : stackTrace) {
           trace += " at "+stackTraceElement +"\n";
         }
@@ -166,15 +156,22 @@ public class ThreadTracker {
     }
   }
 
+  // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
+  private static boolean isIdleApplicationPoolThread(Thread thread, StackTraceElement[] stackTrace) {
+    if (!thread.getName().startsWith("ApplicationImpl pooled thread ")) return false;
+    boolean insideTPEgetTask = Arrays.stream(stackTrace)
+      .anyMatch(element -> element.getMethodName().equals("getTask")
+                           && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
+
+    return insideTPEgetTask;
+  }
+
   public static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup, int timeout, @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
-      Thread jdiThread = ContainerUtil.find(getThreads(), new Condition<Thread>() {
-        @Override
-        public boolean value(Thread thread) {
-          ThreadGroup group = thread.getThreadGroup();
-          return group != null && group.getParent() != null && grandThreadGroup.equals(group.getParent().getName());
-        }
+      Thread jdiThread = ContainerUtil.find(getThreads(), thread -> {
+        ThreadGroup group = thread.getThreadGroup();
+        return group != null && group.getParent() != null && grandThreadGroup.equals(group.getParent().getName());
       });
 
       if (jdiThread == null) {

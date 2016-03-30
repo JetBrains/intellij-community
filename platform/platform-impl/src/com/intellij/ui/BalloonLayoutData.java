@@ -17,11 +17,18 @@ package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
  */
 public class BalloonLayoutData {
+  public String groupId;
+  public String id;
+  public MergeInfo mergeData;
+
+  public boolean showFullContent;
+
   public int height;
   public int twoLineHeight;
   public int fullHeight;
@@ -31,6 +38,8 @@ public class BalloonLayoutData {
 
   public Runnable closeAll;
   public Runnable doLayout;
+
+  public boolean showSettingButton = true;
   public Computable<Boolean> showActions;
 
   public Project project;
@@ -38,4 +47,19 @@ public class BalloonLayoutData {
   public BalloonLayoutConfiguration configuration;
 
   public Runnable lafHandler;
+
+  @NotNull
+  public MergeInfo merge() {
+    return mergeData == null ? new MergeInfo(id, 1) : new MergeInfo(mergeData.linkId, mergeData.count + 1);
+  }
+
+  public static class MergeInfo {
+    public String linkId;
+    public int count;
+
+    public MergeInfo(@NotNull String linkId, int count) {
+      this.linkId = linkId;
+      this.count = count;
+    }
+  }
 }
