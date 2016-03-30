@@ -55,7 +55,7 @@ public class JsonSchemaReader {
                                      @NotNull final String string,
                                      Consumer<String> errorConsumer) throws IOException {
     final JsonSchemaReader reader = new JsonSchemaReader(key);
-    final java.io.StringReader stringReader = new java.io.StringReader(string);
+    java.io.StringReader stringReader = new java.io.StringReader(string);
     try {
       reader.read(stringReader, null);
     } catch (Exception e) {
@@ -64,6 +64,7 @@ public class JsonSchemaReader {
       return false;
     }
     // have two stages so that just syntax errors do not clear cache
+    stringReader = new java.io.StringReader(string);
     try {
       reader.read(stringReader, definitions);
     }
