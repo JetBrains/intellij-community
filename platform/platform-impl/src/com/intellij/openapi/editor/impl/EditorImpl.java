@@ -2156,7 +2156,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (isReleased) {
-      g.setColor(new JBColor(new Color(128, 255, 128), new Color(128, 255, 128)));
+      g.setColor(getDisposedBackground());
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       return;
     }
@@ -2192,6 +2192,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       paintComposedTextDecoration(g);
     }
+  }
+
+  Color getDisposedBackground() {
+    return new JBColor(new Color(128, 255, 128), new Color(128, 255, 128));
   }
 
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
