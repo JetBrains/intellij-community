@@ -273,32 +273,6 @@ def test() {
 '''
   }
 
-  void 'test from string with non fqn options no error'() {
-    addBigInteger()
-    myFixture.addClass('''
-import groovy.transform.stc.ClosureParams;
-import groovy.transform.stc.FromString;
-import groovy.lang.Closure;
-
-public class A {
-  public static void foo(@ClosureParams(value = FromString.class, options = "BigInteger") Closure c) {}
-}
-''')
-    testHighlighting '''\
-import groovy.transform.CompileStatic
-
-@CompileStatic
-class B {
-  def foo(BufferedReader r) {
-    r.eachLine { String a -> }
-  }
-  def bar() {
-    A.foo { BigInteger b -> }
-  }
-}
-'''
-  }
-
   void testTrait1() {
     testHighlighting('''
 trait X {
