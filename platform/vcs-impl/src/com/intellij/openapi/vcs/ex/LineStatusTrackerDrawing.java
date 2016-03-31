@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
@@ -32,19 +31,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class LineStatusTrackerDrawing {
   private LineStatusTrackerDrawing() {
-  }
-
-  public static LineMarkerRenderer createRenderer(final Range range, final LineStatusTracker tracker) {
-    return new LineStatusMarkerRenderer(range) {
-      public void doAction(Editor editor, MouseEvent e) {
-        new MyLineStatusMarkerPopup(tracker, editor, range).showHint(e);
-      }
-    };
   }
 
   public static void moveToRange(Range range, Editor editor, LineStatusTracker tracker) {
@@ -55,7 +45,7 @@ public class LineStatusTrackerDrawing {
     new MyLineStatusMarkerPopup(tracker, editor, range).showAfterScroll();
   }
 
-  private static class MyLineStatusMarkerPopup extends LineStatusMarkerPopup {
+  public static class MyLineStatusMarkerPopup extends LineStatusMarkerPopup {
     @NotNull private final LineStatusTracker myTracker;
 
     public MyLineStatusMarkerPopup(@NotNull LineStatusTracker tracker,

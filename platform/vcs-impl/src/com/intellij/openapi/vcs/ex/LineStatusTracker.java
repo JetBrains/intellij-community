@@ -27,7 +27,9 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -253,18 +255,13 @@ public class LineStatusTracker {
       range.getLine2() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine2());
 
     MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
-    TextAttributes attributes = LineStatusMarkerRenderer.getTextAttributes(range);
 
-    final RangeHighlighter highlighter = markupModel.addRangeHighlighter(first, second,
-                                                                         HighlighterLayer.FIRST - 1, attributes,
-                                                                         HighlighterTargetArea.LINES_IN_RANGE);
-    highlighter.setThinErrorStripeMark(true);
-    highlighter.setGreedyToLeft(true);
-    highlighter.setGreedyToRight(true);
+    RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, new TextRange(first, second), markupModel);
+    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(range, (editor) -> {
+      return new LineStatusTrackerDrawing.MyLineStatusMarkerPopup(this, editor, range);
+    }));
 
-    highlighter.setLineMarkerRenderer(LineStatusTrackerDrawing.createRenderer(range, this));
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-    highlighter.setErrorStripeTooltip(LineStatusMarkerRenderer.getTooltipText(range));
 
     range.setHighlighter(highlighter);
   }

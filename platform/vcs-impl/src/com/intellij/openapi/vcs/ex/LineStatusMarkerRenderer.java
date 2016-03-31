@@ -22,9 +22,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,43 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   @NotNull
-  public static TextAttributes getTextAttributes(@NotNull final Range range) {
+  public static RangeHighlighter createRangeHighlighter(@NotNull Range range,
+                                                        @NotNull TextRange textRange,
+                                                        @NotNull MarkupModel markupModel) {
+    TextAttributes attributes = getTextAttributes(range);
+
+    final RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
+                                                                         HighlighterLayer.FIRST - 1, attributes,
+                                                                         HighlighterTargetArea.LINES_IN_RANGE);
+
+    highlighter.setThinErrorStripeMark(true);
+    highlighter.setGreedyToLeft(true);
+    highlighter.setGreedyToRight(true);
+
+    highlighter.setErrorStripeTooltip(getTooltipText(range));
+
+    return highlighter;
+  }
+
+  @NotNull
+  public static LineStatusMarkerRenderer createRenderer(@NotNull Range range,
+                                                        @Nullable Function<Editor, LineStatusMarkerPopup> popupBuilder) {
+    return new LineStatusMarkerRenderer(range) {
+      @Override
+      public boolean canDoAction(MouseEvent e) {
+        return popupBuilder != null && super.canDoAction(e);
+      }
+
+      @Override
+      public void doAction(Editor editor, MouseEvent e) {
+        LineStatusMarkerPopup popup = popupBuilder != null ? popupBuilder.fun(editor) : null;
+        if (popup != null) popup.showHint(e);
+      }
+    };
+  }
+
+  @NotNull
+  private static TextAttributes getTextAttributes(@NotNull final Range range) {
     return new TextAttributes() {
       @Override
       public Color getErrorStripeColor() {
@@ -53,7 +90,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   @NotNull
-  public static String getTooltipText(@NotNull Range range) {
+  private static String getTooltipText(@NotNull Range range) {
     if (range.getLine1() == range.getLine2()) {
       if (range.getVcsLine1() + 1 == range.getVcsLine2()) {
         return VcsBundle.message("tooltip.text.line.before.deleted", range.getLine1() + 1);
