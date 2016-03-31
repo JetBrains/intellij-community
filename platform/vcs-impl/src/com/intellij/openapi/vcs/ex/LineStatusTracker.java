@@ -16,7 +16,10 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -93,14 +96,13 @@ public class LineStatusTracker {
   @Nullable private DirtyRange myDirtyRange;
 
   private LineStatusTracker(@NotNull final Document document,
-                            @NotNull final Document vcsDocument,
                             @NotNull final Project project,
                             @NotNull final VirtualFile virtualFile,
                             @NotNull final Mode mode) {
     myDocument = document;
-    myVcsDocument = vcsDocument;
     myProject = project;
     myVirtualFile = virtualFile;
+    myMode = mode;
 
     myApplication = ApplicationManager.getApplication();
     myFileEditorManager = FileEditorManager.getInstance(myProject);
@@ -112,9 +114,17 @@ public class LineStatusTracker {
     myApplicationListener = new MyApplicationListener();
     ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
 
-    myMode = mode;
-
     myRanges = new ArrayList<Range>();
+
+    myVcsDocument = new DocumentImpl("");
+    myVcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+  }
+
+  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile,
+                                           @NotNull Document document,
+                                           @NotNull Project project,
+                                           @NotNull Mode mode) {
+    return new LineStatusTracker(document, project, virtualFile, mode);
   }
 
   @CalledInAwt
@@ -844,13 +854,6 @@ public class LineStatusTracker {
       LOG.warn("Vcs TextRange of invalid range");
     }
     return DiffUtil.getLinesRange(myVcsDocument, range.getVcsLine1(), range.getVcsLine2());
-  }
-
-  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile, @NotNull final Document document, final Project project,
-                                           @NotNull Mode mode) {
-    final Document vcsDocument = new DocumentImpl("");
-    vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    return new LineStatusTracker(document, vcsDocument, project, virtualFile, mode);
   }
 
   public static class RevisionPack {
