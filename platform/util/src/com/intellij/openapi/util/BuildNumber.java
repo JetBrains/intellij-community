@@ -37,6 +37,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private static final String SNAPSHOT = "SNAPSHOT";
   private static final String FALLBACK_VERSION = "2999.1.SNAPSHOT";
 
+  public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
+  public static final int STAR_VALUE = -Integer.MAX_VALUE;
+  
   private static class Holder {
     private static final BuildNumber CURRENT_VERSION = fromFile();
   }
@@ -79,11 +82,11 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
 
     for (int each : myComponents) {
-      if (each != Integer.MAX_VALUE) {
+      if (each != SNAPSHOT_VALUE && each != STAR_VALUE) {
         builder.append(each);
       }
       else if (withSnapshotMarker) {
-        builder.append(SNAPSHOT);
+        builder.append(each == SNAPSHOT_VALUE ? SNAPSHOT : STAR);
       }
       builder.append('.');
     }
@@ -172,9 +175,13 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   private static int parseBuildNumber(String version, String code, String name) {
-    if (SNAPSHOT.equals(code) || STAR.equals(code) || BUILD_NUMBER.equals(code)) {
-      return Integer.MAX_VALUE;
+    if (SNAPSHOT.equals(code) || BUILD_NUMBER.equals(code)) {
+      return SNAPSHOT_VALUE;
     }
+    if (STAR.equals(code)) {
+      return STAR_VALUE;
+    }
+    
     try {
       return Integer.parseInt(code);
     }
@@ -208,13 +215,18 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   @Override
   public int compareTo(@NotNull BuildNumber o) {
-    for (int i = 0; i < Math.min(myComponents.length, o.myComponents.length); i++) {
-      int result = myComponents[i] - o.myComponents[i];
-      if (result != 0) return result;
+    int[] c1 = myComponents;
+    int[] c2 = o.myComponents;
+    
+    for (int i = 0; i < Math.min(c1.length, c2.length); i++) {
+      if (c1[i] == c2[i] && (c1[i] == SNAPSHOT_VALUE || c1[i] == STAR_VALUE)) return 0;
+      if (c1[i] == STAR_VALUE) return 1;
+      if (c2[i] == STAR_VALUE) return -1;
 
-      if (myComponents[i] == Integer.MAX_VALUE) return 0; // anything after first SNAPSHOT doesn't really matter
+      int result = c1[i] - c2[i];
+      if (result != 0) return result;
     }
-    return myComponents.length - o.myComponents.length;
+    return c1.length - c2.length;
   }
 
   @NotNull
@@ -229,6 +241,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
   @Deprecated
   public int getBuildNumber() {
     return myFormat == Format.YEAR_BASED ? -1 : myComponents[1];
+  }
+
+  public int[] getComponents() {
+    return myComponents;
   }
 
   @NotNull
@@ -309,7 +325,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   public boolean isSnapshot() {
     for (int each : myComponents) {
-      if (each == Integer.MAX_VALUE) return true;
+      if (each == SNAPSHOT_VALUE) return true;
     }
     return false;
   }

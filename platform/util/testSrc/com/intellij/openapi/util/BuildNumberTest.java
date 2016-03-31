@@ -32,7 +32,7 @@ public class BuildNumberTest {
     assertParsed(BuildNumber.fromString("145.1"), 145, 1, "145.1");
     assertParsed(BuildNumber.fromString("145.1.2"), 145, 1, "145.1.2");
     assertParsed(BuildNumber.fromString("IU-145.1.2"), 145, 1, "IU-145.1.2");
-    assertParsed(BuildNumber.fromString("IU-145.SNAPSHOT"), 145, Integer.MAX_VALUE, "IU-145.SNAPSHOT");
+    assertParsed(BuildNumber.fromString("IU-145.SNAPSHOT"), 145, BuildNumber.SNAPSHOT_VALUE, "IU-145.SNAPSHOT");
     assertParsed(BuildNumber.fromString("IU-145.1.SNAPSHOT"), 145, 1, "IU-145.1.SNAPSHOT");
   }
 
@@ -56,7 +56,7 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void comparingYearBasedVersion() throws Exception {
+  public void comparingVersion() throws Exception {
     assertTrue(BuildNumber.fromString("2016.1").compareTo(BuildNumber.fromString("2016.1")) == 0);
     assertTrue(BuildNumber.fromString("2016.1.1").compareTo(BuildNumber.fromString("2016.1.1")) == 0);
     assertTrue(BuildNumber.fromString("2016.1.1.1").compareTo(BuildNumber.fromString("2016.1.1.1")) == 0);
@@ -72,6 +72,29 @@ public class BuildNumberTest {
 
     assertTrue(BuildNumber.fromString("146.1").compareTo(BuildNumber.fromString("2016.1")) < 0);
     assertTrue(BuildNumber.fromString("146.9.9").compareTo(BuildNumber.fromString("2016.1")) < 0);
+    
+    assertTrue(BuildNumber.fromString("2016.2").compareTo(BuildNumber.fromString("2016.2.*")) < 0);
+    assertTrue(BuildNumber.fromString("2016.2").compareTo(BuildNumber.fromString("2016.3.*")) < 0);
+    assertTrue(BuildNumber.fromString("2016.2").compareTo(BuildNumber.fromString("2016.1.*")) > 0);
+    assertTrue(BuildNumber.fromString("2016.2.2.2.2").compareTo(BuildNumber.fromString("2016.2.*")) < 0);
+    assertTrue(BuildNumber.fromString("2016.2.*").compareTo(BuildNumber.fromString("2016.2.2.2.2")) > 0);
+
+    assertTrue(BuildNumber.fromString("145.1").compareTo(BuildNumber.fromString("145.*")) < 0);
+    assertTrue(BuildNumber.fromString("145.1.1").compareTo(BuildNumber.fromString("145.*")) < 0);
+    assertTrue(BuildNumber.fromString("145.1").compareTo(BuildNumber.fromString("146.*")) < 0);
+    assertTrue(BuildNumber.fromString("145.1").compareTo(BuildNumber.fromString("144.*")) > 0);
+
+    assertTrue(BuildNumber.fromString("145.SNAPSHOT").compareTo(BuildNumber.fromString("145.*")) < 0);
+    assertTrue(BuildNumber.fromString("145.*").compareTo(BuildNumber.fromString("145.SNAPSHOT")) > 0);
+
+    assertTrue(BuildNumber.fromString("2016.1.SNAPSHOT").compareTo(BuildNumber.fromString("2016.1.*")) < 0);
+    assertTrue(BuildNumber.fromString("2016.1.*").compareTo(BuildNumber.fromString("2016.1.SNAPSHOT")) > 0);
+    
+    assertTrue(BuildNumber.fromString("2016.1.SNAPSHOT").compareTo(BuildNumber.fromString("2016.*")) < 0);
+    assertTrue(BuildNumber.fromString("2016.*").compareTo(BuildNumber.fromString("2016.1.SNAPSHOT")) > 0);
+
+    assertTrue(BuildNumber.fromString("2016.SNAPSHOT").compareTo(BuildNumber.fromString("2016.1.*")) > 0);
+    assertTrue(BuildNumber.fromString("2016.1.*").compareTo(BuildNumber.fromString("2016.SNAPSHOT")) < 0);
   }
 
   @Test
@@ -79,7 +102,8 @@ public class BuildNumberTest {
     assertTrue(BuildNumber.fromString("SNAPSHOT").isSnapshot());
     assertTrue(BuildNumber.fromString("__BUILD_NUMBER__").isSnapshot());
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").isSnapshot());
-    assertTrue(BuildNumber.fromString("IC-90.*").isSnapshot());
+    
+    assertFalse(BuildNumber.fromString("IC-90.*").isSnapshot());
     assertFalse(BuildNumber.fromString("90.9999999").isSnapshot());
     
     assertFalse(BuildNumber.fromString("2016.1").isSnapshot());
@@ -106,12 +130,23 @@ public class BuildNumberTest {
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-90.SNAPSHOT")) == 0);
     
     assertTrue(BuildNumber.fromString("2016.1.SNAPSHOT").compareTo(BuildNumber.fromString("2016.1.1")) > 0);
+    assertTrue(BuildNumber.fromString("2016.1.1").compareTo(BuildNumber.fromString("2016.1.SNAPSHOT")) < 0);
+    
     assertTrue(BuildNumber.fromString("2016.1.SNAPSHOT").compareTo(BuildNumber.fromString("2016.1.SNAPSHOT")) == 0);
+    
     assertTrue(BuildNumber.fromString("2016.1.1.SNAPSHOT").compareTo(BuildNumber.fromString("2016.1.1.1")) > 0);
+    assertTrue(BuildNumber.fromString("2016.1.1.1").compareTo(BuildNumber.fromString("2016.1.1.SNAPSHOT")) < 0);
+    
     assertTrue(BuildNumber.fromString("2016.1.1.SNAPSHOT").compareTo(BuildNumber.fromString("2016.1.1.SNAPSHOT")) == 0);
+    
     assertTrue(BuildNumber.fromString("2016.1.SNAPSHOT.1").compareTo(BuildNumber.fromString("2016.1.1.1")) > 0);
+    assertTrue(BuildNumber.fromString("2016.1.1.1").compareTo(BuildNumber.fromString("2016.1.SNAPSHOT.1")) < 0);
+    
     assertTrue(BuildNumber.fromString("2016.1.SNAPSHOT.1").compareTo(BuildNumber.fromString("2016.1.1.SNAPSHOT")) > 0);
+    assertTrue(BuildNumber.fromString("2016.1.1.SNAPSHOT").compareTo(BuildNumber.fromString("2016.1.SNAPSHOT.1")) < 0);
+    
     assertTrue(BuildNumber.fromString("2016.1.SNAPSHOT.1").compareTo(BuildNumber.fromString("2016.1.SNAPSHOT.SNAPSHOT")) == 0);
+    assertTrue(BuildNumber.fromString("2016.1.SNAPSHOT.SNAPSHOT").compareTo(BuildNumber.fromString("2016.1.SNAPSHOT.1")) == 0);
   }
 
   @Test

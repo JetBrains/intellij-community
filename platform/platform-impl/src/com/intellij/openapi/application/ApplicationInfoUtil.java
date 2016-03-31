@@ -37,7 +37,7 @@ public class ApplicationInfoUtil {
     writer.name("name").value(appName);
     writer.name("productName").value(ApplicationNamesInfo.getInstance().getProductName());
     writer.name("baselineVersion").value(build.getBaselineVersion());
-    if (build.getBuildNumber() != Integer.MAX_VALUE) {
+    if (build.getBuildNumber() != BuildNumber.SNAPSHOT_VALUE) {
       writer.name("buildNumber").value(build.getBuildNumber());
     }
   }
