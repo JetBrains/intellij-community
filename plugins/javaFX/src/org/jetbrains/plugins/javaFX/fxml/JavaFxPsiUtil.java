@@ -556,12 +556,14 @@ public class JavaFxPsiUtil {
     return canCoerceImpl(targetType, fromClass, context, messageConsumer);
   }
 
-  /**
-   * Similar to {@link GenericsUtil#getVariableTypeByExpressionType(PsiType)} and {@link TypeConversionUtil#erasure(PsiType)}
-   */
   @Nullable
-  private static PsiType eraseFreeTypeParameters(@Nullable PsiType psiType, PsiMember member) {
+  private static PsiType eraseFreeTypeParameters(@Nullable PsiType psiType, @NotNull PsiMember member) {
     final PsiClass containingClass = member.getContainingClass();
+    return eraseFreeTypeParameters(psiType, containingClass);
+  }
+
+  @Nullable
+  private static PsiType eraseFreeTypeParameters(@Nullable PsiType psiType, @Nullable PsiClass containingClass) {
     if (containingClass == null) return null;
     return JavaPsiFacade.getElementFactory(containingClass.getProject()).createRawSubstitutor(containingClass).substitute(psiType);
   }
@@ -975,7 +977,9 @@ public class JavaFxPsiUtil {
 
           final PsiType handlerType = tagClassSubstitutor != null ?
                                       tagClassSubstitutor.substitute(eventHandlerPropertyType) : eventHandlerPropertyType;
-          return substituteEventType(handlerType, xmlAttribute.getProject());
+          final PsiClassType eventType = substituteEventType(handlerType, xmlAttribute.getProject());
+          final PsiType erasedType = eraseFreeTypeParameters(eventType, tagClass);
+          return erasedType instanceof PsiClassType ? (PsiClassType)erasedType : null;
         }
       }
     }

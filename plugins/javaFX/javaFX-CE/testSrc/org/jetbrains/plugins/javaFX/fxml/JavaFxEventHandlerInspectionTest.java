@@ -68,6 +68,14 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
     doQuickfixTest("Create method 'void onSort(SortEvent)'");
   }
 
+  public void testQuickfixNoField() throws Exception {
+    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+  }
+
+  public void testQuickfixNoFieldNested() throws Exception {
+    doQuickfixTest("Create method 'void onColumnEditStart(CellEditEvent)'");
+  }
+
   public void testQuickfixSuper() throws Exception {
     doQuickfixTest("Create method 'void click(MouseEvent)'");
   }
