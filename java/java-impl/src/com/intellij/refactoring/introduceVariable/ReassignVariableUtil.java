@@ -66,17 +66,17 @@ public class ReassignVariableUtil {
           return true;
         }
 
-        final DefaultListModel model = new DefaultListModel();
+        final DefaultListModel<PsiVariable> model = new DefaultListModel<>();
         for (int i = 0; i < proc.size(); i++) {
           model.addElement(proc.getResult(i));
         }
-        final JList list = new JBList(model);
-        list.setCellRenderer(new ListCellRendererWrapper() {
+        final JBList list = new JBList(model);
+        list.setCellRenderer(new ListCellRendererWrapper<PsiVariable>() {
           @Override
-          public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-            if (value instanceof PsiVariable) {
-              setText(((PsiVariable)value).getName());
-              setIcon(((PsiVariable)value).getIcon(0));
+          public void customize(JList list, PsiVariable value, int index, boolean selected, boolean hasFocus) {
+            if (value != null) {
+              setText(value.getName());
+              setIcon(value.getIcon(0));
             }
           }
         });
@@ -150,6 +150,10 @@ public class ReassignVariableUtil {
           if (element instanceof PsiExpression) {
             element.replace(elementFactory.createExpressionFromText(chosenVariableName, newDeclaration));
           }
+        }
+        final PsiModifierList modifierList = variable.getModifierList();
+        if (modifierList != null) {
+          modifierList.setModifierProperty(PsiModifier.FINAL, false);
         }
       }
     }.execute();
