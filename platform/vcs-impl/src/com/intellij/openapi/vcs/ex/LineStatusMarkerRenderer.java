@@ -84,7 +84,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
     return new TextAttributes() {
       @Override
       public Color getErrorStripeColor() {
-        return LineStatusMarkerRenderer.getErrorStripeColor(range);
+        return LineStatusMarkerRenderer.getErrorStripeColor(range, null);
       }
     };
   }
@@ -114,8 +114,8 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   @Override
   public void paint(Editor editor, Graphics g, Rectangle r) {
     final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    Color gutterColor = getGutterColor(myRange);
-    Color borderColor = getGutterBorderColor();
+    Color gutterColor = getGutterColor(myRange, editor);
+    Color borderColor = getGutterBorderColor(editor);
 
     final int x = r.x + r.width - 3;
     final int endX = gutter.getWhitespaceSeparatorOffset();
@@ -143,7 +143,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
           int start = lineToY(editor, innerRange.getLine1());
           int end = lineToY(editor, innerRange.getLine2());
 
-          paintRect(g, getGutterColor(innerRange), null, x, start, endX, end);
+          paintRect(g, getGutterColor(innerRange, editor), null, x, start, endX, end);
         }
 
         for (int i = 0; i < innerRanges.size(); i++) {
@@ -166,7 +166,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
             end = lineToY(editor, innerRange.getLine2()) + 3;
           }
 
-          paintRect(g, getGutterColor(innerRange), null, x, start, endX, end);
+          paintRect(g, getGutterColor(innerRange, editor), null, x, start, endX, end);
         }
 
         paintRect(g, null, borderColor, x, y, endX, endY);
@@ -204,18 +204,17 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   @Nullable
-  private static Color getGutterColor(@NotNull Range.InnerRange range) {
-    // TODO: we should move color settings from Colors-General to Colors-Diff
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+  private static Color getGutterColor(@NotNull Range.InnerRange range, @Nullable Editor editor) {
+    final EditorColorsScheme scheme = getColorScheme(editor);
     switch (range.getType()) {
       case Range.INSERTED:
-        return globalScheme.getColor(EditorColors.ADDED_LINES_COLOR);
+        return scheme.getColor(EditorColors.ADDED_LINES_COLOR);
       case Range.DELETED:
-        return globalScheme.getColor(EditorColors.DELETED_LINES_COLOR);
+        return scheme.getColor(EditorColors.DELETED_LINES_COLOR);
       case Range.MODIFIED:
-        return globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
+        return scheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
       case Range.EQUAL:
-        return globalScheme.getColor(EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
+        return scheme.getColor(EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
       default:
         assert false;
         return null;
@@ -223,15 +222,15 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   @Nullable
-  private static Color getErrorStripeColor(@NotNull Range range) {
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+  private static Color getErrorStripeColor(@NotNull Range range, @Nullable Editor editor) {
+    final EditorColorsScheme scheme = getColorScheme(editor);
     switch (range.getType()) {
       case Range.INSERTED:
-        return globalScheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
+        return scheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
       case Range.DELETED:
-        return globalScheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
+        return scheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
       case Range.MODIFIED:
-        return globalScheme.getAttributes(DiffColors.DIFF_MODIFIED).getErrorStripeColor();
+        return scheme.getAttributes(DiffColors.DIFF_MODIFIED).getErrorStripeColor();
       default:
         assert false;
         return null;
@@ -239,15 +238,15 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   @Nullable
-  private static Color getGutterColor(@NotNull Range range) {
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+  private static Color getGutterColor(@NotNull Range range, @Nullable Editor editor) {
+    final EditorColorsScheme scheme = getColorScheme(editor);
     switch (range.getType()) {
       case Range.INSERTED:
-        return globalScheme.getColor(EditorColors.ADDED_LINES_COLOR);
+        return scheme.getColor(EditorColors.ADDED_LINES_COLOR);
       case Range.DELETED:
-        return globalScheme.getColor(EditorColors.DELETED_LINES_COLOR);
+        return scheme.getColor(EditorColors.DELETED_LINES_COLOR);
       case Range.MODIFIED:
-        return globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
+        return scheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
       default:
         assert false;
         return null;
@@ -255,9 +254,13 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   @Nullable
-  private static Color getGutterBorderColor() {
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    return globalScheme.getColor(EditorColors.BORDER_LINES_COLOR);
+  private static Color getGutterBorderColor(@Nullable Editor editor) {
+    return getColorScheme(editor).getColor(EditorColors.BORDER_LINES_COLOR);
+  }
+
+  @NotNull
+  private static EditorColorsScheme getColorScheme(@Nullable Editor editor) {
+    return editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
   //
