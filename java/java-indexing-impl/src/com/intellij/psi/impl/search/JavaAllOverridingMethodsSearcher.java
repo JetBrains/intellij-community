@@ -52,44 +52,41 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
 
     final SearchScope scope = p.getScope();
 
-    Processor<PsiClass> inheritorsProcessor = new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass inheritor) {
-        PsiSubstitutor substitutor = null;
+    Processor<PsiClass> inheritorsProcessor = inheritor -> {
+      PsiSubstitutor substitutor = null;
 
-        for (String name : potentials.keySet()) {
-          if (inheritor.findMethodsByName(name, true).length == 0) continue;
+      for (String name : potentials.keySet()) {
+        if (inheritor.findMethodsByName(name, true).length == 0) continue;
 
-          for (PsiMethod superMethod : potentials.get(name)) {
-            if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-                !JavaPsiFacade.getInstance(inheritor.getProject()).arePackagesTheSame(psiClass, inheritor)) continue;
+        for (PsiMethod superMethod : potentials.get(name)) {
+          if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+              !JavaPsiFacade.getInstance(inheritor.getProject()).arePackagesTheSame(psiClass, inheritor)) continue;
 
-            if (substitutor == null) {
-              //could be null if not java inheritor, TODO only JavaClassInheritors are needed
-              substitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
-              if (substitutor == null) return true;
-            }
+          if (substitutor == null) {
+            //could be null if not java inheritor, TODO only JavaClassInheritors are needed
+            substitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
+            if (substitutor == null) return true;
+          }
 
-            MethodSignature superSignature = superMethod.getSignature(substitutor);
-            PsiMethod inInheritor = MethodSignatureUtil.findMethodBySuperSignature(inheritor, superSignature, false);
-            if (inInheritor != null && !inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
-              if (!consumer.process(Pair.create(superMethod, inInheritor))) return false;
-            }
+          MethodSignature superSignature = superMethod.getSignature(substitutor);
+          PsiMethod inInheritor = MethodSignatureUtil.findMethodBySuperSignature(inheritor, superSignature, false);
+          if (inInheritor != null && !inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
+            if (!consumer.process(Pair.create(superMethod, inInheritor))) return false;
+          }
 
-            if (psiClass.isInterface() && !inheritor.isInterface()) {  //check for sibling implementation
-              final PsiClass superClass = inheritor.getSuperClass();
-              if (superClass != null && !superClass.isInheritor(psiClass, true)) {
-                inInheritor = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, superSignature, true);
-                if (inInheritor != null && !inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
-                  if (!consumer.process(Pair.create(superMethod, inInheritor))) return false;
-                }
+          if (psiClass.isInterface() && !inheritor.isInterface()) {  //check for sibling implementation
+            final PsiClass superClass = inheritor.getSuperClass();
+            if (superClass != null && !superClass.isInheritor(psiClass, true)) {
+              inInheritor = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, superSignature, true);
+              if (inInheritor != null && !inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
+                if (!consumer.process(Pair.create(superMethod, inInheritor))) return false;
               }
             }
           }
         }
-
-        return true;
       }
+
+      return true;
     };
 
     return ClassInheritorsSearch.search(psiClass, scope, true).forEach(inheritorsProcessor);
