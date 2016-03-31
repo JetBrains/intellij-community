@@ -399,6 +399,10 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     }
     catch (IOException ignored) {
     }
+    final List<String> releases = PyPIPackageUtil.getPackageReleases(pkg.getName());
+    if (releases != null && !releases.isEmpty()) {
+      version = releases.get(0);
+    }
     consumer.consume(version);
   }
 }
