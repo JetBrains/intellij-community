@@ -37,6 +37,10 @@ public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTes
     doTest();
   }
 
+  public void testFilterVariablesWhichMustBeEffectivelyFinal() throws Exception {
+    doTest();
+  }
+
   public void testUndoPositionAfterSpace() throws Exception {
     doUndoTest();
   }
