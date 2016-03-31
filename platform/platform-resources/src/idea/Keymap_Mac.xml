@@ -280,14 +280,18 @@
       <keyboard-shortcut first-keystroke="meta R"/>
     </action>
     <!--
-     Android Studio: We've changed the default from Cmd-R to Option-R such that it
+     Android Studio: We've changed the default from Cmd-R to Ctrl-Cmd-R such that it
      doesn't conflict with Replace when the editor has focus. (See issue b.android.com/196158).
+     We've also switched to our own Rerun action.
     -->
-    <action id="Rerun">
-      <keyboard-shortcut first-keystroke="alt R"/>
+    <action id="Android.CleanRun">
+      <keyboard-shortcut first-keystroke="ctrl meta R"/>
     </action>
     <action id="RerunTests">
+      <!-- Android Studio: Used for Rerun in Android Studio; this action already
+           had two shortcuts
       <keyboard-shortcut first-keystroke="control meta R"/>
+      -->
       <keyboard-shortcut first-keystroke="shift alt R"/>
     </action>
     <action id="RunClass">
