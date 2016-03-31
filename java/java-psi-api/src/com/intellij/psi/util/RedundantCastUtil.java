@@ -642,7 +642,7 @@ public class RedundantCastUtil {
         }
       }
 
-      if (arrayAccessAtTheLeftSideOfAssignment(parent)) {
+      if (arrayAccessAtTheLeftSideOfAssignment(parent, typeCast)) {
         if (TypeConversionUtil.isAssignable(opType, castTo, false) && opType.getArrayDimensions() == castTo.getArrayDimensions()) {
           addToResults(typeCast);
         }
@@ -715,11 +715,13 @@ public class RedundantCastUtil {
       return true;
     }
 
-    private static boolean arrayAccessAtTheLeftSideOfAssignment(PsiElement element) {
-      PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, false, PsiMember.class);
+    private static boolean arrayAccessAtTheLeftSideOfAssignment(PsiElement parent, PsiElement element) {
+      PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(parent, PsiAssignmentExpression.class, false, PsiMember.class);
       if (assignment == null) return false;
       PsiExpression lExpression = assignment.getLExpression();
-      return PsiTreeUtil.isAncestor(lExpression, element, false) && lExpression instanceof PsiArrayAccessExpression;
+      return lExpression instanceof PsiArrayAccessExpression &&
+             PsiTreeUtil.isAncestor(lExpression, parent, false) &&
+             !PsiTreeUtil.isAncestor(((PsiArrayAccessExpression)lExpression).getIndexExpression(), element, false);
     }
   }
 
