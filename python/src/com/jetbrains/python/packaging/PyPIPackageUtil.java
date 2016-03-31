@@ -190,6 +190,7 @@ public class PyPIPackageUtil {
     if (releases == null) {
       final Vector<String> params = new Vector<String>();
       params.add(packageName);
+      params.add("show_hidden=True");
       myXmlRpcClient.executeAsync("package_releases", params, callback);
     }
     else {
