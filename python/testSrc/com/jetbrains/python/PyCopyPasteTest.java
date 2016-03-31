@@ -376,4 +376,19 @@ public class PyCopyPasteTest extends PyTestCase {
   public void testSameIndentPreserved() {
     doTest();
   }
+
+  // PY-18522
+  public void testEmptyFunctionCaretAtNoneIndent() {
+    doTest();
+  }
+  
+  // PY-18522
+  public void testEmptyFunctionCaretAtDefIndent() {
+    doTest();
+  }
+
+  // PY-18522
+  public void testEmptyFunctionCaretAtBodyIndent() {
+    doTest();
+  }
 }
