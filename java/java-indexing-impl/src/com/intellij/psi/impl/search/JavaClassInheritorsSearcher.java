@@ -178,26 +178,31 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       final boolean[] success = {true};
       currentBase.set(baseClass);
       for (VirtualFile virtualFile : virtualFiles) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-        if (psiFile != null) {
-          psiFile.accept(new JavaRecursiveElementVisitor() {
-            @Override
-            public void visitClass(PsiClass aClass) {
-              if (!success[0]) return;
-              if (!processor.process(aClass)) {
-                success[0] = false;
-                return;
-              }
-              super.visitClass(aClass);
-            }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+            if (psiFile != null) {
+              psiFile.accept(new JavaRecursiveElementVisitor() {
+                @Override
+                public void visitClass(PsiClass aClass) {
+                  if (!success[0]) return;
+                  if (!processor.process(aClass)) {
+                    success[0] = false;
+                    return;
+                  }
+                  super.visitClass(aClass);
+                }
 
-            @Override
-            public void visitCodeBlock(PsiCodeBlock block) {
-              if (!parameters.isIncludeAnonymous()) return;
-              super.visitCodeBlock(block);
+                @Override
+                public void visitCodeBlock(PsiCodeBlock block) {
+                  if (!parameters.isIncludeAnonymous()) return;
+                  super.visitCodeBlock(block);
+                }
+              });
             }
-          });
-        }
+          }
+        });
       }
       return success[0];
     }
