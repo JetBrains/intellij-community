@@ -272,7 +272,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    boolean isMainFrame = window instanceof IdeFrameImpl;
     boolean isFloatingDecorator = window instanceof FloatingDecorator;
 
     boolean isPopup = !(component instanceof JFrame) && !(component instanceof JDialog);
@@ -285,7 +284,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    return !isMainFrame && !isFloatingDecorator;
+    return !isFloatingDecorator;
   }
 
   private boolean inWaitForSecondStrokeState() {
