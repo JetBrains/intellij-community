@@ -12,13 +12,11 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.usages.ConfigurableUsageTarget;
-import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,9 +28,7 @@ import java.util.Set;
 public class UsageViewContext {
   protected final SearchContext mySearchContext;
   private final Runnable mySearchStarter;
-  private UsageView myUsageView;
   protected final Configuration myConfiguration;
-  private Set<Usage> myExcludedSet;
 
   protected UsageViewContext(Configuration configuration, SearchContext searchContext, Runnable searchStarter) {
     myConfiguration = configuration;
@@ -40,18 +36,7 @@ public class UsageViewContext {
     mySearchStarter = searchStarter;
   }
 
-  public boolean isExcluded(Usage usage) {
-    if (myExcludedSet == null) myExcludedSet = myUsageView.getExcludedUsages();
-    return myExcludedSet.contains(usage);
-  }
-
-  public UsageView getUsageView() {
-    return myUsageView;
-  }
-
-  public void setUsageView(final UsageView usageView) {
-    myUsageView = usageView;
-  }
+  public void setUsageView(final UsageView usageView) {}
 
   public ConfigurableUsageTarget getTarget() {
     return new MyUsageTarget();
