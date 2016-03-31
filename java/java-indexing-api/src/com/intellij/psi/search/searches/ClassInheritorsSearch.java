@@ -26,6 +26,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.AbstractQuery;
+import com.intellij.util.FilteredQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -135,8 +136,12 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   @NotNull
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     if (!parameters.isCheckDeep()) {
-      return AbstractQuery.wrapInReadAction(DirectClassInheritorsSearch.search(parameters.getClassToProcess(), parameters.getScope(), parameters.isIncludeAnonymous(),
-                                                parameters.isCheckInheritance()));
+      Query<PsiClass> directQuery = DirectClassInheritorsSearch.search(parameters.getClassToProcess(), parameters.getScope(), parameters.isIncludeAnonymous());
+      if (parameters.getNameCondition() != Conditions.<String>alwaysTrue()) {
+        directQuery = new FilteredQuery<>(directQuery, psiClass -> parameters.getNameCondition()
+          .value(ApplicationManager.getApplication().runReadAction((Computable<String>)psiClass::getName)));
+      }
+      return AbstractQuery.wrapInReadAction(directQuery);
     }
     return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
                                              psiClass -> ApplicationManager.getApplication().runReadAction((Computable<SmartPsiElementPointer<PsiClass>>)() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
@@ -145,7 +150,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   @NotNull
   @Deprecated //todo to be removed in IDEA 17
   /**
-   * @deprecated use {@link #search(com.intellij.psi.PsiClass, com.intellij.psi.search.SearchScope, boolean)} instead
+   * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
    */
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
@@ -153,7 +158,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep) {
-    return search(aClass, scope, checkDeep, true);
+    return search(aClass, scope, checkDeep, true, true);
   }
 
   @NotNull
