@@ -112,8 +112,8 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   }
 
   @Override
-  protected boolean hasBranch(@NotNull HgRepository repository, @NotNull String name) {
-    return HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(name) || repository.getOpenedBranches().contains(name);
+  protected boolean hasBranch(@NotNull HgRepository repository, @NotNull TaskInfo name) {
+    return HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(name.getName()) || repository.getOpenedBranches().contains(name.getName());
   }
 
   @Override

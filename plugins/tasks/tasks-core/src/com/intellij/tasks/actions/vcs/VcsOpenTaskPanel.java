@@ -159,15 +159,15 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myTaskManager.createChangeList(localTask, myChangelistName.getText());
     }
     if (myCreateBranch.isSelected()) {
+      VcsTaskHandler.TaskInfo branchFrom = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
       Runnable createBranch = new Runnable() {
         @Override
         public void run() {
-          myTaskManager.createBranch(localTask, myPreviousTask, myBranchName.getText());
+          myTaskManager.createBranch(localTask, myPreviousTask, myBranchName.getText(), branchFrom);
         }
       };
-      VcsTaskHandler.TaskInfo item = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
-      if (item != null) {
-        myVcsTaskHandler.switchToTask(item, createBranch);
+      if (branchFrom != null) {
+        myVcsTaskHandler.switchToTask(branchFrom, createBranch);
       }
       else {
         createBranch.run();
