@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.repo;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -30,6 +31,7 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.util.List;
 
@@ -37,6 +39,7 @@ import java.util.List;
  * Listens to .hg service files changes and updates {@link HgRepository} when needed.
  */
 final class HgRepositoryUpdater implements Disposable, BulkFileListener {
+  private final Project myProject;
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
   @NotNull private final MergingUpdateQueue myUpdateQueue;
@@ -46,6 +49,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
   @NotNull private final MergingUpdateQueue myUpdateConfigQueue;
   private final HgRepository myRepository;
+  private final VcsDirtyScopeManager myDirtyScopeManager;
 
 
   HgRepositoryUpdater(@NotNull final HgRepository repository) {
@@ -58,11 +62,12 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
     myMqDir = VcsUtil.getVirtualFile(myRepositoryFiles.getMQDirPath());
 
-    Project project = repository.getProject();
+    myProject = repository.getProject();
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myUpdateQueue = new MergingUpdateQueue("HgRepositoryUpdate", TIME_SPAN, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
     myUpdateConfigQueue = new MergingUpdateQueue("HgConfigUpdate", TIME_SPAN, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
-    if (!project.isDisposed()) {
-      myMessageBusConnection = project.getMessageBus().connect();
+    if (!myProject.isDisposed()) {
+      myMessageBusConnection = myProject.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
     }
     else {
@@ -154,6 +159,12 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
     if (configHgrcChanged) {
       myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"));
+    }
+    if (dirstateFileChanged) {
+      final VirtualFile root = myRepository.getRoot();
+      myDirtyScopeManager.dirDirtyRecursively(root);
+      //update async incoming/outgoing model
+      myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
     }
   }
 
