@@ -44,6 +44,7 @@
     <action id="CheckinProject">
       <keyboard-shortcut first-keystroke="alt meta C"/>
     </action>
+    <!-- Android Studio: Switch default Rerun action from "Rerun" to "Android.CleanRun" -->
     <action id="CleanBuildFolder">
       <keyboard-shortcut first-keystroke="alt shift meta K"/>
     </action>
@@ -362,7 +363,7 @@
       <keyboard-shortcut first-keystroke="control 5"/>
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
-    <action id="Rerun">
+    <action id="Android.CleanRun">
       <keyboard-shortcut first-keystroke="control alt meta G"/>
     </action>
     <action id="RerunFailedTests">
