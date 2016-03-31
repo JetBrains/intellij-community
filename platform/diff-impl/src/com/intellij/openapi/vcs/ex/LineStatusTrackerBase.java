@@ -117,7 +117,7 @@ public abstract class LineStatusTrackerBase {
   //
 
   @CalledInAwt
-  public void setBaseRevision(@NotNull final String vcsContent) {
+  public void setBaseRevision(@NotNull final CharSequence vcsContent) {
     myApplication.assertIsDispatchThread();
     if (myReleased) return;
 

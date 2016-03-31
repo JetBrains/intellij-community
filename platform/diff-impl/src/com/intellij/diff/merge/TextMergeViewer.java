@@ -35,6 +35,7 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,11 +43,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -54,8 +55,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopup;
+import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBase;
+import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,6 +74,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class TextMergeViewer implements MergeTool.MergeViewer {
   @NotNull private final MergeContext myMergeContext;
@@ -165,6 +173,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     @NotNull private final ModifierProvider myModifierProvider;
     @NotNull private final MyInnerDiffWorker myInnerDiffWorker;
+    @NotNull private final MyLineStatusTracker myLineStatusTracker;
 
     // all changes - both applied and unapplied ones
     @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<>();
@@ -181,10 +190,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       myModifierProvider = new ModifierProvider();
       myInnerDiffWorker = new MyInnerDiffWorker();
 
+      myLineStatusTracker = new MyLineStatusTracker(getProject(), getEditor().getDocument());
+
       DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
       DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
       DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.LEFT, true), myPanel);
       DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.RIGHT, true), myPanel);
+      DiffUtil.registerAction(new MyShowPrevChangeMarkerAction(null), myPanel);
+      DiffUtil.registerAction(new MyShowNextChangeMarkerAction(null), myPanel);
 
       ProxyUndoRedoAction.register(getProject(), getEditor(), myContentPanel);
     }
@@ -198,6 +211,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @Override
     protected void onDispose() {
       Disposer.dispose(myModel);
+      myLineStatusTracker.release();
       super.onDispose();
     }
 
@@ -294,7 +308,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content", () -> {
         outputDocument.setText(baseDocument.getCharsSequence());
+
         DiffUtil.putNonundoableOperation(getProject(), outputDocument);
+
+        if (getTextSettings().isEnableLstGutterMarkersInMerge()) {
+          myLineStatusTracker.setBaseRevision(baseDocument.getCharsSequence());
+          getEditor().getGutterComponentEx().setForceShowRightFreePaintersArea(true);
+        }
       });
     }
 
@@ -1168,6 +1188,156 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
+    private class MyLineStatusTracker extends LineStatusTrackerBase {
+      public MyLineStatusTracker(@NotNull Project project, @NotNull Document document) {
+        super(project, document);
+      }
+
+      @Override
+      protected void createHighlighter(@NotNull final Range range) {
+        myApplication.assertIsDispatchThread();
+        if (range.getHighlighter() != null) {
+          LOG.error("Multiple highlighters registered for the same Range");
+          return;
+        }
+
+        int first = range.getLine1() < getLineCount(myDocument) ?
+                    myDocument.getLineStartOffset(range.getLine1()) :
+                    myDocument.getTextLength();
+        int second = range.getLine2() < getLineCount(myDocument) ?
+                     myDocument.getLineStartOffset(range.getLine2()) :
+                     myDocument.getTextLength();
+
+        MarkupModel markupModel = getEditor().getMarkupModel();
+
+        RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, new TextRange(first, second), markupModel);
+        highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(range, (editor) -> {
+          return new MyLineStatusMarkerPopup(range);
+        }));
+
+        range.setHighlighter(highlighter);
+      }
+    }
+
+    private class MyLineStatusMarkerPopup extends LineStatusMarkerPopup {
+      public MyLineStatusMarkerPopup(@NotNull Range range) {
+        super(myLineStatusTracker, getEditor(), range);
+      }
+
+      @Override
+      public void scrollAndShow() {
+        if (!myTracker.isValid()) return;
+        final Document document = myTracker.getDocument();
+        int line = Math.min(myRange.getType() == Range.DELETED ? myRange.getLine2() : myRange.getLine2() - 1, getLineCount(document) - 1);
+
+        int[] startLines = new int[]{
+          transferPosition(ThreeSide.BASE, ThreeSide.LEFT, new LogicalPosition(line, 0)).line,
+          line,
+          transferPosition(ThreeSide.BASE, ThreeSide.RIGHT, new LogicalPosition(line, 0)).line
+        };
+
+        for (ThreeSide side : ThreeSide.values()) {
+          DiffUtil.moveCaret(getEditor(side), side.select(startLines));
+        }
+
+        getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+        showAfterScroll();
+      }
+
+      @NotNull
+      @Override
+      protected ActionToolbar buildToolbar(@Nullable Point mousePosition, @NotNull Disposable parentDisposable) {
+        final DefaultActionGroup group = new DefaultActionGroup();
+
+        final MyShowPrevChangeMarkerAction localShowPrevAction = new MyShowPrevChangeMarkerAction(myRange);
+        final MyShowNextChangeMarkerAction localShowNextAction = new MyShowNextChangeMarkerAction(myRange);
+
+        group.add(localShowPrevAction);
+        group.add(localShowNextAction);
+
+        JComponent editorComponent = myEditor.getComponent();
+        localShowPrevAction.registerCustomShortcutSet(localShowPrevAction.getShortcutSet(), editorComponent);
+        localShowNextAction.registerCustomShortcutSet(localShowNextAction.getShortcutSet(), editorComponent);
+
+        final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
+        Disposer.register(parentDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            actionList.remove(localShowPrevAction);
+            actionList.remove(localShowNextAction);
+          }
+        });
+
+        return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+      }
+    }
+
+    private abstract class ShowChangeMarkerAction extends DumbAwareAction {
+      @Nullable private final Range myRange;
+
+      protected ShowChangeMarkerAction(@Nullable Range range, @NotNull String actionId) {
+        myRange = range;
+        ActionUtil.copyFrom(this, actionId);
+      }
+
+      @Nullable
+      protected abstract Range getTargetRange(@NotNull Range range);
+
+      @Nullable
+      protected abstract Range getTargetRange(int line);
+
+      @Override
+      public void update(AnActionEvent e) {
+        boolean isKeyboardShortcut = myRange == null;
+        boolean enabled = getTextSettings().isEnableLstGutterMarkersInMerge();
+        enabled &= isKeyboardShortcut || myLineStatusTracker.isValid() && getTargetRange(myRange) != null;
+        e.getPresentation().setEnabled(enabled);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (!myLineStatusTracker.isValid()) return;
+        int line = getEditor().getCaretModel().getLogicalPosition().line;
+        Range targetRange = myRange != null ? getTargetRange(myRange) : getTargetRange(line);
+        if (targetRange != null) new MyLineStatusMarkerPopup(targetRange).scrollAndShow();
+      }
+    }
+
+    private class MyShowPrevChangeMarkerAction extends ShowChangeMarkerAction {
+      public MyShowPrevChangeMarkerAction(@Nullable Range range) {
+        super(range, "VcsShowPrevChangeMarker");
+      }
+
+      @Nullable
+      @Override
+      protected Range getTargetRange(@NotNull Range range) {
+        return myLineStatusTracker.getPrevRange(range);
+      }
+
+      @Nullable
+      @Override
+      protected Range getTargetRange(int line) {
+        return myLineStatusTracker.getPrevRange(line);
+      }
+    }
+
+    private class MyShowNextChangeMarkerAction extends ShowChangeMarkerAction {
+      public MyShowNextChangeMarkerAction(@Nullable Range range) {
+        super(range, "VcsShowNextChangeMarker");
+      }
+
+      @Nullable
+      @Override
+      protected Range getTargetRange(@NotNull Range range) {
+        return myLineStatusTracker.getNextRange(range);
+      }
+
+      @Nullable
+      @Override
+      protected Range getTargetRange(int line) {
+        return myLineStatusTracker.getNextRange(line);
+      }
+    }
   }
 
   private static class InnerChunkData {
