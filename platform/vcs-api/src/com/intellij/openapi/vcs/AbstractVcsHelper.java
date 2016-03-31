@@ -45,7 +45,7 @@ import java.util.List;
  */
 public abstract class AbstractVcsHelper {
 
-  protected final Project myProject;
+  @NotNull protected final Project myProject;
 
   protected AbstractVcsHelper(@NotNull Project project) {
     myProject = project;

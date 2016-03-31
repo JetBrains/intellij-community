@@ -106,12 +106,11 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
   }
 
   public static class VirtualFileList extends ChangesTreeList<VirtualFile> {
-    private final Project myProject;
+
     @Nullable private final DeleteProvider myDeleteProvider;
 
     public VirtualFileList(Project project, List<VirtualFile> originalFiles, boolean selectableFiles, boolean deletableFiles) {
       super(project, originalFiles, selectableFiles, true, null, null);
-      myProject = project;
       myDeleteProvider = (deletableFiles ?  new VirtualFileDeleteProvider() : null);
     }
 

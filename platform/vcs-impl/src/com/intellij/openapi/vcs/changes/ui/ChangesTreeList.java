@@ -70,7 +70,7 @@ import java.util.List;
 public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataProvider {
   private final MyTree myTree;
   private final JScrollPane myTreeScrollPane;
-  protected final Project myProject;
+  @NotNull protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
@@ -92,7 +92,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   @NotNull private final CopyProvider myTreeCopyProvider;
   private TreeState myNonFlatTreeState;
 
-  public ChangesTreeList(@NotNull final Project project,
+  public ChangesTreeList(@NotNull Project project,
                          @NotNull Collection<T> initiallyIncluded,
                          final boolean showCheckboxes,
                          final boolean highlightProblems,
