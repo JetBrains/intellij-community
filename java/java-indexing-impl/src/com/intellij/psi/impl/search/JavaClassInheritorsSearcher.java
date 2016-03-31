@@ -25,8 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
@@ -140,15 +142,14 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     final Stack<PsiAnchor> stack = new Stack<>();
     final Set<PsiAnchor> processed = ContainerUtil.newTroveSet();
 
+    boolean checkDeep = searchScope instanceof LocalSearchScope;
     final Processor<PsiClass> processor = new ReadActionProcessor<PsiClass>() {
       @Override
       public boolean processInReadAction(PsiClass candidate) {
         ProgressManager.checkCanceled();
 
-        if (parameters.isCheckInheritance() || !(candidate instanceof PsiAnonymousClass)) {
-          if (!candidate.isInheritor(currentBase.get(), false)) {
-            return true;
-          }
+        if (!candidate.isInheritor(currentBase.get(), checkDeep)) {
+          return true;
         }
 
         if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
@@ -169,8 +170,39 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       }
     };
 
+    @NotNull PsiClass baseClass = parameters.getClassToProcess();
+    if (searchScope instanceof LocalSearchScope) {
+      // optimisation: it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
+      // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
+      VirtualFile[] virtualFiles = ((LocalSearchScope)searchScope).getVirtualFiles();
+      final boolean[] success = {true};
+      currentBase.set(baseClass);
+      for (VirtualFile virtualFile : virtualFiles) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        if (psiFile != null) {
+          psiFile.accept(new JavaRecursiveElementVisitor() {
+            @Override
+            public void visitClass(PsiClass aClass) {
+              if (!success[0]) return;
+              if (!processor.process(aClass)) {
+                success[0] = false;
+                return;
+              }
+              super.visitClass(aClass);
+            }
+
+            @Override
+            public void visitCodeBlock(PsiCodeBlock block) {
+              if (!parameters.isIncludeAnonymous()) return;
+              super.visitCodeBlock(block);
+            }
+          });
+        }
+      }
+      return success[0];
+    }
+
     ApplicationManager.getApplication().runReadAction(() -> {
-      @NotNull PsiClass baseClass = parameters.getClassToProcess();
       stack.push(PsiAnchor.create(baseClass));
     });
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
