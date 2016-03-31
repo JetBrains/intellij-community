@@ -45,7 +45,6 @@ public class VcsLogProjectManager {
   @NotNull
   private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   private volatile VcsLogUiImpl myUi;
-  @Nullable private Runnable myRecreateMainLogHandler;
 
   public VcsLogProjectManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
@@ -75,7 +74,7 @@ public class VcsLogProjectManager {
   }
 
   public void setRecreateMainLogHandler(@Nullable Runnable recreateMainLogHandler) {
-    myRecreateMainLogHandler = recreateMainLogHandler;
+    myLogManager.setRecreateMainLogHandler(recreateMainLogHandler);
   }
 
   /**
@@ -100,25 +99,38 @@ public class VcsLogProjectManager {
     return ServiceManager.getService(project, VcsLogProjectManager.class);
   }
 
+  @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   private class LazyVcsLogManager extends ClearableLazyValue<VcsLogManager> {
+    @Nullable private Runnable myRecreateMainLogHandler;
+
     @NotNull
     @CalledInAwt
     @Override
-    protected VcsLogManager compute() {
+    public synchronized VcsLogManager getValue() {
+      return super.getValue();
+    }
+
+    @NotNull
+    @CalledInAwt
+    @Override
+    protected synchronized VcsLogManager compute() {
       return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), myRecreateMainLogHandler);
     }
 
     @CalledInAwt
     @Override
-    public void drop() {
+    public synchronized void drop() {
       if (myValue != null) Disposer.dispose(myValue);
       super.drop();
     }
 
     @Nullable
-    @CalledInAwt
-    public VcsLogManager getCached() {
+    public synchronized VcsLogManager getCached() {
       return myValue;
+    }
+
+    public synchronized void setRecreateMainLogHandler(@Nullable Runnable recreateMainLogHandler) {
+      myRecreateMainLogHandler = recreateMainLogHandler;
     }
   }
 
