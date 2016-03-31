@@ -452,7 +452,7 @@
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyClassProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFileProcessor" order="first"/>
-    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyLiteralExpressionProcessor"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenameUnsupportedExpressionProcessor"/>
 
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyContainingFileRenamerFactory"/>
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyInheritorRenameFactory"/>
