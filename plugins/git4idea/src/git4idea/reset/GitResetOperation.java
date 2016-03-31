@@ -95,7 +95,7 @@ public class GitResetOperation {
         }
         results.put(repository, result);
         repository.update();
-        VfsUtil.markDirtyAndRefresh(true, true, false, root);
+        VfsUtil.markDirtyAndRefresh(false, true, false, root);
         VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
       }
     }
