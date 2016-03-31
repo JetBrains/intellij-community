@@ -149,7 +149,7 @@ public class GithubCreatePullRequestWorker {
 
       GithubAuthDataHolder authHolder;
       try {
-        authHolder = GithubUtil.getValidAuthDataHolderFromConfig(project, indicator);
+        authHolder = GithubUtil.getValidAuthDataHolderFromConfig(project, AuthLevel.LOGGED, indicator);
       }
       catch (IOException e) {
         GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);

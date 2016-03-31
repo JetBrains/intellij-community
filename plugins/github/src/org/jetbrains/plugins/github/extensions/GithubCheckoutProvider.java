@@ -53,7 +53,8 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     List<GithubRepo> availableRepos;
     try {
       availableRepos = GithubUtil.computeValueInModalIO(project, "Access to GitHub", indicator ->
-        GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator, GithubApiUtil::getAvailableRepos));
+        GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator, connection ->
+          GithubApiUtil.getAvailableRepos(connection)));
     }
     catch (IOException e) {
       GithubNotifications.showError(project, "Couldn't get the list of GitHub repositories", e);

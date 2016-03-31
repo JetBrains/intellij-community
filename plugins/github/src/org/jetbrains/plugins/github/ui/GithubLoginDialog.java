@@ -4,10 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
-import org.jetbrains.plugins.github.util.GithubSettings;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -18,18 +15,20 @@ import java.io.IOException;
  */
 public class GithubLoginDialog extends DialogWrapper {
 
-  protected static final Logger LOG = GithubUtil.LOG;
+  private static final Logger LOG = GithubUtil.LOG;
 
-  protected final GithubLoginPanel myGithubLoginPanel;
-  protected final GithubSettings mySettings;
+  private final GithubLoginPanel myGithubLoginPanel;
+  private final GithubSettings mySettings;
 
-  protected final Project myProject;
+  @NotNull private final Project myProject;
+  @NotNull private final AuthLevel myAuthLevel;
 
   protected GithubAuthData myAuthData;
 
-  public GithubLoginDialog(@NotNull final Project project, @NotNull GithubAuthData oldAuthData) {
+  public GithubLoginDialog(@NotNull final Project project, @NotNull GithubAuthData oldAuthData, @NotNull AuthLevel authLevel) {
     super(project, true);
     myProject = project;
+    myAuthLevel = authLevel;
 
     myGithubLoginPanel = new GithubLoginPanel(this);
 
@@ -41,12 +40,15 @@ public class GithubLoginDialog extends DialogWrapper {
     }
 
     mySettings = GithubSettings.getInstance();
-    if (mySettings.isSavePasswordMakesSense()) {
+    if (mySettings.isSavePasswordMakesSense() && !authLevel.isOnetime()) {
       myGithubLoginPanel.setSavePasswordSelected(mySettings.isSavePassword());
     }
     else {
       myGithubLoginPanel.setSavePasswordVisibleEnabled(false);
     }
+
+    if (authLevel.getHost() != null) myGithubLoginPanel.lockHost(authLevel.getHost());
+    if (authLevel.getAuthType() != null) myGithubLoginPanel.lockAuthType(authLevel.getAuthType());
 
     setTitle("Login to GitHub");
     setOKButtonText("Login");

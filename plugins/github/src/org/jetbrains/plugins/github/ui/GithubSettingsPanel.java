@@ -116,7 +116,7 @@ public class GithubSettingsPanel {
     myCreateTokenButton.addActionListener(e -> {
       try {
         String newToken = GithubUtil.computeValueInModalIO(project, "Access to GitHub", indicator ->
-          GithubUtil.runTaskWithBasicAuthForHost(project, GithubAuthDataHolder.createFromSettings(), indicator, getHost(), connection ->
+          GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator, AuthLevel.basicOnetime(getHost()), connection ->
             GithubApiUtil.getMasterToken(connection, "IntelliJ plugin")));
         myPasswordField.setText(newToken);
       }

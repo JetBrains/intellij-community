@@ -38,10 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -147,7 +144,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     else {
       try {
         return GithubUtil.computeValueInModalIO(project, "Access to GitHub", indicator ->
-          GithubUtil.getValidAuthDataHolderFromConfig(project, indicator)
+          GithubUtil.getValidAuthDataHolderFromConfig(project, AuthLevel.LOGGED, indicator)
         );
       }
       catch (IOException e) {
@@ -209,7 +206,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     try {
       final List<FileContent> finalContents = contents;
-      return GithubUtil.runTask(project, auth, indicator, connection ->
+      return GithubUtil.runTask(project, auth, indicator, AuthLevel.ANY, connection ->
         GithubApiUtil.createGist(connection, finalContents, description, isPrivate)).getHtmlUrl();
     }
     catch (IOException e) {
