@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -35,7 +34,6 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   private lateinit var vcs: MockAbstractVcs
   private lateinit var baseRoot: VirtualFile
   private lateinit var basePath: FilePath
-  private lateinit var testRootFile: VirtualFile
 
   override fun setUp() {
     super.setUp()
@@ -43,7 +41,6 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     vcs = MockAbstractVcs(myProject)
     baseRoot = myProject.baseDir
     basePath = getFilePath(baseRoot)
-    testRootFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTestRoot)!!
 
     disableVcsDirtyScopeVfsListener()
     disableChangeListManager()
@@ -80,7 +77,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test dirty files from different roots`() {
-    val otherRoot = createSubRoot(testRootFile, "otherRoot")
+    val otherRoot = createSubRoot(myTestRootFile, "otherRoot")
     val file = createFile(baseRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
@@ -106,7 +103,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   // this is already implicitly checked in several other tests, but better to have it explicit
   fun `test all roots from a single vcs belong to a single scope`() {
-    val otherRoot = createSubRoot(testRootFile, "otherRoot")
+    val otherRoot = createSubRoot(myTestRootFile, "otherRoot")
     val file = createFile(baseRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
@@ -118,7 +115,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test marking file outside of any VCS root dirty has no effect`() {
-    val file = createFile(testRootFile, "outside.txt")
+    val file = createFile(myTestRootFile, "outside.txt")
 
     dirtyScopeManager.fileDirty(file)
 
