@@ -161,7 +161,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public void installPackage(final RepoPackage repoPackage, String version, boolean forceUpgrade, String extraOptions,
                              final Listener listener, boolean installToUser) {
     final String packageName = repoPackage.getName();
-    final String repository = PyPIPackageUtil.PYPI_URL.equals(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
+    final String repository = PyPIPackageUtil.isPyPIRepository(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
     final List<String> extraArgs = new ArrayList<String>();
     if (installToUser) {
       extraArgs.add(PyPackageManager.USE_USER_SITE);
@@ -171,7 +171,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       Collections.addAll(extraArgs, extraOptions.split(" +"));
     }
     if (!StringUtil.isEmptyOrSpaces(repository)) {
-      extraArgs.add("--extra-index-url");
+      extraArgs.add("--index-url");
       extraArgs.add(repository);
     }
     if (forceUpgrade) {

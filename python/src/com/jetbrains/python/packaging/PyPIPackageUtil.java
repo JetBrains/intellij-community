@@ -109,6 +109,10 @@ public class PyPIPackageUtil {
     return Pair.create(pyPackage, null);
   }
 
+  public static boolean isPyPIRepository(@Nullable final String repository) {
+    return repository != null && repository.startsWith(PYPI_HOST);
+  }
+
   public void fillAdditionalPackages(@NotNull final String url) {
     final boolean simpleIndex = url.endsWith("simple/");
     final List<String> packagesList = parsePyPIListFromWeb(url, simpleIndex);
