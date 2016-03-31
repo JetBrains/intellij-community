@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * User : catherine
@@ -84,7 +87,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
     text = addLeadingSpaces(text, NOT_INDENT_FILTER, indentSize, indentChar);
     int firstLineIndent = StringUtil.findFirst(text, NOT_INDENT_FILTER);
-    final String indentText = getIndentText(file, document, caretOffset, lineNumber, firstLineIndent);
+    final String indentText = getIndentText(file, document, caretOffset, lineNumber);
 
     int toRemove = calculateIndentToRemove(text, NOT_INDENT_FILTER);
 
@@ -135,7 +138,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   private static String getIndentText(@NotNull final PsiFile file,
                                       @NotNull final Document document,
                                       int caretOffset,
-                                      int lineNumber, int firstLineIndent) {
+                                      int lineNumber) {
 
     PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS != null) {
@@ -147,27 +150,28 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       }
     }
 
-    int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
-    String indentText = document.getText(TextRange.create(lineStartOffset, caretOffset));
-
     if (nonWS != null && document.getLineNumber(nonWS.getTextOffset()) == lineNumber) {
-      indentText = document.getText(TextRange.create(lineStartOffset, nonWS.getTextOffset()));
+      return PyIndentUtil.getLineIndent(document, lineNumber);
     }
-    else if (caretOffset == lineStartOffset) {
-      final PsiElement ws = file.findElementAt(lineStartOffset);
-      if (ws != null) {
-        final String wsText = ws.getText();
-        final List<String> strings = StringUtil.split(wsText, "\n");
-        if (strings.size() >= 1) {
-          indentText = strings.get(0);
-        }
+
+    int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
+    final PsiElement ws = file.findElementAt(lineStartOffset);
+    if (ws != null) {
+      // Beginning of empty definition, e.g. class or function header without the actual body
+      PyStatementList statementList = ObjectUtils.chooseNotNull(as(ws.getNextSibling(), PyStatementList.class),
+                                                                as(ws.getPrevSibling(), PyStatementList.class));
+      
+      if (statementList != null && statementList.getStatements().length == 0) {
+        return PyIndentUtil.getExpectedElementIndent(statementList);
       }
-      // Top-level, there should be no indentation
-      if (PsiTreeUtil.getParentOfType(ws, PyStatementList.class) == null) {
-        return "";
+
+      final PyStatementListContainer container = PsiTreeUtil.getParentOfType(ws, PyStatementListContainer.class);
+      if (container != null) {
+        return PyIndentUtil.getElementIndent(container.getStatementList());
       }
+      
     }
-    return indentText;
+    return document.getText(TextRange.create(lineStartOffset, caretOffset));
   }
 
   private static int calculateIndentToRemove(@NotNull String text, @NotNull final CharFilter filter) {
