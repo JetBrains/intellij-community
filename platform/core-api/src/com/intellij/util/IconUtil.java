@@ -152,7 +152,7 @@ public class IconUtil {
         }
 
         // render without locked icon patch since we are going to apply it later anyway
-        icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
+        icon = patcher.patchIcon(icon, file, BitUtil.clear(flags, Iconable.ICON_FLAG_READ_STATUS), project);
       }
 
       if (file.is(VFileProperty.SYMLINK)) {

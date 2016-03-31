@@ -76,7 +76,7 @@ void foo(@ClosureParams(value=FromString,options="java.lang.String") Closure cl)
 
 @CompileStatic
 def test() {
-    foo { <error descr="Expected String">Date</error> str -> println str}
+    foo { <error descr="Expected 'java.lang.String', found 'java.util.Date'">Date</error> str -> println str}
 }
 '''
   }
@@ -100,7 +100,7 @@ void foo(@ClosureParams(value=FromString,options="java.util.List<java.lang.Strin
 
 @CompileStatic
 def test() {
-    foo { <error descr="Expected List<String>">List<Date></error> d -> d.each { println it } }
+    foo { <error descr="Expected 'java.util.List<java.lang.String>', found 'java.util.List<java.util.Date>'">List<Date></error> d -> d.each { println it } }
 }
 '''
   }
@@ -270,32 +270,6 @@ def test() {
 
     tor.foo { r, e -> r.times { e.each { it.bar() } } }
     tor.foo { it.times { println 'polymorphic' } }
-}
-'''
-  }
-
-  void 'test from string with non fqn options no error'() {
-    addBigInteger()
-    myFixture.addClass('''
-import groovy.transform.stc.ClosureParams;
-import groovy.transform.stc.FromString;
-import groovy.lang.Closure;
-
-public class A {
-  public static void foo(@ClosureParams(value = FromString.class, options = "BigInteger") Closure c) {}
-}
-''')
-    testHighlighting '''\
-import groovy.transform.CompileStatic
-
-@CompileStatic
-class B {
-  def foo(BufferedReader r) {
-    r.eachLine { String a -> }
-  }
-  def bar() {
-    A.foo { BigInteger b -> }
-  }
 }
 '''
   }

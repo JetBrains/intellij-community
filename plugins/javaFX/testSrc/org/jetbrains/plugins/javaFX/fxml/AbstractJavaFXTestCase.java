@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;

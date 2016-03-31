@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.*;
+import com.intellij.util.BitUtil;
 import gnu.trove.TLongArrayList;
 
 import java.util.ArrayList;
@@ -101,7 +102,7 @@ public class Translator {
     for (String aSuper : def.mySupers) {
       superList.add(id(nameEnvironment, aSuper));
     }
-    if ((def.myMods & IndexTree.ENUM) != 0) {
+    if (BitUtil.isSet(def.myMods, IndexTree.ENUM)) {
       superList.add(nameEnvironment.java_lang_Enum);
     }
     ArrayList<Declaration> innerDefList = new ArrayList<Declaration>();

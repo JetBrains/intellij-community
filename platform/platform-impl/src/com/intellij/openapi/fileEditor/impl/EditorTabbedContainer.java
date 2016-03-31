@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.TimedDeadzone;
@@ -445,7 +446,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       }
 
       if (window != null) {
-        if ((e.getModifiers() & InputEvent.ALT_MASK) != 0) {
+        if (BitUtil.isSet(e.getModifiers(), InputEvent.ALT_MASK)) {
           window.closeAllExcept(file);
         }
         else {

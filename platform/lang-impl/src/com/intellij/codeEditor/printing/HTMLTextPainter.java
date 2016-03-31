@@ -39,6 +39,7 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -368,10 +369,10 @@ class HTMLTextPainter {
         Color foreColor = textAttributes.getForegroundColor();
         if (foreColor == null) foreColor = scheme.getDefaultForeground();
         writer.write("color: " + colorToHtml(foreColor) + "; ");
-        if ((textAttributes.getFontType() & Font.BOLD) != 0) {
+        if (BitUtil.isSet(textAttributes.getFontType(), Font.BOLD)) {
           writer.write("font-weight: bold; ");
         }
-        if ((textAttributes.getFontType() & Font.ITALIC) != 0) {
+        if (BitUtil.isSet(textAttributes.getFontType(), Font.ITALIC)) {
           writer.write("font-style: italic; ");
         }
         writer.write("}\n");

@@ -700,7 +700,11 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public boolean isVisible() {
-    return myPopup != null;
+    if (myPopup == null) return false;
+    Window window = myPopup.getWindow();
+    if (window != null && window.isShowing()) return true;
+    if (LOG.isDebugEnabled()) LOG.debug("window hidden, popup's state: " + myState);
+    return false;
   }
 
   @Override

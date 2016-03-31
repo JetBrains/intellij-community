@@ -244,13 +244,13 @@ public class MergeFromTheirsResolver {
     }
 
     @Override
-    public void apply(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+    public void apply(@NotNull List<FilePatch> remaining, @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
                       @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       final List<FilePatch> patches;
       try {
-        patches = ApplyPatchSaveToFileExecutor.patchGroupsToOneGroup(patchGroups, myBaseDir);
+        patches = ApplyPatchSaveToFileExecutor.patchGroupsToOneGroup(patchGroupsToApply, myBaseDir);
       }
       catch (IOException e) {
         myInner.handleException(e, true);

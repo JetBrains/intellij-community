@@ -48,6 +48,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -235,7 +236,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     Project project = editor.getProject();
     if (project == null) return null;
 
-    if ((flags & LOOKUP_ITEM_ACCEPTED) != 0) {
+    if (BitUtil.isSet(flags, LOOKUP_ITEM_ACCEPTED)) {
       PsiElement element = getTargetElementFromLookup(project);
       if (element != null) {
         return element;
@@ -249,7 +250,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     offset = adjustOffset(file, document, offset);
 
     PsiElement element = file.findElementAt(offset);
-    if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
+    if (BitUtil.isSet(flags, REFERENCED_ELEMENT_ACCEPTED)) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
       //if (referenceOrReferencedElement == null) {
       //  return getReferenceOrReferencedElement(file, editor, flags, offset);
@@ -261,7 +262,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     if (element == null) return null;
 
-    if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
+    if (BitUtil.isSet(flags, ELEMENT_NAME_ACCEPTED)) {
       if (element instanceof PsiNamedElement) return element;
       return getNamedElement(element, offset - element.getTextRange().getStartOffset());
     }

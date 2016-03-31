@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -19,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -26,29 +28,29 @@ import java.util.regex.Matcher;
 /**
  * @author Irina.Chernushina on 2/13/2016.
  */
-public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFactory {
+public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFactory<File> {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderFactory");
 
   @Override
-  public JsonSchemaFileProvider[] getProviders(@Nullable Project project) {
-    final List<JsonSchemaFileProvider> list = new ArrayList<JsonSchemaFileProvider>();
+  public List<JsonSchemaFileProvider<File>> getProviders(@Nullable Project project) {
+    final List<JsonSchemaFileProvider<File>> list = new ArrayList<>();
 
     if (project != null) {
       processConfiguration(project, JsonSchemaMappingsProjectConfiguration.getInstance(project), list);
     }
 
-    return list.isEmpty() ? EMPTY : list.toArray(new JsonSchemaFileProvider[list.size()]);
+    return list.isEmpty() ? Collections.emptyList() : list;
   }
 
   private static void processConfiguration(@Nullable Project project, @NotNull final JsonSchemaMappingsConfigurationBase configuration,
-                                           @NotNull final List<JsonSchemaFileProvider> list) {
+                                           @NotNull final List<JsonSchemaFileProvider<File>> list) {
     final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> map = configuration.getStateMap();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : map.values()) {
       list.add(new MyProvider(project, info.getName(), configuration.convertToAbsoluteFile(info.getRelativePathToSchema()), info.getPatterns()));
     }
   }
 
-  private static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
+  private static class MyProvider implements JsonSchemaFileProvider<File>, JsonSchemaImportedProviderMarker {
     @Nullable private final Project myProject;
     @NotNull private final String myName;
     @NotNull private final File myFile;
@@ -110,6 +112,12 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
           }
         }
       }
+    }
+
+    @NotNull
+    @Override
+    public Pair<SchemaType, File> getKey() {
+      return Pair.create(SchemaType.userSchema, myFile);
     }
 
     @NotNull

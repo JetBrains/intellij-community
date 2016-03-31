@@ -2,15 +2,17 @@ package com.jetbrains.jsonSchema;
 
 
 import com.intellij.json.JsonFileType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
 import java.io.StringReader;
 
-public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
+public class JsonSchemaTestProvider implements JsonSchemaFileProvider<String> {
 
   private final String mySchemaText;
 
@@ -33,5 +35,11 @@ public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
   @Override
   public String getName() {
     return "test";
+  }
+
+  @NotNull
+  @Override
+  public Pair<SchemaType, String> getKey() {
+    return Pair.create(SchemaType.userSchema, mySchemaText);
   }
 }

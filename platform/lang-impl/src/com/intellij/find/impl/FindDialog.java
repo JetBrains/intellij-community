@@ -481,7 +481,7 @@ public class FindDialog extends DialogWrapper {
       if (component instanceof EditorTextField) {
         final Document document = ((EditorTextField)component).getDocument();
         if (document != null) {
-          TransactionGuard.submitTransaction(() -> PsiDocumentManager.getInstance(myProject).commitDocument(document));
+          PsiDocumentManager.getInstance(myProject).commitDocument(document);
         }
       }
 
@@ -546,12 +546,7 @@ public class FindDialog extends DialogWrapper {
     final Alarm alarm = mySearchRescheduleOnCancellationsAlarm;
     if (alarm == null || alarm.isDisposed()) return;
     alarm.cancelAllRequests();
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        findSettingsChanged();
-      }
-    }, 100);
+    alarm.addRequest(() -> TransactionGuard.submitTransaction(myDisposable, this::findSettingsChanged), 100);
   }
 
   private void finishPreviousPreviewSearch() {

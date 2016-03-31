@@ -395,7 +395,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         // because service init requires a read action
         // and there could be a deadlock with a write action waiting already on EDT
         // if current thread is inside a non-cancellable read action
-        GroovyDslExecutor.getIdeaVersion();
+        GdslScriptBase.getIdeaVersion();
         DslActivationStatus.getInstance();
 
         int count = 0;

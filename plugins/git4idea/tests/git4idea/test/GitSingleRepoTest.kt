@@ -13,31 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test;
+package git4idea.test
 
-import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vcs.Executor.cd
+import git4idea.repo.GitRepository
 
-import static com.intellij.openapi.vcs.Executor.cd;
+abstract class GitSingleRepoTest : GitPlatformTest() {
 
-public abstract class GitSingleRepoTest extends GitPlatformTest {
+  protected lateinit var myRepo: GitRepository
 
-  @NotNull protected GitRepository myRepo;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myRepo = GitTestUtil.createRepository(myProject, myProjectPath, makeInitialCommit());
-    cd(myProjectPath);
+  @Throws(Exception::class)
+  override fun setUp() {
+    super.setUp()
+    myRepo = GitTestUtil.createRepository(myProject, myProjectPath, makeInitialCommit())
+    cd(myProjectPath)
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
+  protected open fun makeInitialCommit(): Boolean {
+    return true
   }
-
-  protected boolean makeInitialCommit() {
-    return true;
-  }
-
 }

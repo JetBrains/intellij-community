@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.ValidatingComponent;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
@@ -250,7 +251,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
               textField.setFont(font.deriveFont(font.getStyle() | Font.ITALIC));
             } else {
               textField.setForeground(SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
-              textField.setFont(font.deriveFont(font.getStyle() & (~Font.ITALIC)));
+              textField.setFont(font.deriveFont(BitUtil.clear(font.getStyle(), Font.ITALIC)));
             }
             repaintTable();
           }

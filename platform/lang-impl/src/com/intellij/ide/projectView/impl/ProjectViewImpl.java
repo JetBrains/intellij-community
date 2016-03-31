@@ -199,8 +199,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     constructUi();
 
-
-    Disposer.register(myProject, this);
     myFileEditorManager = fileEditorManager;
 
     myConnection = project.getMessageBus().connect();
@@ -502,7 +500,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     IdeFocusManager.getInstance(myProject).requestFocus(newPane.getComponentToFocus(), false);
 
     newPane.restoreExpandedPaths();
-    if (selectedPsiElement != null) {
+    if (selectedPsiElement != null && newSubId != null) {
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(selectedPsiElement);
       if (virtualFile != null && ((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, new SelectInContext() {
         @Override

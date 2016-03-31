@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
+import com.intellij.util.BitUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -59,7 +60,7 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       if (isForcedLeaf) {
         attributes = attributes.derive(attributes.getStyle(), JBColor.LIGHT_GRAY, attributes.getBgColor(), attributes.getWaveColor());
       }
-      boolean inUsage = (attributes.getFontStyle() & Font.BOLD) != 0;
+      boolean inUsage = BitUtil.isSet(attributes.getFontStyle(), Font.BOLD);
       if (isInsideContainer && inUsage) {
         //Color darker = Color.BLACK;//attributes.getBgColor() == null ? Color.BLACK : attributes.getBgColor().darker();
         //attributes = attributes.derive(SimpleTextAttributes.STYLE_OPAQUE, attributes.getFgColor(), UIUtil.getTreeBackground().brighter(), attributes.getWaveColor());

@@ -114,6 +114,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     return myCbSearchForTextOccurences.isSelected();
   }
 
+  @NotNull
   public String getClassName() {
     return myClassNameField.getText().trim();
   }
@@ -256,7 +257,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     final String className = getClassName();
     final String parameterName = getParameterName();
     PsiManager manager = PsiManager.getInstance(myProject);
-    if ("".equals(className)) {
+    if (className.isEmpty()) {
       message = RefactoringBundle.message("no.class.name.specified");
     }
     else {
@@ -265,7 +266,7 @@ public class MoveInnerDialog extends MoveDialogBase {
       }
       else {
         if (myCbPassOuterClass.isSelected()) {
-          if ("".equals(parameterName)) {
+          if (parameterName != null && parameterName.isEmpty()) {
             message = RefactoringBundle.message("no.parameter.name.specified");
           }
           else {
@@ -285,15 +286,29 @@ public class MoveInnerDialog extends MoveDialogBase {
               }
             }
           }
-          else if (myTargetContainer instanceof PsiDirectory) {
-            message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)myTargetContainer, className);
 
-            if (message == null) {
-              final String packageName = myPackageNameField.getText().trim();
-              if (packageName.length() > 0 && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
-                message = RefactoringMessageUtil.getIncorrectIdentifierMessage(packageName);
-              }
-            }
+        }
+      }
+    }
+
+    PsiElement target = null;
+
+    if (message == null) {
+      JavaRefactoringSettings.getInstance().MOVE_INNER_PREVIEW_USAGES = isPreviewUsages();
+      if (myCbPassOuterClass.isSelected() && mySuggestedNameInfo != null) {
+        mySuggestedNameInfo.nameChosen(getParameterName());
+      }
+
+      target = getTargetContainer();
+      if (target == null) return;
+
+      if (target instanceof PsiDirectory) {
+        message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)target, className);
+
+        if (message == null) {
+          final String packageName = myPackageNameField.getText().trim();
+          if (packageName.length() > 0 && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
+            message = RefactoringMessageUtil.getIncorrectIdentifierMessage(packageName);
           }
         }
       }
@@ -308,13 +323,6 @@ public class MoveInnerDialog extends MoveDialogBase {
       return;
     }
 
-    JavaRefactoringSettings.getInstance().MOVE_INNER_PREVIEW_USAGES = isPreviewUsages();
-    if (myCbPassOuterClass.isSelected() && mySuggestedNameInfo != null) {
-      mySuggestedNameInfo.nameChosen(getParameterName());
-    }
-
-    final PsiElement target = getTargetContainer();
-    if (target == null) return;
     myProcessor.setup(getInnerClass(), className, isPassOuterClass(), parameterName,
                       isSearchInComments(), isSearchInNonJavaFiles(), target);
 

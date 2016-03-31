@@ -16,39 +16,55 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
+import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 
 public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static final Logger LOGGER = Logger.getInstance(JsonSchemaServiceImpl.class);
   private static final Logger RARE_LOGGER = RareLogger.wrap(LOGGER, false);
   @Nullable
   private final Project myProject;
-  private final ConcurrentMap<JsonSchemaFileProvider, JsonSchemaObjectCodeInsightWrapper> myWrappers = ContainerUtil.newConcurrentMap();
-  private final AtomicBoolean myExportedDefinitionsInitialized;
+  private final Object myLock;
+  private final Map<Pair<SchemaType, ?>, JsonSchemaObjectCodeInsightWrapper> myWrappers = new HashMap<>();
+  private final JsonSchemaExportedDefinitions myDefinitions;
 
   public JsonSchemaServiceImpl(@Nullable Project project) {
+    myLock = new Object();
     myProject = project;
-    myExportedDefinitionsInitialized = new AtomicBoolean();
+    myDefinitions = new JsonSchemaExportedDefinitions(project,
+                                                      new Consumer<PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>>() {
+                                                        @Override
+                                                        public void consume(PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>> consumer) {
+                                                          iterateSchemas(consumer);
+                                                        }
+                                                      });
+    if (project != null) {
+      final JsonSchemaVfsListener listener = new JsonSchemaVfsListener(project, this);
+      VirtualFileManager.getInstance().addVirtualFileListener(listener, project);
+    }
   }
 
   @NotNull
-  protected JsonSchemaProviderFactory[] getProviderFactories() {
+  protected JsonSchemaProviderFactory<?>[] getProviderFactories() {
     return JsonSchemaProviderFactory.EP_NAME.getExtensions();
   }
 
@@ -68,6 +84,35 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   public boolean hasSchema(@Nullable VirtualFile file) {
     CodeInsightProviders wrapper = getWrapper(file);
     return wrapper != null;
+  }
+
+  @Override
+  public boolean isSchemaFile(@NotNull File file, @NotNull final Consumer<String> errorConsumer) {
+    final String text;
+    try {
+      text = FileUtil.loadFile(file);
+    }
+    catch (IOException e) {
+      errorConsumer.consume(e.getMessage());
+      return false;
+    }
+    try {
+      return JsonSchemaReader.isJsonSchema(getDefinitions(), Pair.create(SchemaType.userSchema, file), text, errorConsumer);
+    }
+    catch (IOException e) {
+      reset();
+      errorConsumer.consume(e.getMessage());
+      return false;
+    }
+  }
+
+  @NotNull
+  private JsonSchemaExportedDefinitions getDefinitions() {
+    final JsonSchemaExportedDefinitions definitions;
+    synchronized (myLock) {
+      definitions = myDefinitions;
+    }
+    return definitions;
   }
 
   @Nullable
@@ -92,11 +137,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Nullable
-  private JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider provider) {
+  private JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider<?> provider) {
     Reader reader = provider.getSchemaReader();
     try {
       if (reader != null) {
-        final JsonSchemaObject resultObject = new JsonSchemaReader(myProject).read(reader, true);
+        final JsonSchemaObject resultObject = new JsonSchemaReader(provider.getKey()).read(reader, getDefinitions());
         return new JsonSchemaObjectCodeInsightWrapper(provider.getName(), resultObject).setUserSchema(provider instanceof JsonSchemaImportedProviderMarker);
       }
     }
@@ -117,7 +162,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public void reset() {
-    myWrappers.clear();
+    synchronized (myLock) {
+      myWrappers.clear();
+      myDefinitions.reset();
+    }
   }
 
   @Nullable
@@ -134,48 +182,56 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return null;
   }
 
-  @Override
-  public void refreshExportedDefinitions() {
-    myExportedDefinitionsInitialized.getAndSet(false);
-    ensureExportedDefinitionsInitialized();
-  }
-
-  @Override
-  public void ensureExportedDefinitionsInitialized() {
-    if (myExportedDefinitionsInitialized.get()) return;
-    final JsonSchemaProviderFactory[] factories = getProviderFactories();
-    for (JsonSchemaProviderFactory factory : factories) {
-      for (JsonSchemaFileProvider provider : factory.getProviders(myProject)) {
-        final Reader reader = provider.getSchemaReader();
-        if (reader == null) continue;
-        try {
-          final JsonSchemaObject resultObject = new JsonSchemaReader(myProject).read(reader, false);
-          JsonSchemaReader.registerObjectsExportedDefinitions(myProject, resultObject);
-        }
-        catch (IOException e) {
-          logException(provider, e);
-        }
+  public void iterateSchemas(@NotNull final PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>> consumer) {
+    final JsonSchemaProviderFactory<?>[] factories = getProviderFactories();
+    for (JsonSchemaProviderFactory<?> factory : factories) {
+      for (JsonSchemaFileProvider<?> provider : factory.getProviders(myProject)) {
+        consumer.consume(provider.getKey(),
+                                     new Consumer<Consumer<JsonSchemaObject>>() {
+                                       @Override
+                                       public void consume(Consumer<JsonSchemaObject> consumer) {
+                                         final Reader reader = provider.getSchemaReader();
+                                         if (reader == null) return;
+                                         try {
+                                           final JsonSchemaObject resultObject = new JsonSchemaReader(provider.getKey()).read(reader, null);
+                                           consumer.consume(resultObject);
+                                         }
+                                         catch (IOException e) {
+                                           logException(provider, e);
+                                         }
+                                       }
+                                     });
       }
     }
-    myExportedDefinitionsInitialized.getAndSet(true);
+  }
+
+  public void dropProviderFromCache(@NotNull final Pair<SchemaType, File> key) {
+    synchronized (myLock) {
+      final Set<Pair<SchemaType, ?>> dirtySet = myDefinitions.dropKey(key);
+      final Iterator<Pair<SchemaType, ?>> iterator = myWrappers.keySet().iterator();
+      while (iterator.hasNext()) {
+        final Pair<SchemaType, ?> current = iterator.next();
+        if (dirtySet.contains(current)) iterator.remove();
+      }
+    }
   }
 
   @Nullable
   private List<JsonSchemaObjectCodeInsightWrapper> getWrappers(@Nullable VirtualFile file) {
     if (file == null) return null;
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = new ArrayList<>();
-    JsonSchemaProviderFactory[] factories = getProviderFactories();
-    for (JsonSchemaProviderFactory factory : factories) {
-      for (JsonSchemaFileProvider provider : factory.getProviders(myProject)) {
+    JsonSchemaProviderFactory<?>[] factories = getProviderFactories();
+    for (JsonSchemaProviderFactory<?> factory : factories) {
+      for (JsonSchemaFileProvider<?> provider : factory.getProviders(myProject)) {
         if (provider.isAvailable(file)) {
-          JsonSchemaObjectCodeInsightWrapper wrapper = myWrappers.get(provider);
-          if (wrapper == null) {
-            JsonSchemaObjectCodeInsightWrapper newWrapper = createWrapper(provider);
-            if (newWrapper == null) return null;
-            myWrappers.putIfAbsent(provider, newWrapper);
-            wrapper = myWrappers.get(provider);
-          }
-          if (wrapper != null) {
+          final Pair<SchemaType, ?> key = provider.getKey();
+          synchronized (myLock) {
+            JsonSchemaObjectCodeInsightWrapper wrapper = myWrappers.get(key);
+            if (wrapper == null) {
+              wrapper = createWrapper(provider);
+              if (wrapper == null) return null;
+              myWrappers.putIfAbsent(key, wrapper);
+            }
             wrappers.add(wrapper);
           }
         }

@@ -51,5 +51,6 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="xml-analysis-impl" />
     <orderEntry type="module" module-name="xml-psi-impl" />
+    <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
   </component>
 </module>

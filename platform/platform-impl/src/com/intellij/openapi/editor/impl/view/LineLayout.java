@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -469,7 +470,7 @@ abstract class LineLayout {
     }
     
     private boolean isRtl() {
-      return (level & 1) != 0;
+      return BitUtil.isSet(level, 1);
     }
     
     private Chunk[] getChunks() {

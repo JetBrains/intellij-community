@@ -332,24 +332,17 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                                           @Nullable String title,
                                                           @NotNull List<String> contentTitles,
                                                           @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
-    if (fileContents.size() != 3) throw new IllegalArgumentException();
-    if (contentTitles.size() != 3) throw new IllegalArgumentException();
-
-    final Document outputDocument = FileDocumentManager.getInstance().getDocument(output);
-    if (outputDocument == null) throw new InvalidDiffRequestException("Can't get output document: " + output.getPresentableUrl());
-    if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only: " + output.getPresentableUrl());
-
-    DocumentContent outputContent = myContentFactory.create(project, outputDocument);
-    CharSequence originalContent = outputDocument.getImmutableCharSequence();
-
-    List<DocumentContent> contents = new ArrayList<DocumentContent>(3);
+    List<byte[]> byteContents = new ArrayList<byte[]>(3);
     for (VirtualFile file : fileContents) {
-      DocumentContent document = myContentFactory.createDocument(project, file);
-      if (document == null) throw new InvalidDiffRequestException("Can't get text content: " + file.getPresentableUrl());
-      contents.add(document);
+      try {
+        byteContents.add(file.contentsToByteArray());
+      }
+      catch (IOException e) {
+        throw new InvalidDiffRequestException("Can't get text content: " + file.getPresentableUrl(), e);
+      }
     }
 
-    return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles, applyCallback);
+    return createTextMergeRequest(project, output, byteContents, title, contentTitles, applyCallback);
   }
 
   @NotNull

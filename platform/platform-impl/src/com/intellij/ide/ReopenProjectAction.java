@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.BitUtil;
 
 import java.awt.event.InputEvent;
 import java.io.File;
@@ -45,8 +46,8 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final int modifiers = e.getModifiers();
-    final boolean forceOpenInNewFrame = (modifiers & InputEvent.CTRL_MASK) != 0
-                                        || (modifiers & InputEvent.SHIFT_MASK) != 0
+    final boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
+                                        || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
                                         || e.getPlace() == ActionPlaces.WELCOME_SCREEN;
 
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());

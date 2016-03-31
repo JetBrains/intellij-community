@@ -28,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -198,7 +199,7 @@ public class FSRecords implements Forceable {
 
       int count = filelength / RECORD_SIZE;
       for (int n = 2; n < count; n++) {
-        if ((getFlags(n) & FREE_RECORD_FLAG) != 0) {
+        if (BitUtil.isSet(getFlags(n), FREE_RECORD_FLAG)) {
           myFreeRecords.add(n);
         }
       }
@@ -1514,7 +1515,7 @@ public class FSRecords implements Forceable {
     assert fileId > 0 : fileId;
     // TODO: This assertion is a bit timey, will remove when bug is caught.
     if (!lazyVfsDataCleaning) {
-      assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0 : "Accessing attribute of a deleted page: " + fileId + ":" + getName(fileId);
+      assert !BitUtil.isSet(getFlags(fileId), FREE_RECORD_FLAG) : "Accessing attribute of a deleted page: " + fileId + ":" + getName(fileId);
     }
   }
 
@@ -1940,7 +1941,7 @@ public class FSRecords implements Forceable {
       for (int id = 2; id < recordCount; id++) {
         int flags = getFlags(id);
         LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
-        if ((flags & FREE_RECORD_FLAG) != 0) {
+        if (BitUtil.isSet(flags, FREE_RECORD_FLAG)) {
           LOG.assertTrue(DbConnection.myFreeRecords.contains(id), "Record, marked free, not in free list: " + id);
         }
         else {
@@ -1963,8 +1964,8 @@ public class FSRecords implements Forceable {
     assert parentId >= 0 && parentId < recordCount;
     if (parentId > 0 && getParent(parentId) > 0) {
       int parentFlags = getFlags(parentId);
-      assert (parentFlags & FREE_RECORD_FLAG) == 0 : parentId + ": "+Integer.toHexString(parentFlags);
-      assert (parentFlags & PersistentFS.IS_DIRECTORY_FLAG) != 0 : parentId + ": "+Integer.toHexString(parentFlags);
+      assert !BitUtil.isSet(parentFlags, FREE_RECORD_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
+      assert BitUtil.isSet(parentFlags, PersistentFS.IS_DIRECTORY_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
     }
 
     String name = getName(id);

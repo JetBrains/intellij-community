@@ -40,9 +40,19 @@ import java.awt.*;
 import java.util.Set;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
+  private boolean myRequestFocus;
+
+  public ShowParameterInfoHandler() {
+    this(false);
+  }
+
+  public ShowParameterInfoHandler(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    invoke(project, editor, file, -1, null);
+    invoke(project, editor, file, -1, null, myRequestFocus);
   }
 
   @Override
@@ -57,7 +67,14 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return element;
   }
 
+  /**
+   * @deprecated use {@link #invoke(Project, Editor, PsiFile, int, PsiElement, boolean)} instead
+   */
   public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
+    invoke(project, editor, file, lbraceOffset, highlightedElement, false);
+  }
+
+  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -74,6 +91,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     );
 
     context.setHighlightedElement(highlightedElement);
+    context.setRequestFocus(requestFocus);
 
     final Language language = psiElement.getLanguage();
     ParameterInfoHandler[] handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +178,7 @@ public final class SwingCleanuper implements ApplicationComponent{
           if (!Registry.is("ide.mac.fix.accessibleLeak")) return;
 
           HierarchyEvent he = (HierarchyEvent)event;
-          if ((he.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
+          if (BitUtil.isSet(he.getChangeFlags(), HierarchyEvent.SHOWING_CHANGED)) {
             if (he.getComponent() != null && !he.getComponent().isShowing()) {
               Component c = he.getComponent();
               if (c instanceof JTextComponent) {

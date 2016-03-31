@@ -85,6 +85,23 @@ public class Foo {
 '''
   }
 
+  public void testWrongTypeParams() throws Exception {
+    myFixture.addClass 'package f; public class Foo {}'
+    myFixture.configureByText 'a.java', '''\
+public class Bar {
+  Fo<caret>o<String> foo;
+}
+'''
+    importClass()
+    myFixture.checkResult '''\
+import f.Foo;
+
+public class Bar {
+  Foo<String> foo;
+}
+'''
+  }
+
   public void testUseContext() {
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'

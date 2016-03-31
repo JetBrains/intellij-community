@@ -751,6 +751,11 @@
             implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler"/>
     </extensionPoint>
 
+    <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass"
+            implements="com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper"/>
+    </extensionPoint>
+
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
 
     <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
+import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -61,7 +62,7 @@ public class LookupManagerImpl extends LookupManager {
       public void hintShown(final Project project, final LightweightHint hint, final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
-          if (lookup != null && (flags & HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
+          if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {
             lookup.addLookupListener(new LookupAdapter() {
               @Override
               public void currentItemChanged(LookupEvent event) {
