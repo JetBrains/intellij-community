@@ -288,6 +288,8 @@ public class LineStatusTracker {
   public void release() {
     synchronized (myLock) {
       myReleased = true;
+      LOG.assertTrue(!myDuringRollback);
+
       myDocument.removeDocumentListener(myDocumentListener);
       ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
 
@@ -536,6 +538,8 @@ public class LineStatusTracker {
                               int beforeChangedLine2,
                               int linesShift,
                               int beforeTotalLines) {
+    LOG.assertTrue(!myReleased);
+
     List<Range> rangesBeforeChange = new ArrayList<Range>();
     List<Range> rangesAfterChange = new ArrayList<Range>();
     List<Range> changedRanges = new ArrayList<Range>();
