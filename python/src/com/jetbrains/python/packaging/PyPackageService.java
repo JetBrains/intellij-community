@@ -55,7 +55,7 @@ public class PyPackageService implements
 
   public void addRepository(String repository) {
     if (repository == null) return;
-    if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
+    if (PyPIPackageUtil.isPyPIRepository(repository)) {
       PYPI_REMOVED = false;
     }
     else {
@@ -67,7 +67,7 @@ public class PyPackageService implements
   public void removeRepository(final String repository) {
     if (additionalRepositories.contains(repository))
       additionalRepositories.remove(repository);
-    else if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
+    else if (PyPIPackageUtil.isPyPIRepository(repository)) {
       PYPI_REMOVED = true;
     }
   }
