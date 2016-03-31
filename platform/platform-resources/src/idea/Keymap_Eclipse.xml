@@ -291,7 +291,8 @@
       <keyboard-shortcut first-keystroke="control F" />
     </action>
     <action id="ReplaceInPath" />
-    <action id="Rerun">
+    <!-- Android Studio: Switch default Rerun action from "Rerun" to "Android.CleanRun" -->
+    <action id="Android.CleanRun">
       <keyboard-shortcut first-keystroke="control F11" />
     </action>
     <action id="RerunTests">

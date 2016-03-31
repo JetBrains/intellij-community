@@ -71,7 +71,8 @@
     <action id="Refresh">
       <keyboard-shortcut first-keystroke="control 5" />
     </action>
-    <action id="Rerun">
+    <!-- Android Studio: Switch default Rerun action from "Rerun" to "Android.CleanRun" -->
+    <action id="Android.CleanRun">
       <keyboard-shortcut first-keystroke="control 5" />
     </action>
     <action id="RestoreDefaultLayout">
