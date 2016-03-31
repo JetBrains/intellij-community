@@ -296,7 +296,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     var errors = prevErrors
     beforeSave(readonlyFiles)
 
-    super.doSave(saveSessions, readonlyFiles, errors)
+    errors = super.doSave(saveSessions, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
