@@ -22,8 +22,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +31,8 @@ import java.util.Map;
 @State(name = "PyPackageService", storages = @Storage("packages.xml"))
 public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {
-  public Map<String, Boolean> sdkToUsersite = new HashMap<String, Boolean>();
-  public List<String> additionalRepositories = new ArrayList<String>();
+  public Map<String, Boolean> sdkToUsersite = ContainerUtil.newConcurrentMap();
+  public List<String> additionalRepositories = ContainerUtil.createConcurrentList();
   public Map<String, String> PY_PACKAGES = ContainerUtil.newConcurrentMap();
   public String virtualEnvBasePath;
   public Boolean PYPI_REMOVED = false;
