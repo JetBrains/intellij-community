@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +40,7 @@ public class LocalSearchScope extends SearchScope {
 
   @NotNull
   private final PsiElement[] myScope;
+  private final VirtualFile[] myVirtualFiles;
   private final boolean myIgnoreInjectedPsi;
 
   public static final LocalSearchScope EMPTY = new LocalSearchScope(PsiElement.EMPTY_ARRAY);
@@ -64,10 +67,11 @@ public class LocalSearchScope extends SearchScope {
     myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
     Set<PsiElement> localScope = new LinkedHashSet<PsiElement>(scope.length);
-
+    Set<VirtualFile> virtualFiles = new THashSet<VirtualFile>(scope.length);
     for (final PsiElement element : scope) {
       LOG.assertTrue(element != null, "null element");
-      LOG.assertTrue(element.getContainingFile() != null, element.getClass().getName());
+      PsiFile containingFile = element.getContainingFile();
+      LOG.assertTrue(containingFile != null, element.getClass().getName());
       if (element instanceof PsiFile) {
         for (PsiFile file : ((PsiFile)element).getViewProvider().getAllFiles()) {
           if (file == null) throw new IllegalArgumentException("file "+element+" returned null in its getAllFiles()");
@@ -77,8 +81,13 @@ public class LocalSearchScope extends SearchScope {
       else if (element instanceof StubBasedPsiElement || element.getTextRange() != null){
         localScope.add(element);
       }
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(containingFile);
+      if (virtualFile != null) {
+        virtualFiles.add(virtualFile);
+      }
     }
     myScope = PsiUtilCore.toPsiElementArray(localScope);
+    myVirtualFiles = virtualFiles.isEmpty() ? VirtualFile.EMPTY_ARRAY : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   public boolean isIgnoreInjectedPsi() {
@@ -94,6 +103,11 @@ public class LocalSearchScope extends SearchScope {
   @NotNull
   public PsiElement[] getScope() {
     return myScope;
+  }
+
+  @NotNull
+  public VirtualFile[] getVirtualFiles() {
+    return myVirtualFiles;
   }
 
   public boolean equals(Object o) {
@@ -185,7 +199,7 @@ public class LocalSearchScope extends SearchScope {
       if (i > 0) {
         result.append(",");
       }
-      result.append(element.toString());
+      result.append(element);
     }
     //noinspection HardCodedStringLiteral
     return "LocalSearchScope:" + result;
@@ -235,12 +249,7 @@ public class LocalSearchScope extends SearchScope {
   }
 
   public boolean isInScope(VirtualFile file) {
-    for (PsiElement element : myScope) {
-      PsiFile containingFile = element.getContainingFile();
-      if (containingFile == null) continue;
-      if (Comparing.equal(containingFile.getVirtualFile(), file)) return true;
-    }
-    return false;
+    return ArrayUtil.indexOf(myVirtualFiles, file) != -1;
   }
 
   public boolean containsRange(PsiFile file, @NotNull TextRange range) {
