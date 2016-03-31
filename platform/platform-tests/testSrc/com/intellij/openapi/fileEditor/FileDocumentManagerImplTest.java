@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,8 +122,10 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     //noinspection UnusedAssignment
     document = null;
 
-    System.gc();
-    System.gc();
+    long start = System.currentTimeMillis();
+    while (myDocumentManager.getCachedDocument(file) != null && System.currentTimeMillis() < start + 10000) {
+      System.gc();
+    }
 
     document = myDocumentManager.getDocument(file);
     assertTrue(idCode != System.identityHashCode(document));
