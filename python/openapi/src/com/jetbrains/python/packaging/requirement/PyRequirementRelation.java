@@ -25,7 +25,9 @@ public enum PyRequirementRelation {
   GT(">"),
   GTE(">="),
   EQ("=="),
-  NE("!=");
+  NE("!="),
+  COMPATIBLE("~="),
+  STR_EQ("===");
 
   @NotNull
   private final String myValue;
