@@ -33,10 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
@@ -77,8 +74,9 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     if (expr != null) {
       final ASTNode node = expr.getNode();
       ASTNode prev = node.getTreePrev();
-      final ASTNode astNode = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(expr.getLanguage())
-        .generateWhitespaceBetweenTokens(prev, node);
+      final ASTNode astNode = prev instanceof PsiWhiteSpace ? null :
+                              LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(expr.getLanguage())
+                                .generateWhitespaceBetweenTokens(prev, node);
       if (astNode != null) {
         final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
         if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
