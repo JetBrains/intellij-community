@@ -1282,12 +1282,26 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void renameInputVariables() throws IncorrectOperationException {
     //when multiple input variables should have the same name, unique names are generated
     //without reverse, the second rename would rename variable without a prefix into second one though it was already renamed
+    LocalSearchScope localSearchScope = null;
     for (int i = myVariableDatum.length - 1; i >= 0;  i--) {
       VariableData data = myVariableDatum[i];
       PsiVariable variable = data.variable;
-      if (!data.name.equals(variable.getName())) {
-        for (PsiElement element : myElements) {
-          RefactoringUtil.renameVariableReferences(variable, data.name, new LocalSearchScope(element));
+      if (!data.name.equals(variable.getName()) || variable instanceof PsiField) {
+        if (localSearchScope == null) {
+          localSearchScope = new LocalSearchScope(myElements);
+        }
+
+        for (PsiReference reference : ReferencesSearch.search(variable, localSearchScope)) {
+          reference.handleElementRename(data.name);
+
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+            final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
+            if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
+              referenceExpression.setQualifierExpression(null);
+            }
+          }
         }
       }
     }
