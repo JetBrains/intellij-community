@@ -67,7 +67,7 @@ public class PyPIPackageUtil {
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
   private Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
-  private Set<RepoPackage> myAdditionalPackageNames;
+  private static Set<RepoPackage> ourAdditionalPackageNames = new TreeSet<RepoPackage>();
   @Nullable private volatile Set<String> myPackageNames = null;
 
 
@@ -116,7 +116,7 @@ public class PyPIPackageUtil {
     for (String pyPackage : packagesList) {
       if (simpleIndex) {
         final Pair<String, String> nameVersion = splitNameVersion(pyPackage);
-        myAdditionalPackageNames.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
+        ourAdditionalPackageNames.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
       }
       else {
         try {
@@ -126,7 +126,7 @@ public class PyPIPackageUtil {
             final String packageName = matcher.group(1);
             final String packageVersion = matcher.group(2);
             if (!packageName.contains(" "))
-              myAdditionalPackageNames.add(new RepoPackage(packageName, url, packageVersion));
+              ourAdditionalPackageNames.add(new RepoPackage(packageName, url, packageVersion));
           }
         }
         catch (UnsupportedEncodingException e) {
@@ -137,18 +137,17 @@ public class PyPIPackageUtil {
   }
 
   public Set<RepoPackage> getAdditionalPackageNames() {
-    if (myAdditionalPackageNames == null || myAdditionalPackageNames.isEmpty()) {
-      myAdditionalPackageNames = new TreeSet<RepoPackage>();
+    if (ourAdditionalPackageNames.isEmpty()) {
       for (String url : PyPackageService.getInstance().additionalRepositories) {
         fillAdditionalPackages(url);
       }
     }
-    return myAdditionalPackageNames;
+    return ourAdditionalPackageNames;
   }
 
   public void clearPackagesCache() {
     PyPackageService.getInstance().PY_PACKAGES.clear();
-    if (myAdditionalPackageNames != null) myAdditionalPackageNames.clear();
+    ourAdditionalPackageNames.clear();
   }
 
   public void addPackageDetails(@NonNls String packageName, Hashtable details) {
