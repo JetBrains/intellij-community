@@ -35,12 +35,11 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxRootTagDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
 import java.util.*;
@@ -145,7 +144,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
           appendClassName(((PsiMember)declaration).getContainingClass());
         }
       }
-      else if (descriptor instanceof JavaFxBuiltInAttributeDescriptor && FxmlConstants.TYPE.equals(descriptor.getName())) {
+      else if (descriptor instanceof JavaFxRootTagDescriptor.RootTagTypeAttributeDescriptor) {
         appendClassName(JavaFxPsiUtil.findPsiClass(attribute.getValue(), attribute));
       }
     }

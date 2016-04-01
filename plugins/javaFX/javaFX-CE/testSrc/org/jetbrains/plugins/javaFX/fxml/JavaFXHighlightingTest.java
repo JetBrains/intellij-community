@@ -358,6 +358,14 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testBoxedConstantValue() throws Exception {
+    doTest();
+  }
+
+  public void testFactoryMethod() throws Exception {
+    doTest();
+  }
+
   public void testPropertyTagCompatibleClass() throws Exception {
     doTest();
   }

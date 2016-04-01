@@ -115,11 +115,16 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
               return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
             }
           }
-        } else if (FxmlConstants.TYPE.equals(attributeName)) {
-          final PsiReference[] references = context.getReferences();
-          if (references.length == 0 || references[references.length - 1].resolve() == null) {
-            return "Cannot resolve class " + value;
+        }
+        else if (FxmlConstants.FX_CONSTANT.equals(attributeName)) {
+          final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
+          if (tagClass != null) {
+            final PsiField constField = tagClass.findFieldByName(value, true);
+            if (constField == null) {
+              return "Constant '" + value + "' is not found";
+            }
           }
+          return null;
         }
       }
     }
