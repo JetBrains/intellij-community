@@ -15,10 +15,15 @@
  */
 package com.intellij.psi.stubs;
 
+import com.google.common.io.CountingInputStream;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntIntHashMap;
+import com.intellij.util.containers.IntList;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -28,10 +33,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,7 +63,9 @@ public class StubSerializationHelper {
     return myNameStorage.enumerate(serializer.getExternalId());
   }
 
-  private void doSerialize(@NotNull Stub rootStub, @NotNull StubOutputStream stream) throws IOException {
+  private void doSerialize(@NotNull Stub rootStub, @NotNull StubOutputStream stream, OffsetsCounter offsets) throws IOException {
+    offsets.suggest(rootStub);
+
     final ObjectStubSerializer serializer = StubSerializationUtil.getSerializer(rootStub);
 
     DataInputOutputUtil.writeINT(stream, getClassId(serializer));
@@ -71,7 +75,7 @@ public class StubSerializationHelper {
     final int childrenSize = children.size();
     DataInputOutputUtil.writeINT(stream, childrenSize);
     for (int i = 0; i < childrenSize; ++i) {
-      doSerialize(children.get(i), stream);
+      doSerialize(children.get(i), stream, offsets);
     }
   }
 
@@ -81,6 +85,7 @@ public class StubSerializationHelper {
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
     boolean doDefaultSerialization = true;
 
+    final OffsetsCounter offsetsCounter = new OffsetsCounter(stubOutputStream);
     if (rootStub instanceof PsiFileStub) {
       final PsiFileStub[] roots = ((PsiFileStub)rootStub).getStubRoots();
       if (roots.length == 0) {
@@ -89,14 +94,14 @@ public class StubSerializationHelper {
         doDefaultSerialization = false;
         DataInputOutputUtil.writeINT(stubOutputStream, roots.length);
         for (PsiFileStub root : roots) {
-          doSerialize(root, stubOutputStream);
+          doSerialize(root, stubOutputStream, offsetsCounter);
         }
       }
     }
 
     if (doDefaultSerialization) {
       DataInputOutputUtil.writeINT(stubOutputStream, 1);
-      doSerialize(rootStub, stubOutputStream);
+      doSerialize(rootStub, stubOutputStream, offsetsCounter);
     }
     DataOutputStream resultStream = new DataOutputStream(stream);
     DataInputOutputUtil.writeINT(resultStream, storage.myStrings.size());
@@ -104,6 +109,9 @@ public class StubSerializationHelper {
     for(String s:storage.myStrings) {
       IOUtil.writeUTFFast(buffer, resultStream, s);
     }
+
+    offsetsCounter.serialize(resultStream);
+
     resultStream.write(out.getInternalBuffer(), 0, out.size());
   }
 
@@ -119,16 +127,8 @@ public class StubSerializationHelper {
   public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
-    final int numberOfStrings = DataInputOutputUtil.readINT(inputStream);
-    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-    storage.myStrings.ensureCapacity(numberOfStrings);
 
-    int i = 0;
-    while(i < numberOfStrings) {
-      String s = myStringInterner.get(IOUtil.readUTFFast(buffer, inputStream));
-      storage.myStrings.add(s);
-      ++i;
-    }
+    deserializeNamesAndOffsets(storage, inputStream);
 
     final int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
     if (stubFilesCount <= 0) {
@@ -156,12 +156,66 @@ public class StubSerializationHelper {
     return baseStub;
   }
 
+  private static final IntIntHashMap EMPTY_OFFSETS = new IntIntHashMap(0);
+
+  private IntIntHashMap deserializeNamesAndOffsets(FileLocalStringEnumerator storage,
+                                                    StubInputStream inputStream) throws IOException {
+    final int numberOfStrings = DataInputOutputUtil.readINT(inputStream);
+    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+    storage.myStrings.ensureCapacity(numberOfStrings);
+
+    int i = 0;
+    while(i < numberOfStrings) {
+      String s = myStringInterner.get(IOUtil.readUTFFast(buffer, inputStream));
+      storage.myStrings.add(s);
+      ++i;
+    }
+
+    final int cachedOffsetsCount = DataInputOutputUtil.readINT(inputStream);
+    IntIntHashMap offsets = EMPTY_OFFSETS;
+    if (cachedOffsetsCount > 0) {
+       offsets = OffsetsCounter.deserialize(inputStream, cachedOffsetsCount);
+    }
+    return offsets;
+  }
+
+  @Nullable
+  public List<Stub> deserializeRawStubs(@NotNull InputStream stream, IntList ids) throws IOException, SerializerNotFoundException {
+    FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
+    CountingStubInputStream inputStream = new CountingStubInputStream(stream, storage);
+    final IntIntHashMap offsets = deserializeNamesAndOffsets(storage, inputStream);
+    offsets.put(0, 0); // file offset
+    final int initialOffset = inputStream.getCount();
+    int prevOffset = initialOffset;
+    final ArrayList<Stub> result = new ArrayList<>(ids.size());
+    for (int i = 0; i < ids.size(); i++) {
+      final int id = ids.get(i);
+      if (!offsets.containsKey(id)) return null;
+      final int offset = offsets.get(id);
+      final int toSkip = offset - (prevOffset - initialOffset);
+      if (toSkip != inputStream.skip(toSkip)) return null;
+      final Stub stub = deserializeRaw(inputStream, null);
+      result.add(stub);
+      prevOffset = inputStream.getCount();
+    }
+    return result;
+  }
+
   String intern(String str) {
     return myStringInterner.get(str);
   }
 
   @NotNull
   private Stub deserialize(@NotNull StubInputStream stream, @Nullable Stub parentStub) throws IOException, SerializerNotFoundException {
+    Stub stub = deserializeRaw(stream, parentStub);
+    int childCount = DataInputOutputUtil.readINT(stream);
+    for (int i = 0; i < childCount; i++) {
+      deserialize(stream, stub);
+    }
+    return stub;
+  }
+
+  private Stub deserializeRaw(@NotNull StubInputStream stream, @Nullable Stub parentStub) throws IOException, SerializerNotFoundException {
     final int id = DataInputOutputUtil.readINT(stream);
     final ObjectStubSerializer serializer = getClassById(id);
     if (serializer == null) {
@@ -172,12 +226,7 @@ public class StubSerializationHelper {
       throw new SerializerNotFoundException("No serializer registered for stub: ID=" + id + ", externalId:" + externalId + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
     }
 
-    Stub stub = serializer.deserialize(stream, parentStub);
-    int childCount = DataInputOutputUtil.readINT(stream);
-    for (int i = 0; i < childCount; i++) {
-      deserialize(stream, stub);
-    }
-    return stub;
+    return serializer.deserialize(stream, parentStub);
   }
 
 
@@ -227,6 +276,59 @@ public class StubSerializationHelper {
 
     @Override
     public void force() {
+    }
+  }
+
+  private static class OffsetsCounter {
+    private int myCurrentStubId;
+    private final List<Pair<Integer, Integer>> myOffsets = new SmartList<>();
+    private final int myInitialOffset;
+    private final StubOutputStream myStubStream;
+
+    public OffsetsCounter(StubOutputStream stubStream) {
+      myStubStream = stubStream;
+      myCurrentStubId = 0;
+      myInitialOffset = stubStream.getWrittenBytesCount();
+    }
+
+    void suggest(Stub stub) {
+      if (stub instanceof StubBase && ((StubBase)stub).cacheOffset()) {
+        myOffsets.add(Pair.create(myCurrentStubId, myStubStream.getWrittenBytesCount() - myInitialOffset));
+      }
+      myCurrentStubId++;
+    }
+
+    void serialize(DataOutputStream outputStream) throws IOException {
+      DataInputOutputUtil.writeINT(outputStream, myOffsets.size());
+      for (Pair<Integer, Integer> offset : myOffsets) {
+        DataInputOutputUtil.writeINT(outputStream, offset.first);
+        DataInputOutputUtil.writeINT(outputStream, offset.second);
+      }
+    }
+
+    static IntIntHashMap deserialize(DataInputStream inputStream, int count) throws IOException {
+      final IntIntHashMap result = new IntIntHashMap();
+      while (count-- > 0) {
+        final int id = DataInputOutputUtil.readINT(inputStream);
+        final int offset = DataInputOutputUtil.readINT(inputStream);
+        result.put(id, offset);
+      }
+      return result;
+    }
+  }
+
+  private static class CountingStubInputStream extends StubInputStream {
+
+    public CountingStubInputStream(@NotNull InputStream in, @NotNull AbstractStringEnumerator nameStorage) {
+      super(new CountingInputStream(in), nameStorage);
+    }
+
+    int getCount() {
+      long count = ((CountingInputStream)in).getCount();
+      if (count > Integer.MAX_VALUE) {
+        Logger.getInstance(CountingStubInputStream.class).error("Stub is too large");
+      }
+      return (int)count;
     }
   }
 }

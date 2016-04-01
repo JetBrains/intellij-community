@@ -25,10 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.IdIterator;
 import org.jetbrains.annotations.NotNull;
@@ -155,4 +152,23 @@ public abstract class StubIndex {
     LOG.error("Invalid stub element type in index: " + file + ". found: " + psi + ". expected: " + requiredClass);
   }
   public abstract void forceRebuild(@NotNull Throwable e);
+
+  public abstract <Psi extends PsiElement> boolean processRawStubsAsElements(@NotNull final Project project,
+                                                                             @NotNull final Class<Psi> requiredClass,
+                                                                             @NotNull Collection<RawStub> rawStubs,
+                                                                             @NotNull PairProcessor<RawStub, ? super Psi> processor);
+
+  /**
+   * Processes stubs without building the whole stub tree and PSI elements. These stubs won't have parents and children, just body.
+   * If PSI tree (stub- or AST-based) is already build for some file, its PSI elements are processed with fallbackProcessor.
+   *
+   * {@link StubBase#cacheOffset()} method must be true for stubs processed with this method.
+   */
+  public abstract <Key, Psi extends PsiElement> boolean processRawStubs(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                        @NotNull Key key,
+                                                                        @NotNull Project project,
+                                                                        @Nullable GlobalSearchScope scope,
+                                                                        @NotNull Processor<RawStub> processor,
+                                                                        @NotNull Processor<? super Psi> fallbackProcessor,
+                                                                        @NotNull Class<Psi> requiredClass);
 }

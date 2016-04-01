@@ -15,10 +15,13 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.util.containers.IntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 /**
  * Author: dmitrylomov
@@ -33,6 +36,9 @@ public abstract class SerializationManagerEx extends SerializationManager {
 
   @NotNull
   public abstract Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException;
+
+  @Nullable
+  public abstract List<Stub> deserializeRawStubs(@NotNull InputStream stream, IntList ids) throws SerializerNotFoundException;
 
   public abstract boolean isNameStorageCorrupted();
 

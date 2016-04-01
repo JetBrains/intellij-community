@@ -26,7 +26,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 
 public class CumulativeStubVersion {
-  private static final int VERSION = 30  + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
+  private static final int VERSION = 31  + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
 
   public static int getCumulativeVersion() {
     int version = VERSION;

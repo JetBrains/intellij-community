@@ -25,12 +25,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.containers.IntList;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author yole
@@ -83,4 +85,9 @@ public class CoreStubTreeLoader extends StubTreeLoader {
     return false;
   }
 
+  @Nullable
+  @Override
+  public List<Stub> readRawStubsFromVFile(Project project, VirtualFile vFile, IntList ids) {
+    return null;
+  }
 }

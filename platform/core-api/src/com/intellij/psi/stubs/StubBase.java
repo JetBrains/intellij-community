@@ -237,4 +237,11 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   public String toString() {
     return getClass().getSimpleName();
   }
+
+  /**
+   * @return true if this stub is used with {@link com.intellij.psi.stubs.StubIndex#processRawStubs}
+   */
+  public boolean cacheOffset() {
+    return false;
+  }
 }

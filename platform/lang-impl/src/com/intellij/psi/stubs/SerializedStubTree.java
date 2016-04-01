@@ -20,6 +20,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.util.CompressionUtil;
+import com.intellij.util.containers.IntList;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 
 public class SerializedStubTree {
   private final byte[] myBytes;
@@ -86,6 +88,10 @@ public class SerializedStubTree {
       if (willIndexStub) return stubElement;
     }
     return SerializationManagerEx.getInstanceEx().deserialize(new UnsyncByteArrayInputStream(myBytes));
+  }
+
+  public List<Stub> getRawStubs(IntList ids) throws SerializerNotFoundException {
+    return SerializationManagerEx.getInstanceEx().deserializeRawStubs(new UnsyncByteArrayInputStream(myBytes), ids);
   }
 
   public boolean contentLengthMatches(long byteContentLength, int charContentLength) {

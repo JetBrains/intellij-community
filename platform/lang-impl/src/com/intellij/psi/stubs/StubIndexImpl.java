@@ -44,10 +44,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -300,6 +297,74 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           return true;
         }
         return myStubProcessingHelper.processStubsInFile(project, file, value, processor, requiredClass);
+      }
+    });
+  }
+
+  @Override
+  public <Psi extends PsiElement> boolean processRawStubsAsElements(@NotNull Project project,
+                                                                    @NotNull Class<Psi> requiredClass,
+                                                                    @NotNull Collection<RawStub> rawStubs,
+                                                                    @NotNull PairProcessor<RawStub, ? super Psi> processor) {
+    final Map<VirtualFile, List<RawStub>> stubsToProcess = new THashMap<>();
+    for (RawStub rawStub : rawStubs) {
+      List<RawStub> idList = stubsToProcess.get(rawStub.getFile());
+      if (idList == null) {
+        idList = new SmartList<>();
+        stubsToProcess.put(rawStub.getFile(), idList);
+      }
+      idList.add(rawStub);
+    }
+
+    for (Map.Entry<VirtualFile, List<RawStub>> entry : stubsToProcess.entrySet()) {
+      final List<RawStub> stubs = entry.getValue();
+      final StubIdList stubIdList;
+      if (stubs.size() == 1) {
+        stubIdList = new StubIdList(stubs.iterator().next().getId());
+      }
+      else {
+        stubs.sort(new Comparator<RawStub>() {
+          @Override
+          public int compare(RawStub o1, RawStub o2) {
+            return o1.getId() < o2.getId() ? -1 :
+                   o1.getId() > o2.getId() ? 1 : 0;
+          }
+        });
+        final int[] ids = new int[stubs.size()];
+        for (int i = 0; i < stubs.size(); i++) {
+          ids[i] = stubs.get(i).getId();
+        }
+        stubIdList = new StubIdList(ids, ids.length);
+      }
+      final Iterator<RawStub> iterator = stubs.iterator();
+      if (!myStubProcessingHelper.processStubsInFile(project, entry.getKey(), stubIdList, new Processor<Psi>() {
+        @Override
+        public boolean process(Psi psi) {
+          return processor.process(iterator.next(), psi);
+        }
+      }, requiredClass)) return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public <Key, Psi extends PsiElement> boolean processRawStubs(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                               @NotNull Key key,
+                                                               @NotNull Project project,
+                                                               @Nullable GlobalSearchScope scope,
+                                                               @NotNull Processor<RawStub> processor,
+                                                               @NotNull Processor<? super Psi> fallbackProcessor,
+                                                               @NotNull Class<Psi> requiredClass) {
+    return doProcessStubs(indexKey, key, project, scope, new StubIdListContainerAction(null, project) {
+      final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+      @Override
+      protected boolean process(int id, StubIdList value) {
+        final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+        if (file == null || scope != null && !scope.contains(file)) {
+          return true;
+        }
+        return myStubProcessingHelper.processRawStubsInFile(project, file, value, processor, fallbackProcessor, requiredClass);
       }
     });
   }

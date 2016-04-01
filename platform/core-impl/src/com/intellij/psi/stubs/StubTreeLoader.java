@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Function;
+import com.intellij.util.containers.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,10 @@ public abstract class StubTreeLoader {
 
   @Nullable
   public abstract ObjectStubTree readFromVFile(Project project, final VirtualFile vFile);
+
+  /** null means some stub wasn't found by id */
+  @Nullable
+  public abstract List<Stub> readRawStubsFromVFile(Project project, VirtualFile vFile, IntList ids);
   
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 

@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -169,6 +170,35 @@ public abstract class StubProcessingHelperBase {
       }
     }
     return true;
+  }
+
+  public <Psi extends PsiElement> boolean processRawStubsInFile(@NotNull final Project project,
+                                                                @NotNull final VirtualFile file,
+                                                                @NotNull StubIdList value,
+                                                                @NotNull final Processor<RawStub> processor,
+                                                                @NotNull final Processor<? super Psi> fallbackProcessor,
+                                                                @NotNull Class<Psi> requiredClass) {
+    PsiFile candidatePsiFile = PsiManager.getInstance(project).findFile(file);
+
+    if (candidatePsiFile != null) {
+      final FileViewProvider viewProvider = candidatePsiFile.getViewProvider();
+      final PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();
+      if (stubBindingRoot instanceof PsiFileImpl &&
+          ((PsiFileImpl)stubBindingRoot).derefStub() == null &&
+          ((PsiFileImpl)stubBindingRoot).getTreeElement() == null &&
+          ((PsiFileImpl)stubBindingRoot).getElementTypeForStubBuilder() != null) {
+        final List<Stub> stubs = StubTreeLoader.getInstance().readRawStubsFromVFile(project, file, value);
+        if (stubs != null) {
+          for (int i = 0; i < stubs.size(); i++) {
+            Stub stub = stubs.get(i);
+            if (!processor.process(new RawStub(stub, value.get(i), file))) return false;
+          }
+          return true;
+        }
+      }
+    }
+
+    return processStubsInFile(project, file, value, fallbackProcessor, requiredClass);
   }
 
   private void inconsistencyDetected(@NotNull ObjectStubTree stubTree, PsiFileWithStubSupport psiFile) {

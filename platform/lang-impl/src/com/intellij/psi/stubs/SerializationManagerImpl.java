@@ -19,15 +19,18 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.util.containers.IntList;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
@@ -177,6 +180,21 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
 
     try {
       return myStubSerializationHelper.deserialize(stream);
+    }
+    catch (IOException e) {
+      nameStorageCrashed();
+      LOG.info(e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Nullable
+  @Override
+  public List<Stub> deserializeRawStubs(@NotNull InputStream stream, IntList ids) throws SerializerNotFoundException {
+    initSerializers();
+
+    try {
+      return myStubSerializationHelper.deserializeRawStubs(stream, ids);
     }
     catch (IOException e) {
       nameStorageCrashed();

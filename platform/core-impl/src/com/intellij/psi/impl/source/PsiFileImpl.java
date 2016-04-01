@@ -750,7 +750,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Nullable
-  private StubTree derefStub() {
+  public StubTree derefStub() {
     return SoftReference.dereference(myStub);
   }
 

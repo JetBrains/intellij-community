@@ -31,6 +31,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.IntList;
 import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +77,24 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   @Override
   @Nullable
   public ObjectStubTree readFromVFile(Project project, final VirtualFile vFile) {
+    final SerializedStubTree stubTree = readSerializedStubTree(project, vFile);
+    if (stubTree == null) return null;
+
+    Stub stub;
+    try {
+      stub = stubTree.getStub(false);
+    }
+    catch (SerializerNotFoundException e) {
+      processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
+      return null;
+    }
+    ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
+    tree.setDebugInfo("created from index");
+    return tree;
+  }
+
+  @Nullable
+  private static SerializedStubTree readSerializedStubTree(Project project, final VirtualFile vFile) {
     if (DumbService.getInstance(project).isDumb()) {
       return null;
     }
@@ -98,29 +117,22 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       SerializedStubTree stubTree = datas.get(0);
       
       if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
-        return processError(vFile,
-                            "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
-                            ", doc=" + document +
-                            ", docSaved=" + saved +
-                            ", wasIndexedAlready=" + wasIndexedAlready +
-                            ", queried at " + vFile.getTimeStamp(),
-                            null);
+        processError(vFile,
+                     "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+                     ", doc=" + document +
+                     ", docSaved=" + saved +
+                     ", wasIndexedAlready=" + wasIndexedAlready +
+                     ", queried at " + vFile.getTimeStamp(),
+                     null);
+        return null;
       }
 
-      Stub stub;
-      try {
-        stub = stubTree.getStub(false);
-      }
-      catch (SerializerNotFoundException e) {
-        return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
-      }
-      ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
-      tree.setDebugInfo("created from index");
-      return tree;
+      return stubTree;
     }
     else if (size != 0) {
-      return processError(vFile, "Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id,
-                          null);
+      processError(vFile, "Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id,
+                   null);
+      return null;
     }
 
     return null;
@@ -141,7 +153,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     return -1;
   }
 
-  private static ObjectStubTree processError(final VirtualFile vFile, String message, @Nullable Exception e) {
+  private static void processError(final VirtualFile vFile, String message, @Nullable Exception e) {
     LOG.error(message, e);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -155,7 +167,6 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }, ModalityState.NON_MODAL);
 
     FileBasedIndex.getInstance().requestReindex(vFile);
-    return null;
   }
 
   @Override
@@ -188,5 +199,18 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     msg += "\nin many projects: " + hasPsiInManyProjects(file);
     msg += "\nindexing info: " + StubUpdatingIndex.getIndexingStampInfo(file);
     return msg;
+  }
+
+  @Override
+  public List<Stub> readRawStubsFromVFile(Project project, VirtualFile vFile, IntList ids) {
+    final SerializedStubTree tree = readSerializedStubTree(project, vFile);
+    if (tree == null) return null;
+    try {
+      return tree.getRawStubs(ids);
+    }
+    catch (SerializerNotFoundException e) {
+      processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
+      return null;
+    }
   }
 }
