@@ -78,7 +78,8 @@ public class MergeMethodArguments  {
       packageName = this.packageName;
     }
 
-    String text = StringUtil.getQualifiedName(packageName, className);
+    final String qualifiedName = StringUtil.getQualifiedName(packageName, className);
+    String text = qualifiedName;
     if (!typeParams.isEmpty()) {
       text += "<" + StringUtil.join(typeParams, new Function<PsiTypeParameter, String>() {
         @Override
@@ -94,7 +95,7 @@ public class MergeMethodArguments  {
       @Override
       public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
         return (PsiExpression)JavaCodeStyleManager.getInstance(project)
-          .shortenClassReferences(psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr), expr));
+          .shortenClassReferences(psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr, qualifiedName), expr));
       }
     };
 
@@ -130,21 +131,9 @@ public class MergeMethodArguments  {
     return false;
   }
 
-  private String getMergedParam(PsiCallExpression call) {
+  private String getMergedParam(PsiCallExpression call, String qualifiedName) {
     final PsiExpression[] args = call.getArgumentList().getExpressions();
-    StringBuffer newExpression = new StringBuffer();
-    final String qualifiedName;
-    if (myContainingClass != null) {
-      final String containingClassQName = myContainingClass.getQualifiedName();
-      if (containingClassQName != null) {
-        qualifiedName = containingClassQName + "." + className;
-      } else {
-        qualifiedName = className;
-      }
-    }
-    else {
-      qualifiedName = StringUtil.getQualifiedName(packageName, className);
-    }
+    StringBuilder newExpression = new StringBuilder();
     newExpression.append("new ").append(qualifiedName);
     if (!typeParams.isEmpty()) {
       final JavaResolveResult resolvant = call.resolveMethodGenerics();

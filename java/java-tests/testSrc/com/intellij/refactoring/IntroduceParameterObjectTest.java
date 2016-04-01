@@ -202,9 +202,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testIntegerIncremental() throws Exception {
-    checkExceptionThrown("Integer", "java.lang", "Cannot perform the refactoring.\n" +
-                                                 "Setters for the following fields are required:\n" +
-                                                 "value.\n");
+    checkExceptionThrown("Integer", "java.lang", "Setter for field 'value' is required");
   }
 
   private void checkExceptionThrown(String existingClassName, String existingClassPackage, String exceptionMessage) throws Exception {
@@ -227,7 +225,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testExistingBeanIfNoGeneration() throws Exception {
-    checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Setters for the following fields are required:\n" + "i.\n");
+    checkExceptionThrown("Param", "", "Setter for field 'i' is required");
   }
 
   public void testParamNameConflict() throws Exception {
@@ -244,6 +242,6 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testWrongBean() throws Exception {
-    checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Getters for the following fields are required:\n" + "i.\n");
+    checkExceptionThrown("Param", "", "Getter for field 'i' is required");
   }
 }
