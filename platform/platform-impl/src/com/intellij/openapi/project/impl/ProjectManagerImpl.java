@@ -347,6 +347,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
+    fireProjectOpened(project);
     try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE)) {
       DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () ->
         DumbService.getInstance(project).queueTask(new DumbModeTask() {
@@ -363,17 +364,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       );
     }
 
-    Runnable process = new Runnable() {
+    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
+    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            fireProjectOpened(project);
-          }
-        });
-
-        StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
         startupManager.runStartupActivities();
 
         // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
@@ -397,13 +391,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           }
         }, ModalityState.NON_MODAL);
       }
-    };
-    if (myProgressManager.getProgressIndicator() != null) {
-      process.run();
-      return true;
-    }
+    }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
 
-    boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
     if (!ok) {
       closeProject(project, false, false, true);
       notifyProjectOpenFailed();
@@ -460,28 +449,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
-    Project project = myProgressManager.run(new Task.WithResult<Project, IOException>(null, ProjectBundle.message("project.load.progress"), true) {
-      @Override
-      protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
-        final Project project = convertAndLoadProject(filePath);
-        if (project == null) {
-          return null;
-        }
-
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            openProject(project);
-          }
-        });
-        return project;
-      }
-    });
+    final Project project = convertAndLoadProject(filePath);
     if (project == null) {
       WelcomeFrame.showIfNoProjectOpened();
       return null;
     }
-    if (!project.isOpen()) {
+
+    // todo unify this logic with PlatformProjectOpenProcessor
+    if (!openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
@@ -490,6 +465,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       });
     }
+
     return project;
   }
 
@@ -538,10 +514,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   private Project loadProjectWithProgress(@NotNull final String filePath) {
     final ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
-    if (myProgressManager.getProgressIndicator() != null) {
-      initProject(project, null);
-      return project;
-    }
     try {
       myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Object, RuntimeException>() {
         @Override
