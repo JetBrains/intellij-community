@@ -267,8 +267,49 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         resourcesDirectorySet.filters = filterReaders
         sources.put(ExternalSystemSourceType.SOURCE, javaDirectorySet)
         sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
+
+        if(!resolveSourceSetDependencies && ideaTestSourceDirs) {
+          def testDirs = javaDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Iterable)
+          if(!testDirs.isEmpty()) {
+            javaDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+
+            def testDirectorySet = new DefaultExternalSourceDirectorySet()
+            testDirectorySet.name = javaDirectorySet.name
+            testDirectorySet.srcDirs = testDirs
+            testDirectorySet.outputDir = javaDirectorySet.outputDir
+            testDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
+            sources.put(ExternalSystemSourceType.TEST, testDirectorySet)
+          }
+
+          def testResourcesDirs = resourcesDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Iterable)
+          if(!testResourcesDirs.isEmpty()) {
+            resourcesDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+
+            def testResourcesDirectorySet = new DefaultExternalSourceDirectorySet()
+            testResourcesDirectorySet.name = resourcesDirectorySet.name
+            testResourcesDirectorySet.srcDirs = testResourcesDirs
+            testResourcesDirectorySet.outputDir = resourcesDirectorySet.outputDir
+            testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
+            sources.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet)
+          }
+        }
+
         if (generatedDirectorySet) {
           sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
+          if(!resolveSourceSetDependencies && ideaTestSourceDirs) {
+            def testGeneratedDirs = generatedDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Iterable)
+            if(!testGeneratedDirs.isEmpty()) {
+              generatedDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+
+              def testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet()
+              testGeneratedDirectorySet.name = generatedDirectorySet.name
+              testGeneratedDirectorySet.srcDirs = testGeneratedDirs
+              testGeneratedDirectorySet.outputDir = generatedDirectorySet.outputDir
+              testGeneratedDirectorySet.inheritedCompilerOutput = generatedDirectorySet.isCompilerOutputPathInherited()
+
+              sources.put(ExternalSystemSourceType.TEST_GENERATED, testGeneratedDirectorySet)
+            }
+          }
         }
 
         if (ideaPluginModule && !SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name) && !SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
@@ -300,7 +341,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     }
 
     def testSourceSet = result[SourceSet.TEST_SOURCE_SET_NAME]
-    if(ideaPluginModule && testSourceSet && ideaTestSourceDirs && !ideaSourceDirs.isEmpty()) {
+    if(ideaPluginModule && testSourceSet && ideaTestSourceDirs && !ideaTestSourceDirs.isEmpty()) {
       def testGradleSourceSet = sourceSets.findByName(SourceSet.TEST_SOURCE_SET_NAME)
       if(testGradleSourceSet) {
         def testSourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST]
