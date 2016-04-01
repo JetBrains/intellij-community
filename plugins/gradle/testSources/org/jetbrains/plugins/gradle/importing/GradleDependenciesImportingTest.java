@@ -64,6 +64,21 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleLibDepScope("project_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "api", "impl");
+
+    assertModuleModuleDepScope("project", "api", DependencyScope.COMPILE);
+
+    if(GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("1.12")) < 0) {
+      assertModuleModuleDepScope("project", "impl", DependencyScope.RUNTIME);
+    } else {
+      assertModuleModuleDepScope("project", "impl", DependencyScope.RUNTIME, DependencyScope.TEST);
+    }
+
+    assertModuleLibDepScope("project", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.TEST);
+    assertModuleLibDepScope("project", "Gradle: junit:junit:4.11", DependencyScope.TEST);
   }
 
   @Test
@@ -149,6 +164,18 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project_main", depNonJarName, DependencyScope.RUNTIME);
     assertModuleLibDep("project_test", depNonJarName, depNonJar.getUrl());
     assertModuleLibDepScope("project_test", depNonJarName, DependencyScope.RUNTIME);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+
+    assertModuleLibDep("project", depName, depJar.getUrl());
+    assertModuleLibDepScope("project", depName, DependencyScope.COMPILE);
+
+    assertModuleLibDep("project", "Gradle: dep:dep:1.0:tests", depTestsJar.getUrl());
+    assertModuleLibDepScope("project", "Gradle: dep:dep:1.0:tests", DependencyScope.TEST);
+
+    assertModuleLibDep("project", "Gradle: dep:dep:1.0:someExt", depNonJar.getUrl());
+    assertModuleLibDepScope("project", "Gradle: dep:dep:1.0:someExt", DependencyScope.RUNTIME);
   }
 
   @Test
@@ -173,17 +200,32 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project_main", depName, DependencyScope.COMPILE);
     assertModuleLibDepScope("project_main", "Gradle: some:unresolvable-lib:0.1", DependencyScope.COMPILE);
 
-    final List<LibraryOrderEntry> unresolvableDep = getModuleLibDeps("project_main", "Gradle: some:unresolvable-lib:0.1");
+    List<LibraryOrderEntry> unresolvableDep = getModuleLibDeps("project_main", "Gradle: some:unresolvable-lib:0.1");
     assertEquals(1, unresolvableDep.size());
-    final LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
+    LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
     assertFalse(unresolvableEntry.isModuleLevel());
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
-    final String[] unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
+    String[] unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
     assertEquals(1, unresolvableEntryUrls.length);
     assertTrue(unresolvableEntryUrls[0].contains("Could not find some:unresolvable-lib:0.1"));
 
     assertModuleLibDep("project_test", depName, depJar.getUrl());
     assertModuleLibDepScope("project_test", depName, DependencyScope.COMPILE);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+
+    assertModuleLibDep("project", depName, depJar.getUrl());
+    assertModuleLibDepScope("project", depName, DependencyScope.COMPILE);
+    assertModuleLibDepScope("project", "Gradle: unresolvable-lib-0.1:1", DependencyScope.COMPILE);
+
+    unresolvableDep = getModuleLibDeps("project", "Gradle: unresolvable-lib-0.1:1");
+    assertEquals(1, unresolvableDep.size());
+    unresolvableEntry = unresolvableDep.iterator().next();
+    assertTrue(unresolvableEntry.isModuleLevel());
+    assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
+    unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
+    assertEquals(0, unresolvableEntryUrls.length);
   }
 
   @Test
@@ -236,6 +278,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("api_test", "api_main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("impl_test", "impl_main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("impl_test", "api_test", DependencyScope.COMPILE);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project","api", "impl");
+
+    assertModuleModuleDepScope("impl", "api", DependencyScope.TEST);
   }
 
   @Test
@@ -276,6 +323,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project-tests_main", "project2_main", DependencyScope.RUNTIME);
     assertModuleLibDepScope("project-tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0", DependencyScope.COMPILE);
     assertModuleLibDepScope("project-tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1", DependencyScope.RUNTIME);
+
+    importProjectUsingSingeModulePerGradleProject();
+
+    assertModuleModuleDepScope("project-tests", "project1", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project-tests", "project2", DependencyScope.RUNTIME);
+    if(GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.0")) > 0) {
+      assertModuleLibDepScope("project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0", DependencyScope.COMPILE);
+      assertModuleLibDepScope("project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1", DependencyScope.RUNTIME);
+    }
   }
 
   @Test
@@ -309,6 +365,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDeps("project2_main");
     assertModuleLibDepScope("project2_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project2_main", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "project1", "project2");
+    assertModuleModuleDeps("project2", "project1");
+    if(GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.0")) > 0) {
+      assertModuleLibDepScope("project2", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+      assertModuleLibDepScope("project2", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    }
   }
 
   @Test
@@ -346,5 +410,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleModuleDeps("project2_main");
     assertModuleModuleDeps("project2_test", "project1_test", "project2_main");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "project1", "project2");
+    assertModuleModuleDeps("project2", "project1");
   }
 }

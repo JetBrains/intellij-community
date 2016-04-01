@@ -30,6 +30,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;;
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
+  private boolean resolveModulePerSourceSet = true;
 
   @Nullable
   public String getGradleHome() {
@@ -66,6 +67,14 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     this.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
   }
 
+  public boolean isResolveModulePerSourceSet() {
+    return resolveModulePerSourceSet;
+  }
+
+  public void setResolveModulePerSourceSet(boolean useIdeModulePerSourceSet) {
+    this.resolveModulePerSourceSet = useIdeModulePerSourceSet;
+  }
+
   @NotNull
   @Override
   public ExternalProjectSettings clone() {
@@ -75,6 +84,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     result.myGradleJvm = myGradleJvm;
     result.distributionType = distributionType;
     result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
+    result.resolveModulePerSourceSet = resolveModulePerSourceSet;
     return result;
   }
 }
