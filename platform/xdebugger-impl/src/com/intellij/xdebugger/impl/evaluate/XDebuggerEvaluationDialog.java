@@ -285,6 +285,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   @Override
+  public void doCancelAction() {
+    getInputEditor().saveTextInHistory();
+    super.doCancelAction();
+  }
+
+  @Override
   protected String getDimensionServiceKey() {
     return "#xdebugger.evaluate";
   }
