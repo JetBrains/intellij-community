@@ -74,7 +74,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   public String[] getEnumeratedValues() {
     final PsiClass enumClass = getEnum();
     if (enumClass != null) {
-      final PsiField[] fields = enumClass.getFields();
+      final PsiField[] fields = enumClass.getAllFields();
       final List<String> enumConstants = new ArrayList<String>();
       for (PsiField enumField : fields) {
         if (isConstant(enumField)) {

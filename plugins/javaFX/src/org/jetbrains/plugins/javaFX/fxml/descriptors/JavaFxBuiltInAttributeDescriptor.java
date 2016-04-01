@@ -20,12 +20,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,29 +53,6 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
   @Override
   public boolean isEnumerated() {
     return getPsiClass() != null && getName().equals(FxmlConstants.FX_CONSTANT);
-  }
-
-  @Nullable
-  @Override
-  public String[] getEnumeratedValues() {
-    final PsiClass psiClass = getPsiClass();
-    if (psiClass != null) {
-      if (getName().equals(FxmlConstants.FX_CONSTANT)) {
-        final List<String> constants = new ArrayList<String>();
-        for (PsiClass aClass = psiClass; aClass != null; aClass = aClass.getSuperClass()) {
-          final String qualifiedName = aClass.getQualifiedName();
-          if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) break;
-          final PsiField[] fields = aClass.getFields();
-          for (PsiField field : fields) {
-            if (isConstant(field)) {
-              constants.add(field.getName());
-            }
-          }
-        }
-        return ArrayUtil.toStringArray(constants);
-      }
-    }
-    return null;
   }
 
   @Override
