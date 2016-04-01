@@ -19,7 +19,9 @@ import com.intellij.ProjectTopics;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,9 +135,10 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
     ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
     if (progressIndicator == null) {
-      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Initializing Modules...", false, myProject);
+      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Initializing Modules", false, myProject);
     }
     else {
+      progressIndicator.setText("Initializing modules...");
       runnableWithProgress.run();
     }
   }
