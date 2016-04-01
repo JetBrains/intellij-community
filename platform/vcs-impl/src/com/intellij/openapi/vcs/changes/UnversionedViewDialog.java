@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
@@ -101,7 +102,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     TreeModelBuilder builder = new TreeModelBuilder(myProject, myFlattenState);
     final DefaultTreeModel model = builder.buildModelFromFiles(files);
     myView.setModel(model);
-    myView.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, myFlattenState, true));
+    myView.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, myFlattenState ? BooleanGetter.TRUE : BooleanGetter.FALSE, true));
     myView.expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
     state.applyTo(myView);

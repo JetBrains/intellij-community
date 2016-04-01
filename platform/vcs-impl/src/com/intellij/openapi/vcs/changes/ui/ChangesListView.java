@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
@@ -91,10 +92,10 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
-    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).installOn(this);
+    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, BooleanGetter.FALSE, false)).installOn(this);
 
-    myNodeRenderer = new ChangesBrowserNodeRenderer(project, false, true);
-    myShowFlattenNodeRenderer = new ChangesBrowserNodeRenderer(project, true, true);
+    myNodeRenderer = new ChangesBrowserNodeRenderer(project, BooleanGetter.FALSE, true);
+    myShowFlattenNodeRenderer = new ChangesBrowserNodeRenderer(project, BooleanGetter.TRUE, true);
   }
 
   @Override
@@ -168,7 +169,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
           }
         }
       }
-      
+
       if (toExpand != null) {
         expandPath(new TreePath(new Object[] {root, toExpand}));
       }
@@ -649,7 +650,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   @Override
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return action == DnDAction.MOVE && 
+    return action == DnDAction.MOVE &&
            (getSelectedChanges().length > 0 || !getSelectedUnversionedFiles().isEmpty() || !getSelectedIgnoredFiles().isEmpty());
   }
 
