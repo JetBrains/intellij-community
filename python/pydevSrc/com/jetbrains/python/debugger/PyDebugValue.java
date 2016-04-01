@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // todo: load long lists by parts
 // todo: null modifier for modify modules, class objects etc.
@@ -73,7 +75,7 @@ public class PyDebugValue extends XNamedValue {
   }
   
   public PyDebugValue setParent(@Nullable PyDebugValue parent) {
-    return new PyDebugValue(myName, myType, null, myValue, myContainer, myErrorOnEval, parent, myFrameAccessor);
+    return new PyDebugValue(myName, myType, myTypeQualifier, myValue, myContainer, myErrorOnEval, parent, myFrameAccessor);
   }
 
   public PyDebugValue getParent() {
@@ -216,7 +218,7 @@ public class PyDebugValue extends XNamedValue {
   }
   
   public PyDebugValue setName(String newName) {
-    return new PyDebugValue(newName, myType, null, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
+    return new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
   }
 
   @Nullable
@@ -269,10 +271,25 @@ public class PyDebugValue extends XNamedValue {
     return true;
   }
 
+  private static final  Pattern IS_TYPE_DECLARATION = Pattern.compile("<(?:class|type)\\s*'(?<TYPE>.*?)'>");
   @Override
   public void computeTypeSourcePosition(@NotNull XNavigatable navigatable) {
 
-    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(getQualifiedType()));
+    String lookupType = getDeclaringType();
+    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(lookupType));
+  }
+
+  private String getDeclaringType() {
+    String lookupType = getQualifiedType();
+    if (!Strings.isNullOrEmpty(myValue))
+    {
+      Matcher matcher = IS_TYPE_DECLARATION.matcher(myValue);
+      if (matcher.matches())
+      {
+        lookupType = matcher.group("TYPE");
+      }
+    }
+    return lookupType;
   }
 
   public String getQualifiedType() {

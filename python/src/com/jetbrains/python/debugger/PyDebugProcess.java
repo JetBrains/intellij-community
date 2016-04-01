@@ -60,12 +60,10 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import org.jetbrains.annotations.NotNull;
@@ -912,10 +910,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     final PsiFile file = getPsiFile(currentPosition);
 
-    if (file == null) return null;
+    if (file == null || typeName == null || !(file instanceof PyFile)) return null;
 
 
-
+    typeName = typeName.replace("__builtin__.", "");
     if (!typeName.contains(".")) {
       PyType type = PyTypeParser.getTypeByName(file, typeName);
 
@@ -924,12 +922,25 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       }
     }
 
+    PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
     PyPsiFacade psiFacade = PyPsiFacade.getInstance(getProject());
-    PyClass aClass = psiFacade.findClass(typeName);
-    if (aClass != null)
-    {
-      return XSourcePositionImpl.createByElement(aClass);
+    PyType pyType = psiFacade.parseTypeAnnotation(typeName, generator.createDummyFile(((PyFile)file).getLanguageLevel(), ""));
+
+    if (pyType != null) {
+      final PyClassType classType = PyUtil.as(pyType, PyClassType.class);
+
+      if (classType != null) {
+        return XSourcePositionImpl.createByElement(classType.getPyClass());
+      }
+
+      final PyModuleType moduleType = PyUtil.as(pyType, PyModuleType.class);
+      if (moduleType != null) {
+        return XSourcePositionImpl.createByElement(moduleType.getModule());
+      }
     }
+
+
+
 
     return null;
   }
