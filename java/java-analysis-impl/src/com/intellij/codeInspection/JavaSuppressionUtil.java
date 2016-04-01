@@ -210,6 +210,9 @@ public class JavaSuppressionUtil {
         }
 
         PsiModifierListOwner up = PsiTreeUtil.getNonStrictParentOfType(place, PsiVariable.class, PsiDocCommentOwner.class);
+        if (up instanceof PsiDocCommentOwner && up.getModifierList() == null) {
+          up = PsiTreeUtil.getParentOfType(up, PsiVariable.class, PsiDocCommentOwner.class);
+        }
         if (up instanceof PsiVariable) {
           PsiVariable local = (PsiVariable)up;
           if (getAnnotationMemberSuppressedIn(local, toolId) != null) {
