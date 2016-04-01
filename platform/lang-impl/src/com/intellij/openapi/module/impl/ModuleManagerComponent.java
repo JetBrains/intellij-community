@@ -28,7 +28,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.UnknownModuleType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -123,23 +122,8 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
   @Override
   protected void fireModulesAdded() {
-    if (myModuleModel.myModules.isEmpty()) {
-      return;
-    }
-
-    Runnable runnableWithProgress = () -> {
-      for (final Module module : myModuleModel.myModules.values()) {
-        TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, () -> fireModuleAddedInWriteAction(module));
-      }
-    };
-
-    ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
-    if (progressIndicator == null) {
-      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Initializing Modules", false, myProject);
-    }
-    else {
-      progressIndicator.setText("Initializing modules...");
-      runnableWithProgress.run();
+    for (final Module module : myModuleModel.myModules.values()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, () -> fireModuleAddedInWriteAction(module));
     }
   }
 
