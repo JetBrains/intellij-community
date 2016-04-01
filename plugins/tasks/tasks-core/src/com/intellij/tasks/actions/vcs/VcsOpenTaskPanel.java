@@ -186,10 +186,10 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       else if (myVcsTaskHandler != null) {
         return myVcsTaskHandler.isBranchNameValid(branchName)
                ? null
-               : new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.");
+               : new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.", myBranchName);
       }
       else if (branchName.contains(" ")) {
-        return new ValidationInfo("Branch name should not contain spaces");
+        return new ValidationInfo("Branch name should not contain spaces", myBranchName);
       }
       else {
         return null;
@@ -197,7 +197,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     }
     if (myCreateChangelist.isSelected()) {
       if (myChangelistName.getText().trim().isEmpty()) {
-        return new ValidationInfo("Changelist name should not be empty");
+        return new ValidationInfo("Changelist name should not be empty", myChangelistName);
       }
     }
     return null;
