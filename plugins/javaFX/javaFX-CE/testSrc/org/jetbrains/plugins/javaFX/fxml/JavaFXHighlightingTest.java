@@ -366,6 +366,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testPrivateControllerMethod() throws Exception {
+    doTest(getTestName(false) + ".java");
+  }
+
   public void testPropertyTagCompatibleClass() throws Exception {
     doTest();
   }

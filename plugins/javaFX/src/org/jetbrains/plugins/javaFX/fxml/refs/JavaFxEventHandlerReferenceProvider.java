@@ -51,7 +51,7 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
     final PsiMethod[] methods = controllerClass.findMethodsByName(eventHandlerName, true);
 
     final PsiReference[] references = Arrays.stream(methods)
-      .filter(JavaFxEventHandlerReference::isHandlerMethod)
+      .filter(psiMethod -> JavaFxEventHandlerReference.isHandlerMethod(psiMethod, false))
       .map(handlerMethod -> new JavaFxEventHandlerReference(xmlAttributeValue, handlerMethod, controllerClass))
       .toArray(PsiReference.ARRAY_FACTORY::create);
 
