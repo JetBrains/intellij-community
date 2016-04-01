@@ -187,10 +187,6 @@ NSBundle *getJDKBundle(NSString* jdkVersion, NSString* source) {
                 return jdkBundle;
             }
         }
-        else {
-            NSLog(@"JVMVersion %@", jvmVersion(jdkBundle));
-            debugLog([jdkBundle bundlePath]);
-        }
     }
     return nil;
 }
