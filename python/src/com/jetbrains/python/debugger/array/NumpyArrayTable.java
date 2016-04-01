@@ -15,33 +15,19 @@
  */
 package com.jetbrains.python.debugger.array;
 
-import com.google.common.util.concurrent.ListenableFutureTask;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XValue;
 import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
 
-import javax.management.InvalidAttributeValueException;
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -179,7 +165,7 @@ public class NumpyArrayTable {
         final PyDebugValue value = getDebugValue();
         PyDebugValue parent = value.getParent();
         final PyDebugValue slicedValue =
-          new PyDebugValue(slice, value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
+          new PyDebugValue(slice, value.getType(), null, value.getValue(), value.isContainer(), value.isErrorOnEval(),
                            parent, value.getFrameAccessor());
 
         final String format = getFormat().isEmpty() ? "%" : getFormat();

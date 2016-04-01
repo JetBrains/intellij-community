@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger;
 
+import com.google.common.base.Strings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +19,7 @@ public class PyDebugValue extends XNamedValue {
 
   private String myTempName = null;
   private final String myType;
+  private final String myTypeQualifier;
   private final String myValue;
   private final boolean myContainer;
   private final PyDebugValue myParent;
@@ -29,15 +31,16 @@ public class PyDebugValue extends XNamedValue {
 
   private final boolean myErrorOnEval;
 
-  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
+  public PyDebugValue(@NotNull final String name, final String type, String typeQualifier, final String value, final boolean container,
                       boolean errorOnEval, final PyFrameAccessor frameAccessor) {
-    this(name, type, value, container, errorOnEval, null, frameAccessor);
+    this(name, type, typeQualifier, value, container, errorOnEval, null, frameAccessor);
   }
 
-  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
+  public PyDebugValue(@NotNull final String name, final String type, String typeQualifier, final String value, final boolean container,
                       boolean errorOnEval, final PyDebugValue parent, final PyFrameAccessor frameAccessor) {
     super(name);
     myType = type;
+    myTypeQualifier = Strings.isNullOrEmpty(typeQualifier) ? null : typeQualifier;
     myValue = value;
     myContainer = container;
     myErrorOnEval = errorOnEval;
@@ -70,7 +73,7 @@ public class PyDebugValue extends XNamedValue {
   }
   
   public PyDebugValue setParent(@Nullable PyDebugValue parent) {
-    return new PyDebugValue(myName, myType, myValue, myContainer, myErrorOnEval, parent, myFrameAccessor);
+    return new PyDebugValue(myName, myType, null, myValue, myContainer, myErrorOnEval, parent, myFrameAccessor);
   }
 
   public PyDebugValue getParent() {
@@ -213,7 +216,7 @@ public class PyDebugValue extends XNamedValue {
   }
   
   public PyDebugValue setName(String newName) {
-    return new PyDebugValue(newName, myType, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
+    return new PyDebugValue(newName, myType, null, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
   }
 
   @Nullable
@@ -268,6 +271,17 @@ public class PyDebugValue extends XNamedValue {
 
   @Override
   public void computeTypeSourcePosition(@NotNull XNavigatable navigatable) {
-    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(myType));
+
+    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(getQualifiedType()));
+  }
+
+  public String getQualifiedType() {
+    if (Strings.isNullOrEmpty(myType))
+      return null;
+    return (myTypeQualifier == null) ? myType : (myTypeQualifier + "." + myType);
+  }
+
+  public String getTypeQualifier() {
+    return myTypeQualifier;
   }
 }
