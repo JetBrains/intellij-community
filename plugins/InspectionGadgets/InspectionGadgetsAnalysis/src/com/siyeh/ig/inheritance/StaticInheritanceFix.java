@@ -20,8 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -36,7 +35,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -67,16 +65,12 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(final Project project, final ProblemDescriptor descriptor) throws IncorrectOperationException {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        dodoFix(project, descriptor);
-      }
-    }, ModalityState.NON_MODAL, project.getDisposed());
+  public boolean startInWriteAction() {
+    return false;
   }
 
-  private void dodoFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  @Override
+  public void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
     final PsiClass iface = (PsiClass)referenceElement.resolve();
     assert iface != null;
@@ -155,16 +149,6 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
   }
 
   private static void invokeWriteAction(final Runnable runnable, final PsiFile file) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        new WriteCommandAction(file.getProject(), file) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            runnable.run();
-          }
-        }.execute();
-      }
-    });
+    TransactionGuard.submitTransaction(() -> WriteCommandAction.runWriteCommandAction(file.getProject(), null, null, runnable, file));
   }
 }
