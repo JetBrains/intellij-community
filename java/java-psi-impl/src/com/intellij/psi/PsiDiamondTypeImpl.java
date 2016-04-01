@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -176,6 +177,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
     if (!(staticFactoryInfo instanceof MethodCandidateInfo)) {
       return DiamondInferenceResult.UNRESOLVED_CONSTRUCTOR;
+    }
+
+    //15.9.3 Choosing the Constructor and its Arguments
+    //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (§15.12.2.6)
+    if (InferenceSession.wasUncheckedConversionPerformed(context)) {
+      return DiamondInferenceResult.RAW_RESULT;
     }
 
     final PsiMethod staticFactory = ((MethodCandidateInfo)staticFactoryInfo).getElement();
