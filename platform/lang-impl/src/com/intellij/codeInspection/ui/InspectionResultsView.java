@@ -993,11 +993,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public boolean hasProblems() {
-    final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
-    for (Tools currentTools : tools.values()) {
-      for (ScopeToolState state : myProvider.getTools(currentTools)) {
+    return hasProblems(myGlobalInspectionContext.getTools().values(), myGlobalInspectionContext, myProvider);
+  }
+
+  public static boolean hasProblems(@NotNull Collection<Tools> tools,
+                                    @NotNull GlobalInspectionContextImpl context,
+                                    @NotNull InspectionRVContentProvider contentProvider) {
+    for (Tools currentTools : tools) {
+      for (ScopeToolState state : contentProvider.getTools(currentTools)) {
         InspectionToolWrapper toolWrapper = state.getTool();
-        if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+        if (contentProvider.checkReportedProblems(context, toolWrapper)) {
           return true;
         }
       }
@@ -1079,8 +1084,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       myRerun = true;
       if (myScope.isValid()) {
         AnalysisUIOptions.getInstance(myProject).save(myGlobalInspectionContext.getUIOptions());
-        myGlobalInspectionContext.doInspections(myScope);
         myGlobalInspectionContext.setTreeState(getTree().getTreeState());
+        myGlobalInspectionContext.doInspections(myScope);
       }
     }
   }
