@@ -68,9 +68,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
 
-  @NotNull private final ChangesBrowserNodeRenderer myNodeRenderer;
-  @NotNull private final ChangesBrowserNodeRenderer myShowFlattenNodeRenderer;
-
   @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
   @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
@@ -94,8 +91,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
     new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, BooleanGetter.FALSE, false)).installOn(this);
 
-    myNodeRenderer = new ChangesBrowserNodeRenderer(project, BooleanGetter.FALSE, true);
-    myShowFlattenNodeRenderer = new ChangesBrowserNodeRenderer(project, BooleanGetter.TRUE, true);
+    setCellRenderer(new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true));
   }
 
   @Override
@@ -147,7 +143,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     state.setScrollToSelection(false);
     DefaultTreeModel oldModel = getModel();
     setModel(model);
-    setCellRenderer(isShowFlatten() ? myShowFlattenNodeRenderer : myNodeRenderer);
     ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
     expandPath(new TreePath(root.getPath()));
     state.applyTo(this, (ChangesBrowserNode)getModel().getRoot());
