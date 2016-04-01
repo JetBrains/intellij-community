@@ -175,7 +175,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
     checkCanceled();
     final JavaFileObject fo = super.getJavaFileForInput(location, className, kind);
-    if (fo == null) {
+    if (fo == null && !"module-info".equals(className)) {
       // workaround javac bug (missing null-check): throwing exception here instead of returning null
       throw new FileNotFoundException("Java resource does not exist : " + location + '/' + kind + '/' + className);
     }
