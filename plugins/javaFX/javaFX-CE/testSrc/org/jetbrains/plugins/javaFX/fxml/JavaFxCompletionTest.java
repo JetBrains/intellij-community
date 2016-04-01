@@ -252,6 +252,11 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertSameElements(myFixture.getLookupElementStrings(),"pane", "node", "box", "model", "text", "target");
   }
 
+  public void testInheritedConstant() throws Exception {
+    configureAndComplete("InheritedConstantData.java", "InheritedConstantSuperData.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "MY_TEXT", "SUPER_TEXT");
+  }
+
   private void configureAndComplete(final String... extraFiles) {
     final String fxmlFileName = getTestName(true) + ".fxml";
     if (extraFiles.length != 0) {
