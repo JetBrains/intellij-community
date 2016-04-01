@@ -44,6 +44,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PathMacroManager;
@@ -1017,11 +1018,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }, title, null);
       }
     };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    TransactionGuard.submitTransaction(runnable);
   }
 
   private static boolean isBinary(@NotNull PsiFile file) {
