@@ -59,6 +59,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     ExternalProject externalProject = cache[project.path]
     if (externalProject != null) return externalProject
 
+    def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
     def isPreview = ExternalProjectPreview.name.equals(modelName)
     DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
     defaultExternalProject.externalSystemId = "GRADLE"
@@ -70,7 +71,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     defaultExternalProject.buildFile = project.buildFile
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, isPreview)
+    defaultExternalProject.sourceSets = getSourceSets(project, isPreview, resolveSourceSetDependencies)
     defaultExternalProject.tasks = getTasks(project)
 
     defaultExternalProject.plugins = getPlugins(project)
@@ -147,7 +148,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview) {
+  static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
     def ideaPluginModule = ideaPlugin?.model?.module
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
@@ -278,8 +279,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         }
       }
 
-      def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources).resolveDependencies(sourceSet)
-      externalSourceSet.dependencies.addAll(dependencies)
+      if(resolveSourceSetDependencies) {
+        def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources).resolveDependencies(sourceSet)
+        externalSourceSet.dependencies.addAll(dependencies)
+      }
 
       externalSourceSet.sources = sources
       result[sourceSet.name] = externalSourceSet
