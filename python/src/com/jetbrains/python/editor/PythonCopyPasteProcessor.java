@@ -186,13 +186,15 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   private static boolean isApplicable(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
-    final boolean useTabs =
-      CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
+    final boolean useTabs = CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
     final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
-    if (nonWS == null || text.endsWith("\n"))
+    if (nonWS == null) {
+      return !StringUtil.isEmptyOrSpaces(text);
+    }
+    if (text.endsWith("\n") ||
+        (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1))) {
       return true;
-    if (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1))
-      return true;
+    }
     return false;
   }
 
