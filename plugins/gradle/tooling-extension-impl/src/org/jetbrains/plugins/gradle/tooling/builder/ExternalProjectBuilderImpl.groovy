@@ -269,7 +269,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
 
         if(!resolveSourceSetDependencies && ideaTestSourceDirs) {
-          def testDirs = javaDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Iterable)
+          def testDirs = javaDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
           if(!testDirs.isEmpty()) {
             javaDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
 
@@ -281,7 +281,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             sources.put(ExternalSystemSourceType.TEST, testDirectorySet)
           }
 
-          def testResourcesDirs = resourcesDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Iterable)
+          def testResourcesDirs = resourcesDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
           if(!testResourcesDirs.isEmpty()) {
             resourcesDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
 
@@ -297,7 +297,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         if (generatedDirectorySet) {
           sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
           if(!resolveSourceSetDependencies && ideaTestSourceDirs) {
-            def testGeneratedDirs = generatedDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Iterable)
+            def testGeneratedDirs = generatedDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
             if(!testGeneratedDirs.isEmpty()) {
               generatedDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
 
