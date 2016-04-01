@@ -263,7 +263,13 @@ public class PyDebugValue extends XNamedValue {
 
   @Override
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
-    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName));
+    if (myParent == null) {
+      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, null));
+    }
+    else
+    {
+      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, myParent.getDeclaringType()));
+    }
   }
 
   @Override
@@ -279,7 +285,7 @@ public class PyDebugValue extends XNamedValue {
     navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(lookupType));
   }
 
-  private String getDeclaringType() {
+  protected final String getDeclaringType() {
     String lookupType = getQualifiedType();
     if (!Strings.isNullOrEmpty(myValue))
     {
