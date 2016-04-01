@@ -97,7 +97,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
           VirtualFile repositoryRoot = repository.getRoot();
           try {
             new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread();
-            new HgBookmarkCommand(project, repositoryRoot, branch).deleteBookmark();
+            HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
           }
           catch (HgCommandException e) {
               HgErrorUtil.handleException(project, e);
