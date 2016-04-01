@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -154,10 +153,12 @@ public class VcsLogProjectManager {
       }
     }
 
-    private static void init(@NotNull VcsLogProjectManager logManager, @NotNull MessageBusConnection connection, @NotNull AtomicBoolean isInitialized) {
+    private static void init(@NotNull VcsLogProjectManager logManager,
+                             @NotNull MessageBusConnection connection,
+                             @NotNull AtomicBoolean isInitialized) {
       if (isInitialized.compareAndSet(false, true)) {
         connection.disconnect();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        new HeavyAwareExecutor(logManager.myProject).execute(new Runnable() {
           @Override
           public void run() {
             logManager.init();
