@@ -15,12 +15,16 @@
  */
 package git4idea;
 
+import com.intellij.util.text.FilePathHashingStrategy;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * The base class for named git references, like branches and tags.
  */
 public abstract class GitReference implements Comparable<GitReference> {
+
+  public static final TObjectHashingStrategy<String> BRANCH_NAME_HASHING_STRATEGY = FilePathHashingStrategy.create();
 
   @NotNull protected final String myName;
 
@@ -49,17 +53,16 @@ public abstract class GitReference implements Comparable<GitReference> {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-
-    return obj instanceof GitReference && getFullName().equals(((GitReference)obj).getFullName());
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GitReference reference = (GitReference)o;
+    return BRANCH_NAME_HASHING_STRATEGY.equals(myName, reference.myName);
   }
 
   @Override
   public int hashCode() {
-    return toString().hashCode();
+    return BRANCH_NAME_HASHING_STRATEGY.computeHashCode(myName);
   }
 
   public int compareTo(GitReference o) {

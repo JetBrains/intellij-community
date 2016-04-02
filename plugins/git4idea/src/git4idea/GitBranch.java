@@ -63,14 +63,4 @@ public abstract class GitBranch extends GitReference {
   public String getFullName() {
     return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
   }
-
-  @Override
-  public boolean equals(Object o) {
-    return super.equals(o);
-  }
-
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
 }
