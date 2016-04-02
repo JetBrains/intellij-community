@@ -13,10 +13,10 @@ public class GetterSetterClassTest {
 
   public static void main(String[] args) {
     final GetterSetterClassTest test = new GetterSetterClassTest();
-    test.setStringProperty("")
-        .setIntProperty(1)
-        .setBooleanProperty(true)
-        .setDoubleProperty(0.0);
+    test.stringProperty("");
+    test.intProperty(1);
+    test.booleanProperty(true);
+    test.doubleProperty(0.0);
 
     System.out.println(test);
   }

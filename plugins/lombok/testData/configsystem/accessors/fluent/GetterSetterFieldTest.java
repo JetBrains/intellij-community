@@ -4,19 +4,22 @@ import lombok.experimental.Accessors;
 
 @Getter
 @Setter
-@Accessors
-public class GetterSetterClassTest {
+public class GetterSetterFieldTest {
+  @Accessors
   private int intProperty;
+  @Accessors
   private double doubleProperty;
+  @Accessors
   private boolean booleanProperty;
+  @Accessors
   private String stringProperty;
 
   public static void main(String[] args) {
-    final GetterSetterClassTest test = new GetterSetterClassTest();
-    test.setStringProperty("")
-        .setIntProperty(1)
-        .setBooleanProperty(true)
-        .setDoubleProperty(0.0);
+    final GetterSetterFieldTest test = new GetterSetterFieldTest();
+    test.stringProperty("");
+    test.intProperty(1);
+    test.booleanProperty(true);
+    test.doubleProperty(0.0);
 
     System.out.println(test);
   }

@@ -1,15 +1,15 @@
-public class GetterSetterClassTest {
+public class GetterSetterClassAnnotationOverwriteTest {
   private int intProperty;
   private double doubleProperty;
   private boolean booleanProperty;
   private String stringProperty;
 
   public static void main(String[] args) {
-    final GetterSetterClassTest test = new GetterSetterClassTest();
-    test.setStringProperty("")
-        .setIntProperty(1)
-        .setBooleanProperty(true)
-        .setDoubleProperty(0.0);
+    final GetterSetterClassAnnotationOverwriteTest test = new GetterSetterClassAnnotationOverwriteTest();
+    test.setStringProperty("");
+    test.setIntProperty(1)
+    test.setBooleanProperty(true)
+    test.setDoubleProperty(0.0);
 
     System.out.println(test);
   }
@@ -30,23 +30,19 @@ public class GetterSetterClassTest {
     return this.stringProperty;
   }
 
-  public GetterSetterClassTest setIntProperty(int intProperty) {
+  public void setIntProperty(int intProperty) {
     this.intProperty = intProperty;
-    return this;
   }
 
-  public GetterSetterClassTest setDoubleProperty(double doubleProperty) {
+  public void setDoubleProperty(double doubleProperty) {
     this.doubleProperty = doubleProperty;
-    return this;
   }
 
-  public GetterSetterClassTest setBooleanProperty(boolean booleanProperty) {
+  public void setBooleanProperty(boolean booleanProperty) {
     this.booleanProperty = booleanProperty;
-    return this;
   }
 
-  public GetterSetterClassTest setStringProperty(String stringProperty) {
+  public void setStringProperty(String stringProperty) {
     this.stringProperty = stringProperty;
-    return this;
   }
 }
