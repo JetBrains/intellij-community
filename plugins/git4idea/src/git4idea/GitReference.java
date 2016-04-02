@@ -15,6 +15,8 @@
  */
 package git4idea;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +68,6 @@ public abstract class GitReference implements Comparable<GitReference> {
   }
 
   public int compareTo(GitReference o) {
-    return o == null ? 1 : getFullName().compareTo(o.getFullName());
+    return o == null ? 1 : StringUtil.compare(getFullName(), o.getFullName(), SystemInfo.isFileSystemCaseSensitive);
   }
 }
