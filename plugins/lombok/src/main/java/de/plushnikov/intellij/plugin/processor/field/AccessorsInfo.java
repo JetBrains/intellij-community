@@ -5,7 +5,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
-import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.experimental.Accessors;
@@ -13,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Plushnikov Michail
@@ -25,17 +25,19 @@ public class AccessorsInfo {
   private final String[] prefixes;
   private final boolean doNotUseIsPrefix;
 
-  protected AccessorsInfo(boolean fluentValue, boolean chainValue, boolean doNotUseIsPrefix, String... prefixes) {
+  private AccessorsInfo(boolean fluentValue, boolean chainValue, boolean doNotUseIsPrefix, String... prefixes) {
     this.fluent = fluentValue;
     this.chain = chainValue;
     this.doNotUseIsPrefix = doNotUseIsPrefix;
     this.prefixes = null == prefixes ? new String[0] : prefixes;
   }
 
-  public static AccessorsInfo build(boolean fluentValue, boolean chainValue, boolean dontUseIsPrefix, String... prefixes) {
-    return new AccessorsInfo(fluentValue, chainValue, dontUseIsPrefix, prefixes);
+  @NotNull
+  public static AccessorsInfo build(boolean fluentValue, boolean chainValue, boolean doNotUseIsPrefix, String... prefixes) {
+    return new AccessorsInfo(fluentValue, chainValue, doNotUseIsPrefix, prefixes);
   }
 
+  @NotNull
   public static AccessorsInfo build(@NotNull PsiField psiField) {
     final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Accessors.class);
     final PsiClass containingClass = psiField.getContainingClass();
@@ -46,6 +48,7 @@ public class AccessorsInfo {
     }
   }
 
+  @NotNull
   public static AccessorsInfo build(@Nullable PsiClass psiClass) {
     PsiClass containingClass = psiClass;
     while (null != containingClass) {
@@ -56,19 +59,44 @@ public class AccessorsInfo {
       containingClass = containingClass.getContainingClass();
     }
 
-    final boolean doNotUseIsPrefix = null != psiClass &&
-        ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
-    return build(false, false, doNotUseIsPrefix);
+    return buildAccessorsInfo(psiClass, null, null, Collections.<String>emptySet());
   }
 
-  private static AccessorsInfo buildFromAnnotation(@NotNull PsiAnnotation accessorsAnnotation, @NotNull PsiClass psiClass) {
-    final boolean isFluent = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "fluent", ConfigKeys.ACCESSORS_FLUENT);
-    final boolean isChained = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "chain", ConfigKeys.ACCESSORS_CHAIN);
-
+  @NotNull
+  private static AccessorsInfo buildFromAnnotation(@NotNull PsiAnnotation accessorsAnnotation, @Nullable PsiClass psiClass) {
     Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "chain");
+    Boolean fluentDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "fluent");
     Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, "prefix", String.class);
 
-    final boolean doNotUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
+    return buildAccessorsInfo(psiClass, chainDeclaredValue, fluentDeclaredValue, prefixes);
+  }
+
+  @NotNull
+  private static AccessorsInfo buildAccessorsInfo(@Nullable PsiClass psiClass, @Nullable Boolean chainDeclaredValue,
+                                                  @Nullable Boolean fluentDeclaredValue, @NotNull Collection<String> prefixes) {
+    final boolean isFluent;
+    final boolean isChained;
+    final boolean doNotUseIsPrefix;
+
+    if (null != psiClass) {
+      if (null == fluentDeclaredValue) {
+        isFluent = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.ACCESSORS_FLUENT, psiClass);
+      } else {
+        isFluent = fluentDeclaredValue;
+      }
+
+      if (null == chainDeclaredValue) {
+        isChained = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.ACCESSORS_CHAIN, psiClass);
+      } else {
+        isChained = chainDeclaredValue;
+      }
+
+      doNotUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
+    } else {
+      isFluent = null == fluentDeclaredValue ? false : fluentDeclaredValue;
+      isChained = null == chainDeclaredValue ? false : chainDeclaredValue;
+      doNotUseIsPrefix = false;
+    }
 
     boolean isChainDeclaredOrImplicit = isChained || (isFluent && null == chainDeclaredValue);
     return new AccessorsInfo(isFluent, isChainDeclaredOrImplicit, doNotUseIsPrefix, prefixes.toArray(new String[prefixes.size()]));
