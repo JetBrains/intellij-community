@@ -36,6 +36,8 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
     doTest();
   }
 
+  ////////////
+
   public void testFluent$GetterSetterFieldTest() throws IOException {
     doTest();
   }
@@ -53,6 +55,16 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
   }
 
   public void testFluent$GetterSetterWithoutAccessorsAnnotationTest() throws IOException {
+    doTest();
+  }
+
+  ////////////
+
+  public void testPrefix$GetterSetterClassTest() throws IOException {
+    doTest();
+  }
+
+  public void testPrefix$GetterSetterWithoutAccessorsAnnotationClassTest() throws IOException {
     doTest();
   }
 }

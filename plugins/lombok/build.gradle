@@ -32,6 +32,8 @@ dependencies {
     gen 'de.jflex:jflex:1.6.0'
     gen files('lib/grammar-kit.jar')
     gen files('lib/light-psi-all.jar')
+
+    dependencies { testCompile "org.mockito:mockito-core:1.+" }
 }
 
 

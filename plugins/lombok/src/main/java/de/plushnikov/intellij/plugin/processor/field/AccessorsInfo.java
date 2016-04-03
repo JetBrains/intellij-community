@@ -4,7 +4,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.experimental.Accessors;
@@ -73,33 +73,42 @@ public class AccessorsInfo {
 
   @NotNull
   private static AccessorsInfo buildAccessorsInfo(@Nullable PsiClass psiClass, @Nullable Boolean chainDeclaredValue,
-                                                  @Nullable Boolean fluentDeclaredValue, @NotNull Collection<String> prefixes) {
+                                                  @Nullable Boolean fluentDeclaredValue, @NotNull Collection<String> prefixDeclared) {
     final boolean isFluent;
     final boolean isChained;
     final boolean doNotUseIsPrefix;
+    final String[] prefixes;
 
     if (null != psiClass) {
       if (null == fluentDeclaredValue) {
-        isFluent = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.ACCESSORS_FLUENT, psiClass);
+        isFluent = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_FLUENT, psiClass);
       } else {
         isFluent = fluentDeclaredValue;
       }
 
       if (null == chainDeclaredValue) {
-        isChained = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.ACCESSORS_CHAIN, psiClass);
+        isChained = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_CHAIN, psiClass);
       } else {
         isChained = chainDeclaredValue;
       }
 
-      doNotUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
+      if (prefixDeclared.isEmpty()) {
+        prefixes = ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.ACCESSORS_PREFIX, psiClass);
+      } else {
+        prefixes = prefixDeclared.toArray(new String[prefixDeclared.size()]);
+      }
+
+      doNotUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
+
     } else {
       isFluent = null == fluentDeclaredValue ? false : fluentDeclaredValue;
       isChained = null == chainDeclaredValue ? false : chainDeclaredValue;
+      prefixes = prefixDeclared.toArray(new String[prefixDeclared.size()]);
       doNotUseIsPrefix = false;
     }
 
     boolean isChainDeclaredOrImplicit = isChained || (isFluent && null == chainDeclaredValue);
-    return new AccessorsInfo(isFluent, isChainDeclaredOrImplicit, doNotUseIsPrefix, prefixes.toArray(new String[prefixes.size()]));
+    return new AccessorsInfo(isFluent, isChainDeclaredOrImplicit, doNotUseIsPrefix, prefixes);
   }
 
   public boolean isFluent() {

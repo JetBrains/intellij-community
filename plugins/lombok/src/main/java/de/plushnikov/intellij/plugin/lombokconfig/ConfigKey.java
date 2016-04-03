@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
-public enum ConfigKeys {
+public enum ConfigKey {
 
   CONFIG_STOP_BUBBLING("config.stopBubbling", "false"),
 
@@ -31,7 +31,7 @@ public enum ConfigKeys {
   private final String configKey;
   private final String configDefaultValue;
 
-  ConfigKeys(String configKey, String configDefaultValue) {
+  ConfigKey(String configKey, String configDefaultValue) {
     this.configKey = configKey;
     this.configDefaultValue = configDefaultValue;
   }
@@ -57,4 +57,12 @@ public enum ConfigKeys {
       "lombok.synchronized.flagUsage", "lombok.toString.flagUsage", "lombok.val.flagUsage", "lombok.value.flagUsage",
       "lombok.wither.flagUsage"));
 
+  public static ConfigKey fromConfigStringKey(String configStringKey) {
+    for (ConfigKey keys : ConfigKey.values()) {
+      if (keys.getConfigKey().equalsIgnoreCase(configStringKey)) {
+        return keys;
+      }
+    }
+    return null;
+  }
 }

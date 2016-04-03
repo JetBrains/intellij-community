@@ -30,6 +30,7 @@
 
     <projectService serviceImplementation="de.plushnikov.intellij.plugin.provider.LombokProcessorProvider"/>
 
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.settings.LombokSettings"/>
 
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>

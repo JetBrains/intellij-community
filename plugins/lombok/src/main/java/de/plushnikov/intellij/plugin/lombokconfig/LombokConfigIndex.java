@@ -13,6 +13,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import de.plushnikov.intellij.plugin.language.LombokConfigFileType;
+import de.plushnikov.intellij.plugin.language.psi.LombokConfigCleaner;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigFile;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigPsiUtil;
@@ -29,7 +30,8 @@ import java.util.Map;
 public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, String> {
   @NonNls
   public static final ID<ConfigIndexKey, String> NAME = ID.create("LombokConfigIndex");
-  private static final int INDEX_FORMAT_VERSION = 4;
+
+  private static final int INDEX_FORMAT_VERSION = 5;
 
   @NotNull
   @Override
@@ -50,13 +52,42 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
         if (null != directoryFile) {
           final String canonicalPath = PathUtil.toSystemIndependentName(directoryFile.getCanonicalPath());
           if (null != canonicalPath) {
-            final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties((LombokConfigFile) inputData.getPsiFile());
+            final Map<String, String> configValues = extractValues((LombokConfigFile) inputData.getPsiFile());
 
             result = new HashMap<ConfigIndexKey, String>();
-            for (LombokConfigProperty configProperty : configProperties) {
-              result.put(new ConfigIndexKey(canonicalPath, LombokConfigPsiUtil.getKey(configProperty)),
-                  LombokConfigPsiUtil.getValue(configProperty));
+            for (Map.Entry<String, String> entry : configValues.entrySet()) {
+              result.put(new ConfigIndexKey(canonicalPath, entry.getKey()), entry.getValue());
             }
+          }
+        }
+
+        return result;
+      }
+
+      private Map<String, String> extractValues(LombokConfigFile configFile) {
+        Map<String, String> result = new HashMap<String, String>();
+
+        final LombokConfigCleaner[] configCleaners = LombokConfigUtil.getLombokConfigCleaners(configFile);
+        for (LombokConfigCleaner configCleaner : configCleaners) {
+          final String key = LombokConfigPsiUtil.getKey(configCleaner);
+
+          final ConfigKey configKey = ConfigKey.fromConfigStringKey(key);
+          if (null != configKey) {
+            result.put(key, configKey.getConfigDefaultValue());
+          }
+        }
+
+        final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties(configFile);
+        for (LombokConfigProperty configProperty : configProperties) {
+          final String key = LombokConfigPsiUtil.getKey(configProperty);
+          final String value = LombokConfigPsiUtil.getValue(configProperty);
+          final String sign = LombokConfigPsiUtil.getSign(configProperty);
+          if (null == sign) {
+            result.put(key, value);
+          } else {
+            final String previousValue = StringUtil.defaultIfEmpty(result.get(key), "");
+            final String combinedValue = previousValue + sign + value + ";";
+            result.put(key, combinedValue);
           }
         }
 
