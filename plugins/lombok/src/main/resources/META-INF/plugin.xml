@@ -198,6 +198,13 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.11
+				<ol>
+				     <li>Fixed #153: Configuration keys</li>
+				     <li>Fixed #125: Support for lombok.getter.noIsPrefix</li>
+				     <li>Fixed #128: Support @Slf4j with custom logger name</li>
+				</ol>
+			</li>
 		<li>0.10
 				<ol>
 				     <li>Overall significant performance optimizations</li>
