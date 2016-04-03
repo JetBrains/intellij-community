@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.repo;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,6 +30,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.util.List;
 
@@ -36,6 +38,7 @@ import java.util.List;
  * Listens to .hg service files changes and updates {@link HgRepository} when needed.
  */
 final class HgRepositoryUpdater implements Disposable, BulkFileListener {
+  private final Project myProject;
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
   @NotNull private final QueueProcessor<Object> myUpdateQueue;
@@ -43,10 +46,13 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   @Nullable private VirtualFile myMqDir;
   @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
   @NotNull private final QueueProcessor<Object> myUpdateConfigQueue;
+  private final HgRepository myRepository;
+  private final VcsDirtyScopeManager myDirtyScopeManager;
 
 
   HgRepositoryUpdater(@NotNull final HgRepository repository) {
-    VirtualFile hgDir = repository.getHgDir();
+    myRepository = repository;
+    VirtualFile hgDir = myRepository.getHgDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(hgDir.getPath(), true);
     myRepositoryFiles = HgRepositoryFiles.getInstance(hgDir);
     DvcsUtil.visitVcsDirVfs(hgDir, HgRepositoryFiles.getSubDirRelativePaths());
@@ -54,16 +60,17 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     myBranchHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getBranchHeadsDirPath());
     myMqDir = VcsUtil.getVirtualFile(myRepositoryFiles.getMQDirPath());
 
-    Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<Object>(new DvcsUtil.Updater(repository), project.getDisposed());
+    myProject = repository.getProject();
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+    myUpdateQueue = new QueueProcessor<Object>(new DvcsUtil.Updater(repository), myProject.getDisposed());
     myUpdateConfigQueue = new QueueProcessor<Object>(new Consumer<Object>() {
       @Override
       public void consume(Object dummy) {
         repository.updateConfig();
       }
-    }, project.getDisposed());
-    if (!project.isDisposed()) {
-      myMessageBusConnection = project.getMessageBus().connect();
+    }, myProject.getDisposed());
+    if (!myProject.isDisposed()) {
+      myMessageBusConnection = myProject.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
     }
     else {
@@ -153,6 +160,12 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
     if (configHgrcChanged) {
       myUpdateConfigQueue.add(Void.TYPE);
+    }
+    if (dirstateFileChanged) {
+      final VirtualFile root = myRepository.getRoot();
+      myDirtyScopeManager.dirDirtyRecursively(root);
+      //update async incoming/outgoing model
+      myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
     }
   }
 }
