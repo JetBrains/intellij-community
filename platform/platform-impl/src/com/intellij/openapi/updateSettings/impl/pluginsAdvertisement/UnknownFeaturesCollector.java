@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,7 @@ import java.util.Set;
 /**
  * User: anna
  */
-@State(
-  name = "UnknownFeatures",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
   @NonNls private static final String FEATURE_ID = "featureType";
   @NonNls private static final String IMPLEMENTATION_NAME = "implementationName";

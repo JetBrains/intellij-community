@@ -1728,6 +1728,22 @@ public class ExtractMethodProcessor implements MatchProvider {
         myExtractedMethod = suggester.getExtractedMethod();
         myMethodCall      = suggester.getMethodCall();
         myVariableDatum   = suggester.getVariableData();
+
+        final List<PsiVariable> outputVariables = new ArrayList<>();
+        for (PsiReturnStatement statement : PsiUtil.findReturnStatements(myExtractedMethod)) {
+          final PsiExpression returnValue = statement.getReturnValue();
+          if (returnValue instanceof PsiReferenceExpression) {
+            final PsiElement resolve = ((PsiReferenceExpression)returnValue).resolve();
+            if (resolve instanceof PsiLocalVariable) {
+              outputVariables.add((PsiVariable)resolve);
+            }
+          }
+        }
+
+        if (outputVariables.size() == 1) {
+          myOutputVariable = outputVariables.get(0);
+        }
+
         return null;
       }
     }

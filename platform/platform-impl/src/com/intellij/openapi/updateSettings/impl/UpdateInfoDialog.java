@@ -26,7 +26,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -54,6 +53,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final boolean myWriteProtected;
 
   protected UpdateInfoDialog(@NotNull UpdateChannel channel,
+                             @NotNull BuildInfo latestBuild,
                              boolean enableLink,
                              boolean forceHttps,
                              Collection<PluginDownloader> updatedPlugins,
@@ -62,13 +62,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myUpdatedChannel = channel;
     myForceHttps = forceHttps;
     myUpdatedPlugins = updatedPlugins;
-    myLatestBuild = channel.getLatestBuild();
-    myPatch = myLatestBuild != null ? myLatestBuild.findPatchForCurrentBuild() : null;
+    myLatestBuild = latestBuild;
+    myPatch = myLatestBuild.findPatchForCurrentBuild();
     myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
-    if (myLatestBuild != null) {
-      initLicensingInfo(myUpdatedChannel, myLatestBuild);
-    }
+    initLicensingInfo(myUpdatedChannel, myLatestBuild);
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
@@ -165,7 +163,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void openDownloadPage() {
-    BrowserUtil.browse(myUpdatedChannel.getHomePageUrl());
+    String url = myUpdatedChannel.getHomePageUrl();
+    assert url != null : "channel: " + myUpdatedChannel.getId();
+    BrowserUtil.browse(url);
   }
 
   private static class ButtonAction extends AbstractAction {
@@ -198,7 +198,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       String message = myLatestBuild.getMessage();
       final String fullProductName = appNames.getFullProductName();
-      if (message == null) {
+      if (StringUtil.isEmpty(message)) {
         message = IdeBundle.message("updates.new.version.available", fullProductName);
       }
       final String homePageUrl = myUpdatedChannel.getHomePageUrl();
@@ -249,8 +249,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   protected static String formatVersion(String versionString, String build) {
-    Version version = Version.parseVersion(versionString);
-    String formattedVersion = version != null ? version.toString() : versionString;
-    return IdeBundle.message("updates.version.info", formattedVersion, build);
+    return IdeBundle.message("updates.version.info", versionString, build);
   }
 }

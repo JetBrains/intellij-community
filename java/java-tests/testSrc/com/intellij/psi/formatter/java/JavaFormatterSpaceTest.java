@@ -334,7 +334,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacesInsideLambda() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
     getSettings().SPACE_AROUND_LAMBDA_ARROW = true;
 
     doMethodTest("()->{}",
@@ -607,4 +607,41 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                 "    int a = 2;\n" +
                 "}");
   }
+  
+  public void testSpace_BeforeSemicolon_InsideFor() {
+    getSettings().SPACE_BEFORE_SEMICOLON = true;
+    doMethodTest(
+      "int i = 0;\n" +
+      "for (; i < 10 ; i++) {\n" +
+      "}\n",
+      "int i = 0;\n" +
+      "for ( ; i < 10 ; i++) {\n" +
+      "}\n"
+    );
+  }
+  
+  public void testSpace_BeforeSemicolon_InsideFor_IfSpacesWithinForIsOn() {
+    getSettings().SPACE_WITHIN_FOR_PARENTHESES = true;
+    doMethodTest(
+      "int i = 0;\n" +
+      "for (; i < 10 ; i++) {\n" +
+      "}\n",
+      "int i = 0;\n" +
+      "for ( ; i < 10; i++ ) {\n" +
+      "}\n"
+    );
+  }
+  
+  public void testSpaceBeforeTypeArgumentList() {
+    getSettings().SPACE_BEFORE_TYPE_PARAMETER_LIST = true;
+    doMethodTest(
+      "Map<Int, String> map = new HashMap<Int, String>();",
+      "Map <Int, String> map = new HashMap <Int, String>();"
+    );
+    doMethodTest(
+      "Bar.<Int, String>call();",
+      "Bar. <Int, String>call();"
+    );
+  }
+  
 }

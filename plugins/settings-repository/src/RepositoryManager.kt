@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,35 +20,35 @@ import gnu.trove.THashSet
 import java.io.InputStream
 import java.util.*
 
-public interface RepositoryManager {
-  public fun createRepositoryIfNeed(): Boolean
+interface RepositoryManager {
+  fun createRepositoryIfNeed(): Boolean
 
   /**
    * Think twice before use
    */
-  public fun deleteRepository()
+  fun deleteRepository()
 
-  public fun isRepositoryExists(): Boolean
+  fun isRepositoryExists(): Boolean
 
-  public fun getUpstream(): String?
+  fun getUpstream(): String?
 
-  public fun hasUpstream(): Boolean
+  fun hasUpstream(): Boolean
 
   /**
    * Return error message if failed
    */
-  public fun setUpstream(url: String?, branch: String? = null)
+  fun setUpstream(url: String?, branch: String? = null)
 
-  public fun read(path: String): InputStream?
+  fun read(path: String): InputStream?
 
   /**
    * Returns false if file is not written (for example, due to ignore rules).
    */
-  public fun write(path: String, content: ByteArray, size: Int): Boolean
+  fun write(path: String, content: ByteArray, size: Int): Boolean
 
-  public fun delete(path: String)
+  fun delete(path: String)
 
-  public fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean)
+  fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean)
 
   /**
    * Not all implementations support progress indicator (will not be updated on progress).
@@ -57,27 +57,27 @@ public interface RepositoryManager {
    *
    * If fixStateIfCannotCommit, repository state will be fixed before commit.
    */
-  public fun commit(indicator: ProgressIndicator? = null, syncType: SyncType? = null, fixStateIfCannotCommit: Boolean = true): Boolean
+  fun commit(indicator: ProgressIndicator? = null, syncType: SyncType? = null, fixStateIfCannotCommit: Boolean = true): Boolean
 
-  public fun getAheadCommitsCount(): Int
+  fun getAheadCommitsCount(): Int
 
-  public fun commit(paths: List<String>)
+  fun commit(paths: List<String>)
 
-  public fun push(indicator: ProgressIndicator? = null)
+  fun push(indicator: ProgressIndicator? = null)
 
-  public fun fetch(indicator: ProgressIndicator? = null): Updater
+  fun fetch(indicator: ProgressIndicator? = null): Updater
 
-  public fun pull(indicator: ProgressIndicator? = null): UpdateResult?
+  fun pull(indicator: ProgressIndicator? = null): UpdateResult?
 
-  public fun has(path: String): Boolean
+  fun has(path: String): Boolean
 
-  public fun resetToTheirs(indicator: ProgressIndicator): UpdateResult?
+  fun resetToTheirs(indicator: ProgressIndicator): UpdateResult?
 
-  public fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?): UpdateResult?
+  fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?): UpdateResult?
 
-  public fun canCommit(): Boolean
+  fun canCommit(): Boolean
 
-  public interface Updater {
+  interface Updater {
     fun merge(): UpdateResult?
 
     // valid only if merge was called before
@@ -85,18 +85,18 @@ public interface RepositoryManager {
   }
 }
 
-public interface UpdateResult {
+interface UpdateResult {
   val changed: Collection<String>
   val deleted: Collection<String>
 }
 
 val EMPTY_UPDATE_RESULT = ImmutableUpdateResult(Collections.emptySet(), Collections.emptySet())
 
-public data class ImmutableUpdateResult(override val changed: Collection<String>, override val deleted: Collection<String>) : UpdateResult {
-  public fun toMutable(): MutableUpdateResult = MutableUpdateResult(changed, deleted)
+data class ImmutableUpdateResult(override val changed: Collection<String>, override val deleted: Collection<String>) : UpdateResult {
+  fun toMutable(): MutableUpdateResult = MutableUpdateResult(changed, deleted)
 }
 
-public class MutableUpdateResult(changed: Collection<String>, deleted: Collection<String>) : UpdateResult {
+class MutableUpdateResult(changed: Collection<String>, deleted: Collection<String>) : UpdateResult {
   override val changed = THashSet(changed)
   override val deleted = THashSet(deleted)
 
@@ -123,9 +123,9 @@ public class MutableUpdateResult(changed: Collection<String>, deleted: Collectio
   }
 }
 
-public fun UpdateResult?.isEmpty(): Boolean = this == null || (changed.isEmpty() && deleted.isEmpty())
+fun UpdateResult?.isEmpty(): Boolean = this == null || (changed.isEmpty() && deleted.isEmpty())
 
-public fun UpdateResult?.concat(result: UpdateResult?): UpdateResult? {
+fun UpdateResult?.concat(result: UpdateResult?): UpdateResult? {
   if (result.isEmpty()) {
     return this
   }
@@ -138,4 +138,4 @@ public fun UpdateResult?.concat(result: UpdateResult?): UpdateResult? {
   }
 }
 
-public class AuthenticationException(cause: Throwable) : RuntimeException(cause.message, cause)
+class AuthenticationException(cause: Throwable) : RuntimeException(cause.message, cause)

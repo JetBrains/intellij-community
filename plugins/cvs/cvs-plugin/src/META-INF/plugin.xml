@@ -21,7 +21,6 @@
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <checkoutProvider implementation="com.intellij.cvsSupport2.checkout.CvsCheckoutProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"

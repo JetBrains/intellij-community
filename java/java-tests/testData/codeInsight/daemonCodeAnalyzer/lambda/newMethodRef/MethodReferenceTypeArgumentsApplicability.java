@@ -17,7 +17,7 @@ abstract class Test {
 
   {
     I i =  Test::<String>foo;
-    I i1 = Test::<Integer><error descr="Cannot resolve method 'foo'">foo</error>;
+    I i1 = Test::<Integer><error descr="Invalid method reference: String cannot be converted to Integer">foo</error>;
     I i2 = Test::foo;
 
   }

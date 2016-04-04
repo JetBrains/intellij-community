@@ -47,7 +47,7 @@ public class PySuperClassAttributesCompletionContributor extends CompletionContr
                  return;
                }
                for (PyTargetExpression expr : getSuperClassAttributes(containingClass)) {
-                 result.addElement(LookupElementBuilder.create(expr, expr.getName() + " = "));
+                 result.addElement(LookupElementBuilder.createWithSmartPointer(expr.getName() + " = ", expr));
                }
              }
            }

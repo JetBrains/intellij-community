@@ -19,6 +19,7 @@ import com.google.common.base.Objects;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,14 @@ public class GradleRunnerConfigurable extends BaseConfigurable implements Search
   private static final TestRunnerItem[] TEST_RUNNER_ITEMS = new TestRunnerItem[]{
     new TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER),
     new TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER),
-    new TestRunnerItem(null)};
+    new TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST)};
+
+
+  private final Project myProject;
+
+  public GradleRunnerConfigurable(Project project) {
+    myProject = project;
+  }
 
   @Nls
   @Override
@@ -75,7 +83,8 @@ public class GradleRunnerConfigurable extends BaseConfigurable implements Search
   public boolean isModified() {
     GradleSystemRunningSettings uiSettings = new GradleSystemRunningSettings();
     final TestRunnerItem selectedItem = (TestRunnerItem)myPreferredTestRunner.getSelectedItem();
-    GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner = selectedItem == null ? null : selectedItem.value;
+    GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner =
+      selectedItem == null ? GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST : selectedItem.value;
     uiSettings.setPreferredTestRunner(preferredTestRunner);
     GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
     return !settings.equals(uiSettings);
@@ -134,7 +143,7 @@ public class GradleRunnerConfigurable extends BaseConfigurable implements Search
 
     @Override
     public String toString() {
-      return GradleBundle.message("gradle.preferred_test_runner." + (value == null ? "ask" : value.name()));
+      return GradleBundle.message("gradle.preferred_test_runner." + (value == null ? "CHOOSE_PER_TEST" : value.name()));
     }
   }
 }

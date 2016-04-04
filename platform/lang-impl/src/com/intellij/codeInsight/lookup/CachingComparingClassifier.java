@@ -17,13 +17,15 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.ForceableComparable;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,13 +54,14 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
   }
 
   @Override
-  public void removeElement(LookupElement element, ProcessingContext context) {
+  public void removeElement(@NotNull LookupElement element, @NotNull ProcessingContext context) {
     myWeights.remove(element);
     super.removeElement(element, context);
   }
 
+  @NotNull
   @Override
-  public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
+  public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull ProcessingContext context) {
     if (!myWeigher.isPrefixDependent() && myPrimitive) {
       return myNext.classify(source, context);
     }
@@ -75,14 +78,15 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
     }
   }
 
+  @NotNull
   @Override
-  public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
+  public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull ProcessingContext context) {
     checkPrefixChanged(context);
-    super.describeItems(map, context);
+    return super.getSortingWeights(items, context);
   }
 
   @Override
-  public void addElement(LookupElement t, ProcessingContext context) {
+  public void addElement(@NotNull LookupElement t, @NotNull ProcessingContext context) {
     Comparable weight = myWeigher.weigh(t, context.get(CompletionLookupArranger.WEIGHING_CONTEXT));
     if (weight instanceof ForceableComparable) {
       ((ForceableComparable)weight).force();

@@ -66,7 +66,6 @@ public class AnalyzeStacktraceUtil {
     if (!text.equals(consoleText)) {
       consoleView.clear();
       consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
-
       consoleView.scrollTo(0);
     }
   }

@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeSelectionModel;
 import java.io.File;
 
 /**
@@ -40,5 +41,10 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
   @Nullable
   public File getGradleTestReport() {
     return gradleTestReport;
+  }
+
+  @Override
+  protected int getSelectionMode() {
+    return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
   }
 }

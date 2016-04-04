@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.editor.IgnoredPropertiesFilesSuffixesManager;
+import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -27,6 +27,12 @@ import java.util.Collections;
  */
 public class IgnoredPropertiesFilesSuffixesTest extends LightPlatformCodeInsightFixtureTestCase {
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(IncompletePropertyInspection.class);
+  }
+
   public void testPropertyIsComplete() {
     myFixture.addFileToProject("p.properties", "key=value");
     myFixture.addFileToProject("p_en.properties", "key=value eng");
@@ -35,9 +41,9 @@ public class IgnoredPropertiesFilesSuffixesTest extends LightPlatformCodeInsight
     assertNotNull(propertiesFile);
     final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assertSize(3, resourceBundle.getPropertiesFiles());
-    final IgnoredPropertiesFilesSuffixesManager suffixesManager = IgnoredPropertiesFilesSuffixesManager.getInstance(getProject());
-    suffixesManager.addSuffixes(Collections.singleton("ru"));
-    assertTrue(suffixesManager.isPropertyComplete(resourceBundle, "key"));
+    final IncompletePropertyInspection incompletePropertyInspection = IncompletePropertyInspection.getInstance(propertiesFile.getContainingFile());
+    incompletePropertyInspection.addSuffixes(Collections.singleton("ru"));
+    assertTrue(incompletePropertyInspection.isPropertyComplete("key", resourceBundle));
   }
 
   public void testPropertyIsComplete2() {
@@ -48,8 +54,8 @@ public class IgnoredPropertiesFilesSuffixesTest extends LightPlatformCodeInsight
     assertNotNull(propertiesFile);
     final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assertSize(3, resourceBundle.getPropertiesFiles());
-    final IgnoredPropertiesFilesSuffixesManager suffixesManager = IgnoredPropertiesFilesSuffixesManager.getInstance(getProject());
-    assertTrue(suffixesManager.isPropertyComplete(resourceBundle, "key"));
+    final IncompletePropertyInspection incompletePropertyInspection = IncompletePropertyInspection.getInstance(propertiesFile.getContainingFile());
+    assertTrue(incompletePropertyInspection.isPropertyComplete("key", resourceBundle));
   }
 
   public void testPropertyIsIncomplete() {
@@ -61,9 +67,9 @@ public class IgnoredPropertiesFilesSuffixesTest extends LightPlatformCodeInsight
     assertNotNull(propertiesFile);
     final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assertSize(4, resourceBundle.getPropertiesFiles());
-    final IgnoredPropertiesFilesSuffixesManager suffixesManager = IgnoredPropertiesFilesSuffixesManager.getInstance(getProject());
-    suffixesManager.addSuffixes(Collections.singleton("ru"));
-    assertFalse(suffixesManager.isPropertyComplete(resourceBundle, "key"));
+    final IncompletePropertyInspection incompletePropertyInspection = IncompletePropertyInspection.getInstance(propertiesFile.getContainingFile());
+    incompletePropertyInspection.addSuffixes(Collections.singleton("ru"));
+    assertFalse(incompletePropertyInspection.isPropertyComplete("key", resourceBundle));
   }
 
   public void testPropertyIsIncomplete2() {
@@ -76,14 +82,8 @@ public class IgnoredPropertiesFilesSuffixesTest extends LightPlatformCodeInsight
     assertNotNull(propertiesFile);
     final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assertSize(5, resourceBundle.getPropertiesFiles());
-    final IgnoredPropertiesFilesSuffixesManager suffixesManager = IgnoredPropertiesFilesSuffixesManager.getInstance(getProject());
-    suffixesManager.addSuffixes(Collections.singleton("en"));
-    assertFalse(suffixesManager.isPropertyComplete(resourceBundle, "key"));
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    IgnoredPropertiesFilesSuffixesManager.getInstance(getProject()).setSuffixes(Collections.<String>emptySet());
-    super.tearDown();
+    final IncompletePropertyInspection incompletePropertyInspection = IncompletePropertyInspection.getInstance(propertiesFile.getContainingFile());
+    incompletePropertyInspection.addSuffixes(Collections.singleton("en"));
+    assertFalse(incompletePropertyInspection.isPropertyComplete("key", resourceBundle));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SimpleConfigurable;
-import com.intellij.openapi.util.Getter;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
@@ -48,25 +47,18 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   @NotNull
   @Override
   public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
-    Getter<DebuggerSettings> settingsGetter = new Getter<DebuggerSettings>() {
-      @Override
-      public DebuggerSettings get() {
-        return DebuggerSettings.getInstance();
-      }
-    };
-
     switch (category) {
       case GENERAL:
         return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.launching", OptionsBundle.message("options.java.display.name"),
-                                                       DebuggerLaunchingConfigurable.class, settingsGetter));
+                                                       DebuggerLaunchingConfigurable.class, DebuggerSettings::getInstance));
       case DATA_VIEWS:
         return createDataViewsConfigurable();
       case STEPPING:
         return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.stepping", OptionsBundle.message("options.java.display.name"),
-                                                       DebuggerSteppingConfigurable.class, settingsGetter));
+                                                       DebuggerSteppingConfigurable.class, DebuggerSettings::getInstance));
       case HOTSWAP:
         return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", OptionsBundle.message("options.java.display.name"),
-                                                       JavaHotSwapConfigurableUi.class, settingsGetter));
+                                                       JavaHotSwapConfigurableUi.class, DebuggerSettings::getInstance));
     }
     return Collections.emptyList();
   }
@@ -76,12 +68,7 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   public static List<Configurable> createDataViewsConfigurable() {
     return Arrays.<Configurable>asList(new DebuggerDataViewsConfigurable(null),
                                        SimpleConfigurable.create("reference.idesettings.debugger.typerenderers", DebuggerBundle.message("user.renderers.configurable.display.name"),
-                                                                 UserRenderersConfigurable.class, new Getter<NodeRendererSettings>() {
-                                           @Override
-                                           public NodeRendererSettings get() {
-                                             return NodeRendererSettings.getInstance();
-                                           }
-                                         }));
+                                                                 UserRenderersConfigurable.class, NodeRendererSettings::getInstance));
   }
 
   @Override

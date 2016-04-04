@@ -30,13 +30,19 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.psi.util.*;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,25 +56,12 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final boolean myInJavaDoc;
   private boolean myStatic = false;
   private PsiElement myDeclarationHolder = null;
-  private final Set<Object> myResultNames = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
-    @Override
-    public int computeHashCode(Object object) {
-      if (object instanceof MethodSignature) {
-        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode((MethodSignature)object);
-      }
-      return object != null ? object.hashCode() : 0;
-    }
-
-    @Override
-    public boolean equals(Object o1, Object o2) {
-      if (o1 instanceof MethodSignature && o2 instanceof MethodSignature) {
-        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals((MethodSignature)o1, (MethodSignature)o2);
-      }
-      return o1 != null ? o1.equals(o2) : o2 == null;
-    }
-  });
-  private final List<CompletionElement> myResults = new ArrayList<CompletionElement>();
-  private final List<CompletionElement> myFilteredResults = new ArrayList<CompletionElement>();
+  private final Map<CompletionElement, CompletionElement> myResults = new LinkedHashMap<>();
+  private final Set<CompletionElement> mySecondRateResults = ContainerUtil.newIdentityTroveSet();
+  private final Set<String> myShadowedNames = ContainerUtil.newHashSet();
+  private final Set<String> myCurrentScopeMethodNames = ContainerUtil.newHashSet();
+  private final Set<String> myFinishedScopesMethodNames = ContainerUtil.newHashSet();
+  private final Set<PsiMethod> myMethodsToQualify = ContainerUtil.newHashSet();
   private final PsiElement myElement;
   private final PsiElement myScope;
   private final ElementFilter myFilter;
@@ -78,7 +71,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private PsiClass myQualifierClass = null;
   private final Condition<String> myMatcher;
   private final Options myOptions;
-  private final Set<PsiField> myNonInitializedFields = new HashSet<PsiField>();
+  private final Set<PsiField> myNonInitializedFields = new HashSet<>();
   private final boolean myAllowStaticWithInstanceQualifier;
 
   public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<String> nameCondition) {
@@ -145,6 +138,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
 
   public static Set<PsiField> getNonInitializedFields(PsiElement element) {
     final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    //noinspection SSBasedInspection
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class);
     if (statement == null || method == null || !method.isConstructor()) {
       return Collections.emptySet();
@@ -162,7 +156,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       parent = next;
     }
 
-    final Set<PsiField> fields = new HashSet<PsiField>();
+    final Set<PsiField> fields = new HashSet<>();
     final PsiClass containingClass = method.getContainingClass();
     assert containingClass != null;
     for (PsiField field : containingClass.getFields()) {
@@ -205,6 +199,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
     if(event == JavaScopeProcessorEvent.CHANGE_LEVEL){
       myMembersFlag = true;
+      myFinishedScopesMethodNames.addAll(myCurrentScopeMethodNames);
+      myCurrentScopeMethodNames.clear();
     }
     if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
       myDeclarationHolder = (PsiElement)associated;
@@ -241,19 +237,41 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       }
     }
 
-    if (satisfies(element, state) && isAccessible(element)) {
-      CompletionElement element1 = new CompletionElement(element, state.get(PsiSubstitutor.KEY));
-      if (myResultNames.add(element1.getUniqueId())) {
-        StaticProblem sp = myElement.getParent() instanceof PsiMethodReferenceExpression ? StaticProblem.none : getStaticProblem(element);
-        if (sp != StaticProblem.instanceAfterStatic) {
-          (sp == StaticProblem.staticAfterInstance ? myFilteredResults : myResults).add(element1);
+    if (element instanceof PsiVariable) {
+      String name = ((PsiVariable)element).getName();
+      if (myShadowedNames.contains(name)) return true;
+      if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        myShadowedNames.add(name);
+      }
+    }
+
+    if (!satisfies(element, state) || !isAccessible(element)) return true;
+
+    StaticProblem sp = myElement.getParent() instanceof PsiMethodReferenceExpression ? StaticProblem.none : getStaticProblem(element);
+    if (sp == StaticProblem.instanceAfterStatic) return true;
+
+    CompletionElement completion = new CompletionElement(element,  state.get(PsiSubstitutor.KEY));
+    CompletionElement prev = myResults.get(completion);
+    if (prev == null || completion.isMoreSpecificThan(prev)) {
+      myResults.put(completion, completion);
+      if (sp == StaticProblem.staticAfterInstance) {
+        mySecondRateResults.add(completion);
+      }
+
+      if (element instanceof PsiMethod) {
+        String name = ((PsiMethod)element).getName();
+        myCurrentScopeMethodNames.add(name);
+        if (myFinishedScopesMethodNames.contains(name)) {
+          myMethodsToQualify.add((PsiMethod)element);
         }
       }
-    } else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
-      myResultNames.add(CompletionElement.getVariableUniqueId((PsiVariable)element));
     }
 
     return true;
+  }
+
+  public boolean shouldQualifyMethodCall(@NotNull PsiMethod method) {
+    return myMethodsToQualify.contains(method);
   }
 
   private boolean isQualifiedContext() {
@@ -322,20 +340,21 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
 
   public void setCompletionElements(@NotNull Object[] elements) {
     for (Object element: elements) {
-      myResults.add(new CompletionElement(element, PsiSubstitutor.EMPTY));
+      CompletionElement completion = new CompletionElement(element, PsiSubstitutor.EMPTY);
+      myResults.put(completion, completion);
     }
   }
 
   public Iterable<CompletionElement> getResults() {
-    if (myResults.isEmpty()) {
-      return myFilteredResults;
+    if (mySecondRateResults.size() == myResults.size()) {
+      return mySecondRateResults;
     }
-    return myResults;
+    return ContainerUtil.filter(myResults.values(), element -> !mySecondRateResults.contains(element));
   }
 
   public void clear() {
     myResults.clear();
-    myFilteredResults.clear();
+    mySecondRateResults.clear();
   }
 
   @Override

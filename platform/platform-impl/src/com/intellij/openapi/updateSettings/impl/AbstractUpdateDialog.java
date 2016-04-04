@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,25 +81,11 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     });
   }
 
-  protected void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
+  protected void initLicensingInfo(@NotNull UpdateChannel channel, @SuppressWarnings("UnusedParameters") @NotNull BuildInfo build) {
     LicensingFacade facade = LicensingFacade.getInstance();
     if (facade != null) {
       mySubscriptionLicense = facade.isSubscriptionLicense();
-      if (!channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        int majorVersion = build.getMajorVersion();
-        if (majorVersion < 0) {
-          majorVersion = channel.getMajorVersion(); // fallback
-        }
-        final Boolean paidUpgrade = facade.isPaidUpgrade(majorVersion, build.getReleaseDate());
-        if (paidUpgrade == Boolean.TRUE) {
-          myPaidUpgrade = true;
-          myLicenseInfo = IdeBundle.message("updates.channel.key.needed", channel.getEvalDays());
-        }
-        else if (paidUpgrade == Boolean.FALSE) {
-          myLicenseInfo = IdeBundle.message("updates.channel.existing.key");
-        }
-      }
-      else {
+      if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
         myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
       }
     }

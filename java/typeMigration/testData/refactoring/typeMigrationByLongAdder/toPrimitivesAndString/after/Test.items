@@ -1,0 +1,28 @@
+Types:
+PsiField:i : java.util.concurrent.atomic.LongAdder
+PsiMethodCallExpression:i.doubleValue() : double
+PsiMethodCallExpression:i.floatValue() : float
+PsiMethodCallExpression:i.getAndSet(123) : int
+PsiMethodCallExpression:i.longValue() : long
+PsiMethodCallExpression:i.toString() : java.lang.String
+PsiMethodCallExpression:this.i.intValue() : int
+PsiReferenceExpression:i : java.util.concurrent.atomic.LongAdder
+PsiReferenceExpression:i : java.util.concurrent.atomic.LongAdder
+PsiReferenceExpression:i : java.util.concurrent.atomic.LongAdder
+PsiReferenceExpression:i : java.util.concurrent.atomic.LongAdder
+PsiReferenceExpression:i : java.util.concurrent.atomic.LongAdder
+PsiReferenceExpression:i : java.util.concurrent.atomic.LongAdder
+PsiReferenceExpression:this.i : java.util.concurrent.atomic.LongAdder
+
+Conversions:
+i.doubleValue() -> $
+i.floatValue() -> $
+i.getAndSet(123) -> $l$.add($v$ - $l$.sum()) $l$.$setMethodName$($v$)
+i.longValue() -> $
+i.toString() -> $
+new AtomicInteger(0) -> new java.util.concurrent.atomic.LongAdder() new $className$($p$)
+this.i.intValue() -> $
+
+New expression type changes:
+Fails:
+i->java.util.concurrent.atomic.LongAdder

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public interface PyGlobalStatement extends PyStatement, NameDefiner {
+public interface PyGlobalStatement extends PyStatement, PyNamedElementContainer {
   @NotNull PyTargetExpression[] getGlobals();
 
   void addGlobal(String name);

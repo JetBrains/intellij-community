@@ -1,0 +1,25 @@
+::-webkit-scrollbar-corner {
+background-color: #3c3f41;
+}
+
+body {
+    background-color: #3c3f41;
+    color: #bababa
+}
+
+p img {
+    background-color: #bababa;
+}
+
+textarea {
+background-color: #3c3f41;
+color: #bababa
+}
+
+a {
+    color: #589df6
+}
+
+tr {
+    text-align: left
+}

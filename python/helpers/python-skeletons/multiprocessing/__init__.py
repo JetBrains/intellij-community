@@ -136,7 +136,7 @@ class JoinableQueue(multiprocessing.Queue):
         pass
 
 
-def active_childern():
+def active_children():
     """
     :rtype: list[multiprocessing.Process]
     """

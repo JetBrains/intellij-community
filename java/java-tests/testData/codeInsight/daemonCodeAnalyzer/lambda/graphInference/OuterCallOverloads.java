@@ -11,6 +11,6 @@ abstract class Overloadsss {
 
   {
     List<String> l  = foo(bar (null));
-    List<String> l1 = foo(bar1<error descr="Ambiguous method call: both 'Overloadsss.bar1(List<Object>)' and 'Overloadsss.bar1(Set<Object>)' match">(null)</error>);
+    List<String> l1 = foo(bar1<error descr="Ambiguous method call: both 'Overloadsss.bar1(List<K>)' and 'Overloadsss.bar1(Set<K>)' match">(null)</error>);
   }
 }

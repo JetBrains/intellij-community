@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.template.emmet.completion.EmmetAbbreviationCompletionProvider;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -87,7 +88,11 @@ public class XmlCompletionContributor extends CompletionContributor {
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            ProcessingContext context,
                                            @NotNull final CompletionResultSet result) {
-               final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlAttributeValue.class, false);
+               final PsiElement position = parameters.getPosition();
+               if (!position.getLanguage().isKindOf(XMLLanguage.INSTANCE)) {
+                 return;
+               }
+               final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(position, XmlAttributeValue.class, false);
                if (attributeValue == null) {
                  // we are injected, only getContext() returns attribute value
                  return;

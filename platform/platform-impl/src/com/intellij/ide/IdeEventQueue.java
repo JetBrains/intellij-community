@@ -83,7 +83,7 @@ public class IdeEventQueue extends EventQueue {
 
   private final Alarm myIdleRequestsAlarm = new Alarm();
 
-  private final Alarm myIdleTimeCounterAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myIdleTimeCounterAlarm = new Alarm();
 
   private long myIdleTime;
 
@@ -244,7 +244,12 @@ public class IdeEventQueue extends EventQueue {
       myIdleListeners.add(runnable);
       final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeout);
       myListener2Request.put(runnable, request);
-      myIdleRequestsAlarm.addRequest(request, timeout);
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myIdleRequestsAlarm.addRequest(request, timeout);
+        }
+      });
     }
   }
 
@@ -411,7 +416,7 @@ public class IdeEventQueue extends EventQueue {
     if (!(e instanceof KeyEvent)) return e;
 
     KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
-    if (externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
+    if (!Registry.is("ide.non.english.keyboard.layout.fix") || externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
 
     KeyEvent ke = (KeyEvent)e;
 
@@ -484,15 +489,19 @@ public class IdeEventQueue extends EventQueue {
               modifiers |= InputEvent.ALT_MASK;
             }
 
+            int oldKeyCode = ke.getKeyCode();
+
             //noinspection MagicConstant
-            e = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
-                             ke.getKeyCode(), ke.getKeyChar(), ke.getKeyLocation());
+            ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
+                             KeyEvent.VK_UNDEFINED, ke.getKeyChar(), KeyEvent.KEY_LOCATION_UNKNOWN);
+
+            ke.setKeyCode(oldKeyCode);
           }
         }
       }
     }
 
-    return e;
+    return ke;
   }
 
   private static AWTEvent mapEvent(AWTEvent e) {
@@ -500,7 +509,7 @@ public class IdeEventQueue extends EventQueue {
       MouseEvent src = (MouseEvent)e;
       if (src.getButton() < 6) {
         // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
-        e = new MouseWheelEvent(src.getComponent(), src.getID(), src.getWhen(),
+        e = new MouseWheelEvent(src.getComponent(), MouseEvent.MOUSE_WHEEL, src.getWhen(),
                                 src.getModifiers() | InputEvent.SHIFT_DOWN_MASK, src.getX(), src.getY(),
                                 0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.getClickCount(), src.getButton() == 4 ? -1 : 1);
       }
@@ -641,11 +650,6 @@ public class IdeEventQueue extends EventQueue {
           }
         });
       }
-      if (me.getButton() != 0) {
-        setLastClickEvent(me);
-      } else if (lastClickEvent != null && Math.abs(System.currentTimeMillis() - lastClickTime) > 200){
-        setLastClickEvent(null);//Obsolete event
-      }
       if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
         defaultDispatchEvent(e);
       }
@@ -687,19 +691,6 @@ public class IdeEventQueue extends EventQueue {
         LOG.warn("Error accessing java.awt.event.InvocationEvent.runnable field");
       }
     }
-  }
-
-  private MouseEvent lastClickEvent;
-  private long lastClickTime;
-
-  private void setLastClickEvent(@Nullable MouseEvent event) {
-    lastClickEvent = event;
-    lastClickTime = System.currentTimeMillis();
-  }
-
-  public boolean wasRootRecentlyClicked(Component component) {
-    return component != null && lastClickEvent != null && lastClickEvent.getComponent() != null &&
-           SwingUtilities.getRoot(lastClickEvent.getComponent()) == SwingUtilities.getRoot(component);
   }
 
   private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
@@ -992,8 +983,12 @@ public class IdeEventQueue extends EventQueue {
     public int getTimeout() {
       return myTimeout;
     }
-  }
 
+    @Override
+    public String toString() {
+      return "Fire idle request. delay: "+getTimeout()+"; runnable: "+myRunnable;
+    }
+  }
 
   private final class ExitSuspendModeRunnable implements Runnable {
 
@@ -1161,7 +1156,7 @@ public class IdeEventQueue extends EventQueue {
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
   public void postEvent(@NotNull AWTEvent theEvent) {
-    myFrequentEventDetector.eventHappened();
+    myFrequentEventDetector.eventHappened(theEvent);
     super.postEvent(theEvent);
   }
 

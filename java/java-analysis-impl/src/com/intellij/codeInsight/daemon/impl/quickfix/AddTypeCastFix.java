@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,10 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return myType.isValid() && startElement.isValid() && startElement.getManager().isInProject(startElement);
+    return myType.isValid() &&
+           PsiTypesUtil.isDenotableType(myType) &&
+           startElement.isValid() && 
+           startElement.getManager().isInProject(startElement);
   }
 
   @Override

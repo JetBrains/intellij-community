@@ -4,13 +4,13 @@ abstract class A<T> {
   <K> void baz37(B<K, ? extends K> a) {}
   abstract B<T,? extends T> foo37();
   void bar37(A<?> a){
-    baz37<error descr="'baz37(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo37())</error>;
+    baz37(a.foo37());
   }
 
   <K> void baz39(B<K, ? extends K> a) {}
   abstract B<T,? extends T> foo39();
   void bar39(A<? extends T> a){
-    baz39<error descr="'baz39(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo39())</error>;
+    baz39(a.foo39());
   }
 
   <K> void baz52(B<K, ? extends K> a) {}
@@ -22,7 +22,7 @@ abstract class A<T> {
   <K> void baz54(B<K, ? extends K> a) {}
   abstract B<? extends T,? extends T> foo54();
   void bar54(A<? extends T> a){
-    baz54<error descr="'baz54(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo54())</error>;
+    baz54<error descr="'baz54(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? extends T>>,capture<? extends capture<? extends T>>>)'">(a.foo54())</error>;
   }
 
 

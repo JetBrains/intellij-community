@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,74 +16,24 @@
 package com.intellij.psi;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PsiTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-import java.io.IOException;
-
-public class ConstantValuesTest extends PsiTestCase{
+public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
   private PsiClass myClass;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/psi/constantValues";
+  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          try{
-            String rootPath = JavaTestUtil.getJavaTestDataPath() + "/psi/constantValues";
-            VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete, true);
-            ModuleRootModificationUtil.addModuleLibrary(myModule, root.getUrl());
-          }
-          catch(Exception e){
-            LOG.error(e);
-          }
-        }
-      }
-    );
-
-    myClass = myJavaFacade.findClass("ClassWithConstants", GlobalSearchScope.allScope(getProject()));
-    assertNotNull(myClass);
-    assertEquals(StdFileTypes.JAVA, myClass.getContainingFile().getVirtualFile().getFileType());
+    myClass = ((PsiJavaFile)myFixture.configureByFile("ClassWithConstants.java")).getClasses()[0];
   }
 
-  @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    super.invokeTestRunnable(runnable);
-    final PsiJavaFile file = (PsiJavaFile)myClass.getContainingFile();
-
-    WriteCommandAction.runWriteCommandAction(
-      null, new Runnable() {
-        @Override
-        public void run() {
-          try {
-            file.getVirtualFile().setBinaryContent(file.getVirtualFile().contentsToByteArray());
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
-      }
-    );
-
-    LOG.assertTrue(file.isValid());
-    myClass = file.getClasses()[0];
-
-    LOG.assertTrue(myClass.isValid());
-    super.invokeTestRunnable(runnable);
-  }
-
-  public void testInt1(){
+  public void testInt1() {
     PsiField field = myClass.findFieldByName("INT_CONST1", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -95,20 +45,21 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Integer.valueOf(1), field.computeConstantValue());
   }
 
-  public void testInt2(){
+  public void testInt2() {
     PsiField field = myClass.findFieldByName("INT_CONST2", false);
     assertNotNull(field);
     PsiPrefixExpression initializer = (PsiPrefixExpression)field.getInitializer();
     assertNotNull(initializer);
     assertEquals(PsiType.INT, initializer.getType());
     PsiLiteralExpression operand = (PsiLiteralExpression)initializer.getOperand();
+    assertNotNull(operand);
     assertEquals(Integer.valueOf(1), operand.getValue());
     assertEquals("-1", initializer.getText());
 
     assertEquals(Integer.valueOf(-1), field.computeConstantValue());
   }
 
-  public void testInt3(){
+  public void testInt3() {
     PsiField field = myClass.findFieldByName("INT_CONST3", false);
     assertNotNull(field);
     PsiPrefixExpression initializer = (PsiPrefixExpression)field.getInitializer();
@@ -120,7 +71,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Integer.valueOf(value), field.computeConstantValue());
   }
 
-  public void testLong1(){
+  public void testLong1() {
     PsiField field = myClass.findFieldByName("LONG_CONST1", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -132,7 +83,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Long.valueOf(2), field.computeConstantValue());
   }
 
-  public void testLong2(){
+  public void testLong2() {
     PsiField field = myClass.findFieldByName("LONG_CONST2", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -144,7 +95,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Long.valueOf(1000000000000L), field.computeConstantValue());
   }
 
-  public void testLong3(){
+  public void testLong3() {
     PsiField field = myClass.findFieldByName("LONG_CONST3", false);
     assertNotNull(field);
     PsiPrefixExpression initializer = (PsiPrefixExpression)field.getInitializer();
@@ -156,7 +107,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Long.valueOf(value), field.computeConstantValue());
   }
 
-  public void testShort(){
+  public void testShort() {
     PsiField field = myClass.findFieldByName("SHORT_CONST", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -168,7 +119,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Short.valueOf((short)3), field.computeConstantValue());
   }
 
-  public void testByte(){
+  public void testByte() {
     PsiField field = myClass.findFieldByName("BYTE_CONST", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -180,7 +131,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Byte.valueOf((byte)4), field.computeConstantValue());
   }
 
-  public void testChar(){
+  public void testChar() {
     PsiField field = myClass.findFieldByName("CHAR_CONST", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -192,7 +143,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(new Character('5'), field.computeConstantValue());
   }
 
-  public void testBoolean(){
+  public void testBoolean() {
     PsiField field = myClass.findFieldByName("BOOL_CONST", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -204,7 +155,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(Boolean.TRUE, field.computeConstantValue());
   }
 
-  public void testFloat(){
+  public void testFloat() {
     PsiField field = myClass.findFieldByName("FLOAT_CONST", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -216,7 +167,7 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(new Float(1.234f), field.computeConstantValue());
   }
 
-  public void testDouble(){
+  public void testDouble() {
     PsiField field = myClass.findFieldByName("DOUBLE_CONST", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
@@ -228,19 +179,21 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(new Double(3.456), field.computeConstantValue());
   }
 
-  public void testString(){
+  public void testString() {
     PsiField field = myClass.findFieldByName("STRING_CONST", false);
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    PsiType type = initializer.getType();
+    assertNotNull(type);
+    assertTrue(type.equalsToText("java.lang.String"));
     assertEquals("a\r\n\"bcd", initializer.getValue());
     assertEquals("\"a\\r\\n\\\"bcd\"", initializer.getText());
 
     assertEquals("a\r\n\"bcd", field.computeConstantValue());
   }
 
-  public void testInfinity(){
+  public void testInfinity() {
     PsiField field1 = myClass.findFieldByName("d1", false);
     assertNotNull(field1);
     PsiReferenceExpression initializer1 = (PsiReferenceExpression)field1.getInitializer();
@@ -267,17 +220,13 @@ public class ConstantValuesTest extends PsiTestCase{
   }
 
   public void testConstantEvaluatorStackOverflowResistance() {
-    String text ="class X { String s = \"\" ";
-    for (int i=0;i<10000;i++) {
-      text += "+ \"\"";
-    }
-    text += "; }";
-    PsiJavaFile file = (PsiJavaFile)createDummyFile("a.java", text);
+    StringBuilder text = new StringBuilder(65536).append("class X { String s = \"\"");
+    for (int i = 0; i < 10000; i++) text.append(" + \"\"");
+    text.append("; }");
 
-    PsiExpression expression = file.getClasses()[0].findFieldByName("s", false).getInitializer();
-
-    Object o = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-
-    assertEquals("", o);
+    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("a.java", text.toString());
+    PsiField field = file.getClasses()[0].findFieldByName("s", false);
+    assertNotNull(field);
+    assertEquals("", JavaConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false));
   }
 }

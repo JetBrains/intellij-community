@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
@@ -91,9 +90,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   @Override
   protected void doSetText(XExpression text) {
     myExpression = text;
-    Language language = text.getLanguage();
-    FileType fileType = language != null ? language.getAssociatedFileType() : getEditorsProvider().getFileType();
-    myEditorTextField.setNewDocumentAndFileType(fileType, createDocument(text));
+    myEditorTextField.setNewDocumentAndFileType(getFileType(text), createDocument(text));
   }
 
   @Override

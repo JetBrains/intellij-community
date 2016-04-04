@@ -15,31 +15,44 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Highlighter;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.beans.EventHandler.create;
+import static java.util.Locale.ENGLISH;
 
 public class ColorPanel extends JComponent {
+  private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
   private final List<ActionListener> myListeners = new CopyOnWriteArrayList<ActionListener>();
+  private final JTextField myTextField = new JTextField(8);
   private boolean myEditable;
   private ActionEvent myEvent;
   private Color myColor;
 
   public ColorPanel() {
+    addImpl(myTextField, null, 0);
     setEditable(true);
     setMinimumSize(JBUI.size(10, 10));
-    addMouseListener(create(MouseListener.class, this, "onPressed", null, "mousePressed"));
-    addKeyListener(create(KeyListener.class, this, "onPressed", "keyCode", "keyPressed"));
-    addFocusListener(create(FocusListener.class, this, "repaint"));
+    myTextField.addMouseListener(create(MouseListener.class, this, "onPressed", null, "mousePressed"));
+    myTextField.addKeyListener(create(KeyListener.class, this, "onPressed", "keyCode", "keyPressed"));
+    myTextField.setEditable(false);
+    MONOSPACED_FONT.install(myTextField);
+    Painter.BACKGROUND.install(myTextField, true);
   }
 
+  @SuppressWarnings("unused") // used from event handler
   public void onPressed(int keyCode) {
     if (keyCode == KeyEvent.VK_SPACE) {
       onPressed();
@@ -67,13 +80,10 @@ public class ColorPanel extends JComponent {
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
-    g.setColor(hasFocus() ? JBColor.BLACK : JBColor.border());
-    g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
-    if (myColor != null && isEnabled()) {
-      g.setColor(myColor);
-      g.fillRect(2, 2, getWidth() - 4, getHeight() - 4);
-    }
+  public void doLayout() {
+    Rectangle bounds = new Rectangle(getWidth(), getHeight());
+    JBInsets.removeFrom(bounds, getInsets());
+    myTextField.setBounds(bounds);
   }
 
   @Override
@@ -81,26 +91,14 @@ public class ColorPanel extends JComponent {
     if (isPreferredSizeSet()) {
       return super.getPreferredSize();
     }
-    Font font = getFont();
-    if (font != null) {
-      int size = font.getSize();
-      if (size > 6) {
-        return new Dimension(4 + 2 * size, 4 + size);
-      }
-    }
-    return getMinimumSize();
+    Dimension size = myTextField.getPreferredSize();
+    JBInsets.addTo(size, getInsets());
+    return size;
   }
 
   @Override
   public String getToolTipText() {
-    if (myColor == null || !isEnabled()) {
-      return null;
-    }
-    StringBuilder buffer = new StringBuilder("0x").append(ColorUtil.toHex(myColor).toUpperCase());
-    if (myEditable && isEnabled()) {
-      buffer.append(" (Click to customize)");
-    }
-    return buffer.toString();
+    return myTextField.getToolTipText();
   }
 
   public void removeActionListener(ActionListener actionlistener) {
@@ -118,12 +116,91 @@ public class ColorPanel extends JComponent {
 
   public void setSelectedColor(@Nullable Color color) {
     myColor = color;
-    repaint();
+    updateSelectedColor();
+  }
+
+  @SuppressWarnings("UseJBColor")
+  private void updateSelectedColor() {
+    boolean enabled = isEnabled();
+    if (enabled && myEditable) {
+      myTextField.setEnabled(true);
+      myTextField.setToolTipText(UIBundle.message("color.panel.select.color.tooltip.text"));
+    }
+    else {
+      myTextField.setEnabled(false);
+      myTextField.setToolTipText(null);
+    }
+    Color color = enabled ? myColor : null;
+    if (color != null) {
+      myTextField.setText(' ' + ColorUtil.toHex(color).toUpperCase(ENGLISH) + ' ');
+    }
+    else {
+      myTextField.setText(null);
+      color = getBackground();
+    }
+    myTextField.setBackground(color);
+    myTextField.setSelectedTextColor(color);
+    if (color != null) {
+      int gray = (int)(0.212656 * color.getRed() + 0.715158 * color.getGreen() + 0.072186 * color.getBlue());
+      int delta = gray < 0x20 ? 0x60 : gray < 0x50 ? 0x40 : gray < 0x80 ? 0x20 : gray < 0xB0 ? -0x20 : gray < 0xE0 ? -0x40 : -0x60;
+      gray += delta;
+      color = new Color(gray, gray, gray);
+      myTextField.setDisabledTextColor(color);
+      myTextField.setSelectionColor(color);
+      gray += delta;
+      color = new Color(gray, gray, gray);
+      myTextField.setForeground(color);
+    }
   }
 
   public void setEditable(boolean editable) {
     myEditable = editable;
-    setFocusable(editable);
-    repaint();
+    updateSelectedColor();
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    updateSelectedColor();
+  }
+
+  @Override
+  public void repaint() {
+    super.repaint();
+  }
+
+  private static class Painter implements Highlighter.HighlightPainter, PropertyChangeListener {
+    private static final String PROPERTY = "highlighter";
+    private static final Painter BACKGROUND = new Painter();
+
+    @Override
+    public void paint(Graphics g, int p0, int p1, Shape shape, JTextComponent component) {
+      Color color = component.getBackground();
+      if (color != null) {
+        g.setColor(color);
+        Rectangle bounds = shape instanceof Rectangle ? (Rectangle)shape : shape.getBounds();
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      }
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+      Object source = event.getSource();
+      if ((source instanceof JTextComponent) && PROPERTY.equals(event.getPropertyName())) {
+        install((JTextComponent)source, false);
+      }
+    }
+
+    private void install(JTextComponent component, boolean listener) {
+      try {
+        Highlighter highlighter = component.getHighlighter();
+        if (highlighter != null) highlighter.addHighlight(0, 0, this);
+      }
+      catch (BadLocationException ignored) {
+      }
+      if (listener) {
+        component.addPropertyChangeListener(PROPERTY, this);
+      }
+    }
   }
 }

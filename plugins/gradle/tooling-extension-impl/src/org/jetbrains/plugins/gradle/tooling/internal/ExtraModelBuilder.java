@@ -61,12 +61,20 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   public Object buildAll(String modelName, Project project) {
     for (ModelBuilderService service : buildersLoader) {
       if (service.canBuild(modelName) && isVersionMatch(service)) {
+        final long startTime = System.currentTimeMillis();
         try {
           return service.buildAll(modelName, project);
         }
         catch (Exception e) {
           ErrorMessageBuilder builderError = service.getErrorMessageBuilder(project, e);
           project.getLogger().error(builderError.build());
+        } finally {
+          if(Boolean.getBoolean("idea.gradle.custom.tooling.perf")) {
+            final long timeInMs = (System.currentTimeMillis() - startTime);
+            project.getLogger().error(ErrorMessageBuilder.create(
+              project, null, "Performance statistics"
+            ).withDescription(String.format("service %s imported data in %d ms", service.getClass().getSimpleName(), timeInMs)).build());
+          }
         }
         return null;
       }

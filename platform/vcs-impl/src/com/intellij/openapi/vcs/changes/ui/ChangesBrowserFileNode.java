@@ -27,7 +27,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 /**
  * @author yole

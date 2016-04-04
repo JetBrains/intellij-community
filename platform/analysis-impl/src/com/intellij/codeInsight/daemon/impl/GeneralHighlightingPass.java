@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
@@ -66,9 +63,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  static final Condition<PsiFile> SHOULD_HIGHIGHT_FILTER = new Condition<PsiFile>() {
+  static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER = new Condition<PsiFile>() {
     @Override
-    public boolean value(PsiFile file) {
+    public boolean value(@NotNull PsiFile file) {
       return HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
     }
   };
@@ -198,9 +195,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
       List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
       Divider.divideInsideAndOutside(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, insideElements, insideRanges, outsideElements,
-                                     outsideRanges, false, SHOULD_HIGHIGHT_FILTER);
-      // put file element always in outsideElements
-      if (!insideElements.isEmpty() && insideElements.get(insideElements.size()-1) instanceof PsiFile) {
+                                     outsideRanges, false, SHOULD_HIGHLIGHT_FILTER);
+      // put file element always in outsideElements (except file fragments where they have crazy element ranges: an expression might be an immediate child of a file there)
+      if (!insideElements.isEmpty() && insideElements.get(insideElements.size()-1) instanceof PsiFile && !(insideElements.get(insideElements.size()-1) instanceof PsiCodeFragment)) {
         PsiElement file = insideElements.remove(insideElements.size() - 1);
         outsideElements.add(file);
         ProperTextRange range = insideRanges.remove(insideRanges.size() - 1);
@@ -432,7 +429,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                                   @NotNull final Project project) throws ProcessCanceledException {
     progress.cancel();
     JobScheduler.getScheduler().schedule(new Runnable() {
-
       @Override
       public void run() {
         Application application = ApplicationManager.getApplication();

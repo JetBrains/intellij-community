@@ -16,16 +16,19 @@
 
 package org.zmlx.hg4idea.log;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +109,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     repository.update();
-    Map<String, Set<Hash>> branches = repository.getBranches();
+    Map<String, LinkedHashSet<Hash>> branches = repository.getBranches();
     Set<String> openedBranchNames = repository.getOpenedBranches();
     Collection<HgNameWithHashInfo> bookmarks = repository.getBookmarks();
     Collection<HgNameWithHashInfo> tags = repository.getTags();
@@ -115,7 +118,7 @@ public class HgLogProvider implements VcsLogProvider {
 
     Set<VcsRef> refs = new HashSet<VcsRef>(branches.size() + bookmarks.size());
 
-    for (Map.Entry<String, Set<Hash>> entry : branches.entrySet()) {
+    for (Map.Entry<String, LinkedHashSet<Hash>> entry : branches.entrySet()) {
       String branchName = entry.getKey();
       boolean opened = openedBranchNames.contains(branchName);
       for (Hash hash : entry.getValue()) {
@@ -161,9 +164,11 @@ public class HgLogProvider implements VcsLogProvider {
     return myRefSorter;
   }
 
+  @NotNull
   @Override
-  public void subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
-    myProject.getMessageBus().connect(myProject).subscribe(HgVcs.STATUS_TOPIC, new HgUpdater() {
+  public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(HgVcs.STATUS_TOPIC, new HgUpdater() {
       @Override
       public void update(Project project, @Nullable VirtualFile root) {
         if (root != null && roots.contains(root)) {
@@ -171,36 +176,44 @@ public class HgLogProvider implements VcsLogProvider {
         }
       }
     });
+    return connection;
   }
 
   @NotNull
   @Override
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
-                                                                       @NotNull VcsLogFilterCollection filterCollection,
-                                                                       int maxCount) throws VcsException {
+                                                       @NotNull VcsLogFilterCollection filterCollection,
+                                                       int maxCount) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
-    if (filterCollection.getBranchFilter() != null && !filterCollection.getBranchFilter().getBranchNames().isEmpty()) {
+    VcsLogBranchFilter branchFilter = filterCollection.getBranchFilter();
+    if (branchFilter != null) {
       HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
       if (repository == null) {
         LOG.error("Repository not found for root " + root);
         return Collections.emptyList();
       }
 
+      Collection<String> branchNames = repository.getBranches().keySet();
+      Collection<String> bookmarkNames = HgUtil.getNamesWithoutHashes(repository.getBookmarks());
+      Collection<String> predefinedNames = ContainerUtil.list(TIP_REFERENCE);
+
       boolean atLeastOneBranchExists = false;
-      for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
-        if (branchName.equals(TIP_REFERENCE) || branchExists(repository, branchName)) {
+      for (String branchName : ContainerUtil.concat(branchNames, bookmarkNames, predefinedNames)) {
+        if (branchFilter.matches(branchName)) {
           filterParameters.add(HgHistoryUtil.prepareParameter("branch", branchName));
           atLeastOneBranchExists = true;
         }
-        else if (branchName.equals(HEAD_REFERENCE)) {
-          filterParameters.add(HgHistoryUtil.prepareParameter("branch", "."));
-          filterParameters.add("-r");
-          filterParameters.add("::."); //all ancestors for current revision;
-          atLeastOneBranchExists = true;
-        }
       }
+
+      if (branchFilter.matches(HEAD_REFERENCE)) {
+        filterParameters.add(HgHistoryUtil.prepareParameter("branch", "."));
+        filterParameters.add("-r");
+        filterParameters.add("::."); //all ancestors for current revision;
+        atLeastOneBranchExists = true;
+      }
+
       if (!atLeastOneBranchExists) { // no such branches => filter matches nothing
         return Collections.emptyList();
       }
@@ -239,7 +252,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getStructureFilter() != null) {
-      for (VirtualFile file : filterCollection.getStructureFilter().getFiles()) {
+      for (FilePath file : filterCollection.getStructureFilter().getFiles()) {
         filterParameters.add(file.getPath());
       }
     }
@@ -287,10 +300,4 @@ public class HgLogProvider implements VcsLogProvider {
   public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
     return null;
   }
-
-  private static boolean branchExists(@NotNull HgRepository repository, @NotNull String branchName) {
-    return repository.getBranches().keySet().contains(branchName) ||
-           HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(branchName);
-  }
-
 }

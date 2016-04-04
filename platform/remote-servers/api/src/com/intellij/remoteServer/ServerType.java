@@ -82,4 +82,9 @@ public abstract class ServerType<C extends ServerConfiguration> {
       }
     };
   }
+
+  @Nullable
+  public String getCustomToolWindowId() {
+    return null;
+  }
 }

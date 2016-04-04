@@ -254,7 +254,7 @@ abstract class Analysis<Res> {
   }
 
   @NotNull
-  protected abstract Equation<Key, Value> analyze() throws AnalyzerException;
+  protected abstract Equation analyze() throws AnalyzerException;
 
   final Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<BasicValue>(methodNode.maxLocals, methodNode.maxStack);

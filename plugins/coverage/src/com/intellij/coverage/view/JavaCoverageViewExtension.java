@@ -95,11 +95,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   public PackageAnnotator.SummaryCoverageInfo getSummaryCoverageForNodeValue(Object value) {
     if (value instanceof PsiClass) {
-      //no coverage gathered
-      if (!((PsiClass)value).isInterface()) {
-        final String qualifiedName = ((PsiClass)value).getQualifiedName();
-        return myAnnotator.getClassCoverageInfo(qualifiedName);
-      }
+      final String qualifiedName = ((PsiClass)value).getQualifiedName();
+      return myAnnotator.getClassCoverageInfo(qualifiedName);
     }
     if (value instanceof PsiPackage) {
       return myAnnotator.getPackageCoverageInfo((PsiPackage)value, myStateBean.myFlattenPackages);

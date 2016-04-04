@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,5 +69,26 @@ public class LibraryUtil {
     }
     final PsiMethod method = (PsiMethod)scope;
     return isOverrideOfLibraryMethod(method);
+  }
+
+  public static boolean isOnlyLibraryCodeUsed(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+    final Ref<Boolean> libraryCode = Ref.create(Boolean.TRUE);
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (!libraryCode.get().booleanValue()) {
+          return;
+        }
+        super.visitReferenceExpression(expression);
+        final PsiElement target = expression.resolve();
+        if (!(target instanceof PsiCompiledElement)) {
+          libraryCode.set(Boolean.FALSE);
+        }
+      }
+    });
+    return libraryCode.get().booleanValue();
   }
 }

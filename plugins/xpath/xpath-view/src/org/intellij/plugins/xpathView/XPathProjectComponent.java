@@ -16,7 +16,6 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.Variable;
@@ -33,13 +32,7 @@ import java.util.List;
  * It is configured to write its settings into the .iws file rather
  * than the .ipr file. (see plugin.xml)
  */
-@State(
-  name="XPathView.XPathProjectComponent",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "XPathView.XPathProjectComponent", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class XPathProjectComponent implements PersistentStateComponent<Element> {
     protected static final String HISTORY_ELEMENT = "element";
     protected static final String HISTORY = "history";

@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
@@ -57,8 +59,12 @@ public class EditorFragmentComponent extends JPanel {
   private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
-    final int textImageWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil
-      .getScreenRectangle(1, 1).width);
+    boolean newRendering = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering;
+    int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
+    final int textImageWidth = Math.min(
+      editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment, 
+      ScreenUtil.getScreenRectangle(1, 1).width
+    );
     LOG.assertTrue(textImageWidth > 0, "TextWidth: "+textImageWidth+"; startLine:" + startLine + "; endLine:" + endLine + ";");
 
     FoldingModelEx foldingModel = editor.getFoldingModel();
@@ -74,7 +80,7 @@ public class EditorFragmentComponent extends JPanel {
     final int textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
     LOG.assertTrue(textImageHeight > 0, "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
 
-    int savedScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
+    int savedScrollOffset = newRendering ? 0 : editor.getScrollingModel().getHorizontalScrollOffset();
     if (savedScrollOffset > 0) {
       editor.getScrollingModel().scrollHorizontally(0);
     }

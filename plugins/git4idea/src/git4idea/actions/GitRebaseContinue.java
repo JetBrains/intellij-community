@@ -15,35 +15,28 @@
  */
 package git4idea.actions;
 
-import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import git4idea.rebase.GitRebaseUtils;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Rebase abort action
- */
-public class GitRebaseContinue extends GitAbstractRebaseResumeAction {
-
-  /**
-   * {@inheritDoc}
-   */
+public class GitRebaseContinue extends GitAbstractRebaseAction {
   @NotNull
-  protected String getActionName() {
-    return GitBundle.getString("rebase.continue.action.name");
+  @Override
+  protected String getProgressTitle() {
+    return GitRebaseUtils.CONTINUE_PROGRESS_TITLE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @NonNls
-  protected String getOptionName() {
-    return "--continue";
+  @Override
+  protected void performActionForProject(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+    GitRebaseUtils.continueRebase(project);
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  protected String getActionTitle() {
-    return GitBundle.getString("rebase.continue.action.name");
+  @Override
+  protected void performActionForRepository(@NotNull Project project,
+                                            @NotNull GitRepository repository,
+                                            @NotNull ProgressIndicator indicator) {
+    GitRebaseUtils.continueRebase(project, repository, indicator);
   }
 }

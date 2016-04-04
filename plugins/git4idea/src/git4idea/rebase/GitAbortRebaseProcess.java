@@ -26,12 +26,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
@@ -41,7 +39,6 @@ import git4idea.util.GitFreezingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -62,17 +59,20 @@ class GitAbortRebaseProcess {
 
   @Nullable private final GitRepository myRepositoryToAbort;
   @NotNull private final Map<GitRepository, String> myRepositoriesToRollback;
+  @NotNull private final Map<GitRepository, String> myInitialCurrentBranches;
   @NotNull private final ProgressIndicator myIndicator;
   @Nullable private final GitChangesSaver mySaver;
 
   GitAbortRebaseProcess(@NotNull Project project,
                         @Nullable GitRepository repositoryToAbort,
                         @NotNull Map<GitRepository, String> repositoriesToRollback,
+                        @NotNull Map<GitRepository, String> initialCurrentBranches,
                         @NotNull ProgressIndicator progressIndicator,
                         @Nullable GitChangesSaver changesSaver) {
     myProject = project;
     myRepositoryToAbort = repositoryToAbort;
     myRepositoriesToRollback = repositoriesToRollback;
+    myInitialCurrentBranches = initialCurrentBranches;
     myIndicator = progressIndicator;
     mySaver = changesSaver;
 
@@ -81,8 +81,8 @@ class GitAbortRebaseProcess {
   }
 
   void abortWithConfirmation() {
-    LOG.debug("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
-              ". Roots to rollback: " + mention(myRepositoriesToRollback.keySet()));
+    LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
+              ". Roots to rollback: " + DvcsUtil.joinShortNames(myRepositoriesToRollback.keySet()));
     final Ref<AbortChoice> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
@@ -91,7 +91,7 @@ class GitAbortRebaseProcess {
       }
     }, ModalityState.defaultModalityState());
 
-    LOG.debug("User choice: " + ref.get());
+    LOG.info("User choice: " + ref.get());
     if (ref.get() == AbortChoice.ROLLBACK_AND_ABORT) {
       doAbort(true);
     }
@@ -113,7 +113,7 @@ class GitAbortRebaseProcess {
       }
       else {
         String message = "Do you want just to abort rebase" + GitUtil.mention(myRepositoryToAbort) + ",\n" +
-                         "or also rollback the successful rebase in " + mention(myRepositoriesToRollback.keySet()) + "?";
+                         "or also rollback the successful rebase" + GitUtil.mention(myRepositoriesToRollback.keySet()) + "?";
         int choice = DialogManager.showYesNoCancelDialog(myProject, message, title, "Abort & Rollback", "Abort",
                                                          getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.YES) {
@@ -129,7 +129,7 @@ class GitAbortRebaseProcess {
         LOG.error(new Throwable());
       }
       else {
-        String description = "Do you want rollback the successful rebase in " + mention(myRepositoriesToRollback.keySet()) + "?";
+        String description = "Do you want to rollback the successful rebase" + GitUtil.mention(myRepositoriesToRollback.keySet()) + "?";
         int choice = DialogManager.showOkCancelDialog(myProject, description, title, "Rollback", getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.YES) {
           return AbortChoice.ROLLBACK_AND_ABORT;
@@ -153,7 +153,7 @@ class GitAbortRebaseProcess {
         try {
           if (myRepositoryToAbort != null) {
             myIndicator.setText2("git rebase --abort" + GitUtil.mention(myRepositoryToAbort));
-            GitCommandResult result = myGit.rebase(myRepositoryToAbort, GitRebaseParams.abort());
+            GitCommandResult result = myGit.rebaseAbort(myRepositoryToAbort);
             repositoriesToRefresh.add(myRepositoryToAbort);
             if (!result.success()) {
               myNotifier.notifyError("Rebase Abort Failed",
@@ -167,9 +167,18 @@ class GitAbortRebaseProcess {
               myIndicator.setText2("git reset --keep" + GitUtil.mention(repo));
               GitCommandResult res = myGit.reset(repo, GitResetMode.KEEP, myRepositoriesToRollback.get(repo));
               repositoriesToRefresh.add(repo);
+
+              if (res.success()) {
+                String initialBranchPosition = myInitialCurrentBranches.get(repo);
+                if (initialBranchPosition != null && !initialBranchPosition.equals(repo.getCurrentBranchName())) {
+                  myIndicator.setText2("git checkout " + initialBranchPosition + GitUtil.mention(repo));
+                  res = myGit.checkout(repo, initialBranchPosition, null, true, false);
+                }
+              }
+
               if (!res.success()) {
                 String description = myRepositoryToAbort != null ?
-                                     "Rebase abort was successful" + GitUtil.mention(myRepositoryToAbort) + ", but rollback failed":
+                                     "Rebase abort was successful" + GitUtil.mention(myRepositoryToAbort) + ", but rollback failed" :
                                      "Rollback failed";
                 description += GitUtil.mention(repo) + ":" + res.getErrorOutputAsHtmlString() +
                                mentionLocalChangesRemainingInStash(mySaver);
@@ -197,30 +206,5 @@ class GitAbortRebaseProcess {
       repository.update();
     }
     markDirtyAndRefresh(false, true, false, toVirtualFileArray(getRootsFromRepositories(toRefresh)));
-  }
-
-  @NotNull
-  private static String mention(@NotNull Collection<GitRepository> repositories) {
-    return joinWithAnd(ContainerUtil.map(repositories, new Function<GitRepository, String>() {
-      @Override
-      public String fun(@NotNull GitRepository repository) {
-        return getShortRepositoryName(repository);
-      }
-    }));
-  }
-
-  @NotNull
-  private static String joinWithAnd(@NotNull List<String> strings) {
-    int size = strings.size();
-    if (size == 0) return "";
-    if (size == 1) return strings.get(0);
-    if (size == 2) return strings.get(0) + " and " + strings.get(1);
-
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < size - 2; i++) {
-      sb.append(strings.get(i)).append(", ");
-    }
-    sb.append(strings.get(size - 2)).append(" and ").append(strings.get(size - 1));
-    return sb.toString();
   }
 }

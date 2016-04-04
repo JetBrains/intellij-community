@@ -34,6 +34,7 @@ public abstract class Client extends UserDataHolderBase {
     return channel.alloc();
   }
 
+  @NotNull
   protected abstract ChannelFuture send(@NotNull ByteBuf message);
 
   public abstract void sendHeartbeat();

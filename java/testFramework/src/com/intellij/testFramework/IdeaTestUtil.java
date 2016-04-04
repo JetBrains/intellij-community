@@ -132,8 +132,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   private static VirtualFile findJar(String name) {
     String path = PathManager.getHomePath() + '/' + name;
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-    assert file != null : "not found: " + path;
+    VirtualFile file = VfsTestUtil.findFileByCaseSensitivePath(path);
     VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(file);
     assert jar != null : "no .jar for: " + path;
     return jar;

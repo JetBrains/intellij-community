@@ -37,7 +37,7 @@ public class MockRepositoryImpl extends RepositoryImpl {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public AbstractVcs getVcs() {
     throw new UnsupportedOperationException();

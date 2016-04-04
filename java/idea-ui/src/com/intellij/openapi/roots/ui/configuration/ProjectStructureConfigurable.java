@@ -27,7 +27,9 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -38,9 +40,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.JBSplitter;
@@ -75,8 +75,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private JComponent myToolbarComponent;
   @NonNls public static final String CATEGORY = "category";
   private JComponent myToFocus;
-  private boolean myWasUiDisposed;
-  private ConfigurationErrorsComponent myErrorsComponent;
 
   public static class UIState {
     public float proportion;
@@ -177,7 +175,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public JComponent createComponent() {
     myComponent = new MyPanel();
 
-    mySplitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false, .15f) : new JBSplitter(false, .15f);
+    mySplitter = new OnePixelSplitter(false, .15f);
     mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
 
@@ -197,10 +195,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
-    if (Registry.is("ide.new.project.settings")) {
-      left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-      myToolbarComponent.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    }
+    left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myToolbarComponent.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     left.add(myToolbarComponent, BorderLayout.NORTH);
     left.add(mySidePanel, BorderLayout.CENTER);
 
@@ -208,10 +204,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     mySplitter.setSecondComponent(myDetails);
 
     myComponent.add(mySplitter, BorderLayout.CENTER);
-    if (!Registry.is("ide.new.project.settings")) {
-      myErrorsComponent = new ConfigurationErrorsComponent(myProject);
-      myComponent.add(myErrorsComponent, BorderLayout.SOUTH);
-    }
 
     myUiInitialized = true;
 
@@ -251,10 +243,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       }
     }
 
-    if (Registry.is("ide.new.project.settings")) {
-      mySidePanel.addSeparator("--");
-      addErrorPane();
-    }
+    mySidePanel.addSeparator("--");
+    addErrorPane();
   }
 
   private void addArtifactsConfig() {
@@ -366,7 +356,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Resetting Project Structure");
 
     try {
-      myWasUiDisposed = false;
 
       myContext.reset();
 
@@ -414,8 +403,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     propertiesComponent.setValue("project.structure.proportion", String.valueOf(myUiState.proportion));
     propertiesComponent.setValue("project.structure.side.proportion", String.valueOf(myUiState.sideProportion));
 
-    myWasUiDisposed = true;
-
     myUiState.proportion = mySplitter.getProportion();
     saveSideProportion();
     myContext.getDaemonAnalyzer().stop();
@@ -426,10 +413,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myName2Config.clear();
 
     myModuleConfigurator.getFacetsConfigurator().clearMaps();
-
-    if (myErrorsComponent != null) {
-      Disposer.dispose(myErrorsComponent);
-    }
 
     myUiInitialized = false;
   }

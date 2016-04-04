@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>NegatedConditionalExpression.java</file>
-    <line>12</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Negated conditional expression</problem_class>
-    <description>Negating conditional expression #loc</description>
-  </problem>
-</problems>

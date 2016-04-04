@@ -37,12 +37,10 @@ public class CompositeX509TrustManager implements X509TrustManager {
     }
   }
 
-  @Override
   public void checkClientTrusted(X509Certificate[] certificates, String s) throws CertificateException {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void checkServerTrusted(X509Certificate[] certificates, String s) throws CertificateException {
     for (X509TrustManager manager : myManagers) {
       try {
@@ -55,7 +53,6 @@ public class CompositeX509TrustManager implements X509TrustManager {
   }
 
   @NotNull
-  @Override
   public X509Certificate[] getAcceptedIssuers() {
     return new X509Certificate[0];
   }

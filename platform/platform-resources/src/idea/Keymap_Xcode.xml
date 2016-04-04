@@ -24,7 +24,7 @@
       <keyboard-shortcut first-keystroke="meta shift Y" />
       <keyboard-shortcut first-keystroke="meta 6" />
     </action>
-    <action id="ActivateChangesToolWindow">
+    <action id="ActivateVersionControlToolWindow">
       <keyboard-shortcut first-keystroke="meta 9" />
       <keyboard-shortcut first-keystroke="meta shift 9" />
     </action>
@@ -271,6 +271,7 @@
       <keyboard-shortcut first-keystroke="alt shift B"/>
       <mouse-shortcut keystroke="ctrl shift button1"/>
     </action>
+    <action id="tasks.open.in.browser"/><!-- conflicts with GotoTypeDeclaration  -->
     <action id="HelpTopics">
       <keyboard-shortcut first-keystroke="shift meta alt SLASH" />
     </action>
@@ -574,5 +575,7 @@
     </action>
     <action id="EmmetNextEditPoint">
     </action>
+
+    <action id="Vcs.Push" />
   </keymap>
 </component>

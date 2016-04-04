@@ -27,6 +27,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -111,21 +112,22 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected Module loadModule(@NotNull String modulePath) {
-    String normalizedPath = FileUtil.toSystemIndependentName(modulePath);
+    final String normalizedPath = FileUtil.toSystemIndependentName(modulePath);
     LocalFileSystem.getInstance().refreshAndFindFileByPath(normalizedPath);
 
-    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     Module module;
-    AccessToken token = WriteAction.start();
     try {
-      module = moduleManager.loadModule(normalizedPath);
+    module = ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Module, Exception>() {
+      @Override
+      public Module compute() throws Exception {
+        return moduleManager.loadModule(normalizedPath);
+      }
+    });
     }
     catch (Exception e) {
       LOG.error(e);
       return null;
-    }
-    finally {
-      token.finish();
     }
 
     myModulesToDispose.add(module);

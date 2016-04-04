@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
-import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,7 +104,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       return;
     }
 
-    Function<InspectionProfileWrapper, InspectionProfileWrapper> strategy = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    NotNullFunction<InspectionProfileWrapper, InspectionProfileWrapper> strategy = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
     if (strategy == null) {
       file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, strategy = new MyInspectionProfileStrategy());
     }
@@ -126,12 +126,13 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     }
   }
 
-  private static class MyInspectionProfileStrategy implements Function<InspectionProfileWrapper, InspectionProfileWrapper> {
+  private static class MyInspectionProfileStrategy implements NotNullFunction<InspectionProfileWrapper, InspectionProfileWrapper> {
 
     private final Map<InspectionProfileWrapper, MyInspectionProfileWrapper> myWrappers
       = new WeakHashMap<InspectionProfileWrapper, MyInspectionProfileWrapper>();
     private boolean myUseSpellCheck;
 
+    @NotNull
     @Override
     public InspectionProfileWrapper fun(InspectionProfileWrapper inspectionProfileWrapper) {
       if (!READY) {

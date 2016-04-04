@@ -17,7 +17,11 @@ package com.intellij.refactoring.typeMigration;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author db
@@ -39,9 +43,25 @@ public class Util {
   @Nullable
   public static PsiElement normalizeElement(final PsiElement element) {
     if (element instanceof PsiMethod) {
-      final PsiMethod superMethod = ((PsiMethod)element).findDeepestSuperMethod();
-
-      return superMethod == null ? element : superMethod;
+      final PsiMethod method = (PsiMethod)element;
+      final PsiType initialMethodReturnType = method.getReturnType();
+      if (initialMethodReturnType == null) {
+        return null;
+      }
+      final List<PsiMethod> normalized = new SmartList<PsiMethod>();
+      final Queue<PsiMethod> queue = new Queue<PsiMethod>(1);
+      queue.addLast(method);
+      while (!queue.isEmpty()) {
+        final PsiMethod currentMethod = queue.pullFirst();
+        if (initialMethodReturnType.equals(currentMethod.getReturnType())) {
+          for (PsiMethod toConsume : currentMethod.findSuperMethods(false)) {
+            queue.addLast(toConsume);
+          }
+          normalized.add(currentMethod);
+        }
+      }
+      //TODO Dmitry Batkovich multiple result is possible
+      return normalized.isEmpty() ? element : normalized.get(normalized.size() - 1);
     }
     else if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList) {
       final PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();

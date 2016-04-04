@@ -322,7 +322,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
                   sb.append(usagesOfType.size()).append(" ").append(StringUtil.decapitalize(StringUtil.pluralize(type)));
                 }
                 else {
-                  sb.append(StringUtil.decapitalize(usagesOfType.iterator().next().getContainingElement().getPresentableName()));
+                  sb.append(StringUtil.decapitalize(usagesOfType.iterator().next().getContainingElement().getPresentableText()));
                 }
               }
               firstLibraryWithUsageName = library.getName();

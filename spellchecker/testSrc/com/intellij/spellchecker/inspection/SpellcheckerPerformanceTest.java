@@ -54,6 +54,6 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
       public void run() {
         assertSize(typoCount, myFixture.doHighlighting());
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 }

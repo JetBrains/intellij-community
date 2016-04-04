@@ -21,14 +21,18 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -58,6 +62,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
       if (project.isDisposed()) {
         throw new CollectUsagesException("Project is disposed");
       }
+      final String ideaDirPath = getIdeaDirPath(project);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
@@ -68,14 +73,17 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
             new FileBasedIndex.ValueProcessor<Void>() {
               @Override
               public boolean process(VirtualFile file, Void value) {
-                usedFileTypes.add(fileType);
-                return false;
+                //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
+                if (ideaDirPath == null || FileUtil.isAncestorThreeState(ideaDirPath, file.getPath(), true) == ThreeState.NO) {
+                  usedFileTypes.add(fileType);
+                  return false;
+                }
+                return true;
               }
             }, GlobalSearchScope.projectScope(project));
         }
       });
     }
-    usedFileTypes.add(UnknownFileType.INSTANCE);
     return ContainerUtil.map2Set(usedFileTypes, new NotNullFunction<FileType, UsageDescriptor>() {
       @NotNull
       @Override
@@ -83,5 +91,17 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
         return new UsageDescriptor(fileType.getName(), 1);
       }
     });
+  }
+
+  @Nullable
+  private static String getIdeaDirPath(@NotNull Project project) {
+    String projectPath = project.getBasePath();
+    if (projectPath != null) {
+      String ideaDirPath = projectPath + "/" + Project.DIRECTORY_STORE_FOLDER;
+      if (new File(ideaDirPath).isDirectory()) {
+        return ideaDirPath;
+      }
+    }
+    return null;
   }
 }

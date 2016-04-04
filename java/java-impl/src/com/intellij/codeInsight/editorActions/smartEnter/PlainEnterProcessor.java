@@ -99,6 +99,10 @@ public class PlainEnterProcessor implements EnterProcessor {
       if (methodBody != null) return methodBody;
     }
 
+    if (element instanceof PsiSwitchStatement) {
+      return ((PsiSwitchStatement)element).getBody();
+    }
+
     PsiStatement body = null;
     if (element instanceof PsiIfStatement) {
       body =  ((PsiIfStatement)element).getThenBranch();

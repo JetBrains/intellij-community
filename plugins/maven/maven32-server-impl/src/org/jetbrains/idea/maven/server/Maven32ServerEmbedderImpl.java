@@ -18,8 +18,11 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.*;
@@ -68,6 +71,7 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.internal.impl.DefaultArtifactResolver;
 import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.repository.LocalRepositoryManager;
@@ -75,7 +79,10 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.spi.log.LoggerFactory;
+import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
+import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
+import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
@@ -88,7 +95,6 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Overridden maven components:
@@ -538,15 +544,29 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public MavenServerExecutionResult resolveProject(@NotNull File file,
-                                                   @NotNull Collection<String> activeProfiles,
-                                                   @NotNull Collection<String> inactiveProfiles)
+  public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
+                                                               @NotNull Collection<String> activeProfiles,
+                                                               @NotNull Collection<String> inactiveProfiles)
     throws RemoteException, MavenServerProcessCanceledException {
-    DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
+    final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
-    MavenExecutionResult result = doResolveProject(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles),
-                                                   Arrays.<ResolutionListener>asList(listener));
-    return createExecutionResult(file, result, listener.getRootNode());
+    Collection<MavenExecutionResult> results =
+      doResolveProject(files, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles),
+                       Collections.<ResolutionListener>singletonList(listener));
+    return ContainerUtil.mapNotNull(results, new Function<MavenExecutionResult, MavenServerExecutionResult>() {
+      @Override
+      public MavenServerExecutionResult fun(MavenExecutionResult result) {
+        try {
+          if (result != null && result.getMavenProject() != null && result.getMavenProject().getFile() != null) {
+            return createExecutionResult(result.getMavenProject().getFile(), result, listener.getRootNode());
+          }
+        }
+        catch (RemoteException e) {
+          ExceptionUtil.rethrowAllAsUnchecked(e);
+        }
+        return null;
+      }
+    });
   }
 
   @Nullable
@@ -588,15 +608,16 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  public MavenExecutionResult doResolveProject(@NotNull final File file,
-                                               @NotNull final List<String> activeProfiles,
-                                               @NotNull final List<String> inactiveProfiles,
-                                               final List<ResolutionListener> listeners) throws RemoteException {
+  public Collection<MavenExecutionResult> doResolveProject(@NotNull final Collection<File> files,
+                                                           @NotNull final List<String> activeProfiles,
+                                                           @NotNull final List<String> inactiveProfiles,
+                                                           final List<ResolutionListener> listeners) throws RemoteException {
+    final File file = files.size() == 1 ? files.iterator().next() : null;
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    final AtomicReference<MavenExecutionResult> ref = new AtomicReference<MavenExecutionResult>();
+    final Collection<MavenExecutionResult> executionResults = ContainerUtil.newArrayList();
 
     executeWithMavenSession(request, new Runnable() {
       @Override
@@ -609,81 +630,120 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
           String savedLocalRepository = modelInterpolator.getLocalRepository();
           modelInterpolator.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
-          List<ProjectBuildingResult> results;
+          List<ProjectBuildingResult> buildingResults;
 
           try {
             // Don't use build(File projectFile, ProjectBuildingRequest request) , because it don't use cache !!!!!!!! (see http://devnet.jetbrains.com/message/5500218)
-            results = builder.build(Collections.singletonList(new File(file.getPath())), false, request.getProjectBuildingRequest());
+            buildingResults = builder.build(new ArrayList<File>(files), false, request.getProjectBuildingRequest());
           }
           finally {
             modelInterpolator.setLocalRepository(savedLocalRepository);
           }
 
-          ProjectBuildingResult buildingResult = results.get(0);
+          for (ProjectBuildingResult buildingResult : buildingResults) {
 
-          MavenProject project = buildingResult.getProject();
+            MavenProject project = buildingResult.getProject();
 
-          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
-          if (repositorySession instanceof DefaultRepositorySystemSession) {
-            ((DefaultRepositorySystemSession)repositorySession).setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+            RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
+            if (repositorySession instanceof DefaultRepositorySystemSession) {
+              DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
+              session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
 
-            if (myWorkspaceMap != null) {
-              ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
-            }
-          }
+              if (myWorkspaceMap != null) {
+                session.setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
+              }
 
-          List<Exception> exceptions = new ArrayList<Exception>();
-          loadExtensions(project, exceptions);
-
-          //Artifact projectArtifact = project.getArtifact();
-          //Map managedVersions = project.getManagedVersionMap();
-          //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
-          project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
-          //
-
-          if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-            ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
-            resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
-            resolutionRequest.setArtifact(project.getArtifact());
-            resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
-            resolutionRequest.setLocalRepository(myLocalRepository);
-            resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-            resolutionRequest.setListeners(listeners);
-
-            resolutionRequest.setResolveRoot(false);
-            resolutionRequest.setResolveTransitively(true);
-
-            ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-            ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
-
-            project.setArtifacts(result.getArtifacts());
-            // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-            ref.set(new MavenExecutionResult(project, exceptions));
-          }
-          else {
-            final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-            final List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
-
-            Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
-            for (Dependency dependency : dependencies) {
-              final Artifact artifact = RepositoryUtils.toArtifact(dependency.getArtifact());
-              artifact.setScope(dependency.getScope());
-              artifact.setOptional(dependency.isOptional());
-              artifacts.add(artifact);
-              resolveAsModule(artifact);
+              session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+              session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
             }
 
-            project.setArtifacts(artifacts);
-            ref.set(new MavenExecutionResult(project, dependencyResolutionResult, exceptions));
+            List<Exception> exceptions = new ArrayList<Exception>();
+            loadExtensions(project, exceptions);
+
+            //Artifact projectArtifact = project.getArtifact();
+            //Map managedVersions = project.getManagedVersionMap();
+            //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
+            project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
+            //
+
+            if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
+              ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
+              resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
+              resolutionRequest.setArtifact(project.getArtifact());
+              resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
+              resolutionRequest.setLocalRepository(myLocalRepository);
+              resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
+              resolutionRequest.setListeners(listeners);
+
+              resolutionRequest.setResolveRoot(false);
+              resolutionRequest.setResolveTransitively(true);
+
+              ArtifactResolver resolver = getComponent(ArtifactResolver.class);
+              ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
+
+              project.setArtifacts(result.getArtifacts());
+              // end copied from DefaultMavenProjectBuilder.buildWithDependencies
+              executionResults.add(new MavenExecutionResult(project, exceptions));
+            }
+            else {
+              final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
+              final List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
+
+              final Map<Dependency, Artifact> winnerDependencyMap = new HashMap<Dependency, Artifact>();
+              Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
+              dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
+                @Override
+                public boolean visitEnter(org.eclipse.aether.graph.DependencyNode node) {
+                  Artifact winnerArtifact = null;
+                  final Map<?, ?> data = node.getData();
+                  final Object winner = data.get(ConflictResolver.NODE_DATA_WINNER);
+                  if(winner instanceof org.eclipse.aether.graph.DependencyNode) {
+                    org.eclipse.aether.graph.DependencyNode winnerNode = (org.eclipse.aether.graph.DependencyNode)winner;
+                    if(!StringUtil.equals(node.getVersion().toString(), winnerNode.getVersion().toString())) {
+                      Dependency winnerNodeDependency = winnerNode.getDependency();
+                      winnerArtifact = RepositoryUtils.toArtifact(winnerNodeDependency.getArtifact());
+                      winnerArtifact.setScope(winnerNodeDependency.getScope());
+                      winnerArtifact.setOptional(winnerNodeDependency.isOptional());
+                    }
+                  }
+
+                  final Dependency dependency = node.getDependency();
+                  if(dependency != null) {
+                    if(winnerArtifact == null) {
+                      winnerArtifact = RepositoryUtils.toArtifact(node.getArtifact());
+                      winnerArtifact.setScope(dependency.getScope());
+                      winnerArtifact.setOptional(dependency.isOptional());
+                    }
+                    winnerDependencyMap.put(dependency, winnerArtifact);
+                  }
+                  return true;
+                }
+
+                @Override
+                public boolean visitLeave(org.eclipse.aether.graph.DependencyNode node) {
+                  return true;
+                }
+              }));
+              for (Dependency dependency : dependencies) {
+                final Artifact artifact = winnerDependencyMap.get(dependency);
+                if(artifact != null) {
+                  artifacts.add(artifact);
+                  resolveAsModule(artifact);
+                }
+              }
+
+              project.setArtifacts(artifacts);
+              executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions));
+            }
           }
         }
         catch (Exception e) {
-          ref.set(handleException(e));
+          executionResults.add(handleException(e));
         }
       }
     });
 
-    return ref.get();
+    return executionResults;
   }
 
   private boolean resolveAsModule(Artifact a) {
@@ -1185,9 +1245,18 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     try {
       setConsoleAndIndicator(null, null);
 
-      ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).reset();
-      ((CustomMaven32ArtifactResolver)getComponent(ArtifactResolver.class)).reset();
-      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).reset();
+      final ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
+        ((CustomMaven3ArtifactFactory)artifactFactory).reset();
+      }
+      final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
+      if(artifactResolver instanceof CustomMaven32ArtifactResolver) {
+        ((CustomMaven32ArtifactResolver)artifactResolver).reset();
+      }
+      final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
+      if(repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
+        ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
+      }
       //((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }
     catch (Exception e) {

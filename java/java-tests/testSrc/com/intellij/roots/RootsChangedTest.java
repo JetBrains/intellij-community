@@ -54,11 +54,6 @@ public class RootsChangedTest extends ModuleTestCase {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
   }
 
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
-
   public void testEventsAfterFileModifications() throws Exception {
     File root = new File(FileUtil.getTempDirectory());
 

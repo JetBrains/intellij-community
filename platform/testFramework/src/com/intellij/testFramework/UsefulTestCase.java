@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<String, Long>();
   public static Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<String, Long>();
 
+  @NotNull
   protected final Disposable myTestRootDisposable = new Disposable() {
     @Override
     public void dispose() { }
@@ -127,6 +128,8 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  private boolean oldDisposerDebug;
+
   protected boolean shouldContainTempFiles() {
     return true;
   }
@@ -139,10 +142,13 @@ public abstract class UsefulTestCase extends TestCase {
       String testName =  FileUtil.sanitizeFileName(getTestName(true));
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
       testName = new File(testName).getName(); // in case the test name contains file separators
-      myTempDir = FileUtil.toSystemDependentName(ORIGINAL_TEMP_DIR + "/" + TEMP_DIR_MARKER + testName + "_"+ RNG.nextInt(1000));
+      myTempDir = new File(ORIGINAL_TEMP_DIR, TEMP_DIR_MARKER + testName).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
-    ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
+    boolean isPerformanceTest = isPerformanceTest();
+    ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest);
+    // turn off Disposer debugging for performance tests
+    oldDisposerDebug = Disposer.setDebugMode(Disposer.isDebugMode() && !isPerformanceTest);
   }
 
   @Override
@@ -153,6 +159,7 @@ public abstract class UsefulTestCase extends TestCase {
       cleanupDeleteOnExitHookList();
     }
     finally {
+      Disposer.setDebugMode(oldDisposerDebug);
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
         if (hasTmpFilesToKeep()) {
@@ -304,7 +311,8 @@ public abstract class UsefulTestCase extends TestCase {
     return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
 
-  public Disposable getTestRootDisposable() {
+  @NotNull
+  public final Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }
 

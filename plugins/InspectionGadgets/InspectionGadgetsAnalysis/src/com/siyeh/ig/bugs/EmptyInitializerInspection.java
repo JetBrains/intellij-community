@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyInitializerInspection extends BaseInspection {
@@ -89,19 +89,13 @@ public class EmptyInitializerInspection extends BaseInspection {
   private static class EmptyInitializerVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClassInitializer(
-      @NotNull PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       super.visitClassInitializer(initializer);
       final PsiCodeBlock body = initializer.getBody();
-      if (!codeBlockIsEmpty(body)) {
+      if (!ControlFlowUtils.isEmptyCodeBlock(body)) {
         return;
       }
       registerClassInitializerError(initializer);
-    }
-
-    private static boolean codeBlockIsEmpty(PsiCodeBlock codeBlock) {
-      final PsiStatement[] statements = codeBlock.getStatements();
-      return statements.length == 0;
     }
   }
 }

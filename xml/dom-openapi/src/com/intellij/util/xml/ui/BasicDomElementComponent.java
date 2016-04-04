@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,21 @@
 
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -128,7 +128,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
   }
 
   private String convertFieldName(String propertyName, final DomChildrenDescription description) {
-    if (propertyName.startsWith("my")) propertyName = propertyName.substring(2);
+    propertyName = StringUtil.trimStart(propertyName, "my");
 
     String convertedName = description.getDomNameStrategy(getDomElement()).convertName(propertyName);
 

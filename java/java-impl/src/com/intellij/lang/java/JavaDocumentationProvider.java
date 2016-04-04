@@ -21,6 +21,7 @@ import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
@@ -36,6 +37,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -152,8 +154,8 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null && (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile))) {
       final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-      if (orderEntries.size() > 0) {
-        final OrderEntry orderEntry = orderEntries.get(0);
+      OrderEntry orderEntry = ContainerUtil.find(orderEntries, Conditions.instanceOf(LibraryOrSdkOrderEntry.class));
+      if (orderEntry != null) {
         buffer.append("[").append(StringUtil.escapeXml(orderEntry.getPresentableName())).append("] ");
       }
     }
@@ -547,7 +549,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Nullable
   public static String generateExternalJavadoc(final PsiElement element) {
-    final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(element.getProject(), element);
+    final JavaDocInfoGenerator javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
     final List<String> docURLs = getExternalJavaDocUrl(element);
     return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(docURLs));
   }
@@ -637,13 +639,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
           final boolean useJava8Format = PsiUtil.isLanguageLevel8OrHigher(method);
 
-          final Set<String> signatures = new LinkedHashSet<String>();
-          signatures.add(formatMethodSignature(method, true, useJava8Format));
-          signatures.add(formatMethodSignature(method, false, useJava8Format));
-
-          signatures.add(formatMethodSignature(method, true, !useJava8Format));
-          signatures.add(formatMethodSignature(method, false, !useJava8Format));
-
+          final Set<String> signatures = getHtmlMethodSignatures(method, useJava8Format);
           for (String signature : signatures) {
             for (String classUrl : classUrls) {
               urls.add(classUrl + "#" + signature);
@@ -671,6 +667,16 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       }
       return urls;
     }
+  }
+
+  public static Set<String> getHtmlMethodSignatures(PsiMethod method, boolean java8FormatFirst) {
+    final Set<String> signatures = new LinkedHashSet<String>();
+    signatures.add(formatMethodSignature(method, true, java8FormatFirst));
+    signatures.add(formatMethodSignature(method, false, java8FormatFirst));
+
+    signatures.add(formatMethodSignature(method, true, !java8FormatFirst));
+    signatures.add(formatMethodSignature(method, false, !java8FormatFirst));
+    return signatures;
   }
 
   private static String formatMethodSignature(PsiMethod method, boolean raw, boolean java8Format) {

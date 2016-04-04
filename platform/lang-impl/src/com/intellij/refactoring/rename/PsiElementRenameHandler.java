@@ -119,7 +119,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     rename(element, project, nameSuggestionContext, editor);
   }
 
-  static boolean canRename(Project project, Editor editor, PsiElement element) throws CommonRefactoringUtil.RefactoringErrorHintException {
+  public static boolean canRename(Project project, Editor editor, PsiElement element) throws CommonRefactoringUtil.RefactoringErrorHintException {
     String message = renameabilityStatus(project, element);
     if (StringUtil.isNotEmpty(message)) {
       showErrorMessage(project, editor, message);

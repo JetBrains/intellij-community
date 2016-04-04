@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private String myName;
   private int                       myFrameCount = -1;
   // stack frames, 0 - bottom
-  private final LinkedList<StackFrameProxyImpl> myFramesFromBottom = new LinkedList<StackFrameProxyImpl>();
+  private final LinkedList<StackFrameProxyImpl> myFramesFromBottom = new LinkedList<>();
   //cache build on the base of myFramesFromBottom 0 - top, initially nothing is cached
   private List<StackFrameProxyImpl> myFrames = null;
 
@@ -85,7 +86,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       }
       catch (IllegalThreadStateException ignored) {
         myName = "zombie";
-      }                    
+      }
     }
     return myName;
   }
@@ -220,13 +221,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       //LOG.assertTrue(threadRef.isSuspended());
       checkValid();
 
-      if(myFrames == null) {
+      if (myFrames == null) {
         checkFrames(threadRef);
-  
-        myFrames = new ArrayList<StackFrameProxyImpl>(frameCount());
-        for (ListIterator<StackFrameProxyImpl> iterator = myFramesFromBottom.listIterator(frameCount()); iterator.hasPrevious();) {
-          myFrames.add(iterator.previous());
-        }
+
+        myFrames = ContainerUtil.reverse(new ArrayList<>(myFramesFromBottom.subList(0, frameCount())));
       }
     }
     catch (ObjectCollectedException ignored) {

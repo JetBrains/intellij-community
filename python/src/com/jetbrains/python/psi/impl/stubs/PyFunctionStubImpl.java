@@ -18,37 +18,50 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFunctionStub {
   private final String myName;
   private final String myDocString;
-  private final StringRef myDeprecationMessage;
+  private final String myDeprecationMessage;
   private final boolean myAsync;
+  private final String myTypeComment;
 
-  public PyFunctionStubImpl(final String name, final String docString, @Nullable final StringRef deprecationMessage, boolean isAsync,
-                            final StubElement parent, IStubElementType stubElementType) {
+  public PyFunctionStubImpl(@Nullable String name, @Nullable String docString, @Nullable String deprecationMessage, boolean isAsync,
+                            @Nullable String typeComment, final StubElement parent, @NotNull IStubElementType stubElementType) {
     super(parent, stubElementType);
     myName = name;
     myDocString = docString;
     myDeprecationMessage = deprecationMessage;
     myAsync = isAsync;
+    myTypeComment = typeComment;
   }
 
+  @Nullable
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Nullable
+  @Override
   public String getDocString() {
     return myDocString;
   }
 
+  @Nullable
   @Override
   public String getDeprecationMessage() {
-    return myDeprecationMessage == null ? null : myDeprecationMessage.getString();
+    return myDeprecationMessage;
+  }
+
+  @Nullable
+  @Override
+  public String getTypeComment() {
+    return myTypeComment;
   }
 
   @Override

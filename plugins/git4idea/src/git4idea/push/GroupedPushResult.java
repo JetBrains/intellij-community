@@ -17,41 +17,50 @@ package git4idea.push;
 
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 class GroupedPushResult {
 
-  final Map<GitRepository, GitPushRepoResult> successful;
-  final Map<GitRepository, GitPushRepoResult> errors;
-  final Map<GitRepository, GitPushRepoResult> rejected;
+  @NotNull final Map<GitRepository, GitPushRepoResult> successful;
+  @NotNull final Map<GitRepository, GitPushRepoResult> errors;
+  @NotNull final Map<GitRepository, GitPushRepoResult> rejected;
+  @NotNull final Map<GitRepository, GitPushRepoResult> customRejected;
 
-  private GroupedPushResult(Map<GitRepository, GitPushRepoResult> successful,
-                            Map<GitRepository, GitPushRepoResult> errors,
-                            Map<GitRepository, GitPushRepoResult> rejected) {
+  private GroupedPushResult(@NotNull Map<GitRepository, GitPushRepoResult> successful,
+                            @NotNull Map<GitRepository, GitPushRepoResult> errors,
+                            @NotNull Map<GitRepository, GitPushRepoResult> rejected,
+                            @NotNull Map<GitRepository, GitPushRepoResult> customRejected) {
     this.successful = successful;
     this.errors = errors;
     this.rejected = rejected;
+    this.customRejected = customRejected;
   }
 
-  static GroupedPushResult group(Map<GitRepository, GitPushRepoResult> results) {
+  @NotNull
+  static GroupedPushResult group(@NotNull Map<GitRepository, GitPushRepoResult> results) {
     Map<GitRepository, GitPushRepoResult> successful = ContainerUtil.newHashMap();
     Map<GitRepository, GitPushRepoResult> rejected = ContainerUtil.newHashMap();
+    Map<GitRepository, GitPushRepoResult> customRejected = ContainerUtil.newHashMap();
     Map<GitRepository, GitPushRepoResult> errors = ContainerUtil.newHashMap();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : results.entrySet()) {
       GitRepository repository = entry.getKey();
       GitPushRepoResult result = entry.getValue();
 
-      if (result.getType() == GitPushRepoResult.Type.REJECTED) {
+      if (result.getType() == GitPushRepoResult.Type.REJECTED_NO_FF) {
         rejected.put(repository, result);
       }
       else if (result.getType() == GitPushRepoResult.Type.ERROR) {
         errors.put(repository, result);
       }
+      else if (result.getType() == GitPushRepoResult.Type.REJECTED_OTHER) {
+        customRejected.put(repository, result);
+      }
       else {
         successful.put(repository, result);
       }
     }
-    return new GroupedPushResult(successful, errors, rejected);
+    return new GroupedPushResult(successful, errors, rejected, customRejected);
   }
 }

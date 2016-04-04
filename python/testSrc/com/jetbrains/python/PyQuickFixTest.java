@@ -244,6 +244,11 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
+  // PY-18203
+  public void testRedundantParenthesesInTuples() {
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+  }
+
   // PY-1020
   public void testChainedComparisons() {
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
@@ -619,6 +624,16 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testImplementAbstractProperty() {
+    doInspectionTest("ImplementAbstractProperty.py", PyAbstractClassInspection.class, PyBundle.message("QFIX.NAME.implement.methods"),
+                     true, true);
+  }
+
+  public void testImplementAbstractProperty1() {
+    doInspectionTest("ImplementAbstractProperty.py", PyAbstractClassInspection.class, PyBundle.message("QFIX.NAME.implement.methods"),
+                     true, true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
@@ -669,7 +684,7 @@ public class PyQuickFixTest extends PyTestCase {
       }
       if (applyFix) {
         myFixture.launchAction(intentionActions.get(0));
-        myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
+        myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"), true);
       }
     }
     else {

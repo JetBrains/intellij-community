@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,7 +170,14 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
     return ! processor.process(content.getContent());
   }
 
-  public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
+  public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) throws VcsException {
+    reportAppendableHistory(path, null, partner);
+  }
+
+  @Override
+  public void reportAppendableHistory(@NotNull FilePath path, 
+                                      @Nullable VcsRevisionNumber startingRevision, 
+                                      @NotNull final VcsAppendableHistorySessionPartner partner) throws VcsException {
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
 
@@ -180,17 +187,20 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
                               ArrayUtil.EMPTY_STRING_ARRAY;
 
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
-    GitHistoryUtils.history(myProject, refreshPath(path), null, new Consumer<GitFileRevision>() {
-      public void consume(GitFileRevision gitFileRevision) {
-        partner.acceptRevision(gitFileRevision);
-      }
-    }, new Consumer<VcsException>() {
-      public void consume(VcsException e) {
-        if (validator.checkExecutableAndNotifyIfNeeded()) {
-          partner.reportException(e);
-        }
-      }
-    }, additionalArgs);
+    GitHistoryUtils.history(myProject, refreshPath(path), null, startingRevision == null ? GitRevisionNumber.HEAD : startingRevision,
+                            new Consumer<GitFileRevision>() {
+                              public void consume(GitFileRevision gitFileRevision) {
+                                partner.acceptRevision(gitFileRevision);
+                              }
+                            }, 
+                            new Consumer<VcsException>() {
+                              public void consume(VcsException e) {
+                                if (validator.checkExecutableAndNotifyIfNeeded()) {
+                                  partner.reportException(e);
+                                }
+                              }
+                            }, 
+                            additionalArgs);
   }
 
   /**

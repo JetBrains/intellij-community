@@ -15,7 +15,6 @@
  */
 package com.jetbrains.rest;
 
-import com.google.common.collect.Sets;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -25,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,13 +63,14 @@ public class RestFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
   @NotNull
   public Set<Language> getLanguages() {
     if (myLanguages == null) {
-      myLanguages = Sets.newConcurrentHashSet();
-      myLanguages.add(getBaseLanguage());
+      final Set<Language> languages = ContainerUtil.newHashSet();
+      languages.add(getBaseLanguage());
       Language djangoTemplateLanguage = Language.findLanguageByID("DjangoTemplate");
       if (djangoTemplateLanguage != null) {
-        myLanguages.add(djangoTemplateLanguage);
+        languages.add(djangoTemplateLanguage);
       }
-      myLanguages.add(getTemplateDataLanguage());
+      languages.add(getTemplateDataLanguage());
+      myLanguages = languages;
     }
     return myLanguages;
   }

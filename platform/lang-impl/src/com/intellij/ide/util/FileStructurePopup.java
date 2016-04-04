@@ -409,7 +409,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   private void installUpdater() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || myPopup.isDisposed()) {
       return;
     }
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);

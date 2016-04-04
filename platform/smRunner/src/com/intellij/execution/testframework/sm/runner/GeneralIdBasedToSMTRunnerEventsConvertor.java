@@ -445,15 +445,18 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     }
 
     public void setState(@NotNull State newState, @NotNull GeneralIdBasedToSMTRunnerEventsConvertor convertor) {
-      boolean accepted = false;
-      if (myState == State.NOT_RUNNING || myState == State.RUNNING) {
-        accepted = myState.ordinal() < newState.ordinal();
-      }
-      if (accepted) {
-        myState = newState;
-      }
-      else {
+      // allowed sequences: NOT_RUNNING -> RUNNING or IGNORED; RUNNING -> FINISHED, FAILED or IGNORED; FINISHED <-> FAILED; IGNORED -> FINISHED
+      if (myState == State.NOT_RUNNING && newState != State.RUNNING && newState != State.IGNORED ||
+          myState == State.RUNNING && newState != State.FINISHED && newState != State.FAILED && newState != State.IGNORED ||
+          myState == State.FINISHED && newState != State.FAILED ||
+          myState == State.FAILED && newState != State.FINISHED ||
+          myState == State.IGNORED && newState != State.FINISHED) {
         convertor.logProblem("Illegal state change [" + myState + " -> " + newState + "]: " + toString(), false);
+      }
+
+      if (myState.ordinal() < newState.ordinal()) {
+        // for example State.FINISHED comes later than State.FAILED, do not update state in this case
+        myState = newState;
       }
     }
 

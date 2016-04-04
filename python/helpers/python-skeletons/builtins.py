@@ -1424,6 +1424,13 @@ class str(object):
         """
         return 0
 
+    def format(self, *args, **kwargs):
+        """Perform a string formatting operation.
+
+        :rtype: str
+        """
+        return ''
+
     def index(self, sub, start=None, end=None):
         """Like find(), but raise ValueError when the substring is not
         found.

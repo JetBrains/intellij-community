@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.libraries.ui;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;

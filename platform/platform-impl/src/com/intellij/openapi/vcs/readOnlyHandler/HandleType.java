@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,17 +33,23 @@ public abstract class HandleType {
   private final boolean myUseVcs;
 
   public static final HandleType USE_FILE_SYSTEM = new HandleType(VcsBundle.message("handle.ro.file.status.type.using.file.system"), false) {
-    public void processFiles(final Collection<VirtualFile> virtualFiles, String changelist) {
+    @Override
+    public void processFiles(final Collection<VirtualFile> files, String changelist) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
-          try {
-            for (VirtualFile file : virtualFiles) {
+          List<VirtualFile> toRefresh = ContainerUtil.newArrayListWithCapacity(files.size());
+
+          for (VirtualFile file : files) {
+            try {
               ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
-              file.refresh(false, false);
+              toRefresh.add(file);
             }
+            catch (IOException ignored) { }
           }
-          catch (IOException e) {
-            //ignore
+
+          if (!toRefresh.isEmpty()) {
+            RefreshQueue.getInstance().refresh(false, false, null, toRefresh);
           }
         }
       });
@@ -53,6 +61,7 @@ public abstract class HandleType {
     myUseVcs = useVcs;
   }
 
+  @Override
   public String toString() {
     return myName;
   }
@@ -61,6 +70,7 @@ public abstract class HandleType {
     return myUseVcs;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -73,6 +83,7 @@ public abstract class HandleType {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myName != null ? myName.hashCode() : 0);

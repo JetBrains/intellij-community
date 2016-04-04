@@ -20,7 +20,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
 
 interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
-  void fastenBelt();
 
   @Nullable
   PsiElement getCachedElement();

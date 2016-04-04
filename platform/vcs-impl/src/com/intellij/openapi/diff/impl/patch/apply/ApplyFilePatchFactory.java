@@ -18,7 +18,7 @@ package com.intellij.openapi.diff.impl.patch.apply;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 
 public class ApplyFilePatchFactory {
   private ApplyFilePatchFactory() {
@@ -32,7 +32,7 @@ public class ApplyFilePatchFactory {
     return new ApplyBinaryFilePatch(patch);
   }
 
-  public static ApplyBinaryShelvedFilePatch create(final ShelveChangesManager.ShelvedBinaryFilePatch patch) {
+  public static ApplyBinaryShelvedFilePatch create(final ShelvedBinaryFilePatch patch) {
     return new ApplyBinaryShelvedFilePatch(patch);
   }
 
@@ -41,8 +41,8 @@ public class ApplyFilePatchFactory {
       return create((TextFilePatch) patch);
     } else if (patch instanceof BinaryFilePatch) {
       return create((BinaryFilePatch) patch);
-    } else if (patch instanceof ShelveChangesManager.ShelvedBinaryFilePatch) {
-      return create((ShelveChangesManager.ShelvedBinaryFilePatch) patch);
+    } else if (patch instanceof ShelvedBinaryFilePatch) {
+      return create((ShelvedBinaryFilePatch) patch);
     }
     throw new IllegalStateException();
   }

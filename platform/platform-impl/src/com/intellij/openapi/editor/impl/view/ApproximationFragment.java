@@ -72,7 +72,7 @@ class ApproximationFragment implements LineFragment {
 
   @Override
   public float offsetToX(float startX, int startOffset, int offset) {
-    return offset < myLength ? 0 : myWidth;
+    return startX + (offset < myLength ? 0 : myWidth);
   }
 
   @Override

@@ -5,11 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,12 +132,14 @@ public class LocalChangeListImpl extends LocalChangeList {
   void addChange(Change change) {
     myReadChangesCache = null;
     myChanges.add(change);
+    LOG.debug("List: " + myName + ". addChange: " + change);
   }
 
   Change removeChange(Change change) {
     for (Change localChange : myChanges) {
       if (localChange.equals(change)) {
         myChanges.remove(localChange);
+        LOG.debug("List: " + myName + ". removeChange: " + change);
         myReadChangesCache = null;
         return localChange;
       }
@@ -154,6 +158,7 @@ public class LocalChangeListImpl extends LocalChangeList {
         || isIgnoredChange(oldBoy, project)) {
         result.add(oldBoy);
         myChanges.remove(oldBoy);
+        LOG.debug("List: " + myName + ". removed change during processing: " + oldBoy);
         myReadChangesCache = null;
       }
     }
@@ -179,7 +184,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     });
   }
 
-  boolean processChange(Change change) {
+  boolean processChange(@NotNull final Change change) {
     LOG.debug("[process change] for '" + myName + "' isDefault: " + myIsDefault + " change: " +
               ChangesUtil.getFilePath(change).getPath());
     if (myIsDefault) {
@@ -188,12 +193,16 @@ public class LocalChangeListImpl extends LocalChangeList {
       return true;
     }
 
-    for (Change oldChange : myChangesBeforeUpdate) {
-      if (Comparing.equal(oldChange, change)) {
-        LOG.debug("[process change] adding bacuae equal to old: " + ChangesUtil.getFilePath(oldChange).getPath());
-        addChange(change);
-        return true;
+    boolean foundSameChange = ContainerUtil.exists(myChangesBeforeUpdate, new Condition<Change>() {
+      @Override
+      public boolean value(Change oldChange) {
+        return Comparing.equal(change, oldChange);
       }
+    });
+    if (foundSameChange) {
+      LOG.debug("[process change] adding because equal to old: " + ChangesUtil.getFilePath(change).getPath());
+      addChange(change);
+      return true;
     }
     LOG.debug("[process change] not found");
     return false;

@@ -18,6 +18,7 @@ package com.intellij.tasks.integration;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.intellij.openapi.util.Couple;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0;
@@ -58,11 +58,6 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * JIRA 5.0.6, REST API 2.0
    */
   @NonNls private static final String JIRA_5_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8015";
-
-  private static final SimpleDateFormat SHORT_TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-  static {
-    SHORT_TIMESTAMP_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
-  }
 
   private JiraRepository myRepository;
 
@@ -209,12 +204,10 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
 
     // timestamp as comment
     final String comment = "Timestamp: " + TaskUtil.formatDate(new Date());
+    final Couple<Integer> duration = generateWorkItemDuration();
 
-    // semi-unique duration as timeSpend
-    // should be no longer than 8 hours in total, because it's considered as one full day
-    final int minutes = (int)(System.currentTimeMillis() % 240) + 1;
-    final String duration = String.format("%dh %dm", minutes / 60, minutes % 60);
-    myRepository.updateTimeSpent(new LocalTaskImpl(task), duration, comment);
+    final int hours = duration.getFirst(), minutes = duration.getSecond();
+    myRepository.updateTimeSpent(new LocalTaskImpl(task), String.format("%dh %dm", hours, minutes), comment);
 
     final GetMethod request = new GetMethod(myRepository.getRestUrl("issue", task.getId(), "worklog"));
     final String response = myRepository.executeMethod(request);
@@ -224,7 +217,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
 
     assertEquals(comment, last.get("comment").getAsString());
     // don't depend on concrete response format: zero hours stripping, zero padding and so on
-    assertEquals(minutes * 60, last.get("timeSpentSeconds").getAsInt());
+    assertEquals((hours * 60 + minutes) * 60, last.get("timeSpentSeconds").getAsInt());
   }
 
   public void testParseVersionNumbers() throws Exception {

@@ -16,14 +16,14 @@ import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
 
-public class HgContentRevision implements ContentRevision {
+public class HgContentRevision implements ByteBackedContentRevision {
 
   private final Project myProject;
   @NotNull private final HgFile myHgFile;

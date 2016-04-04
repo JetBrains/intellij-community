@@ -67,7 +67,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT", "After closing angle bracket", groupName);
 
       groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS;
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", "Before opening angle bracket", groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
@@ -102,6 +102,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "MODIFIER_LIST_WRAP",
                                    "KEEP_SIMPLE_BLOCKS_IN_ONE_LINE",
                                    "KEEP_SIMPLE_METHODS_IN_ONE_LINE",
+                                   "KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE",
                                    "KEEP_SIMPLE_CLASSES_IN_ONE_LINE",
                                    "KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE",
                                    "FOR_STATEMENT_WRAP",
@@ -155,6 +156,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "SPECIAL_ELSE_IF_TREATMENT",
                                    "ENUM_CONSTANTS_WRAP",
                                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
+                                   "ALIGN_SUBSEQUENT_SIMPLE_METHODS",
                                    "WRAP_FIRST_METHOD_IN_CALL_CHAIN");
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
@@ -174,6 +176,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", ApplicationBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
+    }
+    else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
+      consumer.showStandardOptions("LINE_COMMENT_ADD_SPACE");
     }
     else {
       consumer.showAllStandardOptions();
@@ -392,6 +397,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    do {\n" +
     "        x--;\n" +
     "    } while (x > 10); \n" +
+    "    try (MyResource r1 = getResource();\n" +
+    "      MyResource r2 = null) {\n" +
+    "      doSomething();\n" +
+    "    }\n" +
+    "    Runnable r = () -> {};\n" +
     "  }\n" +
     "    public static void test() \n" +
     "        throws Exception { \n" +

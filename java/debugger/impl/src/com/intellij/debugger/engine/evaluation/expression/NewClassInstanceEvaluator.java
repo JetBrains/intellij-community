@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ class NewClassInstanceEvaluator implements Evaluator {
     // evaluate arguments
     List<Object> arguments;
     if (myParamsEvaluators != null) {
-      arguments = new ArrayList<Object>(myParamsEvaluators.length);
+      arguments = new ArrayList<>(myParamsEvaluators.length);
       for (Evaluator evaluator : myParamsEvaluators) {
         arguments.add(evaluator.evaluate(context));
       }

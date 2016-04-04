@@ -69,6 +69,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "SPACE_BEFORE_SEMICOLON");
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_LBRACKET",
                                 PyBundle.message("formatter.left.bracket"), SPACES_BEFORE_PARENTHESES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AROUND_POWER_OPERATOR",
+                                PyBundle.message("formatter.around.power.operator"), SPACES_AROUND_OPERATORS);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AROUND_EQ_IN_NAMED_PARAMETER",
                                 PyBundle.message("formatter.around.eq.in.named.parameter"), SPACES_AROUND_OPERATORS);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT",
@@ -84,6 +86,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 PyBundle.message("formatter.before.hash"), SPACES_OTHER);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AFTER_NUMBER_SIGN",
                                 PyBundle.message("formatter.after.hash"), SPACES_OTHER);
+      consumer.renameStandardOption("SPACE_AROUND_MULTIPLICATIVE_OPERATORS", PyBundle.message("formatter.around.multiplicative.operators"));
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showStandardOptions("BLANK_LINES_AROUND_CLASS",
@@ -154,7 +157,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   private static String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
                                                    "    dict = {1:'a', 2:'b', 3:'c'}\n" +
                                                    "    x = dict[1]\n" +
-                                                   "    expr = (1+2)*3 << 4 & 16\n" +
+                                                   "    expr = (1+2)*3 << 4**5 & 16\n" +
                                                    "    if expr == 0 or abs(expr) < 0: print('weird'); return\n" +
                                                    "    settings_preview(key=1)\n\n" +
                                                    "foo =\\\n" +

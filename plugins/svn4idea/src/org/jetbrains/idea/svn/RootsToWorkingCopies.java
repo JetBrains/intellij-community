@@ -21,12 +21,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
-import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.info.Info;
@@ -73,9 +72,7 @@ public class RootsToWorkingCopies implements VcsListener {
   }
 
   private void addRoot(final VirtualFile root) {
-    myQueue.run(new Task.Backgroundable(myProject, "Looking for '" + root.getPath() + "' working copy root", false,
-                                        BackgroundFromStartOption.getInstance()) {
-      
+    myQueue.run(new Task.Backgroundable(myProject, "Looking for '" + root.getPath() + "' working copy root", false) {
       public void run(@NotNull ProgressIndicator indicator) {
         calculateRoot(root);
       }

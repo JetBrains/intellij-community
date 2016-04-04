@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,10 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 
 /**
  * @author nik
  */
-@State(
-  name = "ProjectStructureProblems",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/projectStructureProblems.xml")}
-)
+@State(name = "ProjectStructureProblems", storages = @Storage("projectStructureProblems.xml"))
 public class GlobalProjectStructureProblemsSettings extends ProjectStructureProblemsSettingsBase {
 }

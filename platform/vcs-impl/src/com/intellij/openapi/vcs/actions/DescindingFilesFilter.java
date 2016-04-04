@@ -80,8 +80,8 @@ public class DescindingFilesFilter {
       return ourInstance;
     }
 
-    public int compare(final FilePath fp1, final FilePath fp2) {
-      return fp1.getIOFile().getAbsolutePath().length() - fp2.getIOFile().getAbsolutePath().length();
+    public int compare(@NotNull FilePath fp1, @NotNull FilePath fp2) {
+      return fp1.getPath().length() - fp2.getPath().length();
     }
   }
 }

@@ -4,32 +4,32 @@ public class EmptyStatementBody
 {
     private void foo(int j)
     {
-        while(bar());
-        while(bar()){
+        <warning descr="'while' statement has empty body">while</warning>(bar());
+        <warning descr="'while' statement has empty body">while</warning>(bar()){
 
         }
-        for(int i = 0;i<4;i++);
-        for(int i = 0;i<4;i++)
+        <warning descr="'for' statement has empty body">for</warning>(int i = 0;i<4;i++);
+        <warning descr="'for' statement has empty body">for</warning>(int i = 0;i<4;i++)
         {
 
         }
-        if(bar());
-        if(bar()){
+        <warning descr="'if' statement has empty body">if</warning>(bar());
+        <warning descr="'if' statement has empty body">if</warning>(bar()){
 
         }
         if(bar()){
             return;
         }
-        else
+        <warning descr="'else' statement has empty body">else</warning>
         {
 
         }
         if(bar()){
             return;
         }
-        else;
+        <warning descr="'else' statement has empty body">else</warning>;
 
-        switch (j) {}
+        <warning descr="'switch' statement has empty body">switch</warning> (j) {}
     }
 
     private boolean bar()
@@ -38,12 +38,13 @@ public class EmptyStatementBody
     }
 
     void comments(boolean b) {
-      if (b); // comment
-      while (b) {
-        // comment
-      }
-      do {
-        ; // comment
-      } while (b);
+        if (b); // comment
+        while (b) {
+            // comment
+        }
+        do {
+            ; // comment
+        } while (b);
+        if (b) /*comment*/;
     }
 }

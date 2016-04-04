@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,12 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   /**
    * The key to use to encrypt data
    */
-  private transient final AtomicReference<byte[]> key = new AtomicReference<byte[]>();
+  private final transient AtomicReference<byte[]> key = new AtomicReference<byte[]>();
   /**
    * The password database
    */
-  private transient final PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>> database = new PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>>() {
+  private final transient PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>> database = new PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>>() {
+    @Override
     protected Map<ByteArrayWrapper, byte[]> compute() {
       return Collections.synchronizedMap(ContainerUtil.<ByteArrayWrapper, byte[]>newHashMap());
     }

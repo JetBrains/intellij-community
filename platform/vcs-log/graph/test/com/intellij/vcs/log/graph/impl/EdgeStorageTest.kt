@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  */
 package com.intellij.vcs.log.graph.impl
 
+import org.junit.Assert.*
+import org.junit.Test
+import com.intellij.vcs.log.graph.collapsing.EdgeStorage
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
-import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
-import com.intellij.vcs.log.graph.asString
-import com.intellij.vcs.log.graph.collapsing.EdgeStorage
-import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper
 import com.intellij.vcs.log.graph.utils.sortR
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import com.intellij.vcs.log.graph.asString
+import com.intellij.vcs.log.graph.api.EdgeFilter
+import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper
 
-public class EdgeStorageTest : BaseTestGraphBuilder {
+class EdgeStorageTest : BaseTestGraphBuilder {
   val nodeIdByIndex: (Int) -> Int = { it - 10 }
   val nodeIndexById: (Int) -> Int = { it + 10 }
 
@@ -49,7 +49,7 @@ public class EdgeStorageTest : BaseTestGraphBuilder {
 
   infix fun EdgeStorage.assert(s: String) = assertEquals(s, asString())
 
-  fun EdgeStorage.asString(): String = getKnownIds().sortR().map {
+  fun EdgeStorage.asString(): String = knownIds.sortR().map {
     adapter.getAdjacentEdges(nodeIndexById(it), EdgeFilter.ALL).map { it.asString() }.joinToString(",")
   }.joinToString("|-")
 

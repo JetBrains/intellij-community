@@ -41,12 +41,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -124,10 +126,15 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   }
 
   protected Filter<?> getFailuresFilter() {
-    if (TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED.value(myConsoleProperties)) {
-      return Filter.NOT_PASSED.and(Filter.IGNORED.not()).or(Filter.FAILED_OR_INTERRUPTED);
+    return getFailuresFilter(myConsoleProperties);
+  }
+
+  @TestOnly
+  public static Filter<?> getFailuresFilter(TestConsoleProperties consoleProperties) {
+    if (TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED.value(consoleProperties)) {
+      return Filter.NOT_PASSED.or(Filter.FAILED_OR_INTERRUPTED).and(Filter.IGNORED.not());
     }
-    return Filter.FAILED_OR_INTERRUPTED;
+    return Filter.FAILED_OR_INTERRUPTED.and(Filter.IGNORED.not());
   }
 
   @Override
@@ -328,5 +335,10 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     public ArrayList<LogFileOptions> getLogFiles() {
       return myConfiguration.getLogFiles();
     }
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return Registry.is("dumb.aware.run.configurations");
   }
 }

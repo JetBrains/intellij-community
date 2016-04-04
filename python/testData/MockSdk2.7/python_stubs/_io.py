@@ -1,15 +1,15 @@
 # encoding: utf-8
 # module _io
-# from /home/user/.virtualenvs/obraz-py2.7/lib/python2.7/lib-dynload/_io.so
-# by generator 1.127
+# from /Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/lib-dynload/_io.so
+# by generator 1.137
 """
 The io module provides the Python interfaces to stream handling. The
 builtin open function is defined in this module.
 
 At the top of the I/O hierarchy is the abstract base class IOBase. It
 defines the basic interface to a stream. Note, however, that there is no
-seperation between reading and writing to streams; implementations are
-allowed to throw an IOError if they do not support a given operation.
+separation between reading and writing to streams; implementations are
+allowed to raise an IOError if they do not support a given operation.
 
 Extending IOBase is RawIOBase which deals simply with the reading and
 writing of raw bytes to a stream. FileIO subclasses RawIOBase to provide
@@ -185,8 +185,8 @@ class _IOBase(object):
     bytes. bytearrays are accepted too, and in some cases (such as
     readinto) needed. Text I/O classes work with str data.
     
-    Note that calling any method (even inquiries) on a closed stream is
-    undefined. Implementations may raise IOError in this case.
+    Note that calling any method (except additional calls to close(),
+    which are ignored) on a closed stream should raise a ValueError.
     
     IOBase (and its subclasses) support the iterator protocol, meaning
     that an IOBase object can be iterated over yielding the lines in a
@@ -248,8 +248,7 @@ class _IOBase(object):
         
         If limit is specified, at most limit bytes will be read.
         
-        The line terminator is always b'
-        ' for binary files; for text
+        The line terminator is always b'\n' for binary files; for text
         files, the newlines argument to open can be used to select the line
         terminator(s) recognized.
         """
@@ -269,7 +268,7 @@ class _IOBase(object):
         """
         Change stream position.
         
-        Change the stream position to byte offset offset. offset is
+        Change the stream position to the given byte offset. The offset is
         interpreted relative to the position indicated by whence.  Values
         for whence are:
         
@@ -498,6 +497,9 @@ class BufferedRandom(_BufferedIOBase):
         """ x.__repr__() <==> repr(x) """
         pass
 
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
+        pass
+
     closed = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
     mode = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -569,6 +571,9 @@ class BufferedReader(_BufferedIOBase):
 
     def __repr__(self): # real signature unknown; restored from __doc__
         """ x.__repr__() <==> repr(x) """
+        pass
+
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
         pass
 
     closed = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -691,6 +696,9 @@ class BufferedWriter(_BufferedIOBase):
         """ x.__repr__() <==> repr(x) """
         pass
 
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
+        pass
+
     closed = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
     mode = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
@@ -755,7 +763,8 @@ class BytesIO(_BufferedIOBase):
         """
         pass
 
-    def readable(self, *args, **kwargs): # real signature unknown
+    def readable(self): # real signature unknown; restored from __doc__
+        """ readable() -> bool. Returns True if the IO object can be read. """
         pass
 
     def readinto(self, bytearray): # real signature unknown; restored from __doc__
@@ -799,7 +808,8 @@ class BytesIO(_BufferedIOBase):
         """
         pass
 
-    def seekable(self, *args, **kwargs): # real signature unknown
+    def seekable(self): # real signature unknown; restored from __doc__
+        """ seekable() -> bool. Returns True if the IO object can be seeked. """
         pass
 
     def tell(self): # real signature unknown; restored from __doc__
@@ -815,7 +825,8 @@ class BytesIO(_BufferedIOBase):
         """
         pass
 
-    def writable(self, *args, **kwargs): # real signature unknown
+    def writable(self): # real signature unknown; restored from __doc__
+        """ writable() -> bool. Returns True if the IO object can be written. """
         pass
 
     def write(self, bytes): # real signature unknown; restored from __doc__
@@ -854,6 +865,9 @@ class BytesIO(_BufferedIOBase):
     def __setstate__(self, *args, **kwargs): # real signature unknown
         pass
 
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
+        pass
+
     closed = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """True if the file is closed."""
 
@@ -876,7 +890,7 @@ class FileIO(_RawIOBase):
     """
     file(name: str[, mode: str]) -> file IO object
     
-    Open a file.  The mode can be 'r', 'w' or 'a' for reading (default),
+    Open a file.  The mode can be 'r' (default), 'w' or 'a' for reading,
     writing or appending.  The file will be created if it doesn't exist
     when opened for writing or appending; it will be truncated when
     opened for writing.  Add a '+' to the mode to allow simultaneous
@@ -887,20 +901,16 @@ class FileIO(_RawIOBase):
         close() -> None.  Close the file.
         
         A closed file cannot be used for further I/O operations.  close() may be
-        called more than once without error.  Changes the fileno to -1.
+        called more than once without error.
         """
         pass
 
     def fileno(self): # real signature unknown; restored from __doc__
-        """
-        fileno() -> int. "file descriptor".
-        
-        This is needed for lower-level file interfaces, such the fcntl module.
-        """
+        """ fileno() -> int.  Return the underlying file descriptor (an integer). """
         pass
 
     def isatty(self): # real signature unknown; restored from __doc__
-        """ isatty() -> bool.  True if the file is connected to a tty device. """
+        """ isatty() -> bool.  True if the file is connected to a TTY device. """
         pass
 
     def read(self, size=-1): # known case of _io.FileIO.read
@@ -932,13 +942,15 @@ class FileIO(_RawIOBase):
 
     def seek(self, offset, whence=None): # real signature unknown; restored from __doc__
         """
-        seek(offset: int[, whence: int]) -> None.  Move to new file position.
+        seek(offset: int[, whence: int]) -> int.  Move to new file position
+        and return the file position.
         
         Argument offset is a byte count.  Optional argument whence defaults to
-        0 (offset from start of file, offset should be >= 0); other values are 1
-        (move relative to current position, positive or negative), and 2 (move
-        relative to end of file, usually negative, although many platforms allow
-        seeking beyond the end of a file).
+        SEEK_SET or 0 (offset from start of file, offset should be >= 0); other values
+        are SEEK_CUR or 1 (move relative to current position, positive or negative),
+        and SEEK_END or 2 (move relative to end of file, usually negative, although
+        many platforms allow seeking beyond the end of a file).
+        
         Note that not all file objects are seekable.
         """
         pass
@@ -948,14 +960,20 @@ class FileIO(_RawIOBase):
         pass
 
     def tell(self): # real signature unknown; restored from __doc__
-        """ tell() -> int.  Current file position """
+        """
+        tell() -> int.  Current file position.
+        
+        Can raise OSError for non seekable files.
+        """
         pass
 
     def truncate(self, size=None): # real signature unknown; restored from __doc__
         """
-        truncate([size: int]) -> None.  Truncate the file to at most size bytes.
+        truncate([size: int]) -> int.  Truncate the file to at most size bytes and
+        return the truncated size.
         
-        Size defaults to the current file position, as returned by tell().The current file position is changed to the value of size.
+        Size defaults to the current file position, as returned by tell().
+        The current file position is changed to the value of size.
         """
         pass
 
@@ -968,7 +986,8 @@ class FileIO(_RawIOBase):
         write(b: bytes) -> int.  Write bytes b to file, return number written.
         
         Only makes one system call, so not all of the data may be written.
-        The number of bytes actually written is returned.
+        The number of bytes actually written is returned.  In non-blocking mode,
+        returns None if the write would block.
         """
         pass
 
@@ -992,7 +1011,7 @@ class FileIO(_RawIOBase):
     """True if the file is closed"""
 
     closefd = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
-    """True if the file descriptor will be closed"""
+    """True if the file descriptor will be closed by close()."""
 
     mode = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """String giving the file mode"""
@@ -1133,7 +1152,8 @@ class StringIO(_TextIOBase):
         """
         pass
 
-    def readable(self, *args, **kwargs): # real signature unknown
+    def readable(self): # real signature unknown; restored from __doc__
+        """ readable() -> bool. Returns True if the IO object can be read. """
         pass
 
     def readline(self, *args, **kwargs): # real signature unknown
@@ -1156,7 +1176,8 @@ class StringIO(_TextIOBase):
         """
         pass
 
-    def seekable(self, *args, **kwargs): # real signature unknown
+    def seekable(self): # real signature unknown; restored from __doc__
+        """ seekable() -> bool. Returns True if the IO object can be seeked. """
         pass
 
     def tell(self, *args, **kwargs): # real signature unknown
@@ -1173,7 +1194,8 @@ class StringIO(_TextIOBase):
         """
         pass
 
-    def writable(self, *args, **kwargs): # real signature unknown
+    def writable(self): # real signature unknown; restored from __doc__
+        """ writable() -> bool. Returns True if the IO object can be written. """
         pass
 
     def write(self, *args, **kwargs): # real signature unknown
@@ -1217,15 +1239,22 @@ class TextIOWrapper(_TextIOBase):
     errors determines the strictness of encoding and decoding (see the
     codecs.register) and defaults to "strict".
     
-    newline can be None, '', '\n', '\r', or '\r\n'.  It controls the
-    handling of line endings. If it is None, universal newlines is
-    enabled.  With this enabled, on input, the lines endings '\n', '\r',
-    or '\r\n' are translated to '\n' before being returned to the
-    caller. Conversely, on output, '\n' is translated to the system
-    default line seperator, os.linesep. If newline is any other of its
-    legal values, that newline becomes the newline when the file is read
-    and it is returned untranslated. On output, '\n' is converted to the
-    newline.
+    newline controls how line endings are handled. It can be None, '',
+    '\n', '\r', and '\r\n'.  It works as follows:
+    
+    * On input, if newline is None, universal newlines mode is
+      enabled. Lines in the input can end in '\n', '\r', or '\r\n', and
+      these are translated into '\n' before being returned to the
+      caller. If it is '', universal newline mode is enabled, but line
+      endings are returned to the caller untranslated. If it has any of
+      the other legal values, input lines are only terminated by the given
+      string, and the line ending is returned to the caller untranslated.
+    
+    * On output, if newline is None, any '\n' characters written are
+      translated to the system default line separator, os.linesep. If
+      newline is '', no translation takes place. If newline is any of the
+      other legal values, any '\n' characters written are translated to
+      the given string.
     
     If line_buffering is True, a call to flush is implied when a call to
     write contains a newline character.

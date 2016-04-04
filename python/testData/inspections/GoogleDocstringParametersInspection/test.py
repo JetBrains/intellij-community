@@ -65,4 +65,9 @@ def varagrs_undefined(x, *args, y, **kwargs):
     x:
     y:
   """
+  
+
+def no_parameters_declared(x, y):
+    """ 
+    """
     

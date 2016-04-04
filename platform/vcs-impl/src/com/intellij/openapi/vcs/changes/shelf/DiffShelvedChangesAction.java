@@ -35,12 +35,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -51,7 +49,6 @@ import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -139,20 +136,15 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
                                          @NotNull List<MyDiffRequestProducer> diffRequestProducers) {
     final String base = project.getBaseDir().getPath();
     for (final ShelvedBinaryFile shelvedChange : files) {
-      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange) {
+      final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
+      final FilePath filePath = VcsUtil.getFilePath(file);
+      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
         @NotNull
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
           throws DiffRequestProducerException, ProcessCanceledException {
           Change change = shelvedChange.createChange(project);
           return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
-        }
-
-        @NotNull
-        @Override
-        public FilePath getFilePath() {
-          final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
-          return VcsUtil.getFilePath(file);
         }
       });
     }
@@ -162,14 +154,13 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
                                          @NotNull List<ShelvedChange> changesFromFirstList,
                                          @NotNull List<MyDiffRequestProducer> diffRequestProducers) {
     final String base = project.getBasePath();
-    final List<String> missing = new LinkedList<String>();
-
     final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
     final PatchesPreloader preloader = new PatchesPreloader(project);
 
     for (final ShelvedChange shelvedChange : changesFromFirstList) {
       final String beforePath = shelvedChange.getBeforePath();
       final String afterPath = shelvedChange.getAfterPath();
+      final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath == null ? beforePath : afterPath));
       final boolean isNewFile = FileStatus.ADDED.equals(shelvedChange.getFileStatus());
 
       final VirtualFile file; // isNewFile -> parent directory, !isNewFile -> file
@@ -178,18 +169,18 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         if (!isNewFile && (file == null || !file.exists())) throw new FileNotFoundException(beforePath);
       }
       catch (IOException e) {
-        if (beforePath != null) missing.add(beforePath);
+        diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
+          @NotNull
+          @Override
+          public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+            throws DiffRequestProducerException, ProcessCanceledException {
+            throw new DiffRequestProducerException("Cannot find base for '" + (beforePath != null ? beforePath : afterPath) + "'");
+          }
+        });
         continue;
       }
 
-      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange) {
-        @NotNull
-        @Override
-        public FilePath getFilePath() {
-          File file = new File(base, shelvedChange.getAfterPath() == null ? shelvedChange.getBeforePath() : shelvedChange.getAfterPath());
-          return VcsUtil.getFilePath(file);
-        }
-
+      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
         @NotNull
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
@@ -233,12 +224,6 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           }
         }
       });
-    }
-
-    if (!missing.isEmpty()) {
-      // 7-8
-      VcsBalloonProblemNotifier.showOverChangesView(project, "Show Diff: Cannot find base for: " + StringUtil.join(missing, ",\n"),
-                                                    MessageType.WARNING);
     }
   }
 
@@ -323,15 +308,18 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   private static abstract class MyDiffRequestProducer implements DiffRequestProducer {
     @Nullable private final ShelvedChange myTextChange;
     @Nullable private final ShelvedBinaryFile myBinaryChange;
+    @NotNull private final FilePath myFilePath;
 
-    public MyDiffRequestProducer(@NotNull ShelvedChange textChange) {
+    public MyDiffRequestProducer(@NotNull ShelvedChange textChange, @NotNull FilePath filePath) {
       myBinaryChange = null;
       myTextChange = textChange;
+      myFilePath = filePath;
     }
 
-    public MyDiffRequestProducer(@NotNull ShelvedBinaryFile binaryChange) {
+    public MyDiffRequestProducer(@NotNull ShelvedBinaryFile binaryChange, @NotNull FilePath filePath) {
       myBinaryChange = binaryChange;
       myTextChange = null;
+      myFilePath = filePath;
     }
 
     @Nullable
@@ -362,6 +350,8 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     }
 
     @NotNull
-    protected abstract FilePath getFilePath();
+    public FilePath getFilePath() {
+      return myFilePath;
+    }
   }
 }

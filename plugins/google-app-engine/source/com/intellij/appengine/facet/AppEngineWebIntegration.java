@@ -16,6 +16,7 @@
 package com.intellij.appengine.facet;
 
 import com.intellij.appengine.sdk.AppEngineSdk;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
@@ -52,6 +53,9 @@ public abstract class AppEngineWebIntegration {
 
   @Nullable
   public abstract ArtifactType getAppEngineApplicationArtifactType();
+
+  @NotNull
+  public abstract List<FrameworkSupportInModuleProvider.FrameworkDependency> getAppEngineFrameworkDependencies();
 
   public abstract void setupJpaSupport(@NotNull Module module, @NotNull VirtualFile persistenceXml);
 

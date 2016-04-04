@@ -45,17 +45,17 @@ if IS_PYTHON_3K:
     
 try:
     import org.python.core.PyDictionary #@UnresolvedImport @UnusedImport -- just to check if it could be valid
-    def DictContains(d, key):
+    def dict_contains(d, key):
         return d.has_key(key)
 except:
     try:
         #Py3k does not have has_key anymore, and older versions don't have __contains__
-        DictContains = dict.__contains__
+        dict_contains = dict.__contains__
     except:
         try:
-            DictContains = dict.has_key
+            dict_contains = dict.has_key
         except NameError:
-            def DictContains(d, key):
+            def dict_contains(d, key):
                 return d.has_key(key)
 
 
@@ -83,7 +83,7 @@ try:
                 #We'll re-add any paths removed but the pydev_sitecustomize we added from pydev.
                 paths_removed.append(c)
             
-    if DictContains(sys.modules, 'sitecustomize'):
+    if dict_contains(sys.modules, 'sitecustomize'):
         del sys.modules['sitecustomize'] #this module
 except:
     #print the error... should never happen (so, always show, and not only on debug)!
@@ -96,7 +96,7 @@ else:
     except:
         pass
     
-    if not DictContains(sys.modules, 'sitecustomize'):
+    if not dict_contains(sys.modules, 'sitecustomize'):
         #If there was no sitecustomize, re-add the pydev sitecustomize (pypy gives a KeyError if it's not there)
         sys.modules['sitecustomize'] = __pydev_sitecustomize_module__
     
@@ -177,15 +177,22 @@ try:
     #The original getpass doesn't work from the eclipse console, so, let's put a replacement
     #here (note that it'll not go into echo mode in the console, so, what' the user writes
     #will actually be seen)
-    import getpass #@UnresolvedImport
-    if IS_PYTHON_3K:
-        def pydev_getpass(msg='Password: '):
-            return input(msg)
-    else:
-        def pydev_getpass(msg='Password: '):
-            return raw_input(msg)
+    #Note: same thing from the fix_getpass module -- but we don't want to import it in this
+    #custom sitecustomize.
+    def fix_get_pass():
+        try:
+            import getpass
+        except ImportError:
+            return #If we can't import it, we can't fix it
+        import warnings
+        fallback = getattr(getpass, 'fallback_getpass', None) # >= 2.6
+        if not fallback:
+            fallback = getpass.default_getpass # <= 2.5
+        getpass.getpass = fallback
+        if hasattr(getpass, 'GetPassWarning'):
+            warnings.simplefilter("ignore", category=getpass.GetPassWarning)
+    fix_get_pass()
     
-    getpass.getpass = pydev_getpass
 except:
     #Don't report errors at this stage
     if DEBUG:

@@ -1,0 +1,23 @@
+<idea-plugin version="2">
+  <!-- Components and extensions declared in this file work ONLY in the Python plugin,
+       both Community and Professional versions. -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
+                        serviceImplementation="com.jetbrains.python.run.PyPluginCommonOptionsFormFactory"/>
+  </extensions>
+
+  <actions>
+    <action id="PyManagePackages" class="com.jetbrains.python.packaging.PyManagePackagesAction" text="Manage Python Packages...">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
+  
+  <application-components>
+    <component>
+      <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
+      <implementation-class>com.jetbrains.python.console.PydevConsoleRunnerFactory</implementation-class>
+    </component>
+  </application-components>
+
+</idea-plugin>

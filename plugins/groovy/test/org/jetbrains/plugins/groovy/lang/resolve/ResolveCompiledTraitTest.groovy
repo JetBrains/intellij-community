@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,7 +231,6 @@ class ExternalConcrete2 implements somepackage.GenericTrait<String, somepackage.
     assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
   }
 
-
   void 'test generic trait static method'() {
     def definition = configureTraitInheritor()
     def method = definition.findMethodsByName("staticMethodWithTraitGenerics", false)[0]
@@ -264,7 +263,7 @@ class ExternalConcrete2 implements somepackage.GenericTrait<String, somepackage.
     configureTraitInheritor()
     def reference = configureByText(
       'foo.groovy',
-      'new ExternalConcrete().<Integer>staticMethodWith<caret>MethodGenericsClashing(1,"", new PojoInheritor())',
+      'new ExternalConcrete().<Integer>staticMethodWith<caret>MethodGenericsClashing(1, "", new PojoInheritor())',
       GrReferenceExpression
     )
     def resolved = reference.advancedResolve()

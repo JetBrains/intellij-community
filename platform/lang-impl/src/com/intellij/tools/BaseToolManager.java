@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -27,24 +26,22 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public abstract class BaseToolManager<T extends Tool> implements ExportableComponent {
+public abstract class BaseToolManager<T extends Tool> {
   @NotNull private final ActionManagerEx myActionManager;
   private final SchemesManager<ToolsGroup<T>, ToolsGroup<T>> mySchemesManager;
 
-  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, SchemesManagerFactory factory) {
+  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemesManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
     myActionManager = actionManagerEx;
 
-    mySchemesManager = factory.create(getSchemesPath(), createProcessor());
+    //noinspection AbstractMethodCallInConstructor
+    mySchemesManager = factory.create(schemePath, createProcessor(), presentableName);
     mySchemesManager.loadSchemes();
     registerActions();
   }
-
-  protected abstract String getSchemesPath();
 
   protected abstract SchemeProcessor<ToolsGroup<T>> createProcessor();
 
@@ -53,20 +50,8 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableCompo
     return StringUtil.nullize(s, true);
   }
 
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{mySchemesManager.getRootDirectory()};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return ToolsBundle.message("tools.settings");
-  }
-
   public List<T> getTools() {
-    List<T> result = new SmartList<T>();
+    List<T> result = new SmartList<>();
     for (ToolsGroup<T> group : mySchemesManager.getAllSchemes()) {
       result.addAll(group.getElements());
     }
@@ -107,9 +92,8 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableCompo
 
     // register
     // to prevent exception if 2 or more targets have the same name
-    Set<String> registeredIds = new THashSet<String>();
-    List<T> tools = getTools();
-    for (T tool : tools) {
+    Set<String> registeredIds = new THashSet<>();
+    for (T tool : getTools()) {
       String actionId = tool.getActionId();
       if (registeredIds.add(actionId)) {
         myActionManager.registerAction(actionId, createToolAction(tool));

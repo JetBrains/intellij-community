@@ -728,8 +728,7 @@ public class GitHistoryUtils {
   }
 
   /**
-   * Keep for compatibility with TeamCity plugin.
-   * To remove in IDEA 15.
+   * @deprecated To remove in IDEA 17
    */
   @Deprecated
   @SuppressWarnings("unused")
@@ -739,6 +738,10 @@ public class GitHistoryUtils {
     return onlyHashesHistory(project, path, root, parameters);
   }
 
+  /**
+   * @deprecated To remove in IDEA 17
+   */
+  @Deprecated
   public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project, FilePath path, final VirtualFile root, final String... parameters)
     throws VcsException {
     // adjust path using change manager
@@ -870,30 +873,6 @@ public class GitHistoryUtils {
         return factory.createHash(hash);
       }
     });
-  }
-
-  private static void takeLine(final Project project, String line,
-                               StringBuilder sb,
-                               GitLogParser parser,
-                               SymbolicRefsI refs,
-                               VirtualFile root,
-                               VcsException[] exc, GitLineHandler h, AsynchConsumer<GitHeavyCommit> gitCommitConsumer) {
-    final String text = sb.toString();
-    sb.setLength(0);
-    sb.append(line);
-    if (text.length() == 0) return;
-    GitLogRecord record = parser.parseOneRecord(text);
-
-    final GitHeavyCommit gitCommit;
-    try {
-      gitCommit = createCommit(project, refs, root, record);
-    }
-    catch (VcsException e) {
-      exc[0] = e;
-      h.cancel();
-      return;
-    }
-    gitCommitConsumer.consume(gitCommit);
   }
 
   @NotNull

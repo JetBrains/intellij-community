@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public enum State {STOPPED, RUNNING, WAITING_ATTACH, PAUSED, WAIT_EVALUATION, DISPOSED}
 
   public enum Event
-  {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_VIEWS_ONLY, THREADS_REFRESH}
+  {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_WITH_STACK, THREADS_REFRESH}
 
   private volatile boolean myIsEvaluating;
   private volatile int myIgnoreFiltersFrameCountThreshold = 0;
@@ -98,7 +98,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
-  private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<ThreadReferenceProxyImpl>();
+  private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<>();
   protected final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myModifiedClassesScanRequired = false;
@@ -175,6 +175,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
       }
       else {
         getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(context.getSuspendContext()) {
+          @Override
+          public Priority getPriority() {
+            return Priority.HIGH;
+          }
+
           @Override
           public void contextAction() throws Exception {
             context.initCaches();
@@ -376,19 +381,17 @@ public class DebuggerSession implements AbstractDebuggerSession {
                                  Event.REFRESH, null);
   }
 
-  public void refresh(final boolean refreshViewsOnly) {
+  public void refresh(final boolean refreshWithStack) {
     final State state = getState();
     DebuggerContextImpl context = myContextManager.getContext();
     DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(this, context.getSuspendContext(), context.getThreadProxy(), context.getFrameProxy());
-    myContextManager.setState(newContext, state, refreshViewsOnly ? Event.REFRESH_VIEWS_ONLY
-                                                                  : Event.REFRESH
-      , null);
+    myContextManager.setState(newContext, state, refreshWithStack ? Event.REFRESH_WITH_STACK : Event.REFRESH, null);
   }
 
   public void dispose() {
     getProcess().dispose();
     Disposer.dispose(myUpdateAlarm);
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+    DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
       @Override
       public void run() {
         getContextManager().setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null);

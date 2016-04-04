@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.view;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,9 @@ import java.util.List;
 public abstract class ExternalSystemViewContributor {
   public static final ExtensionPointName<ExternalSystemViewContributor> EP_NAME =
     ExtensionPointName.create("com.intellij.externalSystemViewContributor");
+
+  @NotNull
+  public abstract ProjectSystemId getSystemId();
 
   @NotNull
   public abstract List<Key<?>> getKeys();

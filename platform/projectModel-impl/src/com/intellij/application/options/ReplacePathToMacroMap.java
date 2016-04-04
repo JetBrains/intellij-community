@@ -174,6 +174,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     final String replacement = s.getValue();
     if (replacement.contains("..")) return 1;
     if (replacement.contains("$" + PathMacrosImpl.USER_HOME_MACRO_NAME + "$")) return 1;
+    if (replacement.contains("$" + PathMacrosImpl.APPLICATION_HOME_MACRO_NAME + "$")) return 1;
     if (replacement.contains("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$")) return 3;
     if (replacement.contains("$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$")) return 3;
     return 2;

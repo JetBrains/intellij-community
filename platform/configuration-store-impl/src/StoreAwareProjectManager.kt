@@ -41,7 +41,7 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.MultiMap
 import gnu.trove.THashSet
 import org.jetbrains.annotations.TestOnly
-import java.util.LinkedHashSet
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -251,7 +251,7 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
 // used in settings repository plugin
 fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<String>, changedStorages: Set<StateStorage>?, isApp: Boolean): Boolean {
   val message = StringBuilder()
-  val storeName = if (store is IProjectStore) "Project" else "Application"
+  val storeName = if (store is IProjectStore) "Project '${store.projectName}'" else "Application"
   message.append(storeName).append(' ')
   message.append("components were changed externally and cannot be reloaded:\n\n")
   var count = 0
@@ -287,7 +287,7 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
   return false
 }
 
-public enum class ReloadComponentStoreStatus {
+enum class ReloadComponentStoreStatus {
   RESTART_AGREED,
   RESTART_CANCELLED,
   ERROR,

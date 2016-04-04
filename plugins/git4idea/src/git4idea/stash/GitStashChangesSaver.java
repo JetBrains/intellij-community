@@ -161,6 +161,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
     }
   }
 
+  @Override
+  public String toString() {
+    return "StashChangesSaver. Roots: " + myStashedRoots;
+  }
+
   private static class UnstashConflictResolver extends GitConflictResolver {
 
     private final Set<VirtualFile> myStashedRoots;
@@ -216,17 +221,17 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
 
     @Override
-    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+    public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "Uncommitted changes that were stashed before update have conflicts with updated files.";
     }
 
     @Override
-    public String getLeftPanelTitle(VirtualFile file) {
+    public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return getConflictLeftPanelTitle();
     }
 
     @Override
-    public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
+    public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return getConflictRightPanelTitle();
     }
   }

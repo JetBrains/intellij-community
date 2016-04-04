@@ -26,6 +26,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ReloadableComboBoxPanel;
+import com.intellij.util.ui.ReloadablePanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +117,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   private final GithubTagListProvider myTagListProvider;
   private JComponent myComponent;
   private JPanel myVersionPanel;
-  private ReloadableComboBoxPanel<GithubTagInfo> myReloadableComboBoxPanel;
+  private ReloadablePanel<GithubTagInfo> myReloadableComboBoxPanel;
 
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
     String ghUserName = generator.getGithubUserName();

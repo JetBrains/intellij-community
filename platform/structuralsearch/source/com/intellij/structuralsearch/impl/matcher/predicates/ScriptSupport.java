@@ -1,11 +1,13 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
@@ -16,11 +18,14 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
@@ -29,45 +34,68 @@ import java.util.List;
  */
 public class ScriptSupport {
   private final Script script;
+  private final ScriptLog myScriptLog;
 
-  public ScriptSupport(String text, String name) {
+  public ScriptSupport(Project project, String text, String name) {
+    myScriptLog = new ScriptLog(project);
     File scriptFile = new File(text);
     GroovyShell shell = new GroovyShell();
     try {
-      script = scriptFile.exists() ? shell.parse(scriptFile):shell.parse(text, name);
+      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name);
     } catch (Exception ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
     }
   }
 
+  private static Map<String, Object> buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
+    final String name = result.getName();
+    if (name != null && !result.isMultipleMatch()) {
+      final Object value = out.get(name);
+      final PsiElement match = StructuralSearchUtil.getPresentableElement(result.getMatch());
+      if (value == null) {
+        out.put(name, match);
+      }
+      else if (value instanceof List) {
+        @SuppressWarnings("unchecked")
+        final List<PsiElement> list = (List<PsiElement>)value;
+        list.add(match);
+      }
+      else if (value instanceof PsiElement){
+        final List<PsiElement> list = new ArrayList<PsiElement>();
+        list.add((PsiElement)value);
+        list.add(match);
+        out.put(name, list);
+      }
+      else {
+        throw new AssertionError();
+      }
+    }
+    if (result.hasSons()) {
+      for (MatchResult son : result.getAllSons()) {
+        buildVariableMap(son, out);
+      }
+    }
+    return out;
+  }
+
   public String evaluate(MatchResult result, PsiElement context) {
     try {
-      final Binding binding = new Binding();
-
+      final HashMap<String, Object> variableMap = new HashMap<String, Object>();
+      variableMap.put("__log__", myScriptLog);
       if (result != null) {
-        for(MatchResult r:result.getAllSons()) {
-          if (r.isMultipleMatch()) {
-            final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-            for (MatchResult r2 : r.getAllSons()) {
-              elements.add(StructuralSearchUtil.getParentIfIdentifier(r2.getMatch()));
-            }
-            binding.setVariable(r.getName(), elements);
-          }
-          else {
-            binding.setVariable(r.getName(), StructuralSearchUtil.getParentIfIdentifier(r.getMatch()));
-          }
+        buildVariableMap(result, variableMap);
+        if (context == null) {
+          context = result.getMatch();
         }
       }
+      final Binding binding = new Binding(variableMap);
 
-      if (context == null) {
-        context = result.getMatch();
-      }
-      context = StructuralSearchUtil.getParentIfIdentifier(context);
-      binding.setVariable("__context__", context);
+      context = StructuralSearchUtil.getPresentableElement(context);
+      binding.setVariable(Configuration.CONTEXT_VAR_NAME, context);
       script.setBinding(binding);
 
-      Object o = script.run();
+      final Object o = script.run();
       return String.valueOf(o);
     } catch (GroovyRuntimeException ex) {
       throw new StructuralSearchException(SSRBundle.message("groovy.script.error", ex.getMessage()));

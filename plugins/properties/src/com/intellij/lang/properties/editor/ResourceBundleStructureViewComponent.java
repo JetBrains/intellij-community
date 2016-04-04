@@ -21,9 +21,9 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.lang.properties.projectView.ResourceBundleDeleteProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -64,6 +64,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle, anchorizer));
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
+    getTree().setCellRenderer(new ResourceBundleEditorRenderer());
   }
 
   @Override
@@ -83,7 +84,6 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     final DefaultActionGroup propertiesPopupGroup = new DefaultActionGroup();
     propertiesPopupGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP));
     propertiesPopupGroup.add(Separator.getInstance(), Constraints.FIRST);
-    propertiesPopupGroup.add(new IgnoreIncompletePropertyPropertiesFilesAction(), Constraints.FIRST);
     propertiesPopupGroup.add(new NewPropertyAction(true), Constraints.FIRST);
     PopupHandler.installPopupHandler(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
   }
@@ -139,7 +139,10 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
       final IProperty[] properties = (IProperty[])getData(IProperty.ARRAY_KEY.getName());
       if (properties != null) {
         for (IProperty property : properties) {
-          elements.add(property.getPsiElement());
+          final PsiElement element = property.getPsiElement();
+          if (element.isValid()) {
+            elements.add(element);
+          }
         }
       }
       return elements.toArray(new PsiElement[elements.size()]);

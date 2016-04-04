@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -139,7 +142,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     
     VirtualFile root = myFixture.findOrCreateDir("c");
     PsiTestUtil.addSourceContentToRoots(c, root);
-    VirtualFile file = root.createChildData(this, "x.txt");
+    VirtualFile file = createChildData(root, "x.txt");
 
     GlobalSearchScope deps = m.getModuleWithDependentsScope();
     assertTrue(deps.contains(file));
@@ -164,7 +167,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     PsiTestUtil.addSourceContentToRoots(b, bRoot);
     VirtualFile cRoot = myFixture.findOrCreateDir("c");
     PsiTestUtil.addSourceContentToRoots(c, cRoot);
-    VirtualFile file = cRoot.createChildData(this, "x.txt");
+    VirtualFile file = createChildData(cRoot, "x.txt");
 
     GlobalSearchScope deps = c.getModuleContentWithDependenciesScope();
     assertTrue(deps.contains(file));
@@ -278,7 +281,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     VirtualFile lib = myFixture.findOrCreateDir("lib");
     PsiTestUtil.addContentRoot(myModule, lib);
 
-    VirtualFile file = lib.createChildData(this, "a.txt");
+    VirtualFile file = createChildData(lib, "a.txt");
     addLibrary(myModule, DependencyScope.COMPILE);
     assertTrue(myModule.getModuleWithDependenciesAndLibrariesScope(false).contains(file));
   }

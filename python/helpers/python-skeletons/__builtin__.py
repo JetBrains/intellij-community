@@ -1351,6 +1351,13 @@ class str(basestring):
         """
         return 0
 
+    def format(self, *args, **kwargs):
+        """Perform a string formatting operation.
+
+        :rtype: string
+        """
+        return ''
+
     def index(self, sub, start=None, end=None):
         """Like find(), but raise ValueError when the substring is not
         found.
@@ -1733,6 +1740,13 @@ class unicode(basestring):
         :rtype: int
         """
         return 0
+
+    def format(self, *args, **kwargs):
+        """Perform a string formatting operation.
+
+        :rtype: unicode
+        """
+        return ''
 
     def index(self, sub, start=None, end=None):
         """Like find(), but raise ValueError when the substring is not
@@ -2376,7 +2390,7 @@ class file(object):
     def next(self):
         """Returns the next input line.
 
-        :rtype: bytes | unicode
+        :rtype: bytes
         """
         return ''
 
@@ -2385,7 +2399,7 @@ class file(object):
         before obtaining size bytes).
 
         :type size: numbers.Integral
-        :rtype: bytes | unicode
+        :rtype: bytes
         """
         return ''
 
@@ -2393,7 +2407,7 @@ class file(object):
         """Read one entire line from the file.
 
         :type size: numbers.Integral
-        :rtype: bytes | unicode
+        :rtype: bytes
         """
         return ''
 
@@ -2402,14 +2416,14 @@ class file(object):
         lines thus read.
 
         :type sizehint: numbers.Integral
-        :rtype: list[bytes | unicode]
+        :rtype: list[bytes]
         """
         return []
 
     def xreadlines(self):
         """This method returns the same thing as iter(f).
 
-        :rtype: collections.Iterable[bytes | unicode]
+        :rtype: collections.Iterable[bytes]
         """
         return []
 
@@ -2440,7 +2454,7 @@ class file(object):
     def write(self, str):
         """"Write a string to the file.
 
-        :type str: bytes | unicode
+        :type str: bytes
         :rtype: None
         """
         pass
@@ -2448,7 +2462,7 @@ class file(object):
     def writelines(self, sequence):
         """Write a sequence of strings to the file.
 
-        :type sequence: collections.Iterable[bytes | unicode]
+        :type sequence: collections.Iterable[bytes]
         :rtype: None
         """
         pass

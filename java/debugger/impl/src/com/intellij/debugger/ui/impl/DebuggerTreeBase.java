@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,12 +238,10 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     NodeDescriptorImpl descriptor = node.getDescriptor();
     if (descriptor instanceof ValueDescriptorImpl) {
       String text = ((ValueDescriptorImpl)descriptor).getValueText();
-      if (text != null) {
-        final String tipText = DebuggerUtilsEx.prepareValueText(text, myProject);
-        if (!tipText.isEmpty() &&
-            (tipText.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
-          return tipText;
-        }
+      final String tipText = DebuggerUtilsEx.prepareValueText(text, myProject);
+      if (!tipText.isEmpty() &&
+          (tipText.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
+        return tipText;
       }
     }
     return node.getMarkupTooltipText() != null? "" : null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package org.jetbrains.jps.model.serialization.java.compiler;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import java.io.File;
@@ -100,9 +102,11 @@ public class AnnotationProcessorProfileSerializer {
     }
   }
 
-  public static void writeExternal(ProcessorConfigProfile profile, final Element element) {
+  public static void writeExternal(@NotNull ProcessorConfigProfile profile, @NotNull Element element) {
     element.setAttribute(NAME, profile.getName());
-    element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
+    if (!Registry.is("saving.state.in.new.format.is.allowed", false) || profile.isEnabled()) {
+      element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
+    }
 
     final String srcDirName = profile.getGeneratedSourcesDirectoryName(false);
     if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_PRODUCTION_DIR_NAME, srcDirName)) {
@@ -135,10 +139,18 @@ public class AnnotationProcessorProfileSerializer {
       }
     }
 
-    final Element pathElement = addChild(element, "processorPath").setAttribute("useClasspath", Boolean.toString(
-      profile.isObtainProcessorsFromClasspath()));
+
+    Element pathElement = null;
+    if (!Registry.is("saving.state.in.new.format.is.allowed", false) || !profile.isObtainProcessorsFromClasspath()) {
+      pathElement = addChild(element, "processorPath");
+      pathElement.setAttribute("useClasspath", Boolean.toString(profile.isObtainProcessorsFromClasspath()));
+    }
+
     final String path = profile.getProcessorPath();
     if (!StringUtil.isEmpty(path)) {
+      if (pathElement == null) {
+        pathElement = addChild(element, "processorPath");
+      }
       final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
         final String token = tokenizer.nextToken();

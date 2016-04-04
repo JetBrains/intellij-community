@@ -257,7 +257,11 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   @Nullable
   private static String getClassVMName(PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) {
-      return getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class)) +
+      final PsiClass containingClassOfAnonymous = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+      if (containingClassOfAnonymous == null) {
+        return null;
+      }
+      return getClassVMName(containingClassOfAnonymous) +
              JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);
     }
     return ClassUtil.getJVMClassName(containingClass);

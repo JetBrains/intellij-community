@@ -92,7 +92,7 @@ public class ClassFileDecompilers {
   }
 
 
-  public static ExtensionPointName<Decompiler> EP_NAME = ExtensionPointName.create("com.intellij.psi.classFileDecompiler");
+  public static final ExtensionPointName<Decompiler> EP_NAME = ExtensionPointName.create("com.intellij.psi.classFileDecompiler");
 
   private ClassFileDecompilers() { }
 

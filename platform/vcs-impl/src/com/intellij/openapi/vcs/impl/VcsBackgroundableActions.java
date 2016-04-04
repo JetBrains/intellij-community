@@ -22,7 +22,8 @@ public enum VcsBackgroundableActions {
   ANNOTATE,
   COMPARE_WITH, // common for compare with (selected/latest/same) revision
   CREATE_HISTORY_SESSION,
-  HISTORY_FOR_SELECTION;
+  HISTORY_FOR_SELECTION,
+  COMMITTED_CHANGES_DETAILS;
 
   public static Object keyFrom(final FilePath filePath) {
     return filePath.getPath();

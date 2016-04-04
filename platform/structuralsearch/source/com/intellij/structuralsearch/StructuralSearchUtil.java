@@ -41,6 +41,15 @@ public class StructuralSearchUtil {
     return !isIdentifier(element) ? element : element.getParent();
   }
 
+  @NotNull
+  public static PsiElement getPresentableElement(@NotNull PsiElement element) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(element);
+    if (profile == null) {
+      return element;
+    }
+    return getParentIfIdentifier(profile.getPresentableElement(element));
+  }
+
   private static StructuralSearchProfile[] getNewStyleProfiles() {
     if (ourNewStyleProfiles == null) {
       final List<StructuralSearchProfile> list = new ArrayList<StructuralSearchProfile>();

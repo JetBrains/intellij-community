@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,20 @@ inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline
 inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Unit) = done(object : ObsolescentConsumer<T>(node) {
   override fun consume(param: T) = handler(param)
 })
+
+@Suppress("UNCHECKED_CAST")
+inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit) = (this as Promise<Any?>).processed(object : ObsolescentConsumer<Any?>(node) {
+  override fun consume(param: Any?) = handler()
+})
+
+@Suppress("UNCHECKED_CAST")
+inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = (this as Promise<Any?>).done { handler() }
+
+@Suppress("UNCHECKED_CAST")
+inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then { handler() }
+
+@Suppress("UNCHECKED_CAST")
+inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> = (this as Promise<Any?>).processed { handler() }
 
 
 inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {

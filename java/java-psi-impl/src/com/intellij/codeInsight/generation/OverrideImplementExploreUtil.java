@@ -184,7 +184,7 @@ public class OverrideImplementExploreUtil {
           if (c1.isInheritor(c2, true)) return -1;
           if (c2.isInheritor(c1, true)) return 1;
 
-          return StringUtil.notNullize(c1.getName()).compareTo(StringUtil.notNullize(c2.getName()));
+          return StringUtil.notNullize(c1.getQualifiedName()).compareTo(StringUtil.notNullize(c2.getQualifiedName()));
         }
         return m1.getTextOffset() - m2.getTextOffset();
       }

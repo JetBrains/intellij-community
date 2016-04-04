@@ -15,7 +15,11 @@
  */
 package com.intellij.diff;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.diff.Diff;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,89 +28,118 @@ import java.util.List;
  * author: lesya
  */
 public class Block {
-  private final String[] mySource;
-  private int myStart;
-  private int myEnd;
+  private static final Logger LOG = Logger.getInstance(Block.class);
 
-  public Block(String source, int start, int end) {
-    this(LineTokenizer.tokenize(source.toCharArray(), false),
-        start, end);
+  @NotNull private final String[] mySource;
+  private final int myStart;
+  private final int myEnd;
+
+  public Block(@NotNull String source, int start, int end) {
+    this(LineTokenizer.tokenize(source, false, false), start, end);
   }
 
-  public Block(String[] source, int start, int end) {
+  public Block(@NotNull String[] source, int start, int end) {
     mySource = source;
-    myStart = start;
-    myEnd = end;
-
-
+    myStart = Math.min(Math.max(0, start), source.length);
+    myEnd = Math.min(Math.max(myStart, end), source.length);
   }
 
-  public String getBlockContent(){
-    StringBuffer result = new StringBuffer();
+  @NotNull
+  public Block createPreviousBlock(@NotNull String prevContent) {
+    return createPreviousBlock(LineTokenizer.tokenize(prevContent, false, false));
+  }
 
-    int length = myEnd - myStart + 1;
+  @NotNull
+  public Block createPreviousBlock(@NotNull String[] prevContent) {
+    int start = -1;
+    int end = -1;
+    int shift = 0;
 
-    for (int i = 0; i < length; i++) {
-      if ((i + myStart)>= mySource.length) break;
-      result.append(mySource[i + myStart]);
-      if (i < length - 1) result.append("\n");
-    };
+    Diff.Change change = Diff.buildChangesSomehow(prevContent, getSource());
+    while (change != null) {
+      int startLine1 = change.line0;
+      int startLine2 = change.line1;
+      int endLine1 = startLine1 + change.deleted;
+      int endLine2 = startLine2 + change.inserted;
 
-    return result.toString();
+      if (Math.max(myStart, startLine2) < Math.min(myEnd, endLine2)) {
+        // ranges intersect
+        if (startLine2 <= myStart) start = startLine1;
+        if (endLine2 > myEnd) end = endLine1;
+      }
+      if (startLine2 > myStart) {
+        if (start == -1) start = myStart - shift;
+        if (end == -1 && startLine2 >= myEnd) end = myEnd - shift;
+      }
+
+      shift += change.inserted - change.deleted;
+      change = change.link;
+    }
+    if (start == -1) start = myStart - shift;
+    if (end == -1) end = myEnd - shift;
+
+    if (start < 0 || end > prevContent.length || end < start) {
+      LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
+    }
+
+    return new Block(prevContent, start, end);
+  }
+
+  @NotNull
+  public String getBlockContent() {
+    return StringUtil.join(getLines(), "\n");
+  }
+
+  @NotNull
+  public List<String> getLines() {
+    return Arrays.asList(mySource).subList(myStart, myEnd);
   }
 
   public int hashCode() {
-    return getSourceAsList().hashCode() ^ myStart ^ myEnd;
-  }
-
-  private List<String> getSourceAsList() {
-    return Arrays.asList(mySource);
+    return Arrays.hashCode(mySource) ^ myStart ^ myEnd;
   }
 
   public boolean equals(Object object) {
     if (!(object instanceof Block)) return false;
     Block other = (Block)object;
-    return getSourceAsList().equals(other.getSourceAsList())
-        && myStart == other.myStart
-        && myEnd == other.myEnd;
+    return Arrays.equals(mySource, other.mySource)
+           && myStart == other.myStart
+           && myEnd == other.myEnd;
   }
 
-  public int getStart() { return myStart; }
+  public int getStart() {
+    return myStart;
+  }
 
-  public int getEnd() { return myEnd; }
+  public int getEnd() {
+    return myEnd;
+  }
 
-  public void setStart(int start) { myStart = start; }
-
-  public void setEnd(int end) { myEnd = end; }
-
+  @NotNull
   public String[] getSource() {
     return mySource;
   }
 
   public String toString() {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     appendLines(result, 0, myStart);
 
-    appendLineTo(result, "<-----------------------------");
+    result.append("<-----------------------------\n");
 
-    appendLines(result, myStart, myEnd + 1);
+    appendLines(result, myStart, myEnd);
 
-    appendLineTo(result, "----------------------------->");
+    result.append("----------------------------->\n");
 
-    appendLines(result, myEnd + 1, mySource.length);
+    appendLines(result, myEnd, mySource.length);
 
     return result.toString();
   }
 
-  private void appendLines(StringBuffer result, int from, int to) {
-    for (int i = from; i < to; i++){
-      appendLineTo(result, mySource[i]);
+  private void appendLines(@NotNull StringBuilder result, int from, int to) {
+    for (int i = from; i < to; i++) {
+      result.append(mySource[i]);
+      result.append("\n");
     }
-  }
-
-  private void appendLineTo(StringBuffer result, String line) {
-    result.append(line);
-    result.append("\n");
   }
 }

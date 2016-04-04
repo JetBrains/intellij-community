@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.jps.incremental.groovy.JpsGroovySettings;
@@ -27,13 +30,7 @@ import org.jetbrains.jps.incremental.groovy.JpsGroovySettings;
 /**
  * @author peter
  */
-@State(
-  name = "GroovyCompilerProjectConfiguration",
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyc.xml", scheme = StorageScheme.DIRECTORY_BASED)
-  }
-)
+@State(name = "GroovyCompilerProjectConfiguration", storages = @Storage("groovyc.xml"))
 public class GroovyCompilerConfiguration implements PersistentStateComponent<JpsGroovySettings>, Disposable {
   private String myConfigScript = "";
   private String myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;

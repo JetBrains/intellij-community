@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,9 +139,10 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
           target, rmicPath, classpathString, options, entry.getValue()
         );
         final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmdLine));
-        final BaseOSProcessHandler handler = new BaseOSProcessHandler(process, null, null) {
+        final BaseOSProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmdLine, " "), null) {
+          @NotNull
           @Override
-          protected Future<?> executeOnPooledThread(Runnable task) {
+          protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().executeOnPooledThread(task);
           }
         };

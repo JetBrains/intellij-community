@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,9 +126,8 @@ class UndoableGroup {
       public void run() {
         try {
           for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
-            final Collection<DocumentEx> newDocuments;
             if (wrapInBulkUpdate) {
-              newDocuments = new THashSet<DocumentEx>();
+              Collection<DocumentEx> newDocuments = new THashSet<DocumentEx>();
               Set<DocumentEx> documentsToRemoveFromBulk = new THashSet<DocumentEx>(bulkDocuments);
               DocumentReference[] affectedDocuments = action.getAffectedDocuments();
               if (affectedDocuments != null) {
@@ -149,9 +148,6 @@ class UndoableGroup {
               bulkDocuments.removeAll(documentsToRemoveFromBulk);
               bulkDocuments.addAll(newDocuments);
             }
-            else {
-              newDocuments = Collections.emptyList();
-            }
 
             if (isUndo) {
               action.undo();
@@ -160,12 +156,14 @@ class UndoableGroup {
               action.redo();
             }
           }
-          for (DocumentEx bulkDocument : bulkDocuments) {
-            bulkDocument.setInBulkUpdate(false);
-          }
         }
         catch (UnexpectedUndoException e) {
           reportUndoProblem(e, isUndo);
+        }
+        finally {
+          for (DocumentEx bulkDocument : bulkDocuments) {
+            bulkDocument.setInBulkUpdate(false);
+          }
         }
       }
     });

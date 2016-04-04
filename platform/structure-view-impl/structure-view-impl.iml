@@ -7,7 +7,23 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="structure-view-api" exported="" />
+    <orderEntry type="module" module-name="editor-ui-api" exported="" />
+    <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="extensions" exported="" />
+    <orderEntry type="module" module-name="core-api" exported="" />
+    <orderEntry type="library" exported="" name="picocontainer" level="project" />
+    <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="platform-resources-en" exported="" />
+    <orderEntry type="module" module-name="icons" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="projectModel-api" exported="" />
   </component>
 </module>
-

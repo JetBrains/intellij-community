@@ -520,4 +520,9 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   protected String getCbTitle() {
     return "Open moved in editor";
   }
+
+  @Override
+  protected boolean isEnabledByDefault() {
+    return false;
+  }
 }

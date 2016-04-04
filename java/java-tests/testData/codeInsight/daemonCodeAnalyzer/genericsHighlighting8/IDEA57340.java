@@ -9,8 +9,8 @@ class B<L> {
     void bar(B<?> b, A<?, ?> foo1) {
         baz(b.foo());
         A<?, ?> foo = b.foo();
-        baz<error descr="'baz(A<java.lang.Object,java.lang.Object>)' in 'B' cannot be applied to '(A<capture<?>,capture<?>>)'">(foo)</error>;
-        baz<error descr="'baz(A<java.lang.Object,java.lang.Object>)' in 'B' cannot be applied to '(A<capture<?>,capture<?>>)'">(foo1)</error>;
+        baz<error descr="'baz(A<K,K>)' in 'B' cannot be applied to '(A<capture<?>,capture<?>>)'">(foo)</error>;
+        baz<error descr="'baz(A<K,K>)' in 'B' cannot be applied to '(A<capture<?>,capture<?>>)'">(foo1)</error>;
     }
 
     <K> void baz(A<K, K> a) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "MavenProjectNavigator", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "MavenProjectNavigator", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState> {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
 

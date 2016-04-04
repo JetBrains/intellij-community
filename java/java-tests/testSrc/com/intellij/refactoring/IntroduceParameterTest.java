@@ -142,6 +142,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
+  public void testExpandMethodReference() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
+  }
+
   public void testSuperWithSideEffect() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false,
            "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class");

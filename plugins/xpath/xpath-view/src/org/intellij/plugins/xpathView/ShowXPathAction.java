@@ -96,7 +96,7 @@ public class ShowXPathAction extends XPathAction {
             return;
         }
 
-        final Config cfg = myComponent.getConfig();
+        final Config cfg = XPathAppComponent.getInstance().getConfig();
         final RangeHighlighter h = HighlighterUtil.highlightNode(editor, node, cfg.getContextAttributes(), cfg);
 
         final String path = XPathSupport.getInstance().getUniquePath((XmlElement)node, null);

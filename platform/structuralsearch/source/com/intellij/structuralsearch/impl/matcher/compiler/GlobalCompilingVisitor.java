@@ -111,7 +111,7 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  public ArrayList<PsiElement> getLexicalNodes() {
+  public List<PsiElement> getLexicalNodes() {
     return myLexicalNodes;
   }
 

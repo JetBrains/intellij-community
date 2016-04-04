@@ -38,13 +38,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
@@ -94,7 +93,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
   }
 
-  private HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
+  protected HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
   }
 
@@ -322,14 +321,20 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             myHolder.add(result);
           }
           else {
-            if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType) && !expression.hasFormalParameterTypes()) {
-              final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
-              String description = callExpression != null ? InferenceSession.getInferenceErrorMessage(callExpression) : null;
-              if (description == null) {
-                description = "Cyclic inference";
-              }
-              HighlightInfo result =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+            final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+            final PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ? 
+                                                     (PsiCallExpression)parent.getParent() : null;
+            final JavaResolveResult containingCallResolveResult = callExpression != null ? callExpression.resolveMethodGenerics() : null;
+            final String errorMessage;
+            if (containingCallResolveResult instanceof MethodCandidateInfo) {
+              errorMessage = ((MethodCandidateInfo)containingCallResolveResult).getParentInferenceErrorMessage((PsiExpressionList)parent);
+            }
+            else {
+              errorMessage = null;
+            }
+            if (errorMessage != null) {
+              HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(expression).descriptionAndTooltip(errorMessage).create();
               myHolder.add(result);
             }
             else {
@@ -631,7 +636,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
       }
       if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        myHolder.add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, aClass.getVisibleSignatures(), identifier));
+        myHolder.add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
+      }
+
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(GenericsHighlightUtil.checkUnrelatedConcrete(aClass, identifier));
       }
     }
     else if (parent instanceof PsiMethod) {
@@ -922,7 +931,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) {
       PsiIdentifier nameId = pair.getNameIdentifier();
       if (nameId != null) {
-        HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ANNOTATION_ATTRIBUTE_NAME).range(nameId).create();
+        HighlightInfo result = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId).create();
         myHolder.add(result);
       }
     }
@@ -1076,7 +1085,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           !PsiTreeUtil.isAncestor(containingClass, variable, false) &&
           !(variable instanceof PsiField)) {
         if (!PsiTreeUtil.isAncestor(((PsiAnonymousClass) containingClass).getArgumentList(), ref, false)) {
-          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create());
+          myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create());
         }
       }
 
@@ -1231,9 +1240,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
     myHolder.add(HighlightUtil.checkUnqualifiedSuperInDefaultMethod(myLanguageLevel, expression, qualifierExpression));
     if (!myHolder.hasErrorResults() && qualifierExpression != null) {
-      final PsiClass psiClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
+      PsiType type = qualifierExpression.getType();
+      if (type instanceof PsiCapturedWildcardType) {
+        type = ((PsiCapturedWildcardType)type).getUpperBound();
+      }
+      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass != null) {
-        myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, qualifierExpression));
+        myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, expression));
       }
     }
   }
@@ -1334,38 +1347,35 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, expression.getTextRange()));
     }
 
-    if (!myHolder.hasErrorResults() && method instanceof PsiTypeParameterListOwner) {
-      PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)method).getTypeParameters();
-      if (method instanceof PsiMethod) {
-        final PsiClass containingClass = ((PsiMethod)method).getContainingClass();
-        assert containingClass != null : method;
-        typeParameters = ArrayUtil.mergeArrays(typeParameters, containingClass.getTypeParameters());
-      }
-      myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments(typeParameters, expression, result.getSubstitutor(), true));
-    }
-
     if (!myHolder.hasErrorResults()) {
-      if (results.length == 0) {
+      if (results.length == 0 || results[0] instanceof MethodCandidateInfo && 
+                                 !((MethodCandidateInfo)results[0]).isApplicable() &&
+                                 expression.getFunctionalInterfaceType() != null) {
         String description = null;
+        if (results.length == 1) {
+          description = ((MethodCandidateInfo)results[0]).getInferenceErrorMessage();
+        }
         if (expression.isConstructor()) {
           final PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();
 
           if (containingClass != null) {
             if (!myHolder.add(HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, expression)) &&
                 !myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression, containingClass)) &&
-                containingClass.isPhysical()) {
+                containingClass.isPhysical() &&
+                description == null) {
               description = JavaErrorMessages.message("cannot.resolve.constructor", containingClass.getName());
             }
           }
         }
-        else {
+        else if (description == null){
           description = JavaErrorMessages.message("cannot.resolve.method", expression.getReferenceName());
         }
 
         if (description != null) {
           final PsiElement referenceNameElement = expression.getReferenceNameElement();
           final HighlightInfo highlightInfo =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).descriptionAndTooltip(description).range(referenceNameElement).create();
+            HighlightInfo.newHighlightInfo(results.length == 0 ? HighlightInfoType.WRONG_REF : HighlightInfoType.ERROR)
+              .descriptionAndTooltip(description).range(referenceNameElement).create();
           myHolder.add(highlightInfo);
           final TextRange fixRange = HighlightMethodUtil.getFixRange(referenceNameElement);
           QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QuickFixFactory.getInstance().createCreateMethodFromUsageFix(expression));
@@ -1436,7 +1446,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitStatement(PsiStatement statement) {
     super.visitStatement(statement);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkNotAStatement(statement));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkStatementPrependedWithCaseInsideSwitch(statement));
   }
 
   @Override
@@ -1454,6 +1463,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
+    myHolder.add(HighlightUtil.checkStatementPrependedWithCaseInsideSwitch(statement));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchSelectorType(statement, myLanguageLevel));
   }
 
@@ -1595,5 +1605,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Nullable
   private HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull Feature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
+  }
+  
+  protected void prepareToRunAsInspection(final HighlightInfoHolder holder) {
+    myHolder = holder;
+
+    final PsiFile file = holder.getContextFile();
+    myFile = file;
+    myLanguageLevel = PsiUtil.getLanguageLevel(file);
+    myJavaSdkVersion = ObjectUtils.notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), 
+                                           JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
+
   }
 }

@@ -15,10 +15,14 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -68,11 +72,37 @@ public abstract class PerformFixesModalTask implements SequentialTask {
       }
       indicator.setText("Processing " + presentableText);
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+
+    final boolean[] runInReadAction = {false};
+    final QuickFix[] fixes = descriptor.getFixes();
+    if (fixes != null) {
+      for (QuickFix fix : fixes) {
+        if (fix instanceof IntentionAction) {
+          if (!((IntentionAction)fix).startInWriteAction()) {
+            runInReadAction[0] = true;
+          } else {
+            runInReadAction[0] = false;
+            break;
+          }
+        }
+      }
+    }
+
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
       @Override
       public void run() {
-        myDocumentManager.commitAllDocuments();
-        applyFix(myProject, descriptor);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            myDocumentManager.commitAllDocuments();
+            if (!runInReadAction[0]) {
+              applyFix(myProject, descriptor);
+            }
+          }
+        });
+        if (runInReadAction[0]) {
+          applyFix(myProject, descriptor);
+        }
       }
     });
     return isDone();

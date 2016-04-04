@@ -38,7 +38,6 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
   private List<MigrationNode> myCachedChildren;
   private final TypeMigrationLabeler myLabeler;
   private final PsiType myMigrationType;
-  private final TypeMigrationTreeBuilder myBuilder;
   private final HashMap<TypeMigrationUsageInfo, Set<MigrationNode>> myProcessed;
   private final HashSet<TypeMigrationUsageInfo> myParents;
 
@@ -46,13 +45,11 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
                        final TypeMigrationUsageInfo info,
                        final PsiType migrationType,
                        final TypeMigrationLabeler labeler,
-                       final TypeMigrationTreeBuilder builder,
                        final HashSet<TypeMigrationUsageInfo> parents,
                        final HashMap<TypeMigrationUsageInfo, Set<MigrationNode>> processed) {
     super(project, info);
     myLabeler = labeler;
     myMigrationType = migrationType;
-    myBuilder = builder;
     myProcessed = processed;
     myParents = parents;
 
@@ -81,10 +78,8 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
       
       final PsiElement element = myInfo.getElement();
       if (element != null) {
-        myLabeler.setCurrentRoot(myInfo);
-
         try {
-          myLabeler.migrateRoot(element, myMigrationType, myLabeler.markRootUsages(element, myMigrationType));
+          myLabeler.setRootAndMigrate(myInfo, myMigrationType, myLabeler.markRootUsages(element, myMigrationType));
         }
         catch (TypeMigrationLabeler.MigrateException e) {
           //skip warning
@@ -101,7 +96,7 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
             parents.add(info);
 
             final MigrationNode migrationNode =
-                new MigrationNode(getProject(), info, root.getSecond(), myLabeler, myBuilder, parents, myProcessed);
+                new MigrationNode(getProject(), info, root.getSecond(), myLabeler, parents, myProcessed);
 
             if (myInfo.isExcluded()) {
               info.setExcluded(true);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -38,27 +38,22 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.concurrent.Callable;
 
 public final class LoadTextUtil {
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
 
-  private LoadTextUtil() {
-  }
+  private LoadTextUtil() { }
 
   @NotNull
   private static Pair<CharSequence, String> convertLineSeparators(@NotNull CharBuffer buffer) {
@@ -250,7 +245,7 @@ public final class LoadTextUtil {
    *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
    *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
    * @param newModificationStamp new modification stamp or -1 if no special value should be set @return <code>Writer</code>
-   * @throws java.io.IOException if an I/O error occurs
+   * @throws IOException if an I/O error occurs
    * @see VirtualFile#getModificationStamp()
    */
   public static void write(@Nullable Project project,
@@ -267,13 +262,7 @@ public final class LoadTextUtil {
     }
     setDetectedFromBytesFlagBack(virtualFile, buffer);
 
-    OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
-    try {
-      outputStream.write(buffer);
-    }
-    finally {
-      outputStream.close();
-    }
+    virtualFile.setBinaryContent(buffer, newModificationStamp, -1, requestor);
   }
 
   @NotNull
@@ -359,6 +348,8 @@ public final class LoadTextUtil {
     return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
+  private static boolean ourDecompileProgressStarted = false;
+
   @NotNull
   public static CharSequence loadText(@NotNull final VirtualFile file) {
     if (file instanceof LightVirtualFile) {
@@ -376,28 +367,24 @@ public final class LoadTextUtil {
         CharSequence text;
 
         Application app = ApplicationManager.getApplication();
-        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !GraphicsEnvironment.isHeadless()) {
-          final Ref<CharSequence> result = Ref.create(ArrayUtil.EMPTY_CHAR_SEQUENCE);
-          final Ref<Throwable> error = Ref.create();
-          ProgressManager.getInstance().run(new Task.Modal(null, "Decompiling " + file.getName(), true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              indicator.setIndeterminate(true);
-              try {
-                result.set(ApplicationUtil.runWithCheckCanceled(new Callable<CharSequence>() {
+        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !ourDecompileProgressStarted) {
+          ourDecompileProgressStarted = true;
+          try {
+            text = ProgressManager.getInstance().run(new Task.WithResult<CharSequence, RuntimeException>(null, "Decompiling " + file.getName(), true) {
+              @Override
+              protected CharSequence compute(@NotNull ProgressIndicator indicator) {
+                return ApplicationUtil.runWithCheckCanceled(new Computable<CharSequence>() {
                   @Override
-                  public CharSequence call() {
+                  public CharSequence compute() {
                     return decompiler.decompile(file);
                   }
-                }, indicator));
+                }, indicator);
               }
-              catch (Throwable t) {
-                error.set(t);
-              }
-            }
-          });
-          ExceptionUtil.rethrowUnchecked(error.get());
-          text = result.get();
+            });
+          }
+          finally {
+            ourDecompileProgressStarted = false;
+          }
         }
         else {
           text = decompiler.decompile(file);
@@ -407,7 +394,8 @@ public final class LoadTextUtil {
         return text;
       }
 
-      throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " + file.getPresentableUrl() + ". File type: " + fileType.getName());
+      throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " +
+                                         file.getPresentableUrl() + ". File type: " + fileType.getName());
     }
 
     try {

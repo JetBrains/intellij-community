@@ -22,6 +22,7 @@ import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,10 +54,11 @@ public class IDEARemoteTestNG extends TestNG {
             try {
               if (myParam != null) {
                 for (XmlClass aClass : test.getXmlClasses()) {
+                  List<XmlInclude> includes = new ArrayList<XmlInclude>();
                   for (XmlInclude include : aClass.getIncludedMethods()) {
-                    final XmlInclude xmlInclude = new XmlInclude(include.getName(), Collections.singletonList(Integer.parseInt(myParam)), 0);
-                    aClass.setIncludedMethods(Collections.singletonList(xmlInclude));
+                    includes.add(new XmlInclude(include.getName(), Collections.singletonList(Integer.parseInt(myParam)), 0));
                   }
+                  aClass.setIncludedMethods(includes);
                 }
               }
             }

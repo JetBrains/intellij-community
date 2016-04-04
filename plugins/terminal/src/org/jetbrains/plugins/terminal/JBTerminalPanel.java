@@ -59,6 +59,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private static final String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
     "ActivateMessagesToolWindow",
+    "ActivateProjectToolWindow",
     "ActivateFavoritesToolWindow",
     "ActivateFindToolWindow",
     "ActivateRunToolWindow",
@@ -66,7 +67,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateTODOToolWindow",
     "ActivateStructureToolWindow",
     "ActivateHierarchyToolWindow",
-    "ActivateChangesToolWindow",
+    "ActivateVersionControlToolWindow",
 
     "ShowBookmarks",
     "GotoBookmark0",

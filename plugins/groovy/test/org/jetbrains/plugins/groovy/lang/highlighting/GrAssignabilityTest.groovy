@@ -493,7 +493,6 @@ static bar(String s) {
   }
 
   void testLiteralConstructorWithNamedArgs() {
-    addLinkedHashMap()
     testHighlighting('''\
 import groovy.transform.Immutable
 

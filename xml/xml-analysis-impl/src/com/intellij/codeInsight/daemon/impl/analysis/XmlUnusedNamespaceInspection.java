@@ -299,12 +299,16 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
         if (schemaPrefix != null) {
           attribute = schemaPrefix.getDeclaration();
         }
+        else {
+          // declaration was already removed by previous fix in "Fix all"
+          return;
+        }
       }
       String namespace = attribute.getValue();
       String prefix = getDeclaredPrefix(attribute);
 
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      Document document = documentManager.getDocument(attribute.getContainingFile());
+      Document document = documentManager.getDocument(parent.getContainingFile());
       assert document != null;
       attribute.delete();
       if (myRemoveLocation) {

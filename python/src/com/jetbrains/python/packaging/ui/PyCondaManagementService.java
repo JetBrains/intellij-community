@@ -72,8 +72,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
 
     try {
-      final Process process = commandLine.createProcess();
-      final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+      final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
       final ProcessOutput result = handler.runProcess();
       final int exitCode = result.getExitCode();
       if (exitCode != 0) {
@@ -96,8 +95,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
 
     try {
-      final Process process = commandLine.createProcess();
-      final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+      final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
       final ProcessOutput result = handler.runProcess();
       final int exitCode = result.getExitCode();
       if (exitCode != 0) {

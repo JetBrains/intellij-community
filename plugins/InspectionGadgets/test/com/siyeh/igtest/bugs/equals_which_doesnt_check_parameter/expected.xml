@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-    <problem>
-        <file>EqualsWhichDoesntCheckParameterClass.java</file>
-        <line>6</line>
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'equals()' method which does not check class of parameter</problem_class>
-        <description>&lt;code&gt;equals()&lt;/code&gt; should check the class of its parameter #loc</description>
-    </problem>
-</problems>

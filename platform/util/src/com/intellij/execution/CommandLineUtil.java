@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.util.Iterator;
 import java.util.List;
 
 public class CommandLineUtil {
@@ -91,5 +93,27 @@ public class CommandLineUtil {
 
   private static boolean isQuoted(String s, char ch) {
     return s.length() >= 2 && s.charAt(0) == ch && s.charAt(s.length() - 1) == ch;
+  }
+
+  @NotNull
+  public static String extractPresentableName(@NotNull String commandLine) {
+    String executable = commandLine.trim();
+
+    if (StringUtil.startsWithChar(executable, '\"') || StringUtil.startsWithChar(executable, '\'')) {
+      char quote = executable.charAt(0);
+      for (int i = 1; i < executable.length(); i++) {
+        if (executable.charAt(i) == quote &&
+            (executable.charAt(i - 1) != '\'' || StringUtil.isEscapedBackslash(executable, 0, i - 1))) {
+          executable = executable.substring(1, i);
+          break;
+        }
+      }
+    }
+    else {
+      Iterator<String> words = StringUtil.tokenize(commandLine, " \t\n\r\f").iterator();
+      executable = words.hasNext() ? words.next() : executable;
+    }
+
+    return new File(executable.trim()).getName();
   }
 }

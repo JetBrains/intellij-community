@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.util.concurrent.Semaphore;
 
 public class XTestValueNode extends XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl {
+  public Icon myIcon;
   public String myName;
   public String myType;
   public String myValue;
@@ -24,6 +25,7 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
   public void applyPresentation(@Nullable Icon icon,
                                 @NotNull XValuePresentation valuePresentation,
                                 boolean hasChildren) {
+    myIcon = icon;
     myType = valuePresentation.getType();
     myValue = XValuePresentationUtil.computeValueText(valuePresentation);
     myHasChildren = hasChildren;

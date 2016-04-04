@@ -19,9 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -33,9 +31,9 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.docstrings.NumpyDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -197,23 +195,15 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   public PyType getType(@NotNull final TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PsiElement parent = getStubOrPsiParent();
+    final PsiElement parent = getParentByStub();
     if (parent instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList)parent;
       PyFunction func = parameterList.getContainingFunction();
       if (func != null) {
-        StructuredDocString docString = func.getStructuredDocString();
-        if (PyNames.INIT.equals(func.getName()) && docString == null) {
-          PyClass pyClass = func.getContainingClass();
-          if (pyClass != null) {
-            docString = pyClass.getStructuredDocString();
-          }
-        }
-        // FIXME Temporarily disable type extraction directly from NumpyDocString in favor of NumpyDocStringTypeProvider 
-        if (docString != null && !(docString instanceof NumpyDocString)) {
-          String typeName = docString.getParamType(getName());
-          if (typeName != null) {
-            return PyTypeParser.getTypeByName(this, typeName);
+        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final Ref<PyType> resultRef = provider.getParameterType(this, func, context);
+          if (resultRef != null) {
+            return resultRef.get();
           }
         }
         if (isSelf()) {
@@ -243,12 +233,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         }
         if (isPositionalContainer()) {
           return PyBuiltinCache.getInstance(this).getTupleType();
-        }
-        for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-          final Ref<PyType> resultRef = provider.getParameterType(this, func, context);
-          if (resultRef != null) {
-            return resultRef.get();
-          }
         }
         if (context.maySwitchToAST(this)) {
           final PyExpression defaultValue = getDefaultValue();
@@ -460,5 +444,35 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       }
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  public PsiComment getTypeComment() {
+    for (PsiElement next = getNextSibling(); next != null; next = next.getNextSibling()) {
+      if (next.textContains('\n')) break;
+      if (!(next instanceof PsiWhiteSpace)) {
+        if (",".equals(next.getText())) continue;
+        if (next instanceof PsiComment && PyTypingTypeProvider.getTypeCommentValue(next.getText()) != null) {
+          return (PsiComment)next;
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getTypeCommentAnnotation() {
+    final PyNamedParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getTypeComment();
+    }
+    final PsiComment comment = getTypeComment();
+    if (comment != null) {
+      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
+    }
+    return null;
   }
 }

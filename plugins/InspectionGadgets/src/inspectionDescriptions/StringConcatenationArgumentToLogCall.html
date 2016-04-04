@@ -1,11 +1,10 @@
 <html>
 <body>
-Reports non-constant string concatenations used as arguments to SLF4J logging methods.
+Reports non-constant string concatenations used as arguments to SLF4J and Log4j 2 logging methods.
 Non-constant concatenations will be evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
 It is recommended to use a parameterized log message instead, which will not be evaluated when logging is disabled.
 <!-- tooltip end -->
 <p>
-Use the combobox below to ignore certain logging levels (where <i>error</i> is the highest level and <i>trace</i> is the lowest level).
-<p>
+Use the combobox below to ignore certain higher logging levels.
 </body>
 </html>

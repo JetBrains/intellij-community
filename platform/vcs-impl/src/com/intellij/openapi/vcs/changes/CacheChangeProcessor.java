@@ -16,39 +16,27 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.impl.DiffRequestProcessor;
-import com.intellij.diff.requests.*;
-import com.intellij.diff.tools.util.SoftHardCacheMap;
-import com.intellij.diff.util.DiffTaskQueue;
-import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.impl.CacheDiffRequestProcessor;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.ErrorDiffRequest;
+import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
-public abstract class CacheChangeProcessor extends DiffRequestProcessor {
+public abstract class CacheChangeProcessor extends CacheDiffRequestProcessor<CacheChangeProcessor.ChangeWrapper> {
   private static final Logger LOG = Logger.getInstance(CacheChangeProcessor.class);
 
-  @NotNull private final SoftHardCacheMap<Change, Pair<Change, DiffRequest>> myRequestCache =
-    new SoftHardCacheMap<Change, Pair<Change, DiffRequest>>(5, 5);
-
   @Nullable private Change myCurrentChange;
-
-  @NotNull private final DiffTaskQueue myQueue = new DiffTaskQueue();
 
   public CacheChangeProcessor(@NotNull Project project) {
     super(project);
@@ -74,113 +62,47 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   // Update
   //
 
+
+  @NotNull
   @Override
-  protected void reloadRequest() {
-    updateRequest(true, false, null);
+  protected String getRequestName(@NotNull ChangeWrapper wrapper) {
+    return ChangeDiffRequestProducer.getRequestTitle(wrapper.change);
   }
 
-  @CalledInAwt
-  public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
-    updateRequest(force, true, scrollToChangePolicy);
-  }
-
-  @CalledInAwt
-  public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
-    if (isDisposed()) return;
-    final Change change = myCurrentChange;
-
-    DiffRequest cachedRequest = loadRequestFast(change, useCache);
-    if (cachedRequest != null) {
-      applyRequest(cachedRequest, force, scrollToChangePolicy);
-      return;
-    }
-
-    // TODO: check if current loading change is the same as we want to load now? (and not interrupt loading)
-    myQueue.executeAndTryWait(
-      new Function<ProgressIndicator, Runnable>() {
-        @Override
-        public Runnable fun(ProgressIndicator indicator) {
-          final DiffRequest request = loadRequest(change, indicator);
-          return new Runnable() {
-            @Override
-            @CalledInAwt
-            public void run() {
-              myRequestCache.put(change, Pair.create(change, request));
-              applyRequest(request, force, scrollToChangePolicy);
-            }
-          };
-        }
-      },
-      new Runnable() {
-        @Override
-        public void run() {
-          applyRequest(new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(change)), force, scrollToChangePolicy);
-        }
-      },
-      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
-    );
+  @Override
+  protected ChangeWrapper getCurrentRequestProvider() {
+    return myCurrentChange != null ? new ChangeWrapper(myCurrentChange) : null;
   }
 
   @Nullable
-  @CalledInAwt
-  @Contract("null, _ -> !null")
-  protected DiffRequest loadRequestFast(@Nullable Change change, boolean useCache) {
-    if (change == null) return NoDiffRequest.INSTANCE;
+  @Override
+  protected DiffRequest loadRequestFast(@NotNull ChangeWrapper wrapper) {
+    DiffRequest request = super.loadRequestFast(wrapper);
+    if (request != null) return request;
 
-    if (useCache) {
-      Pair<Change, DiffRequest> pair = myRequestCache.get(change);
-      if (pair != null) {
-        Change oldChange = pair.first;
-        if (ChangeDiffRequestProducer.isEquals(oldChange, change)) {
-          return pair.second;
-        }
-      }
+    if (wrapper.change.getBeforeRevision() instanceof FakeRevision || wrapper.change.getAfterRevision() instanceof FakeRevision) {
+      return new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(wrapper.change));
     }
-
-    if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
-      return new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(change));
-    }
-
     return null;
   }
 
   @NotNull
-  @CalledInBackground
-  private DiffRequest loadRequest(@NotNull Change change, @NotNull ProgressIndicator indicator) {
-    ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(getProject(), change);
+  @Override
+  protected DiffRequest loadRequest(@NotNull ChangeWrapper provider, @NotNull ProgressIndicator indicator)
+    throws ProcessCanceledException, DiffRequestProducerException {
+    ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(getProject(), provider.change);
     if (presentable == null) return new ErrorDiffRequest("Can't show diff");
-    try {
-      return presentable.process(getContext(), indicator);
-    }
-    catch (ProcessCanceledException e) {
-      OperationCanceledDiffRequest request = new OperationCanceledDiffRequest(presentable.getName());
-      request.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new ReloadRequestAction(change)));
-      return request;
-    }
-    catch (DiffRequestProducerException e) {
-      return new ErrorDiffRequest(presentable, e);
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-      return new ErrorDiffRequest(presentable, e);
-    }
+    return presentable.process(getContext(), indicator);
   }
 
   //
   // Impl
   //
 
-  @Override
-  @CalledInAwt
-  protected void onDispose() {
-    super.onDispose();
-    myQueue.abort();
-    myRequestCache.clear();
-  }
-
   @NotNull
   @Override
   public Project getProject() {
+    //noinspection ConstantConditions
     return super.getProject();
   }
 
@@ -304,22 +226,22 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     return getSelectedChanges().size() > 1 || getAllChanges().size() > 1;
   }
 
-  //
-  // Actions
-  //
+  protected static class ChangeWrapper {
+    @NotNull private final Change change;
 
-  protected class ReloadRequestAction extends DumbAwareAction {
-    @NotNull private final Change myChange;
-
-    public ReloadRequestAction(@NotNull Change change) {
-      super("Reload", null, AllIcons.Actions.Refresh);
-      myChange = change;
+    private ChangeWrapper(@NotNull Change change) {
+      this.change = change;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      myRequestCache.remove(myChange);
-      updateRequest(true);
+    public boolean equals(Object obj) {
+      if (obj.getClass() != getClass()) return false;
+      return ChangeDiffRequestProducer.isEquals(((ChangeWrapper)obj).change, change);
+    }
+
+    @Override
+    public int hashCode() {
+      return change.hashCode();
     }
   }
 }

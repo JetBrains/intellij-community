@@ -12,7 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
@@ -26,8 +29,8 @@ import java.util.Map;
 @State(
   name = "HgGlobalSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/hg.xml", roamingType = RoamingType.PER_OS),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml", deprecated = true)
+    @Storage(value = "hg.xml", roamingType = RoamingType.PER_OS),
+    @Storage(value = "vcs.xml", deprecated = true)
   }
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {

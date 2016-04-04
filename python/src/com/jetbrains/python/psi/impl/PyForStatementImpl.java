@@ -15,13 +15,15 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
 public class PyForStatementImpl extends PyPartitionedElementImpl implements PyForStatement {
   public PyForStatementImpl(ASTNode astNode) {
@@ -43,19 +45,20 @@ public class PyForStatementImpl extends PyPartitionedElementImpl implements PyFo
   }
 
   @NotNull
-  public Iterable<PyElement> iterateNames() {
+  public List<PsiNamedElement> getNamedElements() {
     PyExpression tgt = getForPart().getTarget();
-    if (tgt instanceof PyReferenceExpression) return Collections.<PyElement>singleton(tgt);
-    else {
-      return new ArrayList<PyElement>(PyUtil.flattenedParensAndStars(tgt));
+    final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(tgt);
+    final List<PsiNamedElement> results = Lists.newArrayList();
+    for (PyExpression expression : expressions) {
+      if (expression instanceof PsiNamedElement) {
+        results.add((PsiNamedElement)expression);
+      }
     }
+    return results;
   }
 
-  public PyElement getElementNamed(final String the_name) {
-    return IterHelper.findName(iterateNames(), the_name);
-  }
-
-  public boolean mustResolveOutside() {
-    return false; 
+  @Override
+  public boolean isAsync() {
+    return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
   }
 }

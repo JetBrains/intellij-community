@@ -17,9 +17,7 @@ package org.jetbrains.idea.maven.actions;
 
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.roots.JavaProjectModelModifier;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,16 +42,75 @@ import java.util.regex.Pattern;
 public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   public void testAddExternalLibraryDependency() throws IOException {
     importProject("<groupId>test</groupId>" +
-                         "<artifactId>project</artifactId>" +
-                         "<version>1</version>");
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
 
     Promise<Void> result =
-      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor(),
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new JunitLibraryDescriptor(),
                                                   DependencyScope.COMPILE);
     assertNotNull(result);
     String version = assertHasDependency(myProjectPom, "junit", "junit");
     waitUntilImported(result);
     assertModuleLibDep("project", "Maven: junit:junit:" + version);
+  }
+
+  public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Promise<Void> result =
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor_2_4(),
+                                                  DependencyScope.COMPILE);
+    assertNotNull(result);
+    assertHasDependency(myProjectPom, "commons-io", "commons-io");
+    waitUntilImported(result);
+    assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
+  }
+
+  public void testAddManagedLibraryDependency() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<dependencyManagement>\n" +
+                  "    <dependencies>\n" +
+                  "        <dependency>\n" +
+                  "            <groupId>commons-io</groupId>\n" +
+                  "            <artifactId>commons-io</artifactId>\n" +
+                  "            <version>2.4</version>\n" +
+                  "        </dependency>\n" +
+                  "    </dependencies>\n" +
+                  "</dependencyManagement>");
+
+    Promise<Void> result =
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor_2_4(),
+                                                  DependencyScope.COMPILE);
+    assertNotNull(result);
+    assertHasManagedDependency(myProjectPom, "commons-io", "commons-io");
+    waitUntilImported(result);
+    assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
+  }
+
+  public void testAddLibraryDependencyReleaseVersion() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Promise<Void> result = getExtension().addExternalLibraryDependency(
+      Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptorUnknownVersion(), DependencyScope.COMPILE);
+    assertNotNull(result);
+    final String version = assertHasDependency(myProjectPom, "commons-io", "commons-io");
+    assertEquals("RELEASE", version);
+    waitUntilImported(result);
+
+    LibraryOrderEntry dep = null;
+    for (OrderEntry e : getRootManager("project").getOrderEntries()) {
+      // can be commons-io:commons-io:2.4 or commons-io:commons-io:RELEASE
+      if (LibraryOrderEntry.class.isInstance(e) && e.getPresentableName().startsWith("Maven: commons-io:commons-io:")) {
+        dep = (LibraryOrderEntry)e;
+      }
+    }
+    assertNotNull(dep);
   }
 
   public void testAddModuleDependency() throws IOException {
@@ -144,6 +201,15 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     return matcher.group(1);
   }
 
+  private void assertHasManagedDependency(VirtualFile pom, final String groupId, final String artifactId) {
+    String pomText = PsiManager.getInstance(myProject).findFile(pom).getText();
+    Pattern
+      pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
+                                artifactId + "</artifactId>\\s*</dependency>.*");
+    Matcher matcher = pattern.matcher(pomText);
+    assertTrue(matcher.matches());
+  }
+
   private void waitUntilImported(Promise<Void> result) {
     waitForReadingCompletion();
     myProjectsManager.waitForResolvingCompletion();
@@ -157,8 +223,32 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     return ContainerUtil.findInstance(JavaProjectModelModifier.EP_NAME.getExtensions(myProject), MavenProjectModelModifier.class);
   }
 
-  private static class CommonsIoLibraryDescriptor extends ExternalLibraryDescriptor {
-    public CommonsIoLibraryDescriptor() {
+  private static class CommonsIoLibraryDescriptor_2_4 extends ExternalLibraryDescriptor {
+    public CommonsIoLibraryDescriptor_2_4() {
+      super("commons-io", "commons-io", "2.4", "2.4");
+    }
+
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      return Collections.emptyList();
+    }
+  }
+
+  private static class CommonsIoLibraryDescriptorUnknownVersion extends ExternalLibraryDescriptor {
+    public CommonsIoLibraryDescriptorUnknownVersion() {
+      super("commons-io", "commons-io", "999.999", "999.999");
+    }
+
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      return Collections.emptyList();
+    }
+  }
+
+  private static class JunitLibraryDescriptor extends ExternalLibraryDescriptor {
+    public JunitLibraryDescriptor() {
       super("junit", "junit");
     }
 

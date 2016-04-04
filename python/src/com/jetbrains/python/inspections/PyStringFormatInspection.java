@@ -78,6 +78,7 @@ public class PyStringFormatInspection extends PyInspection {
         .put('c', "str")
         .put('r', "str")
         .put('s', "str")
+        .put('b', "bytes")
         .build();
 
       private final Map<String, Boolean> myUsedMappingKeys = new HashMap<String, Boolean>();
@@ -372,13 +373,28 @@ public class PyStringFormatInspection extends PyInspection {
           inspectWidth(formatExpression, chunk.getPrecision());
 
           // 7. Format specifier
-          if (FORMAT_CONVERSIONS.containsKey(chunk.getConversionType())) {
-            myFormatSpec.put(mappingKey, FORMAT_CONVERSIONS.get(chunk.getConversionType()));
+          final char conversionType = chunk.getConversionType();
+          if (conversionType == 'b') {
+            final LanguageLevel languageLevel = LanguageLevel.forElement(formatExpression);
+            if (languageLevel.isOlderThan(LanguageLevel.PYTHON35) || !isBytesLiteral(formatExpression, myTypeEvalContext)) {
+              registerProblem(formatExpression, "Unsupported format character 'b'");
+              return;
+            }
+          }
+          if (FORMAT_CONVERSIONS.containsKey(conversionType)) {
+            myFormatSpec.put(mappingKey, FORMAT_CONVERSIONS.get(conversionType));
             continue;
           }
           registerProblem(formatExpression, PyBundle.message("INSP.no.format.specifier.char"), new PyAddSpecifierToFormatQuickFix());
           return;
         }
+      }
+
+      private static boolean isBytesLiteral(@NotNull PyStringLiteralExpression expr, @NotNull TypeEvalContext context) {
+        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(expr);
+        final PyClassType bytesType = builtinCache.getBytesType(LanguageLevel.forElement(expr));
+        final PyType actualType = context.getType(expr);
+        return bytesType != null && actualType != null && PyTypeChecker.match(bytesType, actualType, context);
       }
 
       private void inspectWidth(@NotNull final PyStringLiteralExpression formatExpression, String width) {

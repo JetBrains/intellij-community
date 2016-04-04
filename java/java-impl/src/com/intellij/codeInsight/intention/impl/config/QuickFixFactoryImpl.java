@@ -222,6 +222,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createAddExceptionFromFieldInitializerToConstructorThrowsFix(@NotNull PsiElement element) {
+    return new AddExceptionFromFieldInitializerToConstructorThrowsFix(element);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement element) {
     return new SurroundWithTryCatchFix(element);
   }
@@ -766,6 +772,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall) {
     return new AddMethodQualifierFix(methodCall);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return new WrapLongWithMathToIntExactFix(type, expression);
   }
 
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {

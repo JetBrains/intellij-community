@@ -107,6 +107,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return getFileLanguageLevel(project, file);
   }
 
+  @Nullable
   public static LanguageLevel getFileLanguageLevel(@NotNull Project project, @Nullable VirtualFile file) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;

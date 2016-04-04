@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
   private final Project myProject;

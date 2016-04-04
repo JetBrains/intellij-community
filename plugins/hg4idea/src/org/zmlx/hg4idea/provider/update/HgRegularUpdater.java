@@ -225,14 +225,14 @@ public class HgRegularUpdater implements HgUpdater {
     }
     HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
     HgCommandResult result = new HgRebaseCommand(project, repository).startRebase();
-    if (HgErrorUtil.isAbort(result)) {
+    if (HgErrorUtil.isCommandExecutionFailed(result)) {
       new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't rebase repository.");
       return;
     }
     //noinspection ConstantConditions
     while (result.getExitValue() == 1) {    //if result == null isAbort will be true;
       resolvePossibleConflicts(updatedFiles);
-      if (!HgConflictResolver.findConflicts(project, repoRoot).isEmpty()) {
+      if (HgConflictResolver.hasConflicts(project, repoRoot) || HgErrorUtil.isNothingToRebase(result)) {
         break;
       }
       result = rebaseCommand.continueRebase();

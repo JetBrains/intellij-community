@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="forms_rt" />
@@ -16,4 +16,3 @@
     <orderEntry type="module" module-name="instrumentation-util" exported="" />
   </component>
 </module>
-

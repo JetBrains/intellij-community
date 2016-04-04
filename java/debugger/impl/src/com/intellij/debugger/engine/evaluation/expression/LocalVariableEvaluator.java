@@ -50,6 +50,7 @@ class LocalVariableEvaluator implements Evaluator {
   private final String myLocalVariableName;
   private EvaluationContextImpl myContext;
   private LocalVariableProxyImpl myEvaluatedVariable;
+  private DecompiledLocalVariable myEvaluatedDecompiledVariable;
   private final boolean myCanScanFrames;
 
   public LocalVariableEvaluator(String localVariableName, boolean canScanFrames) {
@@ -95,6 +96,8 @@ class LocalVariableEvaluator implements Evaluator {
             for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
               DecompiledLocalVariable var = entry.getKey();
               if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
+                myEvaluatedDecompiledVariable = var;
+                myContext = context;
                 return entry.getValue();
               }
             }
@@ -137,7 +140,7 @@ class LocalVariableEvaluator implements Evaluator {
   @Override
   public Modifier getModifier() {
     Modifier modifier = null;
-    if (myEvaluatedVariable != null && myContext != null) {
+    if ((myEvaluatedVariable != null || myEvaluatedDecompiledVariable != null) && myContext != null) {
       modifier = new Modifier() {
         @Override
         public boolean canInspect() {
@@ -154,7 +157,12 @@ class LocalVariableEvaluator implements Evaluator {
           StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
           try {
             assert frameProxy != null;
-            frameProxy.setValue(myEvaluatedVariable, value);
+            if (myEvaluatedVariable != null) {
+              frameProxy.setValue(myEvaluatedVariable, value);
+            }
+            else { // no debug info
+              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable.getSlot(), value);
+            }
           }
           catch (EvaluateException e) {
             LOG.error(e);

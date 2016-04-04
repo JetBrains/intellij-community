@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,22 +45,18 @@ import java.util.List;
  * @author Dmitry Krasilschikov
  */
 public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
-  @Nullable private final String myLocationMark;
-
   private final String myPresentableText;
 
   protected AbstractFolderNode(@NotNull final Module module,
                                @NotNull final PsiDirectory directory,
                                @NotNull String presentableText,
-                               @Nullable final String locationMark,
                                final ViewSettings viewSettings, int weight) {
-    super(module, viewSettings, new NodeId(directory, locationMark), weight);
-    myLocationMark = locationMark;
+    super(module, viewSettings, directory, weight);
     myPresentableText = presentableText;
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     final VirtualFile virtualFile = getVirtualFile();
     assert virtualFile != null;
 
@@ -119,7 +115,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
 
     String presentableText = textBuilder == null ? directory.getName() : textBuilder.toString();
 
-    return new AbstractFolderNode(getModule(), realDirectory, presentableText, myLocationMark, getSettings(), FOLDER) {
+    return new AbstractFolderNode(getModule(), realDirectory, presentableText, getSettings(), FOLDER) {
       @Override
       protected void processNotDirectoryFile(List<AbstractTreeNode> nodes, PsiFile file) {
         AbstractFolderNode.this.processNotDirectoryFile(nodes, file);
@@ -179,14 +175,13 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
         return;
       }
     }
-    nodes.add(new FileNode(getModule(), file, myLocationMark, getSettings()));
+    nodes.add(new FileNode(getModule(), file, getSettings()));
   }
 
   protected AbstractTreeNode createClassNode(final GrTypeDefinition typeDefinition) {
-    final NodeId nodeId = getValue();
-    assert nodeId != null;
+    assert getValue() != null;
 
-    return new ClassNode(getModule(), typeDefinition, nodeId.getLocationRootMark(), getSettings());
+    return new ClassNode(getModule(), typeDefinition, getSettings());
   }
 
 }

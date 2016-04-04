@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    f = myRoot.createChildData(null, "f.txt");
+    f = createChildData(myRoot, "f.txt");
   }
 
   public void testContentAtDate() throws Exception {
@@ -45,7 +45,7 @@ public class GettingContentAtDateTest extends IntegrationTestCase {
   }
 
   public void testContentAtDateForFilteredFilesIsNull() throws Exception {
-    VirtualFile f = myRoot.createChildData(null, "f.class");
+    VirtualFile f = createChildData(myRoot, "f.class");
     setContent(f, "1", 1111);
 
     assertContentAt(1111, null);

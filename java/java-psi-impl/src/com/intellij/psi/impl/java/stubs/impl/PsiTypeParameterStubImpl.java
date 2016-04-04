@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
@@ -32,6 +28,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * @author max
+ */
 public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> implements PsiTypeParameterStub {
   private final StringRef myName;
 
@@ -47,9 +46,7 @@ public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> impleme
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("PsiTypeParameter[").append(myName).append(']');
-    return builder.toString();
+    return "PsiTypeParameter[" + myName + ']';
   }
   
   @Override

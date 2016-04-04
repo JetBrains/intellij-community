@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,9 +83,7 @@ public class ProjectUtilCore {
     }
 
     String projectName = FileUtil.toSystemIndependentName(location);
-    if (projectName.endsWith("/")) {
-      projectName = projectName.substring(0, projectName.length() - 1);
-    }
+    projectName = StringUtil.trimEnd(projectName, "/");
 
     final int lastSlash = projectName.lastIndexOf('/');
     if (lastSlash >= 0 && lastSlash + 1 < projectName.length()) {

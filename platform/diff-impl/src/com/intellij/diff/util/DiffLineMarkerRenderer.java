@@ -18,28 +18,33 @@ package com.intellij.diff.util;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class DiffLineMarkerRenderer implements LineMarkerRenderer {
+public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
+  @NotNull private final RangeHighlighter myHighlighter;
   @NotNull private final TextDiffType myDiffType;
   private final boolean myIgnoredFoldingOutline;
   private final boolean myResolved;
 
-  public DiffLineMarkerRenderer(@NotNull TextDiffType diffType) {
-    this(diffType, false);
-  }
+  private final boolean myEmptyRange;
+  private final boolean myLastLine;
 
-  public DiffLineMarkerRenderer(@NotNull TextDiffType diffType, boolean ignoredFoldingOutline) {
-    this(diffType, ignoredFoldingOutline, false);
-  }
-
-  public DiffLineMarkerRenderer(@NotNull TextDiffType diffType, boolean ignoredFoldingOutline, boolean resolved) {
+  public DiffLineMarkerRenderer(@NotNull RangeHighlighter highlighter,
+                                @NotNull TextDiffType diffType,
+                                boolean ignoredFoldingOutline,
+                                boolean resolved,
+                                boolean isEmptyRange,
+                                boolean isLastLine) {
+    myHighlighter = highlighter;
     myDiffType = diffType;
     myIgnoredFoldingOutline = ignoredFoldingOutline;
     myResolved = resolved;
+    myEmptyRange = isEmptyRange;
+    myLastLine = isLastLine;
   }
 
   @Override
@@ -48,8 +53,18 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
     Graphics2D g2 = (Graphics2D)g;
     int x1 = 0;
     int x2 = x1 + gutter.getWidth();
-    int y = range.y;
-    int height = range.height;
+
+    int y, height;
+    if (myEmptyRange && myLastLine) {
+      y = DiffDrawUtil.lineToY(editor, DiffUtil.getLineCount(editor.getDocument()));
+      height = 0;
+    }
+    else {
+      int startLine = editor.getDocument().getLineNumber(myHighlighter.getStartOffset());
+      int endLine = editor.getDocument().getLineNumber(myHighlighter.getEndOffset()) + 1;
+      y = DiffDrawUtil.lineToY(editor, startLine);
+      height = myEmptyRange ? 0 : DiffDrawUtil.lineToY(editor, endLine) - y;
+    }
 
     int annotationsOffset = gutter.getAnnotationsAreaOffset();
     int annotationsWidth = gutter.getAnnotationsAreaWidth();
@@ -88,5 +103,10 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
       // Draw 2 pixel line in that case
       DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color, true, myResolved);
     }
+  }
+
+  @Override
+  public Position getPosition() {
+    return Position.CUSTOM;
   }
 }

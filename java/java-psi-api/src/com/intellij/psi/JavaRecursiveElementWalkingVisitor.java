@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,13 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * a JavaElementVisitor which also visits all children elements
+ * in a tree pre-order, see <a href="https://en.wikipedia.org/wiki/Tree_traversal#Pre-order">Tree traversal:Pre-order</a> for details.
+ * <p>
+ * <b>Note</b>: This visitor handles all containing elements without consuming stack space, so it can be used even for very deep trees.
+ * <b>Note 2</b>: This visitor works for source-based PSI only. Any elements implementing {@link PsiCompiledElement} will be rejected.
+ */
 public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisitor {
   private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
     @Override

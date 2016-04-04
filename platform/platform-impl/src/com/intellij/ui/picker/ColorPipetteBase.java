@@ -16,6 +16,7 @@
 package com.intellij.ui.picker;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,10 @@ public abstract class ColorPipetteBase implements ColorPipette {
     myParent = parent;
     myColorListener = colorListener;
     myRobot = createRobot();
+  }
+
+  public static boolean canUseMacPipette() {
+    return SystemInfo.isMac && Registry.is("ide.mac.new.color.picker");
   }
 
   @Override
@@ -142,7 +147,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     });
 
     myPickerFrame.setUndecorated(true);
-    myPickerFrame.setAlwaysOnTop(!SystemInfo.isJavaVersionAtLeast("1.8.0"));
+    myPickerFrame.setAlwaysOnTop(!SystemInfo.isJavaVersionAtLeast("1.8.0") || canUseMacPipette());
 
     JRootPane rootPane = myPickerFrame.getRootPane();
     rootPane.putClientProperty("Window.shadow", Boolean.FALSE);

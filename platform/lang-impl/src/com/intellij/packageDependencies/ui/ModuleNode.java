@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -27,7 +27,7 @@ import com.intellij.psi.PsiFile;
 import javax.swing.*;
 import java.util.Set;
 
-public class ModuleNode extends PackageDependenciesNode implements NavigatableWithText{
+public class ModuleNode extends PackageDependenciesNode implements NavigatableWithText {
   private final Module myModule;
 
   public ModuleNode(Module module) {
@@ -65,6 +65,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
     return myModule == null || myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getIcon();
   }
 
+  @Override
   public String toString() {
     return myModule == null ? AnalysisScopeBundle.message("unknown.node.text") : myModule.getName();
   }
@@ -90,14 +91,13 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
     if (!(o instanceof ModuleNode)) return false;
 
     final ModuleNode moduleNode = (ModuleNode)o;
-
     return Comparing.equal(myModule, moduleNode.myModule);
   }
 
+  @Override
   public int hashCode() {
     return myModule == null ? 0 : myModule.hashCode();
   }
-
 
   @Override
   public boolean isValid() {
@@ -106,6 +106,6 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
 
   @Override
   public String getNavigateActionText(boolean focusEditor) {
-    return "Open Module Settings";
+    return ActionsBundle.message("action.ModuleSettings.navigate");
   }
 }

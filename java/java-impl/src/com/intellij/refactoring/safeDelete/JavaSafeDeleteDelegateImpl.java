@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -90,6 +91,22 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
           }
         });
       }
+    }
+    else if (element instanceof PsiMethodReferenceExpression) {
+      usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
+        public void deleteElement() throws IncorrectOperationException {
+          final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)element);
+          if (callExpression instanceof PsiCallExpression) {
+            final PsiExpressionList expressionList = ((PsiCallExpression)callExpression).getArgumentList();
+            if (expressionList != null) {
+              final PsiExpression[] args = expressionList.getExpressions();
+              if (index < args.length) {
+                args[index].delete();
+              }
+            }
+          }
+        }
+      });
     }
   }
 }

@@ -57,6 +57,10 @@ public class JavaModuleSourceRoot extends DetectedSourceRoot {
 
   @NotNull
   public JavaModuleSourceRoot combineWith(@NotNull JavaModuleSourceRoot root) {
-    return new JavaModuleSourceRoot(getDirectory(), getPackagePrefix(), ContainerUtil.concat(myLanguages, root.myLanguages));
+    List<String> union = new ArrayList<String>(myLanguages.size() + root.myLanguages.size());
+    union.addAll(myLanguages);
+    union.addAll(root.myLanguages);
+    ContainerUtil.removeDuplicates(union);
+    return new JavaModuleSourceRoot(getDirectory(), getPackagePrefix(), union);
   }
 }

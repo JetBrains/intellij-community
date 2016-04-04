@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PasswordSafeTimed<T> extends TimedReference<T> {
   private int myCheckCount;
 
-  public PasswordSafeTimed() {
+  protected PasswordSafeTimed() {
     super(null);
   }
 

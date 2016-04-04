@@ -1,9 +1,9 @@
-// "Copy 'a' to temp final variable" "true"
+// "Copy 'a' to effectively final temp variable" "true"
 class Test {
     public void test() {
         int a = 1;
         a = 2;
-        final int finalA = a;
+        int finalA = a;
         Runnable r = () -> {
             System.out.println(finalA);
         };

@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
@@ -37,14 +36,14 @@ import java.util.Collection;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
+  @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
+  @NotNull private final GitRepositoryFiles myRepositoryFiles;
+
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
@@ -57,11 +56,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                             final boolean light) {
     super(project, rootDir, parentDisposable);
     myPlatformFacade = facade;
+    myVcs = assertNotNull(GitVcs.getInstance(project));
     myGitDir = gitDir;
-    myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
+    myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
+    myReader = new GitRepositoryReader(myRepositoryFiles);
     myInfo = readRepoInfo();
     if (!light) {
-      myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
+      myUntrackedFilesHolder = new GitUntrackedFilesHolder(this, myRepositoryFiles);
       Disposer.register(this, myUntrackedFilesHolder);
     }
     else {
@@ -92,15 +93,21 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   }
 
   private void setupUpdater() {
-    GitRepositoryUpdater updater = new GitRepositoryUpdater(this);
+    GitRepositoryUpdater updater = new GitRepositoryUpdater(this, myRepositoryFiles);
     Disposer.register(this, updater);
   }
 
-
+  @Deprecated
   @NotNull
   @Override
   public VirtualFile getGitDir() {
     return myGitDir;
+  }
+
+  @NotNull
+  @Override
+  public GitRepositoryFiles getRepositoryFiles() {
+    return myRepositoryFiles;
   }
 
   @Override
@@ -143,10 +150,10 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return currentBranch == null ? null : currentBranch.getName();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public AbstractVcs getVcs() {
-    return GitVcs.getInstance(getProject());
+    return myVcs;
   }
 
   /**
@@ -156,7 +163,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull
   public GitBranchesCollection getBranches() {
     GitRepoInfo info = myInfo;
-    return new GitBranchesCollection(info.getLocalBranches(), info.getRemoteBranches());
+    return new GitBranchesCollection(info.getLocalBranchesWithHashes(), info.getRemoteBranchesWithHashes());
   }
 
   @Override
@@ -195,20 +202,17 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    File configFile = new File(VfsUtilCore.virtualToIoFile(getGitDir()), "config");
+    File configFile = myRepositoryFiles.getConfigFile();
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
-    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches(), state.getRemoteBranches());
+    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
                            state.getLocalBranches(), state.getRemoteBranches(), trackInfos);
   }
 
   private static void notifyIfRepoChanged(@NotNull final GitRepository repository, @NotNull GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
-    if (Disposer.isDisposed(repository.getProject())) {
-      return;
-    }
-    if (!info.equals(previousInfo)) {
+    if (!repository.getProject().isDisposed() && !info.equals(previousInfo)) {
       notifyListenersAsync(repository);
     }
   }
@@ -227,6 +231,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull
   @Override
   public String toLogString() {
-    return String.format("GitRepository " + getRoot() + " : " + myInfo);
+    return "GitRepository " + getRoot() + " : " + myInfo;
   }
 }

@@ -80,7 +80,7 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
           result.setAccessibleParent(null);
         }
       }
-      return result;
+      return accessibleContext = result;
     }
   }
 

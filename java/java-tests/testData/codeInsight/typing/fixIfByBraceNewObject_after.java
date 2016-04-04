@@ -1,5 +1,5 @@
 class C {
   boolean f() {
-    if (new Object(){<caret>)
+    if (new Object(){<caret>})
   }
 }

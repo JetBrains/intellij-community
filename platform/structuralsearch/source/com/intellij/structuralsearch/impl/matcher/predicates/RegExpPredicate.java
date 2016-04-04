@@ -102,9 +102,7 @@ public final class RegExpPredicate extends MatchPredicate {
 
     if (!result) {
 
-      if(StructuralSearchUtil.isIdentifier(matchedNode)) {
-        matchedNode = matchedNode.getParent();
-      }
+      matchedNode = StructuralSearchUtil.getParentIfIdentifier(matchedNode);
 
       String alternativeText = context.getPattern().getAlternativeTextToMatch(matchedNode, text);
       if (alternativeText != null) {

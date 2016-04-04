@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.hash.HashSet;
@@ -211,9 +212,7 @@ class BeforeRunStepsPanel extends JPanel {
         Map.Entry<BeforeRunTaskProvider, Integer> entry = iterator.next();
         BeforeRunTaskProvider provider = entry.getKey();
         String name = provider.getName();
-        if (name.startsWith("Run ")) {
-          name = name.substring(4);
-        }
+        name = StringUtil.trimStart(name, "Run ");
         if (sb.length() > 0) {
           sb.append(", ");
         }

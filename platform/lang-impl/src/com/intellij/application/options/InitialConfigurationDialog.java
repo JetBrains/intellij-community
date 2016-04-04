@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     myCreateScriptCheckbox.setSelected(canCreateLauncherScript);
     myCreateScriptPanel.setVisible(canCreateLauncherScript);
     if (canCreateLauncherScript) {
-      myScriptPathTextField.setText("/usr/local/bin/" + CreateLauncherScriptAction.defaultScriptName());
+      myScriptPathTextField.setText(CreateLauncherScriptAction.defaultScriptPath());
     }
 
     final boolean canCreateDesktopEntry = canCreateDesktopEntry();
@@ -400,7 +400,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myMainPanel));
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myMainPanel));
 
     super.doOKAction();
 
@@ -420,24 +420,40 @@ public class InitialConfigurationDialog extends DialogWrapper {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setFraction(0.0);
+
           if (createScript) {
             indicator.setText("Creating launcher script...");
-            CreateLauncherScriptAction.createLauncherScript(project, pathName);
-            indicator.setFraction(0.5);
+            try {
+              CreateLauncherScriptAction.createLauncherScript(pathName);
+            }
+            catch (Exception e) {
+              CreateLauncherScriptAction.reportFailure(e, getProject());
+            }
           }
+
+          indicator.setFraction(0.5);
+
           if (createEntry) {
-            CreateDesktopEntryAction.createDesktopEntry(project, indicator, globalEntry);
+            indicator.setText("Creating desktop entry...");
+            try {
+              CreateDesktopEntryAction.createDesktopEntry(globalEntry);
+            }
+            catch (Exception e) {
+              CreateDesktopEntryAction.reportFailure(e, getProject());
+            }
           }
+
           indicator.setFraction(1.0);
         }
       });
     }
+
     UIManager.LookAndFeelInfo info = (UIManager.LookAndFeelInfo) myAppearanceComboBox.getSelectedItem();
     LafManagerImpl lafManager = (LafManagerImpl)LafManager.getInstance();
     if (info.getName().contains("Darcula") != (LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo)) {
       lafManager.setLookAndFeelAfterRestart(info);
-      int rc = Messages.showYesNoDialog(project, "IDE appearance settings will be applied after restart. Would you like to restart now?",
-                                        "IDE Appearance", Messages.getQuestionIcon());
+      String message = "IDE appearance settings will be applied after restart. Would you like to restart now?";
+      int rc = Messages.showYesNoDialog(project, message, "IDE Appearance", Messages.getQuestionIcon());
       if (rc == Messages.YES) {
         ((ApplicationImpl) ApplicationManager.getApplication()).restart(true);
       }

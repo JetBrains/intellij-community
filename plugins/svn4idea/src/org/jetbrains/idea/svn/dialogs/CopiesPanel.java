@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.ide.DataManager;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +44,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -180,6 +184,7 @@ public class CopiesPanel {
       }
     });
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(holderPanel);
+    registerHelp(pane);
     myHolder = pane;
     final JScrollBar vBar = pane.getVerticalScrollBar();
     vBar.setBlockIncrement(vBar.getBlockIncrement() * 5);
@@ -447,6 +452,19 @@ public class CopiesPanel {
         notification.expire();
       }
     }
+  }
+
+  private static void registerHelp(@NotNull JComponent component) {
+    DataManager.registerDataProvider(component, new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (PlatformDataKeys.HELP_ID.is(dataId)) {
+          return "reference.vcs.svn.working.copies.information";
+        }
+        return null;
+      }
+    });
   }
 
   public JComponent getComponent() {

@@ -24,20 +24,28 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import org.jetbrains.annotations.Nullable;
 
 public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> implements PyNamedParameterStub {
   private final String myName;
   private final boolean myPositionalContainer;
   private final boolean myKeywordContainer;
   private final boolean myHasDefaultValue;
+  private final String myTypeCommentAnnotation;
 
-  public PyNamedParameterStubImpl(String name, boolean isPositionalContainer, boolean isKeywordContainer, boolean hasDefaultValue,
-                                  StubElement parent, IStubElementType stubElementType) {
+  public PyNamedParameterStubImpl(String name,
+                                  boolean isPositionalContainer,
+                                  boolean isKeywordContainer,
+                                  boolean hasDefaultValue,
+                                  @Nullable String typeCommentAnnotation,
+                                  StubElement parent,
+                                  IStubElementType stubElementType) {
     super(parent, stubElementType);
     myName = name;
     myPositionalContainer = isPositionalContainer;
     myKeywordContainer = isKeywordContainer;
     myHasDefaultValue = hasDefaultValue;
+    myTypeCommentAnnotation = typeCommentAnnotation;
   }
 
   public boolean isPositionalContainer() {
@@ -52,6 +60,12 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
     return myHasDefaultValue;
   }
 
+  @Nullable
+  @Override
+  public String getTypeComment() {
+    return myTypeCommentAnnotation;
+  }
+  
   public String getName() {
     return myName;
   }

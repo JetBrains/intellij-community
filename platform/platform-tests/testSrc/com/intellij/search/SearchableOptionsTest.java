@@ -15,12 +15,12 @@
  */
 package com.intellij.search;
 
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import javax.swing.event.DocumentEvent;
@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class SearchableOptionsTest extends LightPlatformTestCase {
   public void testFindCodeTemplates() {
-    ConfigurableGroup[] groups = {new ProjectConfigurablesGroup(getProject())};
+    ConfigurableGroup[] groups = ShowSettingsUtilImpl.getConfigurableGroups(getProject(), false);
     ConfigurableHit configurables = SearchableOptionsRegistrar.getInstance().getConfigurables(groups, DocumentEvent.EventType.INSERT, null, "method", getProject());
     Set<Configurable> configurableSet = configurables.getAll();
     for (Configurable configurable : configurableSet) {

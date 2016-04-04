@@ -55,8 +55,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     myCache = cache;
   }
 
-  @Override
-  public List<OrderEnumerationHandler> getCustomHandlers(@NotNull Module module) {
+  static List<OrderEnumerationHandler> getCustomHandlers(@NotNull Module module) {
     List<OrderEnumerationHandler> customHandlers = null;
     for (OrderEnumerationHandler.Factory handlerFactory : OrderEnumerationHandler.EP_NAME.getExtensions()) {
       if (handlerFactory.isApplicable(module)) {

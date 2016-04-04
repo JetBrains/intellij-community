@@ -1,9 +1,23 @@
 <html>
 <body>
-Reports <b>AutoCloseable</b> instances which are not used in a <b>try</b>-with-resources statement, also known as <i>Automatic Resource Management</i>.
-This means that the open resource before/in <b>try</b>, close in <b>finally</b> style which was used before <b>try</b>-with-resources was available is also reported.
-This inspection is meant to replace all <i>opened but not safely closed</i> inspections when developing in Java 7.
+Reports <b>AutoCloseable</b> instances which are not used in a try-with-resources statement, also known as
+<i>Automatic Resource Management</i>.
+This means that the open resource before/in <b>try</b>, close in <b>finally</b> style which was used before
+try-with-resources was available is also reported.
+This inspection is meant to replace all <i>opened but not safely closed</i> inspections when developing in Java 7 and higher.
 <p>
-<small>New in 13</small>
+Use the first table below to specify which AutoCloseable subclasses should be ignored by this inspection.
+Specify AutoCloseable subclasses here which do not need to be closed.
+<p>
+Use the second table below to specify which methods returning AutoCloseable will be ignored when called.
+<p>
+Use the first checkbox below to ignore an AutoCloseable if it the result of a method call.
+When enabled, the results of factory methods will also be ignored.
+<p>
+Use the second checkbox below to specify that the inspection should not warn if an AutoCloseable instance is passed
+as a method call argument.
+If enabled the inspection assumes the resource is closed in the called method.
+Method calls inside a <b>finally</b> block with <i>close</i> in the name and an AutoCloseable argument will not be ignored.
+<p>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String CALLEE_TYPE = IdeBundle.message("title.hierarchy.callees.of");
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String CALLER_TYPE = IdeBundle.message("title.hierarchy.callers.of");
 
   private static final String CALL_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.CallHierarchyBrowserBase";
@@ -84,7 +84,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   private class ChangeViewTypeActionBase extends ToggleAction {
     private final String myTypeName;
 
-    public ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon, String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
@@ -109,7 +109,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       super.update(event);
       setEnabled(isValidBase());
     }
@@ -117,7 +117,8 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_CALL_HIERARCHY, CALL_HIERARCHY_BROWSER_DATA_KEY);
+      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_CALL_HIERARCHY, CALL_HIERARCHY_BROWSER_DATA_KEY,
+            LanguageCallHierarchy.INSTANCE);
     }
   }
 

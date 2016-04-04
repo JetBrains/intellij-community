@@ -128,7 +128,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     actionToolbar.setTargetComponent(panel);
 
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle));
+      new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle), getConsoleIcon());
 
     contentDescriptor.setFocusComputable(new Computable<JComponent>() {
       @Override
@@ -145,6 +145,11 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     registerActionShortcuts(actions, panel);
 
     showConsole(defaultExecutor, contentDescriptor);
+  }
+
+  @Nullable
+  protected Icon getConsoleIcon() {
+    return null;
   }
 
   protected String constructConsoleTitle(final @NotNull String consoleTitle) {

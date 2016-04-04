@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,10 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -86,6 +89,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Nullable
   public PsiElement getContext() {
     final PsiReference contextRef = getContextReference();
+    assert contextRef != this : getCanonicalText();
     return contextRef != null ? contextRef.resolve() : null;
   }
 

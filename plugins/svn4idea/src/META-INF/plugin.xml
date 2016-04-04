@@ -49,10 +49,6 @@
       <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
     </action>
 
-    <action id="AlienPropertiesLocalDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAlienAction" popup="true">
-      <add-to-group group-id="AlienCommitChangesDialog.AdditionalActions" anchor="last"/>
-    </action>
-
     <group id="SubversionGroup">
       <action id="Subversion.Share" class="org.jetbrains.idea.svn.actions.ShareProjectAction"/>
       <action id="Subversion.Create.External" class="org.jetbrains.idea.svn.actions.CreateExternalAction"/>
@@ -65,9 +61,6 @@
       <separator/>
       <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction"/>
       <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
-      <action id="ShowPropertiesDiffVsLocal" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction"
-              icon="SvnIcons.PropertiesDiffWithLocal">
-      </action>
       <reference id="ChangesView.Revert"/>
       <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
       <action id="Subversion.MarkResolved" class="org.jetbrains.idea.svn.actions.MarkResolvedAction"/>
@@ -112,17 +105,18 @@
       <add-to-group group-id="SubversionGroup" relative-to-action="ChangesView.AddUnversioned" anchor="after"/>
     </group>
 
-    <action class="org.jetbrains.idea.svn.dialogs.MergeFromAction" id="Subversion.MergeFrom">
-      <add-to-group relative-to-action="Vcs.IntegrateProject" anchor="after" group-id="VcsGlobalGroup"/>
-    </action>
     <action class="org.jetbrains.idea.svn.actions.CleanupProjectAction" id="Subversion.CleanupProject">
-      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Subversion.MergeFrom"/>
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.IntegrateProject"/>
+    </action>
+
+    <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" text="Show Working Copies"
+            description="Shows working copies information: working copy formats and URLs" icon="SvnIcons.ShowWorkingCopies">
+      <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <vcsCheckinHandlerFactory implementation="org.jetbrains.idea.svn.checkin.SvnCheckinHandlerFactory"/>
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <checkoutProvider implementation="org.jetbrains.idea.svn.checkout.SvnCheckoutProvider"/>
     <vcschangedetails implementation="org.jetbrains.idea.svn.treeConflict.TreeConflictDetailsProvider"/>
     <vcschangedetails implementation="org.jetbrains.idea.svn.SvnPhantomChangeDetailsProvider"/>
@@ -150,6 +144,9 @@
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
 
     <statistics.usagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>
+
+    <changesViewContent tabName="Subversion Working Copies Information" className="org.jetbrains.idea.svn.WorkingCopiesContent"
+                        predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"/>
 
     <openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider
         implementation="org.jetbrains.idea.svn.difftool.SvnChangeDiffViewerProvider"/>

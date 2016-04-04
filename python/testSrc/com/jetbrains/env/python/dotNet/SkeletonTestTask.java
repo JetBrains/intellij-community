@@ -4,6 +4,9 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
@@ -103,10 +106,15 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
       assert skeletonFile.delete() : "Failed to delete file " + skeletonFile;
     }
 
-    myFixture.copyFileToProject("dotNet/" + mySourceFileToRunGenerationOn, mySourceFileToRunGenerationOn); // File that uses CLR library
-    myFixture.copyFileToProject("dotNet/PythonLibs.dll", "PythonLibs.dll"); // Library itself
-    myFixture.copyFileToProject("dotNet/SingleNameSpace.dll", "SingleNameSpace.dll"); // Another library
-    myFixture.configureByFile(mySourceFileToRunGenerationOn);
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        myFixture.copyFileToProject("dotNet/" + mySourceFileToRunGenerationOn, mySourceFileToRunGenerationOn); // File that uses CLR library
+        myFixture.copyFileToProject("dotNet/PythonLibs.dll", "PythonLibs.dll"); // Library itself
+        myFixture.copyFileToProject("dotNet/SingleNameSpace.dll", "SingleNameSpace.dll"); // Another library
+        myFixture.configureByFile(mySourceFileToRunGenerationOn);
+      }
+    }, ModalityState.NON_MODAL);
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class); // This inspection should suggest us to generate stubs
 
 

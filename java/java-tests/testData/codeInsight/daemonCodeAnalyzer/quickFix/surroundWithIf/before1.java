@@ -2,6 +2,6 @@
 class A {
     void foo(){
         String i = null;
-        <caret>i.hashCode();
+        i.has<caret>hCode();
     }
 }

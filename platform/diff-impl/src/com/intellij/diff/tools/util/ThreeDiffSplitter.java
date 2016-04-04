@@ -65,6 +65,7 @@ public class ThreeDiffSplitter extends JPanel {
     }
   }
 
+  @Override
   public void doLayout() {
     int width = getWidth();
     int height = getHeight();
@@ -111,6 +112,7 @@ public class ThreeDiffSplitter extends JPanel {
   private static class Divider extends JComponent {
     @Nullable private Painter myPainter;
 
+    @Override
     public void paint(Graphics g) {
       super.paint(g);
       if (myPainter != null) myPainter.paint(g, this);

@@ -34,8 +34,10 @@ public final class ReplacementBuilder {
   private final List<ParameterInfo> parameterizations = new ArrayList<ParameterInfo>();
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
+  private final Project myProject;
 
   ReplacementBuilder(final Project project,final ReplaceOptions options) {
+    myProject = project;
     replacementVarsMap = new HashMap<String, ScriptSupport>();
     this.options = options;
     String _replacement = options.getReplacement();
@@ -177,7 +179,7 @@ public final class ReplacementBuilder {
 
     if (scriptSupport == null) {
       String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
-      scriptSupport = new ScriptSupport(StringUtil.stripQuotesAroundValue(constraint), info.getName());
+      scriptSupport = new ScriptSupport(myProject, StringUtil.stripQuotesAroundValue(constraint), info.getName());
       replacementVarsMap.put(info.getName(), scriptSupport);
     }
     return scriptSupport.evaluate(match, null);

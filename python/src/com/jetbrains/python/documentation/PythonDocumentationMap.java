@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,13 +37,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-@State(
-  name = "PythonDocumentationMap",
-  storages = {
-  @Storage(
-    file = StoragePathMacros.APP_CONFIG + "/other.xml")
-    }
-)
+@State(name = "PythonDocumentationMap", storages = @Storage("other.xml"))
 public class PythonDocumentationMap implements PersistentStateComponent<PythonDocumentationMap.State> {
   public static PythonDocumentationMap getInstance() {
     return ServiceManager.getService(PythonDocumentationMap.class);

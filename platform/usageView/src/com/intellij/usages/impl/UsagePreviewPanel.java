@@ -45,16 +45,30 @@ import java.util.List;
 public class UsagePreviewPanel extends UsageContextPanelBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
+  private final boolean myIsEditor;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
+    this(project, presentation, false);
+  }
+
+  public UsagePreviewPanel(@NotNull Project project,
+                           @NotNull UsageViewPresentation presentation,
+                           boolean isEditor) {
     super(project, presentation);
+    myIsEditor = isEditor;
   }
 
   public static class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
+      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true) {
+        @Override
+        protected void customizeEditorSettings(EditorSettings settings) {
+          super.customizeEditorSettings(settings);
+          settings.setUseSoftWraps(true);
+        }
+      };
     }
 
     @Override
@@ -126,7 +140,10 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
 
       TextRange elementRange = psiElement.getTextRange();
       TextRange infoRange = info.getRangeInElement();
-      TextRange textRange = infoRange == null || infoRange.getStartOffset() > elementRange.getLength() ? null : elementRange.cutOut(infoRange);
+      TextRange textRange = infoRange == null 
+                            || infoRange.getStartOffset() > elementRange.getLength() 
+                            || infoRange.getEndOffset() > elementRange.getLength() ? null 
+                                                                                   : elementRange.cutOut(infoRange);
       if (textRange == null) textRange = elementRange;
       // hack to determine element range to highlight
       if (psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
@@ -153,18 +170,22 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     if (isDisposed) return null;
     Project project = psiFile.getProject();
 
-    Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getVirtualFile(), true);
+    Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getVirtualFile(), !myIsEditor);
 
     EditorSettings settings = editor.getSettings();
+    customizeEditorSettings(settings);
+
+    editor.putUserData(PREVIEW_EDITOR_FLAG, this);
+    return editor;
+  }
+
+  protected void customizeEditorSettings(EditorSettings settings) {
     settings.setLineMarkerAreaShown(false);
     settings.setIndentGuidesShown(false);
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
     settings.setVirtualSpace(true);
-
-    editor.putUserData(PREVIEW_EDITOR_FLAG, this);
-    return editor;
   }
 
   @Override

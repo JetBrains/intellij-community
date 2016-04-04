@@ -13,42 +13,19 @@
 package git4idea.history.browser;
 
 import git4idea.GitBranch;
-import git4idea.history.wholeTree.AbstractHash;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.TreeSet;
 
-/**
- * @author irengrig
- */
+@Deprecated
 public class SymbolicRefs implements SymbolicRefsI {
   private GitBranch myCurrent;
   private final TreeSet<String> myLocalBranches;
   private final TreeSet<String> myRemoteBranches;
-  private String myTrackedRemoteName;
   private String myUsername;
-  private AbstractHash myHeadHash;
 
   public SymbolicRefs() {
     myLocalBranches = new TreeSet<String>();
     myRemoteBranches = new TreeSet<String>();
-  }
-
-  public void addRemote(final String branch) {
-    myRemoteBranches.add(branch);
-  }
-
-  public void addLocal(final String branch) {
-    myLocalBranches.add(branch);
-  }
-
-  public void addLocals(final Collection<String> value) {
-    myLocalBranches.addAll(value);
-  }
-
-  public void addRemotes(final Collection<String> value) {
-    myRemoteBranches.addAll(value);
   }
 
   public TreeSet<String> getLocalBranches() {
@@ -57,12 +34,6 @@ public class SymbolicRefs implements SymbolicRefsI {
 
   public TreeSet<String> getRemoteBranches() {
     return myRemoteBranches;
-  }
-
-  @Override
-  @Nullable
-  public String getCurrentName() {
-    return myCurrent == null ? null : myCurrent.getName();
   }
 
   @Override
@@ -86,15 +57,6 @@ public class SymbolicRefs implements SymbolicRefsI {
     myRemoteBranches.clear();
   }
 
-  public void setTrackedRemote(String trackedRemoteName) {
-    myTrackedRemoteName = trackedRemoteName;
-  }
-
-  @Override
-  public String getTrackedRemoteName() {
-    return myTrackedRemoteName;
-  }
-
   @Override
   public String getUsername() {
     return myUsername;
@@ -104,16 +66,7 @@ public class SymbolicRefs implements SymbolicRefsI {
     myUsername = username;
   }
 
-  public void setHead(AbstractHash hash) {
-    myHeadHash = hash;
-  }
-
-  @Override
-  public AbstractHash getHeadHash() {
-    return myHeadHash;
-  }
-
-  public static enum Kind {
+  public enum Kind {
     TAG,
     LOCAL,
     REMOTE

@@ -20,7 +20,7 @@ public class Test<A, B extends Number>  {
     public static void main(String[] args) {
         Inner<Number, Double> inn = new Inner<>();
         inn.<error descr="Ambiguous method call: both 'Inner.m8(IO<? extends Number>)' and 'Inner.m8(IN<? extends Double>)' match">m8</error>(p -> 1.0);
-        new Test<Number, Integer>().<error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>(p -> 1.0);
+        new Test<Number, Integer>().<error descr="Ambiguous method call: both 'Test.foo(IO<? extends Number>)' and 'Test.foo(IN<? extends Integer>)' match">foo</error>(p -> 1.0);
 
     }
 }

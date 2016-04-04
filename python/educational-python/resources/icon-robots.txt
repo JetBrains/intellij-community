@@ -1,0 +1,2 @@
+skip: tips
+skip: PyCharmEdu*.png

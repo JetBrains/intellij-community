@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -521,13 +521,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
       // Android Studio: Skip binary files here. Needed for unused resource refactoring preview.
       if (file != null && !file.getFileType().isBinary()) {
-        ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
         Segment segment = getFirstSegment();
 
         if (segment != null) {
           Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-
           if (document != null) {
+            ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
             SmartList<TextChunk> chunks = new SmartList<TextChunk>();
             extractor.createTextChunks(
               this,

@@ -175,9 +175,26 @@ public class PyTypeTest extends PyTestCase {
            "l = [1, 2, 3]; expr = l[0]");
   }
 
-  public void testSliceType() {
+  public void testListSliceType() {
     doTest("List[int]",
            "l = [1, 2, 3]; expr = l[0:1]");
+  }
+
+  public void testTupleSliceType() {
+    doTest("tuple",
+           "l = (1, 2, 3); expr = l[0:1]");
+  }
+
+  // PY-18560
+  public void testCustomSliceType() {
+    doTest(
+      "int",
+      "class RectangleFactory(object):\n" +
+      "    def __getitem__(self, item):\n" +
+      "        return 1\n" +
+      "factory = RectangleFactory()\n" +
+      "expr = factory[:]"
+    );
   }
 
   public void testExceptType() {
@@ -694,17 +711,17 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo', 'rb')\n");
   }
 
@@ -958,6 +975,94 @@ public class PyTypeTest extends PyTestCase {
            "    x.foo\n" +
            "\n" +
            "expr = f\n");
+  }
+
+  // PY-16267
+  public void testGenericField() {
+    doTest("str",
+           "class D(object):\n" +
+           "    def __init__(self, foo):\n" +
+           "        '''\n" +
+           "        :type foo: T\n" +
+           "        :rtype: D[T]\n" +
+           "        '''\n" +
+           "        self.foo = foo\n" +
+           "\n" +
+           "\n" +
+           "def g():\n" +
+           "    '''\n" +
+           "    :rtype: D[str]\n" +
+           "    '''\n" +
+           "    return D('test')\n" +
+           "\n" +
+           "\n" +
+           "y = g()\n" +
+           "expr = y.foo\n");
+  }
+
+  public void testConditionInnerScope() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    foo = 'foo'\n" +
+           "else:\n" +
+           "    foo = 0\n" +
+           "\n" +
+           "expr = foo\n");
+  }
+
+  public void testConditionOuterScope() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    foo = 'foo'\n" +
+           "else:\n" +
+           "    foo = 0\n" +
+           "\n" +
+           "def f():\n" +
+           "    expr = foo\n");
+  }
+
+  // PY-18217
+  public void testConditionImportOuterScope() {
+    doMultiFileTest("Union[str, int]",
+                    "if something:\n" +
+                    "    from m1 import foo\n" +
+                    "else:\n" +
+                    "    from m2 import foo\n" +
+                    "\n" +
+                    "def f():\n" +
+                    "    expr = foo\n");
+  }
+
+  // PY-18402
+  public void testConditionInImportedModule() {
+    doMultiFileTest("Union[int, str]",
+                    "from m1 import foo\n" +
+                    "\n" +
+                    "def f():\n" +
+                    "    expr = foo\n");
+  }
+
+  // PY-18427
+  public void testConditionalTypeInDocstring() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    Type = int\n" +
+           "else:\n" +
+           "    Type = str\n" +
+           "\n" +
+           "def f(expr):\n" +
+           "    '''\n" +
+           "    :type expr: Type\n" +
+           "    '''\n" +
+           "    pass\n");
+  }
+
+  // PY-18254
+  public void testFunctionTypeCommentInStubs() {
+    doMultiFileTest("MyClass",
+                    "from module import func\n" +
+                    "\n" +
+                    "expr = func()");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

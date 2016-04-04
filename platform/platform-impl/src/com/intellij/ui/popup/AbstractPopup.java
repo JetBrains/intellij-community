@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -396,6 +395,11 @@ public class AbstractPopup implements JBPopup {
     setAdText(s, SwingConstants.LEFT);
   }
 
+  @NotNull
+  public PopupBorder getPopupBorder() {
+    return myPopupBorder;
+  }
+
   @Override
   public void setAdText(@NotNull final String s, int alignment) {
     if (myAdComponent == null) {
@@ -524,10 +528,6 @@ public class AbstractPopup implements JBPopup {
   public void showInBestPositionFor(@NotNull Editor editor) {
     assert editor.getComponent().isShowing() : "Editor must be showing on the screen";
 
-    // Set the accessible parent so that screen readers don't announce
-    // a window context change -- the tooltip is "logically" hosted
-    // inside the component (e.g. editor) it appears on top of.
-    AccessibleContextUtil.setParent(myComponent, editor.getContentComponent());
     DataContext context = ((EditorEx)editor).getDataContext();
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
     if (dominantArea != null && !myRequestFocus) {
@@ -555,7 +555,7 @@ public class AbstractPopup implements JBPopup {
     if (preferredBounds.y - adjustedBounds.y <= 0) {
       return preferredLocation;
     }
-    int adjustedY = preferredBounds.y - editor.getLineHeight() * 3 / 2 - preferredSize.height;
+    int adjustedY = preferredBounds.y - editor.getLineHeight() - preferredSize.height;
     if (adjustedY < 0) {
       return preferredLocation;
     }

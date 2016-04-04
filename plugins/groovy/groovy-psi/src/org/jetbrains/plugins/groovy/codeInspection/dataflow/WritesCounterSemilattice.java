@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
 import java.util.ArrayList;
@@ -36,8 +37,9 @@ public class WritesCounterSemilattice<T> implements Semilattice<TObjectIntHashMa
     });
   }
 
+  @NotNull
   @Override
-  public TObjectIntHashMap<T> join(ArrayList<TObjectIntHashMap<T>> ins) {
+  public TObjectIntHashMap<T> join(@NotNull ArrayList<TObjectIntHashMap<T>> ins) {
     final TObjectIntHashMap<T> result = new TObjectIntHashMap<T>();
     for (TObjectIntHashMap<T> i : ins) {
       merge(result, i);

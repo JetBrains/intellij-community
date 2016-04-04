@@ -16,8 +16,6 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,13 +121,10 @@ public class CaptionPanel extends JPanel {
 
   public void addSettingsComponent(Component component) {
     if (mySettingComponent == null) {
-      mySettingComponent = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      mySettingComponent.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
-      add(mySettingComponent, BorderLayout.WEST);
+      mySettingComponent = new JPanel();
       mySettingComponent.setOpaque(false);
-      if (!SystemInfo.isMacOSLion || UIUtil.isUnderDarcula()) {
-        mySettingComponent.setBorder(JBUI.Borders.emptyBottom(4));
-      }
+      mySettingComponent.setLayout(new BoxLayout(mySettingComponent, BoxLayout.X_AXIS));
+      add(mySettingComponent, BorderLayout.WEST);
     }
     mySettingComponent.add(component);
   }

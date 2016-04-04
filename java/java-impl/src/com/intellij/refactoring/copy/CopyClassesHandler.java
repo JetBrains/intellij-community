@@ -493,27 +493,9 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<PsiJavaCodeReferenceElement, PsiElement>();
     element.accept(new JavaRecursiveElementVisitor(){
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        decodeRef(expression, oldToNewMap, rebindMap);
-        super.visitReferenceExpression(expression);
-      }
-
-      @Override
-      public void visitNewExpression(PsiNewExpression expression) {
-        super.visitNewExpression(expression);
-        final PsiJavaCodeReferenceElement referenceElement = expression.getClassReference();
-        if (referenceElement != null) {
-          decodeRef(referenceElement, oldToNewMap, rebindMap);
-        }
-      }
-
-      @Override
-      public void visitTypeElement(PsiTypeElement type) {
-        super.visitTypeElement(type);
-        final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
-        if (referenceElement != null) {
-          decodeRef(referenceElement, oldToNewMap, rebindMap);
-        }
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        decodeRef(reference, oldToNewMap, rebindMap);
       }
     });
     for (Map.Entry<PsiJavaCodeReferenceElement, PsiElement> entry : rebindMap.entrySet()) {
@@ -541,7 +523,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       if (element instanceof PsiClass && element.getParent() != null && ((PsiClass)element).getContainingClass() == null && !(element instanceof PsiAnonymousClass)) break;
       element = element.getParent();
     }
-    if (element instanceof PsiCompiledElement) return null;
+    //if (element instanceof PsiCompiledElement) return null;
     if (element instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       ArrayList<PsiClass> buffer = new ArrayList<PsiClass>();

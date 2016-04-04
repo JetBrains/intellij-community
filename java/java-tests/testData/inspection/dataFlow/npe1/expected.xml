@@ -3,7 +3,7 @@
   <problem>
     <file>Npe.java</file>
     <line>7</line>
-    <description>Method invocation 'o.equals()' produce NullPointerException</description>
+    <description>Method invocation 'equals' produce NullPointerException</description>
   </problem>
 </problems>
 

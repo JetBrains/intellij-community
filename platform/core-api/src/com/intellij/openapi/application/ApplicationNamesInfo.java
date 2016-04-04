@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,21 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
+import org.jdom.Document;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 /**
  * @author nik
  */
 public class ApplicationNamesInfo {
-  @NonNls private static final String COMPONENT_NAME = "ApplicationInfo";
-  @NonNls private static final String ELEMENT_NAMES = "names";
-  @NonNls private static final String ATTRIBUTE_PRODUCT = "product";
-  @NonNls private static final String ATTRIBUTE_FULL_NAME = "fullname";
-  @NonNls private static final String ATTRIBUTE_SCRIPT = "script";
+  private static final String COMPONENT_NAME = "ApplicationInfo";
+  private static final String ELEMENT_NAMES = "names";
+  private static final String ATTRIBUTE_PRODUCT = "product";
+  private static final String ATTRIBUTE_FULL_NAME = "fullname";
+  private static final String ATTRIBUTE_SCRIPT = "script";
 
   private String myProductName;
   private String myFullProductName;
@@ -48,13 +50,13 @@ public class ApplicationNamesInfo {
   }
 
   private ApplicationNamesInfo() {
+    String resource = "/idea/" + getComponentName() + ".xml";
     try {
-      //noinspection HardCodedStringLiteral
-      readInfo((JDOMUtil.load(ApplicationNamesInfo.class.getResourceAsStream("/idea/" + getComponentName() + ".xml"))));
+      Document doc = JDOMUtil.loadDocument(ApplicationNamesInfo.class, resource);
+      readInfo(doc.getRootElement());
     }
     catch (Exception e) {
-      //noinspection CallToPrintStackTrace
-      e.printStackTrace();
+      throw new RuntimeException("Cannot load resource: " + resource, e);
     }
   }
 
@@ -62,7 +64,7 @@ public class ApplicationNamesInfo {
     final Element names = rootElement.getChild(ELEMENT_NAMES);
     myProductName = names.getAttributeValue(ATTRIBUTE_PRODUCT);
     myFullProductName = names.getAttributeValue(ATTRIBUTE_FULL_NAME);
-    myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase());
+    myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase(Locale.US));
     myScriptName = names.getAttributeValue(ATTRIBUTE_SCRIPT);
   }
 
@@ -95,10 +97,7 @@ public class ApplicationNamesInfo {
   }
 
   public static String getComponentName() {
-    final String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
-    if (prefix != null) {
-      return prefix + COMPONENT_NAME;
-    }
-    return COMPONENT_NAME;
+    String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
+    return prefix != null ? prefix + COMPONENT_NAME : COMPONENT_NAME;
   }
 }

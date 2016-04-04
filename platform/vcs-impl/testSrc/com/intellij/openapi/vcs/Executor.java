@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,10 +189,11 @@ public class Executor {
       throw new RuntimeException(e);
     }
 
-    CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
+    String commandLine = StringUtil.join(params, " ");
+    CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset(), commandLine);
     ProcessOutput result = handler.runProcess(30 * 1000);
     if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for the command execution. Command: " + StringUtil.join(params, " "));
+      throw new RuntimeException("Timeout waiting for the command execution. Command: " + commandLine);
     }
 
     String stdout = result.getStdout().trim();

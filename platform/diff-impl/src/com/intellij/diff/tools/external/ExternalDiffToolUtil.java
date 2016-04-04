@@ -59,11 +59,11 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static String createFile(@NotNull DiffContent content, @Nullable String title, @Nullable String windowTitle)
+  private static InputFile createFile(@NotNull DiffContent content, @Nullable String title, @Nullable String windowTitle)
     throws IOException {
 
     if (content instanceof EmptyContent) {
-      return createFile(new byte[0], "empty").getPath();
+      return new TempInputFile(createFile(new byte[0], "empty"));
     }
     else if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
@@ -74,20 +74,20 @@ public class ExternalDiffToolUtil {
       }
 
       if (file.isInLocalFileSystem()) {
-        return file.getPath();
+        return new LocalInputFile(file);
       }
 
       String tempFileName = getFileName(title, windowTitle, content.getContentType());
-      return createTempFile(file, tempFileName).getPath();
+      return new TempInputFile(createTempFile(file, tempFileName));
     }
     else if (content instanceof DocumentContent) {
       String tempFileName = getFileName(title, windowTitle, content.getContentType());
-      return createTempFile(((DocumentContent)content), tempFileName).getPath();
+      return new TempInputFile(createTempFile((DocumentContent)content, tempFileName));
     }
     else if (content instanceof DirectoryContent) {
       VirtualFile file = ((DirectoryContent)content).getFile();
       if (file.isInLocalFileSystem()) {
-        return file.getPath();
+        return new LocalInputFile(file);
       }
 
       throw new IllegalArgumentException(content.toString());
@@ -127,7 +127,7 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static OutputFile createOutputFile(@NotNull DiffContent content, @Nullable String windowTitle) throws IOException {
+  private static OutputFile createOutputFile(@NotNull DiffContent content, @Nullable String windowTitle) throws IOException {
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
 
@@ -153,7 +153,7 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static String getFileName(@Nullable String title, @Nullable String windowTitle, @Nullable FileType fileType) {
+  private static String getFileName(@Nullable String title, @Nullable String windowTitle, @Nullable FileType fileType) {
     String prefix = "";
     if (title != null && windowTitle != null) {
       prefix = title + "_" + windowTitle;
@@ -168,7 +168,7 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static File createFile(@NotNull byte[] bytes, @NotNull String name) throws IOException {
+  private static File createFile(@NotNull byte[] bytes, @NotNull String name) throws IOException {
     File tempFile = FileUtil.createTempFile("tmp_", "_" + name, true);
     FileUtil.writeToFile(tempFile, bytes);
     return tempFile;
@@ -182,7 +182,7 @@ public class ExternalDiffToolUtil {
     assert contents.size() == 2 || contents.size() == 3;
     assert titles.size() == contents.size();
 
-    List<String> files = new ArrayList<String>();
+    List<InputFile> files = new ArrayList<InputFile>();
     for (int i = 0; i < contents.size(); i++) {
       files.add(createFile(contents.get(i), titles.get(i), windowTitle));
     }
@@ -193,18 +193,18 @@ public class ExternalDiffToolUtil {
     while (parameterTokenizer.hasMoreTokens()) {
       String arg = parameterTokenizer.nextToken();
       if ("%1".equals(arg)) {
-        args.add(files.get(0));
+        args.add(files.get(0).getPath());
       }
       else if ("%2".equals(arg)) {
         if (files.size() == 3) {
-          args.add(files.get(2));
+          args.add(files.get(2).getPath());
         }
         else {
-          args.add(files.get(1));
+          args.add(files.get(1).getPath());
         }
       }
       else if ("%3".equals(arg)) {
-        if (files.size() == 3) args.add(files.get(1));
+        if (files.size() == 3) args.add(files.get(1).getPath());
       }
       else {
         args.add(arg);
@@ -223,6 +223,8 @@ public class ExternalDiffToolUtil {
                                   @NotNull ThreesideMergeRequest request)
     throws IOException, ExecutionException {
     boolean success = false;
+    OutputFile outputFile = null;
+    List<InputFile> inputFiles = new ArrayList<InputFile>();
     try {
       DiffContent outputContent = request.getOutputContent();
       List<? extends DiffContent> contents = request.getContents();
@@ -232,12 +234,11 @@ public class ExternalDiffToolUtil {
       assert contents.size() == 3;
       assert titles.size() == contents.size();
 
-      List<String> files = new ArrayList<String>();
       for (int i = 0; i < contents.size(); i++) {
-        files.add(createFile(contents.get(i), titles.get(i), windowTitle));
+        inputFiles.add(createFile(contents.get(i), titles.get(i), windowTitle));
       }
 
-      OutputFile outputFile = createOutputFile(outputContent, windowTitle);
+      outputFile = createOutputFile(outputContent, windowTitle);
 
       CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getMergeParameters(), true);
 
@@ -245,13 +246,13 @@ public class ExternalDiffToolUtil {
       while (parameterTokenizer.hasMoreTokens()) {
         String arg = parameterTokenizer.nextToken();
         if ("%1".equals(arg)) {
-          args.add(files.get(0));
+          args.add(inputFiles.get(0).getPath());
         }
         else if ("%2".equals(arg)) {
-          args.add(files.get(2));
+          args.add(inputFiles.get(2).getPath());
         }
         else if ("%3".equals(arg)) {
-          args.add(files.get(1));
+          args.add(inputFiles.get(1).getPath());
         }
         else if ("%4".equals(arg)) {
           args.add(outputFile.getPath());
@@ -320,10 +321,15 @@ public class ExternalDiffToolUtil {
                                            "Merge In External Tool", "Mark as Resolved", "Revert", null) == Messages.YES;
       }
 
-      if (success) outputFile.finish();
+      if (success) outputFile.apply();
     }
     finally {
       request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
+
+      if (outputFile != null) outputFile.cleanup();
+      for (InputFile file : inputFiles) {
+        file.cleanup();
+      }
     }
   }
 
@@ -331,17 +337,70 @@ public class ExternalDiffToolUtil {
   // Helpers
   //
 
-  private interface OutputFile {
+
+  private interface InputFile {
     @NotNull
     String getPath();
 
-    void finish() throws IOException;
+    void cleanup();
   }
 
-  private static class LocalOutputFile implements OutputFile {
+  private interface OutputFile extends InputFile {
+    void apply() throws IOException;
+  }
+
+  private static class LocalOutputFile extends LocalInputFile implements OutputFile {
+    public LocalOutputFile(@NotNull VirtualFile file) {
+      super(file);
+    }
+
+    @Override
+    public void apply() {
+      myFile.refresh(false, false);
+    }
+  }
+
+  private static class NonLocalOutputFile extends TempInputFile implements OutputFile {
     @NotNull private final VirtualFile myFile;
 
-    public LocalOutputFile(@NotNull VirtualFile file) {
+    public NonLocalOutputFile(@NotNull VirtualFile file, @NotNull File localFile) {
+      super(localFile);
+      myFile = file;
+    }
+
+    @Override
+    public void apply() throws IOException {
+      myFile.setBinaryContent(FileUtil.loadFileBytes(myLocalFile));
+    }
+  }
+
+  private static class DocumentOutputFile extends TempInputFile implements OutputFile {
+    @NotNull private final Document myDocument;
+    @NotNull private final Charset myCharset;
+
+    public DocumentOutputFile(@NotNull Document document, @Nullable Charset charset, @NotNull File localFile) {
+      super(localFile);
+      myDocument = document;
+      // TODO: potentially dangerous operation - we're using default charset
+      myCharset = charset != null ? charset : Charset.defaultCharset();
+    }
+
+    @Override
+    public void apply() throws IOException {
+      final String content = StringUtil.convertLineSeparators(FileUtil.loadFile(myLocalFile, myCharset));
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myDocument.setText(content);
+        }
+      });
+    }
+  }
+
+  private static class LocalInputFile implements InputFile {
+    @NotNull protected final VirtualFile myFile;
+
+    public LocalInputFile(@NotNull VirtualFile file) {
       myFile = file;
     }
 
@@ -352,17 +411,14 @@ public class ExternalDiffToolUtil {
     }
 
     @Override
-    public void finish() {
-      myFile.refresh(false, false);
+    public void cleanup() {
     }
   }
 
-  private static class NonLocalOutputFile implements OutputFile {
-    @NotNull private final VirtualFile myFile;
-    @NotNull private final File myLocalFile;
+  private static class TempInputFile implements InputFile {
+    @NotNull protected final File myLocalFile;
 
-    public NonLocalOutputFile(@NotNull VirtualFile file, @NotNull File localFile) {
-      myFile = file;
+    public TempInputFile(@NotNull File localFile) {
       myLocalFile = localFile;
     }
 
@@ -373,38 +429,8 @@ public class ExternalDiffToolUtil {
     }
 
     @Override
-    public void finish() throws IOException {
-      myFile.setBinaryContent(FileUtil.loadFileBytes(myLocalFile));
-    }
-  }
-
-  private static class DocumentOutputFile implements OutputFile {
-    @NotNull private final Document myDocument;
-    @NotNull private final File myLocalFile;
-    @NotNull private final Charset myCharset;
-
-    public DocumentOutputFile(@NotNull Document document, @Nullable Charset charset, @NotNull File localFile) {
-      myDocument = document;
-      myLocalFile = localFile;
-      // TODO: potentially dangerous operation - we're using default charset
-      myCharset = charset != null ? charset : Charset.defaultCharset();
-    }
-
-    @NotNull
-    @Override
-    public String getPath() {
-      return myLocalFile.getPath();
-    }
-
-    @Override
-    public void finish() throws IOException {
-      final String content = StringUtil.convertLineSeparators(FileUtil.loadFile(myLocalFile, myCharset));
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myDocument.setText(content);
-        }
-      });
+    public void cleanup() {
+      myLocalFile.delete();
     }
   }
 }

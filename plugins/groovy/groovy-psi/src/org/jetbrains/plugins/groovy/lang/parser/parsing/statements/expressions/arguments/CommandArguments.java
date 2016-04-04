@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -49,7 +50,8 @@ public class CommandArguments {
 
   private static boolean commandArgParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker commandMarker = builder.mark();
-    if (ArgumentList.argumentLabelStartCheck(builder, parser)) {
+    Pair<Boolean, Boolean> check = ArgumentList.argumentLabelStartCheck(builder, parser);
+    if (check.first) {
       ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON, GroovyBundle.message("colon.expected"));
       ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       if (!ExpressionStatement.argParse(builder, parser)) {
@@ -60,6 +62,6 @@ public class CommandArguments {
     }
 
     commandMarker.drop();
-    return ExpressionStatement.argParse(builder, parser);
+    return check.second || ExpressionStatement.argParse(builder, parser);
   }
 }

@@ -33,10 +33,8 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -61,6 +59,7 @@ import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -228,20 +227,19 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
 
-    AccessToken token = WriteAction.start();
-    try {
-      if (ourProject != null) {
-        closeAndDeleteProject();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        if (ourProject != null) {
+          closeAndDeleteProject();
+        }
+        else {
+          cleanPersistedVFSContent();
+        }
       }
-      else {
-        cleanPersistedVFSContent();
-      }
-    }
-    finally {
-      token.finish();
-    }
+    });
 
-    final File projectFile = FileUtil.createTempFile("light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    final File projectFile = FileUtil.createTempFile(ProjectImpl.LIGHT_PROJECT_NAME, ProjectFileType.DOT_DEFAULT_EXTENSION);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
 
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();

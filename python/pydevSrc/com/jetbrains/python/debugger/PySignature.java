@@ -13,6 +13,8 @@ import java.util.List;
 public class PySignature {
   private final String myFile;
   private final String myFunctionName;
+  
+  private NamedParameter myReturnType = null;
 
   private final List<NamedParameter> myArgs = Lists.newArrayList();
 
@@ -46,6 +48,22 @@ public class PySignature {
     return myArgs;
   }
 
+  public NamedParameter getReturnType() {
+    return myReturnType;
+  }
+
+  public PySignature addReturnType(@Nullable String returnType) {
+    if (StringUtil.isNotEmpty(returnType)) {
+      if (myReturnType != null) {
+        myReturnType.addType(returnType);
+      }
+      else {
+        myReturnType = new NamedParameter("", returnType);
+      }
+    }
+    return this;
+  }
+
   @NotNull
   public PySignature addAllArgs(@NotNull PySignature signature) {
     for (NamedParameter param : signature.getArgs()) {
@@ -71,6 +89,11 @@ public class PySignature {
     return null;
   }
 
+  @Nullable
+  public String getReturnTypeQualifiedName() {
+    return myReturnType != null ? myReturnType.getTypeQualifiedName() : null;
+  }
+
 
   public static class NamedParameter {
     private final String myName;
@@ -94,11 +117,16 @@ public class PySignature {
 
     public String getTypeQualifiedName() {
       if (myTypes.size() == 1) {
-        return myTypes.get(0);
+        return noneTypeToNone(myTypes.get(0));
       }
       else {
-        return StringUtil.join(myTypes, " or ");
+        return "Union[" + StringUtil.join(myTypes, NamedParameter::noneTypeToNone, ", ") + "]";
       }
+    }
+
+    @Nullable
+    private static String noneTypeToNone(@Nullable String type) {
+      return "NoneType".equals(type) ? "None" : type;
     }
 
     public void addType(String type) {

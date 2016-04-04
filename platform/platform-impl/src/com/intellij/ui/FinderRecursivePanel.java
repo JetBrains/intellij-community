@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -353,15 +354,20 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
         //noinspection unchecked
         final T t = (T)value;
-        setIcon(getItemIcon(t));
         try {
+          setIcon(getItemIcon(t));
           append(getItemText(t));
         }
         catch (IndexNotReadyException e) {
           append("loading...");
         }
 
-        doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+        try {
+          doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+        }
+        catch (IndexNotReadyException ignored) {
+          // ignore
+        }
 
         Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
         if (!isSelected && myFileColorManager.isEnabled()) {
@@ -409,6 +415,10 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     if (CommonDataKeys.NAVIGATABLE.is(dataId) && selectedValue instanceof Navigatable) {
       return selectedValue;
     }
+    if (LangDataKeys.MODULE.is(dataId) && selectedValue instanceof Module) {
+      return selectedValue;
+    }
+
     if (selectedValue instanceof DataProvider) {
       return ((DataProvider)selectedValue).getData(dataId);
     }
@@ -443,8 +453,9 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       Object selectedValue = pathToSelect[i];
       panel.setSelectedValue(selectedValue);
       if (i < pathToSelect.length - 1) {
-        panel = (FinderRecursivePanel)panel.getSecondComponent();
-        assert panel != null : Arrays.toString(pathToSelect);
+        final JComponent component = panel.getSecondComponent();
+        assert component instanceof FinderRecursivePanel : Arrays.toString(pathToSelect);
+        panel = (FinderRecursivePanel)component;
       }
     }
 

@@ -352,7 +352,7 @@ public final class PyClassRefactoringUtil {
         if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
           return;
         }
-        final NameDefiner importElement = getImportElement(node);
+        final PyImportedNameDefiner importElement = getImportElement(node);
         if (importElement != null && PsiTreeUtil.isAncestor(element, importElement, false)) {
           return;
         }
@@ -373,7 +373,7 @@ public final class PyClassRefactoringUtil {
     final List<PsiElement> allResolveResults = multiResolveExpression(node);
     PsiElement target = ContainerUtil.getFirstItem(allResolveResults);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
-      final NameDefiner importElement = getImportElement(node);
+      final PyImportedNameDefiner importElement = getImportElement(node);
       if (!PyUtil.inSameFile(element, target) && importElement == null && !(target instanceof PsiFileSystemItem)) {
         return;
       }
@@ -397,7 +397,7 @@ public final class PyClassRefactoringUtil {
   }
 
   @Nullable
-  private static NameDefiner getImportElement(PyReferenceExpression expr) {
+  private static PyImportedNameDefiner getImportElement(PyReferenceExpression expr) {
     for (ResolveResult result : expr.getReference().multiResolve(false)) {
       final PsiElement e = result.getElement();
       if (e instanceof PyImportElement) {

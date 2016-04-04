@@ -25,6 +25,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -275,15 +276,25 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       isDeleteLocalVariable = myPanel.isDeleteLocalVariable();
     }
 
+    final PsiType selectedType = getSelectedType();
     final IntroduceParameterProcessor processor = new IntroduceParameterProcessor(
       myProject, myMethodToReplaceIn, myMethodToSearchFor,
       parameterInitializer, myExpression,
       myLocalVar, isDeleteLocalVariable,
       getParameterName(), myPanel.isReplaceAllOccurences(),
-      myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), myPanel.isGenerateDelegate(), getSelectedType(), myPanel.getParametersToRemove());
+      myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), myPanel.isGenerateDelegate(), selectedType, myPanel.getParametersToRemove());
     if (myCbCollapseToLambda.isVisible() && myCbCollapseToLambda.isSelected() && parameterInitializer != null) {
-      PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(parameterInitializer, getSelectedType());
+      PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(parameterInitializer, selectedType);
       if (lambda != null) {
+        final PsiParameter[] lambdaParameters = ((PsiLambdaExpression)lambda).getParameterList().getParameters();
+        final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(((PsiLambdaExpression)lambda).getBody(), lambdaParameters, selectedType);
+        if (toConvertCall != null) {
+          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, selectedType, lambdaParameters);
+          if (methodReferenceText != null) {
+            lambda = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(methodReferenceText, lambda);
+          }
+        }
+
         processor.setParameterInitializer(lambda);
       }
     }

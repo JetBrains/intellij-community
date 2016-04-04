@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ val File.systemIndependentPath: String
   get() = path.replace(File.separatorChar, '/')
 
 val File.parentSystemIndependentPath: String
-  get() = getParent().replace(File.separatorChar, '/')
+  get() = parent.replace(File.separatorChar, '/')
 
 // PathUtilRt.getParentPath returns empty string if no parent path, but in Kotlin "null" is better because elvis operator could be used
 fun getParentPath(path: String) = StringUtil.nullize(PathUtilRt.getParentPath(path))

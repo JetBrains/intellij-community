@@ -1,0 +1,44 @@
+<idea-plugin version="2">
+  <id>com.jetbrains.python.edu.core</id>
+  <name>Python Educational utils plugin</name>
+  <version>2.0.3</version>
+  <idea-version since-build="143.403"/>
+  <description><![CDATA[
+      PyCharm configuration and python-specific educational utils.
+      ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <change-notes><![CDATA[
+
+      ]]>
+  </change-notes>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Edu">
+    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>
+    <executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>
+
+  </extensions>
+
+  <project-components>
+
+  </project-components>
+
+  <application-components>
+
+  </application-components>
+
+  <actions>
+
+  </actions>
+
+</idea-plugin>

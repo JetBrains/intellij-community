@@ -19,8 +19,8 @@ package org.jetbrains.annotations;
 import java.lang.annotation.*;
 
 /**
- * Specifies that an element of the program is not a user-visible string which needs to be localized,
- * or does not contain such strings. The annotation is intended to be used by localization tools for
+ * Specifies that an element of the program is not an user-visible string which needs to be localized,
+ * or does not contain such strings. This annotation is intended to be used by localization tools for
  * detecting strings which should not be reported as requiring localization.
  * <ul>
  * <li>If a method parameter is annotated with <code>NonNls</code>, the strings passed
@@ -46,6 +46,7 @@ import java.lang.annotation.*;
  * </ul>
  *
  * @author max
+ * @see Nls
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)

@@ -7,7 +7,7 @@ class Test {
   <T extends Runnable> void call1(T t) {}
 
   {
-    call<error descr="'call(T)' in 'Test' cannot be applied to '(<lambda expression>)'">(() -> {})</error>; 
+    call(<error descr="Object is not a functional interface">() -> {}</error>); 
     call1(() -> {}); 
   }
 }

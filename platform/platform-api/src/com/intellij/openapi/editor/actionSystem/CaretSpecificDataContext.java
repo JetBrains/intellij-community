@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,14 @@ public class CaretSpecificDataContext extends DataContextWrapper {
   @Override
   public Object getData(@NonNls String dataId) {
     Project project = (Project)super.getData(CommonDataKeys.PROJECT.getName());
-    if (project == null) {
-      return null;
+    if (project != null) {
+      FileEditorManager fm = FileEditorManager.getInstance(project);
+      if (fm != null) {
+        Object data = fm.getData(dataId, myCaret.getEditor(), myCaret);
+        if (data != null) return data;
+      }
     }
-    FileEditorManager fm = FileEditorManager.getInstance(project);
-    Object data = fm == null ? null : fm.getData(dataId, myCaret.getEditor(), myCaret);
-    return data == null ? super.getData(dataId) : data;
+    if (CommonDataKeys.CARET.is(dataId)) return myCaret;
+    return super.getData(dataId);
   }
 }

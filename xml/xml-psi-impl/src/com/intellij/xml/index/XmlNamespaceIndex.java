@@ -118,23 +118,29 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     };
   }
 
+  private static final String NULL_STRING = "\"\"";
+
   @NotNull
   @Override
   public DataExternalizer<XsdNamespaceBuilder> getValueExternalizer() {
     return new DataExternalizer<XsdNamespaceBuilder>() {
       @Override
       public void save(@NotNull DataOutput out, XsdNamespaceBuilder value) throws IOException {
-        IOUtil.writeUTF(out, value.getNamespace() == null ? "" : value.getNamespace());
-        IOUtil.writeUTF(out, value.getVersion() == null ? "" : value.getVersion());
+        IOUtil.writeUTF(out, value.getNamespace() != null ? value.getNamespace() : NULL_STRING);
+        IOUtil.writeUTF(out, value.getVersion() != null ? value.getVersion() : NULL_STRING);
         writeList(out, value.getTags());
         writeList(out, value.getRootTags());
       }
 
       @Override
       public XsdNamespaceBuilder read(@NotNull DataInput in) throws IOException {
+        String namespace = IOUtil.readUTF(in);
+        if (NULL_STRING.equals(namespace)) namespace = null;
+        String version = IOUtil.readUTF(in);
+        if (NULL_STRING.equals(version)) version = null;
 
-        return new XsdNamespaceBuilder(IOUtil.readUTF(in),
-                                       IOUtil.readUTF(in),
+        return new XsdNamespaceBuilder(namespace,
+                                       version,
                                        readList(in),
                                        readList(in));
       }
@@ -160,7 +166,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   @Nullable

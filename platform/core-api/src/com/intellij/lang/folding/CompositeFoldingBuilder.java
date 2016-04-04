@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,14 @@ import java.util.Set;
  * for a particular language.
  *
  * @author Konstantin Bulenkov
- * @see com.intellij.lang.folding.LanguageFolding
+ * @see LanguageFolding
  * @since 9.0
  */
 public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAware {
   public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<FoldingBuilder>("FOLDING_BUILDER");
   private final List<FoldingBuilder> myBuilders;
 
-  CompositeFoldingBuilder(List<FoldingBuilder> builders) {    
+  CompositeFoldingBuilder(List<FoldingBuilder> builders) {
     myBuilders = builders;
   }
 
@@ -68,12 +68,13 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAwa
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-    @Override
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
     return builder == null ? node.getText() : builder instanceof FoldingBuilderEx
-                                              ? ((FoldingBuilderEx)builder).getPlaceholderText(node, range) : builder.getPlaceholderText(node);
-    }
+                                              ? ((FoldingBuilderEx)builder).getPlaceholderText(node, range)
+                                              : builder.getPlaceholderText(node);
+  }
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node) {

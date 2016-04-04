@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,10 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest
   }
 
   public void testChainedMethodCall() throws Exception {
+    doTest(getTestName(true));
+  }
+
+  public void testOverriding() throws Exception {
     doTest(getTestName(true));
   }
 

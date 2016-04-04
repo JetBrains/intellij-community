@@ -23,14 +23,18 @@ import com.intellij.ide.externalComponents.ExternalComponentSource;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.net.NetUtils;
@@ -114,7 +118,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       }
     }
 
-    mySettings.setUpdateChannelType(myPanel.getSelectedChannelType().getCode());
+    mySettings.setSelectedChannelStatus(myPanel.getSelectedChannelType());
     mySettings.setSecureConnection(myPanel.myUseSecureConnection.isSelected());
   }
 
@@ -123,7 +127,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
     myPanel.myUseSecureConnection.setSelected(mySettings.isSecureConnection());
     myPanel.updateLastCheckedLabel();
-    myPanel.setSelectedChannelType(ChannelStatus.fromCode(mySettings.getUpdateChannelType()));
+    myPanel.setSelectedChannelType(mySettings.getSelectedChannelStatus());
   }
 
   @Override
@@ -138,7 +142,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
 
     Object channel = myPanel.myUpdateChannels.getSelectedItem();
-    return channel != null && !channel.equals(ChannelStatus.fromCode(mySettings.getUpdateChannelType()));
+    return channel != null && !channel.equals(mySettings.getSelectedChannelStatus());
   }
 
   @Override
@@ -149,13 +153,14 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   private static class UpdatesSettingsPanel {
     private final UpdateSettings mySettings;
     private JPanel myPanel;
-    private JButton myCheckNow;
     private JCheckBox myCheckForUpdates;
+    private JComboBox myUpdateChannels;
+    private JButton myCheckNow;
+    private JBLabel myChannelWarning;
+    private JCheckBox myUseSecureConnection;
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
-    private JComboBox myUpdateChannels;
-    private JCheckBox myUseSecureConnection;
     private JPanel mySettingsPanel;
     private JPanel myStatusPanel;
 
@@ -186,7 +191,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
             Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
             UpdateSettings settings = new UpdateSettings();
             settings.loadState(mySettings.getState());
-            settings.setUpdateChannelType(getSelectedChannelType().getCode());
+            settings.setSelectedChannelStatus(getSelectedChannelType());
             settings.setSecureConnection(myUseSecureConnection.isSelected());
             UpdateChecker.updateAndShowResult(project, settings);
             updateLastCheckedLabel();
@@ -197,9 +202,19 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
         myCheckNow.setVisible(false);
       }
 
-      ChannelStatus current = ChannelStatus.fromCode(mySettings.getUpdateChannelType());
+      final ChannelStatus current = mySettings.getSelectedChannelStatus();
       //noinspection unchecked
       myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(Arrays.asList(ChannelStatus.values()), current));
+      myUpdateChannels.setEnabled(
+        !ApplicationInfoEx.getInstanceEx().isEAP() || !UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds());
+      myUpdateChannels.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
+          myChannelWarning.setVisible(lessStable);
+        }
+      });
+      myChannelWarning.setForeground(JBColor.RED);
     }
 
     private void updateLastCheckedLabel() {
@@ -208,7 +223,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
 
     public ChannelStatus getSelectedChannelType() {
-      return (ChannelStatus) myUpdateChannels.getSelectedItem();
+      return (ChannelStatus)myUpdateChannels.getSelectedItem();
     }
 
     public void setSelectedChannelType(ChannelStatus channelType) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,28 +38,35 @@ public class JetBrainsProtocolHandler {
   public static void processJetBrainsLauncherParameters(String url) {
     System.setProperty(JetBrainsProtocolHandler.class.getName(), url);
     url = url.substring(PROTOCOL.length());
-    String platformPrefix = url.substring(0, url.indexOf('/'));
-    url = url.substring(platformPrefix.length() + 1);
-    String command = url.substring(0, url.indexOf('/'));
-    url = url.substring(command.length() + 1);
-    List<String> strings = StringUtil.split(url, "?");
-    ourMainParameter = strings.get(0);
-    ourCommand = command;
+    List<String> urlParts = StringUtil.split(url, "/");
+    if (urlParts.size() < 2) {
+      System.err.print("Wrong URL: " + PROTOCOL + url);
+      return;
+    }
+    String platformPrefix = urlParts.get(0);
+    ourMainParameter = null;
+    ourParameters.clear();
+    ourCommand = urlParts.get(1);
+    if (urlParts.size() > 2) {
+      url = url.substring(platformPrefix.length() + 1 + ourCommand.length() + 1);
+      List<String> strings = StringUtil.split(url, "?");
+      ourMainParameter = strings.get(0);
 
-    if (strings.size() > 1) {
-      List<String> keyValues = StringUtil.split(StringUtil.join(ContainerUtil.subList(strings, 1), "?"), "&");
-      for (String keyValue : keyValues) {
-        if (keyValue.contains("=")) {
-          int ind = keyValue.indexOf('=');
-          String key = keyValue.substring(0, ind);
-          String value = keyValue.substring(ind + 1);
-          if (REQUIRED_PLUGINS_KEY.equals(key)) {
-            System.setProperty(key, value);
+      if (strings.size() > 1) {
+        List<String> keyValues = StringUtil.split(StringUtil.join(ContainerUtil.subList(strings, 1), "?"), "&");
+        for (String keyValue : keyValues) {
+          if (keyValue.contains("=")) {
+            int ind = keyValue.indexOf('=');
+            String key = keyValue.substring(0, ind);
+            String value = keyValue.substring(ind + 1);
+            if (REQUIRED_PLUGINS_KEY.equals(key)) {
+              System.setProperty(key, value);
+            } else {
+              ourParameters.put(key, value);
+            }
           } else {
-            ourParameters.put(key, value);
+            ourParameters.put(keyValue, "");
           }
-        } else {
-          ourParameters.put(keyValue, "");
         }
       }
     }

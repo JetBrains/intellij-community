@@ -22,19 +22,27 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public class ShortcutTextField extends JTextField {
+public final class ShortcutTextField extends JTextField {
   private KeyStroke myKeyStroke;
 
-  public ShortcutTextField() {
+  ShortcutTextField() {
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     setFocusTraversalKeysEnabled(false);
+    setCaret(new DefaultCaret() {
+      @Override
+      public boolean isVisible() {
+        return false;
+      }
+    });
   }
 
   protected void processKeyEvent(KeyEvent e) {
@@ -53,21 +61,32 @@ public class ShortcutTextField extends JTextField {
     }
   }
 
-  public void setKeyStroke(KeyStroke keyStroke) {
-    myKeyStroke = keyStroke;
-    setText(KeyboardShortcutDialog.getTextByKeyStroke(keyStroke));
-    updateCurrentKeyStrokeInfo();
+  void setKeyStroke(KeyStroke keyStroke) {
+    KeyStroke old = myKeyStroke;
+    if (old != null || keyStroke != null) {
+      myKeyStroke = keyStroke;
+      super.setText(KeymapUtil.getKeystrokeText(keyStroke));
+      setCaretPosition(0);
+      firePropertyChange("keyStroke", old, keyStroke);
+    }
   }
 
-  protected void updateCurrentKeyStrokeInfo() {
-  }
-
-  public KeyStroke getKeyStroke() {
+  KeyStroke getKeyStroke() {
     return myKeyStroke;
   }
 
   @Override
   public void enableInputMethods(boolean enable) {
     super.enableInputMethods(enable && Registry.is("ide.settings.keymap.input.method.enabled"));
+  }
+
+  @Override
+  public void setText(String text) {
+    super.setText(text);
+    setCaretPosition(0);
+    if (text == null || text.isEmpty()) {
+      myKeyStroke = null;
+      firePropertyChange("keyStroke", null, null);
+    }
   }
 }

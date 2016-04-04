@@ -35,7 +35,6 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -248,11 +247,6 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   @Override
   protected String getCbTitle() {
     return "Open moved classes in editor";
-  }
-
-  @Override
-  protected boolean isEnabledByDefault() {
-    return false;
   }
 }
 

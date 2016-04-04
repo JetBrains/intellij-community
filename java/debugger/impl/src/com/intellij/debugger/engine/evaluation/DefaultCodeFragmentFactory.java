@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -92,7 +93,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
         if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
           final Semaphore semaphore = new Semaphore();
           semaphore.down();
-          final AtomicReference<PsiType> nameRef = new AtomicReference<PsiType>();
+          final AtomicReference<PsiType> nameRef = new AtomicReference<>();
           final RuntimeTypeEvaluator worker =
             new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
               @Override
@@ -101,7 +102,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
                 semaphore.up();
               }
             };
-          debuggerContext.getDebugProcess().getManagerThread().invoke(worker);
+          debuggerSession.getProcess().getManagerThread().invoke(worker);
           for (int i = 0; i < 50; i++) {
             ProgressManager.checkCanceled();
             if (semaphore.waitFor(20)) break;
@@ -119,6 +120,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     return true; // default factory works everywhere debugger can stop
   }
 
+  @NotNull
   public LanguageFileType getFileType() {
     return StdFileTypes.JAVA;
   }

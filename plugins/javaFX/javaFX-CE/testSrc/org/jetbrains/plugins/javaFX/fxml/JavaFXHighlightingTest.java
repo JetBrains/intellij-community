@@ -256,6 +256,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testRootTagWithImport() throws Exception {
+    doTest();
+  }
+
   public void testReadOnly() throws Exception {
     doTest();
   }

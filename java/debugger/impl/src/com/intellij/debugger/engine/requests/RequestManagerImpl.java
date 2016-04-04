@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +52,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private static final Key<Requestor> REQUESTOR = Key.create("Requestor");
 
   private final DebugProcessImpl myDebugProcess;
-  private final Map<Requestor, String> myRequestWarnings = new HashMap<Requestor, String>();
+  private final Map<Requestor, String> myRequestWarnings = new HashMap<>();
 
-  private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<Requestor, Set<EventRequest>>();
+  private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<>();
   private EventRequestManager myEventRequestManager;
   private @Nullable ThreadReference myFilterThread;
 
@@ -195,7 +195,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private void registerRequest(Requestor requestor, EventRequest request) {
     Set<EventRequest> reqSet = myRequestorToBelongedRequests.get(requestor);
     if(reqSet == null) {
-      reqSet = new HashSet<EventRequest>();
+      reqSet = new HashSet<>();
       myRequestorToBelongedRequests.put(requestor, reqSet);
     }
     reqSet.add(request);

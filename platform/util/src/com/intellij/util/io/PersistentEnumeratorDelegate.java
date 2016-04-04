@@ -62,6 +62,12 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
     return myEnumerator.isDirty();
   }
 
+  public final void markDirty() throws IOException {
+    synchronized (myEnumerator) {
+      myEnumerator.markDirty(true);
+    }
+  }
+
   public boolean isCorrupted() {
     return myEnumerator.isCorrupted();
   }

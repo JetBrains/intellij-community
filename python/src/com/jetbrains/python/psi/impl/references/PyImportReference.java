@@ -146,8 +146,9 @@ public class PyImportReference extends PyReferenceImpl {
     }
     else if (item instanceof LookupElement) {
       LookupElement lookupElement = (LookupElement) item;
-      if (lookupElement.getObject() instanceof PsiElement) {
-        itemElement = (PsiElement) lookupElement.getObject();
+      final PsiElement element = lookupElement.getPsiElement();
+      if (element != null) {
+        itemElement = element;
       }
     }
     return !(itemElement instanceof PsiFile);  // TODO deeper check?

@@ -34,6 +34,7 @@ public class BuildScriptDataBuilder {
   private final Set<String> repositories = ContainerUtil.newTreeSet();
   private final Set<String> dependencies = ContainerUtil.newTreeSet();
   private final Set<String> properties = ContainerUtil.newTreeSet();
+  private final Set<String> buildScriptProperties = ContainerUtil.newTreeSet();
   private final Set<String> buildScriptRepositories = ContainerUtil.newTreeSet();
   private final Set<String> buildScriptDependencies = ContainerUtil.newTreeSet();
   private final Set<String> other = ContainerUtil.newTreeSet();
@@ -84,9 +85,13 @@ public class BuildScriptDataBuilder {
   }
 
   private void addBuildscriptLines(@NotNull List<String> lines, @NotNull Function<String, String> padding) {
-    if (!buildScriptRepositories.isEmpty() || !buildScriptDependencies.isEmpty()) {
+    if (!buildScriptRepositories.isEmpty() || !buildScriptDependencies.isEmpty() || !buildScriptProperties.isEmpty()) {
       lines.add("buildscript {");
       final List<String> buildScriptLines = ContainerUtil.newSmartList();
+      if (!buildScriptProperties.isEmpty()) {
+        buildScriptLines.addAll(buildScriptProperties);
+        buildScriptLines.add("");
+      }
       if (!buildScriptRepositories.isEmpty()) {
         buildScriptLines.add("repositories {");
         buildScriptLines.addAll(ContainerUtil.map(buildScriptRepositories, padding));
@@ -101,6 +106,11 @@ public class BuildScriptDataBuilder {
       lines.add("}");
       lines.add("");
     }
+  }
+
+  public BuildScriptDataBuilder addBuildscriptPropertyDefinition(@NotNull String definition) {
+    buildScriptProperties.add(definition.trim());
+    return this;
   }
 
   public BuildScriptDataBuilder addBuildscriptRepositoriesDefinition(@NotNull String definition) {

@@ -6,19 +6,23 @@
     The plugin extends standard IDEA .class file viewer with powerful Fernflower decompiler -
     no more dull "{ /* compiled code */ }" in method bodies!
   </description>
-  <version>0.1</version>
   <vendor email="support@jetbrains.com" url="https://www.jetbrains.com">JetBrains</vendor>
 
-  <idea-version since-build="135"/>
+  <idea-version since-build="143.381"/>
 
   <depends>com.intellij.modules.java</depends>
 
   <resource-bundle>messages.Decompiler</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-
     <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last"/>
   </extensions>
+
+  <actions>
+   <group>
+      <action id="ByteCodeDecompiler" class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"/>
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
+    </group>
+  </actions>
 
 </idea-plugin>

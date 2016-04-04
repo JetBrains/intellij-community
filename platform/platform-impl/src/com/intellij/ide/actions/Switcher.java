@@ -521,7 +521,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
 
       files.setCellRenderer(filesRenderer);
-      files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
+      files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
       files.addKeyListener(this);
       ScrollingUtil.installActions(files);
       files.addMouseListener(this);
@@ -532,15 +532,9 @@ public class Switcher extends AnAction implements DumbAware {
       this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
         files.setAlignmentY(1f);
-        if (files.getModel().getSize() > 20) {
-          final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
-          pane.setPreferredSize(new Dimension(files.getPreferredSize().width + 10, 20 * 20));
-          pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-          this.add(pane, BorderLayout.EAST);
-        }
-        else {
-          this.add(files, BorderLayout.EAST);
-        }
+        final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
+        pane.setPreferredSize(new Dimension(files.getPreferredSize().width, 20 * 20));
+        this.add(pane, BorderLayout.EAST);
         if (selectionIndex > -1) {
           files.setSelectedIndex(selectionIndex);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.NonNls;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -84,7 +84,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     checkIBus();
-    checkJAyatana();
     startDiskSpaceMonitoring();
 
     if (ApplicationManager.getApplication().isInternal() || StatisticsUploadAssistant.isSendAllowed()) {
@@ -141,16 +140,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             }
           }
         }
-      }
-    }
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  private void checkJAyatana() {
-    if (SystemInfo.isXWindow) {
-      String originalOpts = System.getenv("_ORIGINAL_JAVA_TOOL_OPTIONS");
-      if (originalOpts != null && originalOpts.contains("jayatanaag.jar")) {
-        showNotification("ayatana.menu.warn.message");
       }
     }
   }
@@ -295,7 +284,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final int INTERVAL_IN_MINUTES = 30;
 
   private static void startActivityMonitoring() {
-    JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+    JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
       public void run() {
         long activityCount = ourStudioActionCount.getAndSet(0);

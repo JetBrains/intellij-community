@@ -42,6 +42,6 @@ public class SimpleDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Default viewer";
+    return "Side-by-side viewer";
   }
 }

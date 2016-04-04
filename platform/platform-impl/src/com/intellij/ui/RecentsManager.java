@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-@State(name = "RecentsManager", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
+@State(name = "RecentsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class RecentsManager implements PersistentStateComponent<Element> {
   @NonNls private static final String KEY_ELEMENT_NAME = "key";
   @NonNls private static final String RECENT_ELEMENT_NAME = "recent";

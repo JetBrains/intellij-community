@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.NotNull;
@@ -55,23 +56,40 @@ public class PyTestConfigurationProducer extends PythonTestConfigurationProducer
                                                   Ref<PsiElement> sourceElement) {
     final PsiElement element = sourceElement.get();
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (!(configuration instanceof PyTestRunConfiguration)) return false;
-    if (module == null) return false;
+    if (!(configuration instanceof PyTestRunConfiguration)) {
+      return false;
+    }
+    if (module == null) {
+      return false;
+    }
     if (!(TestRunnerService.getInstance(module).getProjectConfiguration().equals(
-           PythonTestConfigurationsModel.PY_TEST_NAME))) return false;
+      PythonTestConfigurationsModel.PY_TEST_NAME))) {
+      return false;
+    }
 
     final PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
-    if (file == null) return false;
+    if (file == null) {
+      return false;
+    }
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return false;
+    if (virtualFile == null) {
+      return false;
+    }
 
     if (file instanceof PyFile || file instanceof PsiDirectory) {
-      final List<PyStatement> testCases = PyTestUtil.getPyTestCasesFromFile(file);
-      if (testCases.isEmpty()) return false;
-    } else return false;
+      final List<PyStatement> testCases = PyTestUtil.getPyTestCasesFromFile(file, TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()));
+      if (testCases.isEmpty()) {
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
 
     final Sdk sdk = PythonSdkType.findPythonSdk(context.getModule());
-    if (sdk == null) return false;
+    if (sdk == null) {
+      return false;
+    }
 
     configuration.setUseModuleSdk(true);
     configuration.setModule(ModuleUtilCore.findModuleForPsiElement(element));
@@ -83,8 +101,9 @@ public class PyTestConfigurationProducer extends PythonTestConfigurationProducer
       ((PyTestRunConfiguration)configuration).setKeywords(keywords);
       configuration.setName("py.test in " + keywords);
     }
-    else
+    else {
       configuration.setName("py.test in " + file.getName());
+    }
     return true;
   }
 
@@ -142,9 +161,12 @@ public class PyTestConfigurationProducer extends PythonTestConfigurationProducer
     if (virtualFile == null) return false;
 
     if (file instanceof PyFile || file instanceof PsiDirectory) {
-      final List<PyStatement> testCases = PyTestUtil.getPyTestCasesFromFile(file);
+      final List<PyStatement> testCases = PyTestUtil.getPyTestCasesFromFile(file, TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()));
       if (testCases.isEmpty()) return false;
-    } else return false;
+    }
+    else {
+      return false;
+    }
 
     final Sdk sdk = PythonSdkType.findPythonSdk(context.getModule());
     if (sdk == null) return false;

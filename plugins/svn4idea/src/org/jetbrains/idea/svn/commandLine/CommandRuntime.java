@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,6 @@ public class CommandRuntime {
   @NotNull private final SvnVcs myVcs;
   @NotNull private final List<CommandRuntimeModule> myModules;
   private final String exePath;
-  @NotNull private final String executableLocale;
 
   public CommandRuntime(@NotNull SvnVcs vcs, @NotNull AuthenticationService authenticationService) {
     myVcs = vcs;
@@ -52,7 +50,6 @@ public class CommandRuntime {
 
     SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
     exePath = settings.getCommandLinePath();
-    executableLocale = Registry.stringValue(SvnExecutableChecker.SVN_EXECUTABLE_LOCALE_REGISTRY_KEY);
 
     myModules = ContainerUtil.newArrayList();
     myModules.add(new CommandParametersResolutionModule(this));
@@ -237,7 +234,7 @@ public class CommandRuntime {
 
     if (!myVcs.getSvnConfiguration().isRunUnderTerminal() || isLocal(command)) {
       command.putIfNotPresent("--non-interactive");
-      executor = new CommandExecutor(exePath, executableLocale, command);
+      executor = new CommandExecutor(exePath, command);
     }
     else {
       // do not explicitly specify "--force-interactive" as it is not supported in svn 1.7 - commands will be interactive by default as
@@ -254,8 +251,8 @@ public class CommandRuntime {
   @NotNull
   private TerminalExecutor newTerminalExecutor(@NotNull Command command) {
     return SystemInfo.isWindows
-           ? new WinTerminalExecutor(exePath, executableLocale, command)
-           : new TerminalExecutor(exePath, executableLocale, command);
+           ? new WinTerminalExecutor(exePath, command)
+           : new TerminalExecutor(exePath, command);
   }
 
   public static boolean isLocal(@NotNull Command command) {

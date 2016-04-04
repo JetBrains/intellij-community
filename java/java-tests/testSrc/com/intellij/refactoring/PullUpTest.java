@@ -25,7 +25,6 @@ import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.containers.MultiMap;
@@ -98,6 +97,11 @@ public class PullUpTest extends LightRefactoringTestCase {
   public void testNotFunctionalAnymore() {
     setLanguageLevel(LanguageLevel.JDK_1_8);
     doTest(true, "Functional expression demands functional interface to have exact one method", new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, true));
+  }
+
+  public void testPullToInterfaceAsDefault() throws Exception {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(true, "Method <b><code>mass()</code></b> uses field <b><code>SimplePlanet.mass</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("mass", PsiMethod.class, false));
   }
 
   public void testStillFunctional() {

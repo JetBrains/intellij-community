@@ -26,7 +26,7 @@ class AlienTest {
 
     static {
         IInt i1 = MyTest::<error descr="Cannot resolve method 'abracadabra'">abracadabra</error>;
-        IInt i2 = MyTest::<error descr="Cannot resolve method 'foo'">foo</error>;
+        IInt i2 = MyTest::<error descr="Invalid method reference: int cannot be converted to String">foo</error>;
         IInt i3 = MyTest::<error descr="Cannot resolve method 'bar'">bar</error>;
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IIntInt'">IIntInt i4 = MyTest::bar;</error>
         IInt i5 = <error descr="Non-static method cannot be referenced from a static context">MyTest::baz</error>;

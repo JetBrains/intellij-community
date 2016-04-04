@@ -88,8 +88,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
     myOverridenDefaultComponent = overridenDefaultComponent;
   }
 
-// Made non-final for Fabrique
-  public Component getDefaultComponent(final Container focusCycleRoot) {
+  public final Component getDefaultComponent(final Container focusCycleRoot) {
     if (isNoDefaultComponent()) return null;
 
     if (myOverridenDefaultComponent != null) {

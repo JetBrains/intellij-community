@@ -49,10 +49,14 @@ public class HgStatusCommand {
   private final boolean myIncludeUnknown;
   private final boolean myIncludeIgnored;
   private final boolean myIncludeCopySource;
+  private boolean myCleanStatus = false; // should be always false, except checking file existence in revision
 
   @Nullable private final HgRevisionNumber myBaseRevision;
   @Nullable private final HgRevisionNumber myTargetRevision;
 
+  public void cleanFilesOption(boolean clean) {
+    myCleanStatus = clean;
+  }
 
   public static class Builder {
     private boolean includeAdded;
@@ -160,6 +164,9 @@ public class HgStatusCommand {
     }
     if (myIncludeCopySource) {
       options.add("--copies");
+    }
+    if (myCleanStatus) {
+      options.add("--clean");
     }
     if (myBaseRevision != null && (!myBaseRevision.getRevision().isEmpty() || !myBaseRevision.getChangeset().isEmpty())) {
       options.add("--rev");

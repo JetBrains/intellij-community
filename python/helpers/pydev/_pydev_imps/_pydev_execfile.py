@@ -8,11 +8,11 @@ def execfile(file, glob=None, loc=None):
 
     # It seems that the best way is using tokenize.open(): http://code.activestate.com/lists/python-dev/131251/
     import tokenize
-    stream = tokenize.open(file)
+    stream = tokenize.open(file)  # @UndefinedVariable
     try:
         contents = stream.read()
     finally:
         stream.close()
 
     #execute the script (note: it's important to compile first to have the filename set in debug mode)
-    exec(compile(contents+"\n", file, 'exec'), glob, loc) 
+    exec(compile(contents+"\n", file, 'exec'), glob, loc)

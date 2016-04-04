@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,10 +105,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     myActionsPanel.add(installFromDisk);
 
     StatusText emptyText = pluginTable.getEmptyText();
-    emptyText.setText("Nothing to show.");
-    emptyText.appendText(" Click ");
-    emptyText.appendText("Browse", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
-    emptyText.appendText(" to search for non-bundled plugins.");
+    emptyText.setText("No plugins found. ");
+    emptyText.appendText("Search in repositories", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
   }
 
   private static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,

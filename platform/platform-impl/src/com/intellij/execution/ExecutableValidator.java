@@ -106,7 +106,8 @@ public abstract class ExecutableValidator {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(executable);
       commandLine.addParameters(processParameters);
-      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
+      commandLine.setCharset(CharsetToolkit.getDefaultSystemCharset());
+      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
       ProcessOutput result = handler.runProcess(TIMEOUT_MS);
       boolean timeout = result.isTimeout();
       int exitCode = result.getExitCode();

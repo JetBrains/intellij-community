@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import org.jetbrains.annotations.NotNull;
 
 public class EdgePrintElementImpl extends PrintElementWithGraphElement implements EdgePrintElement {
+
   @NotNull
   public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdgeType edgeType) {
     switch (edgeType) {
@@ -48,7 +49,7 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
                               int positionInOtherRow,
                               @NotNull Type type,
                               @NotNull GraphEdge graphEdge,
-                              @NotNull boolean hasArrow,
+                              boolean hasArrow,
                               @NotNull PrintElementManager printElementManager) {
     super(rowIndex, positionInCurrentRow, graphEdge, printElementManager);
     myType = type;

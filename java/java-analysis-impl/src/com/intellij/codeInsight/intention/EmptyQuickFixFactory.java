@@ -169,6 +169,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createAddExceptionFromFieldInitializerToConstructorThrowsFix(@NotNull PsiElement element) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement psiElement) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -606,6 +612,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return QuickFixes.EMPTY_FIX;
   }
 }

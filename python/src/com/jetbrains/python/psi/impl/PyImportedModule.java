@@ -19,7 +19,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
@@ -27,12 +26,10 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * @author yole
  */
-public class PyImportedModule extends LightElement implements NameDefiner {
+public class PyImportedModule extends LightElement {
   @Nullable private PyImportElement myImportElement;
   @NotNull private final PyFile myContainingFile;
   @NotNull private final QualifiedName myImportedPrefix;
@@ -42,7 +39,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
    * @param containingFile file to be used as anchor e.g. to determine relative import position
    * @param importedPrefix qualified name to resolve
    *
-   * @see com.jetbrains.python.psi.resolve.ResolveImportUtil
+   * @see ResolveImportUtil
    */
   public PyImportedModule(@Nullable PyImportElement importElement, @NotNull PyFile containingFile, @NotNull QualifiedName importedPrefix) {
     super(containingFile.getManager(), PythonLanguage.getInstance());
@@ -60,50 +57,6 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   @NotNull
   public QualifiedName getImportedPrefix() {
     return myImportedPrefix;
-  }
-
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
-    throw new UnsupportedOperationException();
-  }
-
-  public PsiElement getElementNamed(String the_name) {
-    QualifiedName prefix = myImportedPrefix.append(the_name);
-    if (myImportElement != null) {
-      final QualifiedName qName = myImportElement.getImportedQName();
-      if (qName != null && qName.getComponentCount() == prefix.getComponentCount()) {
-        return resolve(myImportElement, prefix);
-      }
-      return new PyImportedModule(myImportElement, myContainingFile, prefix);
-    }
-    final PyImportElement fromImportElement = findMatchingFromImport(myImportedPrefix, the_name);
-    if (fromImportElement != null) {
-      return fromImportElement.resolve();
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private PyImportElement findMatchingFromImport(QualifiedName prefix, String name) {
-    final List<PyFromImportStatement> fromImports = getContainingFile().getFromImports();
-    for (PyFromImportStatement fromImport : fromImports) {
-      final QualifiedName qName = fromImport.getImportSourceQName();
-      if (prefix.equals(qName)) {
-        final PyImportElement[] importElements = fromImport.getImportElements();
-        for (PyImportElement importElement : importElements) {
-          final QualifiedName importedName = importElement.getImportedQName();
-          if (importedName != null && importedName.matches(name)) {
-            return importElement;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  public boolean mustResolveOutside() {
-    return true;
   }
 
   public String getText() {
@@ -160,9 +113,5 @@ public class PyImportedModule extends LightElement implements NameDefiner {
     final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement, prefix);
     final PsiElement packageInit = PyUtil.turnDirIntoInit(resolved);
     return packageInit != null ? packageInit : resolved;
-  }
-
-  public boolean isAncestorOf(PyImportedModule other) {
-    return PsiTreeUtil.isAncestor(myContainingFile, other.myContainingFile, true);
   }
 }

@@ -186,6 +186,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       jar("extensions.jar") { module("extensions")}
 
+      jar("external-system-rt.jar") { module("external-system-rt")}
+
       jar([name: "idea.jar", duplicate: "preserve"]) {
         implementationModules.each { module it}
       }
@@ -461,6 +463,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
       }
       jar("remote-servers-git.jar") {
         moduleOptional("remote-servers-git")
+        moduleOptional("remote-servers-git-java")
       }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")
@@ -665,6 +668,17 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     layoutPlugin("settings-repository") {
       fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**,**/dev/**")
     }
+
+    pluginDir("yaml") {
+      dir("lib") {
+        jar("yaml.jar") {
+          noResources("yaml")
+          module("yaml")
+        }
+        resources("yaml")
+      }
+    }
+
   }
 }
 
@@ -995,6 +1009,9 @@ def layout_core(String home, String target) {
       include(name: "snappy-in-java-0.3.1.jar")
       include(name: "jayatana-1.2.4.jar")
       include(name: "imgscalr-lib-4.2.jar")
+      include(name: "batik-all.jar")
+      include(name: "xmlgraphics-commons-1.5.jar")
+      include(name: "xml-apis-ext.jar")
     }
   }
 }

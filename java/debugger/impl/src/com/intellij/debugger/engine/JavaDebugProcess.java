@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -48,6 +49,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -58,7 +60,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
-import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -87,7 +89,7 @@ public class JavaDebugProcess extends XDebugProcess {
     myEditorsProvider = new JavaDebuggerEditorsProvider();
     final DebugProcessImpl process = javaSession.getProcess();
 
-    List<XBreakpointHandler> handlers = new ArrayList<XBreakpointHandler>();
+    List<XBreakpointHandler> handlers = new ArrayList<>();
     handlers.add(new JavaBreakpointHandler.JavaLineBreakpointHandler(process));
     handlers.add(new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process));
     handlers.add(new JavaBreakpointHandler.JavaFieldBreakpointHandler(process));
@@ -106,27 +108,32 @@ public class JavaDebugProcess extends XDebugProcess {
         if (event == DebuggerSession.Event.PAUSE
             || event == DebuggerSession.Event.CONTEXT
             || event == DebuggerSession.Event.REFRESH
+            || event == DebuggerSession.Event.REFRESH_WITH_STACK
                && myJavaSession.isPaused()) {
           final SuspendContextImpl newSuspendContext = newContext.getSuspendContext();
-          if (newSuspendContext != null && shouldApplyContext(newContext)) {
+          if (newSuspendContext != null &&
+              (shouldApplyContext(newContext) || event == DebuggerSession.Event.REFRESH_WITH_STACK)) {
             process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
               @Override
               public void contextAction() throws Exception {
-                newSuspendContext.initExecutionStacks(newContext.getThreadProxy());
+                ThreadReferenceProxyImpl threadProxy = newContext.getThreadProxy();
+                newSuspendContext.initExecutionStacks(threadProxy);
 
-                List<Pair<Breakpoint, Event>> descriptors =
-                  DebuggerUtilsEx.getEventDescriptors(newSuspendContext);
-                if (!descriptors.isEmpty()) {
-                  Breakpoint breakpoint = descriptors.get(0).getFirst();
-                  XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
-                  if (xBreakpoint != null) {
+                Pair<Breakpoint, Event> item = ContainerUtil.getFirstItem(DebuggerUtilsEx.getEventDescriptors(newSuspendContext));
+                if (item != null) {
+                  XBreakpoint xBreakpoint = item.getFirst().getXBreakpoint();
+                  Event second = item.getSecond();
+                  if (xBreakpoint != null && second instanceof LocatableEvent &&
+                      threadProxy != null && ((LocatableEvent)second).thread() == threadProxy.getThreadReference()) {
                     ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
                     unsetPausedIfNeeded(newContext);
+                    SourceCodeChecker.checkSource(newContext);
                     return;
                   }
                 }
                 getSession().positionReached(newSuspendContext);
                 unsetPausedIfNeeded(newContext);
+                SourceCodeChecker.checkSource(newContext);
               }
             });
           }
@@ -187,9 +194,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
   private void unsetPausedIfNeeded(DebuggerContextImpl context) {
     SuspendContextImpl suspendContext = context.getSuspendContext();
-    if (suspendContext != null
-        && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
-        && context.getThreadProxy() != suspendContext.getThread()) {
+    if (suspendContext != null && !suspendContext.suspends(context.getThreadProxy())) {
       ((XDebugSessionImpl)getSession()).unsetPaused();
     }
   }

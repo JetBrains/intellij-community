@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class SubsequentFieldAligner implements ChildAlignmentStrategyProvider {
+public class SubsequentFieldAligner extends ChildAlignmentStrategyProvider {
 
   private final static Set<IElementType> TYPES_TO_ALIGN = ContainerUtil.newHashSet(
     JavaElementType.MODIFIER_LIST,

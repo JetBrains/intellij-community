@@ -51,7 +51,6 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   }
 
   public void apply() throws ConfigurationException {
-    myPanel.validate();
     myPanel.saveSettings();
     if (myPanel.getProjectSettings().isCheckIncomingOutgoing()) {
       myProject.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).show();

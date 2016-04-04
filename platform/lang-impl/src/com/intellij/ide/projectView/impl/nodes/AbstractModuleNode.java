@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> implements NavigatableWithText {
   protected AbstractModuleNode(Project project, Module module, ViewSettings viewSettings) {
@@ -40,32 +42,31 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
 
   @Override
   public void update(PresentationData presentation) {
-    if (getValue().isDisposed()) {
+    Module module = getValue();
+    if (module == null || module.isDisposed()) {
       setValue(null);
       return;
     }
-    presentation.setPresentableText(getValue().getName());
+
+    presentation.setPresentableText(module.getName());
     if (showModuleNameInBold()) {
-      presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      presentation.addText(module.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
-    presentation.setIcon(ModuleType.get(getValue()).getIcon());
+    presentation.setIcon(ModuleType.get(module).getIcon());
+
+    presentation.setTooltip(ModuleType.get(module).getName());
   }
 
   protected boolean showModuleNameInBold() {
     return true;
   }
 
-
-  @Override
-  public String getTestPresentation() {
-    return "Module";
-  }
-
   @NotNull
   @Override
   public Collection<VirtualFile> getRoots() {
-    return Arrays.asList(ModuleRootManager.getInstance(getValue()).getContentRoots());
+    Module module = getValue();
+    return module != null ? Arrays.asList(ModuleRootManager.getInstance(module).getContentRoots()) : Collections.<VirtualFile>emptyList();
   }
 
   @Override
@@ -73,24 +74,17 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
     Module module = getValue();
     if (module == null || module.isDisposed()) return false;
 
-    final VirtualFile testee;
     if (file.getFileSystem() instanceof JarFileSystem) {
-      testee = JarFileSystem.getInstance().getVirtualFileForJar(file);
-      if (testee == null) return false;
+      VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      if (local == null) return false;
+      file = local;
     }
-    else {
-      testee = file;
-    }
-    for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
-      if (VfsUtilCore.isAncestor(root, testee, false)) return true;
-    }
-    return false;
-  }
 
-  @Override
-  public String getToolTip() {
-    final Module module = getValue();
-    return ModuleType.get(module).getName();
+    for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+      if (VfsUtilCore.isAncestor(root, file, false)) return true;
+    }
+
+    return false;
   }
 
   @Override
@@ -103,11 +97,17 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
 
   @Override
   public String getNavigateActionText(boolean focusEditor) {
-    return "Open Module Settings";
+    return ActionsBundle.message("action.ModuleSettings.navigate");
   }
 
   @Override
   public boolean canNavigate() {
     return ProjectSettingsService.getInstance(myProject).canOpenModuleSettings() && getValue() != null;
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public String getTestPresentation() {
+    return "Module";
   }
 }

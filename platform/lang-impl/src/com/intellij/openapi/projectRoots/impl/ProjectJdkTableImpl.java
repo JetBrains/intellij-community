@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.*;
 
 @State(
   name = "ProjectJdkTable",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "jdk.table.xml", roamingType = RoamingType.DISABLED)
 )
 public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableComponent, PersistentStateComponent<Element> {
   private final List<Sdk> mySdks = new ArrayList<Sdk>();

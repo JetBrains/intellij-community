@@ -46,6 +46,10 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
     doTestConfigured(inspection);
   }
 
+  public void testFieldUsedInAnotherMethodAsQualifier() throws Exception {
+    doTest();
+  }
+
   private void doTestConfigured(FieldCanBeLocalInspection inspection) {
     inspection.EXCLUDE_ANNOS.add(Deprecated.class.getName());
     doTest("fieldCanBeLocal/" + getTestName(true), inspection);

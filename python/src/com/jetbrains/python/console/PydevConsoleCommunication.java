@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.WaitFor;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
@@ -41,6 +42,7 @@ import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.List;
@@ -75,7 +77,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * This is the server responsible for giving input to a raw_input() requested.
    */
-  private WebServer myWebServer;
+  private MyWebServer myWebServer;
 
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
 
@@ -112,7 +114,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     super(project);
 
     //start the server that'll handle input requests
-    myWebServer = new WebServer(clientPort, null);
+    myWebServer = new MyWebServer(clientPort);
+    
     myWebServer.addHandler("$default", this);
     this.myWebServer.start();
 
@@ -623,5 +626,45 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   public PythonDebugConsoleCommunication getDebugCommunication() {
     return myDebugCommunication;
+  }
+  
+  
+  public boolean waitForTerminate() {
+    if (myWebServer != null) {
+      return myWebServer.waitForTerminate();
+    }
+    
+    return true;
+  }
+  
+  private static final class MyWebServer extends WebServer {
+    public MyWebServer(int port) {
+      super(port);
+    }
+    
+    @Override
+    public synchronized void shutdown() {
+      try {
+        if (serverSocket != null) {
+          serverSocket.close();
+        }
+      }
+      catch (IOException e) {
+        //pass
+      }
+      super.shutdown();
+    }
+    
+    public boolean waitForTerminate() {
+      if (listener != null) {
+        return new WaitFor(10000){
+          @Override
+          protected boolean condition() {
+            return !listener.isAlive();
+          }
+        }.isConditionRealized();
+      }
+      return true;
+    }
   }
 }

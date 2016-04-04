@@ -65,7 +65,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private XDebugSessionImpl mySession;
   private XDebugSessionData mySessionData;
 
-  private Runnable myRebuildWatchesRunnable = new Runnable() {
+  private final Runnable myRebuildWatchesRunnable = new Runnable() {
     @Override
     public void run() {
       if (myWatchesView != null && myWatchesView.rebuildNeeded()) {

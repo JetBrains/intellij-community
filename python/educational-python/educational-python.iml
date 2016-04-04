@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="python-openapi" exported="" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="python-pydev" />
+    <orderEntry type="library" exported="" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="xdebugger-api" />
+    <orderEntry type="library" name="http-client-3.1" level="project" />
+    <orderEntry type="module" module-name="RegExpSupport" exported="" />
+    <orderEntry type="module" module-name="testRunner" />
+    <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="xdebugger-impl" />
+    <orderEntry type="module" module-name="xml-psi-impl" />
+    <orderEntry type="module" module-name="python-community-ide-resources" />
+    <orderEntry type="module" module-name="python-community" />
+  </component>
+</module>

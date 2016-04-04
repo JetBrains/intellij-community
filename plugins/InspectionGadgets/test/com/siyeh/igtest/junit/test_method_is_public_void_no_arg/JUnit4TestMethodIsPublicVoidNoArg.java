@@ -21,4 +21,7 @@ public class JUnit4TestMethodIsPublicVoidNoArg {
 
   @Test
   public void testFive() {}
+
+  @Test
+  public void testMock(@mockit.Mocked String s) {}
 }

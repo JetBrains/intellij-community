@@ -99,7 +99,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod leastConcreteSuperMethod = getLeastConcreteSuperMethod(method);
+      final PsiMethod leastConcreteSuperMethod = getDirectSuperMethod(method);
       if (leastConcreteSuperMethod == null) {
         return;
       }
@@ -127,15 +127,16 @@ public class RefusedBequestInspectionBase extends BaseInspection {
     }
 
     @Nullable
-    private PsiMethod getLeastConcreteSuperMethod(PsiMethod method) {
-      final PsiMethod[] superMethods = method.findSuperMethods(true);
-      for (final PsiMethod superMethod : superMethods) {
-        final PsiClass containingClass = superMethod.getContainingClass();
-        if (containingClass != null && !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) && !containingClass.isInterface()) {
-          return superMethod;
-        }
+    private PsiMethod getDirectSuperMethod(PsiMethod method) {
+      final PsiMethod superMethod = MethodUtils.getSuper(method);
+      if (superMethod ==  null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return null;
       }
-      return null;
+      final PsiClass containingClass = superMethod.getContainingClass();
+      if (containingClass == null || containingClass.isInterface()) {
+        return null;
+      }
+      return superMethod;
     }
 
     private boolean containsSuperCall(@NotNull PsiElement context, @NotNull PsiMethod method) {

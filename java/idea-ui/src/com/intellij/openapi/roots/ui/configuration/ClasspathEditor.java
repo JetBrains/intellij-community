@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -163,7 +164,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       super(new GridBagLayout());
 
       add(new JLabel(ProjectBundle.message("project.roots.classpath.format.label")),
-          new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 6, 6, 0), 0, 0));
+          new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(10, 6, 6, 0), 0, 0));
 
       formatIdToDescription.put(ClassPathStorageUtil.DEFAULT_STORAGE, ProjectBundle.message("project.roots.classpath.format.default.descr"));
       for (ClasspathStorageProvider provider : providers) {
@@ -173,7 +174,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       comboBoxClasspathFormat = new ComboBox(formatIdToDescription.values().toArray());
       updateClasspathFormat();
       add(comboBoxClasspathFormat,
-          new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
+          new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(6, 6, 6, 0), 0, 0));
     }
 
     private void updateClasspathFormat() {

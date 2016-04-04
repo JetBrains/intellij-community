@@ -21,7 +21,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -59,7 +58,6 @@ import java.awt.event.ActionListener;
 import java.util.*;
 
 public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.DuplicateStringLiteralInspection");
   @SuppressWarnings({"WeakerAccess"}) public int MIN_STRING_LENGTH = 5;
   @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_PROPERTY_KEYS = false;
   @NonNls private static final String BR = "<br>";
@@ -101,8 +99,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
                                             final boolean isOnTheFly) {
     Object value = originalExpression.getValue();
     if (!(value instanceof String)) return;
-    final Project project = holder.getProject();
-    if (!shouldCheck(project, originalExpression)) return;
+    if (!shouldCheck(originalExpression)) return;
     final String stringToFind = (String)value;
     if (stringToFind.length() == 0) return;
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
@@ -152,7 +149,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           PsiElement element = file.findElementAt(offset);
           if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
           PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
-          if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(project, expression)) {
+          if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(expression)) {
             foundExpr.add(expression);
           }
           return true;
@@ -215,8 +212,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     holder.registerProblem(originalExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, array);
   }
 
-  private boolean shouldCheck(@NotNull Project project, @NotNull PsiLiteralExpression expression) {
-    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(project, expression, new THashMap<String, Object>())) return false;
+  private boolean shouldCheck(@NotNull PsiLiteralExpression expression) {
+    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, new THashMap<String, Object>())) return false;
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 

@@ -56,7 +56,7 @@ public class ExternalMergeTool {
     catch (ProcessCanceledException ignore) {
     }
     catch (Throwable e) {
-      LOG.error(e);
+      LOG.warn(e);
       Messages.showErrorDialog(project, e.getMessage(), "Can't Show Merge In External Tool");
     }
   }

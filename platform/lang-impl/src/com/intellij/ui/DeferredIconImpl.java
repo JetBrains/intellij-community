@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,11 @@ package com.intellij.ui;
 
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
@@ -33,6 +35,7 @@ import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
@@ -43,7 +46,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-public class DeferredIconImpl<T> implements DeferredIcon {
+public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, ScalableIcon {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.DeferredIconImpl");
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
   @NotNull
@@ -57,11 +61,33 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private final boolean myAutoUpdatable;
   private long myLastCalcTime;
   private long myLastTimeSpent;
+  private float myScale = 1f;
+  private Icon myOriginalDeferredIcon = null;
 
   private static final Executor ourIconsCalculatingExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
 
   private final IconListener<T> myEvalListener;
   private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator", 200);
+
+  @Override
+  public Icon scale(final float scaleFactor) {
+    if (scaleFactor != myScale) {
+      DeferredIconImpl icon = new DeferredIconImpl(null, myParam, myNeedReadAction, myEvaluator, myEvalListener, myAutoUpdatable) {
+        @Override
+        void setDone(@NotNull Icon result) {
+          super.setDone(result);
+          if (result instanceof ScalableIcon) {
+            myDelegateIcon = ((ScalableIcon)result).scale(scaleFactor);
+          }
+        }
+      };
+      icon.myScale = scaleFactor;
+      icon.myOriginalDeferredIcon = myOriginalDeferredIcon == null ? this : myOriginalDeferredIcon;
+      return icon;
+    }
+    return this;
+  }
+
   private static class Holder {
     private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
   }
@@ -74,13 +100,26 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     this(baseIcon, param, needReadAction, evaluator, null, false);
   }
 
-  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, final Function<T, Icon> evaluator, IconListener<T> listener, boolean autoUpdatable) {
+  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, @NotNull Function<T, Icon> evaluator, @Nullable IconListener<T> listener, boolean autoUpdatable) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myEvaluator = evaluator;
     myNeedReadAction = needReadAction;
     myEvalListener = listener;
     myAutoUpdatable = autoUpdatable;
+    checkDelegationDepth();
+  }
+
+  private void checkDelegationDepth() {
+    int depth = 0;
+    DeferredIconImpl each = this;
+    while (each.myDelegateIcon instanceof DeferredIconImpl && depth < 50) {
+      depth++;
+      each = (DeferredIconImpl)each.myDelegateIcon;
+    }
+    if (depth >= 50) {
+      LOG.error("Too deep deferred icon nesting");
+    }
   }
 
   @NotNull
@@ -117,6 +156,9 @@ public class DeferredIconImpl<T> implements DeferredIcon {
                 @Override
                 public void run() {
                   evaluated[0] = evaluate();
+                  if (myScale != 1f && evaluated[0] instanceof ScalableIcon) {
+                    evaluated[0] = ((ScalableIcon)evaluated[0]).scale(myScale);
+                  }
                 }
               });
               if (myAutoUpdatable) {
@@ -144,6 +186,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         }
         final Icon result = evaluated[0];
         myDelegateIcon = result;
+        checkDelegationDepth();
 
         final boolean shouldRevalidate =
           Registry.is("ide.tree.deferred.icon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
@@ -218,7 +261,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     return target;
   }
 
-  private void setDone(@NotNull Icon result) {
+  void setDone(@NotNull Icon result) {
     if (myEvalListener != null) {
       myEvalListener.evalDone(this, myParam, result);
     }
@@ -228,6 +271,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       myEvaluator = null;
       myParam = null;
     }
+  }
+
+  @Nullable
+  @Override
+  public Icon retrieveIcon() {
+    return isDone() ? myDelegateIcon : evaluate();
   }
 
   @NotNull

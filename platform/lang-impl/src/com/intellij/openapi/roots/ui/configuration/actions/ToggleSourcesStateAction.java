@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.jps.model.JpsElement;
 
 import javax.swing.*;
+import java.util.Locale;
 
 /**
  * @author Eugene Zhuravlev
@@ -42,7 +43,8 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
     myEditHandler = editHandler;
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setText(editHandler.getMarkRootButtonText());
-    templatePresentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootTypeName()));
+    templatePresentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description",
+                                                              editHandler.getFullRootTypeName().toLowerCase(Locale.getDefault())));
     templatePresentation.setIcon(editHandler.getRootIcon());
   }
 

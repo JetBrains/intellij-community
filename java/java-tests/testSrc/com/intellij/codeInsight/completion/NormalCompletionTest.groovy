@@ -479,7 +479,24 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configure()
     assertStringItems 'final', 'finalize'
   }
+  public void testMethodCallAfterFinally() { doTest() }
   public void testPrivateInAnonymous() throws Throwable { doTest() }
+
+  public void testStaticMethodFromOuterClass() {
+    configure()
+    assertStringItems 'foo', 'A.foo', 'for'
+    assert LookupElementPresentation.renderElement(myItems[1]).itemText == 'A.foo'
+    selectItem(myItems[1])
+    checkResult()
+  }
+
+  public void testInstanceMethodFromOuterClass() {
+    configure()
+    assertStringItems 'foo', 'A.this.foo', 'for'
+    assert LookupElementPresentation.renderElement(myItems[1]).itemText == 'A.this.foo'
+    selectItem(myItems[1])
+    checkResult()
+  }
 
   public void testMethodParenthesesSpaces() throws Throwable {
     codeStyleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
@@ -1041,6 +1058,12 @@ public class ListUtils {
     doTest()
   }
 
+  public void testOuterSuperMethodCall() {
+    configure()
+    assert 'Class2.super.put' == LookupElementPresentation.renderElement(myItems[0]).itemText
+    type '\n'
+    checkResult() }
+
   public void testTopLevelClassesFromPackaged() throws Throwable {
     myFixture.addClass "public class Fooooo {}"
     final text = "package foo; class Bar { Fooo<caret> }"
@@ -1540,5 +1563,10 @@ class Bar {
     assert CompletionUtil.getOriginalElement(c2)
 
     assert c1.is(c2)
+  }
+
+  public void testShowMostSpecificOverride() {
+    configure()
+    assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
   }
 }

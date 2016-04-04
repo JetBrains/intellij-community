@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen",
                                                                     "pathlib.Path.open");
-  private static final String BINARY_FILE_TYPE = "io.FileIO[bytes]";
-  private static final String TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
+
+  private static final String PY2K_FILE_TYPE = "file";
+  private static final String PY3K_BINARY_FILE_TYPE = "io.FileIO[bytes]";
+  private static final String PY3K_TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
@@ -63,7 +65,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (type != null) {
       return type;
     }
-    type = getNamedTupleType(referenceTarget, anchor);
+    type = getNamedTupleType(referenceTarget, context, anchor);
     if (type != null) {
       return type;
     }
@@ -174,6 +176,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     if (rightExpression instanceof PyNumericLiteralExpression && ((PyNumericLiteralExpression)rightExpression).isIntegerLiteral()) {
+      if (leftTupleType.isHomogeneous()) {
+        return leftTupleType;
+      }
       final int multiplier = ((PyNumericLiteralExpression)rightExpression).getBigIntegerValue().intValue();
       final int originalSize = leftTupleType.getElementCount();
       // Heuristic
@@ -196,6 +201,11 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (addition.getRightExpression() != null) {
       final PyTupleType rightTupleType = as(context.getType(addition.getRightExpression()), PyTupleType.class);
       if (leftTupleType != null && rightTupleType != null) {
+        if (leftTupleType.isHomogeneous() || rightTupleType.isHomogeneous()) {
+          // We may try to find the common type of elements of two homogeneous tuple as an alternative
+          return null;
+        }
+        
         final PyType[] elementTypes = new PyType[leftTupleType.getElementCount() + rightTupleType.getElementCount()];
         for (int i = 0; i < leftTupleType.getElementCount(); i++) {
           elementTypes[i] = leftTupleType.getElementType(i);
@@ -226,7 +236,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getNamedTupleType(@NotNull PsiElement referenceTarget, @Nullable PsiElement anchor) {
+  private static PyType getNamedTupleType(@NotNull PsiElement referenceTarget,
+                                          @NotNull TypeEvalContext context,
+                                          @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       final QualifiedName calleeName = target.getCalleeName();
@@ -239,7 +251,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           if (callee != null) {
             final PyCallable callable = callee.getCallable();
             if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(callable.getQualifiedName())) {
-              return PyNamedTupleType.fromCall(call, 1);
+              return PyNamedTupleType.fromCall(call, context, 1);
             }
           }
         }
@@ -248,7 +260,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
       final PyFunction function = (PyFunction)referenceTarget;
       if (PyNames.NAMEDTUPLE.equals(function.getName()) && PyNames.COLLECTIONS_NAMEDTUPLE.equals(function.getQualifiedName())) {
-        return PyNamedTupleType.fromCall((PyCallExpression)anchor, 2);
+        return PyNamedTupleType.fromCall((PyCallExpression)anchor, context, 2);
       }
     }
     return null;
@@ -273,19 +285,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     final LanguageLevel level = LanguageLevel.forElement(anchor);
-    // Binary mode
-    if (mode.contains("b")) {
-      return PyTypeParser.getTypeByName(anchor, BINARY_FILE_TYPE);
-    }
-    // Text mode
-    else {
-      if (level.isPy3K() || "io.open".equals(callQName)) {
-        return PyTypeParser.getTypeByName(anchor, TEXT_FILE_TYPE);
-      }
-      else {
-        return PyTypeParser.getTypeByName(anchor, BINARY_FILE_TYPE);
+
+    if (level.isPy3K() || "io.open".equals(callQName)) {
+      if (mode.contains("b")) {
+        return PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE);
+      } else {
+        return PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE);
       }
     }
+
+    return PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE);
   }
 
   @Nullable

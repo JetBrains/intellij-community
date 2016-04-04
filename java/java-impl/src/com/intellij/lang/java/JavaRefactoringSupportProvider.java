@@ -23,6 +23,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.actions.IntroduceFunctionalParameterHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureHandler;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
@@ -83,6 +84,12 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceParameterHandler() {
     return new IntroduceParameterHandler();
+  }
+
+  @Nullable
+  @Override
+  public RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
+    return new IntroduceFunctionalParameterHandler();
   }
 
   @Override

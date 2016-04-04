@@ -15,18 +15,21 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import org.gradle.tooling.model.Model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
  * @since 7/14/2014
  */
-public interface ExternalProject extends Serializable {
+public interface ExternalProject extends Model, Serializable {
 
   @NotNull
   String getExternalSystemId();
@@ -67,9 +70,6 @@ public interface ExternalProject extends Serializable {
   //@NotNull
   //List<ExternalRepository> getRepositories();
 
-  //@NotNull
-  //List<ExternalDependency> getDependencies();
-
   @NotNull
   Map<String, ExternalPlugin> getPlugins();
 
@@ -84,4 +84,20 @@ public interface ExternalProject extends Serializable {
 
   @NotNull
   Map<String, ExternalSourceSet> getSourceSets();
+
+  /**
+   * The paths where the artifacts is constructed
+   *
+   * @return
+   */
+  @NotNull
+  List<File> getArtifacts();
+
+  /**
+   * The artifacts per configuration.
+   *
+   * @return a mapping between the name of a configuration and the files associated with it.
+   */
+  @NotNull
+  Map<String, Set<File>> getArtifactsByConfiguration();
 }

@@ -37,16 +37,18 @@ public class AddManyTestProcesses extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     for (int i = 0; i < 100; i++) {
+      final int finalI = i;
       new Task.Backgroundable(project, "Test Process", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         public void run(@NotNull final ProgressIndicator indicator) {
           for (int j = 0; j < 10000; j++) {
             TimeoutUtil.sleep(1);
             indicator.setText("foo " + j);
+            if (finalI % 10 == 0) {
+              indicator.setText2(j + " foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo");
+            }
           }
         }
       }.queue();
-
     }
-
   }
 }

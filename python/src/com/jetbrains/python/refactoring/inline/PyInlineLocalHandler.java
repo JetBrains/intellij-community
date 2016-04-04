@@ -16,6 +16,7 @@
 package com.jetbrains.python.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineActionHandler;
@@ -47,7 +48,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -165,8 +165,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
     for (final PsiElement ref : refsToInline) {
       final List<PsiElement> elems = new ArrayList<PsiElement>();
-      final List<ReadWriteInstruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false);
-      for (ReadWriteInstruction i : latestDefs) {
+      final List<Instruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false, false);
+      for (Instruction i : latestDefs) {
         elems.add(i.getElement());
       }
       final PsiElement[] defs = elems.toArray(new PsiElement[elems.size()]);
@@ -269,7 +269,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
                                                                   PyTargetExpression local, Project project) {
     if (expr != null) {
       try {
-        final List<ReadWriteInstruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), expr, true);
+        final List<Instruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), expr, true, true);
         if (candidates.size() == 1) {
           final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
           return Pair.create(expression, false);

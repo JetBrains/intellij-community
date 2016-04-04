@@ -52,9 +52,10 @@ internal class TestStateSplitter : MainConfigurationStateSplitter() {
   override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
 }
 
-@Bombed(year = 2016, month = Calendar.DECEMBER, day = 10)
+@Bombed(user = "vladimir.krivosheev", year = 2016, month = Calendar.DECEMBER, day = 10)
 internal class DirectoryBasedStorageTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
@@ -64,8 +65,8 @@ internal class DirectoryBasedStorageTest {
   @Rule fun getChain() = ruleChain
 
   @Test fun save() {
-    val dir = tempDirManager.newPath()
-    val storage = DirectoryBasedStorage(dir.toFile(), TestStateSplitter())
+    val dir = tempDirManager.newPath(refreshVfs = true)
+    val storage = DirectoryBasedStorage(dir, TestStateSplitter())
 
     val componentName = "test"
 

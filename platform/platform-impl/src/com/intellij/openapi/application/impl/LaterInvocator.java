@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
@@ -46,7 +47,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings({"SSBasedInspection"})
+@SuppressWarnings("SSBasedInspection")
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
   private static final boolean DEBUG = LOG.isDebugEnabled();
@@ -82,7 +83,7 @@ public class LaterInvocator {
 
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
-  private static volatile int ourQueueSkipCount = 0; // optimization
+  private static volatile int ourQueueSkipCount; // optimization
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
 
   private static final Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>(); // guarded by RUN_LOCK
@@ -135,7 +136,7 @@ public class LaterInvocator {
 
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
-    ourFrequentEventDetector.eventHappened();
+    ourFrequentEventDetector.eventHappened(runnable);
 
     final ActionCallback callback = new ActionCallback();
     RunnableInfo runnableInfo = new RunnableInfo(runnable, modalityState, expired, callback);
@@ -151,11 +152,15 @@ public class LaterInvocator {
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
+    final Ref<Throwable> exception = Ref.create();
     Runnable runnable1 = new Runnable() {
       @Override
       public void run() {
         try {
           runnable.run();
+        }
+        catch (Throwable e) {
+          exception.set(e);
         }
         finally {
           semaphore.up();
@@ -170,6 +175,9 @@ public class LaterInvocator {
     };
     invokeLater(runnable1, modalityState);
     semaphore.waitFor();
+    if (!exception.isNull()) {
+      throw new RuntimeException(exception.get());
+    }
   }
 
   public static void enterModal(@NotNull Object modalEntity) {

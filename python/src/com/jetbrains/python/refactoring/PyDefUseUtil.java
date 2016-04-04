@@ -41,7 +41,8 @@ public class PyDefUseUtil {
   }
 
   @NotNull
-  public static List<ReadWriteInstruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor, boolean acceptTypeAssertions) {
+  public static List<Instruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor, boolean acceptTypeAssertions,
+                                                boolean acceptImplicitImports) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(anchor);
@@ -58,25 +59,33 @@ public class PyDefUseUtil {
         instr = pred.iterator().next().num();
       }
     }
-    final Collection<ReadWriteInstruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions);
-    return new ArrayList<ReadWriteInstruction>(result);
+    final Collection<Instruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions, acceptImplicitImports);
+    return new ArrayList<Instruction>(result);
   }
 
-  private static Collection<ReadWriteInstruction> getLatestDefs(final String varName, final Instruction[] instructions, final int instr,
-                                                                final boolean acceptTypeAssertions) {
-    final Collection<ReadWriteInstruction> result = new LinkedHashSet<ReadWriteInstruction>();
+  private static Collection<Instruction> getLatestDefs(final String varName, final Instruction[] instructions, final int instr,
+                                                       final boolean acceptTypeAssertions, final boolean acceptImplicitImports) {
+    final Collection<Instruction> result = new LinkedHashSet<Instruction>();
     ControlFlowUtil.iteratePrev(instr, instructions,
                                 new Function<Instruction, ControlFlowUtil.Operation>() {
                                   @Override
                                   public ControlFlowUtil.Operation fun(Instruction instruction) {
+                                    final PsiElement element = instruction.getElement();
+                                    final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
                                     if (instruction instanceof ReadWriteInstruction) {
                                       final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
-                                      final PsiElement element = instruction.getElement();
-                                      final String name = elementName(element);
                                       final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                                      if ((access.isWriteAccess() || (acceptTypeAssertions && access.isAssertTypeAccess())) &&
-                                          Comparing.strEqual(name, varName)) {
-                                        result.add(rwInstruction);
+                                      if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
+                                        final String name = elementName(element);
+                                        if (Comparing.strEqual(name, varName)) {
+                                          result.add(rwInstruction);
+                                          return ControlFlowUtil.Operation.CONTINUE;
+                                        }
+                                      }
+                                    }
+                                    else if (acceptImplicitImports && implicit != null) {
+                                      if (!implicit.multiResolveName(varName).isEmpty()) {
+                                        result.add(instruction);
                                         return ControlFlowUtil.Operation.CONTINUE;
                                       }
                                     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.awt.Component
 import java.io.File
 
-public class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
+class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   @Volatile private var myCommitDialogShown: Boolean = false
   @Volatile private var myMergeDialogShown: Boolean = false
   @Volatile private var myMergeDelegate: () -> Unit = { throw IllegalStateException() }
@@ -141,40 +141,36 @@ public class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     return success
   }
 
-  public fun mergeDialogWasShown(): Boolean {
+  fun mergeDialogWasShown(): Boolean {
     return myMergeDialogShown
   }
 
-  public fun commitDialogWasShown(): Boolean {
+  fun commitDialogWasShown(): Boolean {
     return myCommitDialogShown
   }
 
-  public fun onMerge(delegate : () -> Unit) {
+  fun onMerge(delegate : () -> Unit) {
     myMergeDelegate = delegate
   }
 
-  public fun onCommit(delegate : (String) -> Boolean) {
+  fun onCommit(delegate : (String) -> Boolean) {
     myCommitDelegate = delegate
   }
 
-  @Deprecated("use onCommit")
-  public fun registerHandler(handler: CommitHandler) {
+  @Deprecated("use onCommit") fun registerHandler(handler: CommitHandler) {
     myCommitDelegate = { handler.commit(it) }
   }
 
-  @Deprecated("use onMerge")
-  public fun registerHandler(handler: MergeHandler) {
+  @Deprecated("use onMerge") fun registerHandler(handler: MergeHandler) {
     myMergeDelegate = { handler.showMergeDialog() }
   }
 
-  @Deprecated("use onCommit")
-  public interface CommitHandler {
-    public fun commit(commitMessage: String): Boolean
+  @Deprecated("use onCommit") interface CommitHandler {
+    fun commit(commitMessage: String): Boolean
   }
 
-  @Deprecated("use onMerge")
-  public interface MergeHandler {
-    public fun showMergeDialog()
+  @Deprecated("use onMerge") interface MergeHandler {
+    fun showMergeDialog()
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.IntentionWrapper;
@@ -53,7 +50,7 @@ import java.util.*;
 /**
 * @author cdr
 */
-class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
+public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionListStep");
 
   private final Set<IntentionActionWithTextCaching> myCachedIntentions =
@@ -62,9 +59,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedGutters = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedNotifications = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final IntentionManagerSettings mySettings;
   @Nullable
   private final IntentionHintComponent myIntentionHintComponent;
+  @Nullable
   private final Editor myEditor;
   private final PsiFile myFile;
   private final Project myProject;
@@ -81,9 +80,9 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   };
   private Runnable myFinalRunnable;
 
-  IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
+  public IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
                     @NotNull ShowIntentionsPass.IntentionsInfo intentions,
-                    @NotNull Editor editor,
+                    @Nullable Editor editor,
                     @NotNull PsiFile file,
                     @NotNull Project project) {
     this(intentionHintComponent, editor, file, project);
@@ -91,7 +90,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   }
 
   IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
-                    @NotNull Editor editor,
+                    @Nullable Editor editor,
                     @NotNull PsiFile file,
                     @NotNull Project project) {
     myIntentionHintComponent = intentionHintComponent;
@@ -107,71 +106,81 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     changed |= wrapActionsTo(intentions.inspectionFixesToShow, myCachedInspectionFixes, callUpdate);
     changed |= wrapActionsTo(intentions.intentionsToShow, myCachedIntentions, callUpdate);
     changed |= wrapActionsTo(intentions.guttersToShow, myCachedGutters, callUpdate);
+    changed |= wrapActionsTo(intentions.notificationActionsToShow, myCachedNotifications, callUpdate);
     return changed;
   }
 
   private boolean wrapActionsTo(@NotNull List<HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                 @NotNull Set<IntentionActionWithTextCaching> cachedActions,
                                 boolean callUpdate) {
-    final int caretOffset = myEditor.getCaretModel().getOffset();
-    final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
-    PsiElement element;
-    final PsiElement hostElement;
-    if (myFile instanceof PsiCompiledElement) {
-      hostElement = element = myFile;
-
-    }
-    else if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
-      //???
-      FileViewProvider viewProvider = myFile.getViewProvider();
-      hostElement = element = viewProvider.findElementAt(fileOffset, viewProvider.getBaseLanguage());
-    }
-    else {
-      hostElement = myFile.getViewProvider().findElementAt(fileOffset, myFile.getLanguage());
-      element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
-    }
-    PsiFile injectedFile;
-    Editor injectedEditor;
-    if (element == null || element == hostElement) {
-      injectedFile = myFile;
-      injectedEditor = myEditor;
-    }
-    else {
-      injectedFile = element.getContainingFile();
-      injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
-    }
-
     boolean changed = false;
-    for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext();) {
-      IntentionActionWithTextCaching cachedAction = iterator.next();
-      IntentionAction action = cachedAction.getAction();
-      if (!ShowIntentionActionsHandler.availableFor(myFile, myEditor, action)
-        && (hostElement == element || element != null && !ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
-        iterator.remove();
-        changed = true;
+    if (myEditor == null) {
+      LOG.assertTrue(!callUpdate);
+      for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
+        changed |= cachedActions.add(wrapAction(descriptor, myFile, myFile, null));
       }
-    }
+    } else {
+      final int caretOffset = myEditor.getCaretModel().getOffset();
+      final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
+      PsiElement element;
+      final PsiElement hostElement;
+      if (myFile instanceof PsiCompiledElement) {
+        hostElement = element = myFile;
+      }
+      else if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+        //???
+        FileViewProvider viewProvider = myFile.getViewProvider();
+        hostElement = element = viewProvider.findElementAt(fileOffset, viewProvider.getBaseLanguage());
+      }
+      else {
+        hostElement = myFile.getViewProvider().findElementAt(fileOffset, myFile.getLanguage());
+        element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
+      }
+      PsiFile injectedFile;
+      Editor injectedEditor;
+      if (element == null || element == hostElement) {
+        injectedFile = myFile;
+        injectedEditor = myEditor;
+      }
+      else {
+        injectedFile = element.getContainingFile();
+        injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
+      }
 
-    Set<IntentionActionWithTextCaching> wrappedNew = new THashSet<IntentionActionWithTextCaching>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
-    for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
-      final IntentionAction action = descriptor.getAction();
-      if (element != null && element != hostElement && (!callUpdate || ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
-        IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, element, injectedFile, injectedEditor);
-        wrappedNew.add(cachedAction);
-        changed |= cachedActions.add(cachedAction);
+      for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext(); ) {
+        IntentionActionWithTextCaching cachedAction = iterator.next();
+        IntentionAction action = cachedAction.getAction();
+        if (!ShowIntentionActionsHandler.availableFor(myFile, myEditor, action) &&
+            (hostElement == element || element != null && !ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
+          iterator.remove();
+          changed = true;
+        }
       }
-      else if (hostElement != null && (!callUpdate || ShowIntentionActionsHandler.availableFor(myFile, myEditor, action))) {
-        IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, hostElement, myFile, myEditor);
-        wrappedNew.add(cachedAction);
-        changed |= cachedActions.add(cachedAction);
+
+      Set<IntentionActionWithTextCaching> wrappedNew =
+        new THashSet<IntentionActionWithTextCaching>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
+      for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
+        final IntentionAction action = descriptor.getAction();
+        if (element != null &&
+            element != hostElement &&
+            (!callUpdate || ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
+          IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, element, injectedFile, injectedEditor);
+          wrappedNew.add(cachedAction);
+          changed |= cachedActions.add(cachedAction);
+        }
+        else if (hostElement != null && (!callUpdate || ShowIntentionActionsHandler.availableFor(myFile, myEditor, action))) {
+          IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, hostElement, myFile, myEditor);
+          wrappedNew.add(cachedAction);
+          changed |= cachedActions.add(cachedAction);
+        }
       }
-    }
-    for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext();) {
-      IntentionActionWithTextCaching cachedAction = iterator.next();
-      if (!wrappedNew.contains(cachedAction)) {
-        // action disappeared
-        iterator.remove();
-        changed = true;
+      for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext(); ) {
+        IntentionActionWithTextCaching cachedAction = iterator.next();
+        if (!wrappedNew.contains(cachedAction)) {
+          // action disappeared
+          iterator.remove();
+          changed = true;
+        }
       }
     }
     return changed;
@@ -179,10 +188,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
 
   @NotNull
   IntentionActionWithTextCaching wrapAction(@NotNull HighlightInfo.IntentionActionDescriptor descriptor,
-                                            @NotNull PsiElement element,
-                                            @NotNull PsiFile containingFile,
-                                            @NotNull Editor containingEditor) {
+                                            @Nullable PsiElement element,
+                                            @Nullable PsiFile containingFile,
+                                            @Nullable Editor containingEditor) {
     IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor);
+    if (element == null) return cachedAction;
     final List<IntentionAction> options = descriptor.getOptions(element, containingEditor);
     if (options == null) return cachedAction;
     for (IntentionAction option : options) {
@@ -220,7 +230,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
 
   @Override
   public PopupStep onChosen(final IntentionActionWithTextCaching action, final boolean finalChoice) {
-    if (finalChoice && !(action.getAction() instanceof EmptyIntentionAction)) {
+    if (finalChoice && !(action.getAction() instanceof AbstractEmptyIntentionAction)) {
       applyAction(action);
       return FINAL_CHOICE;
     }
@@ -245,19 +255,24 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (myProject.isDisposed()) return;
+            if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
             if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
               DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
               return;
             }
             
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            final PsiFile file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
-            if (file == null) {
-              return;
+            PsiFile file;
+            if (myEditor != null) {
+              file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
+              if (file == null) {
+                return;
+              }
+            } else {
+              file = myFile;
             }
 
-            ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText());
+            ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
           }
         });
       }
@@ -301,6 +316,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     result.addAll(myCachedInspectionFixes);
     result.addAll(myCachedIntentions);
     result.addAll(myCachedGutters);
+    result.addAll(myCachedNotifications);
     result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
     Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
       @Override
@@ -354,6 +370,9 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
     if (myCachedInspectionFixes.contains(action)) {
       return 10;
+    }
+    if (myCachedNotifications.contains(action)) {
+      return 7;
     }
     if (myCachedGutters.contains(action)) {
       return 5;

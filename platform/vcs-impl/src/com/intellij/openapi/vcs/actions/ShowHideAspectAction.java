@@ -18,12 +18,13 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcsUtil.VcsUtil;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowHideAspectAction extends ToggleAction {
+public class ShowHideAspectAction extends ToggleAction implements DumbAware {
   private final AnnotationFieldGutter myGutter;
   private final EditorGutterComponentEx myGutterComponent;
   private boolean isAvailable = true;

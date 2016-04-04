@@ -1,0 +1,17 @@
+YAML file
+  YAML document
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('logging:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('config:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('bla')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML plain scalar text
+            PsiElement(text)('index')

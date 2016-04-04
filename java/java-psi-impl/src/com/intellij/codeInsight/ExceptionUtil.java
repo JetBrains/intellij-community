@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -44,12 +41,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
  * @author mike
  */
 public class ExceptionUtil {
   @NonNls private static final String CLONE_METHOD_NAME = "clone";
-  public static final RecursionGuard ourThrowsGuard = RecursionManager.createGuard("checkedExceptionsGuard");
 
   private ExceptionUtil() {}
 
@@ -401,7 +399,7 @@ public class ExceptionUtil {
 
       @Override
       public void visitResourceVariable(@NotNull PsiResourceVariable resource) {
-        addExceptions(array, getUnhandledCloserExceptions((PsiResourceListElement)resource, null));
+        addExceptions(array, getUnhandledCloserExceptions(resource, null));
         visitElement(resource);
       }
 
@@ -457,7 +455,7 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
 
-    final PsiSubstitutor substitutor = getSubstitutor(result, methodCall);
+    final PsiSubstitutor substitutor = result.getSubstitutor();
     if (!isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
       final PsiFile containingFile = (containingMethod == null ? methodCall : containingMethod).getContainingFile();
       final MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall, containingFile);
@@ -471,7 +469,7 @@ public class ExceptionUtil {
             if (element instanceof PsiMethod &&
                 MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
                 !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
-              return Pair.create((PsiMethod)element, getSubstitutor(info, methodCall));
+              return Pair.create((PsiMethod)element, info.getSubstitutor());
             }
             return null;
           }
@@ -495,25 +493,6 @@ public class ExceptionUtil {
     }
 
     return getUnhandledExceptions(method, methodCall, topElement, substitutor);
-  }
-
-  private static PsiSubstitutor getSubstitutor(final JavaResolveResult result, PsiCallExpression methodCall) {
-    final PsiLambdaExpression expression = PsiTreeUtil.getParentOfType(methodCall, PsiLambdaExpression.class);
-    final PsiSubstitutor substitutor;
-    if (expression != null) {
-      final PsiElement parent = methodCall.getParent();
-      final boolean callInReturnStatement = parent == expression || 
-                                            parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) == expression;
-      substitutor = callInReturnStatement ? ourThrowsGuard.doPreventingRecursion(expression, false, new Computable<PsiSubstitutor>() {
-        @Override
-        public PsiSubstitutor compute() {
-          return result.getSubstitutor();
-        }
-      }) : result.getSubstitutor();
-    } else {
-      substitutor = result.getSubstitutor();
-    }
-    return substitutor == null ? ((MethodCandidateInfo)result).getSiteSubstitutor() : substitutor;
   }
 
   public static void retainExceptions(List<PsiClassType> ex, List<PsiClassType> thrownEx) {
@@ -554,28 +533,35 @@ public class ExceptionUtil {
 
   @NotNull
   public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceListElement resource) {
-    PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
-    PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(resource.getType()).getSubstitutor();
-    return method != null ? getExceptionsByMethod(method, substitutor, resource) : Collections.<PsiClassType>emptyList();
-  }
-
-  /** @deprecated use {@link #getCloserExceptions(PsiResourceListElement)} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
-  public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceVariable resource) {
-    return getCloserExceptions((PsiResourceListElement)resource);
+    Pair<PsiMethod, PsiSubstitutor> closer = resolveCloser(resource);
+    return closer != null ? getExceptionsByMethod(closer.first, closer.second, resource) : Collections.<PsiClassType>emptyList();
   }
 
   @NotNull
   public static List<PsiClassType> getUnhandledCloserExceptions(@NotNull PsiResourceListElement resource, @Nullable PsiElement topElement) {
-    PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
-    PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(resource.getType()).getSubstitutor();
-    return method != null ? getUnhandledExceptions(method, resource, topElement, substitutor) : Collections.<PsiClassType>emptyList();
+    Pair<PsiMethod, PsiSubstitutor> closer = resolveCloser(resource);
+    return closer != null ? getUnhandledExceptions(closer.first, resource, topElement, closer.second) : Collections.<PsiClassType>emptyList();
   }
 
-  /** @deprecated use {@link #getUnhandledCloserExceptions(PsiResourceListElement, PsiElement)} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
-  public static List<PsiClassType> getUnhandledCloserExceptions(@NotNull PsiResourceVariable resource, @Nullable PsiElement topElement) {
-    return getUnhandledCloserExceptions((PsiResourceListElement)resource, topElement);
+  private static Pair<PsiMethod, PsiSubstitutor> resolveCloser(PsiResourceListElement resource) {
+    PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
+    if (method != null) {
+      PsiClass closerClass = method.getContainingClass();
+      if (closerClass != null) {
+        PsiClassType.ClassResolveResult resourceType = PsiUtil.resolveGenericsClassInType(resource.getType());
+        if (resourceType != null) {
+          PsiClass resourceClass = resourceType.getElement();
+          if (resourceClass != null) {
+            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(closerClass, resourceClass, resourceType.getSubstitutor());
+            if (substitutor != null) {
+              return pair(method, substitutor);
+            }
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   @NotNull

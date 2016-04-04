@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -41,7 +42,7 @@ public class SaveFileAsTemplateAction extends AnAction{
     Project project = assertNotNull(e.getData(CommonDataKeys.PROJECT));
     String fileText = assertNotNull(e.getData(PlatformDataKeys.FILE_TEXT));
     VirtualFile file = assertNotNull(e.getData(CommonDataKeys.VIRTUAL_FILE));
-    String extension = assertNotNull(file.getExtension());
+    String extension = StringUtil.notNullize(file.getExtension());
     String nameWithoutExtension = file.getNameWithoutExtension();
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     for(SaveFileAsTemplateHandler handler: Extensions.getExtensions(SaveFileAsTemplateHandler.EP_NAME)) {
@@ -66,8 +67,6 @@ public class SaveFileAsTemplateAction extends AnAction{
 
   @Override
   public void update(AnActionEvent e) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    String fileText = e.getData(PlatformDataKeys.FILE_TEXT);
-    e.getPresentation().setEnabled(fileText != null && file != null && file.getExtension() != null);
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.getData(PlatformDataKeys.FILE_TEXT) != null);
   }
 }

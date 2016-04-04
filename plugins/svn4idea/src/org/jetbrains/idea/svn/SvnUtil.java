@@ -40,8 +40,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -308,7 +310,7 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static Map<Pair<SVNURL, WorkingCopyFormat>, Set<Change>> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
+  public static MultiMap<Pair<SVNURL, WorkingCopyFormat>, Change> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
     return splitIntoRepositoriesMap(vcs, changes, new Convertor<Change, FilePath>() {
       @Override
       public FilePath convert(@NotNull Change change) {
@@ -318,12 +320,13 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static <T> Map<Pair<SVNURL, WorkingCopyFormat>, Set<T>> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
+  public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
                                                                                           @NotNull List<T> items,
                                                                                           @NotNull final Convertor<T, FilePath> converter) {
-    return ContainerUtil.classify(items.iterator(), new Convertor<T, Pair<SVNURL, WorkingCopyFormat>>() {
+    return ContainerUtil.groupBy(items, new NotNullFunction<T, Pair<SVNURL, WorkingCopyFormat>>() {
+      @NotNull
       @Override
-      public Pair<SVNURL, WorkingCopyFormat> convert(@NotNull T item) {
+      public Pair<SVNURL, WorkingCopyFormat> fun(@NotNull T item) {
         RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item).getIOFile());
 
         return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrlUrl(), path.getFormat());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -58,6 +59,9 @@ public class WatchesRootNode extends XDebuggerTreeNode {
   public void updateWatches(@Nullable XDebuggerEvaluator evaluator) {
     myCurrentEvaluator = evaluator;
     List<WatchNode> newChildren = new ArrayList<WatchNode>();
+    for (WatchNode child : myChildren) {
+      child.setObsolete();
+    }
     if (evaluator != null) {
       for (WatchNode child : myChildren) {
         final XExpression expression = child.getExpression();
@@ -212,11 +216,16 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     new WatchInplaceEditor(this, session, myWatchesView, messageNode, "watch", node).show();
   }
 
-  private class MyEvaluationCallback extends XEvaluationCallbackBase {
+  private class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {
     private final WatchNode myResultPlace;
 
     public MyEvaluationCallback(final @NotNull WatchNode resultPlace) {
       myResultPlace = resultPlace;
+    }
+
+    @Override
+    public boolean isObsolete() {
+      return myResultPlace.isObsolete();
     }
 
     @Override

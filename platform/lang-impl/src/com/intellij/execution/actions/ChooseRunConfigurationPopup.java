@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -236,24 +237,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   private static Action createNumberAction(final int number, final ListPopupImpl listPopup, final Executor executor) {
-    return new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (listPopup.getSpeedSearch().isHoldingFilter())
-          return;
-        for (final Object item : listPopup.getListStep().getValues()) {
-          if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == number) {
-            listPopup.setFinalRunnable(new Runnable() {
-              @Override
-              public void run() {
-                execute((ItemWrapper)item, executor);
-              }
-            });
-            listPopup.closeOk(null);
-          }
-        }
-      }
-    };
+    return new MyAbstractAction(listPopup, number, executor);
   }
 
   private abstract static class Wrapper {
@@ -753,6 +737,35 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
+  private static class MyAbstractAction extends AbstractAction implements DumbAware {
+    private final ListPopupImpl myListPopup;
+    private final int myNumber;
+    private final Executor myExecutor;
+
+    public MyAbstractAction(ListPopupImpl listPopup, int number, Executor executor) {
+      myListPopup = listPopup;
+      myNumber = number;
+      myExecutor = executor;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (myListPopup.getSpeedSearch().isHoldingFilter())
+        return;
+      for (final Object item : myListPopup.getListStep().getValues()) {
+        if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == myNumber) {
+          myListPopup.setFinalRunnable(new Runnable() {
+            @Override
+            public void run() {
+              execute((ItemWrapper)item, myExecutor);
+            }
+          });
+          myListPopup.closeOk(null);
+        }
+      }
+    }
+  }
+
   private class RunListPopup extends ListPopupImpl {
     public RunListPopup(ListPopupStep step) {
       super(step);
@@ -873,24 +886,36 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       for (RunnerAndConfigurationSettings settings : myConfigurations) {
         steps.add(new ConfigurationActionsStep(project, action, settings, false));
       }
-      return new FolderStep(myProject, myExecutorProvider, null, steps);
+      return new FolderStep(myProject, myExecutorProvider, null, steps, action);
     }
   }
 
   private static final class FolderStep extends BaseListPopupStep<ConfigurationActionsStep> {
     private final Project myProject;
+    private final ChooseRunConfigurationPopup myPopup;
     private final ExecutorProvider myExecutorProvider;
 
-    private FolderStep(Project project, ExecutorProvider executorProvider, String folderName, List<ConfigurationActionsStep> children
-    ) {
+    private FolderStep(Project project, ExecutorProvider executorProvider, String folderName, List<ConfigurationActionsStep> children,
+                       ChooseRunConfigurationPopup popup) {
       super(folderName, children, new ArrayList<Icon>());
       myProject = project;
       myExecutorProvider = executorProvider;
+      myPopup = popup;
     }
 
     @Override
     public PopupStep onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
       if (finalChoice) {
+        if (myPopup.myEditConfiguration) {
+          final RunnerAndConfigurationSettings settings = selectedValue.getSettings();
+          return doFinalStep(new Runnable() {
+            @Override
+            public void run() {
+              myPopup.editConfiguration(myProject, settings);
+            }
+          });
+        }
+
         return doFinalStep(new Runnable() {
           @Override
           public void run() {

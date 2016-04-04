@@ -128,7 +128,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     }
 
     @Override
-    protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {
+    protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor, @Nullable Disposable parent) {
     }
   }
 }

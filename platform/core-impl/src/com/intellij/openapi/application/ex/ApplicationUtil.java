@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,21 +52,32 @@ public class ApplicationUtil {
    * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
-  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable,
-                                           @NotNull final ProgressIndicator indicator) throws Exception {
-    return runWithCheckCanceled(callable, indicator, PooledThreadExecutor.INSTANCE);
+  public static <T> T runWithCheckCanceled(@NotNull final Computable<T> computable, @NotNull ProgressIndicator indicator) {
+    try {
+      return runWithCheckCanceled(new Callable<T>() {
+        @Override
+        public T call() throws Exception {
+          return computable.compute();
+        }
+      }, indicator);
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
    * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
-  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable,
-                                           @NotNull final ProgressIndicator indicator, @NotNull ExecutorService executorService) throws Exception {
+  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
     final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
-    Future<?> future = executorService.submit(new Runnable() {
+    Future<?> future = PooledThreadExecutor.INSTANCE.submit(new Runnable() {
       @Override
       public void run() {
         ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {

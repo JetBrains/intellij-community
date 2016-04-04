@@ -51,7 +51,7 @@ public class PythonPatterns extends PlatformPatterns {
           final PyStringLiteralExpression expr = (PyStringLiteralExpression)o;
           if (!DocStringUtil.isDocStringExpression(expr)) {
             final String value = expr.getStringValue();
-            return pattern.matcher(value).matches();
+            return pattern.matcher(value).find();
           }
         }
         return false;

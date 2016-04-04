@@ -1,0 +1,22 @@
+<idea-plugin version="2">
+  <!-- Components and extensions declared in this file work both in PyCharm and Python plugin (but not in CLion).
+       Both Community and Professional editions. -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Buildout -->
+    <facetType implementation="com.jetbrains.python.buildout.BuildoutFacetType"/>
+    <framework.detector implementation="com.jetbrains.python.buildout.BuildoutFrameworkDetector"/>
+
+    <lang.parserDefinition language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgParserDefinition"/>
+    <fileTypeFactory implementation="com.jetbrains.python.buildout.config.BuildoutCfgFileTypeFactory"/>
+    <lang.syntaxHighlighterFactory language="BuildoutCfg"
+                                   implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
+
+    <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="com.jetbrains.python.PyBundle"
+                     key="buildout.unresolved.part.inspection" groupKey="buildout" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.buildout.config.inspection.BuildoutUnresolvedPartInspection"/>
+
+    <colorSettingsPage implementation="com.jetbrains.python.buildout.config.BuildoutCfgColorsPage"/>
+    <problemFileHighlightFilter implementation="com.jetbrains.python.buildout.config.BuildoutCfgProblemFileHighlightFilter"/>
+  </extensions>
+</idea-plugin>

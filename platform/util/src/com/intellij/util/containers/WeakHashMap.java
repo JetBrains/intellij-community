@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Comparing;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +23,11 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
+/**
+ * Weak keys hash map.
+ * Null keys are NOT allowed
+ * Null values are allowed
+ */
 public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
   public WeakHashMap(int initialCapacity, float loadFactor) {
     super(initialCapacity, loadFactor);
@@ -33,33 +38,42 @@ public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
   }
 
   public WeakHashMap() {
-    super();
   }
 
   public WeakHashMap(@NotNull Map<K, V> t) {
     super(t);
   }
 
+  public WeakHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<K> strategy) {
+    super(initialCapacity, loadFactor, strategy);
+  }
+
+  public WeakHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    super(hashingStrategy);
+  }
+
   @NotNull
   @Override
-  protected <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
-    return new WeakKey<T>(k, q);
+  protected <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<T> strategy, @NotNull ReferenceQueue<? super T> q) {
+    return new WeakKey<T>(k, strategy, q);
   }
 
   private static class WeakKey<T> extends WeakReference<T> implements Key<T> {
     private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
+    @NotNull private final TObjectHashingStrategy<T> myStrategy;
 
-    private WeakKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
+    private WeakKey(@NotNull T k, @NotNull TObjectHashingStrategy<T> strategy, @NotNull ReferenceQueue<? super T> q) {
       super(k, q);
-      myHash = k.hashCode();
+      myStrategy = strategy;
+      myHash = strategy.computeHashCode(k);
     }
 
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
-      Object t = get();
-      Object u = ((Key)o).get();
-      return myHash == o.hashCode() && Comparing.equal(t, u);
+      T t = get();
+      T u = ((Key<T>)o).get();
+      return keyEqual(t,u,myStrategy);
     }
 
     public int hashCode() {

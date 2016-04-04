@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,11 +27,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
@@ -38,10 +40,10 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author max
  */
-public class RefreshQueueImpl extends RefreshQueue {
+public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshQueueImpl");
 
-  private final ExecutorService myQueue = ConcurrencyUtil.newSingleThreadExecutor("FS Synchronizer");
+  private final ExecutorService myQueue = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1, this);
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(VfsBundle.message("file.synchronize.progress"));
   private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<RefreshSession>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.ERROR);
@@ -75,7 +77,7 @@ public class RefreshQueueImpl extends RefreshQueue {
       public void run() {
         try {
           myRefreshIndicator.start();
-          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session.toString());
+          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session);
           try {
             doScan(session);
           }
@@ -94,7 +96,7 @@ public class RefreshQueueImpl extends RefreshQueue {
         }
       }
     });
-    myEventCounter.eventHappened();
+    myEventCounter.eventHappened(session);
   }
 
   private void doScan(RefreshSessionImpl session) {
@@ -149,4 +151,7 @@ public class RefreshQueueImpl extends RefreshQueue {
       return !refreshQueue.mySessions.isEmpty();
     }
   }
+
+  @Override
+  public void dispose() { }
 }

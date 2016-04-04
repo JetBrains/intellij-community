@@ -70,6 +70,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
     e.getPresentation().setText(text);
   }
 
+  @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
     DiffRequest request = e.getData(DIFF_REQUEST);
     if (request != null) {
@@ -120,7 +121,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
     Type type = getType(file);
     if (type == Type.DIRECTORY || type == Type.ARCHIVE) {
-      descriptor = new FileChooserDescriptor(false, true, true, false, false, false);
+      descriptor = new FileChooserDescriptor(false, true, true, true, true, false);
       key = LAST_USED_FOLDER_KEY;
     }
     else {

@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2015 Silent Forest AB
- * created: 27 September 2015
- */
 package com.siyeh.ig.fixes.controlflow;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -37,6 +32,16 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}",
                  "void test(boolean foo, boolean bar) {" +
                  "    boolean d = foo == (bar != true);" +
+                 "}");
+  }
+
+  public void testAndOrExpression() {
+    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+                 "boolean fff(boolean a, boolean b) {" +
+                 "    return a && b /**/|| !a;" +
+                 "}",
+                 "boolean fff(boolean a, boolean b) {" +
+                 "    return !a || b;" +
                  "}");
   }
 

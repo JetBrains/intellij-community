@@ -91,8 +91,7 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
       PsiElement element = (PsiElement)dependency;
       if (!element.isValid()) return -1;
       PsiFile containingFile = element.getContainingFile();
-      if (containingFile == null) return -1;
-      return containingFile.getModificationStamp();
+      if (containingFile != null) return containingFile.getModificationStamp();
     }
 
     if (dependency == PsiModificationTracker.MODIFICATION_COUNT) {

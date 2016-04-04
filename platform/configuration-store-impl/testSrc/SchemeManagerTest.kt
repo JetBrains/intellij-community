@@ -18,13 +18,12 @@ package com.intellij.configurationStore
 import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemesManagerFactory
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.util.SmartList
+import com.intellij.util.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
@@ -40,6 +39,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.nio.file.Path
 
 internal val FILE_SPEC = "REMOTE"
 
@@ -48,14 +48,15 @@ internal val FILE_SPEC = "REMOTE"
  */
 internal class SchemeManagerTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
   private val tempDirManager = TemporaryDirectory()
   @Rule fun getTemporaryFolder() = tempDirManager
 
-  private var localBaseDir: File? = null
-  private var remoteBaseDir: File? = null
+  private var localBaseDir: Path? = null
+  private var remoteBaseDir: Path? = null
 
   private fun getTestDataPath() = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/options"
 
@@ -111,14 +112,14 @@ internal class SchemeManagerTest {
     firstScheme!!.name = "first_renamed"
     manager.save()
 
-    checkSchemes(File(remoteBaseDir, "REMOTE"), "first_renamed->first_renamed;2->second", true)
+    checkSchemes(remoteBaseDir!!.resolve("REMOTE"), "first_renamed->first_renamed;2->second", true)
     checkSchemes(localBaseDir!!, "", false)
 
     firstScheme.name = "first_renamed2"
     manager.removeScheme(firstScheme)
     manager.save()
 
-    checkSchemes(File(remoteBaseDir, "REMOTE"), "2->second", true)
+    checkSchemes(remoteBaseDir!!.resolve("REMOTE"), "2->second", true)
     checkSchemes(localBaseDir!!, "", false)
   }
 
@@ -141,16 +142,16 @@ internal class SchemeManagerTest {
     assertThat("first2").isEqualTo(scheme.name)
   }
 
-  fun TestScheme.save(file: File) {
-    FileUtil.writeToFile(file, serialize().toByteArray())
+  fun TestScheme.save(file: Path) {
+    file.write(serialize().toByteArray())
   }
 
   @Test fun `different extensions`() {
-    val dir = tempDirManager.newDirectory()
+    val dir = tempDirManager.newPath()
 
     val scheme = TestScheme("local", "true")
-    scheme.save(File(dir, "1.icls"))
-    TestScheme("local", "false").save(File(dir, "1.xml"))
+    scheme.save(dir.resolve("1.icls"))
+    TestScheme("local", "false").save(dir.resolve("1.xml"))
 
     val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, object: TestSchemesProcessor() {
       override fun isUpgradeNeeded() = true
@@ -160,18 +161,18 @@ internal class SchemeManagerTest {
     schemesManager.loadSchemes()
     assertThat(schemesManager.allSchemes).containsOnly(scheme)
 
-    assertThat(File(dir, "1.icls")).isFile()
-    assertThat(File(dir, "1.xml")).isFile()
+    assertThat(dir.resolve("1.icls")).isRegularFile()
+    assertThat(dir.resolve("1.xml")).isRegularFile()
 
     scheme.data = "newTrue"
     schemesManager.save()
 
-    assertThat(File(dir, "1.icls")).isFile()
-    assertThat(File(dir, "1.xml")).doesNotExist()
+    assertThat(dir.resolve("1.icls")).isRegularFile()
+    assertThat(dir.resolve("1.xml")).doesNotExist()
   }
 
   @Test fun setSchemes() {
-    val dir = tempDirManager.newDirectory()
+    val dir = tempDirManager.newPath()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
@@ -182,12 +183,12 @@ internal class SchemeManagerTest {
     val schemes = schemeManager.allSchemes
     assertThat(schemes).containsOnly(scheme)
 
-    assertThat(File(dir, "s1.xml")).doesNotExist()
+    assertThat(dir.resolve("s1.xml")).doesNotExist()
 
     scheme.data = "newTrue"
     schemeManager.save()
 
-    assertThat(File(dir, "s1.xml")).isFile()
+    assertThat(dir.resolve("s1.xml")).isRegularFile()
 
     schemeManager.setSchemes(emptyList())
 
@@ -197,7 +198,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `save only if scheme differs from bundled`() {
-    val dir = tempDirManager.newDirectory()
+    val dir = tempDirManager.newPath()
     var schemeManager = createSchemeManager(dir)
     val converter: (Element) -> TestScheme = { XmlSerializer.deserialize(it, TestScheme::class.java)!! }
     val bundledPath = "/bundledSchemes/default"
@@ -218,7 +219,7 @@ internal class SchemeManagerTest {
 
     customScheme.data = "foo"
     schemeManager.save()
-    assertThat(File(dir, "default.xml")).isFile()
+    assertThat(dir.resolve("default.xml")).isRegularFile()
 
     schemeManager = createSchemeManager(dir)
     schemeManager.loadBundledScheme(bundledPath, this, converter)
@@ -229,7 +230,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `don't remove dir if no schemes but at least one non-hidden file exists`() {
-    val dir = tempDirManager.newDirectory()
+    val dir = tempDirManager.newPath()
     val schemeManager = createSchemeManager(dir)
 
     val scheme = TestScheme("s1")
@@ -237,12 +238,12 @@ internal class SchemeManagerTest {
 
     schemeManager.save()
 
-    val schemeFile = File(dir, "s1.xml")
-    assertThat(schemeFile).isFile()
+    val schemeFile = dir.resolve("s1.xml")
+    assertThat(schemeFile).isRegularFile()
 
     schemeManager.setSchemes(emptyList())
 
-    FileUtil.writeToFile(File(dir, "empty"), byteArrayOf())
+    dir.resolve("empty").write(byteArrayOf())
 
     schemeManager.save()
 
@@ -251,11 +252,11 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `remove empty directory only if some file was deleted`() {
-    val dir = tempDirManager.newDirectory()
+    val dir = tempDirManager.newPath()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
 
-    assertThat(dir.mkdirs()).isTrue()
+    dir.createDirectories()
     schemeManager.save()
     assertThat(dir).isDirectory()
 
@@ -269,7 +270,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun rename() {
-    val dir = tempDirManager.newDirectory()
+    val dir = tempDirManager.newPath()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
@@ -280,19 +281,19 @@ internal class SchemeManagerTest {
     val schemes = schemeManager.allSchemes
     assertThat(schemes).containsOnly(scheme)
 
-    assertThat(File(dir, "s1.xml")).doesNotExist()
+    assertThat(dir.resolve("s1.xml")).doesNotExist()
 
     scheme.data = "newTrue"
     schemeManager.save()
 
-    assertThat(File(dir, "s1.xml")).isFile()
+    assertThat(dir.resolve("s1.xml")).isRegularFile()
 
     scheme.name = "s2"
 
     schemeManager.save()
 
-    assertThat(File(dir, "s1.xml")).doesNotExist()
-    assertThat(File(dir, "s2.xml")).isFile()
+    assertThat(dir.resolve("s1.xml")).doesNotExist()
+    assertThat(dir.resolve("s2.xml")).isRegularFile()
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
@@ -303,7 +304,7 @@ internal class SchemeManagerTest {
     assertThatThrownBy({SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: File) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), null, dir)
+  private fun createSchemeManager(dir: Path) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), null, dir)
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -313,30 +314,30 @@ internal class SchemeManagerTest {
   private fun doLoadSaveTest(testData: String, expected: String, localExpected: String = "") {
     val schemesManager = createAndLoad(testData)
     schemesManager.save()
-    checkSchemes(File(remoteBaseDir, "REMOTE"), expected, true)
+    checkSchemes(remoteBaseDir!!.resolve("REMOTE"), expected, true)
     checkSchemes(localBaseDir!!, localExpected, false)
   }
 
   private fun checkSchemes(expected: String) {
-    checkSchemes(File(remoteBaseDir, "REMOTE"), expected, true)
+    checkSchemes(remoteBaseDir!!.resolve("REMOTE"), expected, true)
     checkSchemes(localBaseDir!!, "", false)
   }
 
   private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
+    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!.toFile()), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
   }
 
   private fun createTempFiles(testData: String) {
-    val temp = tempDirManager.newDirectory()
-    localBaseDir = File(temp, "__local")
+    val temp = tempDirManager.newPath()
+    localBaseDir = temp.resolve("__local")
     remoteBaseDir = temp
-    FileUtil.copyDir(File("${getTestDataPath()}/$testData"), File(temp, "REMOTE"))
+    FileUtil.copyDir(File("${getTestDataPath()}/$testData"), temp.resolve("REMOTE").toFile())
   }
 }
 
-private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean) {
+private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean) {
   val filesToScheme = StringUtil.split(expected, ";")
   val fileToSchemeMap = THashMap<String, String>()
   for (fileToScheme in filesToScheme) {
@@ -344,10 +345,9 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
     fileToSchemeMap.put(fileToScheme.substring(0, index), fileToScheme.substring(index + 2))
   }
 
-  val files = baseDir.listFiles()
-  if (files != null) {
-    for (file in files) {
-      val fileName = FileUtil.getNameWithoutExtension(file)
+  baseDir.directoryStreamIfExists {
+    for (file in it) {
+      val fileName = FileUtil.getNameWithoutExtension(file.fileName.toString())
       if ("--deleted" == fileName && ignoreDeleted) {
         assertThat(fileToSchemeMap).containsKey(fileName)
       }
@@ -355,14 +355,14 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
   }
 
   for (file in fileToSchemeMap.keys) {
-    assertThat(File(baseDir, "$file.xml")).isFile()
+    assertThat(baseDir.resolve("$file.xml")).isRegularFile()
   }
 
-  if (files != null) {
+  baseDir.directoryStreamIfExists {
     val schemesProcessor = TestSchemesProcessor()
-    for (file in files) {
-      val scheme = schemesProcessor.readScheme(JDOMUtil.load(file), true)!!
-      assertThat(fileToSchemeMap.get(FileUtil.getNameWithoutExtension(file))).isEqualTo(scheme.name)
+    for (file in it) {
+      val scheme = schemesProcessor.readScheme(loadElement(file), true)!!
+      assertThat(fileToSchemeMap.get(FileUtil.getNameWithoutExtension(file.fileName.toString()))).isEqualTo(scheme.name)
     }
   }
 }

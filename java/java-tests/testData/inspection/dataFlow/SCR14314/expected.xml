@@ -3,7 +3,7 @@
   <problem>
     <file>Finally.java</file>
     <line>9</line>
-    <description>Method invocation 'o.hashCode()' may produce java.lang.NullPointerException</description>
+    <description>Method invocation 'hashCode' may produce java.lang.NullPointerException</description>
   </problem>
 </problems>
 

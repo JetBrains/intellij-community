@@ -163,6 +163,6 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
           IElementType.push(old);
         }
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 }

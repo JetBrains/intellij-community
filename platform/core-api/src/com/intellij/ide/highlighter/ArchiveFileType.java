@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,12 @@ package com.intellij.ide.highlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class ArchiveFileType implements FileType {
-  private static final NotNullLazyValue<Icon> ICON = new NotNullLazyValue<Icon>() {
-      @NotNull
-      @Override
-      protected Icon compute() {
-        return AllIcons.FileTypes.Archive;
-      }
-    };
-
   public static final ArchiveFileType INSTANCE = new ArchiveFileType();
 
   @Override
@@ -55,7 +46,7 @@ public class ArchiveFileType implements FileType {
 
   @Override
   public Icon getIcon() {
-    return ICON.getValue();
+    return AllIcons.FileTypes.Archive;
   }
 
   @Override

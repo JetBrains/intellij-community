@@ -8,7 +8,7 @@ class TestCase {
     String s = normalizeSpace(unknown()).trim();
     String s3 = normalizeSpaceInverted(unknown()).trim();
 
-    String s4 = <warning descr="Method invocation 'normalizeSpace(null).trim()' may produce 'java.lang.NullPointerException'">normalizeSpace(null).trim()</warning>;
+    String s4 = normalizeSpace(null).<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>();
   }
 
   public static native String unknown();

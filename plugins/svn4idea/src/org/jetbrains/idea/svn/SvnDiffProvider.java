@@ -151,10 +151,10 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     if (svnInfo.getCommittedRevision().equals(SVNRevision.UNDEFINED) &&
         !svnInfo.getCopyFromRevision().equals(SVNRevision.UNDEFINED) &&
         svnInfo.getCopyFromURL() != null) {
-      String localPath = myVcs.getSvnFileUrlMapping().getLocalPath(svnInfo.getCopyFromURL().toString());
+      File localPath = myVcs.getSvnFileUrlMapping().getLocalPath(svnInfo.getCopyFromURL().toString());
 
       if (localPath != null) {
-        return getCurrentRevisionDescription(new File(localPath));
+        return getCurrentRevisionDescription(localPath);
       }
     }
 

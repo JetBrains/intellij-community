@@ -18,11 +18,10 @@ package com.intellij.openapi.diff.impl.highlighting;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -36,7 +35,7 @@ import java.util.Random;
  *         Date: 7/6/11
  *         Time: 7:44 PM
  */
-public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorRenderer {
+public class FragmentBoundRenderer implements LineMarkerRendererEx, LineSeparatorRenderer {
   private final int myLineHeight;
   private final Editor myEditor;
   private final Consumer<Integer> myOffsetsConsumer;
@@ -64,7 +63,6 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
       ((Graphics2D) gr).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       gr.setColor(getColor());
-      int y = r.y;
       final int width = ((EditorEx)editor).getGutterComponentEx().getWidth();
       final int editorWidth = editor.getScrollingModel().getVisibleArea().width;
       myShoeneLine.ensureLastX(editorWidth + width + width);
@@ -105,6 +103,11 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
     } finally {
       gr.dispose();
     }
+  }
+
+  @Override
+  public Position getPosition() {
+    return Position.CUSTOM;
   }
 
   public Color getColor() {

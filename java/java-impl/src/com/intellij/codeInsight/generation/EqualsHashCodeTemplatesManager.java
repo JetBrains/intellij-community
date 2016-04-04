@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package com.intellij.codeInsight.generation;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,26 +28,31 @@ import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Set;
 
-@State(
-  name = "EqualsHashCodeTemplates",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/equalsHashCodeTemplates.xml"
-    )}
-)
+@State(name = "EqualsHashCodeTemplates", storages = @Storage("equalsHashCodeTemplates.xml"))
 public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String DEFAULT_EQUALS = "/com/intellij/codeInsight/generation/defaultEquals.vm";
   private static final String DEFAULT_HASH_CODE = "/com/intellij/codeInsight/generation/defaultHashCode.vm";
+
   private static final String APACHE3_EQUALS = "/com/intellij/codeInsight/generation/apacheEqualsBuilder3.vm";
   private static final String APACHE3_HASH_CODE = "/com/intellij/codeInsight/generation/apacheHashCodeBuilder3.vm";
+  private static final String APACHE3_BUILDER = "org.apache.commons.lang3.builder.EqualsBuilder";
+
   private static final String APACHE_EQUALS = "/com/intellij/codeInsight/generation/apacheEqualsBuilder.vm";
   private static final String APACHE_HASH_CODE = "/com/intellij/codeInsight/generation/apacheHashCodeBuilder.vm";
+  private static final String APACHE_BUILDER = "org.apache.commons.lang.builder.EqualsBuilder";
+  
+
   private static final String GUAVA_EQUALS = "/com/intellij/codeInsight/generation/guavaEquals.vm";
   private static final String GUAVA_HASH_CODE = "/com/intellij/codeInsight/generation/guavaHashCode.vm";
+  private static final String GUAVA_BUILDER = "com.google.common.base.Objects";
+  
   private static final String OBJECTS_EQUALS = "/com/intellij/codeInsight/generation/objectsEquals.vm";
   private static final String OBJECTS_HASH_CODE = "/com/intellij/codeInsight/generation/objectsHashCode.vm";
+  private static final String OBJECTS_BUILDER = "java.util.Objects";
 
   private static final String EQUALS_SUFFIX = "equals";
   private static final String HASH_CODE_SUFFIX = "hashCode";
@@ -72,17 +75,17 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
         new TemplateResource(toEqualsName(INTELLI_J_DEFAULT), readFile(DEFAULT_EQUALS), true),
         new TemplateResource(toHashCodeName(INTELLI_J_DEFAULT), readFile(DEFAULT_HASH_CODE), true),
 
-        new TemplateResource(toEqualsName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG), readFile(APACHE_EQUALS), true),
-        new TemplateResource(toHashCodeName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG), readFile(APACHE_HASH_CODE), true),
+        new TemplateResource(toEqualsName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG), readFile(APACHE_EQUALS), true, APACHE_BUILDER),
+        new TemplateResource(toHashCodeName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG), readFile(APACHE_HASH_CODE), true, APACHE_BUILDER),
 
-        new TemplateResource(toEqualsName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3), readFile(APACHE3_EQUALS), true),
-        new TemplateResource(toHashCodeName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3), readFile(APACHE3_HASH_CODE), true),
+        new TemplateResource(toEqualsName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3), readFile(APACHE3_EQUALS), true, APACHE3_BUILDER),
+        new TemplateResource(toHashCodeName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3), readFile(APACHE3_HASH_CODE), true, APACHE3_BUILDER),
 
-        new TemplateResource(toEqualsName(OBJECTS_EQUAL_AND_HASH_CODE_GUAVA), readFile(GUAVA_EQUALS), true),
-        new TemplateResource(toHashCodeName(OBJECTS_EQUAL_AND_HASH_CODE_GUAVA), readFile(GUAVA_HASH_CODE), true),
+        new TemplateResource(toEqualsName(OBJECTS_EQUAL_AND_HASH_CODE_GUAVA), readFile(GUAVA_EQUALS), true, GUAVA_BUILDER),
+        new TemplateResource(toHashCodeName(OBJECTS_EQUAL_AND_HASH_CODE_GUAVA), readFile(GUAVA_HASH_CODE), true, GUAVA_BUILDER),
 
-        new TemplateResource(toEqualsName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE), readFile(OBJECTS_EQUALS), true),
-        new TemplateResource(toHashCodeName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE), readFile(OBJECTS_HASH_CODE), true)
+        new TemplateResource(toEqualsName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE), readFile(OBJECTS_EQUALS), true, OBJECTS_BUILDER),
+        new TemplateResource(toHashCodeName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE), readFile(OBJECTS_HASH_CODE), true, OBJECTS_BUILDER)
       };
     }
     catch (IOException e) {
@@ -108,14 +111,6 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
 
   public TemplateResource getHashcodeTemplate(TemplateResource template) {
     return getDefaultTemplate(HASH_CODE_SUFFIX, EQUALS_SUFFIX, template);
-  }
-
-  public String[] getTemplateNames() {
-    final Set<String> names = new LinkedHashSet<String>();
-    for (TemplateResource resource : getAllTemplates()) {
-      names.add(getTemplateBaseName(resource));
-    }
-    return ArrayUtil.toStringArray(names);
   }
 
   @NotNull

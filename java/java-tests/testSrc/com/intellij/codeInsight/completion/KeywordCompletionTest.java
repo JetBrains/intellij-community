@@ -137,6 +137,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testArrayClass() throws Throwable { doTest(1, "class", "interface"); }
   public void testIntInGenerics() throws Throwable { doTest(2, "int", "char", "final"); }
   public void testIntInGenerics2() throws Throwable { doTest(2, "int", "char", "final"); }
+  public void testBreakInLabeledBlock() { doTest(1, "break label", "continue"); }
 
   public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");

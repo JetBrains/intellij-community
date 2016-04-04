@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.vcs.log.Hash;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GitLocalBranch extends GitBranch {
 
-  public GitLocalBranch(@NotNull String name, @NotNull Hash hash) {
-    super(name, hash);
+  public GitLocalBranch(@NotNull String name) {
+    super(name);
   }
 
   @Override

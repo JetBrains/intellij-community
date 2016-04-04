@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,12 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class MoveFilesOrDirectoriesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil");
@@ -132,8 +131,19 @@ public class MoveFilesOrDirectoriesUtil {
           @Override
           public void run() {
             final PsiDirectory targetDirectory = moveDialog != null ? moveDialog.getTargetDirectory() : initialTargetDirectory;
+            if (targetDirectory == null) {
+              LOG.error("It is null! The target directory, it is null!");
+              return;
+            }
 
-            LOG.assertTrue(targetDirectory != null);
+            Collection<PsiElement> toCheck = ContainerUtil.newArrayList((PsiElement)targetDirectory);
+            for (PsiElement e : newElements) {
+              toCheck.add(e instanceof PsiFileSystemItem && e.getParent() != null ? e.getParent() : e);
+            }
+            if (!CommonRefactoringUtil.checkReadOnlyStatus(project, toCheck, false)) {
+              return;
+            }
+
             targetElement[0] = targetDirectory;
 
             try {

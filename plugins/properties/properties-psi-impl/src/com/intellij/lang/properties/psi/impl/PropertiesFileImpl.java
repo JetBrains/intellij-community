@@ -98,16 +98,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     }
   }
 
-  public Character findFirstKeyValueDelimiter() {
-    for (IProperty property : myProperties) {
-      final Character separator = ((PropertyImpl)property).getKeyValueDelimiter();
-      if (separator != null) {
-        return separator;
-      }
-    }
-    return null;
-  }
-
   @Override
   public IProperty findPropertyByKey(@NotNull String key) {
     ensurePropertiesLoaded();
@@ -166,7 +156,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
             final String k1 = p1.getKey();
             final String k2 = p2.getKey();
             LOG.assertTrue(k1 != null && k2 != null);
-            return k1.compareTo(k2);
+            return String.CASE_INSENSITIVE_ORDER.compare(k1, k2);
           }
         });
         return insertIndex == -1 ? null :myProperties.get(insertIndex < 0 ? - insertIndex - 2 : insertIndex);
@@ -200,13 +190,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   @Override
   public IProperty addProperty(String key, String value) {
-    return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value));
+    return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value, null));
   }
 
   @NotNull
   @Override
   public IProperty addPropertyAfter(String key, String value, @Nullable IProperty anchor) {
-    return (IProperty)addPropertyAfter(PropertiesElementFactory.createProperty(getProject(), key, value), anchor);
+    return (IProperty)addPropertyAfter(PropertiesElementFactory.createProperty(getProject(), key, value, null), anchor);
   }
 
   private void insertLineBreakBefore(final ASTNode anchorBefore) {

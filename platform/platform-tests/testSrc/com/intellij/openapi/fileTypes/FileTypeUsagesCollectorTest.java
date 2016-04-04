@@ -55,17 +55,17 @@ public class FileTypeUsagesCollectorTest extends LightPlatformCodeInsightFixture
   }
 
   public void testEmptyProject() throws CollectUsagesException {
-    doTest(Arrays.asList(UnknownFileType.INSTANCE));
+    doTest(Arrays.asList());
   }
 
   public void testSingleFileProject() throws CollectUsagesException {
     myFixture.configureByText("a.txt", "");
-    doTest(Arrays.asList(UnknownFileType.INSTANCE, PlainTextFileType.INSTANCE));
+    doTest(Arrays.asList(PlainTextFileType.INSTANCE));
   }
 
   public void testSeveralSameFilesProject() throws CollectUsagesException {
     myFixture.configureByText("a.txt", "");
     myFixture.configureByText("b.txt", "");
-    doTest(Arrays.asList(UnknownFileType.INSTANCE, PlainTextFileType.INSTANCE));
+    doTest(Arrays.asList(PlainTextFileType.INSTANCE));
   }
 }

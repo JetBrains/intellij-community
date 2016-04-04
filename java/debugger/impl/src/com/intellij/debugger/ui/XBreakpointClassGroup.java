@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import javax.swing.*;
 public class XBreakpointClassGroup extends XBreakpointGroup {
   private static final String DEFAULT_PACKAGE_NAME = DebuggerBundle.message("default.package.name");
 
-  private String myPackageName;
-  private String myClassName;
+  private final String myPackageName;
+  private final String myClassName;
 
   public XBreakpointClassGroup(@Nullable String packageName, String className) {
     myPackageName = packageName != null ? packageName : DEFAULT_PACKAGE_NAME;

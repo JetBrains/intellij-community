@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -968,7 +968,7 @@ class Fopppp {
     myFixture.configureByText "a.groovy", text
 
     final LookupElement[] completion = myFixture.completeBasic()
-    return completion.find { println it.lookupString; itemToCheck == it.lookupString }
+    return completion.find { itemToCheck == it.lookupString }
   }
 
   public void testWordCompletionInLiterals() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package org.jetbrains.jps.builders.rebuild
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.ZipUtil
-
-import java.util.jar.Attributes
-import java.util.jar.Manifest
 import java.io.File
 import java.io.FileInputStream
-import kotlin.test.assertTrue
-import kotlin.test.assertEquals
+import java.util.jar.Attributes
+import java.util.jar.Manifest
 
 /**
  * @author nik
@@ -43,12 +40,12 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
       })
     }
     finally {
-      FileUtil.delete(File(FileUtil.toSystemDependentName(getTestDataRootPath() + "/$name/data/a.jar")))
+      FileUtil.delete(File(FileUtil.toSystemDependentName(testDataRootPath + "/$name/data/a.jar")))
     }
   }
 
   fun testArtifactWithoutOutput() {
-    val outDir = FileUtil.createTempDirectory("output", "").getAbsolutePath()
+    val outDir = FileUtil.createTempDirectory("output", "").absolutePath
     loadProject("artifactWithoutOutput/artifactWithoutOutput.ipr", mapOf("OUTPUT_DIR" to outDir))
 
     rebuild()
@@ -102,7 +99,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     val manifestFile = File(extracted, "META-INF/MANIFEST.MF")
     assertTrue(manifestFile.exists())
     val manifest = Manifest(FileInputStream(manifestFile))
-    assertEquals("MyClass", manifest.getMainAttributes()!!.getValue(Attributes.Name.MAIN_CLASS))
+    assertEquals("MyClass", manifest.mainAttributes!!.getValue(Attributes.Name.MAIN_CLASS))
   }
 
   fun testOverwriteArtifacts() {
@@ -134,7 +131,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
   }
 
   fun testPathVariablesInArtifact() {
-    val externalDir = "${getTestDataRootPath()}/pathVariables/external"
+    val externalDir = "${testDataRootPath}/pathVariables/external"
     doTest("pathVariables/pathVariables.ipr", mapOf("EXTERNAL_DIR" to externalDir), fs {
       dir("artifacts") {
         dir("fileCopy") {

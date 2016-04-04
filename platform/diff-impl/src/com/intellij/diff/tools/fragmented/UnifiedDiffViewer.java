@@ -30,11 +30,13 @@ import com.intellij.diff.tools.util.base.*;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -52,6 +54,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +65,7 @@ import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(UnifiedDiffViewer.class);
@@ -178,8 +182,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument.addDocumentListener(new MyOnesideDocumentListener());
   }
 
-  @CalledInAwt
   @NotNull
+  @Override
+  @CalledInAwt
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
@@ -196,8 +201,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return group;
   }
 
-  @CalledInAwt
   @NotNull
+  @Override
+  @CalledInAwt
   public List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
@@ -218,10 +224,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
-    group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
-    group.add(new AppendSelectedChangesAction(Side.LEFT, false));
-    group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
+    if (isEditable(Side.RIGHT, false)) {
+      group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
+      group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
+    }
 
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
@@ -261,8 +267,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         }
       });
 
-      final boolean innerFragments = getDiffConfig().innerFragments;
-      final List<LineFragment> fragments = DiffUtil.compare(texts[0], texts[1], getDiffConfig(), indicator);
+      final List<LineFragment> fragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
 
       final DocumentContent content1 = getContent1();
       final DocumentContent content2 = getContent2();
@@ -293,12 +298,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       LineNumberConvertor convertor = builder.getConvertor();
       List<LineRange> changedLines = builder.getChangedLines();
-      boolean isEqual = builder.isEqual();
+      boolean isContentsEqual = builder.isEqual();
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
                                                              convertor.createConvertor1(), convertor.createConvertor2());
 
-      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual, innerFragments);
+      return apply(editorData, builder.getBlocks(), convertor, changedLines, isContentsEqual);
     }
     catch (DiffTooBigException e) {
       return new Runnable() {
@@ -373,14 +378,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
                          @NotNull final List<LineRange> changedLines,
-                         final boolean isEqual, final boolean innerFragments) {
+                         final boolean isContentsEqual) {
     return new Runnable() {
       @Override
       public void run() {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
         clearDiffPresentation();
-        if (isEqual) myPanel.addNotification(DiffNotifications.createEqualContents());
+        if (isContentsEqual) myPanel.addNotification(DiffNotifications.createEqualContents());
 
         TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
         myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
@@ -407,22 +412,22 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
         ArrayList<UnifiedDiffChange> diffChanges = new ArrayList<UnifiedDiffChange>(blocks.size());
         for (ChangedBlock block : blocks) {
-          diffChanges.add(new UnifiedDiffChange(UnifiedDiffViewer.this, block, innerFragments));
+          diffChanges.add(new UnifiedDiffChange(UnifiedDiffViewer.this, block));
         }
 
         List<RangeMarker> guarderRangeBlocks = new ArrayList<RangeMarker>();
         if (!myEditor.isViewer()) {
           for (ChangedBlock block : blocks) {
-            int start = myMasterSide.select(block.getStartOffset2(), block.getStartOffset1());
-            int end = myMasterSide.select(block.getEndOffset2() - 1, block.getEndOffset1() - 1);
-            if (start >= end) continue;
-            guarderRangeBlocks.add(createGuardedBlock(start, end));
+            LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
+            TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
+            if (textRange.isEmpty()) continue;
+            guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
           }
           int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
           guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
         }
 
-        myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor);
+        myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor, isContentsEqual);
 
         myFoldingModel.install(changedLines, myRequest, getFoldingModelSettings());
 
@@ -671,7 +676,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         return;
       }
 
-      e.getPresentation().setText(getText());
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(isSomeChangeSelected());
     }
@@ -712,9 +716,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return false;
     }
 
-    @NotNull
-    public abstract String getText();
-
     @CalledWithWriteLock
     protected abstract void apply(@NotNull List<UnifiedDiffChange> changes);
   }
@@ -724,19 +725,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
-      getTemplatePresentation().setIcon(DiffUtil.getArrowIcon(focusedSide));
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      boolean bothEditable = isEditable(Side.LEFT, true) && isEditable(Side.RIGHT, true);
-      if (bothEditable) {
-        return myModifiedSide.select("Apply After", "Apply Before");
-      }
-      else {
-        return "Apply";
-      }
+      getTemplatePresentation().setText(focusedSide.select("Revert", "Accept"));
+      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.Remove, AllIcons.Actions.Checked));
     }
 
     @Override
@@ -752,19 +742,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
+      getTemplatePresentation().setText("Append");
       getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      boolean bothEditable = isEditable(Side.LEFT, true) && isEditable(Side.RIGHT, true);
-      if (bothEditable) {
-        return myModifiedSide.select("Append Right Side", "Append Left Side");
-      }
-      else {
-        return "Append";
-      }
     }
 
     @Override
@@ -1181,9 +1160,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       LineFragment lineFragment = change.getLineFragment();
 
-      int insertedStart = lineFragment.getStartOffset2();
-      int insertedEnd = lineFragment.getEndOffset2();
-      CharSequence insertedText = getContent(mySide).getDocument().getCharsSequence().subSequence(insertedStart, insertedEnd);
+      Document document = getContent(mySide).getDocument();
+      CharSequence insertedText = getLinesContent(document, lineFragment.getStartLine2(), lineFragment.getEndLine2());
 
       int lineNumber = lineFragment.getStartLine2();
 
@@ -1221,9 +1199,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private class MyStatusPanel extends StatusPanel {
+    @Nullable
     @Override
-    protected int getChangesCount() {
-      return myChangedBlockData == null ? 0 : myChangedBlockData.getDiffChanges().size();
+    protected String getMessage() {
+      if (myChangedBlockData == null) return null;
+      int changesCount = myChangedBlockData.getDiffChanges().size();
+      if (changesCount == 0 && !myChangedBlockData.isContentsEqual()) {
+        return DiffBundle.message("diff.all.differences.ignored.text");
+      }
+      return DiffBundle.message("diff.count.differences.status.text", changesCount);
     }
   }
 
@@ -1260,13 +1244,16 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull private final List<UnifiedDiffChange> myDiffChanges;
     @NotNull private final List<RangeMarker> myGuardedRangeBlocks;
     @NotNull private final LineNumberConvertor myLineNumberConvertor;
+    private final boolean myIsContentsEqual;
 
     public ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
                             @NotNull List<RangeMarker> guarderRangeBlocks,
-                            @NotNull LineNumberConvertor lineNumberConvertor) {
+                            @NotNull LineNumberConvertor lineNumberConvertor,
+                            boolean isContentsEqual) {
       myDiffChanges = diffChanges;
       myGuardedRangeBlocks = guarderRangeBlocks;
       myLineNumberConvertor = lineNumberConvertor;
+      myIsContentsEqual = isContentsEqual;
     }
 
     @NotNull
@@ -1282,6 +1269,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull
     public LineNumberConvertor getLineNumberConvertor() {
       return myLineNumberConvertor;
+    }
+
+    public boolean isContentsEqual() {
+      return myIsContentsEqual;
     }
   }
 

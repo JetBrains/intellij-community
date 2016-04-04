@@ -46,10 +46,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -389,13 +386,17 @@ public class RefactoringUtil {
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     PsiType type = getTypeByExpression(expr, factory);
     final boolean isFunctionalType = type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType || type instanceof PsiLambdaParameterType;
-    if (type != null && !isFunctionalType) {
+    final boolean isDenotable = PsiTypesUtil.isDenotableType(expr.getType());
+    if (type != null && !isFunctionalType && isDenotable) {
       return type;
     }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(expr.getProject()).getExpectedTypes(expr, false);
-    if (expectedTypes.length == 1 || isFunctionalType && expectedTypes.length > 0) {
+    if (expectedTypes.length == 1 || (isFunctionalType || !isDenotable)&& expectedTypes.length > 0 ) {
       type = expectedTypes[0].getType();
       if (!type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type;
+    }
+    if (!isDenotable) {
+      return type;
     }
     return null;
   }
@@ -545,7 +546,7 @@ public class RefactoringUtil {
 
   @Nullable
   public static PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
-    if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).getArgumentList();
+    if (ref instanceof PsiCall) return ((PsiCall)ref).getArgumentList();
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiCall) {
       return ((PsiCall)parent).getArgumentList();
@@ -558,7 +559,7 @@ public class RefactoringUtil {
   }
 
   public static PsiCall getCallExpressionByMethodReference(PsiElement ref) {
-    if (ref instanceof PsiEnumConstant) return (PsiCall)ref;
+    if (ref instanceof PsiCall) return (PsiCall)ref;
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiMethodCallExpression) {
       return (PsiMethodCallExpression)parent;

@@ -16,8 +16,12 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -57,6 +61,10 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
     doTest();
   }
 
+  public void testInsideForLoop() throws Exception {
+    doTest();
+  }
+
   public void testInsideAnonymous() throws Exception {
     doTest();
   }
@@ -87,7 +95,19 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
       configureByFile("/refactoring/introduceFunctionalParameter/before" + getTestName(false) + ".java");
       enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
       myEditor.getSettings().setVariableInplaceRenameEnabled(false);
-      new IntroduceParameterHandler().introduceStrategy(getProject(), getEditor(), getFile());
+      final SelectionModel selectionModel = getEditor().getSelectionModel();
+      if (selectionModel.hasSelection()) {
+        final int selectionStart = selectionModel.getSelectionStart();
+        final int selectionEnd = selectionModel.getSelectionEnd();
+        PsiElement[] elements = CodeInsightUtil.findStatementsInRange(getFile(), selectionStart, selectionEnd);
+        if (elements.length == 0) {
+          final PsiExpression expression = CodeInsightUtil.findExpressionInRange(getFile(), selectionStart, selectionEnd);
+          if (expression != null) {
+            elements = new PsiElement[] {expression};
+          }
+        }
+        new IntroduceParameterHandler().introduceStrategy(getProject(), getEditor(), getFile(), elements);
+      }
       checkResultByFile("/refactoring/introduceFunctionalParameter/after" + getTestName(false) + ".java");
       if (conflict != null) {
         fail("Conflict expected");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
  * @author Yura Cangea
  * @version 1.0
  */
-public class RegexpFilter implements Filter {
+public class RegexpFilter implements Filter, DumbAware {
   @NonNls public static final String FILE_PATH_MACROS = "$FILE_PATH$";
   @NonNls public static final String LINE_MACROS = "$LINE$";
   @NonNls public static final String COLUMN_MACROS = "$COLUMN$";
@@ -45,6 +46,7 @@ public class RegexpFilter implements Filter {
   private final int myFileRegister;
   private final int myLineRegister;
   private final int myColumnRegister;
+
   private final Pattern myPattern;
   private final Project myProject;
 
@@ -52,7 +54,7 @@ public class RegexpFilter implements Filter {
     myProject = project;
     validate(expression);
 
-    if (expression == null || expression.trim().isEmpty()) {
+    if (expression.trim().isEmpty()) {
       throw new InvalidExpressionException("expression == null or empty");
     }
 
@@ -105,12 +107,14 @@ public class RegexpFilter implements Filter {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public static void validate(String expression) {
-    if (expression == null || expression.trim().isEmpty()) {
-      throw new InvalidExpressionException("expression == null or empty");
-    }
+    if (StringUtil.isEmptyOrSpaces(expression)) throw new InvalidExpressionException("expression == null or empty");
 
     expression = substituteMacrosWithRegexps(expression);
     Pattern.compile(expression, Pattern.MULTILINE);
+  }
+
+  public Pattern getPattern() {
+    return myPattern;
   }
 
   private static String substituteMacrosWithRegexps(String expression) {
@@ -136,7 +140,7 @@ public class RegexpFilter implements Filter {
 
   @Override
   public Result applyFilter(String line, int entireLength) {
-    Matcher matcher = myPattern.matcher(line);
+    Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 100));
     if (!matcher.find()) {
       return null;
     }
@@ -177,7 +181,7 @@ public class RegexpFilter implements Filter {
   @Nullable
   protected HyperlinkInfo createOpenFileHyperlink(String fileName, final int line, final int column) {
     fileName = fileName.replace(File.separatorChar, '/');
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fileName);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPathIfCached(fileName);
     return file != null ? new OpenFileHyperlinkInfo(myProject, file, line, column) : null;
   }
 

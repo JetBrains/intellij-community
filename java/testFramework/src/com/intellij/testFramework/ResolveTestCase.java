@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,17 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public abstract class ResolveTestCase extends PsiTestCase {
   protected static final String MARKER = "<ref>";
@@ -48,8 +46,7 @@ public abstract class ResolveTestCase extends PsiTestCase {
   }
 
   protected PsiReference configureByFile(@TestDataFile @NotNull String filePath, @Nullable VirtualFile parentDir) throws Exception {
-    final String fullPath = getTestDataPath() + filePath;
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = VfsTestUtil.findFileByCaseSensitivePath(getTestDataPath() + filePath);
     assertNotNull("file " + filePath + " not found", vFile);
 
     String fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile));
@@ -73,7 +70,14 @@ public abstract class ResolveTestCase extends PsiTestCase {
       if (existing != null) {
         myDocument = FileDocumentManager.getInstance().getDocument(existing);
         assertNotNull(myDocument);
-        myDocument.setText(fileText);
+        final String finalFileText = fileText;
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            myDocument.setText(finalFileText);
+          }
+        });
+
         myFile = PsiManager.getInstance(getProject()).findFile(existing);
         assertNotNull(myFile);
         assertEquals(fileText, myFile.getText());

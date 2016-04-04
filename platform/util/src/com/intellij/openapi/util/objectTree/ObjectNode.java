@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.util.objectTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,13 +47,12 @@ final class ObjectNode<T> {
   ObjectNode(@NotNull ObjectTree<T> tree,
              @Nullable ObjectNode<T> parentNode,
              @NotNull T object,
-             long modification,
-             @Nullable final Throwable trace) {
+             long modification) {
     myTree = tree;
     myParent = parentNode;
     myObject = object;
 
-    myTrace = trace;
+    myTrace = Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
     myOwnModification = modification;
   }
 
@@ -171,7 +171,7 @@ final class ObjectNode<T> {
   @Override
   @NonNls
   public String toString() {
-    return "Node: " + myObject.toString();
+    return "Node: " + myObject;
   }
 
   Throwable getTrace() {

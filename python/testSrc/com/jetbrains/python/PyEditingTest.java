@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -74,8 +75,12 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("'' ", doTestTyping(" ", 0, '\''));
   }
 
-  public void testNoClosingTriple() {
-    assertEquals("'''", doTestTyping("''", 2, '\''));
+  public void testAutoCloseTriple() {
+    assertEquals("''''''", doTestTyping("''", 2, '\''));
+  }
+
+  public void testAutoRemoveTriple() {
+    doTestBackspace("closedTripleQuoteBackspace", new LogicalPosition(1, 3));
   }
 
   public void testOvertypeFromInside() {
@@ -270,6 +275,24 @@ public class PyEditingTest extends PyTestCase {
   // PY-17183
   public void testEnterNoDocstringStubWhenCodeExampleInDocstring() {
     doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
+  }
+  
+  // PY-15332
+  public void testEnterDocstringStubNoReturnTagForInit() {
+    doDocStringTypingTest("\n", DocStringFormat.REST);
+  }
+
+  // PY-15532
+  public void testSpaceDocstringStubNoReturnSectionForInit() {
+    final PyCodeInsightSettings codeInsightSettings = PyCodeInsightSettings.getInstance();
+    final boolean oldInsertTypeDocStub = codeInsightSettings.INSERT_TYPE_DOCSTUB;
+    codeInsightSettings.INSERT_TYPE_DOCSTUB = true;
+    try {
+      doDocStringTypingTest(" ", DocStringFormat.GOOGLE);
+    }
+    finally {
+      codeInsightSettings.INSERT_TYPE_DOCSTUB = oldInsertTypeDocStub;
+    }
   }
 
   public void testEnterInString() {  // PY-1738

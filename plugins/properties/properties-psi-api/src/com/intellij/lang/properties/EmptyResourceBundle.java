@@ -18,7 +18,6 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -39,20 +38,8 @@ public class EmptyResourceBundle {
 
       @NotNull
       @Override
-      public List<PropertiesFile> getPropertiesFiles(final Project project) {
-        return getPropertiesFiles();
-      }
-
-      @NotNull
-      @Override
       public PropertiesFile getDefaultPropertiesFile() {
         throw new IllegalStateException();
-      }
-
-      @NotNull
-      @Override
-      public PropertiesFile getDefaultPropertiesFile(final Project project) {
-        return getDefaultPropertiesFile();
       }
 
       @NotNull

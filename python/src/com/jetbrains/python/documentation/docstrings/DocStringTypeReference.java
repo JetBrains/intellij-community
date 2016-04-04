@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation.docstrings;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -78,9 +78,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
 
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    if (newElementName.endsWith(PyNames.DOT_PY)) {
-      newElementName = newElementName.substring(0, newElementName.length() - PyNames.DOT_PY.length());
-    }
+    newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
     return super.handleElementRename(newElementName);
   }
 
@@ -108,9 +106,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     }
     if (result != null) {
       if (myImportElement != null) {
-        results.add(new ImportedResolveResult(result,
-                                              RatedResolveResult.RATE_NORMAL,
-                                              Collections.<PsiElement>singletonList(myImportElement)));
+        results.add(new ImportedResolveResult(result, RatedResolveResult.RATE_NORMAL, myImportElement));
       }
       else {
         results.poke(result, RatedResolveResult.RATE_NORMAL);

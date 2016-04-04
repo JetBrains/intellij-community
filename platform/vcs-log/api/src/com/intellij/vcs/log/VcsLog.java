@@ -15,12 +15,16 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 /**
@@ -32,20 +36,30 @@ public interface VcsLog {
    * Returns commits currently selected in the log.
    */
   @NotNull
-  List<Hash> getSelectedCommits();
+  List<CommitId> getSelectedCommits();
 
   /**
-   * Returns details of the selected commits if all of them have been loaded.
-   * To avoid data inconsistency, if at least one of the selected commits have no details loaded, empty list is returned.
+   * Returns details of the selected commits.
+   * For commits that are not loaded an instance of LoadingDetails is returned.
    */
   @NotNull
   List<VcsFullCommitDetails> getSelectedDetails();
 
   /**
+   * Sends a request to load details that are currently selected.
+   * Details are loaded in background. If a progress indicator is specified it is used during loading process.
+   * After all details are loaded they are provided to the consumer in the EDT.
+   *
+   * @param consumer called in EDT after all details are loaded.
+   * @param indicator progress indicator to use in loading process, can be null.
+   */
+  void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator);
+
+  /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable.
    */
   @Nullable
-  Collection<String> getContainingBranches(@NotNull Hash commitHash);
+  Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root);
 
   /**
    * Returns all {@link VcsRef commit references} available in the log.
@@ -60,12 +74,6 @@ public interface VcsLog {
    */
   @NotNull
   Future<Boolean> jumpToReference(String reference);
-
-  /**
-   * Returns the VCS log toolbar component.
-   */
-  @NotNull
-  Component getToolbar();
 
   /**
    * Returns {@link VcsLogProvider VcsLogProviders} which are active in this log, i.e. which VCS roots are shown in the log.

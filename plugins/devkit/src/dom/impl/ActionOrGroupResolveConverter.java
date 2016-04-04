@@ -32,6 +32,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.impl.DomImplUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,9 +96,11 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   public LookupElement createLookupElement(ActionOrGroup actionOrGroup) {
     if (actionOrGroup instanceof Action) {
       Action action = (Action)actionOrGroup;
+      String msg = action.getId().getStringValue() + " in " + DomUtil.getFile(action) + " " + action.isValid() + " ";
+      DomImplUtil.assertValidity(action, msg);
       final PsiElement element = getPsiElement(actionOrGroup);
       if (element == null) {
-        throw new IllegalStateException(action.getId().getStringValue() + " in " + DomUtil.getFile(action) + " " + action.isValid() + " ");
+        throw new IllegalStateException("no PSI: " + msg);
       }
 
       LookupElementBuilder builder =

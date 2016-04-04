@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbService;
@@ -25,6 +26,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -36,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@State(name="HighlightingSettingsPerFile", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
+@State(name="HighlightingSettingsPerFile", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element> {
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";
@@ -48,12 +50,27 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
 
   private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlightingSetting[]>();
 
+  private static int getRootIndex(PsiFile file) {
+    FileViewProvider provider = file.getViewProvider();
+    Set<Language> languages = provider.getLanguages();
+    if (languages.size() == 1) {
+      return 0;
+    }
+    List<Language> array = new ArrayList<Language>(languages);
+    Collections.sort(array, PsiUtilBase.LANGUAGE_COMPARATOR);
+    for (int i = 0; i < array.size(); i++) {
+      Language language = array.get(i);
+      if (provider.getPsi(language) == file) return i;
+    }
+    throw new RuntimeException("Cannot find root for: "+ file);
+  }
+
   @NotNull
   public FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root){
     final PsiFile containingFile = root.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     FileHighlightingSetting[] fileHighlightingSettings = myHighlightSettings.get(virtualFile);
-    final int index = PsiUtilBase.getRootIndex(root);
+    final int index = getRootIndex(containingFile);
 
     if(fileHighlightingSettings == null || fileHighlightingSettings.length <= index) {
       return getDefaultHighlightingSetting(root.getProject(), virtualFile);
@@ -91,7 +108,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return;
     FileHighlightingSetting[] defaults = myHighlightSettings.get(virtualFile);
-    int rootIndex = PsiUtilBase.getRootIndex(root);
+    int rootIndex = getRootIndex(containingFile);
     if (defaults != null && rootIndex >= defaults.length) defaults = null;
     if (defaults == null) defaults = getDefaults(containingFile);
     defaults[rootIndex] = setting;

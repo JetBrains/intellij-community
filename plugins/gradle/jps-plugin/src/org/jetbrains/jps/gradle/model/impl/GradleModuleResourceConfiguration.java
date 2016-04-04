@@ -39,10 +39,6 @@ public class GradleModuleResourceConfiguration {
   @Tag("parentId")
   public ModuleVersion parentId;
 
-  @NotNull
-  @Tag("directory")
-  public String directory;
-
   @OptionTag
   public boolean overwrite;
 
@@ -82,7 +78,6 @@ public class GradleModuleResourceConfiguration {
   public int computeModuleConfigurationHash() {
     int result = id.hashCode();
     result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
-    result = 31 * result + directory.hashCode();
     result = 31 * result + (outputDirectory != null ? outputDirectory.hashCode() : 0);
     result = 31 * result + (overwrite ? 1 : 0);
     return result;

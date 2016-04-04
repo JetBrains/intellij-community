@@ -10,7 +10,4 @@
 
   <xi:include href="/META-INF/ipython-notebook.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-  </extensions>
 </idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -40,21 +38,11 @@ public class SourceRootAddedAsLibraryRootTest extends PsiTestCase {
     super.setUp();
 
     final File root = createTempDirectory();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+    VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
-          myDir = rootVFile.createChildDirectory(null, "contentAndLibrary");
+    myDir = createChildDirectory(rootVFile, "contentAndLibrary");
 
-          PsiTestUtil.addSourceRoot(myModule, myDir);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-    });
+    PsiTestUtil.addSourceRoot(myModule, myDir);
   }
 
   private void changeRoots() {
@@ -69,8 +57,8 @@ public class SourceRootAddedAsLibraryRootTest extends PsiTestCase {
   }
 
   private void touchFileSync() throws IOException {
-    myVFile = myDir.createChildData(null, "A.java");
-    VfsUtil.saveText(myVFile, "package p; public class A{ public void foo(); }");
+    myVFile = createChildData(myDir, "A.java");
+    setFileText(myVFile, "package p; public class A{ public void foo(); }");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 }

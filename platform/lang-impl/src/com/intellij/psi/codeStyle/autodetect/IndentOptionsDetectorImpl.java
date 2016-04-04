@@ -22,11 +22,14 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -62,8 +65,12 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     return indentOptions;
   }
 
+  @Nullable
   private List<LineIndentInfo> calcLineIndentInfo() {
-    if (myDocument == null) return null;
+    if (myDocument == null || myDocument.getLineCount() < 3 || isFileBigToDetect()) {
+      return null;
+    }
+    
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
     FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(myFile);
     if (modelBuilder == null) return null;
@@ -71,6 +78,15 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     FormattingModel model = modelBuilder.createModel(myFile, settings);
     Block rootBlock = model.getRootBlock();
     return new FormatterBasedLineIndentInfoBuilder(myDocument, rootBlock).build();
+  }
+
+  private boolean isFileBigToDetect() {
+    VirtualFile file = myFile.getVirtualFile();
+    if (file != null && file.getLength() > FileUtilRt.MEGABYTE) {
+      LOG.debug("Indent detector disabled for this file");
+      return true;
+    }
+    return false;
   }
 
   private void adjustIndentOptions(@NotNull IndentOptions indentOptions, @NotNull IndentUsageStatistics stats) {

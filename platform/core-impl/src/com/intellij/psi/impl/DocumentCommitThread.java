@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -35,28 +36,31 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public class DocumentCommitThread extends DocumentCommitProcessor implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
-  private static final String NAME = "Document commit thread";
+
+  private final ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
 
   private final Queue<CommitTask> documentsToCommit = new Queue<CommitTask>(10);
   private final List<CommitTask> documentsToApplyInEDT = new ArrayList<CommitTask>(10);  // guarded by documentsToCommit
   private final ApplicationEx myApplication;
   private volatile boolean isDisposed;
   private CommitTask currentTask; // guarded by documentsToCommit
-  private volatile boolean threadFinished;
   private volatile boolean myEnabled; // true if we can do commits. set to false temporarily during the write action.
   private int runningWriteActions; // accessed in EDT only
 
@@ -71,7 +75,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       public void run() {
         assert runningWriteActions == 0;
         if (application.isDisposed()) return;
-        assert !application.isWriteAccessAllowed();
+        assert !application.isWriteAccessAllowed() || application.isUnitTestMode(); // some crazy stuff happens in tests, e.g. UIUtil.dispatchInvocationEvents()
         application.addApplicationListener(new ApplicationAdapter() {
           @Override
           public void beforeWriteActionStart(Object action) {
@@ -108,9 +112,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     });
     log("Starting thread", null, false);
-    Thread thread = new Thread(this, NAME);
-    thread.setDaemon(true);
-    thread.start();
   }
 
   @Override
@@ -120,17 +121,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       documentsToCommit.clear();
     }
     cancel("Stop thread");
-    wakeUpQueue();
-    while (!threadFinished) {
-      wakeUpQueue();
-      synchronized (documentsToCommit) {
-        try {
-          documentsToCommit.wait(10);
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-    }
   }
 
   private void disable(@NonNls Object reason) {
@@ -147,8 +137,8 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   }
 
   private void wakeUpQueue() {
-    synchronized (documentsToCommit) {
-      documentsToCommit.notifyAll();
+    if (!isDisposed) {
+      executor.execute(this);
     }
   }
 
@@ -201,7 +191,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
     String indent = new SimpleDateFormat("hh:mm:ss:SSSS").format(new Date()) +
       (SwingUtilities.isEventDispatchThread() ?        "-(EDT) " :
-       Thread.currentThread().getName().equals(NAME) ? "-(DCT) " :
                                                        "-      ");
     @NonNls
     String s = indent +
@@ -220,8 +209,14 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         s += "; Uncommitted: " + task.document;
       }
     }
+    synchronized (documentsToCommit) {
+      int size = documentsToCommit.size();
+      if (size != 0) {
+        s += " (" + size + " documents are still in queue)";
+      }
+    }
 
-//    System.err.println(s);
+    //System.out.println(s);
 
     synchronized (log) {
       log.append(s).append("\n");
@@ -291,26 +286,19 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   @Override
   public void run() {
-    threadFinished = false;
-    try {
-      while (!isDisposed) {
-        try {
-          pollQueue();
-        }
-        catch(Throwable e) {
-          LOG.error(e);
-        }
+    while (!isDisposed) {
+      try {
+        boolean polled = pollQueue();
+        if (!polled) break;
+      }
+      catch(Throwable e) {
+        LOG.error(e);
       }
     }
-    finally {
-      threadFinished = true;
-    }
-    // ping the thread waiting for close
-    wakeUpQueue();
-    log("Good bye", null, false);
   }
 
-  private void pollQueue() {
+  // returns true if queue changed
+  private boolean pollQueue() {
     boolean success = false;
     Document document = null;
     Project project = null;
@@ -319,8 +307,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       ProgressIndicator indicator;
       synchronized (documentsToCommit) {
         if (!myEnabled || documentsToCommit.isEmpty()) {
-          documentsToCommit.wait(1000);
-          return;
+          return false;
         }
         task = documentsToCommit.pullFirst();
         document = task.document;
@@ -331,11 +318,11 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
         if (project.isDisposed() || !((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).isInUncommittedSet(document)) {
           log("Abandon and proceed to next",task, false);
-          return;
+          return true;
         }
 
         if (task.removed) {
-          return; // document has been marked as removed, e.g. by synchronous commit
+          return true; // document has been marked as removed, e.g. by synchronous commit
         }
 
         startNewTask(task, "Pulled new task");
@@ -373,11 +360,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       log("PCE", task, false, e);
       success = false;
     }
-    catch (InterruptedException e) {
-      // app must be closing
-      log("IE", task, false, e);
-      cancel(e);
-    }
     catch (Throwable e) {
       LOG.error(e);
       cancel(e);
@@ -389,6 +371,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
       currentTask = null; // do not cancel, it's being invokeLatered
     }
+    return true;
   }
 
   @Override
@@ -491,7 +474,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       return null;
     }
 
-    Runnable finishRunnable = new Runnable() {
+    return new Runnable() {
       @Override
       public void run() {
         myApplication.assertIsDispatchThread();
@@ -539,7 +522,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         }
       }
     };
-    return finishRunnable;
   }
 
   @NotNull
@@ -584,6 +566,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   @Override
   public String toString() {
-    return "Document commit thread; application: "+myApplication+"; isDisposed: "+isDisposed+"; threadFinished: "+threadFinished+"; myEnabled: "+myEnabled+"; runningWriteActions: "+runningWriteActions;
+    return "Document commit thread; application: "+myApplication+"; isDisposed: "+isDisposed+"; myEnabled: "+myEnabled+"; runningWriteActions: "+runningWriteActions;
   }
 }

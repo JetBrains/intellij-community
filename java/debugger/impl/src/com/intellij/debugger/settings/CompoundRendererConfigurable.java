@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -392,7 +392,7 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   private static final class MyTableModel extends AbstractTableModel {
-    private final List<Row> myData = new ArrayList<Row>();
+    private final List<Row> myData = new ArrayList<>();
 
     public MyTableModel() {
     }
@@ -497,7 +497,7 @@ class CompoundRendererConfigurable extends JPanel {
     }
 
     public List<Pair<String, TextWithImports>> getExpressions() {
-      final ArrayList<Pair<String, TextWithImports>> pairs = new ArrayList<Pair<String, TextWithImports>>(myData.size());
+      final ArrayList<Pair<String, TextWithImports>> pairs = new ArrayList<>(myData.size());
       for (final Row row : myData) {
         pairs.add(Pair.create(row.name, row.value));
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
-
+public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -36,14 +34,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
-  }
-
-  private void doTest() {
-    final DataFlowInspection inspection = new DataFlowInspection();
-    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
-    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
-    myFixture.enableInspections(inspection);
-    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
   public void testTryInAnonymous() throws Throwable { doTest(); }
@@ -100,6 +90,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
   public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }
+
+  public void testAnnotationMethodNotNull() { doTest(); }
 
   public void testChainedFinalFieldsDfa() throws Throwable { doTest(); }
   public void testFinalFieldsDifferentInstances() throws Throwable { doTest(); }
@@ -245,6 +237,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testDoubleCCEWarning() { doTest(); }
   public void testLongCircuitOperations() { doTest(); }
   public void testUnconditionalForLoop() { doTest(); }
+  public void testIncrementParenthesized() { doTest(); }
+  public void testDecrementAnotherObjectField() { doTest(); }
   public void testAnonymousMethodIndependence() { doTest(); }
   public void testAnonymousFieldIndependence() { doTest(); }
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
@@ -309,6 +303,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNullableArray() { doTest(); }
 
   public void testAccessingSameArrayElements() { doTest(); }
+
+  public void testMethodParametersCanChangeNullability() { doTest(); }
 
   public void testParametersAreNonnullByDefault() {
     addJavaxNullabilityAnnotations(myFixture);
@@ -438,4 +434,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testConstantConditionsWithAssignmentsInside() { doTest(); }
   public void testIfConditionsWithAssignmentInside() { doTest(); }
+  public void testBitwiseNegatedBoxed() { doTest(); }
+  public void testDontShadowFinalReassignment() { doTest(); }
+
+  public void testLiteralIfCondition() {
+    doTest();
+    myFixture.findSingleIntention("Remove 'if' statement");
+  }
 }

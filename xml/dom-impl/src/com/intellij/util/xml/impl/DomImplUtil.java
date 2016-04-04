@@ -294,14 +294,24 @@ public class DomImplUtil {
     }
     DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
     assert handler != null : domElement;
-    while (handler != null && !(handler instanceof DomRootInvocationHandler) && handler.getXmlTag() == null) {
-      handler = handler.getParentHandler();
+    while (true) {
+      if (handler instanceof DomRootInvocationHandler) {
+        return ((DomRootInvocationHandler)handler).getParent().getFile();
+      }
+
+      XmlTag tag = handler.getXmlTag();
+      if (tag != null) {
+        return getContainingFile(tag);
+      }
+      DomInvocationHandler parent = handler.getParentHandler();
+      if (parent == null) {
+        throw new AssertionError("No parent for " + handler.toStringEx());
+      }
+      handler = parent;
     }
-    if (handler instanceof DomRootInvocationHandler) {
-      return ((DomRootInvocationHandler)handler).getParent().getFile();
-    }
-    assert handler != null;
-    XmlTag tag = handler.getXmlTag();
+  }
+
+  private static XmlFile getContainingFile(XmlTag tag) {
     while (true) {
       final PsiElement parentTag = PhysicalDomParentStrategy.getParentTagCandidate(tag);
       if (!(parentTag instanceof XmlTag)) {

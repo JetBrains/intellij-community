@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,6 +35,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,53 +76,54 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, ApplicationBundle.message("desktop.entry.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        createDesktopEntry(getProject(), indicator, globalEntry);
+        try {
+          indicator.setIndeterminate(true);
+
+          createDesktopEntry(globalEntry);
+
+          final String message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              Notifications.Bus.notify(
+                new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop Entry Created", message, NotificationType.INFORMATION),
+                getProject());
+            }
+          }, ModalityState.NON_MODAL);
+        }
+        catch (Exception e) {
+          reportFailure(e, getProject());
+        }
       }
     });
   }
 
-  public static void createDesktopEntry(@Nullable Project project, @NotNull ProgressIndicator indicator, boolean globalEntry) {
+  public static void createDesktopEntry(boolean globalEntry) throws Exception {
     if (!isAvailable()) return;
-    double step = (1.0 - indicator.getFraction()) / 3.0;
 
     File entry = null;
     try {
-      indicator.setText(ApplicationBundle.message("desktop.entry.checking"));
       check();
-      indicator.setFraction(indicator.getFraction() + step);
-
-      indicator.setText(ApplicationBundle.message("desktop.entry.preparing"));
       entry = prepare();
-      indicator.setFraction(indicator.getFraction() + step);
-
-      indicator.setText(ApplicationBundle.message("desktop.entry.installing"));
       install(entry, globalEntry);
-      indicator.setFraction(indicator.getFraction() + step);
-
-      if (ApplicationManager.getApplication() != null) {
-        String message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
-        Notifications.Bus.notify(
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop entry created", message, NotificationType.INFORMATION),
-          project);
-      }
-    }
-    catch (Exception e) {
-      if (ApplicationManager.getApplication() == null) {
-        throw new RuntimeException(e);
-      }
-
-      LOG.warn(e);
-      String message = e.getMessage();
-      if (StringUtil.isEmptyOrSpaces(message)) message = "Internal error";
-      Notifications.Bus.notify(
-        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Failed to create desktop entry", message, NotificationType.ERROR),
-        project);
     }
     finally {
       if (entry != null) {
         FileUtil.delete(entry);
       }
     }
+  }
+
+  public static void reportFailure(@NotNull Exception e, @Nullable final Project project) {
+    LOG.warn(e);
+    final String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        Notifications.Bus.notify(
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop Entry Creation Failed", message, NotificationType.ERROR),
+          project);
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   private static void check() throws ExecutionException, InterruptedException {
@@ -177,9 +176,16 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
   private static void install(File entryFile, boolean globalEntry) throws IOException, ExecutionException {
     if (globalEntry) {
-      String prompt = ApplicationBundle.message("desktop.entry.sudo.prompt");
-      exec(new GeneralCommandLine("xdg-desktop-menu", "install", "--mode", "system", entryFile.getAbsolutePath()), prompt);
-      exec(new GeneralCommandLine("xdg-desktop-menu", "forceupdate", "--mode", "system"), prompt);
+      File script = ExecUtil.createTempExecutableScript(
+        "create_desktop_entry_", ".sh",
+        "#!/bin/sh\n" +
+        "xdg-desktop-menu install --mode system '" + entryFile.getAbsolutePath() + "' && xdg-desktop-menu forceupdate --mode system\n");
+      try {
+        exec(new GeneralCommandLine(script.getPath()), ApplicationBundle.message("desktop.entry.sudo.prompt"));
+      }
+      finally {
+        FileUtil.delete(script);
+      }
     }
     else {
       exec(new GeneralCommandLine("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath()), null);

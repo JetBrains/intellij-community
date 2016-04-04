@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,34 @@
  */
 package com.intellij.openapi.externalSystem.service.project
 
+import com.intellij.openapi.application.Result
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.FileUtil
-import junit.framework.Test
-import junit.framework.TestSuite
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.ArrayUtil
+import org.jetbrains.annotations.NotNull
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
-
+import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:17 PM
  */
 public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
-
-//  public static Test suite() throws ClassNotFoundException {
-//    return new TestSuite(
-//      Class.forName("_FirstInSuiteTest"),
-//      ExternalProjectServiceTest.class,
-//      Class.forName("_LastInSuiteTest")
-//    );
-//  }
 
   void 'test no duplicate library dependency is added on subsequent refresh when there is an unresolved library'() {
     DataNode<ProjectData> projectNode = buildExternalProjectInfo {
@@ -61,7 +64,7 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         def name = (entry as LibraryOrderEntry).libraryName
         dependencies[name]++
       }
-    }
+      }
     ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1, 'Test_external_system_id: lib2': 1], dependencies)
   }
 
@@ -102,7 +105,7 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         folders['source'] += contentEntry.sourceFolders.length
         folders['excluded'] += contentEntry.excludeFolders.length
       }
-    }
+      }
     ExternalSystemTestUtil.assertMapsEqual(['source': 4, 'excluded': 2], folders)
   }
 
@@ -155,8 +158,8 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         else {
           fail()
         }
+        }
       }
-    }
     ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
   }
 
@@ -193,5 +196,42 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
       }
     }
     assertEquals(new HashSet<>(folders), new HashSet<>([".gradle", "build", "newExclDir"]));
+  }
+
+  void 'test project SDK configuration import'() {
+    String myJdkName = "My JDK";
+    String myJdkHome = IdeaTestUtil.requireRealJdkHome();
+
+    List<String> allowedRoots = new ArrayList<String>();
+    allowedRoots.add(myJdkHome);
+    allowedRoots.addAll(collectRootsInside(myJdkHome));
+    VfsRootAccess.allowRootAccess(myTestRootDisposable, ArrayUtil.toStringArray(allowedRoots));
+
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(myJdkName);
+        if (oldJdk != null) {
+          ProjectJdkTable.getInstance().removeJdk(oldJdk);
+        }
+        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
+        Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName);
+        assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
+        ProjectJdkTable.getInstance().addJdk(jdk);
+      }
+    }.execute();
+
+    DataNode<ProjectData> projectNode = buildExternalProjectInfo {
+      project {
+        javaProject(jdk: '1.7', languageLevel: '1.7') {
+        } } }
+
+    applyProjectState([projectNode])
+
+    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+    Sdk sdk = rootManager.getProjectSdk();
+    assertNotNull(sdk)
+    LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
+    assertEquals(LanguageLevel.JDK_1_7, languageLevelExtension.languageLevel)
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,5 @@ public class FoldingExceptionTest extends LightCodeInsightTestCase {
   private static void runFoldingPass() {
     PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
     CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
-  }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
   }
 }

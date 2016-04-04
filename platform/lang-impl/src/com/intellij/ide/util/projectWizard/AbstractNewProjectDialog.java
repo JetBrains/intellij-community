@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
@@ -50,7 +52,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
-    setTitle(generators.length == 0 ? "Create Project" : "Select Project Type");
+    setTitle(generators.length == 0 ? "Create Project" : "New Project");
     final DefaultActionGroup root = createRootStep();
 
     final Pair<JPanel, JBList> panel = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null);
@@ -102,5 +104,15 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   @NotNull
   protected Action[] createActions() {
     return new Action[0];
+  }
+
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        AbstractNewProjectDialog.super.show();
+      }
+    });
   }
 }

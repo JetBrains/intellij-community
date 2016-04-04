@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,48 +16,32 @@
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType.ERROR
-import com.intellij.notification.NotificationType.INFORMATION
-import com.intellij.notification.NotificationType.WARNING
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
 import git4idea.GitUtil
-import git4idea.commands.Git
+import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.test.GitExecutor.cd
 import git4idea.test.GitExecutor.git
-import git4idea.test.GitTestUtil.assertNotification
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 
-public abstract class GitRebaseBaseTest : GitPlatformTest() {
+abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected val LOCAL_CHANGES_WARNING : String = "Note that some local changes were <a>stashed</a> before rebase."
 
   lateinit protected var myVcsHelper: MockVcsHelper
-  lateinit protected var myFailingGit: TestGitImpl
 
   override fun setUp() {
     super.setUp()
 
     myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
-    myFailingGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
   }
 
-  override fun tearDown() {
-    try {
-      myFailingGit.setShouldFail { false } // to do check for null
-    }
-    finally {
-      super.tearDown()
-    }
-  }
+  override fun createRepository(rootDir: String) = GitTestUtil.createRepository(myProject, rootDir, false)
 
-  override fun createRepository(path: String) = GitTestUtil.createRepository(myProject, path, false)
-
-  override fun getDebugLogCategories() = listOf("#" + GitRebaseProcess::class.java.name)
+  override fun getDebugLogCategories() = listOf("#git4idea.rebase")
 
   protected fun GitRepository.`diverge feature and master`() {
     build(this) {
@@ -116,20 +100,6 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
     }
   }
 
-  protected fun assertSuccessfulNotification(message: String) {
-    assertNotification(INFORMATION, "Rebase Successful", message, myVcsNotifier.lastNotification)
-  }
-
-  protected fun assertWarningNotification(title: String, message: String) {
-    assertNotification(WARNING, title, message, myVcsNotifier.lastNotification)
-  }
-
-  protected fun assertErrorNotification(title: String, message: String) : Notification {
-    val notification = myVcsNotifier.lastNotification
-    assertNotification(ERROR, title, message, notification)
-    return notification
-  }
-
   protected fun GitRepository.`make rebase fail on 2nd commit`() {
     build(this) {
       master {
@@ -147,13 +117,17 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
   protected fun GitRepository.`make rebase fail after resolving conflicts`() {
     myVcsHelper.onMerge {
       resolveConflicts(this)
-      myFailingGit.setShouldFail { true }
+      myGit.setShouldRebaseFail { true }
     }
   }
 
   protected fun resolveConflicts(repository: GitRepository) {
     cd(repository)
     git("add -u .")
+  }
+
+  protected fun `do nothing on merge`() {
+    myVcsHelper.onMerge{}
   }
 
   protected fun GitRepository.`assert feature rebased on master`() {
@@ -166,13 +140,13 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected fun assertRebased(repository: GitRepository, feature: String, master: String) {
     cd(repository)
-    assertEquals(git("rev-parse " + master), git("merge-base $feature $master"))
+    assertEquals("$feature is not rebased on $master!", git("rev-parse " + master), git("merge-base $feature $master"))
   }
 
   protected fun assertNotRebased(feature: String, master: String, repository: GitRepository) {
     cd(repository)
-    assertFalse(git("rev-parse " + master) == git("merge-base $feature $master"),
-                "$feature is unexpectedly rebased on $master" + GitUtil.mention(repository))
+    assertFalse("$feature is unexpectedly rebased on $master" + GitUtil.mention(repository),
+                git("rev-parse " + master) == git("merge-base $feature $master"))
   }
 
   protected fun assertNoRebaseInProgress(repository: GitRepository) {
@@ -190,20 +164,72 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun GitRepository.assertNoLocalChanges() {
-    assertEquals("", gitStatus(), "There should be no local changes!")
+    assertEquals("There should be no local changes!", "", gitStatus())
   }
 
-  protected fun GitRepository.isDirty(): Boolean {
-    return !gitStatus().isEmpty();
+  protected fun GitRepository.hasConflict(file: String) : Boolean {
+    return ("UU " + file).equals(git(this, "status --porcelain"));
   }
-
-  private fun GitRepository.gitStatus() = git(this, "status --porcelain").trim()
 
   protected fun GitRepository.assertConflict(file: String) {
-    assertEquals("UU " + file, git(this, "status --porcelain"))
+    assertTrue("Conflict was expected for " + file + ", but git status doesn't show it: \n${git(this, "status --porcelain")}",
+               hasConflict(file))
   }
 
-  public class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
+  protected fun `assert conflict not resolved notification`() {
+    assertWarningNotification("Rebase Suspended",
+        """
+        You have to <a>resolve</a> the conflicts and <a>continue</a> rebase.<br/>
+        If you want to start from the beginning, you can <a>abort</a> rebase.
+        """)
+  }
+
+  protected fun `assert conflict not resolved notification with link to stash`() {
+    assertWarningNotification("Rebase Suspended",
+        """
+        You have to <a>resolve</a> the conflicts and <a>continue</a> rebase.<br/>
+        If you want to start from the beginning, you can <a>abort</a> rebase.<br/>
+        $LOCAL_CHANGES_WARNING
+        """)
+  }
+
+  protected fun `assert unknown error notification`() {
+    assertErrorNotification("Rebase Failed",
+        """
+        $UNKNOWN_ERROR_TEXT<br/>
+        <a>Retry.</a>
+        """)
+  }
+
+  protected fun `assert unknown error notification with link to abort`(afterContinue : Boolean = false) {
+    val expectedTitle = if (afterContinue) "Continue Rebase Failed" else "Rebase Failed";
+    assertErrorNotification(expectedTitle,
+        """
+        $UNKNOWN_ERROR_TEXT<br/>
+        You can <a>retry</a> or <a>abort</a> rebase.
+        """)
+  }
+
+  protected fun `assert unknown error notification with link to stash`() {
+    assertErrorNotification("Rebase Failed",
+        """
+        $UNKNOWN_ERROR_TEXT<br/>
+        <a>Retry.</a><br/>
+        $LOCAL_CHANGES_WARNING
+        """)
+  }
+
+  protected fun `assert error about unstaged file before continue rebase`(file : String) {
+    assertErrorNotification("Continue Rebase Failed",
+        """
+          $file: needs update
+          You must edit all merge conflicts
+          and then mark them as resolved using git add
+          You can <a>retry</a> or <a>abort</a> rebase.
+          """)
+  }
+
+  class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
     fun generate() : LocalChange {
       cd(repository)
       GitExecutor.file(filePath).create(content).add()
@@ -214,10 +240,28 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
       assertNewFile(repository, filePath, content)
     }
 
-    public fun assertNewFile(repository: GitRepository, file: String, content: String) {
+    fun assertNewFile(repository: GitRepository, file: String, content: String) {
       cd(repository)
-      assertEquals("A  " + file, git("status --porcelain"), "Incorrect git status output")
-      assertEquals(content, Executor.cat(file), "Incorrect content of the file [$file]")
+      assertEquals("Incorrect git status output", "A  " + file, git("status --porcelain"))
+      assertEquals("Incorrect content of the file [$file]", content, Executor.cat(file))
+    }
+  }
+
+  protected open class GitTestingRebaseProcess(project: Project, params: GitRebaseParams, val repositories: Collection<GitRepository>) :
+    GitRebaseProcess(project, GitRebaseSpec.forNewRebase(project, params, repositories, EmptyProgressIndicator()), null) {
+
+    constructor(project: Project, params: GitRebaseParams, repository: GitRepository) : this(project, params, listOf(repository))
+
+    override fun getDirtyRoots(repositories: Collection<GitRepository>): Collection<GitRepository> {
+      return repositories.filter { it.isDirty() }
+    }
+
+    protected fun GitRepository.isDirty(): Boolean {
+      return !gitStatus().isEmpty();
     }
   }
 }
+
+private fun GitRepository.gitStatus() = git(this, "status --porcelain").trim()
+
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.util.FontUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,8 +135,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
 
         int count = node.getRecursiveUsageCount();
-        append(" (" + StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count) + ")",
-               patchAttrs(node, ourNumberOfUsagesAttribute));
+        SimpleTextAttributes attributes = patchAttrs(node, ourNumberOfUsagesAttribute);
+        append(FontUtil.spaceAndThinSpace() + StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count),
+               SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
@@ -146,9 +148,10 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
         if (node.isValid()) {
           TextChunk[] text = node.getUsage().getPresentation().getText();
-          for (TextChunk textChunk : text) {
+          for (int i = 0; i < text.length; i++) {
+            TextChunk textChunk = text[i];
             SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
-            append(textChunk.getText(), patchAttrs(node, simples));
+            append(textChunk.getText() + (i == 0 ? " " : ""), patchAttrs(node, simples), true);
           }
         }
       }

@@ -64,11 +64,11 @@ public class PyDocReference extends PyReferenceImpl {
         final List<Pair<PsiElement,TextRange>> files = languageManager.getInjectedPsiFiles(host);
         if (files != null) {
           for (Pair<PsiElement, TextRange> pair : files) {
-            ResolveProcessor processor = new ResolveProcessor(referencedName);
+            final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
 
             PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)pair.getFirst(), referencedName, pair.getFirst());
             final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, pair.getFirst(),
-                                                                                         pair.getFirst());
+                                                                                pair.getFirst());
             if (resultList.size() > 0) {
               List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
               return ret.toArray(new RatedResolveResult[ret.size()]);
@@ -77,7 +77,7 @@ public class PyDocReference extends PyReferenceImpl {
         }
       }
 
-      ResolveProcessor processor = new ResolveProcessor(referencedName);
+      final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
 
       if (file instanceof ScopeOwner)
         PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)file, referencedName, file);

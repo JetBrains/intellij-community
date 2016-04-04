@@ -15,12 +15,21 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.DebugReflectionUtil.BackLink;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -31,26 +40,48 @@ import java.util.Set;
 class CachedValueChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.CachedValueChecker");
   private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
-  private static Set<Class> ourCheckedClasses = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourCheckedKeys = ContainerUtil.newConcurrentSet();
 
-  static void checkProvider(CachedValueProvider provider, UserDataHolder userDataHolder) {
+  static void checkProvider(@NotNull final CachedValueProvider provider,
+                            @NotNull final Key key,
+                            @NotNull final UserDataHolder userDataHolder) {
     if (!DO_CHECKS) return;
+    if (!ourCheckedKeys.add(key.toString())) return; // store strings because keys are created afresh in each (test) project
 
-    Class<? extends CachedValueProvider> providerClass = provider.getClass();
-    if (!ourCheckedClasses.add(providerClass)) return;
-
-    for (Field field : providerClass.getDeclaredFields()) {
-      try {
-        field.setAccessible(true);
-        Object o = field.get(provider);
-        if (o instanceof PsiElement && o != userDataHolder) {
-          LOG.error("Incorrect CachedValue use. Provider references PSI, causing memory leaks and possible invalid element access: field " + field.getName() + " of " + provider);
-          return;
-        }
-      }
-      catch (IllegalAccessException e) {
-        LOG.error(e);
-      }
+    Set<Object> visited = ContainerUtil.newIdentityTroveSet();
+    BackLink path = findReferencedPsi(provider, userDataHolder, 6, visited, null);
+    if (path != null) {
+      LOG.error("Incorrect CachedValue use. Provider references PSI, causing memory leaks and possible invalid element access, provider=" +
+                provider + "\n" + path);
     }
+  }
+
+  @Nullable
+  private static synchronized BackLink findReferencedPsi(@NotNull Object o,
+                                                         @Nullable final UserDataHolder toIgnore,
+                                                         final int depth,
+                                                         @NotNull final Set<Object> visited,
+                                                         @Nullable final BackLink backLink) {
+    if (depth == 0 || o == toIgnore || !visited.add(o)) return null;
+    if (o instanceof Project || o instanceof Module || o instanceof Application) return null;
+    if (o instanceof PsiElement) {
+      if (toIgnore instanceof PsiElement &&
+          ((PsiElement)toIgnore).getContainingFile() != null &&
+          PsiTreeUtil.isAncestor((PsiElement)o, (PsiElement)toIgnore, true)) {
+        // allow to capture PSI parents, assuming that they stay valid at least as long as the element itself
+        return null;
+      }
+      return backLink;
+    }
+
+    final Ref<BackLink> result = Ref.create();
+    DebugReflectionUtil.processStronglyReferencedValues(o, new PairProcessor<Object, Field>() {
+      @Override
+      public boolean process(Object next, Field field) {
+        result.set(findReferencedPsi(next, toIgnore, depth - 1, visited, new BackLink(next, field, backLink)));
+        return result.isNull();
+      }
+    });
+    return result.get();
   }
 }

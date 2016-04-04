@@ -59,7 +59,7 @@ public class ProjectDataServiceImpl extends AbstractProjectDataService<ProjectDa
     DataNode<ProjectData> node = toImport.iterator().next();
     assert projectData == node.getData();
 
-    if (!ExternalSystemApiUtil.isOneToOneMapping(project, node)) {
+    if (!ExternalSystemApiUtil.isOneToOneMapping(project, node.getData())) {
       return;
     }
     

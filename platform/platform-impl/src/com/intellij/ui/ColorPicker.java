@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.picker.ColorListener;
@@ -162,7 +161,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   @Nullable
   private ColorPipette createPipette(@NotNull ColorListener colorListener, @NotNull Disposable parentDisposable) {
-    if (SystemInfo.isMac && Registry.is("ide.mac.new.color.picker")) {
+    if (ColorPipetteBase.canUseMacPipette()) {
       ColorPipette pipette = getPipetteIfAvailable(new MacColorPipette(this, colorListener), parentDisposable);
       if (pipette != null) {
         return pipette;
@@ -1066,7 +1065,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     private DefaultColorPipette(@NotNull JComponent parent, @NotNull ColorListener colorListener) {
       super(parent, colorListener);
-      myTimer = new Timer(5, new ActionListener() {
+      myTimer = UIUtil.createNamedTimer("DefaultColorPipette",5, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           updatePipette();

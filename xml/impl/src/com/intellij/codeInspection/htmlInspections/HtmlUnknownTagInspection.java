@@ -16,13 +16,25 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction;
+import com.intellij.psi.templateLanguages.ConfigurableTemplateLanguageFileViewProvider;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,5 +130,42 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     additionalAttributesPanel.setText(inspection.getAdditionalEntries());
 
     return result;
+  }
+
+  @Nullable
+  @Override
+  protected LocalQuickFix createChangeTemplateDataFix(PsiFile file) {
+    if (file != TemplateLanguageUtil.getTemplateFile(file)) return null;
+
+    FileViewProvider vp = file.getViewProvider();
+    if (vp instanceof ConfigurableTemplateLanguageFileViewProvider) {
+      final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)vp;
+      final String text =
+        LangBundle.message("quickfix.change.template.data.language.text", viewProvider.getTemplateDataLanguage().getDisplayName());
+
+      return new LocalQuickFixOnPsiElement(file) {
+        @NotNull
+        @Override
+        public String getText() {
+          return text;
+        }
+
+        @Override
+        public void invoke(@NotNull Project project,
+                           @NotNull PsiFile file,
+                           @NotNull PsiElement startElement,
+                           @NotNull PsiElement endElement) {
+          ChangeTemplateDataLanguageAction.editSettings(project, file.getVirtualFile());
+        }
+
+        @Nls
+        @NotNull
+        @Override
+        public String getFamilyName() {
+          return "Change template data language";
+        }
+      };
+    }
+    return null;
   }
 }

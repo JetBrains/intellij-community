@@ -21,4 +21,5 @@ public interface DiffPlaces {
   String COMMIT_DIALOG = "CommitDialog";
   String TESTS_FAILED_ASSERTIONS = "TestsFiledAssertions";
   String MERGE = "Merge";
+  String DIR_DIFF = "DirDiff";
 }

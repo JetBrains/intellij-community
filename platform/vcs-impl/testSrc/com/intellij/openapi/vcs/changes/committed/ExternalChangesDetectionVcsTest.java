@@ -30,6 +30,7 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -190,10 +191,10 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     }
 
     @Override
-    public void getChanges(VcsDirtyScope dirtyScope,
-                           final ChangelistBuilder builder,
-                           ProgressIndicator progress,
-                           ChangeListManagerGate addGate) throws VcsException {
+    public void getChanges(@NotNull VcsDirtyScope dirtyScope,
+                           @NotNull final ChangelistBuilder builder,
+                           @NotNull ProgressIndicator progress,
+                           @NotNull ChangeListManagerGate addGate) throws VcsException {
       for (FilePath path : dirtyScope.getDirtyFiles()) {
         builder.processUnversionedFile(path.getVirtualFile());
       }

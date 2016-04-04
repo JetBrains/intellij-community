@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -50,10 +51,12 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
   private final Color myBackground;
 
   public FileLevelIntentionComponent(final String description,
-                                     final HighlightSeverity severity,
-                                     final GutterMark gutterMark,
-                                     final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
-                                     final Project project, final PsiFile psiFile, final Editor editor) {
+                                     @NotNull HighlightSeverity severity,
+                                     @Nullable GutterMark gutterMark,
+                                     @Nullable final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
+                                     @NotNull final Project project,
+                                     @NotNull final PsiFile psiFile,
+                                     @NotNull final Editor editor) {
     myProject = project;
     myBackground = getColor(severity);
 
@@ -110,7 +113,8 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     return myBackground;
   }
 
-  private  Color getColor(HighlightSeverity severity) {
+  @NotNull
+  private Color getColor(@NotNull HighlightSeverity severity) {
     if (SeverityRegistrar.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.ERROR) >= 0) {
       return LightColors.RED;
     }

@@ -52,7 +52,7 @@ public class ViewTextAction extends XFetchValueActionBase {
         dialog.setText(StringUtil.unquoteString(value));
       }
     };
-  };
+  }
 
   //@Override
   //protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {

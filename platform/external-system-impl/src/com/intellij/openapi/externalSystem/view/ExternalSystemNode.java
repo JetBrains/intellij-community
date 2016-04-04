@@ -77,6 +77,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   private ExternalSystemNode myParent;
   private ExternalSystemNode[] myChildren;
   private ExternalProjectsStructure.ErrorLevel myErrorLevel = ExternalProjectsStructure.ErrorLevel.NONE;
+  private final List<String> myErrors = ContainerUtil.newArrayList();
   private ExternalProjectsStructure.ErrorLevel myTotalErrorLevel = null;
 
   public ExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
@@ -225,7 +226,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     Collections.sort(list, ORDER_AWARE_COMPARATOR);
   }
 
-  protected boolean addAll(Collection<? extends ExternalSystemNode> externalSystemNodes) {
+  public boolean addAll(Collection<? extends ExternalSystemNode> externalSystemNodes) {
     return addAll(externalSystemNodes, false);
   }
 
@@ -243,11 +244,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return true;
   }
 
-  protected boolean add(ExternalSystemNode externalSystemNode) {
+  public boolean add(ExternalSystemNode externalSystemNode) {
     return addAll(ContainerUtil.list(externalSystemNode));
   }
 
-  protected boolean removeAll(Collection<ExternalSystemNode> externalSystemNodes) {
+  public boolean removeAll(Collection<ExternalSystemNode> externalSystemNodes) {
     return removeAll(externalSystemNodes, false);
   }
 
@@ -327,9 +328,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return result;
   }
 
-  public void setErrorLevel(ExternalProjectsStructure.ErrorLevel level) {
+  public void setErrorLevel(ExternalProjectsStructure.ErrorLevel level, String... errors) {
     if (myErrorLevel == level) return;
     myErrorLevel = level;
+    myErrors.clear();
+    Collections.addAll(myErrors, errors);
     myExternalProjectsView.updateUpTo(this);
   }
 
@@ -354,7 +357,8 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
     clearColoredText();
     addColoredFragment(name, prepareAttributes(attributes));
-    getTemplatePresentation().setTooltip(tooltip);
+    final String s = (tooltip != null ? tooltip + "\n\r" : "") + StringUtil.join(myErrors, "\n\r");
+    getTemplatePresentation().setTooltip(s);
   }
 
   private SimpleTextAttributes prepareAttributes(SimpleTextAttributes from) {

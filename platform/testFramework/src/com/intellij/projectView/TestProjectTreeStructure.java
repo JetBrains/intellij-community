@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,6 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   }
 
   public void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
-    Disposer.dispose(pane);
-    pane.createComponent();
-    Disposer.register(this, pane);
     Assert.assertNull(ProjectViewTestUtil.getNodeForElement(element, pane));
     pane.select(element, virtualFile, true);
     Assert.assertTrue(ProjectViewTestUtil.isExpanded(element, pane));

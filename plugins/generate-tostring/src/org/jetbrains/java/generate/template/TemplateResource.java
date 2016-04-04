@@ -27,11 +27,17 @@ public class TemplateResource implements Serializable {
   private final boolean isDefault;
   private String fileName = "";
   private String template = "";
+  private String className;
 
   public TemplateResource(String fileName, String template, boolean aDefault) {
     isDefault = aDefault;
     this.fileName = fileName;
     this.template = template;
+  }
+
+  public TemplateResource(String fileName, String template, boolean isDefault, String className) {
+    this(fileName, template, isDefault);
+    this.className = className;
   }
 
   /**
@@ -116,7 +122,7 @@ public class TemplateResource implements Serializable {
    */
   @Nullable
   public String getJavaDoc() {
-    int i = template.indexOf("*/");
+    int i = template.trim().startsWith("/*") ? template.indexOf("*/") : -1;
     if (i == -1) {
       return null;
     }
@@ -157,7 +163,8 @@ public class TemplateResource implements Serializable {
   }
 
   private static String getMethodSignature(String template) {
-    String s = after(template, "*/").trim();
+    final String trimmed = template.trim();
+    String s = trimmed.startsWith("/*") ? after(trimmed, "*/") : trimmed;
 
     StringBuffer signature = new StringBuffer();
 
@@ -225,6 +232,13 @@ public class TemplateResource implements Serializable {
     }
 
     return true;
+  }
+
+  /**
+   * Class fqn to detect applicability 
+   */
+  public String getClassName() {
+    return className;
   }
 
   /**

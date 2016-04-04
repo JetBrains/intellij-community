@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -43,10 +42,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
-@State(
-  name = "GlobalAntConfiguration",
-  storages = {@com.intellij.openapi.components.Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")}
-)
+@State(name = "GlobalAntConfiguration", storages = @Storage("other.xml"))
 public class GlobalAntConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(GlobalAntConfiguration.class);
 
@@ -126,11 +122,6 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
 
   public AbstractProperty.AbstractPropertyContainer getProperties() {
     return myProperties;
-  }
-
-  public AbstractProperty.AbstractPropertyContainer getProperties(Project project) {
-    return new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{
-      myProperties, AntConfigurationBase.getInstance(project).getProperties()});
   }
 
   public void addConfiguration(final AntInstallation ant) {

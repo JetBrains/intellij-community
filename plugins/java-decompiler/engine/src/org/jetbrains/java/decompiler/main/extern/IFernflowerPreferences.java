@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ public interface IFernflowerPreferences {
   String IDEA_NOT_NULL_ANNOTATION = "inn";
   String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
   String BYTECODE_SOURCE_MAPPING = "bsm";
-  String USE_DEBUG_LINE_NUMBERS = "udl";
 
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
@@ -58,7 +57,7 @@ public interface IFernflowerPreferences {
   String UNIT_TEST_MODE = "__unit_test_mode__";
 
   String LINE_SEPARATOR_WIN = "\r\n";
-  String LINE_SEPARATOR_LIN = "\n";
+  String LINE_SEPARATOR_UNX = "\n";
 
   Map<String, Object> DEFAULTS = Collections.unmodifiableMap(new HashMap<String, Object>() {{
     put(REMOVE_BRIDGE, "1");
@@ -83,7 +82,6 @@ public interface IFernflowerPreferences {
     put(IDEA_NOT_NULL_ANNOTATION, "1");
     put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
     put(BYTECODE_SOURCE_MAPPING, "0");
-    put(USE_DEBUG_LINE_NUMBERS, "0");
 
     put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     put(MAX_PROCESSING_METHOD, "0");

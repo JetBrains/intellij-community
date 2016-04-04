@@ -67,18 +67,14 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     final Editor editor = context.getEditor();
     final char c = context.getCompletionChar();
     if (c == '#') {
-      context.setLaterRunnable(new Runnable() {
-        @Override
-        public void run() {
-          new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor);
-        }
-      });
+      context.setLaterRunnable(() -> new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor));
     } else if (c == '.' && PsiTreeUtil.getParentOfType(position, PsiParameterList.class) == null) {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
 
-    if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null && shouldInsertFqnInJavadoc(item, file, project)) {
-      AllClassesGetter.INSERT_FQN.handleInsert(context, item);
+    String qname = psiClass.getQualifiedName();
+    if (qname != null && PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null && shouldInsertFqnInJavadoc(item, file, project)) {
+      context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), qname);
       return;
     }
 

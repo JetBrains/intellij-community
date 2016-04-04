@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,21 +59,13 @@ public class NakedNotifyInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSynchronizedStatement(
-      @NotNull PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
-      final PsiCodeBlock body = statement.getBody();
-      if (body != null) {
-        checkBody(body);
-      }
+      checkBody(statement.getBody());
     }
 
     private void checkBody(PsiCodeBlock body) {
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return;
-      }
-      final PsiStatement firstStatement = statements[0];
+      final PsiStatement firstStatement = ControlFlowUtils.getFirstStatementInBlock(body);
       if (!(firstStatement instanceof PsiExpressionStatement)) {
         return;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -87,11 +87,8 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
         PsiClass selectedClass = getSelectedClass();
         if (selectedClass != null) {
           PsiField[] fields = selectedClass.getFields();
-          MemberChooser<PsiFieldMember> chooser = new MemberChooser<PsiFieldMember>(ContainerUtil.map2Array(fields, PsiFieldMember.class, new Function<PsiField, PsiFieldMember>() {
-            public PsiFieldMember fun(final PsiField s) {
-              return new PsiFieldMember(s);
-            }
-          }), false, false, myProject);
+          MemberChooser<PsiFieldMember> chooser =
+            new MemberChooser<>(ContainerUtil.map2Array(fields, PsiFieldMember.class, PsiFieldMember::new), false, false, myProject);
           chooser.setTitle(DebuggerBundle.message("add.field.breakpoint.dialog.field.chooser.title", fields.length));
           chooser.setCopyJavadocVisible(false);
           chooser.show();
@@ -115,7 +112,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
   private PsiClass getSelectedClass() {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     String classQName = myClassChooser.getText();
-    if ("".equals(classQName)) {
+    if (StringUtil.isEmpty(classQName)) {
       return null;
     }
     return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(classQName, GlobalSearchScope.allScope(myProject));

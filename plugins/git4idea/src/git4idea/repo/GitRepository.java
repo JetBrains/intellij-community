@@ -62,8 +62,15 @@ public interface GitRepository extends Repository {
 
   Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
 
+  /**
+   * @deprecated Use #getRepositoryFiles(), since there will be two administrative directories if user uses git worktrees.
+   */
+  @Deprecated
   @NotNull
   VirtualFile getGitDir();
+
+  @NotNull
+  GitRepositoryFiles getRepositoryFiles();
 
   @NotNull
   GitUntrackedFilesHolder getUntrackedFilesHolder();

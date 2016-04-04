@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
+import com.intellij.util.Function;
 import gnu.trove.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -803,7 +804,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T find(@NotNull T[] array, @NotNull Condition<T> condition) {
+  public static <T> T find(@NotNull T[] array, @NotNull Condition<? super T> condition) {
     for (T element : array) {
       if (condition.value(element)) return element;
     }
@@ -1206,6 +1207,36 @@ public class ContainerUtil extends ContainerUtilRt {
           @Override
           public void remove() {
             it.remove();
+          }
+        };
+      }
+    };
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T, E> Iterable<Pair<T, E>> zip(@NotNull final Iterable<T> iterable1, @NotNull final Iterable<E> iterable2) {
+    return new Iterable<Pair<T, E>>() {
+      @Override
+      public Iterator<Pair<T, E>> iterator() {
+        return new Iterator<Pair<T, E>>() {
+          private final Iterator<T> i1 = iterable1.iterator();
+          private final Iterator<E> i2 = iterable2.iterator();
+
+          @Override
+          public boolean hasNext() {
+            return i1.hasNext() && i2.hasNext();
+          }
+
+          @Override
+          public Pair<T, E> next() {
+            return Pair.create(i1.next(), i2.next());
+          }
+
+          @Override
+          public void remove() {
+            i1.remove();
+            i2.remove();
           }
         };
       }
@@ -1976,12 +2007,12 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> boolean and(@NotNull T[] iterable, @NotNull Condition<T> condition) {
+  public static <T> boolean and(@NotNull T[] iterable, @NotNull Condition<? super T> condition) {
     return and(Arrays.asList(iterable), condition);
   }
 
   @Contract(pure=true)
-  public static <T> boolean and(@NotNull Iterable<T> iterable, @NotNull Condition<T> condition) {
+  public static <T> boolean and(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
     for (final T t : iterable) {
       if (!condition.value(t)) return false;
     }
@@ -1989,22 +2020,22 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> boolean exists(@NotNull T[] iterable, @NotNull Condition<T> condition) {
+  public static <T> boolean exists(@NotNull T[] iterable, @NotNull Condition<? super T> condition) {
     return or(Arrays.asList(iterable), condition);
   }
 
   @Contract(pure=true)
-  public static <T> boolean exists(@NotNull Iterable<T> iterable, @NotNull Condition<T> condition) {
+  public static <T> boolean exists(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
     return or(iterable, condition);
   }
 
   @Contract(pure=true)
-  public static <T> boolean or(@NotNull T[] iterable, @NotNull Condition<T> condition) {
+  public static <T> boolean or(@NotNull T[] iterable, @NotNull Condition<? super T> condition) {
     return or(Arrays.asList(iterable), condition);
   }
 
   @Contract(pure=true)
-  public static <T> boolean or(@NotNull Iterable<T> iterable, @NotNull Condition<T> condition) {
+  public static <T> boolean or(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
     for (final T t : iterable) {
       if (condition.value(t)) return true;
     }
@@ -2302,7 +2333,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<T> list, @NotNull Condition<T> condition) {
+  public static <T> int indexOf(@NotNull List<T> list, @NotNull Condition<? super T> condition) {
     for (int i = 0, listSize = list.size(); i < listSize; i++) {
       T t = list.get(i);
       if (condition.value(t)) {
@@ -2313,7 +2344,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull List<T> list, @NotNull Condition<T> condition) {
+  public static <T> int lastIndexOf(@NotNull List<T> list, @NotNull Condition<? super T> condition) {
     for (int i = list.size() - 1; i >= 0; i--) {
       T t = list.get(i);
       if (condition.value(t)) {
@@ -2492,8 +2523,15 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap() {
+    return createConcurrentWeakKeyWeakValueMap(ContainerUtil.<K>canonicalStrategy());
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap(@NotNull TObjectHashingStrategy<K> strategy) {
     //noinspection deprecation
-    return new ConcurrentWeakKeyWeakValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+    return new ConcurrentWeakKeyWeakValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(),
+                                                       strategy);
   }
 
   @NotNull
@@ -2820,6 +2858,11 @@ public class ContainerUtil extends ContainerUtilRt {
     protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
       return new TreeMap<K, Collection<V>>();
     }
+  }
+
+  @NotNull
+  public static <K,V> Map<K,V> createWeakKeySoftValueMap() {
+    return new WeakKeySoftValueHashMap<K, V>();
   }
 }
 

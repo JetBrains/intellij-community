@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.CommenterForm;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -24,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.IdeBorderFactory;
@@ -50,9 +50,6 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JTextField myLocalVariableSuffixField;
 
   private JCheckBox myCbPreferLongerNames;
-  private JCheckBox myCbLineCommentAtFirstColumn;
-  private JCheckBox myCbBlockCommentAtFirstColumn;
-
   private final MembersOrderList myMembersOrderList;
 
   private final CodeStyleSettings mySettings;
@@ -63,6 +60,9 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JPanel myMembersPanel;
   private JCheckBox myRepeatSynchronizedCheckBox;
   private JPanel myVisibilityPanel;
+  
+  @SuppressWarnings("unused") private JPanel myCommenterPanel;
+  private CommenterForm myCommenterForm;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
@@ -90,129 +90,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     return "reference.settingsdialog.IDE.globalcodestyle.codegen";
   }
 
-
-  /*private JPanel createNamingPanel() {
-    OptionGroup optionGroup = new OptionGroup("Naming");
-
-    myCbPreferLongerNames = new JCheckBox("Prefer longer names");
-
-    optionGroup.add(myCbPreferLongerNames);
-
-    optionGroup.add(new JLabel("Name prefix for:"));
-
-    myFieldPrefixField = new JTextField(8);
-    optionGroup.add(new JLabel("Field"), myFieldPrefixField, true);
-
-    myStaticFieldPrefixField = new JTextField(8);
-    optionGroup.add(new JLabel("Static field"), myStaticFieldPrefixField, true);
-
-    myParameterPrefixField = new JTextField(8);
-    optionGroup.add(new JLabel("Parameter"), myParameterPrefixField, true);
-
-    myLocalVariablePrefixField = new JTextField(8);
-    optionGroup.add(new JLabel("Local variable"), myLocalVariablePrefixField, true);
-
-    optionGroup.add(new JLabel("Name suffix for:"));
-
-    myFieldSuffixField = new JTextField(8);
-    optionGroup.add(new JLabel("Field"), myFieldSuffixField, true);
-
-    myStaticFieldSuffixField = new JTextField(8);
-    optionGroup.add(new JLabel("Static field"), myStaticFieldSuffixField, true);
-
-    myParameterSuffixField = new JTextField(8);
-    optionGroup.add(new JLabel("Parameter"), myParameterSuffixField, true);
-
-    myLocalVariableSuffixField = new JTextField(8);
-    optionGroup.add(new JLabel("Local variable"), myLocalVariableSuffixField, true);
-
-    return optionGroup.createPanel();
-  }
-
-  private JPanel createCommentPanel() {
-    OptionGroup optionGroup = new OptionGroup("Comment Code");
-
-    myCbLineCommentAtFirstColumn = new JCheckBox("Line comment at first column");
-    optionGroup.add(myCbLineCommentAtFirstColumn);
-
-    myCbBlockCommentAtFirstColumn = new JCheckBox("Block comment at first column");
-    optionGroup.add(myCbBlockCommentAtFirstColumn);
-
-    return optionGroup.createPanel();
-  }
-
-  private JPanel createRightMarginPanel() {
-    OptionGroup optionGroup = new OptionGroup("Wrapping ");
-
-    myRightMarginField = new JTextField(4);
-    optionGroup.add(new JLabel("Right margin (columns)") ,myRightMarginField);
-
-    return optionGroup.createPanel();
-  }
-
-  private JPanel createLineSeparatorPanel(){
-    OptionGroup optionGroup = new OptionGroup("Line Separator (for new files) ");
-
-
-    myLineSeparatorCombo = new JComboBox();
-    myLineSeparatorCombo.addItem(SYSTEM_DEPENDANT_STRING);
-    myLineSeparatorCombo.addItem(UNIX_STRING);
-    myLineSeparatorCombo.addItem(WINDOWS_STRING);
-    myLineSeparatorCombo.addItem(MACINTOSH_STRING);
-
-    optionGroup.add(myLineSeparatorCombo);
-
-    return optionGroup.createPanel();
-  }
-
-  private JPanel createKeepWhenReformattingPanel() {
-    OptionGroup optionGroup = new OptionGroup("Keep When Reformatting");
-
-    myCbKeepLineBreaks = new JCheckBox("Line breaks");
-    optionGroup.add(myCbKeepLineBreaks);
-
-    myCbKeepFirstColumnComment = new JCheckBox("Comment at first column");
-    optionGroup.add(myCbKeepFirstColumnComment);
-
-    myCbKeepControlStatementInOneLine = new JCheckBox("Control statement in one line");
-    optionGroup.add(myCbKeepControlStatementInOneLine);
-
-    return optionGroup.createPanel();
-  }
-
-  private JPanel createMembersOrderPanel() {
-
-    OptionGroup optionGroup = new OptionGroup("Order of Members");
-
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    myMembersOrderList = new MembersOrderList();
-    panel.add(new JScrollPane(myMembersOrderList), new GridBagConstraints(0,0,1,2,1,1,GridBagConstraints.NORTH,GridBagConstraints.BOTH,new Insets(0,0,0,0), 0,0));
-
-    JButton moveUpButton = new JButton("Move Up");
-
-    moveUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e){
-        ListUtil.moveSelectedItemsUp(myMembersOrderList);
-      }
-    });
-    panel.add(moveUpButton, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.NORTH,GridBagConstraints.HORIZONTAL,new Insets(0,5,5,0), 0,0));
-
-   JButton movDownButton = new JButton("Move Down");
-    moveDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e){
-        ListUtil.moveSelectedItemsDown(myMembersOrderList);
-      }
-    });
-   panel.add(movDownButton, new GridBagConstraints(1,1,1,1,0,1,GridBagConstraints.NORTH,GridBagConstraints.HORIZONTAL,new Insets(0,5,5,0), 0,0));
-
-    optionGroup.add(panel);
-
-    return optionGroup.createPanel();
-  }*/
-
   public void reset(CodeStyleSettings settings) {
-    CommonCodeStyleSettings javaCommonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     myCbPreferLongerNames.setSelected(settings.PREFER_LONGER_NAMES);
 
     myFieldPrefixField.setText(settings.FIELD_NAME_PREFIX);
@@ -225,9 +103,6 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     myParameterSuffixField.setText(settings.PARAMETER_NAME_SUFFIX);
     myLocalVariableSuffixField.setText(settings.LOCAL_VARIABLE_NAME_SUFFIX);
 
-    myCbLineCommentAtFirstColumn.setSelected(javaCommonSettings.LINE_COMMENT_AT_FIRST_COLUMN);
-    myCbBlockCommentAtFirstColumn.setSelected(javaCommonSettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
-
     myCbGenerateFinalLocals.setSelected(settings.GENERATE_FINAL_LOCALS);
     myCbGenerateFinalParameters.setSelected(settings.GENERATE_FINAL_PARAMETERS);
     myMembersOrderList.reset(mySettings);
@@ -236,6 +111,8 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     myInsertOverrideAnnotationCheckBox.setSelected(settings.INSERT_OVERRIDE_ANNOTATION);
     myRepeatSynchronizedCheckBox.setSelected(settings.REPEAT_SYNCHRONIZED);
     myJavaVisibilityPanel.setVisibility(settings.VISIBILITY);
+    
+    myCommenterForm.reset(settings);
   }
 
   public void reset() {
@@ -243,7 +120,6 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   }
 
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
-    CommonCodeStyleSettings javaCommonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     settings.PREFER_LONGER_NAMES = myCbPreferLongerNames.isSelected();
 
     settings.FIELD_NAME_PREFIX = setPrefixSuffix(myFieldPrefixField.getText(), true);
@@ -256,9 +132,6 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     settings.PARAMETER_NAME_SUFFIX = setPrefixSuffix(myParameterSuffixField.getText(), false);
     settings.LOCAL_VARIABLE_NAME_SUFFIX = setPrefixSuffix(myLocalVariableSuffixField.getText(), false);
 
-    javaCommonSettings.LINE_COMMENT_AT_FIRST_COLUMN = myCbLineCommentAtFirstColumn.isSelected();
-    javaCommonSettings.BLOCK_COMMENT_AT_FIRST_COLUMN = myCbBlockCommentAtFirstColumn.isSelected();
-
     settings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
     settings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
 
@@ -269,6 +142,8 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     settings.VISIBILITY = myJavaVisibilityPanel.getVisibility();
 
     myMembersOrderList.apply(settings);
+    
+    myCommenterForm.apply(settings);
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
@@ -289,8 +164,6 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   }
 
   public boolean isModified(CodeStyleSettings settings) {
-    CommonCodeStyleSettings javaCommonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
-
     boolean isModified = isModified(myCbPreferLongerNames, settings.PREFER_LONGER_NAMES);
 
     isModified |= isModified(myFieldPrefixField, settings.FIELD_NAME_PREFIX);
@@ -303,10 +176,6 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     isModified |= isModified(myParameterSuffixField, settings.PARAMETER_NAME_SUFFIX);
     isModified |= isModified(myLocalVariableSuffixField, settings.LOCAL_VARIABLE_NAME_SUFFIX);
 
-    isModified |= isModified(myCbLineCommentAtFirstColumn, javaCommonSettings.LINE_COMMENT_AT_FIRST_COLUMN);
-    isModified |= isModified(myCbBlockCommentAtFirstColumn, javaCommonSettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
-
-
     isModified |= isModified(myCbGenerateFinalLocals, settings.GENERATE_FINAL_LOCALS);
     isModified |= isModified(myCbGenerateFinalParameters, settings.GENERATE_FINAL_PARAMETERS);
 
@@ -316,6 +185,8 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
     isModified |= myMembersOrderList.isModified(settings);
     isModified |= !settings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
+    
+    isModified |= myCommenterForm.isModified(settings);
 
     return isModified;
   }
@@ -330,6 +201,11 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
   private static boolean isModified(JTextField textField, String value) {
     return !textField.getText().trim().equals(value);
+  }
+
+  private void createUIComponents() {
+    myCommenterForm =  new CommenterForm(JavaLanguage.INSTANCE);
+    myCommenterPanel = myCommenterForm.getCommenterPanel();
   }
 
   private static class MembersOrderList extends JBList {

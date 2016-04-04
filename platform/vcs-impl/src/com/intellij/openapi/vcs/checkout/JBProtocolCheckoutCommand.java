@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -32,11 +31,10 @@ import java.util.Map;
 public class JBProtocolCheckoutCommand extends JBProtocolCommand {
   private static final String REPOSITORY_NAME_KEY = "checkout.repo";
 
-  @NotNull
-  @Override
-  public String getCommandName() {
-    return "checkout";
+  public JBProtocolCheckoutCommand() {
+    super("checkout");
   }
+
 
   @Override
   public void perform(String vcsId, Map<String, String> parameters) {

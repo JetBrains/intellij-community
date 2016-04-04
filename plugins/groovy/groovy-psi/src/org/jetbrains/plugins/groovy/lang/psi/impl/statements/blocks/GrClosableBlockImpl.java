@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -41,10 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
@@ -53,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
 /**
  * @author ilyas
@@ -98,7 +95,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
     if (!processParameters(processor, state, place)) return false;
-    if (ResolveUtil.shouldProcessProperties(processor.getHint(ClassHint.KEY)) && !ResolveUtil.processElement(processor, getOwner(), state)) return false;
+    if (ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY)) && !ResolveUtil.processElement(processor, getOwner(), state)) return false;
     if (!processClosureClassMembers(processor, state, lastParent, place)) return false;
 
     return true;
@@ -165,13 +162,13 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass == null) return true;
 
-    return closureClass.processDeclarations(processor, state.put(ClassHint.RESOLVE_CONTEXT, this), lastParent, place);
+    return ResolveUtil.processClassDeclarations(closureClass, processor, state.put(ClassHint.RESOLVE_CONTEXT, this), lastParent, place);
   }
 
   private boolean processParameters(@NotNull PsiScopeProcessor processor,
                                     @NotNull ResolveState state,
                                     @NotNull PsiElement place) {
-    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ClassHint.KEY))) return true;
+    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return true;
 
     if (hasParametersSection()) {
       for (GrParameter parameter : getParameters()) {

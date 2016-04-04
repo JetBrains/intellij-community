@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.startup.impl;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -35,7 +36,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
@@ -206,11 +207,6 @@ public class StartupManagerImpl extends StartupManagerEx {
         }
       }
     });
-
-    // otherwise will be stored - we must not create config files in tests
-    if (!app.isUnitTestMode()) {
-      Registry.get("ide.firstStartup").setValue(false);
-    }
   }
 
   public void scheduleInitialVfsRefresh() {
@@ -228,6 +224,8 @@ public class StartupManagerImpl extends StartupManagerEx {
           connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
             @Override
             public void afterProjectClosed(@NotNull Project project) {
+              if (project != myProject) return;
+
               RefreshQueue.getInstance().cancelSession(sessionId);
               connection.disconnect();
             }
@@ -256,11 +254,14 @@ public class StartupManagerImpl extends StartupManagerEx {
       if (path == null || FileUtil.isAncestor(PathManager.getConfigPath(), path, true)) {
         return;
       }
+      if (ProjectUtil.isDirectoryBased(myProject)) {
+        path = PathUtil.getParentPath(path);
+      }
 
-      boolean actual = FileUtil.isFileSystemCaseSensitive(path);
-      LOG.info(path + " case-sensitivity: " + actual);
-      if (actual != SystemInfo.isFileSystemCaseSensitive) {
-        int prefix = SystemInfo.isFileSystemCaseSensitive ? 1 : 0;  // IDE=true -> FS=false -> prefix='in'
+      boolean expected = SystemInfo.isFileSystemCaseSensitive, actual = FileUtil.isFileSystemCaseSensitive(path);
+      LOG.info(path + " case-sensitivity: expected=" + expected + " actual=" + actual);
+      if (actual != expected) {
+        int prefix = expected ? 1 : 0;  // IDE=true -> FS=false -> prefix='in'
         String title = ApplicationBundle.message("fs.case.sensitivity.mismatch.title");
         String text = ApplicationBundle.message("fs.case.sensitivity.mismatch.message", prefix);
         Notifications.Bus.notify(

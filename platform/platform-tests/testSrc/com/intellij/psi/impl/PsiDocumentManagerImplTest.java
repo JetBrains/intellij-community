@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -30,6 +29,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,7 +37,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -46,9 +45,10 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Processor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -96,14 +96,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     VirtualFile vFile = createFile();
     final PsiFile file = new MockPsiFile(vFile, getPsiManager());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
     assertNotNull(document);
     assertSame(document, FileDocumentManager.getInstance().getDocument(vFile));
-  }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
   }
 
   private static LightVirtualFile createFile() {
@@ -113,7 +108,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   public void testDocumentGced() throws Exception {
     VirtualFile vFile = getVirtualFile(createTempFile("txt", "abc"));
     PsiDocumentManagerImpl documentManager = getPsiDocumentManager();
-    long id = System.identityHashCode(documentManager.getDocument(getPsiManager().findFile(vFile)));
+    long id = System.identityHashCode(documentManager.getDocument(findFile(vFile)));
 
     documentManager.commitAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
@@ -121,24 +116,23 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEmpty(documentManager.getUncommittedDocuments());
 
     LeakHunter.checkLeak(documentManager, DocumentImpl.class);
-    LeakHunter.checkLeak(documentManager, PsiFileImpl.class, new Processor<PsiFileImpl>() {
-      @Override
-      public boolean process(PsiFileImpl psiFile) {
-        return psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem;
-      }
-    });
-    //Class.forName("com.intellij.util.ProfilingUtil").getDeclaredMethod("forceCaptureMemorySnapshot").invoke(null);
+    LeakHunter.checkLeak(documentManager, PsiFileImpl.class,
+                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem);
 
     for (int i = 0; i < 1000; i++) {
       PlatformTestUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
-      if (documentManager.getCachedDocument(getPsiManager().findFile(vFile)) == null) break;
+      if (documentManager.getCachedDocument(findFile(vFile)) == null) break;
       System.gc();
     }
-    assertNull(documentManager.getCachedDocument(getPsiManager().findFile(vFile)));
+    assertNull(documentManager.getCachedDocument(findFile(vFile)));
 
-    Document newDoc = documentManager.getDocument(getPsiManager().findFile(vFile));
+    Document newDoc = documentManager.getDocument(findFile(vFile));
     assertTrue(id != System.identityHashCode(newDoc));
+  }
+
+  private PsiFile findFile(@NotNull VirtualFile vFile) {
+    return getPsiManager().findFile(vFile);
   }
 
   public void testGetUncommittedDocuments_noDocuments() throws Exception {
@@ -146,20 +140,12 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testGetUncommittedDocuments_documentChanged_DontProcessEvents() throws Exception {
-    final PsiFile file = getPsiManager().findFile(createFile());
+    final PsiFile file = findFile(createFile());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        getPsiDocumentManager().getSynchronizer().performAtomically(file, new Runnable() {
-          @Override
-          public void run() {
-            changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
-          }
-        });
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      getPsiDocumentManager().getSynchronizer().performAtomically(file, () -> changeDocument(document, getPsiDocumentManager()));
     });
 
 
@@ -169,11 +155,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   public void testGetUncommittedDocuments_documentNotRegistered() throws Exception {
     final Document document = new MockDocument();
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      changeDocument(document, getPsiDocumentManager());
     });
 
 
@@ -181,20 +164,20 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testCommitDocument_RemovesFromUncommittedList() throws Exception {
-    PsiFile file = getPsiManager().findFile(createFile());
+    PsiFile file = findFile(createFile());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      changeDocument(document, getPsiDocumentManager());
     });
-
 
     getPsiDocumentManager().commitDocument(document);
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+  }
+
+  private Document getDocument(PsiFile file) {
+    return getPsiDocumentManager().getDocument(file);
   }
 
   private static void changeDocument(Document document, PsiDocumentManagerImpl manager) {
@@ -204,15 +187,12 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testCommitAllDocument_RemovesFromUncommittedList() throws Exception {
-    PsiFile file = getPsiManager().findFile(createFile());
+    PsiFile file = findFile(createFile());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        changeDocument(document, getPsiDocumentManager());
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      changeDocument(document, getPsiDocumentManager());
     });
 
 
@@ -221,9 +201,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testDocumentFromAlienProjectDoesNotEndUpInMyUncommittedList() throws Exception {
-    PsiFile file = getPsiManager().findFile(createFile());
+    PsiFile file = findFile(createFile());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
     File temp = createTempDirectory();
     final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
@@ -239,29 +219,25 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       final PsiFile alienFile = alienManager.findFile(alienVirt);
       final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
       final Document alienDocument = alienDocManager.getDocument(alienFile);
-      //alienDocument.putUserData(CACHED_VIEW_PROVIDER, new MockFileViewProvider(alienFile));
       assertEquals(0, alienDocManager.getUncommittedDocuments().length);
       assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
 
-      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-        @Override
-        public void run() {
-          changeDocument(alienDocument, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
-          assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
-          assertEquals(0, alienDocManager.getUncommittedDocuments().length);
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        changeDocument(alienDocument, getPsiDocumentManager());
+        assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+        assertEquals(0, alienDocManager.getUncommittedDocuments().length);
 
-          changeDocument(alienDocument, alienDocManager);
-          assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
-          assertEquals(1, alienDocManager.getUncommittedDocuments().length);
+        changeDocument(alienDocument, alienDocManager);
+        assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+        assertEquals(1, alienDocManager.getUncommittedDocuments().length);
 
-          changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
-          assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
-          assertEquals(1, alienDocManager.getUncommittedDocuments().length);
+        changeDocument(document, getPsiDocumentManager());
+        assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
+        assertEquals(1, alienDocManager.getUncommittedDocuments().length);
 
-          changeDocument(document, alienDocManager);
-          assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
-          assertEquals(1, alienDocManager.getUncommittedDocuments().length);
-        }
+        changeDocument(document, alienDocManager);
+        assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
+        assertEquals(1, alienDocManager.getUncommittedDocuments().length);
       });
     }
     finally {
@@ -270,60 +246,42 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testCommitInBackground() {
-    PsiFile file = getPsiManager().findFile(createFile());
+    PsiFile file = findFile(createFile());
     assertNotNull(file);
     assertTrue(file.isPhysical());
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
     assertNotNull(document);
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    getPsiDocumentManager().performWhenAllCommitted(new Runnable() {
-      @Override
-      public void run() {
-        assertTrue(getPsiDocumentManager().isCommitted(document));
-        semaphore.up();
-      }
+    getPsiDocumentManager().performWhenAllCommitted(() -> {
+      assertTrue(getPsiDocumentManager().isCommitted(document));
+      semaphore.up();
     });
     waitAndPump(semaphore, TIMEOUT);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(0, "class X {}");
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.insertString(0, "class X {}");
     });
 
     semaphore.down();
-    getPsiDocumentManager().performWhenAllCommitted(new Runnable() {
-      @Override
-      public void run() {
-        assertTrue(getPsiDocumentManager().isCommitted(document));
-        semaphore.up();
-      }
+    getPsiDocumentManager().performWhenAllCommitted(() -> {
+      assertTrue(getPsiDocumentManager().isCommitted(document));
+      semaphore.up();
     });
     waitAndPump(semaphore, TIMEOUT);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
     final AtomicInteger count = new AtomicInteger();
-    final Runnable action = new Runnable() {
-      @Override
-      public void run() {
-        count.incrementAndGet();
-      }
-    };
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(0, "/**/");
-        boolean executed = getPsiDocumentManager().cancelAndRunWhenAllCommitted("xxx", action);
-        assertFalse(executed);
-        executed = getPsiDocumentManager().cancelAndRunWhenAllCommitted("xxx", action);
-        assertFalse(executed);
-        assertEquals(0, count.get());
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.insertString(0, "/**/");
+      boolean executed = getPsiDocumentManager().cancelAndRunWhenAllCommitted("xxx", count::incrementAndGet);
+      assertFalse(executed);
+      executed = getPsiDocumentManager().cancelAndRunWhenAllCommitted("xxx", count::incrementAndGet);
+      assertFalse(executed);
+      assertEquals(0, count.get());
     });
 
     while (!getPsiDocumentManager().isCommitted(document)) {
@@ -333,16 +291,13 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(1, count.get());
 
     count.set(0);
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(0, "/**/");
-        boolean executed = getPsiDocumentManager().performWhenAllCommitted(action);
-        assertFalse(executed);
-        executed = getPsiDocumentManager().performWhenAllCommitted(action);
-        assertFalse(executed);
-        assertEquals(0, count.get());
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.insertString(0, "/**/");
+      boolean executed = getPsiDocumentManager().performWhenAllCommitted(count::incrementAndGet);
+      assertFalse(executed);
+      executed = getPsiDocumentManager().performWhenAllCommitted(count::incrementAndGet);
+      assertFalse(executed);
+      assertEquals(0, count.get());
     });
 
     while (!getPsiDocumentManager().isCommitted(document)) {
@@ -352,10 +307,44 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(2, count.get());
   }
 
+  public void testDocumentCommittedInBackgroundEventuallyEvenDespiteTyping() throws InterruptedException, IOException {
+    VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", ""));
+    PsiFile file = findFile(virtualFile);
+    assertNotNull(file);
+    assertTrue(file.isPhysical());
+    final Document document = getDocument(file);
+    assertNotNull(document);
+
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.insertString(0, "class X {"+StringUtil.repeat("public int IIII = 222;\n",10000)+"}");
+    });
+
+    while (!getPsiDocumentManager().isCommitted(document)) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
+    assertEquals(StdFileTypes.JAVA.getLanguage(), file.getLanguage());
+
+    for (int i=0;i<300;i++) {
+      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        document.insertString(0, "/**/");
+        assertFalse(getPsiDocumentManager().isCommitted(document));
+      });
+      waitForCommit(document, i);
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        document.deleteString(0, "/**/".length());
+      });
+      waitTenSecondsForCommit(document);
+      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+      //System.out.println("i = " + i);
+    }
+  }
+
   private static void waitAndPump(Semaphore semaphore, int timeout) {
     final long limit = System.currentTimeMillis() + timeout;
     while (System.currentTimeMillis() < limit) {
-      if (semaphore.waitFor(10)) return;
+      if (semaphore.waitFor(1)) return;
       UIUtil.dispatchAllInvocationEvents();
     }
     fail("Timeout");
@@ -363,9 +352,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   public void testDocumentFromAlienProjectGetsCommittedInBackground() throws Exception {
     LightVirtualFile virtualFile = createFile();
-    PsiFile file = getPsiManager().findFile(virtualFile);
+    PsiFile file = findFile(virtualFile);
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
     File temp = createTempDirectory();
     final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
@@ -381,24 +370,18 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
       final Document alienDocument = alienDocManager.getDocument(alienFile);
       assertSame(document, alienDocument);
-      assertEquals(0, alienDocManager.getUncommittedDocuments().length);
-      assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+      assertEmpty(alienDocManager.getUncommittedDocuments());
+      assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
 
-      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-        @Override
-        public void run() {
-          document.setText("xxx");
-          assertOrderedEquals(getPsiDocumentManager().getUncommittedDocuments(), document);
-          assertOrderedEquals(alienDocManager.getUncommittedDocuments(), alienDocument);
-        }
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        document.setText("xxx");
+        assertOrderedEquals(getPsiDocumentManager().getUncommittedDocuments(), document);
+        assertOrderedEquals(alienDocManager.getUncommittedDocuments(), alienDocument);
       });
       assertEquals("xxx", document.getText());
       assertEquals("xxx", alienDocument.getText());
 
-      long t1 = System.currentTimeMillis() + TIMEOUT;
-      while (!getPsiDocumentManager().isCommitted(document) && System.currentTimeMillis() < t1) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
+      waitForCommit(document, TIMEOUT);
       assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
 
       long t2 = System.currentTimeMillis() + TIMEOUT;
@@ -415,47 +398,41 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   public void testCommitThreadGetSuspendedDuringWriteActions() {
     final DocumentCommitThread commitThread = DocumentCommitThread.getInstance();
     assertTrue(commitThread.isEnabled());
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        if (commitThread.isEnabled()) {
-          System.err.println("commitThread: "+commitThread + ";\n"+commitThread.log+";\n"+ThreadDumper.dumpThreadsToString());
-        }
-        assertFalse(commitThread.isEnabled());
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          @Override
-          public void run() {
-            assertFalse(commitThread.isEnabled());
-          }
-        });
-        assertFalse(commitThread.isEnabled());
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      if (commitThread.isEnabled()) {
+        System.err.println("commitThread: "+commitThread + ";\n"+commitThread.log+";\n"+ThreadDumper.dumpThreadsToString());
       }
+      assertFalse(commitThread.isEnabled());
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        assertFalse(commitThread.isEnabled());
+      });
+      assertFalse(commitThread.isEnabled());
     });
     assertTrue(commitThread.isEnabled());
   }
 
   public void testFileChangesToText() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    Document document = getPsiDocumentManager().getDocument(psiFile);
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
 
     rename(vFile, "a.xml");
     assertFalse(psiFile.isValid());
-    assertNotSame(psiFile, getPsiManager().findFile(vFile));
-    psiFile = getPsiManager().findFile(vFile);
+    assertNotSame(psiFile, findFile(vFile));
+    psiFile = findFile(vFile);
 
     assertSame(document, FileDocumentManager.getInstance().getDocument(vFile));
-    assertSame(document, getPsiDocumentManager().getDocument(psiFile));
+    assertSame(document, getDocument(psiFile));
   }
 
   public void testFileChangesToBinary() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    Document document = getPsiDocumentManager().getDocument(psiFile);
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
 
     rename(vFile, "a.zip");
     assertFalse(psiFile.isValid());
-    psiFile = getPsiManager().findFile(vFile);
+    psiFile = findFile(vFile);
     assertInstanceOf(psiFile, PsiBinaryFile.class);
 
     assertNoFileDocumentMapping(vFile, psiFile, document);
@@ -464,12 +441,12 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   public void testFileBecomesTooLarge() throws Exception {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    Document document = getPsiDocumentManager().getDocument(psiFile);
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
 
     makeFileTooLarge(vFile);
     assertFalse(psiFile.isValid());
-    psiFile = getPsiManager().findFile(vFile);
+    psiFile = findFile(vFile);
     assertInstanceOf(psiFile, PsiLargeFile.class);
 
     assertNoFileDocumentMapping(vFile, psiFile, document);
@@ -480,24 +457,21 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertNull(FileDocumentManager.getInstance().getDocument(vFile));
     assertNull(FileDocumentManager.getInstance().getFile(document));
     assertNull(getPsiDocumentManager().getPsiFile(document));
-    assertNull(getPsiDocumentManager().getDocument(psiFile));
+    assertNull(getDocument(psiFile));
   }
 
   private void makeFileTooLarge(final VirtualFile vFile) throws Exception {
-    WriteCommandAction.runWriteCommandAction(myProject, new ThrowableComputable<Object, Exception>() {
-      @Override
-      public Object compute() throws Exception {
-        VfsUtil.saveText(vFile, StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1));
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        return null;
-      }
+    WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<Object, Exception>)() -> {
+      setFileText(vFile, StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1));
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      return null;
     });
   }
 
   public void testCommitDocumentInModalDialog() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    final Document document = getPsiDocumentManager().getDocument(psiFile);
+    PsiFile psiFile = findFile(vFile);
+    final Document document = getDocument(psiFile);
 
     final DialogWrapper dialog = new DialogWrapper(getProject()) {
       @Nullable
@@ -507,86 +481,134 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       }
     };
 
-    disposeOnTearDown(new Disposable() {
-      @Override
-      public void dispose() {
-        dialog.close(DialogWrapper.OK_EXIT_CODE);
-      }
-    });
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        // commit thread is paused
-        document.setText("xx");
+    disposeOnTearDown(() -> dialog.close(DialogWrapper.OK_EXIT_CODE));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      // commit thread is paused
+      document.setText("xx");
 
-        LaterInvocator.enterModal(dialog);
-      }
+      LaterInvocator.enterModal(dialog);
     });
     assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
-    long start = System.currentTimeMillis();
-    while (System.currentTimeMillis() - start < 10000) {
-      UIUtil.dispatchAllInvocationEvents();
-      // must not be committed until exit modal dialog
-      assertFalse(getPsiDocumentManager().isCommitted(document));
-    }
+    // must not be committed until exit modal dialog
+    waitTenSecondsForCommit(document);
+    assertFalse(getPsiDocumentManager().isCommitted(document));
+
     LaterInvocator.leaveModal(dialog);
     assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
-    start = System.currentTimeMillis();
-
-    // must committ
-    while (System.currentTimeMillis() - start < 10000 && !getPsiDocumentManager().isCommitted(document)) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-
+    // must commit
+    waitTenSecondsForCommit(document);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
-
-
     // check that inside modal dialog commit is possible
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        // commit thread is paused
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      // commit thread is paused
 
-        LaterInvocator.enterModal(dialog);
-        document.setText("yyy");
-      }
+      LaterInvocator.enterModal(dialog);
+      document.setText("yyy");
     });
     assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
-    // must committ
-    while (System.currentTimeMillis() - start < 10000 && !getPsiDocumentManager().isCommitted(document)) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
+    // must commit
+    waitTenSecondsForCommit(document);
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
     LaterInvocator.leaveModal(dialog);
   }
-  
+
+  public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = findFile(vFile);
+    final Document document = getDocument(psiFile);
+
+    final DialogWrapper dialog = new DialogWrapper(getProject()) {
+      @Nullable
+      @Override
+      protected JComponent createCenterPanel() {
+        return null;
+      }
+    };
+
+    disposeOnTearDown(() -> dialog.close(DialogWrapper.OK_EXIT_CODE));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      // commit thread is paused
+      document.setText("xx");
+
+      LaterInvocator.enterModal(dialog);
+    });
+    assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
+
+
+    // must not commit in background by default when modality changed
+    waitTenSecondsForCommit(document);
+    assertFalse(getPsiDocumentManager().isCommitted(document));
+
+    // but, when performWhenAllCommitted() in modal context called, should re-add documents into queue nevertheless
+    boolean[] calledPerformWhenAllCommitted = new boolean[1];
+    getPsiDocumentManager().performWhenAllCommitted(() -> calledPerformWhenAllCommitted[0] = true);
+
+    // must commit now
+    waitTenSecondsForCommit(document);
+    assertTrue(getPsiDocumentManager().isCommitted(document));
+    assertTrue(calledPerformWhenAllCommitted[0]);
+
+    LaterInvocator.leaveModal(dialog);
+    assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
+  }
+
+  private void waitTenSecondsForCommit(Document document) {
+    waitForCommit(document, 10000);
+  }
+
+  private void waitForCommit(Document document, int millis) {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < millis && !getPsiDocumentManager().isCommitted(document)) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
   public void testReparseDoesNotModifyDocument() throws Exception {
     VirtualFile file = createTempFile("txt", null, "1\n2\n3\n", Charset.forName("UTF-8"));
     file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
-    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(document.getTextLength(), " ");
-      }
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.insertString(document.getTextLength(), " ");
     });
     
     PsiDocumentManager.getInstance(myProject).reparseFiles(Collections.singleton(file), false);
     assertEquals("1\n2\n3\n ", VfsUtilCore.loadText(file));
 
-    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(0, "-");
-      }
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.insertString(0, "-");
     });
     FileDocumentManager.getInstance().saveDocument(document);
     assertEquals("-1\n2\n3\n", VfsUtilCore.loadText(file));
+  }
+
+  public void testPerformWhenAllCommittedMustNotNest() {
+    PsiFile file = findFile(createFile());
+    assertNotNull(file);
+    assertTrue(file.isPhysical());
+    final Document document = getDocument(file);
+    assertNotNull(document);
+
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.insertString(0, "class X {}");
+    });
+
+    getPsiDocumentManager().performWhenAllCommitted(() -> {
+      try {
+        getPsiDocumentManager().performWhenAllCommitted(() -> {
+
+        });
+        fail("Must fail");
+      }
+      catch (IncorrectOperationException ignored) {
+      }
+    });
+    getPsiDocumentManager().commitAllDocuments();
+    assertTrue(getPsiDocumentManager().isCommitted(document));
   }
 }

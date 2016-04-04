@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.Method;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: lex
@@ -34,7 +37,7 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
   private final Method myMethod;
   private final Value myValue;
 
-  public MethodReturnValueDescriptorImpl(Project project, final Method method, Value value) {
+  public MethodReturnValueDescriptorImpl(Project project, @NotNull Method method, Value value) {
     super(project);
     myMethod = method;
     myValue = value;
@@ -44,9 +47,14 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
     return myValue;
   }
 
+  @NotNull
+  public Method getMethod() {
+    return myMethod;
+  }
+
   public String getName() {
-    //noinspection HardCodedStringLiteral
-    return myMethod.toString();
+    return NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myMethod.declaringType().name()) + "." +
+           DebuggerUtilsEx.methodNameWithArguments(myMethod);
   }
 
   public Type getType() {
@@ -61,7 +69,7 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    throw new EvaluateException("Evaluation not supported for method return value");
+    return null;
   }
 
   public boolean canSetValue() {

@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
@@ -59,7 +60,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.*;
 
@@ -254,7 +254,7 @@ public class GrClassImplUtil {
 
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint == null ? null : nameHint.getName(state);
-    ClassHint classHint = processor.getHint(ClassHint.KEY);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
 

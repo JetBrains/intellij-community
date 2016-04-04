@@ -7,6 +7,9 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.indexing.IndexingDataKeys;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +17,6 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodeSourcePanel;
 
 public class IpnbPyFragment extends PyFileImpl {
-  private PsiElement myContext;
   private boolean myPhysical;
   private final IpnbFilePanel myFilePanel;
   private final IpnbCodeSourcePanel myCodeSourcePanel;
@@ -45,28 +47,14 @@ public class IpnbPyFragment extends PyFileImpl {
     return clone;
   }
 
-  public PsiElement getContext() {
-    return myContext;
-  }
-
   @NotNull
   public FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
-  public boolean isValid() {
-    if (!super.isValid()) return false;
-    if (myContext != null && !myContext.isValid()) return false;
-    return true;
-  }
-
   public boolean isPhysical() {
     return myPhysical;
-  }
-
-  public void setContext(PsiElement context) {
-    myContext = context;
   }
 
   public IpnbFilePanel getFilePanel() {
@@ -87,6 +75,13 @@ public class IpnbPyFragment extends PyFileImpl {
     return getManager().findDirectory(parentFile);
   }
 
+  @NotNull
+  @Override
+  public PsiFile getContext() {
+    final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myFilePanel.getDocument());
+    return psiFile != null ? psiFile : super.getOriginalFile();
+  }
+
   @Override
   public PsiElement getNextSibling() {
     return null;
@@ -95,5 +90,18 @@ public class IpnbPyFragment extends PyFileImpl {
   @Override
   public PsiElement getPrevSibling() {
     return null;
+  }
+
+  @Override
+  public LanguageLevel getLanguageLevel() {
+    VirtualFile virtualFile = getVirtualFile();
+
+    if (virtualFile == null) {
+      virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
+    }
+    if (virtualFile == null) {
+      virtualFile = getViewProvider().getVirtualFile();
+    }
+    return PyUtil.getLanguageLevelForVirtualFile(getProject(), virtualFile);
   }
 }

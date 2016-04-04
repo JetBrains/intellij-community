@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,8 @@ public class MethodMayBeStaticInspection extends MethodMayBeStaticInspectionBase
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.only.option"), ONLY_PRIVATE_OR_FINAL_ATTR_NAME);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.empty.option"), IGNORE_EMPTY_METHODS_ATTR_NAME);
-    optionsPanel.addCheckbox("Ignore default methods", IGNORE_DEFAULT_METHODS_ATTR_NAME);
-    optionsPanel.addCheckbox("Replace qualifier by class name", REPLACE_QUALIFIER_ATTR_NAME);
+    optionsPanel.addCheckbox("Ignore 'default' methods", IGNORE_DEFAULT_METHODS_ATTR_NAME);
+    optionsPanel.addCheckbox("Quick fix replaces instance qualifiers with class references", REPLACE_QUALIFIER_ATTR_NAME);
     return optionsPanel;
   }
 }

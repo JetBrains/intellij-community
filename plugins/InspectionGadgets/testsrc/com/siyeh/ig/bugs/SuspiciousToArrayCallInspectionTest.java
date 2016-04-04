@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,17 @@ public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase
     doMemberTest("public void testThis(java.util.List<String> l) {" +
                  "  l.toArray(/*Array of type 'java.lang.String[]' expected*/new Number[l.size()]/**/);" +
                  "}");
+  }
+
+  public void testGenerics() {
+    doTest("import java.util.*;" +
+           "class K<T extends Integer> {\n" +
+           "    List<T> list = new ArrayList<>();\n" +
+           "\n" +
+           "    String[] m() {\n" +
+           "        return list.toArray(/*Array of type 'java.lang.Integer[]' expected*/new String[list.size()]/**/);\n" +
+           "    }\n" +
+           "}");
   }
 
   @Override

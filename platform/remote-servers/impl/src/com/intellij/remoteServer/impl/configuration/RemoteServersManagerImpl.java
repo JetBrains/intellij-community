@@ -1,6 +1,24 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.remoteServer.impl.configuration;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentSerializationUtil;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
@@ -19,9 +37,7 @@ import java.util.List;
 /**
  * @author nik
  */
-@State(name = "RemoteServers", storages = {
-  @Storage(file = StoragePathMacros.APP_CONFIG + "/remote-servers.xml")
-})
+@State(name = "RemoteServers", storages = @Storage("remote-servers.xml"))
 public class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private List<RemoteServer<?>> myServers = new ArrayList<RemoteServer<?>>();

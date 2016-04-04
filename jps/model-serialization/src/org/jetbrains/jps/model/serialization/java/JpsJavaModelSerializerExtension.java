@@ -28,6 +28,7 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
@@ -72,6 +73,17 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   public void saveRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
     saveExplodedDirectoryExtension(module, rootModel);
     saveJavaModuleExtension(module, rootModel);
+  }
+
+  @Override
+  public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
+    Element testModuleProperties = JDomSerializationUtil.findComponent(rootElement, "TestModuleProperties");
+    if (testModuleProperties != null) {
+      String productionModuleName = testModuleProperties.getAttributeValue("production-module");
+      if (productionModuleName != null) {
+        getService().setTestModuleProperties(module, JpsElementFactory.getInstance().createModuleReference(productionModuleName));
+      }
+    }
   }
 
   @NotNull

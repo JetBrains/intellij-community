@@ -47,13 +47,13 @@ public class WrappedElementAnchor extends PsiAnchor {
   @Override
   public int getStartOffset() {
     PsiElement element = retrieve();
-    return element == null ? -1 : element.getTextRange().getStartOffset();
+    return element == null || element.getTextRange() == null ? -1 : element.getTextRange().getStartOffset();
   }
 
   @Override
   public int getEndOffset() {
     PsiElement element = retrieve();
-    return element == null ? -1 : element.getTextRange().getEndOffset();
+    return element == null || element.getTextRange() == null ? -1 : element.getTextRange().getEndOffset();
   }
 
   @Override

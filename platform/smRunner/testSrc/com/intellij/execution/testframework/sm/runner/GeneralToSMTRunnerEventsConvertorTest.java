@@ -16,7 +16,9 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
@@ -207,6 +209,9 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertNotNull(proxy);
     assertTrue(proxy.isDefect());
     assertFalse(proxy.isInProgress());
+
+    final Filter filter = AbstractRerunFailedTestsAction.getFailuresFilter(myConsole.getProperties());
+    assertFalse(filter.shouldAccept(proxy));
   }
 
   public void testOnTestFinished() {

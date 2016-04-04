@@ -31,12 +31,16 @@ import java.util.List;
  */
 public class FieldConflictsResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.FieldConflictsResolver");
-  private final PsiCodeBlock myScope;
+  private final PsiElement myScope;
   private final PsiField myField;
   private final List<PsiReferenceExpression> myReferenceExpressions;
   private PsiClass myQualifyingClass;
 
   public FieldConflictsResolver(String name, PsiCodeBlock scope) {
+    this(name, (PsiElement)scope);
+  }
+
+  public FieldConflictsResolver(String name, PsiElement scope) {
     myScope = scope;
     if (myScope == null) {
       myField = null;

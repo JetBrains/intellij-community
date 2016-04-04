@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,16 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiType;
 import com.sun.jdi.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Collections;
 
 class InstanceofEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.InstanceofEvaluator");
@@ -62,9 +59,8 @@ class InstanceofEvaluator implements Evaluator {
       ClassType classRefType = (ClassType)classObject.referenceType();
       //noinspection HardCodedStringLiteral
       Method method = classRefType.concreteMethodByName("isAssignableFrom", "(Ljava/lang/Class;)Z");
-      List args = new LinkedList();
-      args.add(((ObjectReference)value).referenceType().classObject());
-      return context.getDebugProcess().invokeMethod(context, classObject, method, args);
+      return context.getDebugProcess().invokeMethod(context, classObject, method,
+                                                    Collections.singletonList(((ObjectReference)value).referenceType().classObject()));
     }
     catch (Exception e) {
       if (LOG.isDebugEnabled()) {

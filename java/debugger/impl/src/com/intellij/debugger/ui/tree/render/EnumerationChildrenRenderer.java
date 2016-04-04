@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -40,7 +39,7 @@ import java.util.List;
  * Date: Dec 19, 2003
  * Time: 1:25:15 PM
  */
-public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.tree.render.ReferenceRenderer implements ChildrenRenderer{
+public final class EnumerationChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer{
   public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 
   private List<Pair<String, TextWithImports>> myChildren;
@@ -48,7 +47,7 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
   public static final @NonNls String CHILD_NAME = "Name";
 
   public EnumerationChildrenRenderer() {
-    this(new ArrayList<Pair<String, TextWithImports>>());
+    this(new ArrayList<>());
   }
 
   public EnumerationChildrenRenderer(List<Pair<String, TextWithImports>> children) {
@@ -70,11 +69,9 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
     myChildren.clear();
 
     List<Element> children = element.getChildren(CHILDREN_EXPRESSION);
-    for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
-      Element item = iterator.next();
-
+    for (Element item : children) {
       String name = item.getAttributeValue(CHILD_NAME);
-      TextWithImports text = DebuggerUtils.getInstance().readTextWithImports((Element) item.getChildren().get(0));
+      TextWithImports text = DebuggerUtils.getInstance().readTextWithImports(item.getChildren().get(0));
 
       myChildren.add(Pair.create(name, text));
     }
@@ -83,8 +80,7 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
 
-    for (Iterator<Pair<String, TextWithImports>> iterator = myChildren.iterator(); iterator.hasNext();) {
-      Pair<String, TextWithImports> pair = iterator.next();
+    for (Pair<String, TextWithImports> pair : myChildren) {
       Element child = new Element(CHILDREN_EXPRESSION);
       child.setAttribute(CHILD_NAME, pair.getFirst());
       child.addContent(DebuggerUtils.getInstance().writeTextWithImports(pair.getSecond()));
@@ -97,7 +93,7 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
     NodeManager nodeManager = builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-    List<DebuggerTreeNode> children = new ArrayList<DebuggerTreeNode>();
+    List<DebuggerTreeNode> children = new ArrayList<>();
     for (Pair<String, TextWithImports> pair : myChildren) {
       children.add(nodeManager.createNode(descriptorFactory.getUserExpressionDescriptor(
         builder.getParentDescriptor(),

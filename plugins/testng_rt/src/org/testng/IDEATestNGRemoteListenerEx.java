@@ -26,7 +26,7 @@ public class IDEATestNGRemoteListenerEx extends IDEATestNGRemoteListener impleme
 
   public synchronized void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
     if (!testResult.getMethod().isTest()) {
-      onConfigurationStart(new DelegatedResult(testResult));
+      onConfigurationStart(createDelegated(testResult));
     }
   }
 
@@ -35,11 +35,11 @@ public class IDEATestNGRemoteListenerEx extends IDEATestNGRemoteListener impleme
 
   @Override
   public synchronized void onConfigurationSuccess(ITestResult result) {
-    onConfigurationSuccess(new DelegatedResult(result));
+    onConfigurationSuccess(createDelegated(result));
   }
 
   @Override
   public synchronized void onConfigurationFailure(ITestResult result) {
-    onConfigurationFailure(new DelegatedResult(result));
+    onConfigurationFailure(createDelegated(result));
   }
 }

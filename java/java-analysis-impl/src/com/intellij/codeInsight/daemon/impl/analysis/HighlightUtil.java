@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -485,7 +485,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   private static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,
                                                       @NotNull PsiType type,
-                                                      @Nullable PsiExpression lExpr,
+                                                      @Nullable final PsiExpression lExpr,
                                                       @Nullable HighlightInfo highlightInfo) {
     if (highlightInfo == null || !(expression instanceof  PsiReferenceExpression)) return;
 
@@ -493,6 +493,16 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!(element instanceof PsiVariable)) return;
 
     registerChangeVariableTypeFixes((PsiVariable)element, type, lExpr, highlightInfo);
+    
+    if (lExpr instanceof PsiMethodCallExpression && lExpr.getParent() instanceof PsiAssignmentExpression) {
+      final PsiElement parent = lExpr.getParent();
+      if (parent.getParent() instanceof PsiStatement) {
+        final PsiMethod method = ((PsiMethodCallExpression)lExpr).resolveMethod();
+        if (method != null && PsiType.VOID.equals(method.getReturnType())) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, new ReplaceAssignmentFromVoidWithStatementIntentionAction(parent, lExpr));
+        }
+      }
+    }
   }
 
   private static boolean isCastIntentionApplicable(@NotNull PsiExpression expression, @Nullable PsiType toType) {
@@ -557,6 +567,7 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(lType, expression));
     }
     if (expression != null) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapLongWithMathToIntExactFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapExpressionFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
     }
@@ -791,6 +802,7 @@ public class HighlightUtil extends HighlightUtilBase {
   private static void registerUnhandledExceptionFixes(PsiElement element, HighlightInfo errorResult, List<PsiClassType> unhandled) {
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToCatchFix());
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToThrowsFix(element));
+    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithTryCatchFix(element));
     if (unhandled.size() == 1) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createGeneralizeCatchFix(element, unhandled.get(0)));
@@ -1379,7 +1391,13 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkNotAStatement(@NotNull PsiStatement statement) {
     if (!PsiUtil.isStatement(statement) && !PsiUtilCore.hasErrorElementChild(statement)) {
-      String description = JavaErrorMessages.message("not.a.statement");
+      boolean isDeclarationNotAllowed = false;
+      if (statement instanceof PsiDeclarationStatement) {
+        final PsiElement parent = statement.getParent();
+        isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
+      }
+      
+      String description = JavaErrorMessages.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
     }
     return null;
@@ -1408,6 +1426,7 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertSwitchToIfIntention(statement));
       if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(PsiType.INT, expression));
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapLongWithMathToIntExactFix(PsiType.INT, expression));
       }
       if (requiredLevel != null) {
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(requiredLevel));
@@ -1538,12 +1557,25 @@ public class HighlightUtil extends HighlightUtilBase {
       //or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
       final PsiClass classT = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
       if (classT != null) {
+        final PsiElement parent = expr.getParent();
+        final PsiElement resolved = parent instanceof PsiReferenceExpression ? ((PsiReferenceExpression)parent).resolve() : null;
+
         for (PsiClass superClass : classT.getSupers()) {
-          if (superClass.isInterface() && //check spec-javac relations
-              superClass.isInheritor(aClass, true)) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(qualifier)
-              .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", format(aClass), formatClass(superClass))).create();
+          if (superClass.isInheritor(aClass, true)) {
+            String cause = null;
+            if (superClass.isInterface()) {
+              cause = "redundant interface " + format(aClass) + " is extended by ";
+            }
+            else if (resolved instanceof PsiMethod &&
+                     MethodSignatureUtil.findMethodBySuperMethod(superClass, (PsiMethod)resolved, true) != resolved) {
+              cause = "method " + ((PsiMethod)resolved).getName() + " is overridden in ";
+            }
+
+            if (cause != null) {
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(qualifier)
+                .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", cause + formatClass(superClass))).create();
+            }
           }
         }
 
@@ -2347,8 +2379,11 @@ public class HighlightUtil extends HighlightUtilBase {
           final String name1 = PsiFormatUtil.formatClass(class1, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
           final String name2 = PsiFormatUtil.formatClass(class2, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
           final String message = JavaErrorMessages.message("exception.must.be.disjoint", sub ? name1 : name2, sub ? name2 : name1);
-          PsiElement element = typeElements.get(sub ? i : j);
-          result.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create());
+          final PsiTypeElement element = typeElements.get(sub ? i : j);
+          final HighlightInfo highlight =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
+          QuickFixAction.registerQuickFixAction(highlight, QUICK_FIX_FACTORY.createDeleteMultiCatchFix(element));
+          result.add(highlight);
           break;
         }
       }
@@ -2428,14 +2463,16 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static HighlightInfo checkStatementPrependedWithCaseInsideSwitch(@NotNull PsiStatement statement) {
-    if (!(statement instanceof PsiSwitchLabelStatement) && statement.getParent() instanceof PsiCodeBlock &&
-        statement.getParent().getParent() instanceof PsiSwitchStatement &&
-        ((PsiCodeBlock)statement.getParent()).getStatements().length != 0 &&
-        statement == ((PsiCodeBlock)statement.getParent()).getStatements()[0]) {
-      String description = JavaErrorMessages.message("statement.must.be.prepended.with.case.label");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+  static HighlightInfo checkStatementPrependedWithCaseInsideSwitch(@NotNull PsiSwitchStatement statement) {
+    PsiCodeBlock body = statement.getBody();
+    if (body != null) {
+      PsiElement first = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), PsiWhiteSpace.class, PsiComment.class);
+      if (first != null && !(first instanceof PsiSwitchLabelStatement) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
+        String description = JavaErrorMessages.message("statement.must.be.prepended.with.case.label");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(first).descriptionAndTooltip(description).create();
+      }
     }
+
     return null;
   }
 

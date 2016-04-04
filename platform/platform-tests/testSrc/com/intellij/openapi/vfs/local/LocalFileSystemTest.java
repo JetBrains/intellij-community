@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +41,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -158,11 +161,11 @@ public class LocalFileSystemTest extends PlatformTestCase {
     VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
-    final VirtualFile fileToCopy = fromVDir.createChildData(this, "temp_file");
+    final VirtualFile fileToCopy = createChildData(fromVDir, "temp_file");
     final byte[] byteContent = {0, 1, 2, 3};
-    fileToCopy.setBinaryContent(byteContent);
+    setBinaryContent(fileToCopy,byteContent);
     final String newName = "new_temp_file";
-    final VirtualFile copy = fileToCopy.copy(this, toVDir, newName);
+    final VirtualFile copy = copy(fileToCopy, toVDir, newName);
     assertEquals(newName, copy.getName());
     assertTrue(Arrays.equals(byteContent, copy.contentsToByteArray()));
   }
@@ -175,11 +178,11 @@ public class LocalFileSystemTest extends PlatformTestCase {
     VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
-    final VirtualFile dirToCopy = fromVDir.createChildDirectory(this, "dir");
-    final VirtualFile file = dirToCopy.createChildData(this, "temp_file");
-    file.setBinaryContent(new byte[]{0, 1, 2, 3});
+    final VirtualFile dirToCopy = createChildDirectory(fromVDir, "dir");
+    final VirtualFile file = createChildData(dirToCopy, "temp_file");
+    setBinaryContent(file,new byte[]{0, 1, 2, 3});
     final String newName = "dir";
-    final VirtualFile dirCopy = dirToCopy.copy(this, toVDir, newName);
+    final VirtualFile dirCopy = copy(dirToCopy, toVDir, newName);
     assertEquals(newName, dirCopy.getName());
     PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir);
   }
@@ -289,7 +292,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
       final VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      file.setBinaryContent("hello".getBytes(CharsetToolkit.UTF8_CHARSET), 0, 0, requestor);
+      setBinaryContent(file,"hello".getBytes(CharsetToolkit.UTF8_CHARSET), 0, 0, requestor);
       assertTrue(file.getLength() > 0);
 
       final VirtualFile check = myFS.refreshAndFindFileByIoFile(hardLinkFile);
@@ -316,20 +319,16 @@ public class LocalFileSystemTest extends PlatformTestCase {
     }
 
     String parent = FileUtil.toSystemIndependentName(file.getParent());
-    VfsRootAccess.allowRootAccess(parent);
-    try {
-      VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
-      assertNotNull(virtualFile);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), parent);
 
-      NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
-      FileAttributes attributes = fs.getAttributes(virtualFile);
-      assertNotNull(attributes);
-      assertEquals(FileAttributes.Type.FILE, attributes.type);
-      assertEquals(FileAttributes.HIDDEN, attributes.flags);
-    }
-    finally {
-      VfsRootAccess.disallowRootAccess(parent);
-    }
+    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(virtualFile);
+
+    NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
+    FileAttributes attributes = fs.getAttributes(virtualFile);
+    assertNotNull(attributes);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertEquals(FileAttributes.HIDDEN, attributes.flags);
   }
 
   public void testRefreshSeesLatestDirectoryContents() throws Exception {
@@ -692,5 +691,35 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertTrue(file.setLastModified(stamp));
     vFile.refresh(false, false);
     assertEquals(2, updated[0]);
+  }
+
+  public void testReadOnly() throws IOException {
+    File file = IoTestUtil.createTestFile("file.txt");
+    VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertWritable(file, vFile, true);
+
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      vFile.setWritable(false);
+      return null;
+    });
+
+    assertWritable(file, vFile, false);
+    vFile.refresh(false, false);
+    assertWritable(file, vFile, false);
+
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      vFile.setWritable(true);
+      return null;
+    });
+    assertWritable(file, vFile, true);
+    vFile.refresh(false, false);
+    assertWritable(file, vFile, true);
+  }
+
+  private static void assertWritable(File file, VirtualFile vFile, boolean expected) {
+    assertEquals(expected, file.canWrite());
+    assertEquals(expected, ObjectUtils.assertNotNull(FileSystemUtil.getAttributes(file)).isWritable());
+    assertEquals(expected, vFile.isWritable());
   }
 }

@@ -480,7 +480,7 @@ public class JavaFxPsiUtil {
     if (aClass != null && aClass.isValid()) {
       XmlElementDescriptor descriptor = parentTag.getDescriptor();
       if (descriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
-        descriptor = ((JavaFxDefaultPropertyElementDescriptor)descriptor).getRootTagDescriptor(parentTag);
+        descriptor = ((JavaFxDefaultPropertyElementDescriptor)descriptor).getFxRootTagDescriptor(parentTag);
       }
 
       if (descriptor instanceof JavaFxPropertyElementDescriptor) {

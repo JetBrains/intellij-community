@@ -15,18 +15,21 @@
  */
 package com.jetbrains.python.editor;
 
+import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
 /**
  * @author yole
  */
-public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler {
+public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements MultiCharQuoteHandler {
 
   private final char[] ourAutoClosingChars; // we add auto-close quotes before these
 
@@ -44,17 +47,22 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler {
       return false;
     }
     CharSequence text = document.getCharsSequence();
-    if (offset + 1 >= text.length() || Arrays.binarySearch(ourAutoClosingChars, text.charAt(offset + 1)) >= 0) {
-      char the_quote = text.charAt(offset);
-      // if we're next to two same quotes, don't auto-close, the user may want a triple quote
+    boolean mayBeSingleQuote = offset + 1 >= text.length() || Arrays.binarySearch(ourAutoClosingChars, text.charAt(offset + 1)) >= 0;
+    boolean mayBeTripleQuote = offset + 4 >= text.length() || Arrays.binarySearch(ourAutoClosingChars, text.charAt(offset + 4)) >= 0;
+
+    if (mayBeTripleQuote) {
+      char theQuote = text.charAt(offset);
+      // if we're next to two same quotes, auto-close triple quote
       if (
         offset >= 2 &&
-        text.charAt(offset - 1) == the_quote &&
-        text.charAt(offset - 2) == the_quote &&
-        (offset < 3 || text.charAt(offset - 3) != the_quote)
+        text.charAt(offset - 1) == theQuote &&
+        text.charAt(offset - 2) == theQuote &&
+        (offset < 3 || text.charAt(offset - 3) != theQuote)
         ) {
-        return false;
+        return true;
       }
+    }
+    if (mayBeSingleQuote ) {
       // handle string literal context
       if (super.isOpeningQuote(iterator, offset)) {
         return true;
@@ -83,8 +91,18 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler {
 
   @Override
   protected boolean isNonClosedLiteral(HighlighterIterator iterator, CharSequence chars) {
-    if (getLiteralStartOffset(chars, iterator.getStart()) >= iterator.getEnd() - 1) return true;
-    if (chars.charAt(iterator.getEnd() - 1) != '\"' && chars.charAt(iterator.getEnd() - 1) != '\'') return true;
+    int end = iterator.getEnd();
+    if (getLiteralStartOffset(chars, iterator.getStart()) >= end - 1) return true;
+    char endSymbol = chars.charAt(end - 1);
+    if (endSymbol != '"' && endSymbol != '\'') return true;
+
+    //for triple quoted string
+    if (end >= 3 &&
+        (endSymbol == chars.charAt(end - 2)) && (chars.charAt(end - 2) == chars.charAt(end - 3)) &&
+        (end < 4 || chars.charAt(end - 4) != endSymbol)) {
+      return true;
+    }
+
     return false;
   }
 
@@ -108,5 +126,24 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler {
     }
 
     return false;
+  }
+
+  @Nullable
+  @Override
+  public CharSequence getClosingQuote(HighlighterIterator iterator, int offset) {
+    Document document = iterator.getDocument();
+    String text = document.getText();
+    char the_quote = text.charAt(offset - 1);
+    if (
+      offset >= 2 &&
+      text.charAt(offset - 2) == the_quote &&
+      text.charAt(offset - 3) == the_quote &&
+      (offset < 4 || text.charAt(offset - 4) != the_quote)) {
+      return StringUtil.repeat(String.valueOf(the_quote), 3);
+    }
+    else if (super.isOpeningQuote(iterator, offset - 1)) {
+      return String.valueOf(the_quote);
+    }
+    return null;
   }
 }

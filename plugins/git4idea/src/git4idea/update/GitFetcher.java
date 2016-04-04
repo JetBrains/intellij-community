@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -80,15 +79,8 @@ public class GitFetcher {
    */
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
-    GitFetchResult fetchResult = GitFetchResult.success();
-    if (myFetchAll) {
-      fetchResult = fetchAll(repository, fetchResult);
-    }
-    else {
-      return fetchCurrentRemote(repository);
-    }
-
-    VfsUtil.markDirtyAndRefresh(false, true, false, repository.getGitDir());
+    GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
+    repository.getRepositoryFiles().refresh(false);
     return fetchResult;
   }
 
@@ -164,7 +156,8 @@ public class GitFetcher {
   }
 
   @NotNull
-  private GitFetchResult fetchAll(@NotNull GitRepository repository, @NotNull GitFetchResult fetchResult) {
+  private static GitFetchResult fetchAll(@NotNull GitRepository repository) {
+    GitFetchResult fetchResult = GitFetchResult.success();
     for (GitRemote remote : repository.getRemotes()) {
       String url = remote.getFirstUrl();
       if (url == null) {

@@ -17,6 +17,9 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
 
@@ -34,7 +37,7 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
   }
 
   public void testUnknownRef() throws Exception {
-    doTest("Controller");
+    doTest("Controller", VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
   public void testRootType() throws Exception {
@@ -47,7 +50,7 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
     myFixture.addFileToProject("btn.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                            "<?import javafx.scene.control.*?>\n" +
                                            "<Button/>");
-    doTest("MyController");
+    doTest("MyController", VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
   public void testFieldsFromControllerSuper() throws Exception {
@@ -59,6 +62,18 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
     final String testFxml = getTestName(true) + ".fxml";
     myFixture.configureByFile(testFxml);
     myFixture.testHighlighting(true, false, false, testFxml);
+  }
+
+  private void doTest(final String controllerName, final String defaultVisibility) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    String savedVisibility = settings.VISIBILITY;
+    try {
+      settings.VISIBILITY = defaultVisibility;
+      doTest(controllerName);
+    }
+    finally {
+      settings.VISIBILITY = savedVisibility;
+    }
   }
 
   private void doTest(final String controllerName) {

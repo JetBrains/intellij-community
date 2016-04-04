@@ -39,6 +39,8 @@ import java.util.ArrayList;
  * @author Sergey.Malenkov
  */
 public class SettingsDialog extends DialogWrapper implements DataProvider {
+  public static final String DIMENSION_KEY = "SettingsEditor";
+
   private final String myDimensionServiceKey;
   private final AbstractEditor myEditor;
   private boolean myApplyButtonNeeded;
@@ -64,11 +66,22 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   public SettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] groups, Configurable configurable, String filter) {
     super(project, true);
-    myDimensionServiceKey = "SettingsEditor";
+    myDimensionServiceKey = DIMENSION_KEY;
     myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter);
     myApplyButtonNeeded = true;
     init(null, project);
   }
+
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        SettingsDialog.super.show();
+      }
+    });
+  }
+
 
   private void init(Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
@@ -142,15 +155,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public void doOKAction() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        if (myEditor.apply()) {
-          ApplicationManager.getApplication().saveAll();
-          SettingsDialog.super.doOKAction();
-        }
-      }
-    });
+    if (myEditor.apply()) {
+      ApplicationManager.getApplication().saveAll();
+      SettingsDialog.super.doOKAction();
+    }
   }
 
   @Override

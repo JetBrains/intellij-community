@@ -177,7 +177,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java (Anonymous in IMPL)"});
+    assertContent(component, new String[]{"a.java (AFoo)", "a.java (Anonymous in IMPL in AFoo)"});
   }
 
   public void testInterfaceMethodOfFunctionalInterface() {

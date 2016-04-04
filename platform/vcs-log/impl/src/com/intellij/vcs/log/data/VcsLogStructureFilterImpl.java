@@ -17,30 +17,41 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogDetailsFilter;
+import com.intellij.vcs.log.VcsLogStructureFilter;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
-  @NotNull private final Set<VirtualFile> myFiles;
+  @NotNull private final Collection<FilePath> myFiles;
 
   public VcsLogStructureFilterImpl(@NotNull Set<VirtualFile> files) {
+    this(ContainerUtil.map(files, new Function<VirtualFile, FilePath>() {
+      @Override
+      public FilePath fun(VirtualFile file) {
+        return VcsUtil.getFilePath(file);
+      }
+    }));
+  }
+
+  public VcsLogStructureFilterImpl(@NotNull Collection<FilePath> files) {
     myFiles = files;
   }
 
   @NotNull
   @Override
-  public Collection<VirtualFile> getFiles() {
+  public Collection<FilePath> getFiles() {
     return myFiles;
   }
 

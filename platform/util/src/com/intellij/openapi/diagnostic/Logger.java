@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,18 @@ public abstract class Logger {
     }
   }
 
+  public boolean isTraceEnabled() {
+    return isDebugEnabled();
+  }
+
+  /**
+   * Log a message with 'trace' level which finer-grained than 'debug' level. Use this method instead of {@link #debug(String)} for internal
+   * events of a subsystem to avoid overwhelming the log if 'debug' level is enabled.
+   */
+  public void trace(String message) {
+    debug(message);
+  }
+
   public void info(@NotNull Throwable t) {
     info(t.getMessage(), t);
   }
@@ -156,4 +168,8 @@ public abstract class Logger {
   }
 
   public abstract void setLevel(Level level);
+
+  protected static Throwable checkException(@Nullable Throwable t) {
+    return t instanceof ControlFlowException ? new Throwable("Control-flow exceptions should never be logged", t) : t;
+  }
 }

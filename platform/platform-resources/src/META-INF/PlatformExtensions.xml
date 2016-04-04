@@ -25,9 +25,6 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.tracker.VirtualFileTracker"
                         serviceImplementation="com.intellij.openapi.vfs.tracker.VirtualFileTrackerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.concurrency.JobScheduler"
-                        serviceImplementation="com.intellij.concurrency.JobSchedulerImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
@@ -64,8 +61,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
-
-    <applicationService serviceImplementation="com.intellij.openapi.options.ex.IdeConfigurablesGroup"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.ErrorReportConfigurable"
                         serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
@@ -369,8 +364,10 @@
 
     <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
-    <postStartupActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
+
+    <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
+    <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
 
     <writingAccessProvider implementation="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider" order="first"/>
 
@@ -411,6 +408,7 @@
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
+    <jbProtocolCommand implementation="com.intellij.openapi.application.JBProtocolShutdownCommand"/>
 
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
@@ -422,7 +420,10 @@
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
     <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"
                          displayName="Startup Tasks"
-                         id="preferences.startup.tasks"/>
+                         id="preferences.startup.tasks" nonDefaultProject="true"/>
     <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
+
+    <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
+                        serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
   </extensions>
 </idea-plugin>

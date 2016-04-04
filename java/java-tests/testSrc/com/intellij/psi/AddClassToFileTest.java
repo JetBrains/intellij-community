@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.psi;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
@@ -30,20 +32,36 @@ public class AddClassToFileTest extends PsiTestCase{
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
     PsiDirectory dir = myPsiManager.findDirectory(root);
     assertNotNull(dir);
-    PsiFile file = dir.createFile("AAA.java");
+    PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+      @Override
+      public PsiFile compute() {
+        return dir.createFile("AAA.java");
+      }
+    });
     PsiClass aClass = myJavaFacade.getElementFactory().createClass("AAA");
-    file.add(aClass);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        file.add(aClass);
+      }
+    });
+
 
     PsiTestUtil.checkFileStructure(file);
   }
 
   public void testFileModified() throws Exception {
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
-    VirtualFile pkg = root.createChildDirectory(this, "foo");
+    VirtualFile pkg = createChildDirectory(root, "foo");
     PsiDirectory dir = myPsiManager.findDirectory(pkg);
     assertNotNull(dir);
     String text = "package foo;\n\nclass A {}";
-    PsiElement created = dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText("A.java", JavaFileType.INSTANCE, text));
+    PsiElement created = ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
+      @Override
+      public PsiElement compute() {
+        return dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText("A.java", JavaFileType.INSTANCE, text));
+      }
+    });
     VirtualFile virtualFile = created.getContainingFile().getVirtualFile();
     assertNotNull(virtualFile);
     String fileText = LoadTextUtil.loadText(virtualFile).toString();

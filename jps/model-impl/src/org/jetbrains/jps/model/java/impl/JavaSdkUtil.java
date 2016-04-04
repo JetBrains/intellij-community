@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,12 +53,12 @@ public class JavaSdkUtil {
         jarDirs = new File[]{libEndorsedDir, libDir, classesDir, libExtDir};
       }
     }
-    else if (new File(home, "lib/modules").isDirectory()) {
+    else if (new File(home, "lib/modules").exists()) {
       File libDir = new File(home, "lib");
       jarDirs = new File[]{libDir};
     }
     else {
-      File libDir = isJre ? new File(home, "lib") : new File(home, "jre/lib");
+      File libDir = new File(home, isJre ? "lib" : "jre/lib");
       File libExtDir = new File(libDir, "ext");
       File libEndorsedDir = new File(libDir, "endorsed");
       jarDirs = new File[]{libEndorsedDir, libDir, libExtDir};

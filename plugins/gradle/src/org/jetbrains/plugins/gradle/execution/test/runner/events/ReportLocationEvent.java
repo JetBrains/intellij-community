@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
 
 import java.io.File;
 
@@ -26,7 +26,7 @@ import java.io.File;
  */
 public class ReportLocationEvent extends AbstractTestEvent {
 
-  public ReportLocationEvent(GradleTestsExecutionConsoleManager consoleManager) {
+  public ReportLocationEvent(GradleTestsExecutionConsole consoleManager) {
     super(consoleManager);
   }
 

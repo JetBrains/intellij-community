@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MarkedDescriptorTree {
-  private final HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>>();
-  private final Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> myRootChildren = new com.intellij.util.containers.HashMap<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>();
+  private final HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>> myChildrenMap = new HashMap<>();
+  private final Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> myRootChildren = new com.intellij.util.containers.HashMap<>();
 
   public <T extends NodeDescriptor> void addChild(NodeDescriptor parent, T child, DescriptorKey<T> key) {
     Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> children;
@@ -34,7 +34,7 @@ public class MarkedDescriptorTree {
     else {
       children = myChildrenMap.get(parent);
       if(children == null) {
-        children = new com.intellij.util.containers.HashMap<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>();
+        children = new com.intellij.util.containers.HashMap<>();
         myChildrenMap.put(parent, children);
       }
     }

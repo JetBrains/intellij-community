@@ -17,6 +17,7 @@
 package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -149,7 +150,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
 
     final Locator2Impl locator = new Locator2Impl();
-    locator.setSystemId(RngParser.reallyFixIDEAUrl(virtualFile.getUrl()));
+    locator.setSystemId(VfsUtilCore.fixIDEAUrl(virtualFile.getUrl()));
 
     final int offset = text.getTextRange().getEndOffset();
     final int lineNumber = document.getLineNumber(offset);

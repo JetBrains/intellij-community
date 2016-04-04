@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module builtins
 # from (built-in)
-# by generator 1.137
+# by generator 1.138
 """
 Built-in functions, exceptions, and other objects.
 
@@ -473,7 +473,7 @@ def pow(*args, **kwargs): # real signature unknown
     """
     pass
 
-def print(*args, sep=' ', end='\n', file=None): # known special case of print
+def print(self, *args, sep=' ', end='\n', file=None): # known special case of print
     """
     print(value, ..., sep=' ', end='\n', file=sys.stdout, flush=False)
     
@@ -4675,7 +4675,7 @@ class str(object):
         """
         return 0
 
-    def format(*args, **kwargs): # known special case of str.format
+    def format(self, *args, **kwargs): # known special case of str.format
         """
         S.format(*args, **kwargs) -> str
         

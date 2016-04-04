@@ -236,7 +236,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
           @NotNull
           @Override
           public Hash fun(Integer integer) {
-            return myDataHolder.getHash(integer);
+            return myDataHolder.getCommitId(integer).getHash();
           }
         };
         return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),

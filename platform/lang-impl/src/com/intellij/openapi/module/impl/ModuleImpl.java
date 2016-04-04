@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -332,7 +331,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
         String parentPath = parent.getPath();
         String ancestorPath = parentPath + "/" + event.getOldValue();
         String moduleFilePath = getModuleFilePath();
-        if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
+        if (FileUtil.isAncestor(ancestorPath, moduleFilePath, true)) {
           setModuleFilePath(parentPath + "/" + event.getNewValue() + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
         }
       }
@@ -348,7 +347,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       String dirName = event.getFileName();
       String ancestorPath = event.getOldParent().getPath() + "/" + dirName;
       String moduleFilePath = getModuleFilePath();
-      if (VfsUtilCore.isAncestor(new File(ancestorPath), new File(moduleFilePath), true)) {
+      if (FileUtil.isAncestor(ancestorPath, moduleFilePath, true)) {
         setModuleFilePath(event.getNewParent().getPath() + "/" + dirName + "/" + FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/'));
       }
     }
@@ -360,7 +359,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return Extensions.getArea(this).getPicoContainer();
   }
 
-  @State(name = "DeprecatedModuleOptionManager", storages = @Storage(file = StoragePathMacros.MODULE_FILE))
+  @State(name = "DeprecatedModuleOptionManager")
   static class DeprecatedModuleOptionManager implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
     static final class State {
       @Property(surroundWithTag = false)

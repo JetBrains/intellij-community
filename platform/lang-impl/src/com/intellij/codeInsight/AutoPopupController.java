@@ -37,6 +37,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,6 +47,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AutoPopupController implements Disposable {
+  /**
+   * Settings this user data key to the editor with a completion provider
+   * makes the autopopup scheduling ignore the state of the corresponding setting.
+   * <p/>
+   * This doesn't affect other conditions when autopopup is not possible (e.g. power save mode).
+   */
+  public static final Key<Boolean> ALWAYS_AUTO_POPUP = Key.create("Always Show Completion Auto-Popup");
+
   private final Project myProject;
   private final Alarm myAlarm = new Alarm();
 
@@ -93,7 +102,8 @@ public class AutoPopupController implements Disposable {
       return;
     }
 
-    if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) {
+    boolean alwaysAutoPopup = editor != null && Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
+    if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
       return;
     }
     if (PowerSaveMode.isEnabled()) {

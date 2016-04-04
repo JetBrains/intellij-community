@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
     super(commandLine, softKillOnWin);
   }
 
-  public PythonProcessHandler(Process process, String commandLine, @NotNull Charset charset) {
+  public PythonProcessHandler(Process process, @NotNull String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 

@@ -635,7 +635,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       canShowSettings() ? showSettings() : null,
       ActionManager.getInstance().getAction("UsageView.Rerun"),
       new CloseAction(),
-      ActionManager.getInstance().getAction("PinToolwindowTab"),
+      ActionManager.getInstance().getAction(IdeActions.ACTION_PIN_ACTIVE_TAB),
       createRecentFindUsagesAction(),
       expandAllAction,
       collapseAllAction,

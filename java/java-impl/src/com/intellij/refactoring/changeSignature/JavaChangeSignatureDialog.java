@@ -563,7 +563,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                          item.typeCodeFragment.getText(),
                                          item.parameter.getName());
       } catch (PsiTypeCodeFragment.NoTypeException e) {
-        return RefactoringBundle.message("changeSignature.no.type.for.parameter", item.parameter.getName());
+        return RefactoringBundle.message("changeSignature.no.type.for.parameter", "return", item.parameter.getName());
       }
 
       item.parameter.setType(type);

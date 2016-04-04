@@ -37,8 +37,12 @@ interface Vm {
 
   val suspendContextManager: SuspendContextManager<out CallFrame>
 
+  val workerManager: WorkerManager
+
   /**
    * Controls whether VM stops on exceptions
    */
   fun setBreakOnException(catchMode: ExceptionCatchMode) = resolvedPromise()
+
+  var captureAsyncStackTraces: Boolean
 }

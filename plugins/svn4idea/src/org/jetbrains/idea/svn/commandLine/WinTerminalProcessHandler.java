@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
   private static final String NON_CSI_ESCAPE_CODE = "\u001B.[@-_]";
   private static final String CSI_ESCAPE_CODE = "\u001B\\[(.*?)[@-~]";
 
-  public WinTerminalProcessHandler(@NotNull Process process, boolean forceUtf8, boolean forceBinary) {
-    super(process, forceUtf8, forceBinary);
+  public WinTerminalProcessHandler(@NotNull Process process, @NotNull String commandLine, boolean forceUtf8, boolean forceBinary) {
+    super(process, commandLine, forceUtf8, forceBinary);
   }
 
   @Override

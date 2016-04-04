@@ -80,6 +80,18 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       checkArguments(node, node.getArguments());
     }
 
+    @Override
+    public void visitPyDecoratorList(final PyDecoratorList node) {
+      PyDecorator[] decorators = node.getDecorators();
+
+      for (PyDecorator decorator: decorators) {
+        if (decorator.hasArgumentList()) {
+          PyExpression[] arguments = decorator.getArguments();
+          checkArguments(decorator, arguments);
+        }
+      }
+    }
+
     private static boolean hasSpecialCasedDefaults(PyCallable callable, PsiElement anchor) {
       final String name = callable.getName();
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);

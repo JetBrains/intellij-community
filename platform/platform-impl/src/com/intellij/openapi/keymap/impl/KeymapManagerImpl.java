@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -40,7 +39,7 @@ import java.util.*;
 
 @State(
   name = "KeymapManager",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_OS),
+  storages = @Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS),
   additionalExportFile = KeymapManagerImpl.KEYMAPS_DIR_PATH
 )
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ApplicationComponent {
@@ -97,18 +96,20 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     }
     mySchemesManager.loadSchemes();
 
-    if (Registry.is("editor.add.carets.on.double.control.arrows")) {
-      int modifierKeyCode = SystemInfo.isMac ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL;
-      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE, modifierKeyCode, KeyEvent.VK_UP);
-      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW, modifierKeyCode, KeyEvent.VK_DOWN);
-      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_LEFT);
-      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_RIGHT);
-      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_HOME);
-      ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_END);
-    }
+    int modifierKeyCode = getMultiCaretActionModifier();
+    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE, modifierKeyCode, KeyEvent.VK_UP);
+    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW, modifierKeyCode, KeyEvent.VK_DOWN);
+    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_LEFT);
+    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_RIGHT);
+    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_HOME);
+    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_END);
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourKeymapManagerInitialized = true;
+  }
+
+  public static int getMultiCaretActionModifier() {
+    return SystemInfo.isMac ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL;
   }
 
   @Override
@@ -203,10 +204,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     Element child = state.getChild(ACTIVE_KEYMAP);
     String activeKeymapName = child == null ? null : child.getAttributeValue(NAME_ATTRIBUTE);
     if (!StringUtil.isEmptyOrSpaces(activeKeymapName)) {
-      Keymap keymap = getKeymap(activeKeymapName);
-      if (keymap != null) {
-        setActiveKeymap(keymap);
-      }
+      mySchemesManager.setCurrentSchemeName(activeKeymapName);
     }
   }
 

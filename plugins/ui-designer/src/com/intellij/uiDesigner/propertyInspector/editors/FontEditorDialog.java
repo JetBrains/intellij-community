@@ -18,10 +18,12 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroFontProperty;
+import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,11 +39,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class FontEditorDialog extends DialogWrapper {
+  private final Model myModel = new Model();
   private JList myFontNameList;
   private JList myFontStyleList;
   private JList myFontSizeList;
@@ -61,7 +65,8 @@ public class FontEditorDialog extends DialogWrapper {
     super(project, false);
     init();
     setTitle(UIDesignerBundle.message("font.chooser.title", propertyName));
-    myFontNameList.setListData(UIUtil.getValidFontNames(true));
+    myFontNameList.setModel(myModel);
+    myFontNameList.setCellRenderer(new FontInfoRenderer());
     myFontNameList.addListSelectionListener(new MyListSelectionListener(myFontNameEdit));
     myFontStyleList.setListData(new String[] {
       UIDesignerBundle.message("font.chooser.regular"),
@@ -170,7 +175,7 @@ public class FontEditorDialog extends DialogWrapper {
       myFontNameCheckbox.setSelected(value.getFontName() != null);
       myFontSizeCheckbox.setSelected(value.getFontSize() >= 0);
       myFontStyleCheckbox.setSelected(value.getFontStyle() >= 0);
-      myFontNameList.setSelectedValue(value.getFontName(), true);
+      myFontNameList.setSelectedValue(myModel.findElement(value.getFontName()), true);
       myFontStyleList.setSelectedIndex(value.getFontStyle());
       if (value.getFontSize() >= 0) {
         myFontSizeList.setSelectedValue(Integer.toString(value.getFontSize()), true);
@@ -187,7 +192,7 @@ public class FontEditorDialog extends DialogWrapper {
 
   private void updateValue() {
     final int fontSize = ((Integer)myFontSizeEdit.getValue()).intValue();
-    myValue = new FontDescriptor(myFontNameCheckbox.isSelected() ? (String) myFontNameList.getSelectedValue() : null,
+    myValue = new FontDescriptor(myFontNameCheckbox.isSelected() ? toString(myFontNameList.getSelectedValue()) : null,
                                  myFontStyleCheckbox.isSelected() ? myFontStyleList.getSelectedIndex() : -1,
                                  myFontSizeCheckbox.isSelected() ? fontSize : -1);
     updatePreview();
@@ -219,6 +224,33 @@ public class FontEditorDialog extends DialogWrapper {
         myTextField.setText("");
       }
       updateValue();
+    }
+  }
+
+  private static String toString(Object object) {
+    return object == null ? null : object.toString();
+  }
+
+  private static final class Model extends AbstractListModel {
+    private final List<FontInfo> myList = FontInfo.getAll(false);
+
+    @Override
+    public int getSize() {
+      return myList.size();
+    }
+
+    @Override
+    public FontInfo getElementAt(int index) {
+      return myList.get(index);
+    }
+
+    public FontInfo findElement(String name) {
+      for (FontInfo info : myList) {
+        if (info.toString().equalsIgnoreCase(name)) {
+          return info;
+        }
+      }
+      return null;
     }
   }
 }

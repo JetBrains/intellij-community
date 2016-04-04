@@ -874,14 +874,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       super.dispose();
 
 
+      removeAll(); // remove root pane from a component's list
       if (rootPane != null) { // Workaround for bug in native code to hold rootPane
         try {
-          ReflectionUtil.resetField(rootPane, "glassPane");
-          ReflectionUtil.resetField(rootPane, "contentPane");
-
+          Disposer.clearOwnFields(rootPane);
           rootPane = null;
-
-          ReflectionUtil.resetField(this, "windowListener");
         }
         catch (Exception ignored) {
         }
@@ -1091,6 +1088,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
 
         super.setGlassPane(glass);
+      }
+
+      @Override
+      public void setContentPane(Container contentPane) {
+        super.setContentPane(contentPane);
+        if (contentPane != null) {
+          contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motino events for a11y
+        }
       }
 
       @Override

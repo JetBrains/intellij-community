@@ -154,7 +154,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
 
         final Sdk jdk;
         if (myJdk != null) {
-          VfsRootAccess.allowRootAccessTemporarily(module, myJdk);
+          VfsRootAccess.allowRootAccess(module, myJdk);
           jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
           ((ProjectJdkImpl)jdk).setVersionString(StringUtil.notNullize(IdeaTestUtil.getMockJdkVersion(myJdk), "java 1.5"));
         }

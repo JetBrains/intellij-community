@@ -40,31 +40,31 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
 
   public String getLineText(int line, Editor editor) {
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-    if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return "";
+    if (!canBeAnnotated(currentLine)) return "";
     return myDelegate.getLineText(currentLine, editor);
   }
 
   public String getToolTip(int line, Editor editor) {
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-    if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return "";
+    if (!canBeAnnotated(currentLine)) return "";
     return myDelegate.getToolTip(currentLine, editor);
   }
 
   public EditorFontType getStyle(int line, Editor editor) {
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-    if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return EditorFontType.PLAIN;
+    if (!canBeAnnotated(currentLine)) return EditorFontType.PLAIN;
     return myDelegate.getStyle(currentLine, editor);
   }
 
   public ColorKey getColor(int line, Editor editor) {
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-    if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return AnnotationSource.LOCAL.getColor();
+    if (!canBeAnnotated(currentLine)) return AnnotationSource.LOCAL.getColor();
     return myDelegate.getColor(currentLine, editor);
   }
 
   public Color getBgColor(int line, Editor editor) {
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-    if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return null;
+    if (!canBeAnnotated(currentLine)) return null;
     return myDelegate.getBgColor(currentLine, editor);
   }
 
@@ -78,13 +78,17 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
 
   public void doAction(int lineNum) {
     int currentLine = myGetUpToDateLineNumber.getLineNumber(lineNum);
-    if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return;
+    if (!canBeAnnotated(currentLine)) return;
     myDelegate.doAction(currentLine);
   }
 
   public Cursor getCursor(int lineNum) {
     int currentLine = myGetUpToDateLineNumber.getLineNumber(lineNum);
-    if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return Cursor.getDefaultCursor();
+    if (!canBeAnnotated(currentLine)) return Cursor.getDefaultCursor();
     return myDelegate.getCursor(currentLine);
+  }
+
+  private static boolean canBeAnnotated(int currentLine) {
+    return currentLine >= 0;
   }
 }

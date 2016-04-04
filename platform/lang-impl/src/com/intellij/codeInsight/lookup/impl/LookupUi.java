@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +65,7 @@ import java.util.Collection;
  */
 class LookupUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupUi");
+  @NotNull
   private final LookupImpl myLookup;
   private final Advertiser myAdvertiser;
   private final JBList myList;
@@ -86,7 +83,7 @@ class LookupUi {
   private int myMaximumHeight = Integer.MAX_VALUE;
   private Boolean myPositionedAbove = null;
 
-  LookupUi(LookupImpl lookup, Advertiser advertiser, JBList list, Project project) {
+  LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list, Project project) {
     myLookup = lookup;
     myAdvertiser = advertiser;
     myList = list;
@@ -126,7 +123,7 @@ class LookupUi {
     mySortingLabel.setOpaque(true);
     new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
-    myModalityState = ModalityState.stateForComponent(lookup.getEditor().getComponent());
+    myModalityState = ModalityState.stateForComponent(lookup.getTopLevelEditor().getComponent());
 
     addListeners();
 
@@ -210,7 +207,7 @@ class LookupUi {
     myLookup.getComponent().addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        final ActionCallback done = IdeFocusManager.getInstance(myProject).requestFocus(myLookup.getEditor().getContentComponent(), true);
+        final ActionCallback done = IdeFocusManager.getInstance(myProject).requestFocus(myLookup.getTopLevelEditor().getContentComponent(), true);
         IdeFocusManager.getInstance(myProject).typeAheadUntil(done);
         new Alarm(myLookup).addRequest(new Runnable() {
           @Override
@@ -253,7 +250,7 @@ class LookupUi {
   }
 
   void refreshUi(boolean selectionVisible, boolean itemsChanged, boolean reused, boolean onExplicitAction) {
-    Editor editor = myLookup.getEditor();
+    Editor editor = myLookup.getTopLevelEditor();
     if (editor.getComponent().getRootPane() == null || editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
       return;
     }
@@ -286,7 +283,7 @@ class LookupUi {
     final JComponent lookupComponent = myLookup.getComponent();
     Dimension dim = lookupComponent.getPreferredSize();
     int lookupStart = myLookup.getLookupStart();
-    Editor editor = myLookup.getEditor();
+    Editor editor = myLookup.getTopLevelEditor();
     if (lookupStart < 0 || lookupStart > editor.getDocument().getTextLength()) {
       LOG.error(lookupStart + "; offset=" + editor.getCaretModel().getOffset() + "; element=" +
                 myLookup.getPsiElement());

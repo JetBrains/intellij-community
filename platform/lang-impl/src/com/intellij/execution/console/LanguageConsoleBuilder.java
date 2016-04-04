@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,7 +255,7 @@ public final class LanguageConsoleBuilder {
       ((SoftWrapModelImpl)editor.getSoftWrapModel()).getApplianceManager().setWidthProvider(new SoftWrapApplianceManager.VisibleAreaWidthProvider() {
         @Override
         public int getVisibleAreaWidth() {
-          int guttersWidth = lineEndGutter.getPreferredSize().width + lineStartGutter.getPreferredSize().width;
+          int guttersWidth = lineEndGutter.getPreferredWidth() + lineStartGutter.getPreferredWidth();
           EditorEx editor = getHistoryViewer();
           return editor.getScrollingModel().getVisibleArea().width - guttersWidth;
         }

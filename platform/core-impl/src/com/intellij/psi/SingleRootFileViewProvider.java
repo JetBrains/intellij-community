@@ -124,13 +124,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
-    if (file instanceof LightVirtualFile) {
-      final Language language = ((LightVirtualFile)file).getLanguage();
-      if (language != null) {
-        return language;
-      }
-    }
-
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
@@ -391,7 +384,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return contentSize > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
   }
 
-  private static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
+  public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
     if (vFile instanceof LightVirtualFile) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes
       final int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
@@ -612,16 +605,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     @Override
     public long getModificationStamp() {
-      final VirtualFile virtualFile = getVirtualFile();
-      if (virtualFile instanceof LightVirtualFile) {
-        Document doc = getCachedDocument();
-        if (doc != null) return getLastCommittedStamp(doc);
-        return virtualFile.getModificationStamp();
-      }
-
-      final Document document = getDocument();
+      final Document document = getCachedDocument();
       if (document == null) {
-        return virtualFile.getModificationStamp();
+        return getVirtualFile().getModificationStamp();
       }
       return getLastCommittedStamp(document);
     }

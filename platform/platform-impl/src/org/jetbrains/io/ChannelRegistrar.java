@@ -17,10 +17,12 @@ package org.jetbrains.io;
 
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @ChannelHandler.Sharable
@@ -48,7 +50,8 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
     close(true);
   }
 
-  public void close(boolean shutdownEventLoopGroup) {
+  @NotNull
+  public Future<?> close(boolean shutdownEventLoopGroup) {
     EventLoopGroup eventLoopGroup = null;
     if (shutdownEventLoopGroup) {
       for (Channel channel : openChannels) {
@@ -59,13 +62,17 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
       }
     }
 
+    Future<?> result;
     try {
-      openChannels.close().awaitUninterruptibly(30, TimeUnit.SECONDS);
+      ChannelGroupFuture groupFuture = openChannels.close();
+      groupFuture.awaitUninterruptibly(30, TimeUnit.SECONDS);
+      result = groupFuture;
     }
     finally {
       if (eventLoopGroup != null) {
-        eventLoopGroup.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
+        result = eventLoopGroup.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
       }
     }
+    return result;
   }
 }

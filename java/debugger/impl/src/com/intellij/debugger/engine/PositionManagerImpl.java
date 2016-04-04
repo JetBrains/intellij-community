@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,12 +33,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.sun.jdi.AbsentInformationException;
@@ -91,7 +92,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return ApplicationManager.getApplication().runReadAction(new Computable<List<ClassPrepareRequest>>() {
       @Override
       public List<ClassPrepareRequest> compute() {
-        List<ClassPrepareRequest> res = new ArrayList<ClassPrepareRequest>();
+        List<ClassPrepareRequest> res = new ArrayList<>();
         for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
           ClassPrepareRequestor prepareRequestor = requestor;
           String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
@@ -132,7 +133,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return null;
     }
 
-    PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
+    Project project = getDebugProcess().getProject();
+    PsiFile psiFile = getPsiFileByLocation(project, location);
     if(psiFile == null ) {
       return null;
     }
@@ -147,43 +149,48 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       lineNumber = -1;
     }
 
-    if (lineNumber > -1) {
-      SourcePosition position = calcLineMappedSourcePosition(psiFile, lineNumber);
-      if (position != null) {
-        return position;
+    // replace file with alternative
+    String altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), project);
+    if (altFileUrl != null) {
+      VirtualFile altFile = VirtualFileManager.getInstance().findFileByUrl(altFileUrl);
+      if (altFile != null) {
+        PsiFile altPsiFile = psiFile.getManager().findFile(altFile);
+        if (altPsiFile != null) {
+          psiFile = altPsiFile;
+        }
       }
+    }
+
+    SourcePosition sourcePosition = null;
+    if (lineNumber > -1) {
+      sourcePosition = calcLineMappedSourcePosition(psiFile, lineNumber);
     }
 
     final Method method = location.method();
 
-    if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
-      final String methodSignature = method.signature();
-      if (methodSignature == null) {
+    if (sourcePosition == null && (psiFile instanceof PsiCompiledElement || lineNumber < 0)) {
+      String methodSignature = method.signature();
+      String methodName = method.name();
+      if (methodSignature != null && methodName != null && location.declaringType() != null) {
+        MethodFinder finder = new MethodFinder(location.declaringType().name(), methodName, methodSignature);
+        psiFile.accept(finder);
+        PsiMethod compiledMethod = finder.getCompiledMethod();
+        if (compiledMethod != null) {
+          sourcePosition = SourcePosition.createFromElement(compiledMethod);
+          if (lineNumber >= 0) {
+            sourcePosition = new ClsSourcePosition(sourcePosition, lineNumber);
+          }
+        }
+      }
+      else {
         return SourcePosition.createFromLine(psiFile, -1);
       }
-      final String methodName = method.name();
-      if (methodName == null) {
-        return SourcePosition.createFromLine(psiFile, -1);
-      }
-      if (location.declaringType() == null) {
-        return SourcePosition.createFromLine(psiFile, -1);
-      }
-
-      final MethodFinder finder = new MethodFinder(location.declaringType().name(), methodName, methodSignature);
-      psiFile.accept(finder);
-
-      final PsiMethod compiledMethod = finder.getCompiledMethod();
-      if (compiledMethod == null) {
-        return SourcePosition.createFromLine(psiFile, -1);
-      }
-      SourcePosition sourcePosition = SourcePosition.createFromElement(compiledMethod);
-      if (lineNumber >= 0) {
-        sourcePosition = new ClsSourcePosition(sourcePosition, lineNumber);
-      }
-      return sourcePosition;
     }
 
-    SourcePosition sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
+    if (sourcePosition == null) {
+      sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
+    }
+
     int lambdaOrdinal = -1;
     if (LambdaMethodFilter.isLambdaName(method.name())) {
       Set<Method> lambdas =
@@ -198,7 +205,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           }
         });
       if (lambdas.size() > 1) {
-        ArrayList<Method> lambdasList = new ArrayList<Method>(lambdas);
+        ArrayList<Method> lambdasList = new ArrayList<>(lambdas);
         Collections.sort(lambdasList, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
         lambdaOrdinal = lambdasList.indexOf(method);
       }
@@ -228,11 +235,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         if (method == null) {
           return null;
         }
-        else if ((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName()))) {
-          if (insideBody(element, ((PsiMethod)method).getBody())) return element;
-        }
-        else if (method instanceof PsiLambdaExpression && LambdaMethodFilter.isLambdaName(myExpectedMethodName)) {
-          if (insideBody(element, ((PsiLambdaExpression)method).getBody())) return element;
+        else if (((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName())) ||
+                  (method instanceof PsiLambdaExpression && LambdaMethodFilter.isLambdaName(myExpectedMethodName))) &&
+                 insideBody(element, DebuggerUtilsEx.getBody(method))) {
+          return element;
         }
       }
       return null;
@@ -254,7 +260,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           PsiFile file = original.getFile();
           int line = original.getLine();
           if (LambdaMethodFilter.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
-            List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, false);
+            List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, true);
 
             Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
             if (document == null || line >= document.getLineCount()) {
@@ -323,7 +329,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   private static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Set<PsiClass> res = new HashSet<PsiClass>();
+    Set<PsiClass> res = new HashSet<>();
     for (PsiElement element : getLineElements(file, lineNumber)) {
       PsiClass aClass = getEnclosingClass(element);
       if (aClass != null) {
@@ -397,7 +403,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       @Override
       public List<ReferenceType> compute() {
-        List<ReferenceType> res = new ArrayList<ReferenceType>();
+        List<ReferenceType> res = new ArrayList<>();
         for (PsiClass aClass : getLineClasses(position.getFile(), position.getLine())) {
           res.addAll(getClassReferences(aClass, position));
         }
@@ -407,10 +413,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   private List<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
-    final Ref<String> baseClassNameRef = new Ref<String>(null);
-    final Ref<PsiClass> classAtPositionRef = new Ref<PsiClass>(null);
-    final Ref<Boolean> isLocalOrAnonymous = new Ref<Boolean>(Boolean.FALSE);
-    final Ref<Integer> requiredDepth = new Ref<Integer>(0);
+    final Ref<String> baseClassNameRef = new Ref<>(null);
+    final Ref<PsiClass> classAtPositionRef = new Ref<>(null);
+    final Ref<Boolean> isLocalOrAnonymous = new Ref<>(Boolean.FALSE);
+    final Ref<Integer> requiredDepth = new Ref<>(0);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         classAtPositionRef.set(psiClass);
@@ -426,7 +432,15 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             }
           }
           else {
-            LOG.error("Local or anonymous class has no non-local parent");
+            final StringBuilder sb = new StringBuilder();
+            PsiTreeUtil.treeWalkUp(psiClass, null, new PairProcessor<PsiElement, PsiElement>() {
+              @Override
+              public boolean process(PsiElement element, PsiElement element2) {
+                sb.append('\n').append(element);
+                return true;
+              }
+            });
+            LOG.info("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
           }
         }
         else {
@@ -441,7 +455,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     final List<ReferenceType> classes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
-    final List<ReferenceType> result = new ArrayList<ReferenceType>(classes.size());
+    final List<ReferenceType> result = new ArrayList<>(classes.size());
 
     // Android Studio: In some scenarios we need to set a breakpoint in a different class to the one found here.
     // when that happens we need to allow a custom position manager to change the class at the last minute.
@@ -545,7 +559,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           int locationLine = lnumber - 1;
           PsiFile psiFile = position.getFile().getOriginalFile();
           if (psiFile instanceof PsiCompiledFile) {
-            locationLine = bytecodeToSourceLine(psiFile, locationLine);
+            locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine);
             if (locationLine < 0) continue;
           }
           rangeBegin = Math.min(rangeBegin,  locationLine);
@@ -652,32 +666,20 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     @Override
     public SourcePosition mapDelegate(SourcePosition original) {
-      if (myOriginalLine < 0) return original;
-      SourcePosition position = calcLineMappedSourcePosition(getFile(), myOriginalLine);
+      PsiFile file = getFile();
+      if (myOriginalLine < 0 || !file.isValid()) return original;
+      PsiDocumentManager.getInstance(file.getProject()).getDocument(file); // to ensure decompilation
+      SourcePosition position = calcLineMappedSourcePosition(file, myOriginalLine);
       return position != null ? position : original;
     }
   }
 
   @Nullable
   private static SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
-    int line = bytecodeToSourceLine(psiFile, originalLine);
+    int line = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, originalLine);
     if (line > -1) {
       return SourcePosition.createFromLine(psiFile, line - 1);
     }
     return null;
-  }
-
-  private static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
-    VirtualFile file = psiFile.getVirtualFile();
-    if (file != null) {
-      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
-      if (mapping != null) {
-        int line = mapping.bytecodeToSource(originalLine + 1);
-        if (line > -1) {
-          return line;
-        }
-      }
-    }
-    return -1;
   }
 }

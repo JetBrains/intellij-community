@@ -20,6 +20,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -44,7 +45,6 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.MethodExitEvent;
-import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
 import org.jdom.Element;
@@ -53,8 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
-import java.util.Iterator;
-import java.util.Set;
 
 public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint");
@@ -90,7 +88,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   public PsiClass getPsiClass() {
     return PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<PsiClass>() {
       public PsiClass compute() {
-        return getClassName() != null ? DebuggerUtilsEx.findClass(getClassName(), myProject, GlobalSearchScope.allScope(myProject)) : null;
+        return getClassName() != null ? DebuggerUtils.findClass(getClassName(), myProject, GlobalSearchScope.allScope(myProject)) : null;
       }
     });
   }
@@ -236,11 +234,11 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
 
     try {
       getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "WATCH_ENTRY"));
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     try {
       getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "WATCH_EXIT"));
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
 
     if(className == null || methodName == null) {

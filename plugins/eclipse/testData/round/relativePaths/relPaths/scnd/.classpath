@@ -3,6 +3,7 @@
 	<classpathentry kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/frst"/>
+	<classpathentry kind="src" path="/frst2"/>
 	<classpathentry kind="lib" path="/ws-internals/lib/jar-all-4.zip" sourcepath="jar-all-4-src.zip">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/scnd/jar-all-4-javadoc.zip!/doc/api"/>

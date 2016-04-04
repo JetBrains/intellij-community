@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +91,8 @@ public class PythonRunConfigurationProducer extends RunConfigurationProducer<Pyt
     final Module module = ModuleUtilCore.findModuleForPsiElement(script);
     if (module != null) {
       for (RunnableScriptFilter f : Extensions.getExtensions(RunnableScriptFilter.EP_NAME)) {
-        if (f.isRunnableScript(script, module, location)) {
+        // Configuration producers always called by user
+        if (f.isRunnableScript(script, module, location, TypeEvalContext.userInitiated(location.getProject(), null))) {
           return false;
         }
       }

@@ -47,18 +47,19 @@ public class TypeEvaluator {
   private final TypeMigrationRules myRules;
   private final TypeMigrationLabeler myLabeler;
 
-
   public TypeEvaluator(final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types, final TypeMigrationLabeler labeler) {
     myLabeler = labeler;
-    myRules = labeler.getRules();
+    myRules = labeler == null ? new TypeMigrationRules() : labeler.getRules();
     myTypeMap = new HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>>();
 
-    for (final Pair<TypeMigrationUsageInfo, PsiType> p : types) {
-      final LinkedList<PsiType> e = new LinkedList<PsiType>();
-
-      e.addFirst(p.getSecond());
-
-      myTypeMap.put(p.getFirst(), e);
+    if (types != null) {
+      for (final Pair<TypeMigrationUsageInfo, PsiType> p : types) {
+        if (!(p.getFirst().getElement() instanceof PsiExpression)) {
+          final LinkedList<PsiType> e = new LinkedList<PsiType>();
+          e.addFirst(p.getSecond());
+          myTypeMap.put(p.getFirst(), e);
+        }
+      }
     }
 
   }
@@ -88,6 +89,7 @@ public class TypeEvaluator {
 
       e.addFirst(type);
 
+      usageInfo.setOwnerRoot(myLabeler.getCurrentRoot());
       myTypeMap.put(usageInfo, e);
       return true;
     }
@@ -232,12 +234,19 @@ public class TypeEvaluator {
         }
       }
     }
+    else if (expr instanceof PsiFunctionalExpression) {
+      final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expr).getFunctionalInterfaceType();
+      if (functionalInterfaceType != null) {
+        return functionalInterfaceType;
+      }
+    }
     else if (expr instanceof PsiReferenceExpression) {
       final PsiType type = evaluateReferenceExpressionType(expr);
       if (type != null) {
         return PsiImplUtil.normalizeWildcardTypeByPosition(type, expr);
       }
-    } else if (expr instanceof PsiSuperExpression) {
+    }
+    else if (expr instanceof PsiSuperExpression) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
       if (psiClass != null) {
         final PsiClass superClass = psiClass.getSuperClass();
@@ -467,7 +476,15 @@ public class TypeEvaluator {
     }
 
     void bindTypeParameters(PsiType formal, final PsiType actual) {
-      if (formal instanceof PsiWildcardType) formal = ((PsiWildcardType)formal).getBound();
+      if (formal instanceof PsiWildcardType) {
+        if (actual instanceof PsiCapturedWildcardType &&
+            ((PsiWildcardType)formal).isExtends() == ((PsiCapturedWildcardType)actual).getWildcard().isExtends()) {
+          bindTypeParameters(((PsiWildcardType)formal).getBound(), ((PsiCapturedWildcardType)actual).getWildcard().getBound());
+          return;
+        } else {
+          formal = ((PsiWildcardType)formal).getBound();
+        }
+      }
 
       if (formal instanceof PsiArrayType && actual instanceof PsiArrayType) {
         bindTypeParameters(((PsiArrayType)formal).getComponentType(), ((PsiArrayType)actual).getComponentType());

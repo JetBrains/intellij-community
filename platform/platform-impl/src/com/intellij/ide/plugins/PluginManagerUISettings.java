@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -25,7 +28,7 @@ import javax.swing.*;
 
 @State(
   name = "PluginManagerConfigurable",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/plugin_ui.xml")
+  storages = @Storage("plugin_ui.xml")
 )
 public class PluginManagerUISettings implements PersistentStateComponent<PluginManagerUISettings>, PerformInBackgroundOption {
   public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();

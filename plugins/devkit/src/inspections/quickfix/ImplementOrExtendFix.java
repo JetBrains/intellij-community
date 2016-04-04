@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,32 +25,35 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * @author swr
- */
+import static org.jetbrains.idea.devkit.util.PsiUtil.createPointer;
+
 public class ImplementOrExtendFix extends BaseFix {
+  private final SmartPsiElementPointer<PsiClass> myCompClassPointer;
 
-  private final PsiClass myCompClass;
-
-  private ImplementOrExtendFix(PsiClass compClass, PsiClass checkedClass, boolean onTheFly) {
-    super(checkedClass, onTheFly);
-    myCompClass = compClass;
+  private ImplementOrExtendFix(@NotNull PsiClass compClass,
+                               @NotNull PsiClass checkedClass,
+                               boolean onTheFly) {
+    super(createPointer(checkedClass), onTheFly);
+    myCompClassPointer = createPointer(compClass);
   }
 
+  @NotNull
   public static LocalQuickFix[] createFix(PsiClass compClass, PsiClass checkedClass, boolean onTheFly) {
     ImplementOrExtendFix fix = null;
 
     if (compClass.isInterface() && compClass.getImplementsList() != null) {
       fix = new ImplementOrExtendFix(compClass, checkedClass, onTheFly);
-    } else if (!compClass.isInterface()) {
-      final PsiReferenceList extendsList = checkedClass.getExtendsList();
+    }
+    else if (!compClass.isInterface()) {
+      PsiReferenceList extendsList = checkedClass.getExtendsList();
       if (extendsList != null) {
         if (extendsList.getReferenceElements().length == 0) {
           fix = new ImplementOrExtendFix(compClass, checkedClass, onTheFly);
-        } else if (extendsList.getReferenceElements().length == 1) {
+        }
+        else if (extendsList.getReferenceElements().length == 1) {
           // check for explicit "extends Object" case
-          final PsiClassType javaLangObject = PsiType.getJavaLangObject(checkedClass.getManager(),
-                  checkedClass.getResolveScope());
+          PsiClassType javaLangObject = PsiType.getJavaLangObject(checkedClass.getManager(),
+                                                                        checkedClass.getResolveScope());
           if (extendsList.getReferencedTypes()[0].equals(javaLangObject)) {
             fix = new ImplementOrExtendFix(compClass, checkedClass, onTheFly);
           }
@@ -62,10 +65,12 @@ public class ImplementOrExtendFix extends BaseFix {
 
   @NotNull
   public String getName() {
-    return (myCompClass.isInterface()
+    PsiClass clazz = myCompClassPointer.getElement();
+    if (clazz == null) return "Invalid";
+    return (clazz.isInterface()
             ? StringUtil.capitalize(DevKitBundle.message("keyword.implement"))
             : StringUtil.capitalize(DevKitBundle.message("keyword.extend")))
-            + " '" + myCompClass.getQualifiedName() + "'";
+           + " '" + clazz.getQualifiedName() + "'";
   }
 
   @NotNull
@@ -74,16 +79,21 @@ public class ImplementOrExtendFix extends BaseFix {
   }
 
   protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {
-    final PsiClass clazz = (PsiClass)myElement;
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
-    final PsiClassType compType = elementFactory.createType(myCompClass);
+    PsiElement element = myPointer.getElement();
+    PsiClass compClass = myCompClassPointer.getElement();
+    if (!(element instanceof PsiClass)) return;
+    if (compClass == null) return;
+    PsiClass clazz = (PsiClass)element;
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
+    PsiClassType compType = elementFactory.createType(compClass);
 
-    final PsiReferenceList list;
-    if (myCompClass.isInterface()) {
+    PsiReferenceList list;
+    if (compClass.isInterface()) {
       list = clazz.getImplementsList();
       assert list != null;
-    } else {
-      final PsiReferenceList extendsList = clazz.getExtendsList();
+    }
+    else {
+      PsiReferenceList extendsList = clazz.getExtendsList();
       assert extendsList != null;
       if (extendsList.getReferencedTypes().length > 0) {
         extendsList.getReferenceElements()[0].delete();
@@ -91,7 +101,7 @@ public class ImplementOrExtendFix extends BaseFix {
       list = extendsList;
     }
 
-    final PsiElement e = list.add(elementFactory.createReferenceElementByType(compType));
+    PsiElement e = list.add(elementFactory.createReferenceElementByType(compType));
     if (myOnTheFly && external && e instanceof Navigatable) ((Navigatable)e).navigate(true);
   }
 }

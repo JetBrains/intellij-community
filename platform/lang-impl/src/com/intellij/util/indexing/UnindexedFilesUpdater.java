@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,20 +97,15 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     indicator.setText(IdeBundle.message("progress.indexing.updating"));
 
     indexFiles(indicator, files);
-    snapshot.logResponsivenessSinceCreation("Unindexed files update");
 
+    snapshot.logResponsivenessSinceCreation("Unindexed files update");
   }
 
   private void indexFiles(ProgressIndicator indicator, List<VirtualFile> files) {
     CacheUpdateRunner.processFiles(indicator, true, files, myProject, new Consumer<FileContent>() {
       @Override
       public void consume(FileContent content) {
-        try {
-          myIndex.indexFileContent(myProject, content);
-        }
-        finally {
-          IndexingStamp.flushCache(content.getVirtualFile());
-        }
+        myIndex.indexFileContent(myProject, content);
       }
     });
   }
@@ -124,7 +119,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     catch (ProcessCanceledException e) {
       LOG.info("Unindexed files update canceled");
       throw e;
-    } finally {
+    }
+    finally {
       myIndex.filesUpdateFinished(myProject);
     }
   }

@@ -16,8 +16,10 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -206,6 +208,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                  LanguageLevel languageLevel) {
     return getInferenceHelper(languageLevel)
       .getSubstitutionForTypeParameter(typeParam, param, arg, isContraVariantPosition, languageLevel);
+  }
+
+  @NotNull
+  @Override
+  public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
+    return JavaPsiImplementationHelper.getInstance(myManager.getProject()).getEffectiveLanguageLevel(virtualFile);
   }
 
   @NotNull

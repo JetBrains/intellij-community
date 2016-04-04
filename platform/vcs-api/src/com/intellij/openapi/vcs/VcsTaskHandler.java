@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,11 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 16.07.13
- */
 public abstract class VcsTaskHandler {
+
+  private static final String DEFAULT_PROHIBITED_SYMBOLS = " ";
 
   public static VcsTaskHandler[] getAllHandlers(final Project project) {
     VcsTaskHandler[] extensions = EXTENSION_POINT_NAME.getExtensions(project);
@@ -41,7 +40,7 @@ public abstract class VcsTaskHandler {
     return handlers.toArray(new VcsTaskHandler[handlers.size()]);
   }
 
-  public static class TaskInfo {
+  public static class TaskInfo implements Comparable<TaskInfo> {
 
     private final String myBranch;
     private final Collection<String> myRepositories;
@@ -62,6 +61,11 @@ public abstract class VcsTaskHandler {
     @Override
     public String toString() {
       return getName();
+    }
+
+    @Override
+    public int compareTo(TaskInfo o) {
+      return Comparing.compare(myBranch, o.myBranch);
     }
   }
 
@@ -86,4 +90,25 @@ public abstract class VcsTaskHandler {
    * @return all existing tasks (branches)
    */
   public abstract TaskInfo[] getAllExistingTasks();
+
+  /**
+   * Should check prohibited symbols and constructions; name ref conflicts depended on Repository will be checked separately if needed
+   *
+   * @param branchName to check
+   * @return true if valid
+   */
+  public boolean isBranchNameValid(@NotNull String branchName) {
+    return !branchName.contains(DEFAULT_PROHIBITED_SYMBOLS);
+  }
+
+  /**
+   * Update branchName to valid
+   *
+   * @param suggestedName suggested name
+   * @return new valid branchName
+   */
+  @NotNull
+  public String cleanUpBranchName(@NotNull String suggestedName) {
+    return suggestedName.replaceAll(DEFAULT_PROHIBITED_SYMBOLS, "-");
+  }
 }

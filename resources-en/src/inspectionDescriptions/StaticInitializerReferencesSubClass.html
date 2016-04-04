@@ -1,0 +1,7 @@
+<html>
+<body>
+This inspection reports classes that refer to their own subclasses in their static initializers or in static fields.
+Such references can cause JVM-level deadlocks in multithreaded environment, when one thread tries to load superclass
+and another thread tries to load subclass at the same time.
+</body>
+</html>

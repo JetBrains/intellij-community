@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
+ * @deprecated ShowSettingsUtilImpl#getConfigurableGroups(project, false)
  */
+@Deprecated
 public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
   private final Project myProject;
 
   public ProjectConfigurablesGroup(@NotNull Project project) {
-    super(project, Configurable.PROJECT_CONFIGURABLE, true);
+    super(project, Configurable.PROJECT_CONFIGURABLE);
     myProject = project;
   }
 

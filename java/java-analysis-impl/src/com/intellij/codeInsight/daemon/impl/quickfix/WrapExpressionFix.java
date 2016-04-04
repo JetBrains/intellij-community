@@ -60,13 +60,14 @@ public class WrapExpressionFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    final PsiMethod wrapper = myExpression.isValid() && myExpectedType != null ? findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected) : null;
+    PsiType type = myExpression.getType();
+    final PsiMethod wrapper = myExpression.isValid() && myExpectedType != null && type != null ? findWrapper(type, myExpectedType, myPrimitiveExpected) : null;
     final String methodPresentation = wrapper != null ? wrapper.getContainingClass().getName() + "." + wrapper.getName() : "";
     return QuickFixBundle.message("wrap.expression.using.static.accessor.text", methodPresentation);
   }
 
   @Nullable
-  private static PsiMethod findWrapper(PsiType type, @NotNull PsiClassType expectedType, boolean primitiveExpected) {
+  private static PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType, boolean primitiveExpected) {
     PsiClass aClass = expectedType.resolve();
     if (aClass != null) {
       PsiType expectedReturnType = expectedType;
@@ -114,7 +115,9 @@ public class WrapExpressionFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected);
+    PsiType type = myExpression.getType();
+    assert type != null;
+    PsiMethod wrapper = findWrapper(type, myExpectedType, myPrimitiveExpected);
     assert wrapper != null;
     PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";

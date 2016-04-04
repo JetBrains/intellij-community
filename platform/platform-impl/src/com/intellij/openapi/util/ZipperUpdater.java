@@ -50,6 +50,10 @@ public class ZipperUpdater {
   }
 
   public void queue(@NotNull final Runnable runnable, final boolean urgent) {
+    queue(runnable, urgent, false);
+  }
+
+  public void queue(@NotNull final Runnable runnable, final boolean urgent, final boolean anyModality) {
     synchronized (myLock) {
       if (myAlarm.isDisposed()) return;
       final boolean wasRaised = myRaised;
@@ -68,9 +72,16 @@ public class ZipperUpdater {
             }
           }
         };
-        if (Alarm.ThreadToUse.SWING_THREAD.equals(myThreadToUse) && ! ApplicationManager.getApplication().isDispatchThread()) {
-          myAlarm.addRequest(request, urgent ? 0 : myDelay, ModalityState.NON_MODAL);
-        } else {
+        if (Alarm.ThreadToUse.SWING_THREAD.equals(myThreadToUse)) {
+          if (anyModality) {
+            myAlarm.addRequest(request, urgent ? 0 : myDelay, ModalityState.any());
+          } else if (!ApplicationManager.getApplication().isDispatchThread()) {
+            myAlarm.addRequest(request, urgent ? 0 : myDelay, ModalityState.NON_MODAL);
+          } else {
+            myAlarm.addRequest(request, urgent ? 0 : myDelay);
+          }
+        }
+        else {
           myAlarm.addRequest(request, urgent ? 0 : myDelay);
         }
       }

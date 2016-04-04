@@ -1,0 +1,12 @@
+svn4idea
+git4idea
+remote-servers-git
+github
+IntelliLang
+IntelliLang-python
+student
+student-python
+course-creator
+course-creator-python
+hg4idea
+ipnb

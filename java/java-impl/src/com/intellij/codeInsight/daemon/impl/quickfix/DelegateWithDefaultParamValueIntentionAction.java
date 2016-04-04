@@ -87,8 +87,9 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
       prototype.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
       prototype.addBefore(emptyBody, null);
     }
+
     final PsiClass aClass = method.getContainingClass();
-    if (aClass != null && aClass.isInterface()) {
+    if (aClass != null && aClass.isInterface() && !method.hasModifierProperty(PsiModifier.STATIC)) {
       prototype.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
     }
 

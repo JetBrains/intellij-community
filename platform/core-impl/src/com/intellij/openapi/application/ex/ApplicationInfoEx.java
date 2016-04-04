@@ -51,6 +51,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getEditorBackgroundImageUrl();
 
+  /**
+   * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
+   * standalone tool so different licensing scheme should be applied.
+   */
+  @Nullable
   public abstract String getPackageCode();
 
   public abstract String getFullApplicationName();

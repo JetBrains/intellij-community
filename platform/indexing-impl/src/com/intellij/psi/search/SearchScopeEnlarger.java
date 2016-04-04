@@ -19,7 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
 public abstract class SearchScopeEnlarger {
-  public static ExtensionPointName<SearchScopeEnlarger> EXTENSION = ExtensionPointName.create("com.intellij.searchScopeEnlarger");
+  public static final ExtensionPointName<SearchScopeEnlarger> EXTENSION = ExtensionPointName.create("com.intellij.searchScopeEnlarger");
 
   public boolean allScopeSearchesOutsideRootModel(Project project) {
     return false;

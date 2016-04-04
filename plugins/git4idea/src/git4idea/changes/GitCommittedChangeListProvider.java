@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
  * The provider for committed change lists
  */
@@ -195,7 +197,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     final GitHeavyCommit gitCommit = gitCommits.get(0);
     CommittedChangeList commit = new GitCommittedChangeList(gitCommit.getDescription() + " (" + gitCommit.getShortHash().getString() + ")",
                                                             gitCommit.getDescription(), gitCommit.getAuthor(), (GitRevisionNumber)number,
-                                                            new Date(gitCommit.getAuthorTime()), gitCommit.getChanges(), true);
+                                                            new Date(gitCommit.getAuthorTime()), gitCommit.getChanges(),
+                                                            assertNotNull(GitVcs.getInstance(myProject)), true);
 
     final Collection<Change> changes = commit.getChanges();
     if (changes.size() == 1) {

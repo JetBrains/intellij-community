@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,16 @@ package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.zip.CRC32;
 
 /**
  * Do not use this class directly.
@@ -30,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class IdeaWin32 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.win32.IdeaWin32");
-  private static final boolean DEBUG_ENABLED = LOG.isDebugEnabled();
+  private static final boolean TRACE_ENABLED = LOG.isTraceEnabled();
 
   private static final IdeaWin32 ourInstance;
 
@@ -38,7 +44,9 @@ public class IdeaWin32 {
     IdeaWin32 instance = null;
     if (SystemInfo.isWin2kOrNewer && SystemProperties.getBooleanProperty("idea.use.native.fs.for.win", true)) {
       try {
-        UrlClassLoader.loadPlatformLibrary("IdeaWin32");
+        if (!loadBundledLibrary()) {
+          UrlClassLoader.loadPlatformLibrary("IdeaWin32");
+        }
         instance = new IdeaWin32();
         LOG.info("Native filesystem for Windows is operational");
       }
@@ -47,6 +55,20 @@ public class IdeaWin32 {
       }
     }
     ourInstance = instance;
+  }
+
+  private static boolean loadBundledLibrary() throws IOException {
+    String name = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
+    URL bundled = IdeaWin32.class.getResource(name + ".dll");
+    if (bundled == null) return false;
+    byte[] content = FileUtil.loadBytes(bundled.openStream());
+    CRC32 crc32 = new CRC32();
+    crc32.update(content);
+    long hash = Math.abs(crc32.getValue());
+    File file = new File(FileUtil.getTempDirectory(), name + '.' + hash + ".dll");
+    if (!file.exists()) FileUtil.writeToFile(file, content);
+    System.load(file.getPath());
+    return true;
   }
 
   public static boolean isAvailable() {
@@ -70,12 +92,12 @@ public class IdeaWin32 {
   @Nullable
   public FileInfo getInfo(@NotNull String path) {
     path = path.replace('/', '\\');
-    if (DEBUG_ENABLED) {
-      LOG.debug("getInfo(" + path + ")");
+    if (TRACE_ENABLED) {
+      LOG.trace("getInfo(" + path + ")");
       long t = System.nanoTime();
       FileInfo result = getInfo0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("  " + t + " mks");
+      LOG.trace("  " + t + " mks");
       return result;
     }
     else {
@@ -86,12 +108,12 @@ public class IdeaWin32 {
   @Nullable
   public String resolveSymLink(@NotNull String path) {
     path = path.replace('/', '\\');
-    if (DEBUG_ENABLED) {
-      LOG.debug("resolveSymLink(" + path + ")");
+    if (TRACE_ENABLED) {
+      LOG.trace("resolveSymLink(" + path + ")");
       long t = System.nanoTime();
       String result = resolveSymLink0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("  " + t + " mks");
+      LOG.trace("  " + t + " mks");
       return result;
     }
     else {
@@ -102,12 +124,12 @@ public class IdeaWin32 {
   @Nullable
   public FileInfo[] listChildren(@NotNull String path) {
     path = path.replace('/', '\\');
-    if (DEBUG_ENABLED) {
-      LOG.debug("list(" + path + ")");
+    if (TRACE_ENABLED) {
+      LOG.trace("list(" + path + ")");
       long t = System.nanoTime();
       FileInfo[] children = listChildren0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("  " + (children == null ? -1 : children.length) + " children, " + t + " mks");
+      LOG.trace("  " + (children == null ? -1 : children.length) + " children, " + t + " mks");
       return children;
     }
     else {

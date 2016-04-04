@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -154,7 +155,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(ref);
     if (modifierList != null) {
       for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-        if (PsiImplUtil.findApplicableTarget(annotation, PsiAnnotation.TargetType.TYPE_USE) != null) {
+        if (AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE) != null) {
           return true;
         }
       }

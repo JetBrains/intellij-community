@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,11 +105,11 @@ public class FunctionalInterfaceParameterizationUtil {
                                                          session.substituteWithInferenceVariables(targetMethodParams[i].getType())));
       }
 
-      if (!session.repeatInferencePhases(false)) {
+      if (!session.repeatInferencePhases()) {
         return null;
       }
 
-      final PsiSubstitutor substitutor = session.retrieveNonPrimitiveEqualsBounds(session.getInferenceVariables());
+      final PsiSubstitutor substitutor = session.getInstantiations(session.getInferenceVariables());
       final PsiType[] newTypeParameters = new PsiType[parameters.length];
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];
@@ -130,7 +129,7 @@ public class FunctionalInterfaceParameterizationUtil {
       }
 
       //Otherwise, the inferred parameterization is either F<A'1, ..., A'm>, if all the type arguments are types,
-      if (!TypeConversionUtil.containsWildcards(parameterization)) {
+      if (!isWildcardParameterized(parameterization)) {
         return parameterization;
       }
 

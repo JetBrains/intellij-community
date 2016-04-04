@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use Options | File Templates.
  */
 public interface DfaMemoryState {
+  @NotNull
   DfaMemoryState createCopy();
 
   DfaValue pop();
@@ -40,7 +41,7 @@ public interface DfaMemoryState {
 
   void setVarValue(DfaVariableValue var, DfaValue value);
 
-  boolean applyInstanceofOrNull(DfaRelationValue dfaCond);
+  boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond);
 
   boolean applyCondition(DfaValue dfaCond);
 
@@ -55,7 +56,7 @@ public interface DfaMemoryState {
   boolean isNotNull(DfaValue dfaVar);
 
   @Nullable
-  DfaConstValue getConstantValue(DfaVariableValue value);
+  DfaConstValue getConstantValue(@NotNull DfaVariableValue value);
 
   /**
    * Ephemeral means a state that was created when considering a method contract and checking if one of its arguments is null.

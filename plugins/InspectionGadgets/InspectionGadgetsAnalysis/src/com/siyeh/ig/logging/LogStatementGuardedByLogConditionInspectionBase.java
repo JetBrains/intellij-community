@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -196,9 +197,6 @@ public class LogStatementGuardedByLogConditionInspectionBase extends BaseInspect
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
       if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName)) {
         return;
       }
@@ -240,13 +238,11 @@ public class LogStatementGuardedByLogConditionInspectionBase extends BaseInspect
     }
 
     private boolean isLogGuardCheck(@Nullable PsiExpression expression, String logMethodName) {
+      expression = ParenthesesUtils.stripParentheses(expression);
       if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier == null) {
-          return false;
-        }
         if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName)) {
           return false;
         }

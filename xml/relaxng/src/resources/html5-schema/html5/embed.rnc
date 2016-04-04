@@ -169,17 +169,22 @@ namespace local = ""
 			                    | dropzone
 			                    | hidden
 			                    | onabort
+			                    | onautocomplete
+			                    | onautocompleteerror
 			                    | onblur
+			                    | oncancel
 			                    | oncanplay
 			                    | oncanplaythrough
 			                    | onchange
 			                    | onclick
 			                    | onclose
 			                    | oncontextmenu
+			                    | oncuechange
 			                    | ondblclick
 			                    | ondrag
 			                    | ondragend
 			                    | ondragenter
+			                    | ondragexit
 			                    | ondragleave
 			                    | ondragover
 			                    | ondragstart
@@ -199,41 +204,33 @@ namespace local = ""
 			                    | onloadedmetadata
 			                    | onloadstart
 			                    | onmousedown
+			                    | onmouseenter
+			                    | onmouseleave
 			                    | onmousemove
 			                    | onmouseout
 			                    | onmouseover
 			                    | onmouseup
-			                    | onmousewheel
+			                    | onwheel
 			                    | onpause
 			                    | onplay
 			                    | onplaying
 			                    | onprogress
 			                    | onratechange
 			                    | onreset
+			                    | onresize
 			                    | onscroll
 			                    | onseeked
 			                    | onseeking
 			                    | onselect
 			                    | onshow
+			                    | onsort
 			                    | onstalled
 			                    | onsubmit
 			                    | onsuspend
 			                    | ontimeupdate
+			                    | ontoggle
 			                    | onvolumechange
 			                    | onwaiting
-			                    | onafterprint
-			                    | onbeforeprint
-			                    | onbeforeunload
-			                    | onhashchange
-			                    | onmessage
-			                    | onoffline
-			                    | ononline
-			                    | onpopstate
-			                    | onredo
-			                    | onresize
-			                    | onstorage
-			                    | onundo
-			                    | onunload
 			                    | role
 			                    | aria-atomic
 			                    | aria-busy
@@ -465,152 +462,9 @@ namespace local = ""
 				w:string "seamless" | w:string ""
 			} & v5only
 		iframe.attrs.sandbox =
-			attribute sandbox
-				{	list 
-					{	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-scripts" )?
-					}
-				|	list 
-					{	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-forms" )?
-					}
-				|	list 
-					{	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-scripts" )?
-					}
-				|	list 
-					{	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-same-origin" )?
-					}
-				|	list 
-					{	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-forms" )?
-					}
-				|	list 
-					{	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-same-origin" )?
-					}
-				|	list 
-					{	( w:string "allow-same-origin" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-scripts" )?
-					}
-				|	list 
-					{	( w:string "allow-same-origin" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-forms" )?
-					}
-				|	list 
-					{	( w:string "allow-forms" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-scripts" )?
-					}
-				|	list 
-					{	( w:string "allow-forms" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-same-origin" )?
-					}
-				|	list 
-					{	( w:string "allow-scripts" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-forms" )?
-					}
-				|	list 
-					{	( w:string "allow-scripts" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-same-origin" )?
-					}
-				|	list 
-					{	( w:string "allow-same-origin" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-scripts" )?
-					}
-				|	list 
-					{	( w:string "allow-same-origin" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-forms" )?
-					}
-				|	list 
-					{	( w:string "allow-forms" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-scripts" )?
-					}
-				|	list 
-					{	( w:string "allow-forms" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-same-origin" )?
-					}
-				|	list 
-					{	( w:string "allow-scripts" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-forms" )?
-					}
-				|	list 
-					{	( w:string "allow-scripts" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-top-navigation" )?
-					,	( w:string "allow-same-origin" )?
-					}
-				|	list 
-					{	( w:string "allow-same-origin" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-top-navigation" )?
-					}
-				|	list 
-					{	( w:string "allow-same-origin" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-top-navigation" )?
-					}
-				|	list 
-					{	( w:string "allow-forms" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-top-navigation" )?
-					}
-				|	list 
-					{	( w:string "allow-forms" )?
-					,	( w:string "allow-scripts" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-top-navigation" )?
-					}
-				|	list 
-					{	( w:string "allow-scripts" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-top-navigation" )?
-					}
-				|	list 
-					{	( w:string "allow-scripts" )?
-					,	( w:string "allow-forms" )?
-					,	( w:string "allow-same-origin" )?
-					,	( w:string "allow-top-navigation" )?
-					}
-				} & v5only
+			attribute sandbox {
+				common.data.sandbox-allow-list
+			} & v5only
 		iframe.attrs.allowfullscreen =
 			attribute allowfullscreen {
 				w:string "allowfullscreen" | w:string ""

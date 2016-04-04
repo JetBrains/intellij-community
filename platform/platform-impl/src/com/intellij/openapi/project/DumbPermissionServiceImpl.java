@@ -15,35 +15,38 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class DumbPermissionServiceImpl implements DumbPermissionService {
-  private final Map<ModalityState, DumbModePermission> myPermissions = ContainerUtil.newConcurrentMap();
+  private final ThreadLocal<DumbModePermission> myPermission = new ThreadLocal<DumbModePermission>();
 
   @Override
   public void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
-    ModalityState modality = ModalityState.defaultModalityState();
-    DumbModePermission prev = myPermissions.put(modality, permission);
+    DumbModePermission prev = myPermission.get();
+    if (prev == DumbModePermission.MAY_START_MODAL && permission == DumbModePermission.MAY_START_BACKGROUND) {
+      runnable.run();
+      return;
+    }
+
+    myPermission.set(permission);
     try {
       runnable.run();
     }
     finally {
       if (prev == null) {
-        myPermissions.remove(modality);
+        myPermission.remove();
       } else {
-        myPermissions.put(modality, prev);
+        myPermission.set(prev);
       }
     }
   }
 
-  public Map<ModalityState, DumbModePermission> getPermissions() {
-    return myPermissions;
+  @Nullable
+  public DumbModePermission getPermission() {
+    return myPermission.get();
   }
 }

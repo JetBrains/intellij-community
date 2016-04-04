@@ -64,8 +64,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         ((ResourceBundleStructureViewModel)getTreeModel()).setShowOnlyIncomplete(state);
-        final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)getFileEditor();
-        resourceBundleEditor.setKeepEmptyProperties(state);
+        rebuild();
       }
     });
 

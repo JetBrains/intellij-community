@@ -45,7 +45,7 @@ public class CompressedAppendableFile {
   private int myChunkTableLength;
   private static final int FACTOR = 32;
   private long [] myChunkOffsetTable; // one long offset per FACTOR compressed chunks
-  private static final boolean doDebug = SystemProperties.getBooleanProperty("idea.compressed.file.self.check", true);
+  private static final boolean doDebug = SystemProperties.getBooleanProperty("idea.compressed.file.self.check", false);
   private TLongArrayList myCompressedChunksFileOffsets = doDebug ? new TLongArrayList() : null;
   private static final int MAX_PAGE_LENGTH = 0xFFFF;
 

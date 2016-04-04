@@ -19,20 +19,19 @@ package com.intellij.ide.impl.dataRules;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 
 public class VirtualFileRule implements GetDataRule {
   @Override
   public Object getData(final DataProvider dataProvider) {
-    // Try to detect multiselection.
+    // Try to detect multi-selection.
     PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
     if (psiElements != null) {
       for (PsiElement elem : psiElements) {
-        VirtualFile virtualFile = PsiUtilBase.getVirtualFile(elem);
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(elem);
         if (virtualFile != null) return virtualFile;
       }
     }
@@ -50,6 +49,6 @@ public class VirtualFileRule implements GetDataRule {
     if (elem == null) {
       return null;
     }
-    return PsiUtilBase.getVirtualFile(elem);
+    return PsiUtilCore.getVirtualFile(elem);
   }
 }

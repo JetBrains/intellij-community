@@ -159,7 +159,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
       }
     }
     for (RangeMarker marker : myRangeMarkers) {
-      if (!marker.isValid()) {
+      if (!marker.isValid() || marker.getStartOffset() == marker.getEndOffset()) {
         continue;
       }
       FoldRegion region = FoldingUtil.findFoldRegion(editor, marker.getStartOffset(), marker.getEndOffset());

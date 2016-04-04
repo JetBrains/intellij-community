@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
@@ -66,12 +67,8 @@ public class LogInformationWrapper {
 
   private static LogInformationWrapper buildWrapper(LogInformation log, String rcsFileName, int length) {
     String relativePath = rcsFileName.substring(length);
-    if (relativePath.startsWith("/")) {
-      relativePath = relativePath.substring(1);
-    }
-    if (relativePath.endsWith(CVS_REPOSITORY_FILE_POSTFIX)) {
-      relativePath = relativePath.substring(0, relativePath.length() - CVS_REPOSITORY_FILE_POSTFIX.length());
-    }
+    relativePath = StringUtil.trimStart(relativePath, "/");
+    relativePath = StringUtil.trimEnd(relativePath, CVS_REPOSITORY_FILE_POSTFIX);
     return new LogInformationWrapper(relativePath, log.getRevisionList(), log.getAllSymbolicNames());
   }
 }

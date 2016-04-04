@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.fixes.migration;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.migration.UnnecessaryBoxingInspection;
 import com.siyeh.ig.migration.WhileCanBeForeachInspection;
 
 public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
@@ -30,6 +29,8 @@ public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
 
   public void testThis() { doTest(); }
   public void testCast() { doTest(); }
+  public void testNakedNext() { doTest(); }
+  public void testUnboundWildcard() { doTest(); }
 
   @Override
   protected String getRelativePath() {

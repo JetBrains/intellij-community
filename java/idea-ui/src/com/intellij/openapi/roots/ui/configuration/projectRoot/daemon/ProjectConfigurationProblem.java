@@ -26,7 +26,7 @@ import javax.swing.*;
 /**
 * @author nik
 */
-class ProjectConfigurationProblem extends ConfigurationError {
+public class ProjectConfigurationProblem extends ConfigurationError {
   private final ProjectStructureProblemDescription myDescription;
   private final Project myProject;
 
@@ -49,6 +49,11 @@ class ProjectConfigurationProblem extends ConfigurationError {
   private static String computeDescription(ProjectStructureProblemDescription description) {
     final String descriptionString = description.getDescription();
     return descriptionString != null ? descriptionString : description.getMessage(true);
+  }
+
+  @NotNull
+  public ProjectStructureProblemDescription getProblemDescription() {
+    return myDescription;
   }
 
   @Override

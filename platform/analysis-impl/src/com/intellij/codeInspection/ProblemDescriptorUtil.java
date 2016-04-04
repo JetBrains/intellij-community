@@ -140,6 +140,19 @@ public class ProblemDescriptorUtil {
                                                               @NotNull HighlightSeverity severity,
                                                               @NotNull SeverityRegistrar severityRegistrar) {
     final ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
+    final HighlightInfoType highlightInfoType = getHighlightInfoType(highlightType, severity, severityRegistrar);
+    if (highlightInfoType == HighlightSeverity.INFORMATION) {
+      final TextAttributesKey attributes = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
+      if (attributes != null) {
+        return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
+      }
+    }
+    return highlightInfoType;
+  }
+
+  public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
+                                                       @NotNull HighlightSeverity severity,
+                                                       @NotNull SeverityRegistrar severityRegistrar) {
     switch (highlightType) {
       case GENERIC_ERROR_OR_WARNING:
         return severityRegistrar.getHighlightInfoTypeBySeverity(severity);
@@ -164,10 +177,6 @@ public class ProblemDescriptorUtil {
       case GENERIC_ERROR:
         return HighlightInfoType.ERROR;
       case INFORMATION:
-        final TextAttributesKey attributes = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
-        if (attributes != null) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
-        }
         return HighlightInfoType.INFORMATION;
     }
     throw new RuntimeException("Cannot map " + highlightType);

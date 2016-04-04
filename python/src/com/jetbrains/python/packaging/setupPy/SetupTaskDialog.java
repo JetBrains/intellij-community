@@ -151,7 +151,7 @@ public class SetupTaskDialog extends DialogWrapper {
       if (option.checkbox) {
         JCheckBox checkBox = (JCheckBox)entry.getValue();
         if (checkBox.isSelected() != option.negative) {
-          result.add(option.name);
+          result.add("--" + option.name);
         }
       }
       else {

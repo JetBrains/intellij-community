@@ -1,5 +1,5 @@
 
 class A<K>{
-    void foo(A<A<?>> b){ <error descr="Inferred type 'A<?>' for type parameter 'T' is not within its bound; should extend 'A<java.lang.Object>'">bar(b)</error>; }
+    void foo(A<A<?>> b){ bar<error descr="'bar(A<T>)' in 'A' cannot be applied to '(A<A<?>>)'">(b)</error>; }
     <S, T extends A<S>> void bar(A<T> a){}
 }

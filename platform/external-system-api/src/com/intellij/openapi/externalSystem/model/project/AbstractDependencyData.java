@@ -11,7 +11,7 @@ import java.io.ObjectInputStream;
  * @since 8/10/11 6:41 PM
  */
 public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
-  implements DependencyData, Named
+  implements DependencyData, Named, OrderAware
 {
 
   private static final long serialVersionUID = 1L;
@@ -22,6 +22,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   private DependencyScope myScope = DependencyScope.COMPILE;
 
   private boolean myExported;
+  private int myOrder;
 
   protected AbstractDependencyData(@NotNull ModuleData ownerModule, @NotNull T dependency) {
     super(ownerModule.getOwner());
@@ -100,6 +101,15 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
 
+  @Override
+  public int getOrder() {
+    return myOrder;
+  }
+
+  public void setOrder(int order) {
+    myOrder = order;
+  }
+
   @SuppressWarnings("MethodOverridesPrivateMethodOfSuperclass")
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
@@ -120,7 +130,9 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
       return false;
     }
     AbstractDependencyData<?> that = (AbstractDependencyData<?>)o;
-    return  myScope.equals(that.myScope) && myOwnerModule.equals(that.myOwnerModule) && myTarget.equals(that.myTarget);
+    return myScope.equals(that.myScope) &&
+           myOwnerModule.equals(that.myOwnerModule) &&
+           myTarget.equals(that.myTarget);
   }
 
   @Override

@@ -72,7 +72,7 @@ public class TaskUtil {
 
   public static String formatTask(@NotNull Task task, String format) {
     return format
-      .replace("{id}", task.getId())
+      .replace("{id}", task.getPresentableId())
       .replace("{number}", task.getNumber())
       .replace("{project}", StringUtil.notNullize(task.getProject()))
       .replace("{summary}", task.getSummary());
@@ -90,7 +90,7 @@ public class TaskUtil {
   public static String getTrimmedSummary(Task task) {
     String text;
     if (task.isIssue()) {
-      text = task.getId() + ": " + task.getSummary();
+      text = task.getPresentableId() + ": " + task.getSummary();
     }
     else {
       text = task.getSummary();

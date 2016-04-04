@@ -11,7 +11,7 @@ public abstract class LineBreakpointCommand extends AbstractCommand {
   protected final int myLine;
 
 
-  public LineBreakpointCommand(RemoteDebugger debugger,
+  public LineBreakpointCommand(@NotNull RemoteDebugger debugger,
                                String type, int commandCode,
                                @NotNull final String file,
                                final int line) {

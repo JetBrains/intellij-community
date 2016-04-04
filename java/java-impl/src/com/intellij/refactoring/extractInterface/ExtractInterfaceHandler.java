@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -140,20 +141,21 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
                                    String interfaceName,
                                    MemberInfo[] selectedMembers,
                                    DocCommentPolicy javaDocPolicy) throws IncorrectOperationException {
-    aClass.getProject().getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+    final Project project = aClass.getProject();
+    project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createBeforeData(aClass, selectedMembers));
     final PsiClass anInterface = JavaDirectoryService.getInstance().createInterface(targetDir, interfaceName);
     try {
       PsiJavaCodeReferenceElement ref = ExtractSuperClassUtil.createExtendingReference(anInterface, aClass, selectedMembers);
       final PsiReferenceList referenceList = aClass.isInterface() ? aClass.getExtendsList() : aClass.getImplementsList();
       assert referenceList != null;
-      referenceList.add(ref);
+      CodeStyleManager.getInstance(project).reformat(referenceList.add(ref));
       PullUpProcessor pullUpHelper = new PullUpProcessor(aClass, anInterface, selectedMembers, javaDocPolicy);
       pullUpHelper.moveMembersToBase();
       return anInterface;
     }
     finally {
-      aClass.getProject().getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
         .refactoringDone(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createAfterData(anInterface));
     }
   }

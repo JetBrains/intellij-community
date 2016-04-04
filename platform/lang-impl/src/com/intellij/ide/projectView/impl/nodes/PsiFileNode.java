@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -134,10 +135,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
 
   @Override
   public String getNavigateActionText(boolean focusEditor) {
-    if (isNavigatableLibraryRoot()) {
-      return "Open Library Settings";
-    }
-    return null;
+    return isNavigatableLibraryRoot() ? ActionsBundle.message("action.LibrarySettings.navigate") : null;
   }
 
   @Override

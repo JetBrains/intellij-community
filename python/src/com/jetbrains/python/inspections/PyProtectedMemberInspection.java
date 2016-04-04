@@ -21,9 +21,11 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -55,6 +57,7 @@ import java.util.List;
  */
 public class PyProtectedMemberInspection extends PyInspection {
   public boolean ignoreTestFunctions = true;
+  public boolean ignoreAnnotations = false;
 
   @Nls
   @NotNull
@@ -83,13 +86,24 @@ public class PyProtectedMemberInspection extends PyInspection {
       if (!(statement instanceof PyFromImportStatement)) return;
       final PyReferenceExpression importReferenceExpression = node.getImportReferenceExpression();
       final PyReferenceExpression importSource = ((PyFromImportStatement)statement).getImportSource();
-      if (importReferenceExpression != null && importSource != null)
+      if (importReferenceExpression != null && importSource != null && !isImportFromTheSamePackage(importSource)) {
         checkReference(importReferenceExpression, importSource);
+      }
+    }
+
+    private boolean isImportFromTheSamePackage(PyReferenceExpression importSource) {
+      PsiDirectory directory = importSource.getContainingFile().getContainingDirectory();
+      if (directory != null && PyUtil.isPackage(directory, true, importSource.getContainingFile()) &&
+          directory.getName().equals(importSource.getName())) {
+        return true;
+      }
+      return false;
     }
 
     @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
+      if (ignoreAnnotations && PsiTreeUtil.getParentOfType(node, PyAnnotation.class) != null) return;
       if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
       checkReference(node, qualifier);
     }
@@ -102,7 +116,6 @@ public class PyProtectedMemberInspection extends PyInspection {
 
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PsiReference reference = node.getReference(getResolveContext());
-        if (reference == null) return;
         for (final PyInspectionExtension inspectionExtension : PyInspectionExtension.EP_NAME.getExtensions()) {
           if (inspectionExtension.ignoreProtectedSymbol(node, myTypeEvalContext)) {
             return;
@@ -126,7 +139,7 @@ public class PyProtectedMemberInspection extends PyInspection {
 
         final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
-          if (PyTestUtil.isPyTestClass(parentClass) && ignoreTestFunctions) return;
+          if (PyTestUtil.isPyTestClass(parentClass, null) && ignoreTestFunctions) return;
 
           if (parentClass.isSubclass(resolvedClass, null))
             return;
@@ -161,6 +174,7 @@ public class PyProtectedMemberInspection extends PyInspection {
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore test functions", "ignoreTestFunctions");
+    panel.addCheckbox("Ignore annotations", "ignoreAnnotations");
     return panel;
   }
 }

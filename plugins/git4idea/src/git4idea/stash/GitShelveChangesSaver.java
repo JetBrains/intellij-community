@@ -118,4 +118,9 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   public void showSavedChanges() {
     myShelveViewManager.activateView(myShelvedLists.get(myShelvedLists.keySet().iterator().next()));
   }
+
+  @Override
+  public String toString() {
+    return "ShelveChangesSaver. Lists: " + myShelvedLists;
+  }
 }

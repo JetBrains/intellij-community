@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.actions.ActivateToolWindowAction;
-import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -54,10 +53,14 @@ public class EditorEmptyTextPainter {
       public Couple<Integer> fun(Integer width, Integer height) {
         Dimension s = splitters.getSize();
         int w = (s.width - width) / 2;
-        int h = s.height * 3 / 8; // fix vertical position @ golden ratio
+        int h = (int)(s.height * heightRatio());
         return Couple.of(w, h);
       }
     });
+  }
+
+  protected double heightRatio() {
+    return 0.375; // fix vertical position @ golden ratio 
   }
 
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
@@ -70,7 +73,7 @@ public class EditorEmptyTextPainter {
   }
 
   protected void appendDnd(@NotNull UIUtil.TextPainter painter) {
-    appendLine(painter, "Drop files here from " + ShowFilePathAction.getFileManagerName());
+    appendLine(painter, "Drop files here to open");
   }
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {

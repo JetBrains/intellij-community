@@ -18,9 +18,9 @@ abstract class ClassNameScheme(private val suffix: String, private val rootPacka
 
   private fun getShortNameChars(baseName: String): CharArray {
     val name = CharArray(baseName.length + suffix.length)
-    baseName.getChars(0, baseName.length, name, 0)
+    baseName.toCharArray(name, 0, 0, baseName.length)
     if (!suffix.isEmpty()) {
-      suffix.getChars(0, suffix.length, name, baseName.length)
+      suffix.toCharArray(name, baseName.length, 0, suffix.length)
     }
     if (Character.isLowerCase(name[0])) {
       name[0] = Character.toUpperCase(name[0])

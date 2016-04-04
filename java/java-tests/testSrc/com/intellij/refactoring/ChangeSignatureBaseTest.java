@@ -17,11 +17,13 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,6 +98,16 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
                         GenParams genParams,
                         GenExceptions genExceptions,
                         boolean generateDelegate) {
+    doTest(newVisibility, newName, newReturnType, genParams, genExceptions, generateDelegate, false);
+  }
+
+  protected void doTest(@PsiModifier.ModifierConstant @Nullable String newVisibility,
+                        @Nullable String newName,
+                        @Nullable String newReturnType,
+                        GenParams genParams,
+                        GenExceptions genExceptions,
+                        boolean generateDelegate,
+                        boolean skipConflict) {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
     PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
@@ -104,7 +116,20 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
     PsiType newType = newReturnType != null ? myFactory.createTypeFromText(newReturnType, method) : method.getReturnType();
     new ChangeSignatureProcessor(getProject(), method, generateDelegate, newVisibility,
                                  newName != null ? newName : method.getName(),
-                                 newType, genParams.genParams(method), genExceptions.genExceptions(method)).run();
+                                 newType, genParams.genParams(method), genExceptions.genExceptions(method)) {
+      @Override
+      protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+        try {
+          return super.preprocessUsages(refUsages);
+        }
+        catch (ConflictsInTestsException e) {
+          if (skipConflict) {
+            return true;
+          }
+          throw e;
+        }
+      }
+    }.run();
     checkResultByFile(basePath + "_after.java");
   }
 

@@ -18,7 +18,7 @@ class Test {
     } else if ("Queues".equals(parentName)) {
       System.out.println(parentNode.toString());
     }
-    System.out.println(<warning descr="Method invocation 'parentNode.toString()' may produce 'java.lang.NullPointerException'">parentNode.toString()</warning>);
+    System.out.println(parentNode.<warning descr="Method invocation 'toString' may produce 'java.lang.NullPointerException'">toString</warning>());
   }
 
   public static int foo(String a, String b) {

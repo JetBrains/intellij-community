@@ -29,6 +29,9 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getLOperands;
+import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getROperands;
+
 /**
  * @author mike
  */
@@ -37,22 +40,8 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
-      return false;
-    }
-    PsiJavaToken token = (PsiJavaToken)element;
-    if (!(token.getParent() instanceof PsiPolyadicExpression)) return false;
-
-    PsiPolyadicExpression expression = (PsiPolyadicExpression)token.getParent();
-    boolean isAndExpression = expression.getOperationTokenType() == JavaTokenType.ANDAND;
-    boolean isOrExpression = expression.getOperationTokenType() == JavaTokenType.OROR;
-    if (!isAndExpression && !isOrExpression) return false;
-
-    while (expression.getParent() instanceof PsiPolyadicExpression) {
-      expression = (PsiPolyadicExpression)expression.getParent();
-      if (isAndExpression && expression.getOperationTokenType() != JavaTokenType.ANDAND) return false;
-      if (isOrExpression && expression.getOperationTokenType() != JavaTokenType.OROR) return false;
-    }
+    final PsiPolyadicExpression expression = SplitConditionUtil.findCondition(element);
+    if (expression == null) return false;
 
     if (!(expression.getParent() instanceof PsiIfStatement)) return false;
     PsiIfStatement ifStatement = (PsiIfStatement)expression.getParent();
@@ -122,32 +111,6 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     editor.getCaretModel().moveToOffset(offset1);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
-  }
-
-  private static PsiExpression getROperands(PsiPolyadicExpression expression, PsiJavaToken separator) throws IncorrectOperationException {
-    PsiElement next = PsiTreeUtil.skipSiblingsForward(separator, PsiWhiteSpace.class, PsiComment.class);
-    final int offsetInParent;
-    if (next == null) {
-      offsetInParent = separator.getStartOffsetInParent() + separator.getTextLength();
-    } else {
-      offsetInParent = next.getStartOffsetInParent();
-    }
-
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
-    String rOperands = expression.getText().substring(offsetInParent);
-    return factory.createExpressionFromText(rOperands, expression.getParent());
-  }
-
-  private static PsiExpression getLOperands(PsiPolyadicExpression expression, PsiJavaToken separator) throws IncorrectOperationException {
-    PsiElement prev = separator;
-    if (prev.getPrevSibling() instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
-    if (prev == null) {
-      throw new IncorrectOperationException("Unable to split '"+expression.getText()+"' left to '"+separator+"' (offset "+separator.getStartOffsetInParent()+")");
-    }
-
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
-    String rOperands = expression.getText().substring(0, prev.getStartOffsetInParent());
-    return factory.createExpressionFromText(rOperands, expression.getParent());
   }
 
   private static void doOrSplit(PsiIfStatement ifStatement, PsiPolyadicExpression expression, PsiJavaToken token, Editor editor) throws IncorrectOperationException {

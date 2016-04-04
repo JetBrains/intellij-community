@@ -5,10 +5,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Not thread-safe.
@@ -29,7 +26,7 @@ public class LibraryData extends AbstractNamedData implements Named {
   }
 
   public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name, boolean unresolved) {
-    super(owner, name, String.format("%s: %s", owner.getReadableName(), name));
+    super(owner, name, name.isEmpty() ? "" : String.format("%s: %s", owner.getReadableName(), name));
     myUnresolved = unresolved;
   }
 
@@ -46,7 +43,7 @@ public class LibraryData extends AbstractNamedData implements Named {
   public void addPath(@NotNull LibraryPathType type, @NotNull String path) {
     Set<String> paths = myPaths.get(type);
     if (paths == null) {
-      myPaths.put(type, paths = new HashSet<String>());
+      myPaths.put(type, paths = new LinkedHashSet<String>());
     } 
     paths.add(ExternalSystemApiUtil.toCanonicalPath(path));
   }

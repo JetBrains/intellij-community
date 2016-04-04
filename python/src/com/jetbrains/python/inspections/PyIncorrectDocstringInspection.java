@@ -28,6 +28,7 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -89,6 +90,10 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
   private static List<PyNamedParameter> getMissingParams(@NotNull StructuredDocString docString, @NotNull PyParameter[] realParams) {
     final List<PyNamedParameter> missing = new ArrayList<PyNamedParameter>();
     final List<String> docStringParameters = docString.getParameters();
+    if (docStringParameters.isEmpty()) {
+      return Collections.emptyList();
+    }
+    
     for (PyParameter p : realParams) {
       final PyNamedParameter named = as(p, PyNamedParameter.class);
       if (p.isSelf() || named == null || named.isPositionalContainer() || named.isKeywordContainer()) {

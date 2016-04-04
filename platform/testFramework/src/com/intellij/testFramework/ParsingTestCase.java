@@ -54,7 +54,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusFactory;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +110,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     myPsiManager = new MockPsiManager(myProject);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
     MutablePicoContainer appContainer = getApplication().getPicoContainer();
-    registerComponentInstance(appContainer, MessageBus.class, MessageBusFactory.newMessageBus(getApplication()));
+    registerComponentInstance(appContainer, MessageBus.class, getApplication().getMessageBus());
     registerComponentInstance(appContainer, SchemesManagerFactory.class, new MockSchemesManagerFactory());
     final MockEditorFactory editorFactory = new MockEditorFactory();
     registerComponentInstance(appContainer, EditorFactory.class, editorFactory);

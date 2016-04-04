@@ -296,7 +296,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
         selectionListener.valueChanged(e);
       }
     };
-    myRevisionsList.getExpandableItemsHandler().setEnabled(false);
+    myRevisionsList.setExpandableItemsEnabled(false);
     new TableViewSpeedSearch<CommittedChangeList>(myRevisionsList) {
       @Override
       protected String getItemText(@NotNull CommittedChangeList element) {

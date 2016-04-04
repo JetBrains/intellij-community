@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,9 +189,7 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
       try {
         String line;
         while ((line = reader.readLine()) != null) {
-          if (line.startsWith("/1 ")) {
-            line = line.substring(3);
-          }
+          line = StringUtil.trimStart(line, "/1 ");
           final int sepPosition = line.indexOf(' ');
           if (sepPosition > 0) {
             final String cvsRoot = line.substring(0, sepPosition);

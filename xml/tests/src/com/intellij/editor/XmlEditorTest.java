@@ -35,13 +35,11 @@ public class XmlEditorTest extends LightCodeInsightTestCase {
   public void testEnterPerformance() throws Exception {
     configureByFile(getTestFilePath(true));
     EditorTestUtil.performTypingAction(myEditor, '\n');
-    PlatformTestUtil.assertTiming("Xml editor enter", 7500, 1, new Runnable() {
-      public void run() {
-        for (int i = 0; i < 3; i ++) {
-          EditorTestUtil.performTypingAction(myEditor, '\n');
-        }
+    PlatformTestUtil.assertTiming("Xml editor enter", 7500, 1, () -> {
+      for (int i = 0; i < 3; i ++) {
+        EditorTestUtil.performTypingAction(myEditor, '\n');
       }
-    });    
+    });
     checkResultByFile(getTestFilePath(false));
   }
 

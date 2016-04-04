@@ -18,7 +18,6 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -31,7 +30,7 @@ import java.util.concurrent.Future;
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
 
-  private boolean myHasPty = false;
+  private boolean myHasPty;
   private boolean myDestroyRecursively = true;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
@@ -39,22 +38,30 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(commandLine instanceof PtyCommandLine);
   }
 
+  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other ctor (to be removed in IDEA 17) */
+  @Deprecated
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
   }
 
-  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
   }
 
-  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
   }
 
+  @NotNull
   @Override
-  protected Future<?> executeOnPooledThread(Runnable task) {
-    Application app = ApplicationManager.getApplication();
-    return app != null ? app.executeOnPooledThread(task) : super.executeOnPooledThread(task);
+  protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
+    return super.executeOnPooledThread(task);  // to maintain binary compatibility?
   }
 
   protected boolean shouldDestroyProcessRecursively() {

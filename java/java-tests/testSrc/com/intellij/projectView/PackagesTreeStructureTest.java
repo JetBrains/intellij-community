@@ -73,6 +73,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                        "    Class1.java\n" +
                        "    Class2.java\n" +
                        "    Class4.java\n" +
+                       "    emptyClassFile.class\n" +
                        "    Form1.form\n" +
                        "    Form1.java\n" +
                        "    Form2.form\n" +
@@ -120,6 +121,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                         "  Class1.java\n" +
                         "  Class2.java\n" +
                         "  Class4.java\n" +
+                        "  emptyClassFile.class\n" +
                         "  Form1.form\n" +
                         "  Form1.java\n" +
                         "  Form2.form\n" +
@@ -168,6 +170,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                     "    Class1.java\n" +
                     "    Class2.java\n" +
                     "    Class4.java\n" +
+                    "    emptyClassFile.class\n" +
                     "    Form1.form\n" +
                     "    Form1.java\n" +
                     "    Form2.form\n" +
@@ -182,6 +185,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                      "  Class1.java\n" +
                      "  Class2.java\n" +
                      "  Class4.java\n" +
+                     "  emptyClassFile.class\n" +
                      "  Form1.form\n" +
                      "  Form1.java\n" +
                      "  Form2.form\n" +

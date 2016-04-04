@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
  * @author Sergey Simonchik
  */
 public class GithubDownloadUtil {
+  private static final String PROJECT_GENERATORS = "projectGenerators";
 
   private GithubDownloadUtil() {}
 
@@ -30,9 +31,26 @@ public class GithubDownloadUtil {
   }
 
   @NotNull
+  private static String formatGithubUserName(@NotNull String userName) {
+    return "github-" + userName;
+  }
+
+  @NotNull
   public static File getCacheDir(@NotNull String userName, @NotNull String repositoryName) {
-    File generatorsDir = new File(PathManager.getSystemPath(), "projectGenerators");
+    File generatorsDir = new File(PathManager.getSystemPath(), PROJECT_GENERATORS);
     String dirName = formatGithubRepositoryName(userName, repositoryName);
+    File dir = new File(generatorsDir, dirName);
+    try {
+      return dir.getCanonicalFile();
+    } catch (IOException e) {
+      return dir;
+    }
+  }
+
+  @NotNull
+  public static File getUserCacheDir(@NotNull String userName) {
+    File generatorsDir = new File(PathManager.getSystemPath(), PROJECT_GENERATORS);
+    String dirName = formatGithubUserName(userName);
     File dir = new File(generatorsDir, dirName);
     try {
       return dir.getCanonicalFile();

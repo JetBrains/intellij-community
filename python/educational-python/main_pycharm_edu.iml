@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="colorSchemes" />
+    <orderEntry type="module" module-name="svn4idea" />
+    <orderEntry type="module" module-name="git4idea" />
+    <orderEntry type="module" module-name="relaxng" />
+    <orderEntry type="module" module-name="rest" />
+    <orderEntry type="module" module-name="python-helpers" />
+    <orderEntry type="module" module-name="python-ide-community" />
+    <orderEntry type="module" module-name="platform-main" />
+    <orderEntry type="module" module-name="ShortcutPromoter" />
+    <orderEntry type="module" module-name="educational-python" />
+    <orderEntry type="module" module-name="course-creator" />
+    <orderEntry type="module" module-name="course-creator-python" />
+    <orderEntry type="module" module-name="student" />
+    <orderEntry type="module" module-name="student-python" />
+    <orderEntry type="module" module-name="hg4idea" />
+    <orderEntry type="module" module-name="ipnb" />
+  </component>
+</module>

@@ -146,7 +146,7 @@ class AlignmentImpl extends Alignment {
     myOffsetRespBlocks.add(block);
   }
   
-  public Set<LeafBlockWrapper> getAllBlocks() {
+  public Set<LeafBlockWrapper> getOffsetResponsibleBlocks() {
     return ContainerUtil.newHashSet(myOffsetRespBlocks);
   }
 

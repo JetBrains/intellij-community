@@ -16,26 +16,27 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.psi.PsiElement;
-
-import java.util.List;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class ImportedResolveResult extends RatedResolveResult {
-  private final List<PsiElement> myNameDefiners;
+  @Nullable private final PyImportedNameDefiner myDefiner;
 
-  public ImportedResolveResult(PsiElement element, int rate, List<PsiElement> nameDefiners) {
+  public ImportedResolveResult(PsiElement element, int rate, @Nullable PyImportedNameDefiner definer) {
     super(rate, element);
-    myNameDefiners = nameDefiners;
+    myDefiner = definer;
   }
 
-  public List<PsiElement> getNameDefiners() {
-    return myNameDefiners;
+  @Nullable
+  public PyImportedNameDefiner getDefiner() {
+    return myDefiner;
   }
 
   @Override
   public RatedResolveResult replace(PsiElement what) {
-    return new ImportedResolveResult(what, getRate(), myNameDefiners);
+    return new ImportedResolveResult(what, getRate(), myDefiner);
   }
 }

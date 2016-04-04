@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +36,12 @@ import java.util.List;
 public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
 
   @NotNull private final GitBrancher myBrancher;
+  @NotNull private final GitRefNameValidator myNameValidator;
 
   public GitTaskHandler(@NotNull GitBrancher brancher, @NotNull GitRepositoryManager repositoryManager, @NotNull Project project) {
     super(repositoryManager, project, "branch");
     myBrancher = brancher;
+    myNameValidator = GitRefNameValidator.getInstance();
   }
 
   @Override
@@ -75,5 +78,16 @@ public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
         return branch.getName();
       }
     });
+  }
+
+  @Override
+  public boolean isBranchNameValid(@NotNull String branchName) {
+    return myNameValidator.checkInput(branchName);
+  }
+
+  @NotNull
+  @Override
+  public String cleanUpBranchName(@NotNull String suggestedName) {
+    return myNameValidator.cleanUpBranchName(suggestedName);
   }
 }

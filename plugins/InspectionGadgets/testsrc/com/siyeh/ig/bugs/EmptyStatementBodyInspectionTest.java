@@ -1,13 +1,21 @@
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class EmptyStatementBodyInspectionTest extends IGInspectionTestCase {
+public class EmptyStatementBodyInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final EmptyStatementBodyInspection tool = new EmptyStatementBodyInspection();
-    tool.m_reportEmptyBlocks = true;
-    tool.commentsAreContent = true;
-    doTest("com/siyeh/igtest/bugs/empty_statement_body", tool);
+  public void testEmptyStatementBody() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final EmptyStatementBodyInspection inspection = new EmptyStatementBodyInspection();
+    inspection.m_reportEmptyBlocks = true;
+    inspection.commentsAreContent = true;
+    return inspection;
   }
 }

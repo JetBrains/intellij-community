@@ -26,7 +26,6 @@ public class VcsUsualLineAnnotationData implements VcsLineAnnotationData {
   private final VcsRevisionNumber[] myData;
 
   public VcsUsualLineAnnotationData(int size) {
-    assert size > 0;
     myData = new VcsRevisionNumber[size];
   }
 

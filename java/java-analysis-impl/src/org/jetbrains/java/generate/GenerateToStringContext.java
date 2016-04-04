@@ -15,19 +15,16 @@
  */
 package org.jetbrains.java.generate;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import org.jetbrains.java.generate.config.Config;
 
 /**
  * Application context for this plugin.
  */
-@State(
-  name = "ToStringSettings",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
-)
+@State(name = "ToStringSettings", storages = @Storage("other.xml"))
 public class GenerateToStringContext implements PersistentStateComponent<Config> {
     public static GenerateToStringContext getInstance() {
         return ServiceManager.getService(GenerateToStringContext.class);

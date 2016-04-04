@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-@State(
-  name = "SvnDiffSettings",
-  storages = @Storage(file = DiffUtil.DIFF_CONFIG)
-)
+@State(name = "SvnDiffSettings", storages = @Storage(DiffUtil.DIFF_CONFIG))
 public class SvnDiffSettingsHolder implements PersistentStateComponent<SvnDiffSettingsHolder.State> {
   public static final Key<SvnDiffSettings> KEY = Key.create("SvnDiffSettings");
 

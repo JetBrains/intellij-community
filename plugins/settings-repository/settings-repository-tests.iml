@@ -34,6 +34,5 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="test-framework-java8" />
   </component>
 </module>

@@ -65,7 +65,7 @@ public class RncHighlighter extends SyntaxHighlighterBase {
     fillMap(ourMap1, RncTokenTypes.DOC_TOKENS, DefaultLanguageHighlighterColors.DOC_COMMENT);
     fillMap(ourMap1, RncTokenTypes.COMMENTS, DefaultLanguageHighlighterColors.LINE_COMMENT);
 
-    fillMap(ourMap1, RncTokenTypes.IDENTIFIERS, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
+    fillMap(ourMap1, RncTokenTypes.IDENTIFIERS, DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
 
     ourMap1.put(RncTokenTypes.ILLEGAL_CHAR, HighlighterColors.BAD_CHARACTER);
   }

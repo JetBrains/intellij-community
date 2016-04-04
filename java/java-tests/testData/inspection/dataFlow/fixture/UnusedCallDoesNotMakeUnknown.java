@@ -9,6 +9,6 @@ class Doo {
 
   public void main(String[] args) {
     Object method = getMethod();
-    System.out.println(<warning descr="Method invocation 'getMethod().hashCode()' may produce 'java.lang.NullPointerException'">getMethod().hashCode()</warning>);
+    System.out.println(getMethod().<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
 }

@@ -17,6 +17,8 @@ package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -438,6 +440,31 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     //noinspection ConstantConditions
     return getCommonCodeStyleSettings().getIndentOptions();
+  }
+
+  /**
+   * When you have more than one completion variant, you may use this method providing variant to choose.
+   * It only works for one caret (multiple carets not supported) and since it puts tab after completion, be sure to limit
+   * line somehow (i.e. with comment).
+   * <br/>
+   * Example: "user.n[caret]." There are "name" and "nose" fields.
+   * By calling this function with "nose" you will end with "user.nose  ".
+   */
+  protected final void completeCaretWithMultipleVariants(@NotNull final String... desiredVariants) {
+    final LookupElement[] lookupElements = myFixture.completeBasic();
+    final LookupEx lookup = myFixture.getLookup();
+    if (lookupElements != null && lookupElements.length > 1) {
+      // More than one element returned, check directly because completion can't work in this case
+      for (final LookupElement element : lookupElements) {
+        final String suggestedString = element.getLookupString();
+        if (Arrays.asList(desiredVariants).contains(suggestedString)) {
+          myFixture.getLookup().setCurrentItem(element);
+          lookup.setCurrentItem(element);
+          myFixture.completeBasicAllCarets('\t');
+          return;
+        }
+      }
+    }
   }
 }
 

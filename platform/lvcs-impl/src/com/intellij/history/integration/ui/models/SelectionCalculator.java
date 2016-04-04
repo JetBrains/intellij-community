@@ -17,7 +17,6 @@
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.diff.Block;
-import com.intellij.diff.FindBlock;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
@@ -75,7 +74,7 @@ public class SelectionCalculator {
     if (content == null) {
       result = EMPTY_BLOCK; 
     } else  if (revisionIndex == 0) {
-      result = new Block(content, myFromLine, myToLine);
+      result = new Block(content, myFromLine, myToLine + 1);
     }
     else {
       Block prev = EMPTY_BLOCK;
@@ -84,7 +83,7 @@ public class SelectionCalculator {
         i--;
         prev = getSelectionFor(i, totalRevisions, p);
       }
-      result = new FindBlock(content, prev).getBlockInThePrevVersion();
+      result = prev.createPreviousBlock(content);
     }
 
     myCache.put(revisionIndex, result);

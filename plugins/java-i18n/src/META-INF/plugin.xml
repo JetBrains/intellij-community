@@ -19,7 +19,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <referenceProviderType key="Properties File Key Provider"
                            implementationClass="com.intellij.lang.properties.PropertiesReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
@@ -44,7 +43,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedMessageFormatParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.InspectionsBundle"
-                     key="inspection.duplicates.display.name" groupName="Internationalization issues" enabledByDefault="false"
+                     key="inspection.duplicates.display.name" groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>
 
