@@ -29,7 +29,6 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import com.jetbrains.jsonSchema.extension.SchemaType;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +37,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
 
-public class JsonSchemaServiceImpl implements JsonSchemaService {
+public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private static final Logger LOGGER = Logger.getInstance(JsonSchemaServiceImpl.class);
   private static final Logger RARE_LOGGER = RareLogger.wrap(LOGGER, false);
   @Nullable
@@ -50,8 +49,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   public JsonSchemaServiceImpl(@Nullable Project project) {
     myLock = new Object();
     myProject = project;
-    myDefinitions = new JsonSchemaExportedDefinitions(project,
-                                                      new Consumer<PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>>() {
+    myDefinitions = new JsonSchemaExportedDefinitions(
+      new Consumer<PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>>() {
                                                         @Override
                                                         public void consume(PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>> consumer) {
                                                           iterateSchemas(consumer);
@@ -147,6 +146,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
     catch (Exception e) {
       logException(provider, e);
+    } finally {
+      if (reader != null) try {
+        reader.close();
+      }
+      catch (IOException e) {
+        logException(provider, e);
+      }
     }
     return null;
   }
@@ -302,5 +308,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     public DocumentationProvider getDocumentationProvider() {
       return myDocumentationProvider;
     }
+  }
+
+  @Override
+  public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
+    return myDefinitions.checkFileForId(id, file);
   }
 }

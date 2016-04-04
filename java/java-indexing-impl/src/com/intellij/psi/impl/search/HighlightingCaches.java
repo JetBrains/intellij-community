@@ -22,7 +22,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,8 +56,8 @@ class HighlightingCaches {
 
   // baseClass -> (list of direct subclasses, isInheritor flag array)
   final Map<PsiClass, Pair<List<PsiClass>, AtomicIntegerArray>> DIRECT_SUB_CLASSES = createWeakCache();
-  // baseClass -> list of (search params, corresponding cached sub classes)
-  final ConcurrentMap<PsiClass, List<Pair<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>>>> ALL_SUB_CLASSES = createWeakCache();
+  // baseClass -> all sub classes transitively, including anonymous
+  final ConcurrentMap<PsiClass, Collection<PsiClass>> ALL_SUB_CLASSES = createWeakCache();
   // baseMethod -> all overriding methods
   final Map<PsiMethod, Collection<PsiMethod>> OVERRIDING_METHODS = createWeakCache();
 

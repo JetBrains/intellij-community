@@ -67,7 +67,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         }
         if (editor != null && !editor.isDisposed()) {
           // usability: show auto import popup as soon as possible
-          new ShowAutoImportPass(project, psiFile, editor).applyInformationToEditor();
+          new ShowAutoImportPass(project, psiFile, editor).addImports();
           
           DaemonListeners.repaintErrorStripeRenderer(editor, project);
         }

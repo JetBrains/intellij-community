@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -42,6 +43,7 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
     final MultiMap<String, PsiMethod> potentials = ApplicationManager.getApplication().runReadAction((Computable<MultiMap<String, PsiMethod>>)() -> {
         final MultiMap<String, PsiMethod> result = MultiMap.create();
         for (PsiMethod method : psiClass.getMethods()) {
+          ProgressManager.checkCanceled();
           if (PsiUtil.canBeOverriden(method)) {
             result.putValue(method.getName(), method);
           }
@@ -56,9 +58,11 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
       PsiSubstitutor substitutor = null;
 
       for (String name : potentials.keySet()) {
+        ProgressManager.checkCanceled();
         if (inheritor.findMethodsByName(name, true).length == 0) continue;
 
         for (PsiMethod superMethod : potentials.get(name)) {
+          ProgressManager.checkCanceled();
           if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
               !JavaPsiFacade.getInstance(inheritor.getProject()).arePackagesTheSame(psiClass, inheritor)) continue;
 

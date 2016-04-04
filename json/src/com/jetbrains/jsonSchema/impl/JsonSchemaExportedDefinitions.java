@@ -15,16 +15,17 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaReader.LOG;
@@ -39,12 +40,9 @@ public class JsonSchemaExportedDefinitions {
   private final BidirectionalMap<String, Pair<SchemaType, ?>> myId2Key;
   private final MultiMap<Pair<SchemaType, ?>, Pair<SchemaType, ?>> myCrossDependencies;
   private final Map<String, Map<String, JsonSchemaObject>> myMap;
-  private final Project myProject;
   @NotNull private final Consumer<PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>> mySchemasIterator;
 
-  public JsonSchemaExportedDefinitions(@Nullable final Project project,
-                                       @NotNull Consumer<PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>> schemasIterator) {
-    myProject = project;
+  public JsonSchemaExportedDefinitions(@NotNull Consumer<PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>> schemasIterator) {
     mySchemasIterator = schemasIterator;
     myLock = new Object();
     myMap = new HashMap<>();
@@ -130,5 +128,20 @@ public class JsonSchemaExportedDefinitions {
       }
     }
     return dirtyKeys;
+  }
+
+  public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
+    final Pair<SchemaType, ?> pair;
+    synchronized (myLock) {
+      ensureInitialized();
+      pair = myId2Key.get(id);
+    }
+    if (pair == null) return false;
+    if (SchemaType.schema.equals(pair.getFirst())) return JsonSchemaProjectSelfProviderFactory.SCHEMA_JSON_FILE_NAME
+      .equals(file.getName());
+    if (SchemaType.embeddedSchema.equals(pair.getFirst())) return file.getName().equals(pair.getSecond());
+    if (SchemaType.userSchema.equals(pair.getFirst())) return pair.getSecond() != null &&
+                                                              pair.getSecond().equals(new File(file.getPath()));
+    return false;
   }
 }
