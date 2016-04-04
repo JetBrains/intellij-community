@@ -38,8 +38,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private static final String FALLBACK_VERSION = "2999.1.SNAPSHOT";
 
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
-  public static final int STAR_VALUE = -Integer.MAX_VALUE;
-  
+
   private static class Holder {
     private static final BuildNumber CURRENT_VERSION = fromFile();
   }
@@ -82,11 +81,11 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
 
     for (int each : myComponents) {
-      if (each != SNAPSHOT_VALUE && each != STAR_VALUE) {
+      if (each != SNAPSHOT_VALUE) {
         builder.append(each);
       }
       else if (withSnapshotMarker) {
-        builder.append(each == SNAPSHOT_VALUE ? SNAPSHOT : STAR);
+        builder.append(SNAPSHOT);
       }
       builder.append('.');
     }
@@ -168,6 +167,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
         // it's probably a baseline, not a build number
         return new BuildNumber(productCode, Format.BRANCH_BASED, buildNumber, 0);
       }
+
+      if (buildNumber >= 2016 && buildNumber <= 2999) {
+        return new BuildNumber(productCode, Format.YEAR_BASED, buildNumber, 0);
+      }
       
       baselineVersion = getBaseLineForHistoricBuilds(buildNumber);
       return new BuildNumber(productCode, Format.HISTORIC, baselineVersion, buildNumber);
@@ -179,7 +182,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
       return SNAPSHOT_VALUE;
     }
     if (STAR.equals(code)) {
-      return STAR_VALUE;
+      return SNAPSHOT_VALUE;
     }
     
     try {
@@ -219,9 +222,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
     int[] c2 = o.myComponents;
     
     for (int i = 0; i < Math.min(c1.length, c2.length); i++) {
-      if (c1[i] == c2[i] && (c1[i] == SNAPSHOT_VALUE || c1[i] == STAR_VALUE)) return 0;
-      if (c1[i] == STAR_VALUE) return 1;
-      if (c2[i] == STAR_VALUE) return -1;
+      if (c1[i] == c2[i] && c1[i] == SNAPSHOT_VALUE) return 0;
+      if (c1[i] == SNAPSHOT_VALUE) return 1;
+      if (c2[i] == SNAPSHOT_VALUE) return -1;
 
       int result = c1[i] - c2[i];
       if (result != 0) return result;

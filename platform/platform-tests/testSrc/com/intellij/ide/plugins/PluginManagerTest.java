@@ -88,6 +88,10 @@ public class PluginManagerTest {
     assertCompatible("2016.2.1", "2016.2", "2016.2.*");
 
     assertCompatible("2016.2.SNAPSHOT", null, "2016.2.*");
+
+    assertCompatible("2016.2", "2016", null);
+    assertCompatible("2015", null, "2016");
+    assertIncompatible("2016.1", null, "2016");
   }
 
   @Test
