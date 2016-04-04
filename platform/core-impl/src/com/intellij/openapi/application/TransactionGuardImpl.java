@@ -201,10 +201,10 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Runnable runnable) throws ProcessCanceledException {
+  public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
-      Transaction transaction = new Transaction(runnable, getCurrentMergeableTransaction(), kind, app);
+      Transaction transaction = new Transaction(runnable, getCurrentMergeableTransaction(), TransactionKind.ANY_CHANGE, app);
       if (!canRunTransactionNow(transaction, true)) {
         throw new AssertionError("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                                  "Please use asynchronous submit*Transaction. " +
@@ -218,7 +218,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitMergeableTransaction(Disposer.newDisposable("never disposed"), kind, new Runnable() {
+    submitMergeableTransaction(Disposer.newDisposable("never disposed"), TransactionKind.ANY_CHANGE, new Runnable() {
       @Override
       public void run() {
         try {

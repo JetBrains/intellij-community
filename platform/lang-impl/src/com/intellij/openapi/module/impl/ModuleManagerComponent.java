@@ -21,7 +21,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -123,7 +122,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @Override
   protected void fireModulesAdded() {
     for (final Module module : myModuleModel.myModules.values()) {
-      TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, () -> fireModuleAddedInWriteAction(module));
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> fireModuleAddedInWriteAction(module));
     }
   }
 

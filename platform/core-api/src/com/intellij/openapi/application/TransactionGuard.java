@@ -136,7 +136,7 @@ public abstract class TransactionGuard {
    * @see #submitMergeableTransaction(Disposable, TransactionKind, Runnable)
    * @throws ProcessCanceledException if current thread is interrupted
    */
-  public abstract void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull Runnable transaction) throws ProcessCanceledException;
+  public abstract void submitTransactionAndWait(@NotNull Runnable transaction) throws ProcessCanceledException;
 
   /**
    * A synchronous version of {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}.
