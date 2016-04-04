@@ -89,8 +89,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   private void pollQueueLater() {
     //todo replace with SwingUtilities when write actions are required to run under a guard
-    final Application app = ApplicationManager.getApplication();
-    app.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         Queue<Transaction> queue = getQueue(myCurrentTransaction);
@@ -100,15 +99,15 @@ public class TransactionGuardImpl extends TransactionGuard {
           runSyncTransaction(next);
         }
       }
-    }, app.getDisposed());
+    });
   }
 
   private void runSyncTransaction(@NotNull Transaction transaction) {
+    if (Disposer.isDisposed(transaction.parentDisposable)) return;
+
     AccessToken token = startTransactionUnchecked();
     try {
-      if (!Disposer.isDisposed(transaction.parentDisposable)) {
-        transaction.runnable.run();
-      }
+      transaction.runnable.run();
     }
     finally {
       token.finish();
@@ -154,7 +153,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       runnable.run();
     } else {
       //todo add ModalityState.any() when write actions are required to run under a guard
-      app.invokeLater(runnable, app.getDisposed());
+      app.invokeLater(runnable);
     }
   }
 
@@ -219,7 +218,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitMergeableTransaction(ApplicationManager.getApplication(), kind, new Runnable() {
+    submitMergeableTransaction(Disposer.newDisposable("never disposed"), kind, new Runnable() {
       @Override
       public void run() {
         try {
@@ -293,7 +292,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       public void run() {
         submitMergeableTransaction(parentDisposable, id, transaction);
       }
-    }, app.getDisposed());
+    });
   }
 
   @Override
