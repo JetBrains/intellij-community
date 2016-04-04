@@ -160,14 +160,12 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                                                 as(ws.getPrevSibling(), PyStatementList.class));
       
       if (statementList != null && statementList.getStatements().length == 0) {
-        return PyIndentUtil.getExpectedElementIndent(statementList);
+        return PyIndentUtil.getElementIndent(statementList);
       }
 
-      final PyStatementListContainer container = PsiTreeUtil.getParentOfType(ws, PyStatementListContainer.class);
-      if (container != null) {
-        return PyIndentUtil.getElementIndent(container.getStatementList());
+      if (PsiTreeUtil.getParentOfType(ws, PyStatementListContainer.class) != null) {
+        return PyIndentUtil.getElementIndent(ws);
       }
-      
     }
     return document.getText(TextRange.create(lineStartOffset, caretOffset));
   }
