@@ -112,6 +112,7 @@ abstract class LineLayout {
     List<BidiRun> runs = createRuns(editor, chars, -1);
     for (BidiRun run : runs) {
       for (Chunk chunk : run.getChunks()) {
+        chunk.fragments = new ArrayList<>();
         addFragments(run, chunk, chars, chunk.startOffset, chunk.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
       }
     }
@@ -510,7 +511,7 @@ abstract class LineLayout {
   }
   
   static class Chunk {
-    final List<LineFragment> fragments = new ArrayList<LineFragment>(); // in logical order
+    List<LineFragment> fragments; // in logical order
     private int startOffset;
     private int endOffset;
 
@@ -523,7 +524,8 @@ abstract class LineLayout {
       if (isReal()) {
         view.getTextLayoutCache().onChunkAccess(this);
       }
-      if (!fragments.isEmpty()) return;
+      if (fragments != null) return;
+      fragments = new ArrayList<>();
       int lineStartOffset = view.getEditor().getDocument().getLineStartOffset(line);
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
@@ -545,7 +547,7 @@ abstract class LineLayout {
       assert targetEndOffset > startOffset;
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
-      if (quickEvaluationListener != null && fragments.isEmpty()) {
+      if (quickEvaluationListener != null && fragments == null) {
         quickEvaluationListener.run();
         return new ApproximationChunk(view, line, start, end);
       }
@@ -554,6 +556,7 @@ abstract class LineLayout {
       }
       ensureLayout(view, run, line);
       Chunk chunk = new Chunk(start, end);
+      chunk.fragments = new ArrayList<>();
       int offset = startOffset;
       for (LineFragment fragment : fragments) {
         if (end <= offset) break;
@@ -571,7 +574,7 @@ abstract class LineLayout {
     }
 
     void clearCache() {
-      fragments.clear();
+      fragments = null;
     }
   }
   
@@ -580,7 +583,7 @@ abstract class LineLayout {
       super(start, end);
       int startColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, start);
       int endColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, end);
-      fragments.add(new ApproximationFragment(end - start, endColumn - startColumn, view.getMaxCharWidth()));
+      fragments = Collections.singletonList(new ApproximationFragment(end - start, endColumn - startColumn, view.getMaxCharWidth()));
     }
 
     @Override
@@ -645,7 +648,6 @@ abstract class LineLayout {
       myFragment.isRtl = run.isRtl();
       Chunk[] chunks = run.getChunks();
       Chunk chunk = chunks[run.isRtl() ? chunks.length - 1 - myChunkIndex : myChunkIndex];
-      assert !chunk.fragments.isEmpty();
       myFragment.delegate = chunk.fragments.get(run.isRtl() ? chunk.fragments.size() - 1 - myFragmentIndex : myFragmentIndex);
       myFragment.startOffset = run.isRtl() ? run.endOffset - myOffsetInsideRun : run.startOffset + myOffsetInsideRun;
       
