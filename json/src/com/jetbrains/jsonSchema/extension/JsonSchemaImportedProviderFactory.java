@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -16,9 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -140,9 +141,10 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
     @Override
     public Reader getSchemaReader() {
       try {
-        return new FileReader(myFile);
+        final String text = FileUtil.loadFile(myFile);
+        return new StringReader(text);
       }
-      catch (FileNotFoundException e) {
+      catch (IOException e) {
         LOG.info(e);
         return null;
       }
