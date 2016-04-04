@@ -170,6 +170,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myCustomScopeButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.CUSTOM);
 
     myScopeCombo.init(myProject, searchInLib, true, preselect);
+    myScopeCombo.setCurrentSelection(false);
 
     //correct selection
     myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT || myFileName == null);
