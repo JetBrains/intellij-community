@@ -311,7 +311,6 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         contentIndex.append("\" target=\"elementFrame\">");
         contentIndex.append(refElement.getName());
         contentIndex.append("</a><br>");
-        //TODO here we have descriptors
         exporter.createPage(refElement);
       }
 
