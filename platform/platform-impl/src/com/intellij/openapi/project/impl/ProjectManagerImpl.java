@@ -513,6 +513,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       project = loadProjectWithProgress(filePath);
       if (project == null) return null;
     }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
     catch (Throwable t) {
       LOG.info(t);
       throw new IOException(t);
