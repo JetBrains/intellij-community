@@ -24,99 +24,107 @@ import static org.junit.Assert.assertTrue;
 public class PluginManagerTest {
   @Test
   public void compatibilityBranchBased() throws Exception {
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), null, null, null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), null, null, null, null));
+    assertCompatible("145.2", null, null);
+    assertCompatible("145.2.2", null, null);
 
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), "145", null, null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), null, "146", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), "145", null, null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), null, "146", null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), null, "145", null, null));
+    assertCompatible("145.2", "145", null);
+    assertCompatible("145.2", null, "146");
+    assertCompatible("145.2.2", "145", null);
+    assertCompatible("145.2.2", null, "146");
+    assertIncompatible("145.2", null, "145");
 
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), "146", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), null, "144", null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), "146", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), null, "144", null, null));
+    assertIncompatible("145.2", "146", null);
+    assertIncompatible("145.2", null, "144");
+    assertIncompatible("145.2.2", "146", null);
+    assertIncompatible("145.2.2", null, "144");
 
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), "145.2", null, null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), null, "145.2", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), "145.2", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), null, "145.2", null, null));
+    assertCompatible("145.2", "145.2", null);
+    assertCompatible("145.2", null, "145.2");
+    assertCompatible("145.2.2", "145.2", null);
+    assertIncompatible("145.2.2", null, "145.2");
 
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), "145.3", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), null, "145.1", null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), "145.3", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), null, "145.1", null, null));
+    assertIncompatible("145.2", "145.3", null);
+    assertIncompatible("145.2", null, "145.1");
+    assertIncompatible("145.2.2", "145.3", null);
+    assertIncompatible("145.2.2", null, "145.1");
 
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), "140.3", null, null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), null, "146.1", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), "140.3", null, null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), null, "146.1", null, null));
+    assertCompatible("145.2", "140.3", null);
+    assertCompatible("145.2", null, "146.1");
+    assertCompatible("145.2.2", "140.3", null);
+    assertCompatible("145.2.2", null, "146.1");
 
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), "145.2.0", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), "145.2.1", null, null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2"), null, "145.2.3", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), "145.2.0", null, null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.2"), null, "145.2.3", null, null));
+    assertIncompatible("145.2", "145.2.0", null);
+    assertIncompatible("145.2", "145.2.1", null);
+    assertCompatible("145.2", null, "145.2.3");
+    assertCompatible("145.2.2", "145.2.0", null);
+    assertCompatible("145.2.2", null, "145.2.3");
   }
 
   @Test
   public void compatibilityBranchBasedStar() throws Exception {
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.10"), "144.*", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.10"), "145.*", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.10"), "146.*", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.10"), null, "144.*", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.10"), null, "145.*", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.10"), null, "146.*", null, null));
+    assertCompatible("145.10", "144.*", null);
+    assertIncompatible("145.10", "145.*", null);
+    assertIncompatible("145.10", "146.*", null);
+    assertIncompatible("145.10", null, "144.*");
+    assertCompatible("145.10", null, "145.*");
+    assertCompatible("145.10", null, "146.*");
     
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.10.1"), null, "145.*", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.10.1"), "145.10", "145.10.*", null, null));
+    assertCompatible("145.10.1", null, "145.*");
+    assertCompatible("145.10.1", "145.10", "145.10.*");
 
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.SNAPSHOT"), null, "145.*", null, null));
+    assertCompatible("145.SNAPSHOT", null, "145.*");
   }
   
   @Test
   public void compatibilityYearBasedStar() throws Exception {
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2"), "2016.1.*", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2"), "2016.2.*", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2"), "2016.2.*", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2"), null, "2016.1.*", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2"), null, "2016.2.*", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2"), null, "20163.*", null, null));
+    assertCompatible("2016.2", "2016.1.*", null);
+    assertIncompatible("2016.2", "2016.2.*", null);
+    assertIncompatible("2016.2", "2016.2.*", null);
+    assertIncompatible("2016.2", null, "2016.1.*");
+    assertCompatible("2016.2", null, "2016.2.*");
+    assertCompatible("2016.2", null, "20163.*");
     
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.1"), null, "2016.2.*", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.1"), "2016.2", "2016.2.*", null, null));
+    assertCompatible("2016.2.1", null, "2016.2.*");
+    assertCompatible("2016.2.1", "2016.2", "2016.2.*");
 
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.SNAPSHOT"), null, "2016.2.*", null, null));
+    assertCompatible("2016.2.SNAPSHOT", null, "2016.2.*");
   }
 
   @Test
   public void compatibilityBranchBasedSnapshots() throws Exception {
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.SNAPSHOT"), "146", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.SNAPSHOT"), "145.3", null, null, null));
+    assertIncompatible("145.SNAPSHOT", "146", null);
+    assertIncompatible("145.2.SNAPSHOT", "145.3", null);
 
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.SNAPSHOT"), "145.2", null, null, null));
+    assertCompatible("145.SNAPSHOT", "145.2", null);
 
     // snapshot ignore until build (special case)
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.SNAPSHOT"), null, "145", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.SNAPSHOT"), null, "144", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.SNAPSHOT"), null, "145", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("145.2.SNAPSHOT"), null, "144", null, null));
+    assertCompatible("145.SNAPSHOT", null, "145");
+    assertCompatible("145.SNAPSHOT", null, "144");
+    assertCompatible("145.2.SNAPSHOT", null, "145");
+    assertCompatible("145.2.SNAPSHOT", null, "144");
   }
 
   @Test
   public void compatibilityYearBasedSnapshots() throws Exception {
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.SNAPSHOT"), "2016.3", null, null, null));
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.2.SNAPSHOT"), "2016.2.3", null, null, null));
+    assertIncompatible("2016.2.SNAPSHOT", "2016.3", null);
+    assertIncompatible("2016.2.2.SNAPSHOT", "2016.2.3", null);
 
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.SNAPSHOT"), "2016.2.2", null, null, null));
+    assertCompatible("2016.2.SNAPSHOT", "2016.2.2", null);
 
     // snapshot ignore until build (special case)
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.SNAPSHOT"), null, "2016.2", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.SNAPSHOT"), null, "2016.1", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.SNAPSHOT"), null, "2017.2", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.2.SNAPSHOT"), null, "2016.2", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.2.SNAPSHOT"), null, "2016.1", null, null));
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString("2016.2.2.SNAPSHOT"), null, "144", null, null));
+    assertCompatible("2016.2.SNAPSHOT", null, "2016.2");
+    assertCompatible("2016.2.SNAPSHOT", null, "2016.1");
+    assertCompatible("2016.2.SNAPSHOT", null, "2017.2");
+    assertCompatible("2016.2.2.SNAPSHOT", null, "2016.2");
+    assertCompatible("2016.2.2.SNAPSHOT", null, "2016.1");
+    assertCompatible("2016.2.2.SNAPSHOT", null, "144");
+  }
+
+  private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
+    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild, null, null));
+  }
+
+  private static void assertCompatible(String ideVersion, String sinceBuild, String untilBuild) {
+    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild, null, null));
   }
 }
