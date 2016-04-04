@@ -146,7 +146,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
   
-  void validate() {
+  synchronized void validate() {
     int lineCount = myDocument.getLineCount();
     int cacheSize = myLines.size();
     if (cacheSize != lineCount) throw new IllegalStateException("Line count: " + lineCount + ", cache size: " + cacheSize);
