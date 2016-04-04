@@ -317,4 +317,10 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       csp.run();
     }
   }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "unused";
+  }
 }

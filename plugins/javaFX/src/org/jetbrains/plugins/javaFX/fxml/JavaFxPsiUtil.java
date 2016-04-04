@@ -951,7 +951,7 @@ public class JavaFxPsiUtil {
     final PsiClass tagClass = getTagClass(xmlTag);
     if (tagClass != null) {
       final String tagFieldName = xmlTag.getAttributeValue(FxmlConstants.FX_ID);
-      if (tagFieldName != null) {
+      if (!StringUtil.isEmpty(tagFieldName)) {
         final PsiField tagField = controllerClass.findFieldByName(tagFieldName, true);
         if (tagField != null && !tagField.hasModifierProperty(PsiModifier.STATIC) && isVisibleInFxml(tagField)) {
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(tagField.getType());

@@ -73,6 +73,10 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
     doQuickfixTest("Create method 'void onSort(SortEvent)'");
   }
 
+  public void testQuickfixFieldType()throws Exception {
+    doQuickfixTest("Change field 'table' type to 'javafx.scene.control.TableView<java.util.Map<java.lang.String,java.lang.Double>>'");
+  }
+
   public void testQuickfixNoFieldNested() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     final boolean oldImports = settings.INSERT_INNER_CLASS_IMPORTS;

@@ -2,6 +2,7 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -9,17 +10,21 @@ import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -76,21 +81,23 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
             final PsiType actualType = parameters[0].getType();
             if (actualType instanceof PsiClassType) {
               if (!actualType.isAssignableFrom(declaredType)) {
-                final LocalQuickFix quickFix = new ChangeParameterTypeQuickFix(attribute, method, declaredType);
-
+                final LocalQuickFix parameterTypeFix = new ChangeParameterTypeQuickFix(attribute, method, declaredType);
                 final PsiClassType actualRawType = ((PsiClassType)actualType).rawType();
                 final PsiClassType expectedRawType = declaredType.rawType();
                 if (actualRawType.isAssignableFrom(expectedRawType)) {
+                  final LocalQuickFix fieldTypeFix = getFieldTypeFix(attribute, (PsiClassType)actualType);
+                  final LocalQuickFix[] quickFixes =
+                    fieldTypeFix != null ? new LocalQuickFix[]{parameterTypeFix, fieldTypeFix} : new LocalQuickFix[]{parameterTypeFix};
                   holder.registerProblem(xmlAttributeValue,
                                          "Incompatible generic parameter of event handler argument: " + actualType.getCanonicalText() +
                                          " is not assignable from " + declaredType.getCanonicalText(),
-                                         quickFix);
+                                         quickFixes);
                 }
                 else {
                   holder.registerProblem(xmlAttributeValue,
                                          "Incompatible event handler argument: " + actualRawType.getCanonicalText() +
                                          " is not assignable from " + expectedRawType.getCanonicalText(),
-                                         quickFix);
+                                         parameterTypeFix);
                 }
               }
             }
@@ -125,6 +132,44 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel("Detect event handler method having non-void return type", this, "myDetectNonVoidReturnType");
+  }
+
+  @Nullable
+  private static LocalQuickFix getFieldTypeFix(XmlAttribute attribute, PsiClassType eventType) {
+    final XmlTag xmlTag = attribute.getParent();
+    if (xmlTag != null) {
+      final String tagFieldName = xmlTag.getAttributeValue(FxmlConstants.FX_ID);
+      if (!StringUtil.isEmpty(tagFieldName)) {
+        final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(attribute.getContainingFile());
+        if (controllerClass != null) {
+          final PsiField tagField = controllerClass.findFieldByName(tagFieldName, true);
+          if (tagField != null && !tagField.hasModifierProperty(PsiModifier.STATIC) && JavaFxPsiUtil.isVisibleInFxml(tagField)) {
+            final PsiType tagFieldType = tagField.getType();
+            if (tagFieldType instanceof PsiClassType) {
+              final PsiClass fieldClass = PsiUtil.resolveClassInClassTypeOnly(tagFieldType);
+              if (fieldClass != null) {
+                final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(eventType);
+                final PsiClass eventClass = resolveResult.getElement();
+                if (eventClass != null) {
+                  final PsiSubstitutor eventSubstitutor = resolveResult.getSubstitutor();
+                  final PsiManager manager = fieldClass.getManager();
+                  for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(eventClass)) {
+                    final PsiType eventTypeArgument = eventSubstitutor.substitute(typeParameter);
+                    if (eventTypeArgument instanceof PsiClassType) {
+                      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(eventTypeArgument);
+                      if (manager.areElementsEquivalent(aClass, fieldClass)) {
+                        return new VariableTypeFix(tagField, eventTypeArgument);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private static class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
