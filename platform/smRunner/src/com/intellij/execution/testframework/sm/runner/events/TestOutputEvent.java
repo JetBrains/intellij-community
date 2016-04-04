@@ -30,7 +30,7 @@ public class TestOutputEvent extends TreeNodeEvent {
   }
 
   public TestOutputEvent(@NotNull String testName, @NotNull String text, boolean stdOut) {
-    super(testName, -1);
+    super(testName, null);
     myText = text;
     myStdOut = stdOut;
   }

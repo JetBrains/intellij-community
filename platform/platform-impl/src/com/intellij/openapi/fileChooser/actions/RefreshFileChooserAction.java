@@ -15,18 +15,21 @@
  */
 package com.intellij.openapi.fileChooser.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 
 /**
  * @author yole
-*/
-public class RefreshFileChooserAction extends AnAction implements DumbAware {
-  public void actionPerformed(final AnActionEvent e) {
+ */
+public class RefreshFileChooserAction extends FileChooserAction {
+  protected void update(FileSystemTree fileChooser, AnActionEvent e) {
+  }
+
+  @Override
+  protected void actionPerformed(FileSystemTree fileChooser, AnActionEvent e) {
     RefreshQueue.getInstance().refresh(true, true, null, ModalityState.current(), ManagingFS.getInstance().getLocalRoots());
   }
 }

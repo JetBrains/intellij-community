@@ -54,7 +54,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     super(null, true, true);
-    setTitle("Customize " + ApplicationNamesInfo.getInstance().getProductName());
+    setTitle("Customize " + ApplicationNamesInfo.getInstance().getFullProductName());
     getPeer().setAppIcons();
 
     stepsProvider.initSteps(this, mySteps);
@@ -200,8 +200,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myHeaderLabel.setText(ensureHTML(myCurrentStep.getHTMLHeader()));
     myFooterLabel.setText(ensureHTML(myCurrentStep.getHTMLFooter()));
     StringBuilder navHTML = new StringBuilder("<html><body>");
+    String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
     for (int i = 0; i < mySteps.size(); i++) {
-      if (i > 0) navHTML.append("&nbsp;&#8594;&nbsp;");
+      if (i > 0) navHTML.append("&nbsp;").append(arrow).append("&nbsp;");
       if (i == myIndex) navHTML.append("<b>");
       navHTML.append(mySteps.get(i).getTitle());
       if (i == myIndex) navHTML.append("</b>");

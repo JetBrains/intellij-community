@@ -37,6 +37,11 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
   @Nullable
   protected abstract VcsFileRevision getFileRevision(@NotNull AnActionEvent e);
 
+  @Nullable
+  protected Editor getEditor(@NotNull AnActionEvent e) {
+    return null;
+  }
+
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
   }
@@ -70,7 +75,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     assert file != null;
     assert fileRevision != null;
 
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    final Editor editor = getEditor(e);
     final CharSequence oldContent = editor == null ? null : editor.getDocument().getImmutableCharSequence();
     final int oldLine = editor == null ? 0 : editor.getCaretModel().getLogicalPosition().line;
 

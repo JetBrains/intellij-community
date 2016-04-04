@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,11 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
   }
 
   public void readExternal(Element parentElement) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentElement.getChild(myTagName));
+    Element child = parentElement.getChild(myTagName);
+    if (child != null) {
+      DefaultJDOMExternalizer.readExternal(this, child);
+      importLegacySettings();
+    }
   }
 
   public void writeExternal(Element parentElement, @NotNull final CustomCodeStyleSettings parentSettings) throws WriteExternalException {
@@ -69,7 +73,6 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
   /**
    * For compatibility with old code style settings stored in CodeStyleSettings.
    */
-  public void importLegacySettings() {
+  protected void importLegacySettings() {
   }
-
 }

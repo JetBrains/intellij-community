@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LicensingFacade;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.Date;
 
 /**
  * @author anna
@@ -40,8 +42,6 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
 
   protected String myLicenseInfo = null;
-  protected boolean myPaidUpgrade;
-  protected boolean mySubscriptionLicense = false;
 
   protected AbstractUpdateDialog(boolean enableLink) {
     super(true);
@@ -71,56 +71,44 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   }
 
   protected void restart() {
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     // do not stack several modal dialogs (native & swing)
-    app.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        app.restart(true);
-      }
-    });
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    app.invokeLater(() -> app.restart(true));
   }
 
-  protected void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
+  protected void initLicensingInfo(@NotNull UpdateChannel channel, @SuppressWarnings("UnusedParameters") @NotNull BuildInfo build) {
     LicensingFacade facade = LicensingFacade.getInstance();
     if (facade != null) {
-      mySubscriptionLicense = facade.isSubscriptionLicense();
-      if (!channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        int majorVersion = build.getMajorVersion();
-        if (majorVersion < 0) {
-          majorVersion = channel.getMajorVersion(); // fallback
-        }
-        final Boolean paidUpgrade = facade.isPaidUpgrade(majorVersion, build.getReleaseDate());
-        if (paidUpgrade == Boolean.TRUE) {
-          myPaidUpgrade = true;
-          myLicenseInfo = IdeBundle.message("updates.channel.key.needed", channel.getEvalDays());
-        }
-        else if (paidUpgrade == Boolean.FALSE) {
-          myLicenseInfo = IdeBundle.message("updates.channel.existing.key");
-        }
+      if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
+        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
       }
       else {
-        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
+        Date buildDate = build.getReleaseDate();
+        Date expiration = facade.getLicenseExpirationDate();
+        if (buildDate != null && facade.isPerpetualForProduct(buildDate)) {
+          myLicenseInfo = IdeBundle.message("updates.fallback.build");
+        }
+        else if (expiration != null && expiration.after(new Date())) {
+          myLicenseInfo = IdeBundle.message("updates.subscription.active.till", DateFormatUtil.formatAboutDialogDate(expiration));
+        }
       }
     }
   }
-
 
   protected void configureMessageArea(@NotNull JEditorPane area) {
     String messageBody = myEnableLink ? IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()) : "";
     configureMessageArea(area, messageBody, null, null);
   }
 
-  protected void configureMessageArea(final @NotNull JEditorPane area,
+  protected void configureMessageArea(@NotNull JEditorPane area,
                                       @NotNull String messageBody,
                                       @Nullable Color fontColor,
                                       @Nullable HyperlinkListener listener) {
-    String text = "<html><head>" +
-                 UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
-                 "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
-                 "</head><body>" +
-                 messageBody +
-                 "</body></html>";
+    String text =
+      "<html><head>" +
+      UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
+      "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
+      "</head><body>" + messageBody + "</body></html>";
 
     area.setBackground(UIUtil.getPanelBackground());
     area.setBorder(IdeBorderFactory.createEmptyBorder());
@@ -128,13 +116,9 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     area.setEditable(false);
 
     if (listener == null && myEnableLink) {
-      listener = new HyperlinkListener() {
-        @Override
-        public void hyperlinkUpdate(final HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            UpdateSettingsConfigurable settings = new UpdateSettingsConfigurable(false);
-            ShowSettingsUtil.getInstance().editConfigurable(area, settings);
-          }
+      listener = (e) -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          ShowSettingsUtil.getInstance().editConfigurable(area, new UpdateSettingsConfigurable(false));
         }
       };
     }

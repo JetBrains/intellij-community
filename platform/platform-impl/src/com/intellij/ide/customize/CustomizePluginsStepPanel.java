@@ -68,7 +68,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     Map<String, Pair<Icon, List<String>>> groups = pluginGroups.getTree();
     for (final Map.Entry<String, Pair<Icon, List<String>>> entry : groups.entrySet()) {
       final String group = entry.getKey();
-      if (PluginGroups.CORE.equals(group)) continue;
+      if (PluginGroups.CORE.equals(group) || myPluginGroups.getSets(group).isEmpty()) continue;
 
       JPanel groupPanel = new JPanel(new GridBagLayout()) {
         @Override
@@ -129,9 +129,10 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     int cursor = 0;
     Component[] components = gridPanel.getComponents();
     int rowCount = components.length / COLS;
+    if (components.length % COLS == 0) rowCount--;
     for (Component component : components) {
       ((JComponent)component).setBorder(
-        new CompoundBorder(new CustomLineBorder(ColorUtil.withAlpha(JBColor.foreground(), .2), 0, 0, cursor / 3 < rowCount - 1 ? 1 : 0,
+        new CompoundBorder(new CustomLineBorder(ColorUtil.withAlpha(JBColor.foreground(), .2), 0, 0, cursor / 3 <= rowCount - 1 ? 1 : 0,
                                                 cursor % COLS != COLS - 1 ? 1 : 0) {
           @Override
           protected Color getColor() {

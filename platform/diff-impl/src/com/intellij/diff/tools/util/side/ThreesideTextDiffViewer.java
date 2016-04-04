@@ -73,7 +73,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
-    new MyOpenInEditorWithMouseAction().register(getEditors());
+    new MyOpenInEditorWithMouseAction().install(getEditors());
 
     myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
 

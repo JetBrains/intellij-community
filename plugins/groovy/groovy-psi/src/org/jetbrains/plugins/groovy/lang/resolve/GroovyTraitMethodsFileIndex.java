@@ -52,9 +52,8 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
   private final InputFilter myFilter;
   private final SingleEntryIndexer<PsiJavaFileStub> myIndexer;
-  private final SerializationManagerEx mySerializer;
 
-  public GroovyTraitMethodsFileIndex(@NotNull SerializationManagerEx serializer) {
+  public GroovyTraitMethodsFileIndex() {
     myFilter = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
@@ -67,7 +66,6 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
         return index(inputData.getFile(), inputData.getContent());
       }
     };
-    mySerializer = serializer;
   }
 
   @NotNull
@@ -114,7 +112,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   @Override
   public void save(@NotNull DataOutput out, PsiJavaFileStub value) throws IOException {
     BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
-    mySerializer.serialize(value, buffer);
+    SerializationManagerEx.getInstanceEx().serialize(value, buffer);
     out.writeInt(buffer.size());
     out.write(buffer.getInternalBuffer(), 0, buffer.size());
   }
@@ -124,7 +122,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     try {
       byte[] buffer = new byte[in.readInt()];
       in.readFully(buffer);
-      return (PsiJavaFileStub)mySerializer.deserialize(new ByteArrayInputStream(buffer));
+      return (PsiJavaFileStub)SerializationManagerEx.getInstanceEx().deserialize(new ByteArrayInputStream(buffer));
     }
     catch (SerializerNotFoundException e) {
       throw new IOException(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -57,8 +56,7 @@ public class EncapsulateVariableFix extends InspectionGadgetsFix {
       field = (PsiField)parent;
     }
     else if (parent instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)parent;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiField)) {
         return;
@@ -68,21 +66,18 @@ public class EncapsulateVariableFix extends InspectionGadgetsFix {
     else {
       return;
     }
-    final JavaRefactoringActionHandlerFactory factory =
-      JavaRefactoringActionHandlerFactory.getInstance();
-    final RefactoringActionHandler renameHandler =
-      factory.createEncapsulateFieldsHandler();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        renameHandler.invoke(project, new PsiElement[]{field}, null);
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-    }
+    final JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
+    final RefactoringActionHandler encapsulateFieldsHandler = factory.createEncapsulateFieldsHandler();
+    encapsulateFieldsHandler.invoke(project, new PsiElement[]{field}, null);
+  }
+
+  @Override
+  protected boolean prepareForWriting() {
+    return false;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

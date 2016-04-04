@@ -486,15 +486,15 @@ public class PushController implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         myPushSettings.saveExcludedRepoRoots(myExcludedRepositoryRoots);
         for (PushSupport support : myPushSupports) {
-          doPush(support, force);
+          doPushSynchronously(support, force);
         }
       }
     };
     task.queue();
   }
 
-  private <R extends Repository, S extends PushSource, T extends PushTarget> void doPush(@NotNull PushSupport<R, S, T> support,
-                                                                                         boolean force) {
+  private <R extends Repository, S extends PushSource, T extends PushTarget> void doPushSynchronously(@NotNull PushSupport<R, S, T> support,
+                                                                                                      boolean force) {
     VcsPushOptionValue options = myDialog.getAdditionalOptionValue(support);
     Pusher<R, S, T> pusher = support.getPusher();
     Map<R, PushSpec<S, T>> specs = collectPushSpecsForVcs(support);

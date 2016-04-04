@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ public class PublicConstructorInspection extends PublicConstructorInspectionBase
     return new ReplaceConstructorWithFactoryMethodFix();
   }
 
-  private class ReplaceConstructorWithFactoryMethodFix extends InspectionGadgetsFix {
+  private static class ReplaceConstructorWithFactoryMethodFix extends InspectionGadgetsFix {
 
     @NotNull
     @Override
@@ -60,7 +59,7 @@ public class PublicConstructorInspection extends PublicConstructorInspectionBase
     }
 
     @Override
-    protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(final Project project, ProblemDescriptor descriptor) {
       final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class, PsiMethod.class);
       final AsyncResult<DataContext> context = DataManager.getInstance().getDataContextFromFocus();
       context.doWhenDone(new Consumer<DataContext>() {
@@ -71,6 +70,16 @@ public class PublicConstructorInspection extends PublicConstructorInspectionBase
           handler.invoke(project, new PsiElement[]{element}, dataContext);
         }
       });
+    }
+
+    @Override
+    protected boolean prepareForWriting() {
+      return false;
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }

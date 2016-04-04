@@ -65,19 +65,26 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
     new WriteCommandAction(context.getProject()) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        handleInsert(context);
+        doHandleInsert(context);
       }
     }.execute();
     Disposer.dispose(context.getOffsetMap());
+
+    if (handleCompletionChar(context) && !myState.isFinished()) {
+      myState.calcResults(true);
+      myState.nextTab();
+    }
   }
 
   @Override
   public void handleInsert(final InsertionContext context) {
-    LookupElement item = getDelegate();
-    Project project = context.getProject();
-    Editor editor = context.getEditor();
+    doHandleInsert(context);
+    handleCompletionChar(context);
+  }
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+  private void doHandleInsert(InsertionContext context) {
+    LookupElement item = getDelegate();
+    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
 
     TextRange range = myState.getCurrentVariableRange();
     final TemplateLookupSelectionHandler handler = item.getUserData(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM);
@@ -87,17 +94,14 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
     else {
       super.handleInsert(context);
     }
+  }
 
+  private static boolean handleCompletionChar(InsertionContext context) {
     if (context.getCompletionChar() == '.') {
-      EditorModificationUtil.insertStringAtCaret(editor, ".");
-      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
-      return;
+      EditorModificationUtil.insertStringAtCaret(context.getEditor(), ".");
+      AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      return false;
     }
-
-    if (!myState.isFinished()) {
-      myState.calcResults(true);
-    }
-
-    myState.nextTab();
+    return true;
   }
 }

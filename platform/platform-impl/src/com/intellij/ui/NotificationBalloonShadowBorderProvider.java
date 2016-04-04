@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons.Ide.Notification.Shadow;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,5 +110,78 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     g.fill(new Rectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height));
     g.setColor(myBorderColor);
     g.draw(new RoundRectangle2D.Double(bounds.x + 0.5, bounds.y + 0.5, bounds.width - 1, bounds.height - 1, 3, 3));
+  }
+
+  @Override
+  public void paintPointingShape(@NotNull Rectangle bounds,
+                                 @NotNull Point pointTarget,
+                                 @NotNull Balloon.Position position,
+                                 @NotNull Graphics2D g) {
+    int x, y, length;
+
+    if (position == Balloon.Position.above) {
+      length = INSETS.bottom;
+      x = pointTarget.x;
+      y = bounds.y + bounds.height + length;
+    }
+    else if (position == Balloon.Position.below) {
+      length = INSETS.top;
+      x = pointTarget.x;
+      y = bounds.y - length;
+    }
+    else if (position == Balloon.Position.atRight) {
+      length = INSETS.left;
+      x = bounds.x - length;
+      y = pointTarget.y;
+    }
+    else {
+      length = INSETS.right;
+      x = bounds.x + bounds.width + length;
+      y = pointTarget.y;
+    }
+
+    Polygon p = new Polygon();
+    p.addPoint(x, y);
+
+    length += 2;
+    if (position == Balloon.Position.above) {
+      p.addPoint(x - length, y - length);
+      p.addPoint(x + length, y - length);
+    }
+    else if (position == Balloon.Position.below) {
+      p.addPoint(x - length, y + length);
+      p.addPoint(x + length, y + length);
+    }
+    else if (position == Balloon.Position.atRight) {
+      p.addPoint(x + length, y - length);
+      p.addPoint(x + length, y + length);
+    }
+    else {
+      p.addPoint(x - length, y - length);
+      p.addPoint(x - length, y + length);
+    }
+
+    g.setColor(myFillColor);
+    g.fillPolygon(p);
+
+    g.setColor(myBorderColor);
+
+    length -= 2;
+    if (position == Balloon.Position.above) {
+      g.drawLine(x, y, x - length, y - length);
+      g.drawLine(x, y, x + length, y - length);
+    }
+    else if (position == Balloon.Position.below) {
+      g.drawLine(x, y, x - length, y + length);
+      g.drawLine(x, y, x + length, y + length);
+    }
+    else if (position == Balloon.Position.atRight) {
+      g.drawLine(x, y, x + length, y - length);
+      g.drawLine(x, y, x + length, y + length);
+    }
+    else {
+      g.drawLine(x, y, x - length, y - length);
+      g.drawLine(x, y, x - length, y + length);
+    }
   }
 }

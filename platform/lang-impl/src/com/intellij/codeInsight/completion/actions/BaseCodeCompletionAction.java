@@ -18,13 +18,12 @@ package com.intellij.codeInsight.completion.actions;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -34,7 +33,7 @@ import java.awt.event.InputEvent;
 /**
  * @author peter
  */
-public abstract class BaseCodeCompletionAction extends AnAction implements HintManagerImpl.ActionToIgnore, DumbAware {
+public abstract class BaseCodeCompletionAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
 
   protected BaseCodeCompletionAction() {
     setEnabledInModalContext(true);

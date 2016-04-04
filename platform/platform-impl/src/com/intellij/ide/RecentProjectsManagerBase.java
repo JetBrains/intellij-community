@@ -128,7 +128,9 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         state.lastPath = null;
       }
     }
-    myState = state;
+    synchronized (myStateLock) {
+      myState = state;
+    }
   }
 
   protected void removeDuplicates(State state) {

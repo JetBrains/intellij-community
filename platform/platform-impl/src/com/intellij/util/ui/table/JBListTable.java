@@ -43,6 +43,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EventObject;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
@@ -140,6 +141,14 @@ public abstract class JBListTable {
 
     public MyCellEditor(JBTableRowEditor editor) {
       myEditor = editor;
+    }
+
+    @Override
+    public boolean isCellEditable(EventObject e) {
+      if (e instanceof MouseEvent && UIUtil.isSelectionButtonDown((MouseEvent)e)) {
+        return false;
+      }
+      return super.isCellEditable(e);
     }
 
     @Override

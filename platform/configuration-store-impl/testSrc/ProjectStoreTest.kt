@@ -32,12 +32,12 @@ import com.intellij.testFramework.*
 import com.intellij.util.PathUtil
 import com.intellij.util.readText
 import com.intellij.util.systemIndependentPath
+import com.intellij.util.write
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.nio.file.Paths
 
 fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
@@ -110,8 +110,8 @@ internal class ProjectStoreTest {
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
 
       // test reload on external change
-      val file = File(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
-      file.writeText(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
+      val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
+      file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       project.baseDir.refresh(false, true)
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()

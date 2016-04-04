@@ -42,14 +42,16 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
+import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.apache.http.client.utils.URIBuilder
@@ -69,29 +71,26 @@ import java.util.*
  */
 object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
-  val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
   @JvmField
   val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private val INSTALLATION_UID = "installation.uid"
   private val DISABLED_UPDATE = "disabled_update.txt"
+  private val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
   private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
   private val ourAdditionalRequestOptions = hashMapOf<String, String>()
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
   private val ourShownNotificationTypes = Collections.synchronizedSet(EnumSet.noneOf(NotificationUniqueType::class.java))
 
-  private val UPDATE_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl }
-  private val PATCHES_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl }
-
   val excludedFromUpdateCheckPlugins = hashSetOf<String>()
 
   private val updateUrl: String
-    get() = System.getProperty("idea.updates.url") ?: UPDATE_URL
+    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl
 
   private val patchesUrl: String
-    get() = System.getProperty("idea.patches.url") ?: PATCHES_URL
+    get() = System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl
 
   /**
    * For scheduled update checks.
@@ -115,12 +114,8 @@ object UpdateChecker {
     val fromSettings = customSettings != null
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
-      override fun run(indicator: ProgressIndicator) {
-        doUpdateAndShowResult(getProject(), fromSettings, true, settings, indicator, null)
-      }
-
+      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), fromSettings, true, settings, indicator, null)
       override fun isConditionalModal(): Boolean = fromSettings
-
       override fun shouldStartInBackground(): Boolean = !fromSettings
     })
   }
@@ -183,7 +178,7 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    if (System.getProperty(NO_PLATFORM_UPDATE, "false").toBoolean()) {
+    if (SystemProperties.getBooleanProperty(NO_PLATFORM_UPDATE, false)) {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
 
@@ -198,9 +193,9 @@ object UpdateChecker {
 
       updateInfo = HttpRequests.request(updateUrl)
           .forceHttps(settings.canUseSecureConnection())
-          .connect { request ->
+          .connect {
             try {
-              UpdatesInfo(JDOMUtil.load(request.reader))
+              UpdatesInfo(loadElement(it.reader))
             }
             catch (e: JDOMException) {
               // corrupted content, don't bother telling user
@@ -491,23 +486,22 @@ object UpdateChecker {
     val appdata = System.getenv("APPDATA")
     if (appdata != null) {
       val jetBrainsDir = File(appdata, "JetBrains")
-      if (jetBrainsDir.exists() || jetBrainsDir.mkdirs()) {
+      if (jetBrainsDir.isDirectory || jetBrainsDir.mkdirs()) {
         val permanentIdFile = File(jetBrainsDir, "PermanentUserId")
         try {
           if (permanentIdFile.exists()) {
-            return FileUtil.loadFile(permanentIdFile).trim { it <= ' ' }
+            val bytes = permanentIdFile.readBytes()
+            val offset = if (CharsetToolkit.hasUTF8Bom(bytes)) CharsetToolkit.UTF8_BOM.size else 0
+            return String(bytes, offset, bytes.size - offset, Charsets.UTF_8)
           }
 
-          var uuid = propertiesComponent.getValue(INSTALLATION_UID)
-          if (uuid == null) {
-            uuid = generateUUID()
-          }
-          FileUtil.writeToFile(permanentIdFile, uuid)
+          val uuid = propertiesComponent.getValue(INSTALLATION_UID) ?: generateUUID()
+          permanentIdFile.writeText(uuid, Charsets.UTF_8)
           return uuid
         }
-        catch (ignored: IOException) {
+        catch (e: IOException) {
+          LOG.debug(e)
         }
-
       }
     }
 
@@ -543,7 +537,10 @@ object UpdateChecker {
 
     val fileName = "$productCode-$fromBuildNumber-$toBuildNumber-patch$bundledJdk$osSuffix.jar"
 
-    val url = URL(URL(patchesUrl), fileName).toString()
+    var baseUrl = patchesUrl
+    if (!baseUrl.endsWith('/')) baseUrl += '/'
+
+    val url = URL(URL(baseUrl), fileName).toString()
     val tempFile = HttpRequests.request(url)
         .gzip(false)
         .forceHttps(forceHttps)

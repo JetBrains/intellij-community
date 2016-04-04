@@ -502,7 +502,7 @@ public class DvcsUtil {
   }
 
   @NotNull
-  private static String joinWithAnd(@NotNull List<String> strings, int limit) {
+  public static String joinWithAnd(@NotNull List<String> strings, int limit) {
     int size = strings.size();
     if (size == 0) return "";
     if (size == 1) return strings.get(0);

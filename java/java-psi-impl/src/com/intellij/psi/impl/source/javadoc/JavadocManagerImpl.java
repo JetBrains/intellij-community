@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,14 +68,10 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new ValueDocTagInfo());
 
     Collections.addAll(myInfos, Extensions.getExtensions(JavadocTagInfo.EP_NAME, project));
+
     for (CustomJavadocTagProvider extension : Extensions.getExtensions(CustomJavadocTagProvider.EP_NAME)) {
       myInfos.addAll(extension.getSupportedTags());
     }
-  }
-
-  @Deprecated
-  public void registerTagInfo(@NotNull JavadocTagInfo info) {
-    myInfos.add(info);
   }
 
   @Override
@@ -96,7 +92,9 @@ public class JavadocManagerImpl implements JavadocManager {
   @Nullable
   public JavadocTagInfo getTagInfo(String name) {
     for (JavadocTagInfo info : myInfos) {
-      if (info.getName().equals(name)) return info;
+      if (info.getName().equals(name)) {
+        return info;
+      }
     }
 
     return null;

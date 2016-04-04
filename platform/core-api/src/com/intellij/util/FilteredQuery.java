@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class FilteredQuery<T> implements Query<T> {
   private final Query<T> myOriginal;
   private final Condition<T> myFilter;
 
-  public FilteredQuery(final Query<T> original, Condition<T> filter) {
+  public FilteredQuery(@NotNull Query<T> original, @NotNull Condition<T> filter) {
     myOriginal = original;
     myFilter = filter;
   }
@@ -69,6 +69,7 @@ public class FilteredQuery<T> implements Query<T> {
   }
 
   @Override
+  @NotNull
   public Iterator<T> iterator() {
     return findAll().iterator();
   }
@@ -76,16 +77,13 @@ public class FilteredQuery<T> implements Query<T> {
   private class MyProcessor implements Processor<T> {
     private final Processor<T> myConsumer;
 
-    public MyProcessor(Processor<T> consumer) {
+    public MyProcessor(@NotNull Processor<T> consumer) {
       myConsumer = consumer;
     }
 
     @Override
     public boolean process(final T t) {
-      if (!myFilter.value(t)) return true;
-      if (!myConsumer.process(t)) return false;
-
-      return true;
+      return !myFilter.value(t) || myConsumer.process(t);
     }
   }
 }

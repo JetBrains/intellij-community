@@ -303,4 +303,30 @@ public class EditorImplTest extends AbstractEditorTest {
     
     verifySoftWrapPositions();
   }
+  
+  public void testUpDownNearDocumentTopAndBottom() throws Exception {
+    initText("abc\nd<caret>ef\nghi");
+    up();
+    checkResultByText("a<caret>bc\ndef\nghi");
+    up();
+    checkResultByText("<caret>abc\ndef\nghi");
+    down();
+    checkResultByText("abc\nd<caret>ef\nghi");
+    down();
+    checkResultByText("abc\ndef\ng<caret>hi");
+    down();
+    checkResultByText("abc\ndef\nghi<caret>");
+    up();
+    checkResultByText("abc\nd<caret>ef\nghi");
+  }
+  
+  public void testScrollingToCaretAtSoftWrap() throws Exception {
+    initText("looooooooooooooooong wooooooooooooooooords");
+    configureSoftWraps(10);
+    end();
+    VisualPosition caretPosition = myEditor.getCaretModel().getCurrentCaret().getVisualPosition();
+    Point caretPoint = myEditor.visualPositionToXY(caretPosition);
+    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+    assertTrue(visibleArea.contains(caretPoint));
+  }
 }

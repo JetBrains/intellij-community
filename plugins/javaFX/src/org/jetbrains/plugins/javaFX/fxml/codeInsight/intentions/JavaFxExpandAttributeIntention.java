@@ -23,8 +23,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -51,13 +53,13 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
     LOG.assertTrue(descriptor != null);
     String value = attr.getValue();
     final PsiElement declaration = descriptor.getDeclaration();
-    if (declaration instanceof PsiField) {
-      final PsiType fieldType = ((PsiField)declaration).getType();
-      final PsiType itemType = JavaGenericsUtil.getCollectionItemType(fieldType, declaration.getResolveScope());
+    if (declaration instanceof PsiMember) {
+      final PsiType propertyType = PropertyUtil.getPropertyType((PsiMember)declaration);
+      final PsiType itemType = JavaGenericsUtil.getCollectionItemType(propertyType, declaration.getResolveScope());
       if (itemType != null) {
         final String typeNode = itemType.getPresentableText();
         JavaFxPsiUtil.insertImportWhenNeeded((XmlFile)attr.getContainingFile(), typeNode, itemType.getCanonicalText());
-        final String[] vals = value.split(",");
+        final String[] vals = value != null ? value.split(",") : ArrayUtil.EMPTY_STRING_ARRAY;
         value = StringUtil.join(vals, new Function<String, String>() {
           @Override
           public String fun(String s) {
@@ -81,13 +83,8 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
 
           PsiType tagType = null;
           final PsiElement declaration = descriptor.getDeclaration();
-          if (declaration instanceof PsiField) {
-            tagType = ((PsiField)declaration).getType();
-          } else if (declaration instanceof PsiMethod) {
-            final PsiParameter[] parameters = ((PsiMethod)declaration).getParameterList().getParameters();
-            if (parameters.length == 1) {
-              tagType = parameters[0].getType();
-            }
+          if (declaration instanceof PsiMember) {
+            tagType = PropertyUtil.getPropertyType((PsiMember)declaration);
           }
           PsiClass tagClass = PsiUtil.resolveClassInType(tagType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)tagType).getBoxedType(parent) : tagType);
           if ((tagClass != null && JavaFxPsiUtil.isAbleToInstantiate(tagClass) == null) || descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {

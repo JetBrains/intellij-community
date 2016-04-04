@@ -71,9 +71,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Date;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
 public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvider {
@@ -133,7 +131,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     VcsLogGraphTable.Selection previousSelection = getSelection();
     getModel().setVisiblePack(visiblePack);
-    previousSelection.restore(visiblePack.getVisibleGraph(), true);
+    previousSelection.restore(visiblePack.getVisibleGraph(), true, permGraphChanged);
 
     for (VcsLogHighlighter highlighter : myHighlighters) {
       highlighter.update(visiblePack, permGraphChanged);
@@ -396,7 +394,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
       // since fireTableDataChanged clears selection we restore it here
       if (previousSelection != null) {
-        previousSelection.restore(getVisibleGraph(), answer == null || (answer.getCommitToJump() != null && answer.doJump()));
+        previousSelection.restore(getVisibleGraph(), answer == null || (answer.getCommitToJump() != null && answer.doJump()), false);
       }
     }
 
@@ -422,29 +420,30 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   @NotNull
   private String getArrowTooltipText(int commit, @Nullable Integer row) {
-    // mini details getter needs row in order to pre-load commit
-    // this is going to be fixed soon
     VcsShortCommitDetails details;
-    if (row == null || row < 0) {
-      details = myLogDataManager.getMiniDetailsGetter().getCommitDataIfAvailable(commit);
+    if (row != null && row >= 0) {
+      details = getModel().getShortDetails(row); // preload rows around the commit
     }
     else {
-      details = getModel().getShortDetails(row);
+      details = myLogDataManager.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
     }
-    String balloonText;
-    if (details != null && !(details instanceof LoadingDetails)) {
+
+    String balloonText = "";
+    if (details instanceof LoadingDetails) {
+      CommitId commitId = myLogDataManager.getCommitId(commit);
+      if (commitId != null) {
+        balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
+        if (myUi.isMultipleRoots()) {
+          balloonText += " in " + commitId.getRoot().getName();
+        }
+      }
+    }
+    else {
       balloonText = "Jump to <b>\"" +
                     StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
                     "\"</b> by " +
                     details.getAuthor().getName() +
                     DetailsPanel.formatDateTime(details.getAuthorTime());
-    }
-    else {
-      CommitId commitId = myLogDataManager.getCommitId(commit);
-      balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
-      if (myUi.isMultipleRoots()) {
-        balloonText += " in " + commitId.getRoot().getName();
-      }
     }
     return balloonText;
   }
@@ -475,14 +474,14 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     @NotNull private final TIntHashSet mySelectedCommits;
     @Nullable private final Integer myVisibleSelectedCommit;
     @Nullable private final Integer myDelta;
-    private final boolean myScrollToTop;
+    private final boolean myIsOnTop;
 
 
     public Selection(@NotNull VcsLogGraphTable table) {
       myTable = table;
       List<Integer> selectedRows = ContainerUtil.sorted(Ints.asList(myTable.getSelectedRows()));
       Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(myTable);
-      myScrollToTop = visibleRows.first - 1 == 0;
+      myIsOnTop = visibleRows.first - 1 == 0;
 
       VisibleGraph<Integer> graph = myTable.getVisibleGraph();
 
@@ -509,7 +508,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       myDelta = delta;
     }
 
-    public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection) {
+    public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection, boolean permGraphChanged) {
       Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getModel(), newVisibleGraph);
       if (!toSelectAndScroll.first.isEmpty()) {
         myTable.getSelectionModel().setValueIsAdjusting(true);
@@ -523,7 +522,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
         myTable.getSelectionModel().setValueIsAdjusting(false);
       }
       if (scrollToSelection) {
-        if (myScrollToTop) {
+        if (myIsOnTop && permGraphChanged) { // scroll on top when some fresh commits arrive
           scrollToRow(0, 0);
         }
         else if (toSelectAndScroll.second != null) {
@@ -572,11 +571,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   }
 
   private class MyMouseAdapter extends MouseAdapter {
-    private final TableLinkMouseListener myLinkListener;
-
-    MyMouseAdapter() {
-      myLinkListener = new TableLinkMouseListener();
-    }
+    @NotNull private final TableLinkMouseListener myLinkListener = new TableLinkMouseListener();
 
     @Override
     public void mouseClicked(MouseEvent e) {

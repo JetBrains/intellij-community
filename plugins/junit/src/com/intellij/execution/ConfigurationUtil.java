@@ -35,8 +35,8 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ClassesWithAnnotatedMembersSearch;
 import com.intellij.psi.stubsHierarchy.impl.ClassAnchorUtil;
-import com.intellij.psi.stubsHierarchy.impl.SingleClassHierarchy;
 import com.intellij.psi.stubsHierarchy.impl.HierarchyService;
+import com.intellij.psi.stubsHierarchy.impl.SingleClassHierarchy;
 import com.intellij.psi.stubsHierarchy.impl.SmartClassAnchor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
@@ -103,8 +103,9 @@ public class ConfigurationUtil {
     }
 
     Set<PsiClass> processed = ContainerUtil.newHashSet();
-    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.Test", true, symbols);
-    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.runner.RunWith", false, symbols);
+    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.TEST_ANNOTATION, true, symbols);
+    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.TEST5_ANNOTATION, true, symbols);
+    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.RUN_WITH, false, symbols);
     return hasJunit4;
   }
 

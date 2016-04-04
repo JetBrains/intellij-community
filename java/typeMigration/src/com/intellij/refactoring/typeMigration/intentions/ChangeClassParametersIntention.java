@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -91,10 +92,12 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
             myNewType = value != null ? value.getText() : "";
             final int segmentsCount = state.getSegmentsCount();
             final Document document = state.getEditor().getDocument();
-            for (int i = 0; i < segmentsCount; i++) {
-              final TextRange segmentRange = state.getSegmentRange(i);
-              document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), oldTypeText);
-            }
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              for (int i = 0; i < segmentsCount; i++) {
+                final TextRange segmentRange = state.getSegmentRange(i);
+                document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), oldTypeText);
+              }
+            });
           }
 
           @Override

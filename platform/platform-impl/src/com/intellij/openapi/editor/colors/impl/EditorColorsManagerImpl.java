@@ -37,10 +37,10 @@ import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.JdomKt;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
@@ -51,9 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @State(
   name = "EditorColorsManagerImpl",
@@ -206,7 +204,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       try {
         URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
         assert resource != null;
-        ((AbstractColorsScheme)editorColorsScheme).readAttributes(JDOMUtil.load(URLUtil.openStream(resource)));
+        ((AbstractColorsScheme)editorColorsScheme).readAttributes(JdomKt.loadElement(URLUtil.openStream(resource)));
       }
       catch (Exception e) {
         LOG.error(e);
@@ -233,8 +231,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @NotNull
   @Override
   public EditorColorsScheme[] getAllSchemes() {
-    List<EditorColorsScheme> schemes = mySchemeManager.getAllSchemes();
-    EditorColorsScheme[] result = schemes.toArray(new EditorColorsScheme[schemes.size()]);
+    EditorColorsScheme[] result = getAllVisibleSchemes(mySchemeManager.getAllSchemes());
     Arrays.sort(result, new Comparator<EditorColorsScheme>() {
       @Override
       public int compare(@NotNull EditorColorsScheme s1, @NotNull EditorColorsScheme s2) {
@@ -246,6 +243,16 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
     });
     return result;
+  }
+
+  private static EditorColorsScheme[] getAllVisibleSchemes(@NotNull Collection<EditorColorsScheme> schemes) {
+    List<EditorColorsScheme> visibleSchemes = new ArrayList<>(schemes.size() - 1);
+    for (EditorColorsScheme scheme : schemes) {
+      if (!(scheme instanceof EmptyColorScheme)) {
+        visibleSchemes.add(scheme);
+      }
+    }
+    return visibleSchemes.toArray(new EditorColorsScheme[visibleSchemes.size()]);
   }
 
   @Override

@@ -1,0 +1,1 @@
+'{<warning descr="Unresolved reference 'foo'">foo</warning>}'.format(**dict(t=1))

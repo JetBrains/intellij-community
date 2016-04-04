@@ -63,4 +63,7 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression> {
 
   @Nullable
   String getDocString();
+
+  @Nullable
+  String getTypeComment();
 }

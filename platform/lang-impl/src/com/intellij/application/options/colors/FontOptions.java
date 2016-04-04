@@ -16,7 +16,7 @@
 
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.OptionsConstants;
+import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
@@ -161,7 +161,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         try {
           int value = Integer.parseInt(myEditorFontSizeField.getText());
           value += (up ? 1 : -1);
-          value = Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE, Math.max(OptionsConstants.MIN_EDITOR_FONT_SIZE, value));
+          value = Math.min(EditorFontsConstants.getMaxEditorFontSize(), Math.max(EditorFontsConstants.getMinEditorFontSize(), value));
           myEditorFontSizeField.setText(String.valueOf(value));
         }
         catch (NumberFormatException ignored) {
@@ -188,7 +188,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         try {
           float value = Float.parseFloat(myLineSpacingField.getText());
           value += (up ? 1 : -1) * .1F;
-          value = Math.min(OptionsConstants.MAX_EDITOR_LINE_SPACING, Math.max(OptionsConstants.MIN_EDITOR_LINE_SPACING, value));
+          value = Math.min(EditorFontsConstants.getMaxEditorLineSpacing(), Math.max(EditorFontsConstants.getMinEditorLineSpacing(), value));
           myLineSpacingField.setText(String.format(Locale.ENGLISH, "%.1f", value));
         }
         catch (NumberFormatException ignored) {
@@ -200,19 +200,19 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   private int getFontSizeFromField() {
     try {
-      return Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE,
-                      Math.max(OptionsConstants.MIN_EDITOR_FONT_SIZE, Integer.parseInt(myEditorFontSizeField.getText())));
+      return Math.min(EditorFontsConstants.getMaxEditorFontSize(),
+                      Math.max(EditorFontsConstants.getMinEditorFontSize(), Integer.parseInt(myEditorFontSizeField.getText())));
     }
     catch (NumberFormatException e) {
-      return OptionsConstants.DEFAULT_EDITOR_FONT_SIZE;
+      return EditorFontsConstants.getDefaultEditorFontSize();
     }
   }
 
   private float getLineSpacingFromField() {
     try {
-       return Math.min(OptionsConstants.MAX_EDITOR_LINE_SPACING, Math.max(OptionsConstants.MIN_EDITOR_LINE_SPACING, Float.parseFloat(myLineSpacingField.getText())));
+       return Math.min(EditorFontsConstants.getMaxEditorLineSpacing(), Math.max(EditorFontsConstants.getMinEditorLineSpacing(), Float.parseFloat(myLineSpacingField.getText())));
     } catch (NumberFormatException e){
-      return OptionsConstants.DEFAULT_EDITOR_LINE_SPACING;
+      return EditorFontsConstants.getDefaultEditorLineSpacing();
     }
   }
 
@@ -229,13 +229,13 @@ public class FontOptions extends JPanel implements OptionsPanel{
       if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
         fontPreferences.addFontFamily(primaryFontFamily);
       }
-      fontPreferences.register(primaryFontFamily, JBUI.scale(fontSize));
+      fontPreferences.register(primaryFontFamily, fontSize);
     }
     if (secondaryFontFamily != null) {
       if (!FontPreferences.DEFAULT_FONT_NAME.equals(secondaryFontFamily)){
         fontPreferences.addFontFamily(secondaryFontFamily);
       }
-      fontPreferences.register(secondaryFontFamily, JBUI.scale(fontSize));
+      fontPreferences.register(secondaryFontFamily, fontSize);
     }
     updateDescription(true);
   }

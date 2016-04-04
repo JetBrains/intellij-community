@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -736,6 +737,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkOptionalParametersInAbstractMethod(AnnotationHolder holder, GrMethod method) {
     if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+    if (!(method.getContainingClass() instanceof GrInterfaceDefinition)) return;
 
     for (GrParameter parameter : method.getParameters()) {
       GrExpression initializerGroovy = parameter.getInitializerGroovy();
@@ -1192,29 +1194,18 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private void checkNamedArgs(GrNamedArgument[] namedArguments, boolean forArgList) {
     highlightNamedArgs(namedArguments);
 
-    MultiMap<String, GrArgumentLabel> map = new MultiMap<String, GrArgumentLabel>();
-    for (GrNamedArgument element : namedArguments) {
-      final GrArgumentLabel label = element.getLabel();
-      if (label != null) {
-        final String name = label.getName();
-        if (name != null) {
-          map.putValue(name, label);
-        }
+    Set<Object> existingKeys = ContainerUtil.newHashSet();
+    for (GrNamedArgument namedArgument : namedArguments) {
+      GrArgumentLabel label = namedArgument.getLabel();
+      Object value = PsiUtil.getLabelValue(label);
+      if (value == null) continue;
+      if (value == ObjectUtils.NULL) value = null;
+      if (existingKeys.add(value)) continue;
+      if (forArgList) {
+        myHolder.createErrorAnnotation(label, GroovyBundle.message("duplicated.named.parameter", String.valueOf(value)));
       }
-    }
-
-    for (String key : map.keySet()) {
-      final List<GrArgumentLabel> arguments = (List<GrArgumentLabel>)map.get(key);
-      if (arguments.size() > 1) {
-        for (int i = 1; i < arguments.size(); i++) {
-          final GrArgumentLabel label = arguments.get(i);
-          if (forArgList) {
-            myHolder.createErrorAnnotation(label, GroovyBundle.message("duplicated.named.parameter", key));
-          }
-          else {
-            myHolder.createWarningAnnotation(label, GroovyBundle.message("duplicate.element.in.the.map"));
-          }
-        }
+      else {
+        myHolder.createWarningAnnotation(label, GroovyBundle.message("duplicate.element.in.the.map", String.valueOf(value)));
       }
     }
   }

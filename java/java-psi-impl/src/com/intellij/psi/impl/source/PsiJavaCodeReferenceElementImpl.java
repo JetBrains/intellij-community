@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -383,7 +383,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private JavaResolveResult[] resolve(final int kind, @NotNull PsiFile containingFile) {
     switch (kind) {
       case CLASS_FQ_NAME_KIND: {
-        // TODO: support type parameters in FQ names
         String text = getNormalizedText();
         if (StringUtil.isEmptyOrSpaces(text)) return JavaResolveResult.EMPTY_ARRAY;
 
@@ -551,6 +550,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     if (qName == null) {
       qName = aClass.getName();
+      assert qName != null : aClass;
       PsiClass psiClass = facade.getResolveHelper().resolveReferencedClass(qName, this);
       if (!getManager().areElementsEquivalent(psiClass, aClass)) {
         throw cannotBindError(aClass);

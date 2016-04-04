@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -57,7 +56,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       Application app = ApplicationManager.getApplication();
       if (app.isDispatchThread()) {
         doScan(session);
-        session.fireEvents(app.isWriteAccessAllowed());
+        session.fireEvents(false);
       }
       else {
         if (((ApplicationEx)app).holdsReadLock()) {
@@ -72,28 +71,14 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void queueSession(@NotNull final RefreshSessionImpl session, @NotNull final ModalityState modality) {
-    myQueue.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myRefreshIndicator.start();
-          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session);
-          try {
-            doScan(session);
-          }
-          finally {
-            token.finish();
-            myRefreshIndicator.stop();
-          }
-        }
-        finally {
-          ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-            @Override
-            public void run() {
-              session.fireEvents(false);
-            }
-          }, modality);
-        }
+    myQueue.submit(() -> {
+      myRefreshIndicator.start();
+      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session)) {
+        doScan(session);
+      }
+      finally {
+        myRefreshIndicator.stop();
+        ApplicationManager.getApplication().invokeLater(() -> session.fireEvents(true), modality);
       }
     });
     myEventCounter.eventHappened(session);

@@ -42,8 +42,6 @@ import java.util.Map;
  */
 public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.Key, List<FileIncludeInfoImpl>> {
 
-  private final FileIncludeProvider[] myProviders = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
-
   public static final ID<Key,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
   private static final int BASE_VERSION = 5;
@@ -72,6 +70,10 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return result;
   }
 
+  private static class Holder {
+    private static final FileIncludeProvider[] myProviders = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
+  }
+
   @NotNull
   @Override
   public ID<Key, List<FileIncludeInfoImpl>> getName() {
@@ -93,7 +95,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
           }
         };
 
-        for (FileIncludeProvider provider : myProviders) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
           if (!provider.acceptFile(inputData.getFile())) continue;
           FileIncludeInfo[] infos = provider.getIncludeInfos(inputData);
           if (infos.length  == 0) continue;
@@ -174,7 +176,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
           return false;
         }
-        for (FileIncludeProvider provider : myProviders) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
           if (provider.acceptFile(file)) {
             return true;
           }
@@ -184,7 +186,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
       @Override
       public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
-        for (FileIncludeProvider provider : myProviders) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
           provider.registerFileTypesUsedForIndexing(fileTypeSink);
         }
       }
@@ -199,7 +201,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   @Override
   public int getVersion() {
     int version = BASE_VERSION;
-    for (FileIncludeProvider provider : myProviders) {
+    for (FileIncludeProvider provider : Holder.myProviders) {
       version = version * 31 + (provider.getVersion() ^ provider.getClass().getName().hashCode());
     }
     return version;

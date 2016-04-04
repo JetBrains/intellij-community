@@ -1,4 +1,4 @@
-from django.forms import Form
+from django.forms import BaseForm
 class BaseFormSet(object):
     """
     A collection of instances of the same Form class.
@@ -8,7 +8,7 @@ class BaseFormSet(object):
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, form_kwargs=None):
         """
-        :rtype: BaseFormSet[T <= Form]
+        :rtype: BaseFormSet[T <= BaseForm]
         """
 
     def __iter__(self):

@@ -1,9 +1,10 @@
 package com.jetbrains.edu.learning.actions;
 
 import com.intellij.icons.AllIcons;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -28,5 +29,17 @@ public class StudyNextWindowAction extends StudyWindowNavigationAction {
         return newIndex == windows.size() ? windows.get(0) : windows.get(newIndex);
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public String getActionId() {
+    return ACTION_ID;
+  }
+
+  @Nullable
+  @Override
+  public String[] getShortcuts() {
+    return new String[]{SHORTCUT, SHORTCUT2};
   }
 }

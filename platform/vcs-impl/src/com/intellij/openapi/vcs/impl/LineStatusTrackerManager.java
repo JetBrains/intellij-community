@@ -385,7 +385,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
             }
             final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
             if (tracker != null) {
-              tracker.initialize(converted, revisionPack);
+              tracker.setBaseRevision(converted, revisionPack);
             }
           }
         }

@@ -640,6 +640,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final Semaphore targetDone = new Semaphore();
     targetDone.down();
     final Ref<Boolean> result = Ref.create(Boolean.FALSE);
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         try {
@@ -721,9 +722,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               try {
                 myInitThread = Thread.currentThread();
                 // first, remove existing files
-                final AntBuildFile[] currentFiles = getBuildFiles();
-                for (AntBuildFile file : currentFiles) {
-                  removeBuildFile(file);
+                for (AntBuildFile file : getBuildFiles()) {
+                  removeBuildFileImpl(file);
                 }
                 // then fill the configuration with the files configured in xml
                 List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<Pair<Element, AntBuildFileBase>>(files.size());
@@ -801,6 +801,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               }
               finally {
                 try {
+                  incModificationCount();
                   updateRegisteredActions();
                 }
                 finally {
@@ -861,14 +862,17 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private static void queueLater(final Task task) {
     final Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      task.queue();
-    } else {
+    if (!app.isDispatchThread() || task.isHeadless()) {
+      // for headless tasks we need to ensure async execution. 
+      // Otherwise calls to AntConfiguration.getInstance() from the task will cause SOE
       app.invokeLater(new Runnable() {
         public void run() {
           task.queue();
         }
-      });
+      }, ModalityState.any());
+    }
+    else {
+      task.queue();
     }
   }
 

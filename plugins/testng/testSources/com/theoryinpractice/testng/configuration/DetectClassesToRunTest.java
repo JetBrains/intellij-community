@@ -43,6 +43,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     super.setUp();
     myFixture.addClass("package org.testng.annotations; @interface Test {public String[] dependsOnMethods() default {};}");
     myFixture.addClass("package org.testng.annotations; @interface BeforeClass {}");
+    myFixture.addClass("package org.testng.annotations; @interface BeforeGroups {public String[] value() default {};}");
   }
 
   @AfterMethod
@@ -117,6 +118,20 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestClassConfiguration(aClass);
   }
 
+  @Test
+  public void testBeforeGroups() throws Exception {
+    final PsiClass aClass =
+       myFixture.addClass("package a; public class ATest {" +
+                         "  @org.testng.annotations.Test(groups = { \"g1\" })\n" +
+                         "  public void testOne(){}\n" +
+                         "}");
+    final PsiClass configClass = myFixture.addClass("package a; public class ConfigTest {" +
+                                                 "  @org.testng.annotations.BeforeGroups(groups = { \"g1\" })\n" +
+                                                 "  public void testTwo(){}\n " +
+                                                 "}");
+    doTestMethodConfiguration(aClass, configClass, configClass.getMethods()[0], aClass.getMethods());
+  }
+
   public void testRerunFailedTestWithDependency() throws Exception {
     final PsiClass aClass =
       myFixture.addClass("package a; public class ATest {" +
@@ -186,6 +201,10 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTestMethodConfiguration(PsiClass aClass, PsiMethod... expectedMethods) throws CantRunException {
+    doTestMethodConfiguration(aClass, null, null, expectedMethods);
+  }
+  
+  private void doTestMethodConfiguration(PsiClass aClass, PsiClass secondaryClass, PsiMethod configMethod, PsiMethod... expectedMethods) throws CantRunException {
     final TestNGConfiguration configuration =
       new TestNGConfiguration("testOne", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
     final TestData data = configuration.getPersistantData();
@@ -201,6 +220,11 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     assertContainsElements(classes.keySet(), aClass);
     final Map<PsiMethod, List<String>> methods = classes.get(aClass);
     assertContainsElements(methods.keySet(), expectedMethods);
+    if (secondaryClass != null) {
+      final Map<PsiMethod, List<String>> configMethods = classes.get(secondaryClass);
+      assertTrue(configMethods != null);
+      assertTrue(configMethods.containsKey(configMethod));
+    }
   }
   
   private void doTestClassConfiguration(PsiClass aClass) throws CantRunException {

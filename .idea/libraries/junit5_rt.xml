@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="junit5_rt">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-commons-5.0.0-ALPHA.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-engine-api-5.0.0-ALPHA.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit-launcher-5.0.0-ALPHA.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit4-engine-5.0.0-ALPHA.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit4-runner-5.0.0-ALPHA.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/junit5_rt/lib/junit5-engine-5.0.0-ALPHA.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

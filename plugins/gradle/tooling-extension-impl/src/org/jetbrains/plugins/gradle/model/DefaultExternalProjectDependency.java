@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.model;
 
 import com.google.common.base.Objects;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -29,7 +30,7 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
   private static final long serialVersionUID = 1L;
 
   private String myProjectPath;
-  private Collection<String> myProjectDependencyArtifacts;
+  private Collection<File> myProjectDependencyArtifacts;
 
   public DefaultExternalProjectDependency() {
   }
@@ -39,8 +40,8 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
     myProjectPath = dependency.getProjectPath();
     myProjectDependencyArtifacts =
       dependency.getProjectDependencyArtifacts() == null
-      ? new ArrayList<String>()
-      : new ArrayList<String>(dependency.getProjectDependencyArtifacts());
+      ? new ArrayList<File>()
+      : new ArrayList<File>(dependency.getProjectDependencyArtifacts());
   }
 
   @Override
@@ -53,11 +54,11 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
   }
 
   @Override
-  public Collection<String> getProjectDependencyArtifacts() {
+  public Collection<File> getProjectDependencyArtifacts() {
     return myProjectDependencyArtifacts;
   }
 
-  public void setProjectDependencyArtifacts(Collection<String> projectArtifacts) {
+  public void setProjectDependencyArtifacts(Collection<File> projectArtifacts) {
     myProjectDependencyArtifacts = projectArtifacts;
   }
 

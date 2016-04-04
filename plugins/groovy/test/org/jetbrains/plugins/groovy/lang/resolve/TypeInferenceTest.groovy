@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -408,10 +408,7 @@ print lis<caret>t
   }
 
   void testEmptyMapOrMapWithGenerics() {
-    doTest('''\
-def map = cond ? [1:'a', 2:'a', 3:'a'] : [:]
-print ma<caret>p
-''', "java.util.LinkedHashMap<$JAVA_LANG_STRING, $JAVA_LANG_STRING>")
+    doExprTest '''cond ? [1:'a', 2:'a', 3:'a'] : [:]''', "java.util.LinkedHashMap<java.lang.Integer, java.lang.String>"
   }
 
   void testEmptyMapOrMapWithGenerics2() {
@@ -714,4 +711,14 @@ def foo(List list) {
 ''', 'java.util.ArrayList<java.util.List>')
   }
 
+  void 'test map literal type'() {
+    doExprTest "[a: 'foo']", "java.util.LinkedHashMap<java.lang.String, java.lang.String>"
+    doExprTest "[1: 'foo']", "java.util.LinkedHashMap<java.lang.Integer, java.lang.String>"
+    doExprTest "[1L: 'foo']", "java.util.LinkedHashMap<java.lang.Long, java.lang.String>"
+    doExprTest "[null: 'foo']", "java.util.LinkedHashMap<java.lang.String, java.lang.String>"
+    doExprTest "[(null): 'foo']", "java.util.LinkedHashMap<null, java.lang.String>"
+    doExprTest "[foo: null]", "java.util.LinkedHashMap<java.lang.String, null>"
+    doExprTest "[(null): 'foo', bar: null]", "java.util.LinkedHashMap<java.lang.String, java.lang.String>"
+    doExprTest "[foo: 'bar', 2: 'goo']", "java.util.LinkedHashMap<java.io.Serializable, java.lang.String>"
+  }
 }

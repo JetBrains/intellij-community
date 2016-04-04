@@ -275,10 +275,10 @@ public class PatternValidator extends LocalInspectionTool {
 
           final String classname = myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().first;
           final AnnotateFix fix = new AnnotateFix((PsiModifierListOwner)e, classname);
-          quickFix = fix.canApply() ? fix : new IntroduceVariableFix(expr);
+          quickFix = fix.canApply() ? fix : new IntroduceVariableFix();
         }
         else {
-          quickFix = new IntroduceVariableFix(expr);
+          quickFix = new IntroduceVariableFix();
         }
         holder.registerProblem(expr, "Unsubstituted expression", quickFix);
       }
@@ -286,16 +286,13 @@ public class PatternValidator extends LocalInspectionTool {
   }
 
   private static class IntroduceVariableFix implements LocalQuickFix {
-    private final PsiExpression myExpr;
 
-    public IntroduceVariableFix(PsiExpression expr) {
-      myExpr = expr;
-    }
+    public IntroduceVariableFix() {}
 
     @Override
     @NotNull
     public String getName() {
-      return "Introduce Variable";
+      return "Introduce variable";
     }
 
     @Override
@@ -306,15 +303,21 @@ public class PatternValidator extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
       final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
       final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
       dataContextContainer.doWhenDone(new Consumer<DataContext>() {
         @Override
         public void consume(DataContext dataContext) {
-          handler.invoke(project, new PsiElement[]{myExpr}, dataContext);
+          handler.invoke(project, new PsiElement[]{element}, dataContext);
         }
       });
       // how to automatically annotate the variable after it has been introduced?
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }

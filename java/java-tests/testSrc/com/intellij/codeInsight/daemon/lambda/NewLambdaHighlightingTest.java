@@ -276,6 +276,22 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCLikeArrayDeclarationInLambdaWithExplicitTypes() throws Exception {
+    doTest();
+  }
+
+  public void testAdditionalConstraintsOrderWhenOutputVariablesAlreadyHaveProperEqualBound() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA153284() throws Exception {
+    doTest();
+  }
+
+  public void testAvoidPartlyRawTypesAsTheyWontBeTreatedAsWildcardParameterizedAnyway() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

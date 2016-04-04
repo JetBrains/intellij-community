@@ -302,8 +302,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
           // We want to move caret to the first column if it's already located at the first line and 'Up' is pressed.
           newColumnNumber = 0;
-          desiredX = -1;
-          lastColumnNumber = -1;
         }
 
         VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
@@ -316,8 +314,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
             if (lastOffsetColumn > newColumnNumber) {
               newColumnNumber = lastOffsetColumn;
               newLeansRight = true;
-              desiredX = -1;
-              lastColumnNumber = -1;
             }
           }
           if (!editorSettings.isCaretInsideTabs()) {

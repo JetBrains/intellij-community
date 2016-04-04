@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
+import com.jetbrains.edu.learning.StudyPluginConfigurator;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -124,16 +124,21 @@ class StudyBrowserWindow extends JFrame {
     });
   }
 
-  public void loadContent(@NotNull final String content, StudyToolWindowConfigurator configurator) {
-    String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
-    Platform.runLater(()-> {
+  public void loadContent(@NotNull final String content, @Nullable StudyPluginConfigurator configurator) {
+    if (configurator == null) {
+      Platform.runLater(() -> myEngine.loadContent(content));
+    }
+    else {
+      String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
+      Platform.runLater(() -> {
         updateLookWithProgressBarIfNeeded();
-        myEngine.loadContent(withCodeHighlighting);        
+        myEngine.loadContent(withCodeHighlighting);
       });
+    }
   }
 
   @Nullable
-  private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyToolWindowConfigurator configurator) {
+  private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyPluginConfigurator configurator) {
     String template = null;
     InputStream stream = getClass().getResourceAsStream("/code-mirror/template.html");
     try {

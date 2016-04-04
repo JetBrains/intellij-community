@@ -852,6 +852,18 @@
         <option name="FOREGROUND" value="D0D0FF" />
       </value>
     </option>
+    <option name="JADE_FILE_PATH">
+      <value>
+        <option name="FOREGROUND" value="A5C261" />
+      </value>
+    </option>
+    <option baseAttributes="DEFAULT_LABEL" name="JADE_FILTER_NAME" />
+    <option baseAttributes="DEFAULT_IDENTIFIER" name="JADE_JS_BLOCK" />
+    <option name="JADE_STATEMENTS">
+      <value>
+        <option name="FOREGROUND" value="CC7833" />
+      </value>
+    </option>
     <option name="JAVA_BLOCK_COMMENT">
       <value>
         <option name="FOREGROUND" value="BC9458" />
@@ -1582,6 +1594,41 @@
       </value>
     </option>
     <option baseAttributes="SLIM_STATIC_CONTENT" name="SLIM_TAG_START" />
+    <option name="SPY-JS.EXCEPTION">
+      <value>
+        <option name="BACKGROUND" value="713f3f" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="E6E1DC" />
+      </value>
+    </option>
+    <option name="SPY-JS.FUNCTION_SCOPE">
+      <value>
+        <option name="BACKGROUND" value="2e2e1f" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="E6E1DC" />
+      </value>
+    </option>
+    <option name="SPY-JS.PATH_LEVEL_ONE">
+      <value>
+        <option name="BACKGROUND" value="264226" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="E6E1DC" />
+      </value>
+    </option>
+    <option name="SPY-JS.PATH_LEVEL_TWO">
+      <value>
+        <option name="EFFECT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="E6E1DC" />
+      </value>
+    </option>
+    <option name="SPY-JS.PROGRAM_SCOPE">
+      <value>
+        <option name="BACKGROUND" value="2b2b2b" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="E6E1DC" />
+      </value>
+    </option>
+    <option baseAttributes="TEXT" name="SPY-JS.VALUE_HINT" />
     <option name="STATIC_FIELD_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="fda5ff" />

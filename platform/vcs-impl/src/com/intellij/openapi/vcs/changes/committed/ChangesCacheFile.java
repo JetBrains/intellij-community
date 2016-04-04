@@ -941,8 +941,8 @@ public class ChangesCacheFile {
           final FilePath path = afterRevision.getFile();
           debug("Marking created file " + path);
           myCreatedFiles.add(path);
-        } else if (change.getBeforeRevision().getFile().getIOFile().getAbsolutePath().equals(
-          afterRevision.getFile().getIOFile().getAbsolutePath()) && change.isIsReplaced()) {
+        }
+        else if (change.getBeforeRevision().getFile().getPath().equals(afterRevision.getFile().getPath()) && change.isIsReplaced()) {
           myReplacedFiles.add(afterRevision.getFile());
         }
         if (incomingFiles != null && !incomingFiles.contains(afterRevision.getFile())) {
@@ -1104,8 +1104,7 @@ public class ChangesCacheFile {
     }
 
     private static boolean isFileDeleted(@NotNull FilePath file, @NotNull FilePath beforeFile) {
-      if (file.getIOFile().getAbsolutePath().equals(beforeFile.getIOFile().getAbsolutePath()) ||
-          file.isUnder(beforeFile, false)) {
+      if (file.getPath().equals(beforeFile.getPath()) || file.isUnder(beforeFile, false)) {
         debug("Found subsequent deletion for file " + file);
         return true;
       }

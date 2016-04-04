@@ -31,12 +31,12 @@ public class JUnitForkedStarter extends ChildVMStarter {
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
     final int lastIdx = Integer.parseInt(args[1]);
     final String[] childTestDescription = {args[2]};
-    final boolean isJUnit4 = args[3].equalsIgnoreCase("true");
+    final String argentName = args[3];
     final ArrayList listeners = new ArrayList();
     for (int i = 4, argsLength = args.length; i < argsLength; i++) {
       listeners.add(args[i]);
     }
-    IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
+    IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(argentName).newInstance();
     //noinspection IOResourceOpenedButNotSafelyClosed
     testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
     System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, 1, false));

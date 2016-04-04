@@ -106,7 +106,9 @@ public class DefaultExternalDependencyId implements ExternalDependencyId, Serial
     if (group != null) {
       buf.append(group).append(':');
     }
-    buf.append(name);
+    if(name != null) {
+      buf.append(name);
+    }
     if (!"jar".equals(packaging)) {
       buf.append(':').append(packaging);
     }

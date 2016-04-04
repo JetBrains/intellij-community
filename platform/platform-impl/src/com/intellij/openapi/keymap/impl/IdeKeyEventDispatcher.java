@@ -868,17 +868,15 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
+      ApplicationManager.getApplication().invokeLater(
+        () -> ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
           final AnActionEvent event =
             new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                               ActionManager.getInstance(), 0);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
             ActionUtil.performActionDumbAware(action, event);
           }
-        }
-      });
+        }));
     }
 
     @Override

@@ -406,7 +406,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       return size;
     }
 
-    private String getMessageText(VcsFullCommitDetails commit) {
+    @NotNull
+    private String getMessageText(@NotNull VcsFullCommitDetails commit) {
       String fullMessage = commit.getFullMessage();
       int separator = fullMessage.indexOf("\n\n");
       String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
@@ -415,7 +416,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
              escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description));
     }
 
-    private String escapeMultipleSpaces(String text) {
+    @NotNull
+    private String escapeMultipleSpaces(@NotNull String text) {
       StringBuilder result = new StringBuilder();
       for (int i = 0; i < text.length(); i++) {
         if (text.charAt(i) == ' ') {
@@ -433,7 +435,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       return result.toString();
     }
 
-    private static String getAuthorText(VcsFullCommitDetails commit) {
+    @NotNull
+    private static String getAuthorText(@NotNull VcsFullCommitDetails commit) {
       long authorTime = commit.getAuthorTime();
       long commitTime = commit.getCommitTime();
 
@@ -542,8 +545,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private static class MessagePanel extends NonOpaquePanel {
-
-    private final JLabel myLabel;
+    @NotNull private final JLabel myLabel;
 
     MessagePanel() {
       super(new BorderLayout());

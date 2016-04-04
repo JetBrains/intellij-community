@@ -51,7 +51,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.Language;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -71,6 +73,8 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   @NonNls private static final String PROBLEMS = "problems";
   @NonNls private static final String HTML = "HTML";
   @NonNls private static final String XML = "XML";
+  @NonNls private static final String CSS = "p.problem-description-group {color: %s; font-weight:bold;}";
+
 
   public ExportHTMLAction(final InspectionResultsView view) {
     super(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.Actions.Export);
@@ -276,6 +280,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+      presentation.updateContent();
       final Map<String, Set<RefEntity>> toolContent = presentation.getContent();
       content.putAll(toolContent);
     }
@@ -293,7 +298,11 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       List<RefEntity> packageContent = new ArrayList<RefEntity>(content.get(packageName));
       Collections.sort(packageContent, RefEntityAlphabeticalComparator.getInstance());
       StringBuffer contentIndex = new StringBuffer();
-      contentIndex.append("<html><body>");
+      contentIndex.append("<html>" +
+                          "<head>\n" +
+                          "<link rel=\"stylesheet\" type=\"text/css\" href=\"inspection-report-style.css\">\n" +
+                          "</head>" +
+                          "<body>");
       for (RefEntity refElement : packageContent) {
         refElement = refElement.getRefManager().getRefinedElement(refElement);
         contentIndex.append("<a HREF=\"");
@@ -307,6 +316,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
       contentIndex.append("</body></html>");
       HTMLExportUtil.writeFile(exporter.getRootFolder(), packageName + "-index.html", contentIndex, myView.getProject());
+      HTMLExportUtil.writeFile(exporter.getRootFolder(), "inspection-report-style.css", String.format(CSS, UIUtil.isUnderDarcula() ? "#A5C25C" : "#005555"), myView.getProject());
     }
 
     final Set<RefModule> modules = new HashSet<RefModule>();

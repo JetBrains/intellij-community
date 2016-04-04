@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
-import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.Nullable;
 
 public class StudyMoveDelegate extends MoveHandlerDelegate{
@@ -49,6 +49,6 @@ public class StudyMoveDelegate extends MoveHandlerDelegate{
                            DataContext dataContext,
                            @Nullable PsiReference reference,
                            Editor editor) {
-    return true;
+    return StudyUtils.isStudyProject(project);
   }
 }

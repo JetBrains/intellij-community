@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -173,13 +174,17 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public void setEditorFontSize(int fontSize) {
+    fontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
     myFontPreferences.register(getEditorFontName(), fontSize);
     initFonts();
   }
   
   @Override
   public void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    myQuickDocFontSize = fontSize;
+    if (myQuickDocFontSize != fontSize) {
+      myQuickDocFontSize = fontSize;
+      myIsSaveNeeded = true;
+    }
   }
 
   @Override
@@ -307,7 +312,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
     boolean isDefault = isDefaultScheme != null && Boolean.parseBoolean(isDefaultScheme);
     if (!isDefault) {
-      myParentScheme = getDefaultScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, DEFAULT_SCHEME_NAME));
+      myParentScheme = getDefaultScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, EmptyColorScheme.NAME));
     }
 
     for (final Object o : node.getChildren()) {
@@ -353,8 +358,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     DefaultColorSchemesManager manager = DefaultColorSchemesManager.getInstance();
     EditorColorsScheme defaultScheme = manager.getScheme(name);
     if (defaultScheme == null) {
-      defaultScheme = manager.getScheme(DEFAULT_SCHEME_NAME);
-      assert defaultScheme != null : "Fatal error: built-in 'Default' color scheme not found";
+      defaultScheme = EmptyColorScheme.INSTANCE;
     }
     return defaultScheme;
   }
@@ -481,11 +485,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
   }
 
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  public void 
+  writeExternal(Element parentNode) throws WriteExternalException {
     parentNode.setAttribute(NAME_ATTR, getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
 
-    if (myParentScheme != null) {
+    if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
     }
 
@@ -704,6 +709,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public void setConsoleFontSize(int fontSize) {
+    fontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
     myConsoleFontPreferences.register(getConsoleFontName(), fontSize);
     initFonts();
   }

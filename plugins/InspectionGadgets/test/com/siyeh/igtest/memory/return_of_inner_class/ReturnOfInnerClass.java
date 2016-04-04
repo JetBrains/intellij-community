@@ -1,5 +1,9 @@
 public class ReturnOfInnerClass {
 
+  public static Object zero() {
+    return new Object() {};
+  }
+
   public Object one() {
     <warning descr="Return of instance of anonymous class">return</warning> new Object() {};
   }

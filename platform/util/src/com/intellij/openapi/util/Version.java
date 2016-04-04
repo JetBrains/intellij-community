@@ -4,9 +4,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class Version {
   public final int major;
   public final int minor;
@@ -22,22 +19,26 @@ public class Version {
   public static Version parseVersion(@NotNull String versionString) {
     String[] versions = versionString.split("\\.");
     String version = versions[0];
-    int major = StringUtil.parseInt(version, -1);
+    int major = parseNumber(version, -1);
     if (major < 0) {
       return null;
     }
 
-    int minor = (versions.length > 1) ? StringUtil.parseInt(versions[1], -1) : 0;
+    int minor = (versions.length > 1) ? parseNumber(versions[1], -1) : 0;
     if (minor < 0) {
-      return null;
+      return new Version(major, 0, 0);
     }
 
-    int patch = (versions.length > 2) ? StringUtil.parseInt(versions[2], -1) : 0;
+    int patch = (versions.length > 2) ? parseNumber(versions[2], -1) : 0;
     if (patch < 0) {
-      return null;
+      return new Version(major, minor, 0);
     }
 
     return new Version(major, minor, patch);
+  }
+  
+  private static int parseNumber(String num, int def) {
+    return StringUtil.parseInt(num.replaceFirst("(\\d+).*", "$1"), def);
   }
 
   public boolean is(@Nullable Integer major) {

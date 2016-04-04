@@ -350,26 +350,16 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   private void registerShortcuts() {
-    ActionManager actionManager = ActionManager.getInstance();
-    actionManager.getAction(XDebuggerActions.SET_VALUE)
-      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this, this);
-    actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), this, this);
-    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, this);
-    Shortcut[] editTypeShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(XDebuggerActions.EDIT_TYPE_SOURCE);
-    actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).registerCustomShortcutSet(
-      new CustomShortcutSet(editTypeShortcuts), this, this);
-    actionManager.getAction(XDebuggerActions.MARK_OBJECT).registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark")), this, this);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.SET_VALUE, this, this);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.COPY_VALUE, this, this);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.JUMP_TO_SOURCE, this, this);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.JUMP_TO_TYPE_SOURCE, this, this);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.MARK_OBJECT, this, this);
   }
 
   private static void markNodesObsolete(final XValueContainerNode<?> node) {
     node.setObsolete();
-    List<? extends XValueContainerNode<?>> loadedChildren = node.getLoadedChildren();
-    if (loadedChildren != null) {
-      for (XValueContainerNode<?> child : loadedChildren) {
-        markNodesObsolete(child);
-      }
-    }
+    node.getLoadedChildren().forEach(XDebuggerTree::markNodesObsolete);
   }
 
   @Nullable

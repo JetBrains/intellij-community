@@ -62,7 +62,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
   }
 
   @Override
-  protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
+  protected HgCommandResult executeCommandInCurrentThread(VirtualFile repo, List<String> args) {
     String repositoryURL = getRepositoryUrl(repo);
     if (repositoryURL == null) {
       LOG.info("executeCommand no default path configured");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.search;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -39,17 +41,35 @@ public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement
       });
     }
     else if (queryParameters instanceof PyFunction) {
-      final Query<PyFunction> query = PyOverridingMethodsSearch.search((PyFunction) queryParameters, true);
-      return query.forEach(new Processor<PyFunction>() {
-        public boolean process(final PyFunction pyFunction) {
-          return consumer.process(pyFunction);
+      final Query<PyFunction> query = ApplicationManager.getApplication().runReadAction(
+        new Computable<Query<PyFunction>>() {
+          @Override
+          public Query<PyFunction> compute() {
+            return PyOverridingMethodsSearch.search((PyFunction)queryParameters, true);
+          }
         }
-      });
+      );
+
+      return query.forEach(
+        new Processor<PyFunction>() {
+          public boolean process(final PyFunction pyFunction) {
+            return consumer.process(pyFunction);
+          }
+        }
+      );
     }
     else if (queryParameters instanceof PyTargetExpression) {  // PY-237
-      final PsiElement parent = queryParameters.getParent();
+      final PsiElement parent = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiElement>() {
+          @Override
+          public PsiElement compute() {
+            return queryParameters.getParent();
+          }
+        }
+      );
+
       if (parent instanceof PyAssignmentStatement) {
-        return consumer.process(parent);        
+        return consumer.process(parent);
       }
     }
     return true;

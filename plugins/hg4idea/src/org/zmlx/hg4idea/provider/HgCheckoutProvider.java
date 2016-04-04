@@ -59,7 +59,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
         HgCloneCommand clone = new HgCloneCommand(project);
         clone.setRepositoryURL(sourceRepositoryURL);
         clone.setDirectory(targetDir);
-        cloneResult.set(clone.execute());
+        cloneResult.set(clone.executeInCurrentThread());
       }
 
       @Override

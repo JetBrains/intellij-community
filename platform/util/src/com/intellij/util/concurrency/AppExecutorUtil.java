@@ -61,4 +61,14 @@ public class AppExecutorUtil {
   public static ScheduledExecutorService createBoundedScheduledExecutorService(int maxSimultaneousTasks) {
     return new BoundedScheduledExecutorService(getAppExecutorService(), maxSimultaneousTasks);
   }
+
+  /**
+   * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the application pool
+   *         (i.e. all tasks are run in the {@link #getAppExecutorService()} global thread pool).
+   * @see #getAppExecutorService()
+   */
+  @NotNull
+  public static ExecutorService createBoundedApplicationPoolExecutor(int maxThreads) {
+    return new BoundedTaskExecutor(getAppExecutorService(), maxThreads);
+  }
 }

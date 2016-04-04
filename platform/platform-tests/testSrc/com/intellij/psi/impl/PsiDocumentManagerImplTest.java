@@ -660,4 +660,43 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       System.out.println("i = " + i);
     }
   }
+
+  public void testCommitNonPhysicalPsiWithoutWriteAction() throws IOException {
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
+
+    PsiFile original = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
+    assertNotNull(original);
+    assertTrue(original.getViewProvider().isEventSystemEnabled());
+
+    long modCount = getPsiManager().getModificationTracker().getModificationCount();
+
+    PsiFile copy = (PsiFile)original.copy();
+    assertFalse(copy.getViewProvider().isEventSystemEnabled());
+
+    Document document = copy.getViewProvider().getDocument();
+    assertNotNull(document);
+    document.setText("class A{}");
+
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
+    assertEquals(modCount, getPsiManager().getModificationTracker().getModificationCount());
+    assertEquals(document.getText(), copy.getText());
+    assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+  }
+
+  public void testCommitNonPhysicalCopyOnPerformWhenAllCommitted() throws Exception {
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
+
+    PsiFile original = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
+    assertNotNull(original);
+    PsiFile copy = (PsiFile)original.copy();
+    assertEquals("", copy.getText());
+    Document document = copy.getViewProvider().getDocument();
+    assertNotNull(document);
+
+    document.setText("class A{}");
+    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> assertEquals(document.getText(), copy.getText()));
+    DocumentCommitThread.getInstance().waitForAllCommits();
+    assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+  }
+
 }

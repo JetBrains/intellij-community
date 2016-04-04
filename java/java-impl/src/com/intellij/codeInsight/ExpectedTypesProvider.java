@@ -42,6 +42,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -932,11 +933,14 @@ public class ExpectedTypesProvider {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
 
+      PsiMethod toExclude = ExpressionUtils.isConstructorInvocation(argumentList.getParent())
+                            ? PsiTreeUtil.getParentOfType(argument, PsiMethod.class) : null;
+
       PsiResolveHelper helper = JavaPsiFacade.getInstance(myExpr.getProject()).getResolveHelper();
       List<CandidateInfo> methodCandidates = new ArrayList<CandidateInfo>();
       for (CandidateInfo candidate : allCandidates) {
         PsiElement element = candidate.getElement();
-        if (element instanceof PsiMethod && helper.isAccessible((PsiMember)element, argumentList, null)) {
+        if (element instanceof PsiMethod && helper.isAccessible((PsiMember)element, argumentList, null) && element != toExclude) {
           methodCandidates.add(candidate);
         }
       }
@@ -1158,7 +1162,8 @@ public class ExpectedTypesProvider {
       if (className != null && className.startsWith("Log")) {
         if (parameterType instanceof PsiClassType) {
           PsiType typeArg = PsiUtil.substituteTypeParameter(parameterType, CommonClassNames.JAVA_LANG_CLASS, 0, true);
-          if (typeArg != null && TypeConversionUtil.erasure(typeArg).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          if (typeArg instanceof PsiWildcardType && !((PsiWildcardType)typeArg).isBounded() ||
+              typeArg != null && TypeConversionUtil.erasure(typeArg).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             PsiClass placeClass = PsiTreeUtil.getContextOfType(argument, PsiClass.class);
             PsiClass classClass = ((PsiClassType)parameterType).resolve();
             if (placeClass != null && classClass != null) {

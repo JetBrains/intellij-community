@@ -100,7 +100,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
         if (lambdaContext != null && 
             (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) &&
-            canBeConvertedToLambda(aClass, false, reportNotAnnotatedInterfaces)) {
+            canBeConvertedToLambda(aClass, false, reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiElement lBrace = aClass.getLBrace();
           LOG.assertTrue(lBrace != null);
           final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
@@ -111,12 +111,15 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     };
   }
 
-  private static boolean hasRuntimeAnnotations(PsiMethod method) {
+  private static boolean hasRuntimeAnnotations(PsiMethod method, @NotNull Set<String> runtimeAnnotationsToIgnore) {
     PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       PsiElement target = ref != null ? ref.resolve() : null;
       if (target instanceof PsiClass) {
+        if (runtimeAnnotationsToIgnore.contains(((PsiClass)target).getQualifiedName())) {
+          continue;
+        }
         final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation((PsiClass)target, Retention.class.getName());
         if (retentionAnno != null) {
           PsiAnnotationMemberValue value = retentionAnno.findAttributeValue("value");
@@ -178,13 +181,16 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     return null;
   }
 
-  public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass, boolean acceptParameterizedFunctionTypes) {
-    return canBeConvertedToLambda(aClass, acceptParameterizedFunctionTypes, true);
+  public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass,
+                                               boolean acceptParameterizedFunctionTypes,
+                                               @NotNull Set<String> ignoredRuntimeAnnotations) {
+    return canBeConvertedToLambda(aClass, acceptParameterizedFunctionTypes, true, ignoredRuntimeAnnotations);
   }
 
   public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass,
                                                boolean acceptParameterizedFunctionTypes,
-                                               boolean reportNotAnnotatedInterfaces) {
+                                               boolean reportNotAnnotatedInterfaces,
+                                               @NotNull Set<String> ignoredRuntimeAnnotations) {
     if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
       final PsiClassType baseClassType = aClass.getBaseClassType();
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();
@@ -203,7 +209,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
           final PsiMethod method = methods[0];
           return method.getBody() != null &&
                  !hasForbiddenRefsInsideBody(method, aClass) &&
-                 !hasRuntimeAnnotations(method) &&
+                 !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
                  !method.hasModifierProperty(PsiModifier.SYNCHRONIZED);
         }
       }
@@ -497,16 +503,18 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
       super.visitReferenceExpression(expression);
       if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
-        final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
-        if (field != null) {
+        final PsiMember member = PsiTreeUtil.getParentOfType(myAnonymClass, PsiMember.class);
+        if (member instanceof PsiField || member instanceof PsiClassInitializer) {
           final PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiField && 
-              ((PsiField)resolved).getContainingClass() == field.getContainingClass() && 
+          final PsiClass memberContainingClass = member.getContainingClass();
+          if (resolved instanceof PsiField &&
+              memberContainingClass != null &&
+              PsiTreeUtil.isAncestor(((PsiField)resolved).getContainingClass(), memberContainingClass, false) &&
               expression.getQualifierExpression() == null) {
             final PsiExpression initializer = ((PsiField)resolved).getInitializer();
             if (initializer == null ||
-                resolved == field ||
-                initializer.getTextOffset() > myAnonymClass.getTextOffset() && !((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+                resolved == member ||
+                initializer.getTextOffset() > myAnonymClass.getTextOffset() && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC) == member.hasModifierProperty(PsiModifier.STATIC)) {
               myBodyContainsForbiddenRefs = true;
               return;
             }

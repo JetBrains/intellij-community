@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 public class MethodSignatureUtil {
@@ -320,16 +323,20 @@ public class MethodSignatureUtil {
       result = result.put(superTypeParameters[i], factory.createType(methodTypeParameter));
     }
 
+    final PsiSubstitutor methodSubstitutor = methodSignature.getSubstitutor();
+
     //check bounds
     for (int i = 0; i < methodTypeParameters.length; i++) {
       PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
       PsiTypeParameter superTypeParameter = superTypeParameters[i];
       final Set<PsiType> methodSupers = new HashSet<PsiType>();
-      Collections.addAll(methodSupers, methodTypeParameter.getSuperTypes());
+      for (PsiClassType methodSuper : methodTypeParameter.getSuperTypes()) {
+        methodSupers.add(methodSubstitutor.substitute(methodSuper));
+      }
 
       final Set<PsiType> superSupers = new HashSet<PsiType>();
       for (PsiClassType superSuper : superTypeParameter.getSuperTypes()) {
-        superSupers.add(result.substitute(superSuper));
+        superSupers.add(methodSubstitutor.substitute(result.substitute(superSuper)));
       }
       methodSupers.remove(PsiType.getJavaLangObject(methodTypeParameter.getManager(), methodTypeParameter.getResolveScope()));
       superSupers.remove(PsiType.getJavaLangObject(superTypeParameter.getManager(), superTypeParameter.getResolveScope()));

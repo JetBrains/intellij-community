@@ -1,7 +1,9 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.DumbAware;
@@ -92,6 +94,12 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
 
     if (currentLine < 0 || currentLine >= revisions.size()) return null;
     return revisions.get(currentLine);
+  }
+
+  @Nullable
+  @Override
+  protected Editor getEditor(@NotNull AnActionEvent e) {
+    return e.getData(CommonDataKeys.EDITOR);
   }
 
   @Override

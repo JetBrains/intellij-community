@@ -234,7 +234,8 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
     @Override
     public String toString() {
-      return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + BoundedTaskExecutor.info(this);
+      Object info = BoundedTaskExecutor.info(this);
+      return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + (info == this ? super.toString() : info);
     }
 
     @NotNull

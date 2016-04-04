@@ -127,6 +127,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -150,8 +151,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public static final int MAX_TOP_HIT = 15;
   private static final int POPUP_MAX_WIDTH = 600;
   private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
-  private static final Executor RUN_EXECUTOR = DefaultRunExecutor.getRunExecutorInstance();
-  private static final Executor DEBUG_EXECUTOR = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -911,14 +910,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Nullable
   public Executor findExecutor(@NotNull RunnerAndConfigurationSettings settings) {
-    Executor executor = ourShiftIsPressed.get() ? RUN_EXECUTOR : DEBUG_EXECUTOR;
+    final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
+    final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+
+    Executor executor = ourShiftIsPressed.get() ? runExecutor : debugExecutor;
     RunConfiguration runConf = settings.getConfiguration();
     if (executor == null || runConf == null) {
       return null;
     }
     ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);
     if (runner == null) {
-      executor = RUN_EXECUTOR == executor ? DEBUG_EXECUTOR : RUN_EXECUTOR;
+      executor = runExecutor == executor ? debugExecutor : runExecutor;
     }
     return executor;
   }

@@ -15,8 +15,10 @@
  */
 package com.intellij.execution.testframework.autotest;
 
-import com.intellij.execution.DelayedDocumentWatcher;
-import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -31,33 +33,43 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
  */
-public class AutoTestManager {
+@State(
+  name = "AutoTestManager",
+  storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
+)
+public class AutoTestManager implements PersistentStateComponent<AutoTestManager.State> {
   private static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
   private static final int AUTO_TEST_MANAGER_DELAY_DEFAULT = 3000;
 
   private static final Key<ProcessListener> ON_TERMINATION_RESTARTER_KEY = Key.create("auto.test.manager.on.termination.restarter");
-  private static final Key<ExecutionEnvironment> EXECUTION_ENVIRONMENT_KEY = Key.create("auto.test.manager.execution.environment");
 
   private final Project myProject;
   private int myDelayMillis;
   private DelayedDocumentWatcher myDocumentWatcher;
+  private final Set<RunProfile> myEnabledRunProfiles = ContainerUtil.newHashSet();
 
   @NotNull
   public static AutoTestManager getInstance(Project project) {
@@ -66,7 +78,7 @@ public class AutoTestManager {
 
   public AutoTestManager(@NotNull Project project) {
     myProject = project;
-    myDelayMillis = StringUtilRt.parseInt(PropertiesComponent.getInstance(project).getValue(AUTO_TEST_MANAGER_DELAY), AUTO_TEST_MANAGER_DELAY_DEFAULT);
+    myDelayMillis = PropertiesComponent.getInstance(project).getInt(AUTO_TEST_MANAGER_DELAY, AUTO_TEST_MANAGER_DELAY_DEFAULT);
     myDocumentWatcher = createWatcher();
   }
 
@@ -93,11 +105,11 @@ public class AutoTestManager {
     Content content = descriptor.getAttachedContent();
     if (content != null) {
       if (enabled) {
-        EXECUTION_ENVIRONMENT_KEY.set(content, environment);
+        myEnabledRunProfiles.add(environment.getRunProfile());
         myDocumentWatcher.activate();
       }
       else {
-        EXECUTION_ENVIRONMENT_KEY.set(content, null);
+        myEnabledRunProfiles.remove(environment.getRunProfile());
         if (!hasEnabledAutoTests()) {
           myDocumentWatcher.deactivate();
         }
@@ -123,19 +135,11 @@ public class AutoTestManager {
     return isAutoTestEnabledForDescriptor(descriptor);
   }
 
-  private static boolean isAutoTestEnabledForDescriptor(@NotNull RunContentDescriptor descriptor) {
+  private boolean isAutoTestEnabledForDescriptor(@NotNull RunContentDescriptor descriptor) {
     Content content = descriptor.getAttachedContent();
     if (content != null) {
-      ExecutionEnvironment watched = EXECUTION_ENVIRONMENT_KEY.get(content);
-      if (watched != null) {
-        ExecutionEnvironment current = getCurrentEnvironment(content);
-        boolean result = current != null && equals(current, watched);
-        if (!result) {
-          // let GC do its work
-          EXECUTION_ENVIRONMENT_KEY.set(content, null);
-        }
-        return result;
-      }
+      ExecutionEnvironment environment = getCurrentEnvironment(content);
+      return environment != null && myEnabledRunProfiles.contains(environment.getRunProfile());
     }
     return false;
   }
@@ -147,13 +151,6 @@ public class AutoTestManager {
       return null;
     }
     return LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
-  }
-
-  private static boolean equals(@NotNull ExecutionEnvironment env1, @NotNull ExecutionEnvironment env2) {
-    return env1.getRunProfile() == env2.getRunProfile() &&
-           env1.getRunner() == env2.getRunner() &&
-           env1.getExecutor() == env2.getExecutor() &&
-           env1.getExecutionTarget() == env2.getExecutionTarget();
   }
 
   private static void clearRestarterListener(@NotNull ProcessHandler processHandler) {
@@ -178,9 +175,9 @@ public class AutoTestManager {
     }
   }
 
-  private static void restartAutoTest(@NotNull RunContentDescriptor descriptor,
-                                      int modificationStamp,
-                                      @NotNull DelayedDocumentWatcher documentWatcher) {
+  private void restartAutoTest(@NotNull RunContentDescriptor descriptor,
+                               int modificationStamp,
+                               @NotNull DelayedDocumentWatcher documentWatcher) {
     ProcessHandler processHandler = descriptor.getProcessHandler();
     if (processHandler != null && !processHandler.isProcessTerminated()) {
       scheduleRestartOnTermination(descriptor, processHandler, modificationStamp, documentWatcher);
@@ -190,10 +187,10 @@ public class AutoTestManager {
     }
   }
 
-  private static void scheduleRestartOnTermination(@NotNull final RunContentDescriptor descriptor,
-                                                   @NotNull final ProcessHandler processHandler,
-                                                   final int modificationStamp,
-                                                   @NotNull final DelayedDocumentWatcher documentWatcher) {
+  private void scheduleRestartOnTermination(@NotNull final RunContentDescriptor descriptor,
+                                            @NotNull final ProcessHandler processHandler,
+                                            final int modificationStamp,
+                                            @NotNull final DelayedDocumentWatcher documentWatcher) {
     ProcessListener restarterListener = ON_TERMINATION_RESTARTER_KEY.get(processHandler);
     if (restarterListener != null) {
       clearRestarterListener(processHandler);
@@ -234,5 +231,55 @@ public class AutoTestManager {
       myDocumentWatcher.activate();
     }
     PropertiesComponent.getInstance(myProject).setValue(AUTO_TEST_MANAGER_DELAY, myDelayMillis, AUTO_TEST_MANAGER_DELAY_DEFAULT);
+  }
+
+  @Nullable
+  @Override
+  public State getState() {
+    State state = new State();
+    for (RunProfile profile : myEnabledRunProfiles) {
+      RunConfiguration runConfiguration = ObjectUtils.tryCast(profile, RunConfiguration.class);
+      if (runConfiguration != null) {
+        RunConfigurationDescriptor descriptor = new RunConfigurationDescriptor();
+        descriptor.myType = runConfiguration.getType().getId();
+        descriptor.myName = runConfiguration.getName();
+        state.myEnabledRunConfigurations.add(descriptor);
+      }
+    }
+    return state;
+  }
+
+  @Override
+  public void loadState(State state) {
+    List<RunConfiguration> configurations = ContainerUtil.newArrayList();
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+    List<RunConfigurationDescriptor> descriptors = ContainerUtil.notNullize(state.myEnabledRunConfigurations);
+    for (RunConfigurationDescriptor descriptor : descriptors) {
+      if (descriptor.myType != null && descriptor.myName != null) {
+        RunnerAndConfigurationSettings settings = runManager.findConfigurationByTypeAndName(descriptor.myType,
+                                                                                            descriptor.myName);
+        RunConfiguration configuration = settings != null ? settings.getConfiguration() : null;
+        if (configuration != null) {
+          configurations.add(configuration);
+        }
+      }
+    }
+    myEnabledRunProfiles.clear();
+    myEnabledRunProfiles.addAll(configurations);
+  }
+
+  static class State {
+    @Tag("enabled-run-configurations")
+    @AbstractCollection(surroundWithTag = false)
+    List<RunConfigurationDescriptor> myEnabledRunConfigurations = ContainerUtil.newArrayList();
+  }
+
+  @Tag("run-configuration")
+  static class RunConfigurationDescriptor {
+    @Attribute("type")
+    String myType;
+
+    @Attribute("name")
+    String myName;
   }
 }

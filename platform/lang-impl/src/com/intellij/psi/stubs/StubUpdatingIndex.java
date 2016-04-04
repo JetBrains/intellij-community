@@ -288,9 +288,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     public void flush() throws StorageException {
       final StubIndexImpl stubIndex = getStubIndex();
       try {
-        for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
-          stubIndex.flush(key);
-        }
+        stubIndex.flush();
       }
       finally {
         super.flush();

@@ -151,6 +151,6 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
     HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(!path.isDirectory())
       .baseRevision(compareWithRevisionNumber).targetRevision(null).build(repository.getProject());
     statusCommand.cleanFilesOption(true);
-    return !statusCommand.execute(repository.getRoot(), Collections.singleton(path)).isEmpty();
+    return !statusCommand.executeInCurrentThread(repository.getRoot(), Collections.singleton(path)).isEmpty();
   }
 }

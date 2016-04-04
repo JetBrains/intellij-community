@@ -75,7 +75,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
   }
 
   @Override
-  protected boolean isResolved(@NotNull ThreeSide side) {
+  public boolean isResolved(@NotNull ThreeSide side) {
     return false;
   }
 

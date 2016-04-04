@@ -91,6 +91,11 @@ fun Path.write(data: ByteArray, offset: Int = 0, length: Int = data.size): Path 
   return this
 }
 
+fun Path.write(data: String): Path {
+  Files.write(this, data.toByteArray())
+  return this
+}
+
 fun Path.size() = Files.size(this)
 
 fun Path.sizeOrNull(): Long {

@@ -229,7 +229,7 @@ public class MigrationPanel extends JPanel implements Disposable {
                     }
                     new WriteCommandAction(myProject) {
                       protected void run(@NotNull Result result) throws Throwable {
-                        TypeMigrationProcessor.change(myLabeler, usages);
+                        TypeMigrationProcessor.change(usages, myLabeler, myProject);
                       }
                     }.execute();
                   }

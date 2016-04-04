@@ -87,7 +87,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       return ArrayUtil.toStringArray(enumConstants);
     }
 
-    final String propertyQName = JavaFxPsiUtil.getBoxedPropertyType(getDeclaration());
+    final String propertyQName = JavaFxPsiUtil.getBoxedPropertyType(myPsiClass, getDeclarationImpl());
     if (CommonClassNames.JAVA_LANG_FLOAT.equals(propertyQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(propertyQName)) {
       return new String[] {"Infinity", "-Infinity", "NaN",  "-NaN"};
     } else if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyQName)) {
@@ -110,8 +110,8 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   public PsiElement getEnumeratedValueDeclaration(XmlElement xmlElement, String value) {
     final PsiClass aClass = getEnum();
     if (aClass != null) {
-      final PsiField fieldByName = aClass.findFieldByName(value, false);
-      return fieldByName != null ? fieldByName : aClass.findFieldByName(value.toUpperCase(), false);
+      final PsiField fieldByName = aClass.findFieldByName(value, true);
+      return fieldByName != null ? fieldByName : aClass.findFieldByName(value.toUpperCase(), true);
     }
     return xmlElement;
   }
@@ -190,13 +190,13 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
         else {
           final XmlAttributeDescriptor attributeDescriptor = ((XmlAttribute)parent).getDescriptor();
           if (attributeDescriptor != null) {
+            final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
             final PsiElement declaration = attributeDescriptor.getDeclaration();
             final String boxedQName;
             if (declaration != null) {
-              boxedQName = JavaFxPsiUtil.getBoxedPropertyType(declaration);
+              boxedQName = declaration instanceof PsiMember ? JavaFxPsiUtil.getBoxedPropertyType(tagClass, (PsiMember)declaration) : null;
             }
             else {
-              final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
               if (tagClass != null && !InheritanceUtil.isInheritor(tagClass, false, JavaFxCommonNames.JAVAFX_SCENE_NODE)) {
                 boxedQName = tagClass.getQualifiedName();
               }
@@ -208,7 +208,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
               try {
                 final Class<?> aClass = Class.forName(boxedQName);
                 final Method method = aClass.getMethod(JavaFxCommonNames.VALUE_OF, String.class);
-                method.invoke(aClass, ((XmlAttributeValue)context).getValue());
+                method.invoke(aClass, xmlAttributeValue.getValue());
               }
               catch (InvocationTargetException e) {
                 final Throwable cause = e.getCause();
@@ -217,8 +217,8 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
                   if (reference != null) {
                     final PsiElement resolve = reference.resolve();
                     if (resolve instanceof XmlAttributeValue) {
-                      final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)resolve);
-                      if (tagClass != null && boxedQName.equals(tagClass.getQualifiedName())) {
+                      final PsiClass resolvedClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)resolve);
+                      if (resolvedClass != null && boxedQName.equals(resolvedClass.getQualifiedName())) {
                         return null;
                       }
                     }
@@ -238,14 +238,11 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
 
   @Override
   public PsiElement getDeclaration() {
-    if (myPsiClass != null) {
-      final PsiField field = myPsiClass.findFieldByName(myName, true);
-      if (field != null) {
-        return field;
-      }
-      return JavaFxPsiUtil.findPropertySetter(myName, myPsiClass);
-    }
-    return null;
+    return getDeclarationImpl();
+  }
+
+  private PsiMember getDeclarationImpl() {
+    return JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(myName);
   }
 
   @Override

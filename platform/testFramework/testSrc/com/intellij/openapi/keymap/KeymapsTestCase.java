@@ -71,11 +71,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "BACK_SPACE",               "EditorBackSpace", "Images.Thumbnails.UpFolder"},
     { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
                                   "PropertyInspectorActions.EditValue", "Console.Execute", "Console.TableResult.EditValue"},
-    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "XDebugger.EditWatch"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "F5",                       "UML.ApplyCurrentLayout", "CopyElement"},
     { "F7",                       "NextDiff", "StepInto"},
-    { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add"},
+    { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add", "XDebugger.NewWatch"},
     { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
     { "alt DOWN",                 "ShowContent", "MethodDown"},
@@ -179,7 +179,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     put("Emacs", new String[][] {
     { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
                                   "PropertyInspectorActions.EditValue", "Console.Execute", "Console.TableResult.EditValue"},
-    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "XDebugger.EditWatch"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", 
                                   "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
@@ -253,7 +253,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt L",              "ReformatCode", "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
     });
     put("Eclipse", new String[][] {
-    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc"},
+    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "XDebugger.EditWatch"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "F5",                       "UML.ApplyCurrentLayout", "StepInto"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
@@ -291,7 +291,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control T",          "GotoClass", "GotoChangedFile"},
     });
     put("NetBeans 6.5", new String[][] {
-    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "XDebugger.EditWatch"},
     { "F4",                       "RunToCursor", "EditSource"},
     { "F5",                       "Debugger.ResumeThread", "Resume", "UML.ApplyCurrentLayout"},
     { "alt DOWN",                 "NextOccurence", "ShowContent"},
@@ -324,7 +324,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift TAB",                "EditorUnindentSelection", "PreviousTemplateVariable", "PrevParameter", "PrevTemplateParameter"},
     });
     put("JBuilder", new String[][] {
-    { "F2",                       "EditorTab", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F2",                       "EditorTab", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "XDebugger.EditWatch"},
     { "F5",                       "ToggleBreakpointEnabled", "UML.ApplyCurrentLayout"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
     { "control F6",               "PreviousEditorTab", "PreviousTab", },
@@ -341,7 +341,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     });
     put("Eclipse (Mac OS X)", new String[][] {
       { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
-      { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc"},
+      { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "XDebugger.EditWatch"},
       { "F3",                       "GotoDeclaration", "EditSource"},
       { "F5",                       "StepInto", "Console.TableResult.Reload", "UML.ApplyCurrentLayout"},
       { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},

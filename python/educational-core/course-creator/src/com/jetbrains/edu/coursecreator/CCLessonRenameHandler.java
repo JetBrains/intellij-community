@@ -3,9 +3,9 @@ package com.jetbrains.edu.coursecreator;
 import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
 import org.jetbrains.annotations.NotNull;
 
 public class CCLessonRenameHandler extends CCRenameHandler implements TitledHandler {

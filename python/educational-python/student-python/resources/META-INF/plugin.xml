@@ -18,11 +18,12 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.python</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
-  <depends>com.jetbrains.edu.core</depends>
   <depends>com.jetbrains.python.edu.core</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+                        serviceImplementation="com.jetbrains.edu.learning.PyStudyInstructionPainter" overrides="true"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>
@@ -32,7 +33,7 @@
   <extensions defaultExtensionNs="Edu">
     <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>
     <StudyLanguageManager implementationClass="com.jetbrains.edu.learning.PyStudyLanguageManager" language="Python"/>
-    <studyToolWindowConfigurator implementation="com.jetbrains.edu.learning.PyStudyToolWindowConfigurator" />
+    <studyPluginConfigurator implementation="com.jetbrains.edu.learning.PyStudyPluginConfigurator" />
   </extensions>
   <actions>
     <action id="WelcomeScreen.PythonIntro" class="com.jetbrains.edu.learning.actions.PyStudyIntroductionCourseAction"
@@ -42,6 +43,8 @@
     <action id="StudyWatchTutorial" class="com.jetbrains.edu.learning.actions.PyStudyWatchTutorialAction">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
+    <action class="com.jetbrains.edu.learning.PyStudyCheckAction" id="PyCheckAction"
+            />
   </actions>
 
   <project-components>

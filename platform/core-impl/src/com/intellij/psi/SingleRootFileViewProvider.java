@@ -128,13 +128,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
-    if (file instanceof LightVirtualFile) {
-      final Language language = ((LightVirtualFile)file).getLanguage();
-      if (language != null) {
-        return language;
-      }
-    }
-
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 

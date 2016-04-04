@@ -43,6 +43,7 @@ public class NextVariableAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+
     @Override
     protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);

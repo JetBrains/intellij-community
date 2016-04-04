@@ -52,6 +52,23 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testWithAnonymousClasses() throws Exception {
+    doTest();
+  }
+
+
+  public void testCastInMethodCallQualifierWithWildcardReturn() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedWildcardInCast() throws Exception {
+    doTest();
+  }
+
+  public void testTopLevelResolutionFailures() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }

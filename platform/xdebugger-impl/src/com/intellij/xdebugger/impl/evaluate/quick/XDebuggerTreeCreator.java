@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.concurrency.ResultConsumer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XSourcePosition;
@@ -29,8 +28,6 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.tree.TreeNode;
 
 public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,String>> {
   @NotNull private final Project myProject;
@@ -54,12 +51,7 @@ public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,Str
     tree.setRoot(root, true);
     tree.setSelectionRow(0);
     // expand root on load
-    tree.expandNodesOnLoad(new Condition<TreeNode>() {
-      @Override
-      public boolean value(TreeNode node) {
-        return node == root;
-      }
-    });
+    tree.expandNodesOnLoad(node -> node == root);
     return tree;
   }
 

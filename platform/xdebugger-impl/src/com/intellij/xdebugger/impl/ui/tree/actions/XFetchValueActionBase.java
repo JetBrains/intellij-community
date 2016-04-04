@@ -27,7 +27,7 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,14 +58,10 @@ public abstract class XFetchValueActionBase extends AnAction {
 
   protected boolean isEnabled(@NotNull AnActionEvent event, @NotNull Object node) {
     if (node instanceof XValueNodeImpl) {
-      if (((XValueNodeImpl)node).isComputed()) {
+      if (node instanceof WatchNodeImpl || ((XValueNodeImpl)node).isComputed()) {
         event.getPresentation().setEnabled(true);
         return true;
       }
-    }
-    else if (node instanceof WatchMessageNode) {
-      event.getPresentation().setEnabled(true);
-      return true;
     }
     return false;
   }
@@ -100,9 +96,6 @@ public abstract class XFetchValueActionBase extends AnAction {
           new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
         }
       }
-    }
-    else if (node instanceof WatchMessageNode) {
-      valueCollector.add(((WatchMessageNode)node).getExpression().getExpression());
     }
   }
 

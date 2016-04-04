@@ -1423,7 +1423,7 @@ public class Mappings {
           final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
 
           if (d.packageLocalOn()) {
-            debug("Method became package-local, affecting method usages outside the package");
+            debug("Method became package-private, affecting method usages outside the package");
             myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
 
             for (final UsageRepr.Usage usage : usages) {
@@ -1483,7 +1483,7 @@ public class Mappings {
 
               if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                 if (!constrained) {
-                  debug("Added public or package-local method became protected --- affect method usages with protected constraint");
+                  debug("Added public or package-private method became protected --- affect method usages with protected constraint");
                   if (!affected) {
                     myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                     state.myAffectedUsages.addAll(usages);

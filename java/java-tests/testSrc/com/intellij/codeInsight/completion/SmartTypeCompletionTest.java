@@ -1166,7 +1166,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testLocalClassInExpectedTypeArguments() { doTest(); }
 
-  private void doActionTest() throws Exception {
+  private void doActionTest() {
     configureByTestName();
     checkResultByTestName();
   }
@@ -1237,4 +1237,6 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
   }
+
+  public void testQualifyOuterClassCall() { doActionTest(); }
 }

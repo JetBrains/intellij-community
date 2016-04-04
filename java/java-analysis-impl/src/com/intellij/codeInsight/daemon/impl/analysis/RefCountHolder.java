@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,17 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
+import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
@@ -30,9 +36,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.Predicate;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -96,6 +104,38 @@ class RefCountHolder {
   private RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
     log("c: created for ", file);
+  }
+
+  @NotNull
+  GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file,
+                                         @Nullable final UnusedDeclarationInspectionBase deadCodeInspection,
+                                         boolean isUnusedToolEnabled) {
+    final FileViewProvider viewProvider = file.getViewProvider();
+    Project project = file.getProject();
+
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    boolean inLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
+
+    final boolean myDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
+    @NotNull final Predicate<PsiElement> myIsEntryPointPredicate = member -> !myDeadCodeEnabled || deadCodeInspection.isEntryPoint(member);
+
+    return new GlobalUsageHelper() {
+      @Override
+      public boolean shouldCheckUsages(@NotNull PsiMember member) {
+        return !inLibrary && !myIsEntryPointPredicate.apply(member);
+      }
+
+      @Override
+      public boolean isCurrentFileAlreadyChecked() {
+        return true;
+      }
+
+      @Override
+      public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
+        return isReferenced(member);
+      }
+    };
   }
 
   private void clear() {

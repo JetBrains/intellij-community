@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.LicensingFacade;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -52,31 +50,19 @@ class NewChannelDialog extends AbstractUpdateDialog {
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<Action> actions = ContainerUtil.newArrayList(getOKAction());
+    return new Action[]{
+      getOKAction(),
 
-    if (myPaidUpgrade) {
-      actions.add(new AbstractAction(IdeBundle.message("updates.buy.online.button")) {
+      new AbstractAction(IdeBundle.message("updates.remind.later.button")) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          LicensingFacade facade = LicensingFacade.getInstance();
-          assert facade != null;
-          BrowserUtil.browse(facade.getUpgradeUrl());
+          UpdateSettings.getInstance().forgetChannelId(myChannel.getId());
           doCancelAction();
         }
-      });
-    }
+      },
 
-    actions.add(new AbstractAction(IdeBundle.message("updates.remind.later.button")) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        UpdateSettings.getInstance().forgetChannelId(myChannel.getId());
-        doCancelAction();
-      }
-    });
-
-    actions.add(getCancelAction());
-
-    return actions.toArray(new Action[actions.size()]);
+      getCancelAction()
+    };
   }
 
   @Override
@@ -91,7 +77,7 @@ class NewChannelDialog extends AbstractUpdateDialog {
 
   @Override
   protected void doOKAction() {
-    BrowserUtil.browse(myChannel.getHomePageUrl());
+    BrowserUtil.browse(Objects.requireNonNull(myChannel.getHomePageUrl(), "missing URL for channel " + myChannel.getId()));
     super.doOKAction();
   }
 

@@ -50,7 +50,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDelegatingConstructorCall() {
-    checkPreferredItems 0, 'element', 'equals'
+    checkPreferredItems 0, 'element'
   }
 
   public void testPreferAnnotationMethods() throws Throwable {
@@ -432,6 +432,17 @@ interface TxANotAnno {}
   }
 
   public void testDispreferReturnBeforeStatement() {
+    checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+
+  public void testDispreferReturnInConstructor() {
+    checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+
+  public void testDispreferReturnInVoidMethodTopLevel() {
+    checkPreferredItems 0, 'reaction', 'rezet', 'return'
+  }
+  public void testDispreferReturnInVoidLambda() {
     checkPreferredItems 0, 'reaction', 'rezet', 'return'
   }
 

@@ -27,13 +27,11 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 
-import static java.net.HttpURLConnection.HTTP_NOT_IMPLEMENTED;
-import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class HttpRequestsTest  {
+public class HttpRequestsTest {
   private static final String LOCALHOST = "127.0.0.1";
 
   private HttpServer myServer;

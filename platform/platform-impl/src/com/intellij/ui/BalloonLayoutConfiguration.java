@@ -49,6 +49,9 @@ public class BalloonLayoutConfiguration {
   public static final int FixedWidth;
   public static final int MaxWidth;
 
+  public static final int MaxFullContentWidth = JBUI.scale(350);
+  public static final String MaxFullContentWidthStyle = "width:" + MaxFullContentWidth + "px;";
+
   public static final int MinWidth = JBUI.scale(100);
 
   public static final String MaxWidthStyle;
@@ -81,10 +84,11 @@ public class BalloonLayoutConfiguration {
   public static final int NotificationSpace = JBUI.scale(10);
 
   @NotNull
-  public static BalloonLayoutConfiguration create(@NotNull Notification notification, @NotNull BalloonLayoutData layoutData) {
+  public static BalloonLayoutConfiguration create(@NotNull Notification notification,
+                                                  @NotNull BalloonLayoutData layoutData,
+                                                  boolean actions) {
     boolean title = notification.isTitle();
     boolean content = notification.isContent();
-    boolean actions = !notification.getActions().isEmpty();
     if (title && content && actions) {
       return treeLines();
     }

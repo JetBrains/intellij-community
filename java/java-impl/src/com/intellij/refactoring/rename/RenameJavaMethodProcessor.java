@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -360,7 +360,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return;
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, true).findAll();
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass).findAll();
 
     MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
     MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),

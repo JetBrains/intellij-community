@@ -217,7 +217,7 @@ public class PluginGroups {
     addVimPlugin(featuredPlugins);
     featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
     featuredPlugins.put("Atlassian Connector",
-                        "Tools Integration:Integration for Atlassian JIRA, Bamboo, Cricible, FishEye:atlassian-idea-plugin");
+                        "Tools Integration:Integration for Atlassian JIRA, Bamboo, Crucible, FishEye:atlassian-idea-plugin");
   }
 
   public static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {

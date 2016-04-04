@@ -18,10 +18,12 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -214,23 +216,28 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
         final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
         if (descriptor != null) {
           final PsiElement declaration = descriptor.getDeclaration();
-          if (declaration instanceof PsiField) {
-            return collectProperties((PsiField)declaration);
+          final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myTagClass, declaration);
+          if (propertyType != null) {
+            return collectProperties(propertyType, parent.getProject());
           }
         }
       }
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    private Object[] collectProperties(@NotNull PsiField psiField) {
-      final PsiType type = psiField.getType();
-      final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(type, psiField.getProject());
-      final List<PsiField> objs = new ArrayList<PsiField>();
-      for (PsiField field : myTagClass.getAllFields()) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        final PsiType fieldType = field.getType();
-        if (TypeConversionUtil.isAssignable(type, fieldType) || (propertyType != null && TypeConversionUtil.isAssignable(propertyType, fieldType))) {
-          objs.add(field);
+    private Object[] collectProperties(@NotNull PsiType propertyType, @NotNull Project project) {
+      final PsiType resolvedType = JavaFxPsiUtil.getWritablePropertyType(propertyType, project);
+      final List<LookupElement> objs = new ArrayList<>();
+      final List<PsiMember> readableProperties = JavaFxPsiUtil.collectReadableProperties(myTagClass);
+      for (PsiMember readableMember : readableProperties) {
+        final PsiType readableType = JavaFxPsiUtil.getReadablePropertyType(readableMember);
+        if (readableType == null) continue;
+        if (TypeConversionUtil.isAssignable(propertyType, readableType) ||
+            resolvedType != null && TypeConversionUtil.isAssignable(resolvedType, readableType)) {
+          final String propertyName = PropertyUtil.getPropertyName(readableMember);
+          if (propertyName != null) {
+            objs.add(LookupElementBuilder.create(readableMember, propertyName));
+          }
         }
       }
       return ArrayUtil.toObjectArray(objs);

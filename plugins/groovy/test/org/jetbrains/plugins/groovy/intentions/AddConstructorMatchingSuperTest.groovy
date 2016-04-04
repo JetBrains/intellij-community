@@ -34,6 +34,7 @@ public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
 
   void testGroovyToGroovy() {
     doTextTest('''\
+@interface Anno {}
 class Base {
     Base(int p, @Anno int x) throws Exception {}
 }
@@ -41,6 +42,7 @@ class Base {
 class Derived exten<caret>ds Base {
 }
 ''', '''\
+@interface Anno {}
 class Base {
     Base(int p, @Anno int x) throws Exception {}
 }
@@ -55,6 +57,7 @@ class Derived extends Base {
 
   void testJavaToGroovy() {
     myFixture.addClass('''\
+@interface Anno {}
 class Base {
     Base(int p, @Anno int x) throws Exception {}
 }

@@ -19,20 +19,15 @@ package com.intellij.util.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class Animator implements Disposable {
-  // allow only one animation run at a time
-  private final ScheduledExecutorService scheduler = AppExecutorUtil.createBoundedScheduledExecutorService(1);
-
   private final String myName;
   private final int myTotalFrames;
   private final int myCycleDuration;
@@ -147,20 +142,10 @@ public abstract class Animator implements Disposable {
       animationDone();
     }
     else if (myTicker == null) {
-      myTicker = scheduler.scheduleWithFixedDelay(new Runnable() {
-        private final AtomicBoolean scheduled = new AtomicBoolean(false);
-
+      myTicker = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(new Runnable() {
         @Override
         public void run() {
-          if (scheduled.compareAndSet(false, true) && !isDisposed()) {
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                scheduled.set(false);
-                onTick();
-              }
-            });
-          }
+          onTick();
         }
 
         @Override
@@ -183,8 +168,8 @@ public abstract class Animator implements Disposable {
 
   @Override
   public void dispose() {
-    myDisposed = true;
     stopTicker();
+    myDisposed = true;
   }
 
   public boolean isRunning() {

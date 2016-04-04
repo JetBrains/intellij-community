@@ -30,6 +30,7 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testInheritUnrelatedDefaults() { doTest(true, false); }
   public void testExtensionMethods() { doTest(false, false); }
   public void testInheritDefaultMethodInInterface() { doTest(false, false); }
+  public void testCheckForFunctionalInterfaceCandidatesWhenOverrideEquivalentMethodsAreFoundInSuperInterfaces() { doTest(false, false);}
   public void testStaticMethodsInFunctionalInterface() { doTest(false, false); }
   public void testCyclicSubstitutor() { doTest(false, false); }
   public void testThisAccessibility() { doTest(false, false); }
@@ -59,6 +60,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   }
 
   public void testUnrelatedDefaultsOverriddenWithConcreteMethodNonEmptySubstitutor() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testUnrelatedDefaultsWithTypeParameter() throws Exception {
     doTest(false, false);
   }
 

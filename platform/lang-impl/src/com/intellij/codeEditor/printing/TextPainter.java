@@ -377,12 +377,14 @@ class TextPainter extends BasePainter {
       getMethodSeparator(lIterator.getLineNumber());
     }
 
+    char[] text = myDocument.getCharsSequence().toString().toCharArray();
+
     while (!hIterator.atEnd() && !lIterator.atEnd()) {
       int hEnd = hIterator.getEnd();
       int lEnd = lIterator.getEnd();
       int lStart = lIterator.getStart();
       if (hEnd >= lEnd) {
-        if (!drawString(g, lEnd - lIterator.getSeparatorLength(), lEnd - lStart, position, clip, backColor,
+        if (!drawString(g, text, lEnd - lIterator.getSeparatorLength(), myOffset == lStart, position, clip, backColor,
                         underscoredColor)) {
           drawLineNumber(g, 0, lineY);
           break;
@@ -409,13 +411,13 @@ class TextPainter extends BasePainter {
         }
       } else {
         if (hEnd > lEnd - lIterator.getSeparatorLength()) {
-          if (!drawString(g, lEnd - lIterator.getSeparatorLength(), lEnd - lStart, position, clip, backColor,
+          if (!drawString(g, text, lEnd - lIterator.getSeparatorLength(), myOffset == lStart, position, clip, backColor,
                           underscoredColor)) {
             drawLineNumber(g, 0, lineY);
             break;
           }
         } else {
-          if (!drawString(g, hEnd, lEnd - lStart, position, clip, backColor, underscoredColor)) {
+          if (!drawString(g, text, hEnd, myOffset == lStart, position, clip, backColor, underscoredColor)) {
             drawLineNumber(g, 0, lineY);
             break;
           }
@@ -611,52 +613,39 @@ class TextPainter extends BasePainter {
     g.setFont(savedFont);
   }
 
-  private boolean drawString(Graphics2D g, int end, int colNumber, Point2D position, Rectangle2D clip, Color backColor,
-                             Color underscoredColor) {
-    ProgressManager.checkCanceled();
-    if (myOffset >= end)
-      return true;
-    char[] text = myDocument.getCharsSequence().toString().toCharArray(); //TODO: Make drawTabbedString work with CharSequence instead.
-    boolean isInClip = (getLineHeight(g) + position.getY() >= clip.getY()) &&
-                       (position.getY() <= clip.getY() + clip.getHeight());
-    if (!isInClip)
-      return true;
-    return drawTabbedString(g, text, end - myOffset, position, clip, colNumber, backColor, underscoredColor);
-  }
-
-  private boolean drawTabbedString(final Graphics2D g, char[] text, int length, Point2D position, Rectangle2D clip,
-                                   int colNumber, Color backColor, Color underscoredColor) {
-    boolean ret = true;
-    if (myOffset + length >= mySegmentEnd) {
-      ret = false;
-      length = mySegmentEnd - myOffset;
+  private boolean drawString(Graphics2D g, char[] text, int end, boolean lineStart, Point2D position, Rectangle2D clip, 
+                             Color backColor, Color underscoredColor) {
+    boolean toContinue = true; 
+    if (end >= mySegmentEnd) {
+      end = mySegmentEnd;
+      toContinue = false;
     }
-    if (length <= 0) { // can happen in recursive invocations below
-      return false;
-    }
+    if (myOffset >= end) return toContinue;
+    boolean isInClip = (getLineHeight(g) + position.getY() >= clip.getY()) && (position.getY() <= clip.getY() + clip.getHeight());
+    if (!isInClip) return toContinue;
+    
     if (myPrintSettings.WRAP) {
-      double w = getTextSegmentWidth(text, myOffset, length, position.getX(), g);
+      double w = getTextSegmentWidth(text, myOffset, end - myOffset, position.getX(), g);
       if (position.getX() + w > clip.getWidth()) {
-        IntArrayList breakOffsets = LineWrapper.calcBreakOffsets(text, myOffset, myOffset + length, colNumber, position.getX(),
-                                                                    clip.getWidth(), new LineWrapper.WidthProvider() {
-          @Override
-          public double getWidth(char[] text, int start, int count, double x) {
-            return getTextSegmentWidth(text, start, count, x, g);
-          }
-        });
-        int startOffset = myOffset;
+        IntArrayList breakOffsets = LineWrapper.calcBreakOffsets(text, myOffset, end, lineStart, position.getX(), clip.getWidth(),
+                                                                 (t, start, count, x) -> getTextSegmentWidth(t, start, count, x, g));
         for (int i = 0; i < breakOffsets.size(); i++) {
           int breakOffset = breakOffsets.get(i);
-          drawTabbedString(g, text, breakOffset - myOffset, position, clip, colNumber, backColor, underscoredColor);
+          drawTabbedString(g, text, breakOffset - myOffset, position, backColor, underscoredColor);
           position.setLocation(0, position.getY() + getLineHeight(g));
           if (position.getY() > clip.getY() + clip.getHeight() - getLineHeight(g)) {
             return false;
           }
         }
-        drawTabbedString(g, text, startOffset + length - myOffset, position, clip, colNumber, backColor, underscoredColor);
-        return ret;
       }
     }
+    drawTabbedString(g, text, end - myOffset, position, backColor, underscoredColor);
+    return toContinue;
+  }
+
+  private void drawTabbedString(final Graphics2D g, char[] text, int length, Point2D position, Color backColor, Color underscoredColor) {
+    ProgressManager.checkCanceled();
+    if (length <= 0) return;
     double xStart = position.getX();
     double x = position.getX();
     double y = getLineHeight(g) - getDescent(g) + position.getY();
@@ -698,7 +687,6 @@ class TextPainter extends BasePainter {
     }
     position.setLocation(x, position.getY());
     myOffset += length;
-    return ret;
   }
 
   private double drawStringToGraphics(Graphics2D g, String s, double x, double y) {

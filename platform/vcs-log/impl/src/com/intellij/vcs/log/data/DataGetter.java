@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface DataGetter<T extends VcsShortCommitDetails> {
-  @Nullable
+  @NotNull
   T getCommitData(@NotNull Integer hash, @NotNull Iterable<Integer> neighbourHashes);
 
   void loadCommitsData(@NotNull List<Integer> hashes,

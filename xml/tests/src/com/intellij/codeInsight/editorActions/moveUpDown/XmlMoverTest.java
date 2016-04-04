@@ -69,17 +69,15 @@ public class XmlMoverTest extends LightPlatformCodeInsightTestCase {
 
   private void performAction(final String fileName, final EditorActionHandler handler, final String afterFileName) throws Exception {
     configureByFile(fileName);
-    final boolean enabled = handler.isEnabled(myEditor, null);
-    assertEquals("not enabled for " + afterFileName, new File(getTestDataPath(), afterFileName).exists(), enabled);
-    if (enabled) {
+    if (handler.isEnabled(myEditor, null)) {
       WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
           handler.execute(myEditor, null);
         }
       });
-      checkResultByFile(afterFileName);
     }
+    checkResultByFile(new File(getTestDataPath(), afterFileName).exists() ? afterFileName : fileName);
   }
 
   protected String getBasePath() {

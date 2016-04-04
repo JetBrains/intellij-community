@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SchemeProcessor<T extends ExternalizableScheme> {
+  /**
+   * Element will not be modified, it is safe to return non-cloned instance.
+   */
   public abstract Parent writeScheme(@NotNull T scheme) throws WriteExternalException;
 
   public void initScheme(@NotNull T scheme) {

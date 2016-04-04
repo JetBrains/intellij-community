@@ -30,6 +30,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
@@ -135,20 +136,35 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   public void scrollToCaret(@NotNull ScrollType scrollType) {
     assertIsDispatchThread();
-    LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
     myEditor.validateSize();
-    scrollTo(caretPosition, scrollType);
+    if (myEditor.myUseNewRendering) {
+      VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
+      scrollTo(caretPosition, scrollType);
+    }
+    else {
+      LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
+      scrollTo(caretPosition, scrollType);
+    }
+  }
+
+  private void scrollTo(@NotNull VisualPosition pos, @NotNull ScrollType scrollType) {
+    Point targetLocation = myEditor.visualPositionToXY(pos);
+    scrollTo(targetLocation, scrollType);
+  }
+
+  private void scrollTo(@NotNull Point targetLocation, @NotNull ScrollType scrollType) {
+    AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
+    Rectangle viewRect = canceledThread != null ? canceledThread.getTargetVisibleArea() : getVisibleArea();
+    Point p = calcOffsetsToScroll(targetLocation, scrollType, viewRect);
+    scrollToOffsets(p.x, p.y);
   }
 
   @Override
   public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
 
-    AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
-    Rectangle viewRect = canceledThread != null ? canceledThread.getTargetVisibleArea() : getVisibleArea();
-
-    Point p = calcOffsetsToScroll(pos, scrollType, viewRect);
-    scrollToOffsets(p.x, p.y);
+    Point targetLocation = myEditor.logicalPositionToXY(pos);
+    scrollTo(targetLocation, scrollType);
   }
 
   private static void assertIsDispatchThread() {
@@ -177,9 +193,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     myAnimationDisabled = false;
   }
 
-  private Point calcOffsetsToScroll(LogicalPosition pos, ScrollType scrollType, Rectangle viewRect) {
-    Point targetLocation = myEditor.logicalPositionToXY(pos);
-
+  private Point calcOffsetsToScroll(Point targetLocation, ScrollType scrollType, Rectangle viewRect) {
     if (myEditor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
       if (scrollType == ScrollType.CENTER ||
           scrollType == ScrollType.CENTER_DOWN ||

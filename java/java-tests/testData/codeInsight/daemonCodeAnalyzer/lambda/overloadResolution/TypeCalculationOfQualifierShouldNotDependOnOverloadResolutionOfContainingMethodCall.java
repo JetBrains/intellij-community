@@ -1,8 +1,6 @@
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.stream.*;
 
 class Main {
 
@@ -17,4 +15,20 @@ class Main {
     System.out.println(keys);
   }
 
+
+  private void <warning descr="Private method 'legs(java.lang.String...)' is never used">legs</warning>(String... s) {
+    System.out.println(s);
+  }
+
+  private void legs(List<String> s) {
+    System.out.println(s);
+  }
+
+  void m(Stream<String> stream) {
+    legs(stream.map(l -> l).collect(toImmutableList()));
+  }
+
+  static <T> Collector<T, ?, List<T>> toImmutableList() {
+    return null;
+  }
 }

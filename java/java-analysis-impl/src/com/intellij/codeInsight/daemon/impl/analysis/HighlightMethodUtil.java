@@ -461,9 +461,11 @@ public class HighlightMethodUtil {
         //ensure type params are not included
         methodCallTypeByArgs = JavaPsiFacade.getElementFactory(method.getProject())
           .createRawSubstitutor(method).substitute(methodCallTypeByArgs);
-        QuickFixAction.registerQuickFixAction(highlightInfo, 
-                                              getFixRange(methodCall),
-                                              QUICK_FIX_FACTORY.createMethodReturnFix(containerMethod, methodCallTypeByArgs, true));
+        if (methodCallTypeByArgs != null) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, 
+                                                getFixRange(methodCall),
+                                                QUICK_FIX_FACTORY.createMethodReturnFix(containerMethod, methodCallTypeByArgs, true));
+        }
       }
     }
   }

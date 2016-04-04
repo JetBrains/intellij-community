@@ -2,6 +2,7 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -200,7 +201,23 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
        @Override
        public LookupElement[] calculateLookupItems(ExpressionContext context) {
-         return expression.calculateLookupItems(context);
+         final LookupElement[] elements = expression.calculateLookupItems(context);
+         if (elements != null) {
+           LookupElement toBeSelected = null;
+           for (LookupElement element : elements) {
+             if (element instanceof PsiTypeLookupItem && ((PsiTypeLookupItem)element).getType().getPresentableText().equals(defaultType)) {
+               toBeSelected = element;
+               break;
+             }
+           }
+           if (toBeSelected != null) {
+             final int idx = ArrayUtil.find(elements, toBeSelected);
+             if (idx > 0) {
+               return ArrayUtil.prepend(toBeSelected, ArrayUtil.remove(elements, idx));
+             }
+           }
+         }
+         return elements;
        }
 
        @Override

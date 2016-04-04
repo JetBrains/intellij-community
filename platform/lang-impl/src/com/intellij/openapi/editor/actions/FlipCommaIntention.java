@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class FlipCommaIntention implements IntentionAction {
           PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(new Runnable() {
             @Override
             public void run() {
-              swapAtComma(editor, element);
+              swapAtComma(element);
             }
           });
         }
@@ -72,18 +72,13 @@ public class FlipCommaIntention implements IntentionAction {
     return true;
   }
 
-  private static void swapAtComma(@NotNull Editor editor, @NotNull PsiElement comma) {
+  private static void swapAtComma(@NotNull PsiElement comma) {
     PsiElement prev = smartAdvanceAsExpr(comma, false);
     PsiElement next = smartAdvanceAsExpr(comma, true);
     if (prev != null && next != null) {
-      boolean caretBeforeComma = editor.getCaretModel().getOffset() <= comma.getTextRange().getStartOffset();
-      PsiElement nextAnchor = next.getPrevSibling();
-      PsiElement prevAnchor = prev.getNextSibling();
-      comma.getParent().addBefore(next, prevAnchor);
-      comma.getParent().addAfter(prev, nextAnchor);
-      next.delete();
-      prev.delete();
-      editor.getCaretModel().moveToOffset(caretBeforeComma ? comma.getTextRange().getStartOffset() : comma.getTextRange().getEndOffset());
+      PsiElement copy = prev.copy();
+      prev.replace(next);
+      next.replace(copy);
     }
   }
 

@@ -18,19 +18,14 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.editor.Document;
 
 /**
- * A kind of transaction used in {@link TransactionGuard#submitMergeableTransaction(TransactionKind, Runnable)}
- * and {@link TransactionGuard#acceptNestedTransactions(TransactionKind...)}.
+ * A kind of transaction used in {@link TransactionGuard#submitMergeableTransaction(TransactionKind, Runnable)},
+ * {@link TransactionGuard#acceptNestedTransactions(TransactionKind...)}.
  */
 public interface TransactionKind {
   /**
    * Same as {@link Common#TEXT_EDITING}
    */
   TransactionKind TEXT_EDITING = Common.TEXT_EDITING;
-
-  /**
-   * Same as {@link Common#NO_MERGE}
-   */
-  TransactionKind NO_MERGE = Common.NO_MERGE;
 
   /**
    * Same as {@link Common#ANY_CHANGE}
@@ -56,11 +51,7 @@ public interface TransactionKind {
      * <li>Project root set change
      * <li>Dumb mode (reindexing) start/finish, (see {@link com.intellij.openapi.project.DumbService}).
      */
-    ANY_CHANGE,
+    ANY_CHANGE
 
-    /**
-     * Transactions of this kind won't be merged into other transactions
-     */
-    NO_MERGE
   }
 }

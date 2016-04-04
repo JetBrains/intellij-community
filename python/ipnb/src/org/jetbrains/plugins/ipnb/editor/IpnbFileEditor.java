@@ -332,8 +332,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
                              new CellSelectionListener() {
                                @Override
                                public void selectionChanged(@NotNull IpnbPanel ipnbPanel, boolean byMouse) {
-                                 if (myCellTypeCombo == null || byMouse) return;
+                                 if (myCellTypeCombo == null) return;
                                  updateCellTypeCombo(ipnbPanel);
+                                 if (byMouse) return;
                                  updateScrollPosition(ipnbPanel);
                                }
                              });

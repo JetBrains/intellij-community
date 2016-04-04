@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author vlan
@@ -42,8 +43,10 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors {
   List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
 
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location,
-                                                   @NotNull AccessDirection direction, @NotNull PyResolveContext resolveContext,
+  List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
+                                                   @Nullable PyExpression location,
+                                                   @NotNull AccessDirection direction,
+                                                   @NotNull PyResolveContext resolveContext,
                                                    boolean inherited);
 
   // TODO: Pull to PyType at next iteration
@@ -57,6 +60,9 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors {
    * @see PyTypeUtil#getMembersOfType(PyClassLikeType, Class, TypeEvalContext)
    */
   void visitMembers(@NotNull Processor<PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context);
+
+  @NotNull
+  Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context);
 
   boolean isValid();
 

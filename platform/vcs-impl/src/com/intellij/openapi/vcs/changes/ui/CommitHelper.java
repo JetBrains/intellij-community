@@ -444,7 +444,7 @@ public class CommitHelper {
           moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
                            VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
         }
-      }, ModalityState.defaultModalityState(), o -> myProject.isDisposed());
+      }, ModalityState.defaultModalityState(), myProject.getDisposed());
     }
 
     public void doBeforeRefresh() {

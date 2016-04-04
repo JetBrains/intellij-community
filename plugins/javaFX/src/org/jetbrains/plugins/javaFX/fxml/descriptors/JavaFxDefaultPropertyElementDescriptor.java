@@ -142,7 +142,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
       if (defaultAttributeList.contains(attributeName)) {
         return new JavaFxDefaultPropertyAttributeDescriptor(attributeName, getName());
       }
-      final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
+      final PsiMethod propertySetter = JavaFxPsiUtil.findStaticPropertySetter(attributeName, context);
       if (propertySetter != null) {
         return new JavaFxStaticSetterAttributeDescriptor(propertySetter, attributeName);
       }

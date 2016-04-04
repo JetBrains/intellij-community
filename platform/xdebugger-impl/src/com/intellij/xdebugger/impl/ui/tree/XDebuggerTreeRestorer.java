@@ -36,8 +36,8 @@ import java.util.Map;
 public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelectionListener {
   private final XDebuggerTree myTree;
   private final Rectangle myLastVisibleNodeRect;
-  private final Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo>();
-  private final Map<RestorableStateNode, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<RestorableStateNode, XDebuggerTreeState.NodeInfo>();
+  private final Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<>();
+  private final Map<RestorableStateNode, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<>();
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
 
@@ -51,12 +51,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private void restoreChildren(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
     if (nodeInfo.isExpanded()) {
       myTree.expandPath(treeNode.getPath());
-      List<? extends XDebuggerTreeNode> children = treeNode.getLoadedChildren();
-      if (children != null) {
-        for (XDebuggerTreeNode child : children) {
-          restoreNode(child, nodeInfo);
-        }
-      }
+      treeNode.getLoadedChildren().forEach(child -> restoreNode(child, nodeInfo));
       myNode2State.put(treeNode, nodeInfo);
     }
   }

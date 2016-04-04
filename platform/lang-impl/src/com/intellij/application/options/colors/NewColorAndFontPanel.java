@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -78,8 +79,12 @@ public class NewColorAndFontPanel extends JPanel {
 
     // We don't want to show non-used preview panel (it's considered to be not in use if it doesn't contain text).
     if (myPreviewPanel.getPanel() != null && (page == null || !StringUtil.isEmptyOrSpaces(page.getDemoText()))) {
-      add(top, BorderLayout.NORTH);
-      add(myPreviewPanel.getPanel(), BorderLayout.CENTER);
+      @SuppressWarnings("SuspiciousNameCombination")
+      JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, top, myPreviewPanel.getPanel());
+      splitPane.setBorder(BorderFactory.createEmptyBorder());
+      splitPane.setContinuousLayout(true);
+      add(splitPane);
+      GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
     }
     else {
       add(top, BorderLayout.CENTER);

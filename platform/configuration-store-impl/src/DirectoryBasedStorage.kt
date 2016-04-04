@@ -23,7 +23,6 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.StateStorageBase
-import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -36,7 +35,6 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.systemIndependentPath
 import gnu.trove.THashMap
 import org.jdom.Element
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Path
@@ -202,7 +200,7 @@ open class DirectoryBasedStorage(private val dir: Path,
 
         var element: Element? = null
         try {
-          element = states.getElement(fileName, null)
+          element = states.getElement(fileName) ?: continue
           storage.pathMacroSubstitutor?.collapsePaths(element)
 
           storeElement.setAttribute(FileStorageCoreUtil.NAME, storage.componentName!!)
@@ -228,11 +226,11 @@ open class DirectoryBasedStorage(private val dir: Path,
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {
-            try {
+            if (file.isWritable) {
               file.delete(this)
             }
-            catch (e: FileNotFoundException) {
-              throw ReadOnlyModificationException(file, e, null)
+            else {
+              throw ReadOnlyModificationException(file, null)
             }
           }
         }

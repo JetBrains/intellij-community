@@ -61,7 +61,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
       messageProcessor.send(disconnectRequest)
         .rejected {
           if (it.message != CONNECTION_CLOSED_MESSAGE) {
-            LOG.error(it)
+            Promise.logError(LOG, it)
           }
         }
       // we don't wait response because 1) no response to "disconnect" message (V8 for example) 2) closed message manager just ignore any incoming messages

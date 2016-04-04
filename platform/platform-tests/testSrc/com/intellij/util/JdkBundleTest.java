@@ -117,7 +117,6 @@ public class JdkBundleTest {
 
   @Test
   public void testCreateBundle() throws Exception {
-    if (SystemInfo.isWindows) return; // Windows is not supported so far
     File homeJDK = new File(System.getProperty("java.home")).getParentFile();
 
     if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
@@ -145,7 +144,6 @@ public class JdkBundleTest {
 
   @Test
   public void testCreateBoot() throws Exception {
-    if (SystemInfo.isWindows) return; // Windows is not supported so far
     File homeJDK = new File(System.getProperty("java.home")).getParentFile();
 
     if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre

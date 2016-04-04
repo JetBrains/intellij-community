@@ -101,7 +101,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return getName();
+    return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
   }
 
   private void annotateMethod(@NotNull PsiMethod method) {

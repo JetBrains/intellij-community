@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.Condition;
@@ -76,7 +75,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     super("kind");
     myCompletionType = completionType;
     myPosition = position;
-    myNonInitializedFields = JavaCompletionProcessor.getNonInitializedFields(position);
+    myNonInitializedFields = CheckInitialized.getNonInitializedFields(position);
     myRequiredSuper = createSuitabilityCondition(position);
   }
 
@@ -169,7 +168,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
 
     if (object instanceof PsiKeyword) {
       String keyword = ((PsiKeyword)object).getText();
-      if (PsiKeyword.RETURN.equals(keyword) && isLastStatement(PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class))) {
+      if (PsiKeyword.RETURN.equals(keyword) &&
+          isLastStatement(PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class)) &&
+          !isOnTopLevelInVoidMethod(myPosition)) {
         return MyResult.probableKeyword;
       }
       if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
@@ -261,6 +262,21 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     }
 
     return MyResult.normal;
+  }
+
+  private static boolean isOnTopLevelInVoidMethod(PsiElement position) {
+    PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class);
+    if (block != null) {
+      PsiElement parent = block.getParent();
+      if (parent instanceof PsiMethod) {
+        return ((PsiMethod)parent).isConstructor() || PsiType.VOID.equals(((PsiMethod)parent).getReturnType());
+      }
+      if (parent instanceof PsiLambdaExpression) {
+        PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+        return method != null && PsiType.VOID.equals(method.getReturnType());
+      }
+    }
+    return false;
   }
 
   private static boolean isGetter(Object object) {

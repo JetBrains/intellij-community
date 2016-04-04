@@ -549,15 +549,20 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         return false;
       }
 
-      final PsiFile copy = PsiFileFactory.getInstance(project)
-        .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
-
-      final PsiExpression exprInRange = CodeInsightUtil.findExpressionInRange(copy, elements[0].getTextRange().getStartOffset(),
-                                                                              elements[elements.length - 1].getTextRange().getEndOffset());
-      final PsiElement[] elementsCopy = exprInRange != null
-                                        ? new PsiElement[] {exprInRange}
-                                        : CodeInsightUtil.findStatementsInRange(copy, elements[0].getTextRange().getStartOffset(),
-                                                                                elements[elements.length - 1].getTextRange().getEndOffset());
+      final PsiElement[] elementsCopy;
+      if (!elements[0].isPhysical()) {
+        elementsCopy = elements;
+      }
+      else {
+        final PsiFile copy = PsiFileFactory.getInstance(project)
+          .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+        final TextRange range = new TextRange(elements[0].getTextRange().getStartOffset(),
+                                              elements[elements.length - 1].getTextRange().getEndOffset());
+        final PsiExpression exprInRange = CodeInsightUtil.findExpressionInRange(copy, range.getStartOffset(), range.getEndOffset());
+        elementsCopy = exprInRange != null
+                       ? new PsiElement[]{exprInRange}
+                       : CodeInsightUtil.findStatementsInRange(copy, range.getStartOffset(), range.getEndOffset());
+      }
       final List<PsiMethod> enclosingMethodsInCopy = getEnclosingMethods(Util.getContainingMethod(elementsCopy[0]));
       final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy, 
                                                                               enclosingMethodsInCopy.get(enclosingMethodsInCopy.size() - 1));
@@ -629,8 +634,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                   final PsiType selectedType,
                                                   final MyExtractMethodProcessor processor, 
                                                   final PsiElement[] elements) {
-    final PsiElement commonParent = elements.length > 1 ? PsiTreeUtil.findCommonParent(elements) 
-                                                        : PsiTreeUtil.getParentOfType(elements[0].getParent(), PsiCodeBlock.class, false);
+    final PsiElement commonParent = findCommonParent(elements);
     if (commonParent == null) {
       LOG.error("Should have common parent:" + Arrays.toString(elements));
       return;
@@ -638,8 +642,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     final RangeMarker marker = editor.getDocument().createRangeMarker(commonParent.getTextRange());
 
     final PsiElement[] copyElements = processor.getElements();
-    final PsiElement containerCopy = copyElements.length > 1 ? PsiTreeUtil.findCommonParent(copyElements)
-                                                             : PsiTreeUtil.getParentOfType(copyElements[0].getParent(), PsiCodeBlock.class, false);
+    final PsiElement containerCopy = findCommonParent(copyElements);
     if (containerCopy == null) {
       LOG.error("Should have common parent:" + Arrays.toString(copyElements));
       return;
@@ -661,7 +664,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         final String interfaceMethodName = method.getName();
         processor.setMethodName(interfaceMethodName);
 
-        if (copyElements.length == 1) {
+        if (copyElements.length == 1 && copyElements[0].getUserData(ElementToWorkOn.PARENT) == null) {
           copyElements[0].putUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL, true);
         }
 
@@ -701,6 +704,20 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       .introduceParameter(methodToIntroduceParameter, methodToSearchFor);
   }
 
+  @Nullable
+  private static PsiElement findCommonParent(PsiElement[] copyElements) {
+    if (copyElements.length > 1) {
+      return PsiTreeUtil.findCommonParent(copyElements);
+    }
+    else {
+      PsiElement parent = copyElements[0].getUserData(ElementToWorkOn.PARENT);
+      if (parent == null) {
+        parent = copyElements[0].getParent();
+      }
+      return PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
+    }
+  }
+
   private static class MyExtractMethodProcessor extends ExtractMethodProcessor {
     private final PsiMethod myTopEnclosingMethod;
 
@@ -736,6 +753,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     @Override
     protected boolean isFoldingApplicable() {
       return false;
+    }
+
+    @Override
+    protected PsiMethod addExtractedMethod(PsiMethod newMethod) {
+      return newMethod;
     }
 
     @Override

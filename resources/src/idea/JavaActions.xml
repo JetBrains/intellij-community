@@ -172,7 +172,6 @@
     </action>
 
     <group id="JavaDebuggerActions">
-      <!--<action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>-->
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
@@ -183,7 +182,7 @@
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
-      <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction"/>
+      <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
       <action id="Debugger.EditTypeSource" class="com.intellij.debugger.actions.JumpToObjectAction"/>
       <reference ref="Debugger.PopFrame"/>
@@ -232,7 +231,9 @@
       <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
     </group>
 
-    <action id="TypeHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction">
+    <action id="TypeHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"
+            use-shortcut-of="TypeHierarchy">
       <add-to-group group-id="TypeHierarchyPopupMenu" anchor="first"/>
     </action>
 
@@ -245,11 +246,15 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <action id="MethodHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction">
+    <action id="MethodHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction"
+            use-shortcut-of="MethodHierarchy">
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </action>
 
-    <action id="CallHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction">
+    <action id="CallHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction"
+            use-shortcut-of="CallHierarchy">
       <add-to-group group-id="CallHierarchyPopupMenu" anchor="first"/>
     </action>
 

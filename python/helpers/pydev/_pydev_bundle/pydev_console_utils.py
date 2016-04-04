@@ -1,7 +1,7 @@
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
 import sys
 from _pydevd_bundle.pydevd_constants import IS_JYTHON
-from _pydev_imps import _pydev_thread as thread
+from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_utils import *  # @UnusedWildImport
@@ -489,7 +489,7 @@ class BaseInterpreterInterface:
             try:
                 # Try to import the packages needed to attach the debugger
                 import pydevd
-                from _pydev_imps import _pydev_threading as threading
+                from _pydev_imps._pydev_saved_modules import threading
 
             except:
                 # This happens on Jython embedded in host eclipse

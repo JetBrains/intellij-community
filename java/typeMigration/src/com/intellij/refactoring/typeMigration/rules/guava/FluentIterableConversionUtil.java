@@ -16,7 +16,6 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -144,9 +143,7 @@ public class FluentIterableConversionUtil {
       PsiAnonymousClass anonymousClass;
       if (argument instanceof PsiNewExpression &&
           (anonymousClass = ((PsiNewExpression)argument).getAnonymousClass()) != null) {
-        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true)) {
-          argument = AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(argument, true, true);
-        };
+        argument = GuavaConversionUtil.convertAnonymousClass((PsiNewExpression)argument, anonymousClass, typeEvaluator);
       }
       final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(expression.getProject());
       if (argument != null && !(argument instanceof PsiFunctionalExpression)) {

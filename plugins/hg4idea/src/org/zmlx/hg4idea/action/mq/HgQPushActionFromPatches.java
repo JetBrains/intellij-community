@@ -21,8 +21,8 @@ import org.zmlx.hg4idea.repo.HgRepository;
 
 public class HgQPushActionFromPatches extends HgSingleActionFomMqPatches {
   @Override
-  protected void execute(@NotNull HgRepository repository, @NotNull String patchName) {
-    new HgQPushCommand(repository).execute(patchName);
+  protected void executeInCurrentThread(@NotNull HgRepository repository, @NotNull String patchName) {
+    new HgQPushCommand(repository).executeInCurrentThread(patchName);
   }
 
   @NotNull

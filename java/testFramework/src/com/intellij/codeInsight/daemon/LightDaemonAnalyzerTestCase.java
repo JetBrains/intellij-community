@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -94,8 +93,12 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   protected void doTestConfiguredFile(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, @Nullable String filePath) {
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
 
-    ExpectedHighlightingData data = new ExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
+    ExpectedHighlightingData data = getExpectedHighlightingData(checkWarnings, checkWeakWarnings, checkInfos);
     checkHighlighting(data, composeLocalPath(filePath));
+  }
+  
+  protected ExpectedHighlightingData getExpectedHighlightingData(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
+    return new ExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
   }
 
   @Nullable

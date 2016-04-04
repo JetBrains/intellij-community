@@ -94,7 +94,8 @@ public class ProcessInfo {
 
   @Override
   public String toString() {
-    return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'";
+    return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'" +
+           (myExecutablePath.isPresent() ? " " + myExecutablePath.get() : "");
   }
 
   @Override
@@ -108,6 +109,7 @@ public class ProcessInfo {
     if (!myExecutableName.equals(info.myExecutableName)) return false;
     if (!myArgs.equals(info.myArgs)) return false;
     if (!myCommandLine.equals(info.myCommandLine)) return false;
+    if (!myExecutablePath.equals(info.myExecutablePath)) return false;
 
     return true;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,17 +119,11 @@ public class StructContext {
       }
 
       if (filename.endsWith(".class")) {
-        try {
-          DataInputFullStream in = loader.getClassStream(file.getAbsolutePath(), null);
-          try {
-            StructClass cl = new StructClass(in, isOwn, loader);
-            classes.put(cl.qualifiedName, cl);
-            unit.addClass(cl, filename);
-            loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(LazyLoader.Link.CLASS, file.getAbsolutePath(), null));
-          }
-          finally {
-            in.close();
-          }
+        try (DataInputFullStream in = loader.getClassStream(file.getAbsolutePath(), null)) {
+          StructClass cl = new StructClass(in, isOwn, loader);
+          classes.put(cl.qualifiedName, cl);
+          unit.addClass(cl, filename);
+          loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(LazyLoader.Link.CLASS, file.getAbsolutePath(), null));
         }
         catch (IOException ex) {
           String message = "Corrupted class file: " + file;
@@ -143,10 +137,8 @@ public class StructContext {
   }
 
   private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file);
-
-    try {
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
       Enumeration<? extends ZipEntry> entries = archive.entries();
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
@@ -177,9 +169,6 @@ public class StructContext {
           unit.addDirEntry(name);
         }
       }
-    }
-    finally {
-      archive.close();
     }
   }
 

@@ -42,6 +42,7 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.PyFunctionTypeCommentReferenceContributor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -196,12 +197,18 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
     }
 
-    private static boolean canHaveAttribute(@NotNull PyClass cls, @Nullable String attrName) {
+    private boolean canHaveAttribute(@NotNull PyClass cls, @Nullable String attrName) {
       final List<String> slots = cls.getOwnSlots();
+
       // Class instance can contain attributes with arbitrary names
       if (slots == null || slots.contains(PyNames.DICT)) {
         return true;
       }
+
+      if (attrName != null && cls.findClassAttribute(attrName, true, myTypeEvalContext) != null) {
+        return true;
+      }
+
       return slots.contains(attrName) || cls.getProperties().containsKey(attrName);
     }
 
@@ -493,13 +500,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (PyNames.COMPARISON_OPERATORS.contains(refName)) {
           return;
         }
-        if (expr.isQualified()) {
-          final PyClassTypeImpl object_type = (PyClassTypeImpl)PyBuiltinCache.getInstance(node).getObjectType();
-          if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refName)) {
-            return;
-          }
-        }
-        else {
+        if (!expr.isQualified()) {
           if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(expr)) {
             return;
           }
@@ -656,6 +657,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
         }
+      }
+      
+      if (reference instanceof PySubstitutionChunkReference && ((PySubstitutionChunkReference)reference).ignoreUnresolved()) {
+        return;        
       }
       registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
     }

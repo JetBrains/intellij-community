@@ -579,8 +579,10 @@ public class DaemonListeners implements Disposable {
           int offset = editor.logicalPositionToOffset(logical);
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
-          if (info == null || info.getDescription() == null) return;
-          if (IdeTooltipManager.getInstance().hasCurrent()) return;
+          if (info == null || info.getDescription() == null) {
+            IdeTooltipManager.getInstance().hideCurrent(e.getMouseEvent());
+            return;
+          }
           DaemonTooltipUtil.showInfoTooltip(info, editor, offset);
           shown = true;
         }

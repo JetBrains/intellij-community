@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class CopyAbstractMethodImplementationHandler {
   private void searchExistingImplementations() {
     mySourceClass = myMethod.getContainingClass();
     if (!mySourceClass.isValid()) return;
-    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass, true)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass)) {
       if (!inheritor.isInterface()) {
         PsiMethod method = ImplementAbstractMethodAction.findExistingImplementation(inheritor, myMethod);
         if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {

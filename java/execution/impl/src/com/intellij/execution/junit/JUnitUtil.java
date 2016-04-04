@@ -37,10 +37,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
@@ -48,17 +45,38 @@ public class JUnitUtil {
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
   @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
+  @NonNls public static final String TEST5_ANNOTATION = "org.junit.gen5.api.Test";
   @NonNls public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
   @NonNls public static final String DATA_POINT = "org.junit.experimental.theories.DataPoint";
   @NonNls public static final String SUITE_METHOD_NAME = "suite";
+
   public static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
   public static final String AFTER_ANNOTATION_NAME = "org.junit.After";
+
+  public static final String BEFORE_EACH_ANNOTATION_NAME = "org.junit.gen5.api.BeforeEach";
+  public static final String AFTER_EACH_ANNOTATION_NAME = "org.junit.gen5.api.AfterEach";
+
   public static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
+
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
+
+  public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.gen5.api.BeforeAll";
+  public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.gen5.api.AfterAll";
+
+  private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION, TEST5_ANNOTATION));
+
+  private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
+  private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
+
+  private static final List<String> STATIC_5_CONFIGS = Arrays.asList(BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
+
+  private static final List<String> STATIC_CONFIGS = Arrays.asList(BEFORE_CLASS_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME,
+                                                                   PARAMETRIZED_PARAMETERS_ANNOTATION_NAME);
   private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = Collections.unmodifiableList(
-    Arrays.asList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME));
+    Arrays.asList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
+                  BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME));
   
   @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
@@ -126,16 +144,27 @@ public class JUnitUtil {
         }
       }
     }
-    if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
-    if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
+    final boolean hasJUnit5 = isJUnit5(modifierList);
+    if (!PsiClassUtil.isRunnableClass(psiClass, !hasJUnit5, checkAbstract)) return false;
+
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
+
+    if (checkForTestCaseInheritance && (!hasJUnit5 || psiClass.hasModifierProperty(PsiModifier.PUBLIC)) && isTestCaseInheritor(psiClass)) return true;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
       if (isSuiteMethod(method)) return true;
       if (isTestAnnotated(method)) return true;
+    }
+    
+    if (hasJUnit5) {
+      for (PsiClass innerClass : psiClass.getInnerClasses()) {
+        for (PsiMethod method : innerClass.getAllMethods()) {
+          if (isTestAnnotated(method)) return true;
+        }
+      }
     }
 
     return false;
@@ -150,11 +179,12 @@ public class JUnitUtil {
   }
 
   private static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
-    if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
-
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
+
+    if (!PsiClassUtil.isRunnableClass(psiClass, !isJUnit5(modifierList), checkAbstract)) return false;
+
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
       if (isTestAnnotated(method)) return true;
@@ -163,8 +193,16 @@ public class JUnitUtil {
     return false;
   }
 
+  public static boolean isJUnit5(@NotNull PsiElement element) {
+    return isJUnit5(element.getResolveScope(), element.getProject());
+  }
+
+  public static boolean isJUnit5(GlobalSearchScope scope, Project project) {
+    return JavaPsiFacade.getInstance(project).findClass(TEST5_ANNOTATION, scope) != null;
+  }
+  
   public static boolean isTestAnnotated(final PsiMethod method) {
-    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, false) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
+    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATIONS, false) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method.getContainingClass(), Collections.singleton(RUN_WITH));
       if (annotation != null) {
         final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
@@ -240,18 +278,28 @@ public class JUnitUtil {
       }
     }
     final String name = psiMethod.getName();
-    if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      if (SUITE_METHOD_NAME.equals(name) || "setUp".equals(name) || "tearDown".equals(name)) {
+    final boolean isPublic = psiMethod.hasModifierProperty(PsiModifier.PUBLIC);
+    if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (isPublic && (SUITE_METHOD_NAME.equals(name) || "setUp".equals(name) || "tearDown".equals(name))) {
         return true;
       }
+
       if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BEFORE_CLASS_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME,
-                                                                PARAMETRIZED_PARAMETERS_ANNOTATION_NAME))) {
+        if (AnnotationUtil.isAnnotated(psiMethod, STATIC_CONFIGS)) {
+          return isPublic;
+        }
+        if (AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS)) {
           return true;
         }
       }
       else {
-        if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME))) return true;
+        if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_CONFIGS)) {
+          return isPublic;
+        }
+
+        if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_5_CONFIGS)) {
+          return true;
+        }
       }
     }
     return false;

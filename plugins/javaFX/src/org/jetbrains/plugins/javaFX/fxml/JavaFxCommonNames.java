@@ -27,7 +27,10 @@ import java.util.Map;
  */
 public class JavaFxCommonNames {
   @NonNls public static final String JAVAFX_BEANS_PROPERTY = "javafx.beans.property.Property";
-  @NonNls public static final String JAVAFX_OBSERVABLE_LIST_PROPERTY = "javafx.collections.ObservableList";
+  @NonNls public static final String JAVAFX_COLLECTIONS_OBSERVABLE_LIST = "javafx.collections.ObservableList";
+  @NonNls public static final String JAVAFX_COLLECTIONS_OBSERVABLE_SET = "javafx.collections.ObservableSet";
+  @NonNls public static final String JAVAFX_COLLECTIONS_OBSERVABLE_MAP = "javafx.collections.ObservableMap";
+  @NonNls public static final String JAVAFX_COLLECTIONS_OBSERVABLE_ARRAY = "javafx.collections.ObservableArray";
   @NonNls public static final String JAVAFX_ANCHOR_PANE = "javafx.scene.layout.AnchorPane";
   @NonNls public static final String JAVAFX_EVENT = "javafx.event.Event";
   @NonNls public static final String JAVAFX_BEANS_DEFAULT_PROPERTY = "javafx.beans.DefaultProperty";
@@ -40,6 +43,7 @@ public class JavaFxCommonNames {
   @NonNls public static final String JAVAFX_FXML_BUILDER = "javafx.util.Builder";
   @NonNls public static final String JAVAFX_BEANS_OBSERVABLE = "javafx.beans.Observable";
   @NonNls public static final String VALUE_OF = "valueOf";
+  @NonNls public static final String VALUE = "value";
   @NonNls public static final String JAVAFX_FXML_FXMLLOADER = "javafx.fxml.FXMLLoader";
   @NonNls public static final String JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE = "javafx.beans.value.ObservableValue";
   @NonNls public static final String JAVAFX_BEANS_VALUE_WRITABLE_VALUE = "javafx.beans.value.WritableValue";

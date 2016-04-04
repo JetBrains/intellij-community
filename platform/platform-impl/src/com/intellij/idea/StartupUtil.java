@@ -16,6 +16,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -31,6 +32,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -57,6 +59,8 @@ import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
@@ -150,6 +154,20 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
+      final Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
+      if (!PrivacyPolicy.isVersionAccepted(policy.getFirst())) {
+        try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              showPrivacyPolicyAgreement(policy.getSecond());
+            }
+          });
+          PrivacyPolicy.setVersionAccepted(policy.getFirst());
+        }
+        catch (Exception ignored) {
+        }
+      }
     }
 
     appStarter.start(newConfigFolder);
@@ -438,15 +456,24 @@ public class StartupUtil {
             URL url = e.getURL();
             if (url != null) {
               BrowserUtil.browse(url);
-            } 
+            }
             else {
               SwingHelper.scrollToReference(viewer, e.getDescription());
             }
           }
         });
         viewer.setText(htmlText);
+        StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
+        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
+        styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+        styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
+        styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
+        styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
+        styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
         viewer.setCaretPosition(0);
-        viewer.setBorder(JBUI.Borders.empty(5));
+        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
         centerPanel
           .add(new JBScrollPane(viewer, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),

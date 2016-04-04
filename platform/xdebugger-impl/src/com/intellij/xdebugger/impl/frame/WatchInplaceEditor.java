@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
@@ -36,13 +37,15 @@ import javax.swing.*;
 public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
   private final XWatchesView myWatchesView;
-  @Nullable private final WatchNode myOldNode;
+  private final WatchNode myOldNode;
   private WatchEditorSessionListener mySessionListener;
 
   public WatchInplaceEditor(@NotNull WatchesRootNode rootNode,
-                            @Nullable XDebugSession session, XWatchesView watchesView, final WatchNode node,
-                            @NonNls final String historyId,
-                            final @Nullable WatchNode oldNode) {
+                            @Nullable XDebugSession session,
+                            XWatchesView watchesView,
+                            WatchNode node,
+                            @NonNls String historyId,
+                            @Nullable WatchNode oldNode) {
     super((XDebuggerTreeNode)node, historyId);
     myRootNode = rootNode;
     myWatchesView = watchesView;
@@ -62,11 +65,11 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   public void cancelEditing() {
     if (!isShown()) return;
     super.cancelEditing();
-    int index = myRootNode.removeChildNode(getNode());
-    if (myOldNode != null && index != -1) {
-      myWatchesView.addWatchExpression(myOldNode.getExpression(), index, false);
+    int index = myRootNode.getIndex(getNode());
+    if (myOldNode == null && index != -1) {
+      myRootNode.removeChildNode(getNode());
     }
-    getTree().setSelectionRow(index);
+    TreeUtil.selectNode(myTree, getNode());
   }
 
   @Override
@@ -78,7 +81,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     if (!XDebuggerUtilImpl.isEmptyExpression(expression) && index != -1) {
       myWatchesView.addWatchExpression(expression, index, false);
     }
-    getTree().setSelectionRow(index);
+    TreeUtil.selectNode(myTree, getNode());
   }
 
   @Override

@@ -20,7 +20,8 @@ import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.CaretModel;
@@ -56,6 +57,7 @@ public class FixDocCommentAction extends EditorAction {
   }
 
   private static final class MyHandler extends EditorActionHandler {
+
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);

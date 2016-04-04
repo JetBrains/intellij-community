@@ -16,9 +16,7 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -30,6 +28,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,6 +67,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String FILE_PARAM = "--file";
   public static final String MODULE_PARAM = "--module";
   public static final String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
+  public static final String LIBRARY_ROOTS = "LIBRARY_ROOTS";
   public static final String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
   @SuppressWarnings("SpellCheckingInspection")
   public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
@@ -301,6 +301,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     addProjectRootsToEnv(project, cmd);
+    addSdkRootsToEnv(project, cmd);
 
     final String[] debuggerArgs = new String[]{
       CLIENT_PARAM, "127.0.0.1",
@@ -346,5 +347,21 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     commandLine.getEnvironment().put(IDE_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
+  }
+
+  private static void addSdkRootsToEnv(@NotNull Project project, @NotNull GeneralCommandLine commandLine) {
+    final RunManager runManager = RunManager.getInstance(project);
+    final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
+    if (selectedConfiguration != null) {
+      final RunConfiguration configuration = selectedConfiguration.getConfiguration();
+      if (configuration instanceof AbstractPythonRunConfiguration) {
+        AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
+        List<String> roots = Lists.newArrayList();
+        for (VirtualFile contentRoot : runConfiguration.getSdk().getSdkModificator().getRoots(OrderRootType.CLASSES)) {
+          roots.add(contentRoot.getPath());
+        }
+        commandLine.getEnvironment().put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));
+      }
+    }
   }
 }

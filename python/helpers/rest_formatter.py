@@ -224,7 +224,7 @@ class RestHTMLTranslator(HTMLTranslator):
             return HTMLTranslator.visit_problematic(self, node)
 
         directive, text = self._strip_markup(node.astext())
-        if directive[1:-1] in ('exc', 'class'):
+        if directive and directive[1:-1] in ('exc', 'class'):
             self.body.append(self.starttag(node, 'a', '', href='psi_element://#typename#' + text))
             self.body.append(text)
             self.body.append('</a>')

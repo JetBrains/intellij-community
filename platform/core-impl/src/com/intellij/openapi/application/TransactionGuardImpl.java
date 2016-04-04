@@ -18,6 +18,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,24 +37,41 @@ public class TransactionGuardImpl extends TransactionGuard {
   private final Queue<Runnable> myQueue = new LinkedBlockingQueue<Runnable>();
   private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
   private String myTransactionStartTrace;
+  private ModalityState myTransactionModality;
+  private boolean myUserActivity;
 
   @Override
   @NotNull
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (kind != TransactionKind.NO_MERGE && myMergeableKinds.contains(kind)) {
+    ModalityState modality = ModalityState.current();
+    if (isInsideTransaction()) {
+      if (modality.equals(myTransactionModality) || myUserActivity) {
+        return AccessToken.EMPTY_ACCESS_TOKEN;
+      }
+
+      if (myMergeableKinds.contains(kind)) {
+        final ModalityState prev = myTransactionModality;
+        myTransactionModality = modality;
+        return new AccessToken() {
+          @Override
+          public void finish() {
+            myTransactionModality = prev;
+          }
+        };
+      }
+
+      // please assign exceptions that occur here to Peter
+      LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment. Kind is " + kind,
+                new Attachment("trace.txt", myTransactionStartTrace));
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
-    if (myTransactionStartTrace != null) {
-      LOG.error("Nested transactions are not allowed, see FAQ in TransactionGuard class javadoc. Transaction start trace is in attachment.",
-                new Attachment("trace.txt", myTransactionStartTrace));
-      //throw new IllegalStateException("Nested transactions are not allowed");
-    }
+    myTransactionModality = modality;
     myTransactionStartTrace = DebugUtil.currentStackTrace();
     return new AccessToken() {
       @Override
       public void finish() {
         myTransactionStartTrace = null;
+        myTransactionModality = null;
         if (!myQueue.isEmpty()) {
           pollQueueLater();
         }
@@ -71,7 +89,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
         Runnable next = myQueue.poll();
         if (next != null) {
-          runSyncTransaction(TransactionKind.NO_MERGE, next);
+          runSyncTransaction(TransactionKind.ANY_CHANGE, next);
         }
       }
     }, app.getDisposed());
@@ -87,8 +105,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  @Override
-  public boolean isInsideTransaction() {
+  private boolean isInsideTransaction() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myTransactionStartTrace != null;
   }
@@ -98,7 +115,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (!isInsideTransaction() || kind != TransactionKind.NO_MERGE && myMergeableKinds.contains(kind)) {
+        if (canRunTransactionNow(kind)) {
           runSyncTransaction(kind, transaction);
         }
         else {
@@ -117,9 +134,13 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
+  protected boolean canRunTransactionNow(@NotNull TransactionKind kind) {
+    return !isInsideTransaction() || myMergeableKinds.contains(kind) || ModalityState.current().equals(myTransactionModality);
+  }
+
   @Override
   @NotNull
-  public AccessToken acceptNestedTransactions(TransactionKind... kinds) {
+  public AccessToken acceptNestedTransactions(@NotNull TransactionKind... kinds) {
     //todo enable when transactions are mandatory
     /*
     if (!isInsideTransaction()) {
@@ -141,11 +162,24 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
+  public void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage) {
+    if (transactionRequired != isInsideTransaction()) {
+      LOG.error(errorMessage);
+    }
+  }
+
+  @Override
   public void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Runnable transaction) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
-    assert !app.isDispatchThread() : "submitTransactionAndWait should not be invoked on dispatch thread";
-    assert !app.isReadAccessAllowed() : "submitTransactionAndWait should not be invoked from a read action";
+    if (app.isDispatchThread()) {
+      if (!canRunTransactionNow(kind)) {
+        throw new AssertionError("Cannot run submitTransactionAndWait from another transaction, kind " + kind + " is not allowed");
+      }
+      runSyncTransaction(kind, transaction);
+      return;
+    }
 
+    assert !app.isReadAccessAllowed() : "submitTransactionAndWait should not be invoked from a read action";
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
@@ -167,5 +201,50 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (exception[0] != null) {
       throw new RuntimeException(exception[0]);
     }
+  }
+
+  /**
+   * An absolutely guru method!<p/>
+   *
+   * Executes the given code and marks it as a user activity, to allow write actions to be run without requiring transactions.
+   * This is only to be called from UI infrastructure, during InputEvent processing and wrap the point where the control
+   * goes to custom input event handlers for the first time.<p/>
+   *
+   * If you wish to invoke some actionPerformed,
+   * please consider using {@code ActionManager.tryToExecute()} instead, or ensure in some other way that the action is enabled
+   * and can be invoked in the current modality state.
+   */
+  public <T extends Throwable> void performUserActivity(Runnable activity) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    AccessToken token = startActivity(true);
+    try {
+      activity.run();
+    }
+    finally {
+      token.finish();
+    }
+  }
+
+  /**
+   * An absolutely guru method, only intended to be used from Swing event processing. Please consult Peter if you think you need to invoke this.
+   */
+  @NotNull
+  public AccessToken startActivity(boolean userActivity) {
+    if (myUserActivity == userActivity) {
+      return AccessToken.EMPTY_ACCESS_TOKEN;
+    }
+
+    final boolean prev = myUserActivity;
+    myUserActivity = userActivity;
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        myUserActivity = prev;
+      }
+    };
+  }
+
+  public boolean isWriteActionAllowed() {
+    return !Registry.is("ide.require.transaction.for.model.changes", false) || isInsideTransaction() || myUserActivity;
   }
 }

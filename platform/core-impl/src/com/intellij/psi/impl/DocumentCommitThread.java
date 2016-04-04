@@ -19,9 +19,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -75,6 +73,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class DocumentCommitThread implements Runnable, Disposable, DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
@@ -419,7 +420,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
       if (success) {
         assert !myApplication.isDispatchThread();
-        myApplication.invokeLater(finishRunnable, task.myCreationModalityState);
+        final Runnable finalFinishRunnable = finishRunnable;
+        myApplication.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, finalFinishRunnable);
+          }
+        }, task.myCreationModalityState);
       }
     }
     catch (ProcessCanceledException e) {
@@ -471,14 +478,29 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       throw new RuntimeException(s);
     }
 
-    CommitTask task = createNewTaskAndCancelSimilar(project, document, getAllFileNodes(psiFile), "Sync commit", ModalityState.current());
-    assert !task.indicator.isCanceled();
-    Pair<Runnable, Object> result = commitUnderProgress(task, true);
-    Runnable finish = result.first;
-    log(project, "Committed sync", task, finish, task.indicator);
-    assert finish != null;
+    List<Pair<PsiFileImpl, FileASTNode>> allFileNodes = getAllFileNodes(psiFile);
 
-    finish.run();
+    Lock documentLock = getDocumentLock(document);
+
+    CommitTask task;
+    synchronized (lock) {
+      // synchronized to ensure no new similar tasks can start before we hold the document's lock
+      task = createNewTaskAndCancelSimilar(project, document, allFileNodes, "Sync commit", ModalityState.current());
+      documentLock.lock();
+    }
+
+    try {
+      assert !task.indicator.isCanceled();
+      Pair<Runnable, Object> result = commitUnderProgress(task, true);
+      Runnable finish = result.first;
+      log(project, "Committed sync", task, finish, task.indicator);
+      assert finish != null;
+
+      finish.run();
+    }
+    finally {
+      documentLock.unlock();
+    }
 
     // will wake itself up on write action end
   }
@@ -525,28 +547,39 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         myApplication.assertReadAccessAllowed();
         if (project.isDisposed()) return;
 
-        if (documentManager.isCommitted(document)) return;
-
-        if (!task.isStillValid()) {
-          task.cancel("Task invalidated", DocumentCommitThread.this);
+        Lock lock = getDocumentLock(document);
+        if (!lock.tryLock()) {
+          task.cancel("Can't obtain document lock", DocumentCommitThread.this);
           return;
         }
 
-        FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
-        if (viewProvider == null) {
-          finishProcessors.add(handleCommitWithoutPsi(documentManager, task));
-          return;
-        }
+        try {
+          if (documentManager.isCommitted(document)) return;
 
-        for (Pair<PsiFileImpl, FileASTNode> pair : task.myOldFileNodes) {
-          PsiFileImpl file = pair.first;
-          if (file.isValid()) {
-            FileASTNode oldFileNode = pair.second;
-            Processor<Document> finishProcessor = doCommit(task, file, oldFileNode);
-            if (finishProcessor != null) {
-              finishProcessors.add(finishProcessor);
+          if (!task.isStillValid()) {
+            task.cancel("Task invalidated", DocumentCommitThread.this);
+            return;
+          }
+
+          FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
+          if (viewProvider == null) {
+            finishProcessors.add(handleCommitWithoutPsi(documentManager, task));
+            return;
+          }
+
+          for (Pair<PsiFileImpl, FileASTNode> pair : task.myOldFileNodes) {
+            PsiFileImpl file = pair.first;
+            if (file.isValid()) {
+              FileASTNode oldFileNode = pair.second;
+              Processor<Document> finishProcessor = doCommit(task, file, oldFileNode);
+              if (finishProcessor != null) {
+                finishProcessors.add(finishProcessor);
+              }
             }
           }
+        }
+        finally {
+          lock.unlock();
         }
       }
     };
@@ -637,14 +670,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   }
 
   @TestOnly
-  public void waitForAllCommits() throws ExecutionException, InterruptedException {
+  public void waitForAllCommits() throws ExecutionException, InterruptedException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
     ((BoundedTaskExecutor)executor).waitAllTasksExecuted(100, TimeUnit.SECONDS);
     UIUtil.dispatchAllInvocationEvents();
   }
-
 
   private static class CommitTask {
     static final Key<Object> CANCEL_REASON = Key.create("CANCEL_REASON");
@@ -742,7 +774,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     return new Processor<Document>() {
       @Override
       public boolean process(Document document) {
-        ApplicationManager.getApplication().assertWriteAccessAllowed();
+        if (file.isPhysical()) {
+          ApplicationManager.getApplication().assertWriteAccessAllowed();
+        }
         if (!task.isStillValid() ||
             ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getCachedViewProvider(document) != file.getViewProvider()) {
           return false; // optimistic locking failed
@@ -887,4 +921,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       }
     }
   }
+
+  /**
+   * @return an internal lock object to prevent read & write phases of commit from running simultaneously for free-threaded PSI
+   */
+  private static Lock getDocumentLock(Document document) {
+    Lock lock = document.getUserData(DOCUMENT_LOCK);
+    return lock != null ? lock : ((UserDataHolderEx)document).putUserDataIfAbsent(DOCUMENT_LOCK, new ReentrantLock());
+  }
+  private static final Key<Lock> DOCUMENT_LOCK = Key.create("DOCUMENT_LOCK");
 }

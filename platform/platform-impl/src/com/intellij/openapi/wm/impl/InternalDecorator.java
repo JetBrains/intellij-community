@@ -100,6 +100,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myHideStripeButtonAction = new RemoveStripeButtonAction();
     myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow);
 
+    setFocusable(false);
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+
     myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
       @Override
       public ActionGroup produce() {

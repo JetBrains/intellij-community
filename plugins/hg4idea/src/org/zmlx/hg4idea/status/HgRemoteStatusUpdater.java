@@ -76,8 +76,8 @@ public class HgRemoteStatusUpdater implements HgUpdater {
             if (project.isDisposed()) return;
             final VirtualFile[] roots =
               root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
-            updateChangesetStatus(project, roots, myIncomingStatus, true);
-            updateChangesetStatus(project, roots, myOutgoingStatus, false);
+            updateChangesStatusSynchronously(project, roots, myIncomingStatus, true);
+            updateChangesStatusSynchronously(project, roots, myOutgoingStatus, false);
 
             project.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
 
@@ -110,15 +110,15 @@ public class HgRemoteStatusUpdater implements HgUpdater {
     }
   }
 
-  private void updateChangesetStatus(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
+  private void updateChangesStatusSynchronously(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
     if (!myProjectSettings.isCheckIncomingOutgoing()) return;
     final List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();
     for (VirtualFile root : roots) {
       if (incoming) {
-        changesets.addAll(new HgIncomingCommand(project).execute(root));
+        changesets.addAll(new HgIncomingCommand(project).executeInCurrentThread(root));
       }
       else {
-        changesets.addAll(new HgOutgoingCommand(project).execute(root));
+        changesets.addAll(new HgOutgoingCommand(project).executeInCurrentThread(root));
       }
     }
     status.setChanges(changesets.size(), new ChangesetFormatter(status, changesets));

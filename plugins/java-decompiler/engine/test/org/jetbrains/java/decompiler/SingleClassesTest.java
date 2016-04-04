@@ -46,6 +46,7 @@ public class SingleClassesTest {
   }
 
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
+  @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
   @Test public void testClassLoop() { doTest("pkg/TestClassLoop"); }
   @Test public void testClassSwitch() { doTest("pkg/TestClassSwitch"); }
@@ -82,6 +83,8 @@ public class SingleClassesTest {
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
+  @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
+  @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
 
   protected void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

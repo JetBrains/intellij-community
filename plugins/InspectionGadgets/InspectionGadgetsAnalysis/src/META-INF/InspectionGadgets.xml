@@ -2639,6 +2639,10 @@
                      key="sleep.while.holding.lock.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.SleepWhileHoldingLockInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SynchronizationOnGetClass" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="synchronization.on.get.class.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.threading.SynchronizationOnGetClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SynchronizationOnLocalVariableOrMethodParameter" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="synchronization.on.local.variable.or.method.parameter.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"

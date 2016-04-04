@@ -439,6 +439,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
       final PsiCodeBlock methodBody = getMethod().getBody();
       LOG.assertTrue(methodBody != null);
+      adjustTargetClassReferences(methodBody);
       return myElementFactory.createExpressionFromText("new Object(){ \n" +
                                                        "private " +
                                                        returnType.getPresentableText() +

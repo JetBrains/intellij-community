@@ -70,12 +70,13 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   // for diagnostics
-  static Object info(Object task) {
+  static Object info(Runnable info) {
+    Object task = info;
     if (task instanceof FutureTask) {
-      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task.getClass());
+      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task);
     }
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
-      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task.getClass());
+      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task);
     }
     return task;
   }
@@ -116,13 +117,22 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     }
     long status = incrementCounterAndTimestamp(); // increment inProgress and queue stamp atomically
 
-    if (tryToExecute(status, task)) {
+    int inProgress = (int)status;
+
+    assert inProgress > 0 : inProgress;
+    if (inProgress <= myMaxTasks) {
+      // optimisation: can execute without queue/dequeue
+      wrapAndExecute(task, status);
       return;
     }
+
     if (!myTaskQueue.offer(task)) {
       throw new RejectedExecutionException();
     }
-    pollAndExecute(status);
+    Runnable next = pollOrGiveUp(status);
+    if (next != null) {
+      wrapAndExecute(next, status);
+    }
   }
 
   static {
@@ -134,91 +144,90 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     long newStatus;
     do {
       status = myStatus.get();
+      // avoid "tasks number" bits to be garbled on overflow
       newStatus = status + 1 + (1L << 32) & 0x7fffffffffffffffL;
     } while (!myStatus.compareAndSet(status, newStatus));
     return newStatus;
   }
 
-  private void pollAndExecute(long status) {
+  // return next task taken from the queue if it can be executed now
+  // or decrement my counter (atomically) and return null
+  private Runnable pollOrGiveUp(long status) {
     while (true) {
       int inProgress = (int)status;
       assert inProgress > 0 : inProgress;
 
       Runnable next;
       if (inProgress <= myMaxTasks && (next = myTaskQueue.poll()) != null) {
-        tryToExecute(status, next);
-        break;
+        return next;
       }
       if (myStatus.compareAndSet(status, status - 1)) {
         break;
       }
       status = myStatus.get();
     }
+    return null;
   }
 
-  // true if executed
-  private boolean tryToExecute(long status, @NotNull Runnable task) {
-    int inProgress = (int)status;
-
-    assert inProgress > 0 : inProgress;
-    if (inProgress <= myMaxTasks) {
+  private void runFirstTaskThenPollAndRunRest(@NotNull Runnable first, long status) {
+    // we are back inside backend executor, no need to call .execute() - just run synchronously
+    Runnable task = first;
+    do {
       try {
-        myBackendExecutor.execute(wrap(task));
+        task.run();
       }
-      catch (Error e) {
-        myStatus.decrementAndGet();
-        throw e;
+      catch (Error ignored) {
+        // exception will be stored in this FutureTask status
       }
-      catch (RuntimeException e) {
-        myStatus.decrementAndGet();
-        throw e;
+      catch (RuntimeException ignored) {
+        // exception will be stored in this FutureTask status
       }
-      return true;
+      task = pollOrGiveUp(status);
     }
-    return false;
+    while (task != null);
   }
 
-  @NotNull
-  private Runnable wrap(@NotNull final Runnable task) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          task.run();
+  private void wrapAndExecute(@NotNull final Runnable task, final long status) {
+    try {
+      myBackendExecutor.execute(new Runnable() {
+        @Override
+        public void run() {
+          runFirstTaskThenPollAndRunRest(task, status);
         }
-        finally {
-          pollAndExecute(myStatus.get());
-        }
-      }
-
-      @Override
-      public String toString() {
-        return String.valueOf(info(task));
-      }
-    };
+      });
+    }
+    catch (Error e) {
+      myStatus.decrementAndGet();
+      throw e;
+    }
+    catch (RuntimeException e) {
+      myStatus.decrementAndGet();
+      throw e;
+    }
   }
 
   @TestOnly
-  public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException {
+  public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
     // start myMaxTasks runnables which will spread to all available executor threads
     // and wait for them all to finish
+    final Runnable wait = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          started.countDown();
+          readyToFinish.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
     List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxTasks, null), new Function<Object, Future>() {
       @Override
       public Future fun(Object o) {
-        return submit(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              started.countDown();
-              readyToFinish.await();
-            }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
+        return submit(wait);
       }
     });
     try {
@@ -234,7 +243,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       readyToFinish.countDown();
     }
     for (Future future : futures) {
-      future.get();
+      future.get(timeout, unit);
     }
   }
 

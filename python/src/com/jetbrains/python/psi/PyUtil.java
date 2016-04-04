@@ -1718,6 +1718,66 @@ public class PyUtil {
     return ScratchFileService.isInScratchRoot(PsiUtilCore.getVirtualFile(element));
   }
 
+  @Nullable
+  public static PyType getReturnTypeOfMember(@NotNull PyType type,
+                                             @NotNull String memberName,
+                                             @Nullable PyExpression location,
+                                             @NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> resolveResults = type.resolveMember(memberName, location, AccessDirection.READ,
+                                                                                 resolveContext);
+
+    if (resolveResults != null) {
+      final List<PyType> types = new ArrayList<>();
+
+      for (RatedResolveResult resolveResult : resolveResults) {
+        final PyType returnType = getReturnType(resolveResult.getElement(), context);
+
+        if (returnType != null) {
+          types.add(returnType);
+        }
+      }
+
+      return PyUnionType.union(types);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PyType getReturnType(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
+    if (element instanceof PyTypedElement) {
+      final PyType type = context.getType((PyTypedElement)element);
+
+      return getReturnType(type, context);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PyType getReturnType(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    if (type instanceof PyCallableType) {
+      return ((PyCallableType)type).getReturnType(context);
+    }
+
+    if (type instanceof PyUnionType) {
+      final List<PyType> types = new ArrayList<>();
+
+      for (PyType pyType : ((PyUnionType)type).getMembers()) {
+        final PyType returnType = getReturnType(pyType, context);
+
+        if (returnType != null) {
+          types.add(returnType);
+        }
+      }
+
+      return PyUnionType.union(types);
+    }
+
+    return null;
+  }
+
   /**
    * This helper class allows to collect various information about AST nodes composing {@link PyStringLiteralExpression}.
    */

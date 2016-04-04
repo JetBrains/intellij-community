@@ -35,6 +35,7 @@ public class NotificationParentGroup {
   private static Map<NotificationParentGroupBean, List<NotificationParentGroupBean>> myChildren;
   private static Map<String, NotificationParentGroupBean> myGroupToParent;
   private static Map<String, String> myReplaceTitles;
+  private static Map<String, String> myShortTitles;
 
   private static void prepareInfo() {
     if (myParents == null) {
@@ -60,6 +61,7 @@ public class NotificationParentGroup {
 
       myGroupToParent = new HashMap<>();
       myReplaceTitles = new HashMap<>();
+      myShortTitles = new HashMap<>();
       for (NotificationGroupBean bean : EP_CHILD_NAME.getExtensions()) {
         NotificationParentGroupBean parent = myParents.get(bean.parentId);
         if (parent != null) {
@@ -67,6 +69,9 @@ public class NotificationParentGroup {
 
           if (bean.replaceTitle != null) {
             myReplaceTitles.put(bean.groupId, bean.replaceTitle);
+          }
+          if (bean.shortTitle != null) {
+            myShortTitles.put(bean.groupId, bean.shortTitle);
           }
         }
       }
@@ -77,6 +82,12 @@ public class NotificationParentGroup {
   public static String getReplaceTitle(@NotNull String groupId) {
     prepareInfo();
     return myReplaceTitles.get(groupId);
+  }
+
+  @Nullable
+  public static String getShortTitle(@NotNull String groupId) {
+    prepareInfo();
+    return myShortTitles.get(groupId);
   }
 
   @NotNull

@@ -293,7 +293,7 @@ public class PyTypeParserTest extends PyTestCase {
     
     final PyClassType type3 = as(parameterTypes.get(2).getType(context), PyClassType.class);
     assertNotNull(type3);
-    assertEquals("tuple", type3.getName());
+    assertEquals("(str, ...)", type3.getName());
     
     final PyCollectionType type4 = as(parameterTypes.get(3).getType(context), PyCollectionType.class);
     assertNotNull(type4);

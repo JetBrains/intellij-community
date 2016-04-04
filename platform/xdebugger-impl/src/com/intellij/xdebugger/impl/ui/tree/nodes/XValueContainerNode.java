@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,7 +105,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       else {
         newChildren = new SmartList<>();
         if (myValueChildren == null) {
-          myValueChildren = last ? Collections.emptyList() : new SmartList<>();
+          myValueChildren = new SmartList<>();
         }
       }
 
@@ -175,8 +176,14 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @Override
   public void setMessage(@NotNull final String message,
-                         final Icon icon, @NotNull final SimpleTextAttributes attributes, @Nullable final XDebuggerTreeNodeHyperlink link) {
+                         final Icon icon,
+                         @NotNull final SimpleTextAttributes attributes,
+                         @Nullable final XDebuggerTreeNodeHyperlink link) {
     invokeNodeUpdate(() -> setMessageNodes(MessageTreeNode.createMessages(myTree, this, message, link, icon, attributes), false));
+  }
+
+  public void setInfoMessage(@NotNull String message, @Nullable HyperlinkListener hyperlinkListener) {
+    invokeNodeUpdate(() -> setMessageNodes(Collections.singletonList(MessageTreeNode.createInfoMessage(myTree, message, hyperlinkListener)), false));
   }
 
   private void setTemporaryMessageNode(final MessageTreeNode messageNode) {
@@ -234,7 +241,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Override
-  @Nullable
+  @NotNull
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> empty = Collections.<XValueGroupNodeImpl>emptyList();
     return ContainerUtil.concat(ObjectUtils.notNull(myTopGroups, empty),

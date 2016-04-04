@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
         final PsiDocTag[] tags = tag.getContainingComment().getTags();
         final Set<String> unboundParams = new HashSet<String>();
         for (PsiParameter parameter : parameters) {
-          if (!JavaDocLocalInspectionBase.isFound(tags, parameter)) {
+          if (!JavadocHighlightUtil.hasTagForParameter(tags, parameter)) {
             unboundParams.add(parameter.getName());
           }
         }
@@ -248,7 +248,7 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Remove tag";
     }
 
     @Override

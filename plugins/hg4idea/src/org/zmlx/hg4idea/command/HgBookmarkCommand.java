@@ -43,20 +43,20 @@ public class HgBookmarkCommand {
     };
   }
 
-  public void createBookmark(boolean isActive) throws HgCommandException {
+  public void createBookmarkAsynchronously(boolean isActive) throws HgCommandException {
     if (isActive) {
-      executeBookmarkCommand();
+      executeBookmarkCommandAsynchronously();
     }
     else {
-      executeBookmarkCommand("--inactive");
+      executeBookmarkCommandAsynchronously("--inactive");
     }
   }
 
-  public static void createBookmark(@NotNull List<HgRepository> repositories, @NotNull String name, boolean isActive) {
+  public static void createBookmarkAsynchronously(@NotNull List<HgRepository> repositories, @NotNull String name, boolean isActive) {
     for (HgRepository repository : repositories) {
       Project project = repository.getProject();
       try {
-        new HgBookmarkCommand(project, repository.getRoot(), name).createBookmark(isActive);
+        new HgBookmarkCommand(project, repository.getRoot(), name).createBookmarkAsynchronously(isActive);
       }
       catch (HgCommandException exception) {
         HgErrorUtil.handleException(project, exception);
@@ -65,10 +65,10 @@ public class HgBookmarkCommand {
   }
 
   public void deleteBookmark() throws HgCommandException {
-    executeBookmarkCommand("-d");  //delete
+    executeBookmarkCommandAsynchronously("-d");  //delete
   }
 
-  private void executeBookmarkCommand(@NotNull String... args) throws HgCommandException {
+  private void executeBookmarkCommandAsynchronously(@NotNull String... args) throws HgCommandException {
     if (StringUtil.isEmptyOrSpaces(myBookmarkName)) {
       throw new HgCommandException("bookmark name is empty");
     }

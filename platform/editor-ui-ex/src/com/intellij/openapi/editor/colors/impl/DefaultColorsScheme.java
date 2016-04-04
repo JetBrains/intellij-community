@@ -46,9 +46,14 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
         attrs = getFallbackAttributes(key.getFallbackAttributeKey());
         if (attrs != null && !attrs.isFallbackEnabled()) return attrs;
       }
-      attrs = key.getDefaultAttributes();
+      attrs = getKeyDefaults(key);
     }
     return attrs;
+  }
+
+  @Nullable
+  protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
+    return key.getDefaultAttributes();
   }
 
   @Nullable

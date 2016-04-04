@@ -46,7 +46,7 @@ fun processScopeVariables(scope: Scope,
                           isLast: Boolean) = processVariables(context, scope.variablesHost.get(), node, { memberFilter, variables ->
   val additionalVariables = memberFilter.additionalVariables
 
-  val exceptionValue = context.viewSupport.vm?.suspendContextManager?.context?.exceptionData?.exceptionValue
+  val exceptionValue = context.vm?.suspendContextManager?.context?.exceptionData?.exceptionValue
   val properties = ArrayList<Variable>(variables.size + additionalVariables.size + (if (exceptionValue == null) 0 else 1))
 
   exceptionValue?.let {

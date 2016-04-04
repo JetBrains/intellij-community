@@ -61,6 +61,6 @@ public class JavaFxRedundantPropertyValueInspectionTest extends AbstractJavaFXQu
     if (getTestName(false).endsWith("Attribute")) {
       return "Remove attribute " + tagName;
     }
-    return "Remove tag '" + tagName + "'";
+    return "Remove tag " + tagName;
   }
 }

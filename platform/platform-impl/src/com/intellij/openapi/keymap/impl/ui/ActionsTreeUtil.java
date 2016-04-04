@@ -556,7 +556,7 @@ public class ActionsTreeUtil {
         final Shortcut[] actionShortcuts =
           keymap.getShortcuts(action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action));
         for (Shortcut actionShortcut : actionShortcuts) {
-          if (shortcut.equals(actionShortcut)) {
+          if (actionShortcut != null && actionShortcut.startsWith(shortcut)) {
             return true;
           }
         }

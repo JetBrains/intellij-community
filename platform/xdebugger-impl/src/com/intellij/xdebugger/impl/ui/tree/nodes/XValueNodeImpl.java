@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
@@ -99,8 +98,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     // extra check for obsolete nodes - tree root was changed
     // too dangerous to put this into isObsolete - it is called from anywhere, not only EDT
     if (isObsolete()) return;
-    XDebuggerTreeNode root = getTree().getRoot();
-    if (root != null && !TreeUtil.isAncestor(root, this)) return;
 
     setIcon(icon);
     myValuePresentation = valuePresentation;

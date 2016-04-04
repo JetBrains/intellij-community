@@ -119,12 +119,12 @@ public class LineStatusTracker {
   }
 
   @CalledInAwt
-  public void initialize(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
+  public void setBaseRevision(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
     myApplication.assertIsDispatchThread();
 
     synchronized (myLock) {
       try {
-        if (myInitialized || myReleased) return;
+        if (myReleased) return;
         if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
 
         myBaseRevisionNumber = baseRevisionNumber;

@@ -57,10 +57,7 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
     extractProcessor.prepare();
     extractProcessor.testPrepare();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
-    });
-
+    ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
 
     checkResultByFile("/refactoring/extractMethodObject/" + testName + ".java" + ".after");
   }
@@ -139,6 +136,10 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
 
   public void testWithPrivateStaticMethodUsed2() throws Exception {
     doTest();
+  }
+
+  public void testThisAndSuperAnon() throws Exception {
+    doTest(false);
   }
 
   public void testWithPrivateMethodWhichCantBeMoved() throws Exception {

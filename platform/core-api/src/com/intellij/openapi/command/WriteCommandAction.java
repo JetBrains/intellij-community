@@ -72,21 +72,26 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   @Override
   public RunResult<T> execute() {
     Application application = ApplicationManager.getApplication();
-    if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
+    final boolean dispatchThread = application.isDispatchThread();
+    if (!dispatchThread && application.isReadAccessAllowed()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
       throw new IllegalStateException();
     }
     final RunResult<T> result = new RunResult<T>(this);
 
-    try {
-      application.invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          performWriteCommandAction(result);
-        }
-      }, ModalityState.defaultModalityState());
+    if (dispatchThread) {
+      performWriteCommandAction(result);
+    } else {
+      try {
+        TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, new Runnable() {
+          @Override
+          public void run() {
+            performWriteCommandAction(result);
+          }
+        });
+      }
+      catch (ProcessCanceledException ignored) { }
     }
-    catch (ProcessCanceledException ignored) { }
     return result;
   }
 

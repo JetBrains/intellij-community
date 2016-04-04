@@ -38,7 +38,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.impl.ShadowBorderPainter;
+import com.intellij.openapi.ui.impl.ShadowPainter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -532,13 +532,22 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
            (SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN));
   }
 
+  final static ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Windows.Shadow.Top,
+                                                                  AllIcons.Windows.Shadow.TopRight,
+                                                                  AllIcons.Windows.Shadow.Right,
+                                                                  AllIcons.Windows.Shadow.BottomRight,
+                                                                  AllIcons.Windows.Shadow.Bottom,
+                                                                  AllIcons.Windows.Shadow.BottomLeft,
+                                                                  AllIcons.Windows.Shadow.Left,
+                                                                  AllIcons.Windows.Shadow.TopLeft);
+
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
     //noinspection Since15
     super.paint(g);
     if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
-      final BufferedImage shadow = ShadowBorderPainter.createShadow(getRootPane(), getWidth(), getHeight());
+      final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());
       g.drawImage(shadow, 0, 0, null);
     }
   }
@@ -552,10 +561,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   public void doLayout() {
     super.doLayout();
     if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
-      final int side = AllIcons.Ide.Shadow.Right.getIconWidth();
-      final int top = AllIcons.Ide.Shadow.Top.getIconHeight();
-      final int bottom = AllIcons.Ide.Shadow.Bottom.getIconHeight();
-      getRootPane().setBounds(side, top, getWidth() - 2 * side, getHeight() - top - bottom);
+      final int leftSide = AllIcons.Windows.Shadow.Left.getIconWidth();
+      final int rightSide = AllIcons.Windows.Shadow.Right.getIconWidth();
+      final int top = AllIcons.Windows.Shadow.Top.getIconHeight();
+      final int bottom = AllIcons.Windows.Shadow.Bottom.getIconHeight();
+      getRootPane().setBounds(leftSide, top, getWidth() - leftSide - rightSide, getHeight() - top - bottom);
     }
   }
 

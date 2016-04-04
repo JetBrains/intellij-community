@@ -121,6 +121,7 @@
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuilderStrategySupport"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.ExternalBuilderStrategySupport"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.InitializerBuilderStrategySupport"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.bindable.BindableTransformContributor"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
@@ -532,8 +533,6 @@
                             implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator"/>
 
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
-
-    <attachSourcesProvider implementation="org.jetbrains.plugins.groovy.ivy.IvyAttachSourceProvider"/>
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
                          displayName="Groovy Compiler" parentId="project.propCompiler"/>

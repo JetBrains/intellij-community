@@ -251,7 +251,8 @@ public class JavaKeywordCompletion {
     PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(position);
     addFinal(result, position, prevLeaf);
 
-    if (isStatementPosition(position)) {
+    boolean statementPosition = isStatementPosition(position);
+    if (statementPosition) {
       addCaseDefault(result, position);
       if (START_SWITCH.accepts(position)) {
         return;
@@ -263,7 +264,7 @@ public class JavaKeywordCompletion {
 
     addThisSuper(result, position);
 
-    addExpressionKeywords(parameters, result, position, prevLeaf);
+    addExpressionKeywords(parameters, result, position, prevLeaf, statementPosition);
 
     addFileHeaderKeywords(result, position, prevLeaf);
 
@@ -358,7 +359,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  private static void addExpressionKeywords(CompletionParameters parameters, Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
+  private static void addExpressionKeywords(CompletionParameters parameters, Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf, boolean statementPosition) {
     if (psiElement(JavaTokenType.DOUBLE_COLON).accepts(prevLeaf)) {
       PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiMethodReferenceExpression.class);
       TailType tail = parent != null && !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
@@ -368,7 +369,9 @@ public class JavaKeywordCompletion {
 
     if (isExpressionPosition(position)) {
       if (PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) == null) {
-        result.consume(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
+        if (!statementPosition) {
+          result.consume(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
+        }
         result.consume(createKeyword(position, PsiKeyword.NULL));
       }
       if (mayExpectBoolean(parameters)) {

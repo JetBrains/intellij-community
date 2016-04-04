@@ -129,9 +129,11 @@ public class PyTypeModelBuilder {
 
   static class TupleType extends TypeModel {
     private final List<TypeModel> members;
+    private final boolean homogeneous;
 
-    public TupleType(List<TypeModel> members) {
+    public TupleType(List<TypeModel> members, boolean homogeneous) {
       this.members = members;
+      this.homogeneous = homogeneous;
     }
 
     @Override
@@ -244,11 +246,11 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyTupleType) {
       final List<TypeModel> elementModels = new ArrayList<TypeModel>();
       final PyTupleType tupleType = (PyTupleType)type;
-      for (int i = 0; i < tupleType.getElementCount(); i++) {
+      for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
         final PyType elementType = tupleType.getElementType(i);
         elementModels.add(build(elementType, true));
       }
-      result = new TupleType(elementModels);
+      result = new TupleType(elementModels, tupleType.isHomogeneous());
     }
     if (result == null) {
       result = type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
@@ -477,6 +479,9 @@ public class PyTypeModelBuilder {
     public void tuple(TupleType type) {
       add("Tuple[");
       processList(type.members, ", ");
+      if (type.homogeneous) {
+        add(", ...");
+      }
       add("]");
     }
   }

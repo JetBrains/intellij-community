@@ -62,6 +62,10 @@ public final class PsiUtil extends PsiUtilCore {
   public static final int ACCESS_LEVEL_PRIVATE = 1;
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
 
+  private static final Set<String> IGNORED_NAMES = ContainerUtil.newTroveSet(
+    "ignore", "ignore1", "ignore2", "ignore3", "ignore4", "ignore5",
+    "ignored", "ignored1", "ignored2", "ignored3", "ignored4", "ignored5");
+
   private PsiUtil() {}
 
   public static boolean isOnAssignmentLeftHand(@NotNull PsiExpression expr) {
@@ -760,6 +764,9 @@ public final class PsiUtil extends PsiUtilCore {
     return null;
   }
 
+  /**
+   * Applies capture conversion to the type in context
+   */
   @NotNull
   public static PsiType captureToplevelWildcards(@NotNull final PsiType type, @NotNull final PsiElement context) {
     if (type instanceof PsiClassType) {
@@ -804,6 +811,38 @@ public final class PsiUtil extends PsiUtilCore {
       return captureToplevelWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
     }
 
+    return type;
+  }
+
+  /**
+   * Opens top level captured wildcards and remap them according to the context.
+   * The only valid purpose: allow to speculate on non-physical expressions about types, e.g. to detect redundant casts with 'wildcards'
+   */
+  public static PsiType recaptureWildcards(PsiType type, PsiElement context) {
+    if (type instanceof PsiClassType) {
+      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      final PsiClass aClass = resolveResult.getElement();
+      if (aClass != null) {
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+
+        PsiSubstitutor resultSubstitution = null;
+        for (PsiTypeParameter parameter : substitutor.getSubstitutionMap().keySet()) {
+          final PsiType substitute = substitutor.substitute(parameter);
+          if (substitute instanceof PsiCapturedWildcardType) {
+            if (resultSubstitution == null) resultSubstitution = substitutor;
+            resultSubstitution = resultSubstitution.put(parameter, ((PsiCapturedWildcardType)substitute).getWildcard());
+          }
+        }
+
+        if (resultSubstitution != null) {
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+          return captureToplevelWildcards(factory.createType(aClass, resultSubstitution), context);
+        }
+      }
+    }
+    else if (type instanceof PsiArrayType) {
+      return recaptureWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
+    }
     return type;
   }
 
@@ -1098,8 +1137,8 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiParameter && element.getParent() instanceof PsiCatchSection;
   }
 
-  public static boolean isIgnoredName(@Nullable final String name) {
-    return "ignore".equals(name) || "ignored".equals(name);
+  public static boolean isIgnoredName(@Nullable String name) {
+    return name != null && IGNORED_NAMES.contains(name);
   }
 
   @Nullable

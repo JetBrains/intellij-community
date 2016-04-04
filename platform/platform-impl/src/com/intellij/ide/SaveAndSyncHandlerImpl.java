@@ -74,12 +74,9 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
     mySettings = generalSettings;
     myProgressManager = progressManager;
 
-    myIdleListener = new Runnable() {
-      @Override
-      public void run() {
-        if (mySettings.isAutoSaveIfInactive() && canSyncOrSave()) {
-          ((FileDocumentManagerImpl)fileDocumentManager).saveAllDocuments(false);
-        }
+    myIdleListener = () -> {
+      if (mySettings.isAutoSaveIfInactive() && canSyncOrSave()) {
+        TransactionGuard.submitTransaction(() -> ((FileDocumentManagerImpl)fileDocumentManager).saveAllDocuments(false));
       }
     };
     IdeEventQueue.getInstance().addIdleListener(myIdleListener, mySettings.getInactiveTimeout() * 1000);

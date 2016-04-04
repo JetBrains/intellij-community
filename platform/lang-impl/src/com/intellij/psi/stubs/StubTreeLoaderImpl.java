@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -58,7 +59,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
         // but don't reuse psiFile itself to avoid loading its contents. If we load AST, the stub will be thrown out anyway.
       }
-      Stub element = StubTreeBuilder.buildStubTree(fc);
+      Stub element = RecursionManager.doPreventingRecursion(vFile, false, () -> StubTreeBuilder.buildStubTree(fc));
       if (element instanceof PsiFileStub) {
         StubTree tree = new StubTree((PsiFileStub)element);
         tree.setDebugInfo("created from file content");

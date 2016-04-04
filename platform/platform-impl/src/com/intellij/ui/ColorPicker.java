@@ -47,6 +47,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
@@ -94,7 +95,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   };
 
   public ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
-    this(parent, color, true, enableOpacity, Collections.<ColorPickerListener>emptyList(), false);
+    this(parent, color, true, enableOpacity, Collections.emptyList(), false);
   }
 
   private ColorPicker(Disposable parent,
@@ -1050,9 +1051,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private static class DefaultColorPipette extends ColorPipetteBase {
-    private static final int SIZE = 32;
-    private static final Point HOT_SPOT = new Point(SIZE / 2, SIZE / 2);
-
+    private static final int SIZE = 30;
+    private static final int DIALOG_SIZE = SIZE - 4;
+    private static final Point HOT_SPOT = new Point(DIALOG_SIZE / 2, DIALOG_SIZE / 2);
+    
     private final Rectangle myCaptureRect = new Rectangle(-4, -4, 8, 8);
     private final Rectangle myZoomRect = new Rectangle(0, 0, SIZE, SIZE);
     private final Point myPreviousLocation = new Point();
@@ -1074,11 +1076,22 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     @Override
+    protected Color getPixelColor(Point location) {
+      return super.getPixelColor(new Point(location.x - HOT_SPOT.x + SIZE / 2, location.y - HOT_SPOT.y + SIZE / 2));
+    }
+
+    @Override
     public Dialog show() {
       Dialog picker = super.show();
       myTimer.start();
       // it seems like it's the lowest value for opacity for mouse events to be processed correctly
       WindowManager.getInstance().setAlphaModeRatio(picker, SystemInfo.isMac ? 0.95f : 0.99f);
+
+      if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+        Area area = new Area(new Rectangle(0, 0, DIALOG_SIZE, DIALOG_SIZE));
+        area.subtract(new Area(new Rectangle(SIZE / 2 - 1, SIZE / 2 - 1, 3, 3)));
+        picker.setShape(area);
+      }
       return picker;
     }
 
@@ -1112,11 +1125,15 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         pickerDialog.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
-            cancelPipette();
+            if (e.isTemporary()) {
+              pickAndClose();
+            } else {
+              cancelPipette();
+            }
           }
         });
 
-        pickerDialog.setSize(SIZE - 4, SIZE - 4);
+        pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
         myMaskImage = UIUtil.createImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D maskG = myMaskImage.createGraphics();
         maskG.setColor(Color.BLUE);
@@ -1147,12 +1164,11 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       if (pickerDialog != null && pickerDialog.isShowing()) {
         Point mouseLoc = updateLocation();
         if (mouseLoc == null) return;
-        final Color c = myRobot.getPixelColor(mouseLoc.x, mouseLoc.y);
+        final Color c = getPixelColor(mouseLoc);
         if (!c.equals(getColor()) || !mouseLoc.equals(myPreviousLocation)) {
           setColor(c);
           myPreviousLocation.setLocation(mouseLoc);
-          myCaptureRect.setLocation(mouseLoc.x - 2, mouseLoc.y - 2);
-          myCaptureRect.setBounds(mouseLoc.x - 2, mouseLoc.y - 2, 5, 5);
+          myCaptureRect.setBounds(mouseLoc.x - HOT_SPOT.x + SIZE / 2 - 2, mouseLoc.y - HOT_SPOT.y + SIZE / 2 - 2, 5, 5);
           
           BufferedImage capture = myRobot.createScreenCapture(myCaptureRect);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 /**
  * This is should be first test in all tests so we can measure how long tests are starting up.
@@ -31,8 +32,8 @@ import java.util.List;
  */
 @SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr"})
 public class _FirstInSuiteTest extends TestCase {
-  public static long suiteStarted = 0L;
-  public static boolean nothingIsCalled = false;
+  public static long suiteStarted;
+  public static boolean nothingIsCalled;
 
   public void testReportClassLoadingProblems() {
     List<Throwable> problems = TestAll.getLoadingClassProblems();
@@ -40,7 +41,7 @@ public class _FirstInSuiteTest extends TestCase {
 
     StringBuilder builder = new StringBuilder("The following test classes were not loaded:\n");
     for (Throwable each : problems) {
-      builder.append(each.toString()).append("\n");
+      builder.append(each).append("\n");
       each.printStackTrace(System.out);
     }
 
@@ -54,22 +55,12 @@ public class _FirstInSuiteTest extends TestCase {
     nothingIsCalled = true;
     suiteStarted = System.nanoTime();
 
-    SwingUtilities.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        System.out.println("EDT is " + Thread.currentThread());
-      }
-    });
+    SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.
     // so we try to forcibly terminate EDT here to urge JVM to re-spawn new shiny permanent EDT-1
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    SwingUtilities.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        System.out.println("EDT is " + Thread.currentThread());
-      }
-    });
+    SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
 
     // force platform JNA load
     Class.forName("com.sun.jna.Native");
@@ -77,6 +68,8 @@ public class _FirstInSuiteTest extends TestCase {
     String tempDirectory = FileUtilRt.getTempDirectory();
     String[] list = new File(tempDirectory).list();
     System.out.println("FileUtil.getTempDirectory() = " + tempDirectory + " (" + list.length + " files)");
+
+    Preferences.userRoot(); // starts (anonymous!) timer deep in JDK bowels. helps against thread leaks
   }
 
   // performance tests

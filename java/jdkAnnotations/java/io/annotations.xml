@@ -122,6 +122,18 @@
   <item name="java.io.File java.io.File[] listFiles()">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
+  <item name='java.io.File java.io.File[] listFiles(java.io.FileFilter)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.io.File java.io.File[] listFiles(java.io.FileFilter) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.io.File java.io.File[] listFiles(java.io.FilenameFilter)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.io.File java.io.File[] listFiles(java.io.FilenameFilter) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name="java.io.File java.lang.String getAbsolutePath()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -133,6 +145,15 @@
   </item>
   <item name="java.io.File java.lang.String getPath()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.io.File java.lang.String[] list()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.io.File java.lang.String[] list(java.io.FilenameFilter)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.io.File java.lang.String[] list(java.io.FilenameFilter) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name="java.io.File java.net.URI toURI()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -205,9 +226,6 @@
   </item>
   <item name='java.io.FileWriter FileWriter(java.lang.String, boolean) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name="java.io.FilterInputStream FilterInputStream(java.io.InputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.FilterInputStream int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />

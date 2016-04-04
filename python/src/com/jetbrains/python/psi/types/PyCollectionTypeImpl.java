@@ -71,7 +71,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
 
   @Override
   public PyClassType toInstance() {
-    return myIsDefinition ? new PyCollectionTypeImpl(myClass, false, myElementTypes) : this;
+    return myIsDefinition ? withUserDataCopy(new PyCollectionTypeImpl(myClass, false, myElementTypes)) : this;
   }
 
   @Override

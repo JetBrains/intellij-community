@@ -17,11 +17,11 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IdSet;
+import com.intellij.util.indexing.containers.SortedFileIdSetIterator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashMap;
@@ -32,7 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -429,28 +432,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  private static final ThreadLocalCachedIntArray ourSpareBuffer = new ThreadLocalCachedIntArray();
-
-  private static final int INT_BITS_SHIFT = 5;
-  private static int nextSetBit(int bitIndex, int[] bits, int bitsLength) {
-    int wordIndex = bitIndex >> INT_BITS_SHIFT;
-    if (wordIndex >= bitsLength) {
-      return -1;
-    }
-
-    int word = bits[wordIndex] & (-1 << bitIndex);
-
-    while (true) {
-      if (word != 0) {
-        return (wordIndex << INT_BITS_SHIFT) + Long.numberOfTrailingZeros(word);
-      }
-      if (++wordIndex == bitsLength) {
-        return -1;
-      }
-      word = bits[wordIndex];
-    }
-  }
-
   @Override
   public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
     DataInputOutputUtil.writeINT(out, size());
@@ -466,9 +447,15 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         // serialize positive file ids with delta encoding
         ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
         IntIterator intIterator = originalInput.rawIntIterator();
-        DataInputOutputUtil.writeINT(out, -intIterator.size());
+        if (!intIterator.hasAscendingOrder()) {
+          // remove possible dupes
+          intIterator = SortedFileIdSetIterator.getTransientIterator(intIterator);
+        }
 
-        if (intIterator.hasAscendingOrder()) {
+        if (intIterator.size() == 1) {
+          DataInputOutputUtil.writeINT(out, intIterator.next());
+        } else {
+          DataInputOutputUtil.writeINT(out, -intIterator.size());
           IdSet checkSet = originalInput.getCheckSet();
           if (checkSet != null && checkSet.size() != intIterator.size()) {  // debug code
             int a = 1; assert false;
@@ -478,41 +465,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           while (intIterator.hasNext()) {
             int fileId = intIterator.next();
             if (checkSet != null && !checkSet.contains(fileId)) { // debug code
-              int a = 1; assert false;
+              int a = 1;
+              assert false;
             }
             DataInputOutputUtil.writeINT(out, fileId - prev);
             prev = fileId;
-          }
-        } else {
-          // sorting numbers via bitset before writing deltas
-          int max = 0, min = Integer.MAX_VALUE;
-
-          while(intIterator.hasNext()) {
-            int nextInt = intIterator.next();
-            max = Math.max(max, nextInt);
-            min = Math.min(min, nextInt);
-          }
-
-          assert min > 0;
-
-          final int offset = (min >> INT_BITS_SHIFT) << INT_BITS_SHIFT;
-          final int bitsLength = ((max - offset) >> INT_BITS_SHIFT) + 1;
-          final int[] bits = ourSpareBuffer.getBuffer(bitsLength);
-          for(int i = 0; i < bitsLength; ++i) bits[i] = 0;
-
-          intIterator = originalInput.rawIntIterator();
-          while(intIterator.hasNext()) {
-            final int id = intIterator.next() - offset;
-            bits[id >> INT_BITS_SHIFT] |= (1 << (id));
-          }
-
-          int pos = nextSetBit(0, bits, bitsLength);
-          int prev = 0;
-
-          while (pos != -1) {
-            DataInputOutputUtil.writeINT(out, pos + offset - prev);
-            prev = pos + offset;
-            pos = nextSetBit(pos + 1, bits, bitsLength);
           }
         }
       }

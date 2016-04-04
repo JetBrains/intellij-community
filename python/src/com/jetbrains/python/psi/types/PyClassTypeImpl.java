@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,16 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Override
   public PyClassType toInstance() {
-    return myIsDefinition ? new PyClassTypeImpl(myClass, false) : this;
+    return myIsDefinition ? withUserDataCopy(new PyClassTypeImpl(myClass, false)) : this;
+  }
+
+  /**
+   * Wrap new instance to copy user data to it
+   */
+  @NotNull
+  final <T extends PyClassTypeImpl> T withUserDataCopy(@NotNull final T newInstance) {
+    newInstance.setUserMap(getUserMap());
+    return newInstance;
   }
 
   @Override
@@ -155,7 +164,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember =
-      resolveByOverridingMembersProviders(this, name, location); //overriding members provers have priority to normal resolve
+      resolveByOverridingMembersProviders(this, name, location, context); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -368,66 +377,23 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context) {
-    return getReturnType(context, null);
+    return getPossibleCallType(context, null);
   }
 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    return getReturnType(context, callSite);
+    return getPossibleCallType(context, callSite);
   }
 
   @Nullable
-  private PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyCallSiteExpression callSite) {
+  private PyType getPossibleCallType(@NotNull TypeEvalContext context, @Nullable PyCallSiteExpression callSite) {
     if (!isDefinition()) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final List<? extends RatedResolveResult> resolveResults = resolveMember(PyNames.CALL, callSite, AccessDirection.READ, resolveContext);
-
-      if (resolveResults != null) {
-        final ArrayList<PyType> result = new ArrayList<PyType>();
-
-        for (RatedResolveResult resolveResult : resolveResults) {
-          result.addAll(
-            getPossibleReturnTypes(resolveResult.getElement(), context)
-          );
-        }
-
-        return PyUnionType.union(result);
-      }
+      return PyUtil.getReturnTypeOfMember(this, PyNames.CALL, callSite, context);
     }
     else {
-      return new PyClassTypeImpl(getPyClass(), false);
+      return withUserDataCopy(new PyClassTypeImpl(getPyClass(), false));
     }
-
-    return null;
-  }
-
-  @NotNull
-  private static List<PyType> getPossibleReturnTypes(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
-    final ArrayList<PyType> result = new ArrayList<PyType>();
-
-    if (element instanceof PyTypedElement) {
-      final PyType elementType = context.getType((PyTypedElement)element);
-
-      result.addAll(getPossibleReturnTypes(elementType, context));
-
-      if (elementType instanceof PyUnionType) {
-        for (PyType type : ((PyUnionType)elementType).getMembers()) {
-          result.addAll(getPossibleReturnTypes(type, context));
-        }
-      }
-    }
-
-    return result;
-  }
-
-  @NotNull
-  private static List<PyType> getPossibleReturnTypes(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyCallableType) {
-      return Collections.singletonList(((PyCallableType)type).getReturnType(context));
-    }
-
-    return Collections.emptyList();
   }
 
   @Nullable
@@ -468,10 +434,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
+  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass,
+                                                                String name,
+                                                                @Nullable PsiElement location,
+                                                                @NotNull final TypeEvalContext context) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, null);
+        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, context);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -566,11 +535,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public void visitMembers(@NotNull final Processor<PsiElement> processor,
                            final boolean inherited,
                            @NotNull final TypeEvalContext context) {
-
     myClass.visitMethods(new MyProcessorWrapper<PyFunction>(processor), false, context);
     myClass.visitClassAttributes(new MyProcessorWrapper<PyTargetExpression>(processor), false, context);
 
-    // TODO: accept instance attributes as well
+    for (PyTargetExpression expression : myClass.getInstanceAttributes()) {
+      processor.process(expression);
+    }
 
     if (!inherited) {
       return;
@@ -582,6 +552,42 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         type.visitMembers(processor, false, context);
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> result = new LinkedHashSet<>();
+
+    for (PyFunction function : myClass.getMethods()) {
+      result.add(function.getName());
+    }
+
+    for (PyTargetExpression expression : myClass.getClassAttributes()) {
+      result.add(expression.getName());
+    }
+
+    for (PyTargetExpression expression : myClass.getInstanceAttributes()) {
+      result.add(expression.getName());
+    }
+
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      for (PyCustomMember member : provider.getMembers(this, null, context)) {
+        result.add(member.getName());
+      }
+    }
+
+    if (inherited) {
+      for (PyClassLikeType type : getAncestorTypes(context)) {
+        if (type != null) {
+          final PyClassLikeType ancestorType = isDefinition() ? type : type.toInstance();
+
+          result.addAll(ancestorType.getMemberNames(false, context));
+        }
+      }
+    }
+
+    return result;
   }
 
   private void addOwnClassMembers(PsiElement expressionHook,
@@ -688,19 +694,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (!myClass.isValid()) {
       throw new PsiInvalidElementAccessException(myClass, myClass.getClass().toString() + ": " + message);
     }
-  }
-
-  @NotNull
-  public Set<String> getPossibleInstanceMembers() {
-    Set<String> ret = new HashSet<String>();
-    /*
-    if (myClass != null) {
-      PyClassType otype = PyBuiltinCache.getInstance(myClass.getProject()).getObjectType();
-      ret.addAll(otype.getPossibleInstanceMembers());
-    }
-    */
-    // TODO: add our own ideas here, e.g. from methods other than constructor
-    return Collections.unmodifiableSet(ret);
   }
 
   @Override

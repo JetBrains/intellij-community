@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
@@ -72,6 +73,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.*;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -479,7 +481,7 @@ public class FindDialog extends DialogWrapper {
       if (component instanceof EditorTextField) {
         final Document document = ((EditorTextField)component).getDocument();
         if (document != null) {
-          PsiDocumentManager.getInstance(myProject).commitDocument(document);
+          TransactionGuard.submitTransaction(() -> PsiDocumentManager.getInstance(myProject).commitDocument(document));
         }
       }
 
@@ -643,6 +645,12 @@ public class FindDialog extends DialogWrapper {
           }
         };
         myResultsPreviewTable = table;
+        new TableSpeedSearch(table, new Convertor<Object, String>() {
+          @Override
+          public String convert(Object o) {
+            return ((UsageInfo2UsageAdapter)o).getFile().getName();
+          }
+        });
         myResultsPreviewTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
           @Override
           public void valueChanged(ListSelectionEvent e) {
@@ -1669,7 +1677,7 @@ public class FindDialog extends DialogWrapper {
           final String uniqueVirtualFilePath =
             UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(usageAdapter.getUsageInfo().getProject(), usageAdapter.getFile());
           // line number / file info
-          append(uniqueVirtualFilePath + " " + text[0].getText(), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+          append(uniqueVirtualFilePath + " " + text[0].getText(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         setBorder(null);
       }
@@ -1684,10 +1692,9 @@ public class FindDialog extends DialogWrapper {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      setBackground(UIUtil.getTableBackground(isSelected));
       myUsageRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
+      setBackground(myUsageRenderer.getBackground());
       return this;
     }
   }

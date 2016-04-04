@@ -42,7 +42,7 @@ public class FocusOppositePaneAction extends AnAction implements DumbAware {
     throw new UnsupportedOperationException();
   }
 
-  public void setupAction(@NotNull JComponent component) {
+  public void install(@NotNull JComponent component) {
     registerCustomShortcutSet(getShortcutSet(), component);
   }
 

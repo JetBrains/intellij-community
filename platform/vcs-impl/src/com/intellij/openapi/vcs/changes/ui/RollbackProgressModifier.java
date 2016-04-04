@@ -75,23 +75,21 @@ public class RollbackProgressModifier implements RollbackProgressListener {
   }
 
   public void accept(@NotNull final Change change) {
-    acceptImpl(ChangesUtil.getFilePath(change).getIOFile().getAbsolutePath());
+    acceptImpl(ChangesUtil.getFilePath(change).getPath());
   }
 
   public void accept(@NotNull final FilePath filePath) {
-    acceptImpl(filePath.getIOFile().getAbsolutePath());
+    acceptImpl(filePath.getPath());
   }
 
   public void accept(final List<FilePath> paths) {
     if (myIndicator != null) {
       if (paths != null && (! paths.isEmpty())) {
-        for (int i = 0; i < paths.size(); i++) {
-          final FilePath path = paths.get(i);
-          final String name = path.getIOFile().getAbsolutePath();
-          checkName(name);
+        for (FilePath path : paths) {
+          checkName(path.getPath());
         }
         myIndicator.setFraction(myCnt / myTotal);
-        myIndicator.setText2(VcsBundle.message("rolling.back.file", paths.get(0).getIOFile().getAbsolutePath()));
+        myIndicator.setText2(VcsBundle.message("rolling.back.file", paths.get(0).getPath()));
       }
     }
   }

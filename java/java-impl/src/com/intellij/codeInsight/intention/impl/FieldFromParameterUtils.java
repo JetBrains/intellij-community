@@ -145,19 +145,25 @@ public final class FieldFromParameterUtils {
         else if (expression instanceof PsiAssignmentExpression) {
           PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
           PsiExpression lExpression = assignmentExpression.getLExpression();
-          PsiExpression rExpression = assignmentExpression.getRExpression();
 
           if (!(lExpression instanceof PsiReferenceExpression)) break;
-          if (!(rExpression instanceof PsiReferenceExpression)) break;
 
-          PsiReferenceExpression lReference = (PsiReferenceExpression)lExpression;
-          PsiReferenceExpression rReference = (PsiReferenceExpression)rExpression;
-
-          PsiElement lElement = lReference.resolve();
-          PsiElement rElement = rReference.resolve();
-
+          PsiElement lElement = ((PsiReferenceExpression)lExpression).resolve();
           if (!(lElement instanceof PsiField) || ((PsiField)lElement).getContainingClass() != targetClass) break;
-          if (!(rElement instanceof PsiParameter)) break;
+
+          final Set<PsiParameter> parameters = new HashSet<>();
+          SyntaxTraverser.psiTraverser().withRoot(assignmentExpression.getRExpression())
+            .filter(PsiReferenceExpression.class)
+            .forEach(expr -> {
+              final PsiElement resolve = expr.resolve();
+              if (resolve instanceof PsiParameter && ((PsiParameter)resolve).getDeclarationScope() == myParameter.getDeclarationScope()) {
+                parameters.add((PsiParameter)resolve);
+              }
+            });
+
+          if (parameters.size() != 1) break;
+
+          PsiElement rElement = parameters.iterator().next();
 
           if (myParameter.getTextRange().getStartOffset() < rElement.getTextRange().getStartOffset()) {
             if (anchorRef != null) {

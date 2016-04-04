@@ -68,7 +68,7 @@ public class InheritanceUtil {
 
       @Override
       public boolean process(PsiClass inheritor) {
-        if (inheritor.equals(class2) || inheritor.isInheritor(class2, true) || (avoidExpensiveProcessing && count.incrementAndGet() > 20)) {
+        if (inheritor.equals(class2) || inheritor.isInheritor(class2, true) || avoidExpensiveProcessing && count.incrementAndGet() > 20) {
           result[0] = true;
           return false;
         }
@@ -87,31 +87,22 @@ public class InheritanceUtil {
       }
     }
     final Query<PsiClass> search = ClassInheritorsSearch.search(aClass, scope, true, true);
-    return !search.forEach(new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass inheritor) {
-        return inheritor.isInterface() || inheritor.isAnnotationType() || inheritor.hasModifierProperty(PsiModifier.ABSTRACT);
-      }
-    });
+    return !search.forEach(
+      inheritor -> inheritor.isInterface() || inheritor.isAnnotationType() || inheritor.hasModifierProperty(PsiModifier.ABSTRACT));
   }
 
   public static boolean hasOneInheritor(final PsiClass aClass) {
     final CountingProcessor processor = new CountingProcessor(2);
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      @Override
-      public void run() {
-        ClassInheritorsSearch.search(aClass, aClass.getUseScope(), false).forEach(processor);
-      }
-    }, null);
+    ProgressManager.getInstance().runProcess(
+      (Runnable)() -> ClassInheritorsSearch.search(aClass, aClass.getUseScope(), false).forEach(processor), null);
     return processor.getCount() == 1;
   }
 
-  public static class CountingProcessor implements Processor<PsiClass> {
-
+  private static class CountingProcessor implements Processor<PsiClass> {
     private final AtomicInteger myCount = new AtomicInteger(0);
     private final int myLimit;
 
-    public CountingProcessor(int limit) {
+    CountingProcessor(int limit) {
       myLimit = limit;
     }
 
@@ -121,11 +112,7 @@ public class InheritanceUtil {
 
     @Override
     public boolean process(PsiClass aClass) {
-      if (myCount.get() == myLimit){
-        return false;
-      }
-      myCount.incrementAndGet();
-      return true;
+      return myCount.updateAndGet(oldCount -> Math.min(myLimit, oldCount + 1)) != myLimit;
     }
   }
 }

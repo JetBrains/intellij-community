@@ -325,7 +325,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     try {
       URL defaultFileTypesUrl = FileTypeManagerImpl.class.getResource("/defaultFileTypes.xml");
       if (defaultFileTypesUrl != null) {
-        Element defaultFileTypesElement = JDOMUtil.load(URLUtil.openStream(defaultFileTypesUrl));
+        Element defaultFileTypesElement = JdomKt.loadElement(URLUtil.openStream(defaultFileTypesUrl));
         for (Element e : defaultFileTypesElement.getChildren()) {
           //noinspection SpellCheckingInspection
           if ("filetypes".equals(e.getName())) {

@@ -15,6 +15,9 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
@@ -191,9 +194,8 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-      @Override
-      public void run() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
+      try (AccessToken ignored = TransactionGuard.getInstance().acceptNestedTransactions(TransactionKind.TEXT_EDITING)) {
         RefactoringDialog.super.show();
       }
     });

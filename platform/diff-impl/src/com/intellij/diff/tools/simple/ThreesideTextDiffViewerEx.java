@@ -25,11 +25,13 @@ import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffDividerDrawUtil.DividerPaintable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,7 +53,8 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable1;
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable2;
 
-  @NotNull protected final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
+  @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
+  @NotNull private final PrevNextDifferenceIterable myPrevNextConflictIterable;
   @NotNull protected final MyStatusPanel myStatusPanel;
 
   @NotNull protected final MyFoldingModel myFoldingModel;
@@ -66,8 +69,12 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     mySyncScrollable1 = new MySyncScrollable(Side.LEFT);
     mySyncScrollable2 = new MySyncScrollable(Side.RIGHT);
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
+    myPrevNextConflictIterable = new MyPrevNextConflictIterable();
     myStatusPanel = new MyStatusPanel();
     myFoldingModel = new MyFoldingModel(getEditors().toArray(new EditorEx[3]), this);
+
+    DiffUtil.registerAction(new PrevConflictAction(), myPanel);
+    DiffUtil.registerAction(new NextConflictAction(), myPanel);
   }
 
   @Override
@@ -138,12 +145,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   //
   // Impl
   //
-
-  @Override
-  protected void onDocumentChange(@NotNull DocumentEvent e) {
-    super.onDocumentChange(e);
-    myFoldingModel.onDocumentChanged(e);
-  }
 
   @CalledInAwt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
@@ -262,6 +263,44 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   //
   // Actions
   //
+
+  private class PrevConflictAction extends DumbAwareAction {
+    public PrevConflictAction() {
+      EmptyAction.setupAction(this, "Diff.PreviousConflict", null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (!myPrevNextConflictIterable.canGoPrev()) return;
+      myPrevNextConflictIterable.goPrev();
+    }
+  }
+
+  private class NextConflictAction extends DumbAwareAction {
+    public NextConflictAction() {
+      EmptyAction.setupAction(this, "Diff.NextConflict", null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (!myPrevNextConflictIterable.canGoNext()) return;
+      myPrevNextConflictIterable.goNext();
+    }
+  }
+
+  private class MyPrevNextConflictIterable extends MyPrevNextDifferenceIterable {
+    @NotNull
+    @Override
+    protected List<? extends ThreesideDiffChangeBase> getChanges() {
+      List<? extends ThreesideDiffChangeBase> changes = ThreesideTextDiffViewerEx.this.getChanges();
+      return ContainerUtil.filter(changes, new Condition<ThreesideDiffChangeBase>() {
+        @Override
+        public boolean value(ThreesideDiffChangeBase change) {
+          return change.isConflict();
+        }
+      });
+    }
+  }
 
   protected class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<ThreesideDiffChangeBase> {
     @NotNull

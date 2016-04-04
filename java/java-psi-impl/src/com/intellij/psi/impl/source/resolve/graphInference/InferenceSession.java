@@ -1153,7 +1153,7 @@ public class InferenceSession {
         type =  PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
       }
       else {
-        type = myErased ? null : upperBound;
+        type = upperBound;
       }
 
       if (type instanceof PsiIntersectionType) {
@@ -1390,7 +1390,6 @@ public class InferenceSession {
           boolean dependsOnOutput = false;
           for (InferenceVariable inputVariable : inputVariables) {
             if (dependsOnOutput) break;
-            if (inputVariable.hasInstantiation(this)) continue;
             final Set<InferenceVariable> dependencies = inputVariable.getDependencies(this);
             dependencies.add(inputVariable);
             if (!hasCapture(inputVariable)) {

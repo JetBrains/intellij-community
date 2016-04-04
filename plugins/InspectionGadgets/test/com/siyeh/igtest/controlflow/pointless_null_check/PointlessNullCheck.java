@@ -11,15 +11,15 @@ public class PointlessNullCheck {
             System.out.println("this should trigger a warning");
         }
 
-        if (arg instanceof String && <warning descr="Unnecessary 'null' check before 'instanceof' expression">null != arg</warning>) {
+        if (arg instanceof String && <warning descr="Unnecessary 'null' check after 'instanceof' expression">null != arg</warning>) {
             System.out.println("this should trigger a warning");
         }
 
-        if (arg instanceof String && <warning descr="Unnecessary 'null' check before 'instanceof' expression">arg != null</warning>) {
+        if (arg instanceof String && <warning descr="Unnecessary 'null' check after 'instanceof' expression">arg != null</warning>) {
             System.out.println("this should trigger a warning");
         }
 
-        if ((arg instanceof String) && (<warning descr="Unnecessary 'null' check before 'instanceof' expression">arg != null</warning>)) {
+        if ((arg instanceof String) && (<warning descr="Unnecessary 'null' check after 'instanceof' expression">arg != null</warning>)) {
             System.out.println("this should trigger a warning");
         }
 
@@ -34,7 +34,7 @@ public class PointlessNullCheck {
             System.out.println("this should trigger a warning");
         }
 
-        if (arg instanceof String && arg.equals(arg) && <warning descr="Unnecessary 'null' check before 'instanceof' expression">arg != null</warning>) {
+        if (arg instanceof String && arg.equals(arg) && <warning descr="Unnecessary 'null' check after 'instanceof' expression">arg != null</warning>) {
             System.out.println("warning");
         }
      }

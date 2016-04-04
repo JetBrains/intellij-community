@@ -3,7 +3,7 @@ package com.jetbrains.edu.coursecreator;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.learning.core.EduNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

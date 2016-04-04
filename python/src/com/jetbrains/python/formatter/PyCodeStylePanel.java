@@ -126,7 +126,8 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
   public boolean isModified(CodeStyleSettings settings) {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     return customSettings.DICT_ALIGNMENT != getDictAlignmentAsInt() ||
-           customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine();
+           customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine() || 
+           customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS != useContinuationIndentForArguments() ;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -57,7 +54,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -78,7 +74,6 @@ class PostHighlightingVisitor {
   private int myCurrentEntryIndex;
   private boolean myHasMissortedImports;
   private final UnusedSymbolLocalInspectionBase myUnusedSymbolInspection;
-  private final boolean myInLibrary;
   private final HighlightDisplayKey myDeadCodeKey;
   private final HighlightInfoType myDeadCodeInfoType;
   private final UnusedDeclarationInspectionBase myDeadCodeInspection;
@@ -121,12 +116,6 @@ class PostHighlightingVisitor {
     myCurrentEntryIndex = -1;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
 
-    final FileViewProvider viewProvider = myFile.getViewProvider();
-
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
-    myInLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
-
     myRefCountHolder = refCountHolder;
 
 
@@ -147,40 +136,15 @@ class PostHighlightingVisitor {
                                                                        HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
   }
 
-  void collectHighlights(@NotNull PsiFile file,
-                         @NotNull HighlightInfoHolder result,
-                         @NotNull ProgressIndicator progress) {
+  void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
 
-    final boolean myDeadCodeEnabled = myDeadCodeInspection != null && profile.isToolEnabled(myDeadCodeKey, file) && myDeadCodeInspection.isGlobalEnabledInEditor();
-    @NotNull final Predicate<PsiElement> myIsEntryPointPredicate = new Predicate<PsiElement>() {
-      @Override
-      public boolean apply(PsiElement member) {
-        return !myDeadCodeEnabled || myDeadCodeInspection.isEntryPoint(member);
-      }
-    };
-
-    GlobalUsageHelper globalUsageHelper = new GlobalUsageHelper() {
-      @Override
-      public boolean shouldCheckUsages(@NotNull PsiMember member) {
-        return !myInLibrary && !myIsEntryPointPredicate.apply(member);
-      }
-
-      @Override
-      public boolean isCurrentFileAlreadyChecked() {
-        return true;
-      }
-
-      @Override
-      public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
-        return myRefCountHolder.isReferenced(member);
-      }
-    };
+    boolean unusedSymbolEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
+    GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection, unusedSymbolEnabled);
 
     boolean errorFound = false;
-    boolean unusedSymbolEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
 
     if (unusedSymbolEnabled) {
       final FileViewProvider viewProvider = myFile.getViewProvider();

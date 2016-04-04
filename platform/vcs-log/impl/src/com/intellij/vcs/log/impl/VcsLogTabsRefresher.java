@@ -49,7 +49,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
-  private static final Logger LOG = Logger.getInstance(VcsLogTabsRefresher.class);
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
 
   @NotNull private final VcsLogDataManager myDataManager;

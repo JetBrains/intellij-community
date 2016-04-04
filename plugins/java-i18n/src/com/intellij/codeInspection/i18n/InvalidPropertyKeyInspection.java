@@ -191,6 +191,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
     }
 
     private void visitPropertyKeyAnnotationParameter(PsiExpression expression, String key) {
+      if (!(expression.getParent() instanceof PsiExpressionList)) return;
       Ref<String> resourceBundleName = new Ref<String>();
       if (!JavaI18nUtil.isValidPropertyReference(myManager.getProject(), expression, key, resourceBundleName)) {
         String bundleName = resourceBundleName.get();

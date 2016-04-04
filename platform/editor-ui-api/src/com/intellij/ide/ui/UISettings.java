@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 
 import static com.intellij.util.ui.UIUtil.isValidFont;
 
@@ -53,8 +53,15 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   /** Not tabbed pane. */
   public static final int TABS_NONE = 0;
 
+  private String lafID;
+
   public static UISettings getInstance() {
-    return ServiceManager.getService(UISettings.class);
+    UISettings instance = ServiceManager.getService(UISettings.class);
+    if (!instance.lafID.equals(UIManager.getLookAndFeel().getID())) {
+      // Re-init if LaF changed.
+      instance.init();
+    }
+    return instance;
   }
 
   /**
@@ -135,6 +142,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
+    init();
+  }
+
+  private void init() {
     tweakPlatformDefaults();
     setSystemFontFaceAndSize();
 
@@ -142,6 +153,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     if (scrollToSource != null) {
       DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
     }
+    lafID = UIManager.getLookAndFeel().getID();
   }
 
   private void tweakPlatformDefaults() {
@@ -171,13 +183,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     incModificationCount();
     myDispatcher.getMulticaster().uiSettingsChanged(this);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
-    IconLoader.setFilter(COLOR_BLINDNESS == ColorBlindness.protanopia
-                         ? DaltonizationFilter.protanopia
-                         : COLOR_BLINDNESS == ColorBlindness.deuteranopia
-                           ? DaltonizationFilter.deuteranopia
-                           : COLOR_BLINDNESS == ColorBlindness.tritanopia
-                             ? DaltonizationFilter.tritanopia
-                             : null);
+    IconLoader.setFilter(Registry.is("color.blindness.daltonization")
+                         ? DaltonizationFilter.get(COLOR_BLINDNESS)
+                         : MatrixFilter.get(COLOR_BLINDNESS));
   }
 
   public void removeUISettingsListener(UISettingsListener listener) {
@@ -185,11 +193,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   private void setSystemFontFaceAndSize() {
-    if (FONT_FACE == null || FONT_SIZE <= 0) {
-      final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
-      FONT_FACE = fontData.first;
-      FONT_SIZE = fontData.second;
-    }
+    final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
+    FONT_FACE = fontData.first;
+    FONT_SIZE = fontData.second;
   }
 
   private static Pair<String, Integer> getSystemFontFaceAndSize() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -483,37 +483,39 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void registerToolWindowsFromBeans() {
-    ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-    for (final ToolWindowEP bean : beans) {
-      final Condition<Project> condition = bean.getCondition();
-      if (condition == null) {
-        initToolWindow(bean);
-      }
-      else {
-        checkConditionInReadAction(bean, condition);
-      }
-    }
+    List<ToolWindowEP> beans = new ArrayList<>(Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME)));
+    Collections.reverse(beans);
+
+    checkConditionsInReadAction(beans, new ArrayList<>());
   }
 
-  private void checkConditionInReadAction(@NotNull final ToolWindowEP bean, @NotNull final Condition<Project> condition) {
+  private void checkConditionsInReadAction(@NotNull List<ToolWindowEP> beans, @NotNull List<ToolWindowEP> checkedSuccessfully) {
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
-
       @Nullable
       @Override
       public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        if (!myProject.isDisposed() && condition.value(myProject)) {
-          return new Continuation(() -> {
-            if (!myProject.isDisposed() && getToolWindow(bean.id) == null) {
-              initToolWindow(bean);
-            }
-          }, ModalityState.any());
+        for (int i = beans.size() - 1; i >= 0; i--) {
+          indicator.checkCanceled();
+          ToolWindowEP bean = beans.remove(i);
+          Condition<Project> condition = ObjectUtils.notNull(bean.getCondition(), Conditions.<Project>alwaysTrue());
+          if (!myProject.isDisposed() && condition.value(myProject)) {
+            checkedSuccessfully.add(bean);
+          }
         }
-        return null;
+        return new Continuation(() -> {
+          if (!myProject.isDisposed()) {
+            for (ToolWindowEP bean : checkedSuccessfully) {
+              if (getToolWindow(bean.id) == null) {
+                initToolWindow(bean);
+              }
+            }
+          }
+        }, ModalityState.any());
       }
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        checkConditionInReadAction(bean, condition);
+        checkConditionsInReadAction(beans, checkedSuccessfully);
       }
     });
   }

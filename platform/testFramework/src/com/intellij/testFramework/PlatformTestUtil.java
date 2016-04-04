@@ -39,6 +39,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
@@ -49,6 +50,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
@@ -914,5 +918,22 @@ public class PlatformTestUtil {
     catch (ExecutionException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  public static List<WebReference> collectWebReferences(@NotNull PsiElement element) {
+    List<WebReference> refs = new ArrayList<>();
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        for (PsiReference ref : element.getReferences()) {
+          if (ref instanceof WebReference) {
+            refs.add((WebReference)ref);
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+    return refs;
   }
 }

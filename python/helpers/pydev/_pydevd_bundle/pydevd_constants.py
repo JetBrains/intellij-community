@@ -91,15 +91,57 @@ except AttributeError:
 
 try:
     SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
+    try:
+        import gevent
+    except:
+        SUPPORT_GEVENT = False
 except:
     # Jython 2.1 doesn't accept that construct
     SUPPORT_GEVENT = False
 
-USE_LIB_COPY = SUPPORT_GEVENT and not IS_PY3K and sys.version_info[1] >= 6
-from _pydev_imps import _pydev_threading as threading
+# At the moment gevent supports Python >= 2.6 and Python >= 3.3
+USE_LIB_COPY = SUPPORT_GEVENT and \
+               ((not IS_PY3K and sys.version_info[1] >= 6) or
+                (IS_PY3K and sys.version_info[1] >= 3))
 
-from _pydev_imps import _pydev_thread
-_nextThreadIdLock = _pydev_thread.allocate_lock()
+
+def protect_libraries_from_patching():
+    """
+    In this function we delete some modules from `sys.modules` dictionary and import them again inside
+      `_pydev_saved_modules` in order to save their original copies there. After that we can use these
+      saved modules within the debugger to protect them from patching by external libraries (e.g. gevent).
+    """
+    patched = ['threading', 'thread', '_thread', 'time', 'socket', 'Queue', 'queue', 'select',
+               'xmlrpclib', 'SimpleXMLRPCServer', 'BaseHTTPServer', 'SocketServer',
+               'xmlrpc.client', 'xmlrpc.server', 'http.server', 'socketserver']
+
+    for name in patched:
+        try:
+            __import__(name)
+        except:
+            pass
+
+    patched_modules = dict([(k, v) for k, v in sys.modules.items()
+                            if k in patched])
+
+    for name in patched_modules:
+        del sys.modules[name]
+
+    # import for side effects
+    import _pydev_imps._pydev_saved_modules
+
+    for name in patched_modules:
+        sys.modules[name] = patched_modules[name]
+
+
+if USE_LIB_COPY:
+    protect_libraries_from_patching()
+
+
+from _pydev_imps._pydev_saved_modules import threading
+
+from _pydev_imps._pydev_saved_modules import thread
+_nextThreadIdLock = thread.allocate_lock()
 
 #=======================================================================================================================
 # Jython?

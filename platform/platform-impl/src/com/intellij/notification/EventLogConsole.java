@@ -61,6 +61,7 @@ import java.util.List;
  */
 class EventLogConsole {
   private static final Key<String> GROUP_ID = Key.create("GROUP_ID");
+  private static final Key<String> NOTIFICATION_ID = Key.create("NOTIFICATION_ID");
 
   private final NotNullLazyValue<Editor> myLogEditor = new NotNullLazyValue<Editor>() {
     @NotNull
@@ -222,6 +223,7 @@ class EventLogConsole {
     RangeHighlighter highlighter =
       editor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
     GROUP_ID.set(highlighter, notification.getGroupId());
+    NOTIFICATION_ID.set(highlighter, notification.id);
 
     for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
       final RangeHighlighter rangeHighlighter = myHyperlinkSupport.getValue()
@@ -292,6 +294,22 @@ class EventLogConsole {
 
   public Editor getConsoleEditor() {
     return myLogEditor.getValue();
+  }
+
+  public void showNotification(@NotNull final String id) {
+    final EditorEx editor = (EditorEx)getConsoleEditor();
+    editor.getMarkupModel()
+      .processRangeHighlightersOverlappingWith(0, editor.getDocument().getTextLength(), new Processor<RangeHighlighterEx>() {
+        @Override
+        public boolean process(RangeHighlighterEx rangeHighlighter) {
+          if (id.equals(NOTIFICATION_ID.get(rangeHighlighter))) {
+            editor.getCaretModel().moveToOffset(rangeHighlighter.getStartOffset());
+            editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
+            return false;
+          }
+          return true;
+        }
+      });
   }
 
   @Nullable

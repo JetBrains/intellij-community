@@ -43,7 +43,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
@@ -968,9 +967,6 @@ public class XDebugSessionImpl implements XDebugSession {
   public void setWatchExpressions(@NotNull XExpression[] watchExpressions) {
     mySessionData.setWatchExpressions(watchExpressions);
     myDebuggerManager.getWatchesManager().setWatches(getConfigurationName(), watchExpressions);
-    if (Registry.is("debugger.watches.in.variables")) {
-      rebuildViews();
-    }
   }
 
   XExpression[] getWatchExpressions() {

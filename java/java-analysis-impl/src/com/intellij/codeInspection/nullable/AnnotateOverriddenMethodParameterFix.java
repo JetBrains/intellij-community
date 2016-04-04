@@ -98,6 +98,6 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return getName();
+    return InspectionsBundle.message("annotate.overridden.methods.parameters.family.name");
   }
 }

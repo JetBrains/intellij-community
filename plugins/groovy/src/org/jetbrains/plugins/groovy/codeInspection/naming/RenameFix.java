@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.naming;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -64,25 +63,18 @@ public class RenameFix extends GroovyFix {
           factory.createRenameHandler();
       final DataManager dataManager = DataManager.getInstance();
       final DataContext dataContext = dataManager.getDataContext();
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          renameHandler.invoke(project, new PsiElement[]{elementToRename},
-                               dataContext);
-        }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-      }
-    } else {
+      renameHandler.invoke(project, new PsiElement[]{elementToRename}, dataContext); }
+    else {
       final RefactoringFactory factory =
           RefactoringFactory.getInstance(project);
       final RenameRefactoring renameRefactoring =
           factory.createRename(elementToRename, targetName);
       renameRefactoring.run();
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }
