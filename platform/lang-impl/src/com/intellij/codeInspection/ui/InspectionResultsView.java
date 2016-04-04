@@ -392,6 +392,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return null;
   }
 
+  public void openRightPanelIfNeed() {
+    if (mySplitter.getSecondComponent() == null) {
+      syncRightPanel();
+    }
+  }
+
   private void syncRightPanel() {
     final Editor oldEditor = myPreviewEditor;
     if (myLoadingProgressPreview != null) {
