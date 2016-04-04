@@ -11,7 +11,7 @@ class Test {
   }
 
   void test(boolean cond) {
-    <error descr="Cannot resolve method 'm(<lambda expression>)'">m</error>(() -> {
+    <error descr="Ambiguous method call: both 'Test.m(GetInt)' and 'Test.m(GetInteger)' match">m</error>(() -> {
       if (cond)
         return 42;
       else

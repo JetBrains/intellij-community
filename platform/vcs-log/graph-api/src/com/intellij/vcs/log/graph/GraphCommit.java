@@ -21,13 +21,13 @@ import java.util.List;
 
 /**
  */
-public interface GraphCommit<CommitId> {
+public interface GraphCommit<Id> {
 
   @NotNull
-  CommitId getId();
+  Id getId();
 
   @NotNull
-  List<CommitId> getParents();
+  List<Id> getParents();
 
   /**
    * <p>Returns the timestamp indicating the date & time when this commit was made.</p>

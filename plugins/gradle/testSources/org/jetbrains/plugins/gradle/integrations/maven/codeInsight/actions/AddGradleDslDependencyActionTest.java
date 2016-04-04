@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;

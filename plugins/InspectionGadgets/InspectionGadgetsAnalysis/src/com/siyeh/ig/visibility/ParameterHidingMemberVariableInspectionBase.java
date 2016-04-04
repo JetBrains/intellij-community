@@ -34,7 +34,7 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
   public boolean m_ignoreInvisibleFields = true;
 
   @SuppressWarnings("PublicField")
-  public boolean m_ignoreStaticMethodParametersHidingInstanceFields = false;
+  public boolean m_ignoreStaticMethodParametersHidingInstanceFields = true;
 
   @SuppressWarnings("PublicField")
   public boolean m_ignoreForConstructors = false;
@@ -149,6 +149,9 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
              field.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.STATIC)) &&
             (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass))) {
           return aClass;
+        }
+        if (aClass.hasModifierProperty(PsiModifier.STATIC) && m_ignoreStaticMethodParametersHidingInstanceFields) {
+          return null;
         }
         aClass = ClassUtils.getContainingClass(aClass);
       }

@@ -43,12 +43,15 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
+
+  private Set<VirtualFile> myOpenedFiles = new THashSet<>();
 
   @Override
   public void setUp() throws Exception {
@@ -61,10 +64,18 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    NonProjectFileWritingAccessProvider.setCustomUnlocker(null);
-    NonProjectFileWritingAccessProvider.enableChecksInTests(getProject(), false);
-    super.tearDown();
-    ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed
+    try {
+      NonProjectFileWritingAccessProvider.setCustomUnlocker(null);
+      NonProjectFileWritingAccessProvider.enableChecksInTests(getProject(), false);
+      FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+      for (VirtualFile file : myOpenedFiles) {
+        editorManager.closeFile(file);
+      }
+    }
+    finally {
+      super.tearDown();
+      ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed
+    }
   }
 
   public void testBasicAccessCheck() throws Exception {
@@ -351,6 +362,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private Editor getEditor(VirtualFile file) {
+    myOpenedFiles.add(file);
     return FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
   }
 

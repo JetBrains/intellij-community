@@ -53,6 +53,13 @@ final class PaintersHelper implements Painter.Listener {
     return !myPainters.isEmpty();
   }
 
+  public boolean needsRepaint() {
+    for (Painter painter : myPainters) {
+      if (painter.needsRepaint()) return true;
+    }
+    return false;
+  }
+
   public void addPainter(@NotNull Painter painter, @Nullable Component component) {
     myPainters.add(painter);
     myPainter2Component.put(painter, component == null ? myRootComponent : component);
@@ -125,11 +132,6 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public static void initWallpaperPainter(@NotNull String propertyName, @NotNull PaintersHelper painters) {
-    String value = System.getProperty(propertyName);
-    if (value == null && !new File(PathManager.getConfigPath(), propertyName + ".png").exists()) {
-      // property not set & there's no default
-      return;
-    }
     ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName);
     painters.addPainter(painter, null);
   }
@@ -144,40 +146,58 @@ final class PaintersHelper implements Painter.Listener {
       String current;
 
       @Override
+      public boolean needsRepaint() {
+        return ensureImageLoaded();
+      }
+
+      @Override
       public void executePaint(Component component, Graphics2D g) {
-        String value = StringUtil.notNullize(System.getProperty(propertyName), propertyName + ".png");
+        if (!ensureImageLoaded()) return;
+        executePaint(g, component, image, fillType, alpha, insets);
+      }
+
+      boolean ensureImageLoaded() {
+        String value = System.getProperty(propertyName);
         if (!Comparing.equal(value, current)) {
           current = value;
           image = scaled = null;
           insets = JBUI.emptyInsets();
-          String[] parts = value.split(",");
-          try {
-            alpha = StringUtil.parseInt(parts.length > 1 ? parts[1]: "", 10) / 100f;
-            try {
-              fillType =  FillType.valueOf(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "");
-            }
-            catch (IllegalArgumentException e) {
-              fillType = FillType.SCALE;
-            }
-            String filePath = parts[0];
-
-            URL url = filePath.contains("://") ? new URL(filePath) :
-                      (FileUtil.isAbsolutePlatformIndependent(filePath)
-                       ? new File(filePath)
-                       : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
-            image = ImageLoader.loadFromUrl(url);
-          }
-          catch (Exception ignored) {
-          }
+          loadImage(value);
         }
-        if (image == null) return;
-        executePaint(g, component, image, fillType, alpha, insets);
+        return image != null;
+      }
+
+      void loadImage(@Nullable String propertyValue) {
+        String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
+        try {
+          alpha = StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f;
+          try {
+            fillType =  FillType.valueOf(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "");
+          }
+          catch (IllegalArgumentException e) {
+            fillType = FillType.SCALE;
+          }
+          String filePath = parts[0];
+
+          URL url = filePath.contains("://") ? new URL(filePath) :
+                    (FileUtil.isAbsolutePlatformIndependent(filePath)
+                     ? new File(filePath)
+                     : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
+          image = ImageLoader.loadFromUrl(url);
+        }
+        catch (Exception ignored) {
+        }
       }
     };
   }
 
-  public static AbstractPainter newImagePainter(final Image image, final FillType fillType, final float alpha, final Insets insets) {
+  public static AbstractPainter newImagePainter(@NotNull final Image image, final FillType fillType, final float alpha, final Insets insets) {
     return new ImagePainter() {
+      @Override
+      public boolean needsRepaint() {
+        return true;
+      }
+
       @Override
       public void executePaint(Component component, Graphics2D g) {
         executePaint(g, component, image, fillType, alpha, insets);
@@ -188,9 +208,6 @@ final class PaintersHelper implements Painter.Listener {
   private abstract static class ImagePainter extends AbstractPainter {
 
     VolatileImage scaled;
-
-    @Override
-    public boolean needsRepaint() { return true; }
 
     public void executePaint(Graphics2D g, Component component, Image image, FillType fillType, float alpha, Insets insets) {
       int cw0 = component.getWidth();

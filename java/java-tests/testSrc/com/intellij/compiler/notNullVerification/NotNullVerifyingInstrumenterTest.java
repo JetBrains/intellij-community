@@ -216,7 +216,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
         byte[] content = FileUtil.loadFileBytes(file);
 
         FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
-        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
         modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer);
 
         byte[] instrumented = writer.toByteArray();

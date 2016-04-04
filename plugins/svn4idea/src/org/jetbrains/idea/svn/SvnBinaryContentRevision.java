@@ -35,12 +35,7 @@ class SvnBinaryContentRevision extends SvnContentRevision implements BinaryConte
 
   @Nullable
   public byte[] getBinaryContent() throws VcsException {
-    try {
-      return getUpToDateBinaryContent();
-    }
-    catch(Exception ex) {
-      throw new VcsException(ex);
-    }
+    return getContentAsBytes();
   }
 
   @NonNls

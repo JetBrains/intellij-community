@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@ package com.intellij.internal.psiView;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -33,36 +30,28 @@ import com.intellij.openapi.project.Project;
 public class PsiViewerAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    new PsiViewerDialog(project, false, null, null).show();
+    new PsiViewerDialog(e.getProject(), false, null, null).show();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    final Presentation p = e.getPresentation();
-    if (project == null) {
-      p.setVisible(false);
-      p.setEnabled(false);
-      return;
-    }
+    boolean enabled = false;
 
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      p.setVisible(true);
-      p.setEnabled(true);
-      return;
-    }
-
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      if ("PLUGIN_MODULE".equals(ModuleType.get(module).getId())) {
-        p.setVisible(true);
-        p.setEnabled(true);
-        return;
+    Project project = e.getProject();
+    if (project != null) {
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        enabled = true;
+      }
+      else {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          if ("PLUGIN_MODULE".equals(ModuleType.get(module).getId())) {
+            enabled = true;
+            break;
+          }
+        }
       }
     }
-    
-    p.setVisible(false);
-    p.setEnabled(false);
+
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 }

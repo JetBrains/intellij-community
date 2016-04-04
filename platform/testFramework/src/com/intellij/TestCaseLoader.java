@@ -65,7 +65,7 @@ public class TestCaseLoader {
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
     String patterns = System.getProperty(TARGET_TEST_PATTERNS);
-    if (patterns != null) {
+    if (!StringUtil.isEmpty(patterns)) {
       myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
       System.out.println("Using patterns: [" + patterns +"]");
     }

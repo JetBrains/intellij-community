@@ -3,11 +3,11 @@
   <problem>
     <file>IDEADEV10489.java</file>
     <line>10</line>
-    <description>Method invocation 's.length()' may produce NullPointerException</description>
+    <description>Method invocation 'length' may produce NullPointerException</description>
   </problem>
   <problem>
     <file>IDEADEV10489.java</file>
     <line>8</line>
-    <description>Method invocation 's.length()' may produce NullPointerException</description>
+    <description>Method invocation 'length' may produce NullPointerException</description>
   </problem>
 </problems>

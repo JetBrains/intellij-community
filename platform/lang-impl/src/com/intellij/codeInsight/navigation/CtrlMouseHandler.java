@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -198,7 +199,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       myStoredModifiers = mouseEvent.getModifiers();
       BrowseMode browseMode = getBrowseMode(myStoredModifiers);
 
-      if (browseMode == BrowseMode.None) {
+      if (browseMode == BrowseMode.None || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
         disposeHighlighter();
         return;
       }
@@ -384,19 +385,22 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     public Info(@NotNull PsiElement elementAtPointer) {
-      this(elementAtPointer, Collections.singletonList(getReferenceRange(elementAtPointer)));
+      this(elementAtPointer, getReferenceRanges(elementAtPointer));
     }
 
     @NotNull
-    private static TextRange getReferenceRange(@NotNull PsiElement elementAtPointer) {
+    private static List<TextRange> getReferenceRanges(@NotNull PsiElement elementAtPointer) {
+      if (!elementAtPointer.isPhysical()) return Collections.emptyList();
       int textOffset = elementAtPointer.getTextOffset();
       final TextRange range = elementAtPointer.getTextRange();
+      if (range == null) {
+        throw new AssertionError("Null range for " + elementAtPointer + " of " + elementAtPointer.getClass());
+      }
       if (textOffset < range.getStartOffset() || textOffset < 0) {
         LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.getClass());
         textOffset = range.getStartOffset();
       }
-      
-      return new TextRange(textOffset, range.getEndOffset());
+      return Collections.singletonList(new TextRange(textOffset, range.getEndOffset()));
     }
 
     boolean isSimilarTo(@NotNull Info that) {
@@ -821,31 +825,35 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (offset >= selStart && offset < selEnd) return;
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, new ReadTask() {
+        @Nullable
         @Override
-        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-          doExecute(file, offset);
+        public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+          return doExecute(file, offset);
         }
 
         @Override
         public void onCanceled(@NotNull ProgressIndicator indicator) {
+          LOG.debug("Highlighting was cancelled");
         }
       });
     }
 
-    private void doExecute(@NotNull PsiFile file, int offset) {
+    @Nullable
+    private ReadTask.Continuation doExecute(@NotNull PsiFile file, int offset) {
       final Info info;
       final DocInfo docInfo;
       try {
         info = getInfoAt(myEditor, file, offset, myBrowseMode);
-        if (info == null) return;
+        if (info == null) return null;
         docInfo = info.getInfo();
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
-        return;
+        return null;
       }
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      LOG.debug("Obtained info about element under cursor");
+      return new ReadTask.Continuation(new Runnable() {
         @Override
         public void run() {
           if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
@@ -934,10 +942,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public void showHint(@NotNull LightweightHint hint) {
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-      Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
+      short constraint = HintManager.ABOVE;
+      Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
+      if (p.y - hint.getComponent().getPreferredSize().height < 0) {
+        constraint = HintManager.UNDER;
+        p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
+      }
       hintManager.showEditorHint(hint, myEditor, p,
                                  HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                                 0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, HintManager.ABOVE).setContentActive(false));
+                                 0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, constraint).setContentActive(false));
     }
   }
 

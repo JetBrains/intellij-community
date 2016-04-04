@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import javax.swing.SwingUtilities;
 import javax.swing.event.MenuDragMouseEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -95,6 +96,12 @@ public class MouseEventAdapter<T> implements MouseListener, MouseMotionListener,
 
   protected MouseWheelEvent convert(MouseWheelEvent event) {
     return event;
+  }
+
+  public static MouseEvent convert(MouseEvent event, Component source) {
+    Point point = event.getLocationOnScreen();
+    SwingUtilities.convertPointFromScreen(point, source);
+    return convert(event, source, point.x, point.y);
   }
 
   public static MouseEvent convert(MouseEvent event, Component source, int x, int y) {

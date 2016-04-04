@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ public class TerminalExecutor extends CommandExecutor {
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public TerminalExecutor(@NotNull @NonNls String exePath, @NotNull String locale, @NotNull Command command) {
-    super(exePath, locale, command);
+  public TerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
+    super(exePath, command);
   }
 
   public void addInteractiveListener(@NotNull InteractiveCommandListener listener) {
@@ -60,7 +60,7 @@ public class TerminalExecutor extends CommandExecutor {
   @NotNull
   @Override
   protected SvnProcessHandler createProcessHandler() {
-    return new TerminalProcessHandler(myProcess, needsUtf8Output(), false);
+    return new TerminalProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), false);
   }
 
   /**

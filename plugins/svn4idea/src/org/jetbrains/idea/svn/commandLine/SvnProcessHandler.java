@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,7 @@ public class SvnProcessHandler extends OSProcessHandler {
   private final boolean myForceBinary;
   @NotNull private final ByteArrayOutputStream myBinaryOutput;
 
-  public SvnProcessHandler(@NotNull Process process, boolean forceUtf8, boolean forceBinary) {
-    this(process, null, forceUtf8, forceBinary);
-  }
-
-  public SvnProcessHandler(@NotNull Process process, @Nullable String commandLine, boolean forceUtf8, boolean forceBinary) {
+  public SvnProcessHandler(@NotNull Process process, @NotNull String commandLine, boolean forceUtf8, boolean forceBinary) {
     super(process, commandLine);
 
     myForceUtf8 = forceUtf8;
@@ -61,7 +57,7 @@ public class SvnProcessHandler extends OSProcessHandler {
 
   @NotNull
   @Override
-  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
+  protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
     if (myForceBinary) {
       return new SimpleBinaryOutputReader(myProcess.getInputStream(), sleepingPolicy);
     }
@@ -69,10 +65,9 @@ public class SvnProcessHandler extends OSProcessHandler {
   }
 
   private class SimpleBinaryOutputReader extends BinaryOutputReader {
-
-    public SimpleBinaryOutputReader(@NotNull InputStream stream, SleepingPolicy sleepingPolicy) {
+    private SimpleBinaryOutputReader(@NotNull InputStream stream, @NotNull SleepingPolicy sleepingPolicy) {
       super(stream, sleepingPolicy);
-      start();
+      start(myPresentableName);
     }
 
     @Override
@@ -80,8 +75,9 @@ public class SvnProcessHandler extends OSProcessHandler {
       myBinaryOutput.write(data, 0, size);
     }
 
+    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(Runnable runnable) {
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return SvnProcessHandler.this.executeOnPooledThread(runnable);
     }
   }

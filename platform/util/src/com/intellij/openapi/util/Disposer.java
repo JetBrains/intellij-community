@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -43,6 +44,7 @@ public class Disposer {
   private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
     @Override
     public void execute(@NotNull final Disposable each) {
+      //noinspection SSBasedInspection
       each.dispose();
     }
 
@@ -61,9 +63,19 @@ public class Disposer {
 
   @NotNull
   public static Disposable newDisposable() {
+    return newDisposable(null);
+  }
+
+  @NotNull
+  public static Disposable newDisposable(@Nullable final String debugName) {
     return new Disposable() {
       @Override
       public void dispose() {
+      }
+
+      @Override
+      public String toString() {
+        return debugName == null ? super.toString() : debugName;
       }
     };
   }
@@ -125,12 +137,18 @@ public class Disposer {
     }
   }
 
+  @TestOnly
   public static boolean isEmpty() {
     return ourDebugMode && ourTree.isEmpty();
   }
 
-  public static void setDebugMode(final boolean b) {
-    ourDebugMode = b;
+  /**
+   * @return old value
+   */
+  public static boolean setDebugMode(final boolean debugMode) {
+    boolean oldValue = ourDebugMode;
+    ourDebugMode = debugMode;
+    return oldValue;
   }
 
   public static boolean isDebugMode() {

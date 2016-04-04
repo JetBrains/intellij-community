@@ -21,15 +21,15 @@ import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFileElementType;
-import com.jetbrains.python.psi.PyImportStatementBase;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +41,16 @@ import java.util.List;
  */
 public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
 
+  public static final TokenSet FOLDABLE_COLLECTIONS_LITERALS = TokenSet.create(
+                                                     PyElementTypes.SET_LITERAL_EXPRESSION,
+                                                     PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                     PyElementTypes.GENERATOR_EXPRESSION,
+                                                     PyElementTypes.SET_COMP_EXPRESSION,
+                                                     PyElementTypes.DICT_COMP_EXPRESSION,
+                                                     PyElementTypes.LIST_LITERAL_EXPRESSION,
+                                                     PyElementTypes.LIST_COMP_EXPRESSION,
+                                                     PyElementTypes.TUPLE_EXPRESSION);
+
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
                                           @NotNull PsiElement root,
@@ -50,7 +60,8 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   private static void appendDescriptors(ASTNode node, List<FoldingDescriptor> descriptors) {
-    if (node.getElementType() instanceof PyFileElementType) {
+    IElementType elementType = node.getElementType();
+    if (elementType instanceof PyFileElementType) {
       final List<PyImportStatementBase> imports = ((PyFile)node.getPsi()).getImportBlock();
       if (imports.size() > 1) {
         final PyImportStatementBase firstImport = imports.get(0);
@@ -59,13 +70,18 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                                                          lastImport.getTextRange().getEndOffset())));
       }
     }
-    else if (node.getElementType() == PyElementTypes.STATEMENT_LIST) {
+    else if (elementType == PyElementTypes.STATEMENT_LIST) {
       foldStatementList(node, descriptors);
     }
-    else if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      foldDocString(node, descriptors);
+    else if (elementType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
+      foldLongStrings(node, descriptors);
     }
-
+    else if (FOLDABLE_COLLECTIONS_LITERALS.contains(elementType)) {
+      foldCollectionLiteral(node, descriptors);
+    }
+    else if (elementType == PyTokenTypes.END_OF_LINE_COMMENT) {
+      foldSequentialComments(node, descriptors);
+    }
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       appendDescriptors(child, descriptors);
@@ -73,9 +89,47 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
   }
 
+  private static void foldSequentialComments(ASTNode node, List<FoldingDescriptor> descriptors) {
+    //need to skip previous comments in sequence
+    ASTNode curNode = node.getTreePrev();
+    while (curNode != null) {
+      if (curNode.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        return;
+      }
+      curNode = curNode.getPsi() instanceof PsiWhiteSpace ? curNode.getTreePrev() : null;
+    }
+
+    //fold sequence comments in one block
+    curNode = node.getTreeNext();
+    ASTNode lastCommentNode = node;
+    while (curNode != null) {
+      if (curNode.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        lastCommentNode = curNode;
+        curNode = curNode.getTreeNext();
+        continue;
+      }
+      curNode = curNode.getPsi() instanceof PsiWhiteSpace ? curNode.getTreeNext() : null;
+    }
+
+    if (lastCommentNode != node) {
+      descriptors.add(new FoldingDescriptor(node, TextRange.create(node.getStartOffset(), lastCommentNode.getTextRange().getEndOffset())));
+    }
+
+  }
+
+  private static void foldCollectionLiteral(ASTNode node, List<FoldingDescriptor> descriptors) {
+    if (StringUtil.countNewLines(node.getChars()) > 0) {
+      TextRange range = node.getTextRange();
+      int delta = node.getElementType() == PyElementTypes.TUPLE_EXPRESSION ? 0 : 1;
+      descriptors.add(new FoldingDescriptor(node, TextRange.create(range.getStartOffset() + delta, range.getEndOffset() - delta)));
+    }
+  }
+
   private static void foldStatementList(ASTNode node, List<FoldingDescriptor> descriptors) {
     IElementType elType = node.getTreeParent().getElementType();
-    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION) {
+    if (elType == PyElementTypes.FUNCTION_DECLARATION
+        || elType == PyElementTypes.CLASS_DECLARATION
+        || ifFoldBlocks(node, elType)) {
       ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
       if (colon != null && colon.getStartOffset() + 1 < node.getTextRange().getEndOffset() - 1) {
         final CharSequence chars = node.getChars();
@@ -95,8 +149,22 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
   }
 
-  private static void foldDocString(ASTNode node, List<FoldingDescriptor> descriptors) {
-    if (getDocStringOwnerType(node) != null && StringUtil.countChars(node.getText(), '\n') > 1) {
+  private static boolean ifFoldBlocks(ASTNode statementList, IElementType parentType) {
+    if (!PyElementTypes.PARTS.contains(parentType) && parentType != PyElementTypes.WITH_STATEMENT) {
+      return false;
+    }
+    PsiElement element = statementList.getPsi();
+    if (element instanceof PyStatementList) {
+      return StringUtil.countNewLines(element.getText()) > 0;
+    }
+    return false;
+  }
+
+  private static void foldLongStrings(ASTNode node, List<FoldingDescriptor> descriptors) {
+    //don't want to fold docstrings like """\n string \n """
+    boolean shouldFoldDocString = getDocStringOwnerType(node) != null && StringUtil.countNewLines(node.getChars()) > 1;
+    boolean shouldFoldString = getDocStringOwnerType(node) == null && StringUtil.countNewLines(node.getChars()) > 0;
+    if (shouldFoldDocString || shouldFoldString) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
   }
@@ -126,12 +194,26 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       return "import ...";
     }
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      final String stringValue = ((PyStringLiteralExpression)node.getPsi()).getStringValue().trim();
-      final String[] lines = LineTokenizer.tokenize(stringValue, true);
-      if (lines.length > 2 && lines[1].trim().length() == 0) {
-        return "\"\"\"" + lines [0].trim() + "...\"\"\"";
+      PyStringLiteralExpression stringLiteralExpression = (PyStringLiteralExpression)node.getPsi();
+      if (stringLiteralExpression.isDocString()) {
+        final String stringValue = stringLiteralExpression.getStringValue().trim();
+        final String[] lines = LineTokenizer.tokenize(stringValue, true);
+        if (lines.length > 2 && lines[1].trim().length() == 0) {
+          return "\"\"\"" + lines[0].trim() + "...\"\"\"";
+        }
+        return "\"\"\"...\"\"\"";
+      } else {
+        return getLanguagePlaceholderForString(stringLiteralExpression);
       }
-      return "\"\"\"...\"\"\"";
+    }
+    return "...";
+  }
+
+  private static String getLanguagePlaceholderForString(PyStringLiteralExpression stringLiteralExpression) {
+    String stringText = stringLiteralExpression.getText();
+    Pair<String, String> quotes = PythonStringUtil.getQuotes(stringText);
+    if (quotes != null) {
+      return quotes.second + "..." + quotes.second;
     }
     return "...";
   }
@@ -146,10 +228,19 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
         // method will be collapsed, no need to also collapse docstring
         return false;
       }
-      return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
+      if (getDocStringOwnerType(node) != null) {
+        return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
+      }
+      return PythonFoldingSettings.getInstance().isCollapseLongStrings();
+    }
+    if (node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+      return PythonFoldingSettings.getInstance().isCollapseSequentialComments();
     }
     if (node.getElementType() == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
       return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
+    }
+    if (FOLDABLE_COLLECTIONS_LITERALS.contains(node.getElementType())) {
+      return PythonFoldingSettings.getInstance().isCollapseLongCollections();
     }
     return false;
   }

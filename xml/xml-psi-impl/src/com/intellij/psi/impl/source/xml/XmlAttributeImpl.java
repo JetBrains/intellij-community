@@ -49,7 +49,7 @@ import static com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENT
 /**
  * @author Mike
  */
-public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
+public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, HintedReferenceHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeImpl");
 
   private final int myHC = ourHC++;
@@ -104,6 +104,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
         }
         else {
           if (newValue != null) {
+            att.addChild(newValue.getTreePrev().copyElement());
             att.addChild(newValue.copyElement());
           }
         }
@@ -310,7 +311,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute(nameText, "");
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, "", this);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
@@ -331,14 +332,36 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
   @Override
   public PsiReference getReference() {
-    final PsiReference[] refs = getReferences();
+    final PsiReference[] refs = getReferences(PsiReferenceService.Hints.NO_HINTS);
     if (refs.length > 0) return refs[0];
     return null;
   }
 
   @Override
+  public boolean shouldAskParentForReferences(@NotNull PsiReferenceService.Hints hints) {
+    return false;
+  }
+
+  /**
+   * Use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
+   */
+  @Deprecated
   @NotNull
-  public PsiReference[] getReferences() {
+  @Override
+  public final PsiReference[] getReferences() {
+    return getReferences(PsiReferenceService.Hints.NO_HINTS);
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] getReferences(@NotNull PsiReferenceService.Hints hints) {
+    if (hints.offsetInElement != null) {
+      XmlElement nameElement = getNameElement();
+      if (nameElement == null || hints.offsetInElement > nameElement.getStartOffsetInParent() + nameElement.getTextLength()) {
+        return PsiReference.EMPTY_ARRAY;
+      }
+    }
+
     final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
     PsiReference[] refs;
     if (isNamespaceDeclaration()) {
@@ -369,7 +392,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
     final PsiElement parentElement = getParent();
-    if (parentElement instanceof XmlDecl) return null;
+    if (parentElement == null) return null; // e.g. XmlDecl or PI
     final XmlTag tag = (XmlTag)parentElement;
     final XmlElementDescriptor descr = tag.getDescriptor();
     if (descr == null) return null;

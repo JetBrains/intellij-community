@@ -135,8 +135,10 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static Sdk setupSdk(final Sdk[] allSdks,
-                             final VirtualFile homeDir, final SdkType sdkType, final boolean silent,
+  public static Sdk setupSdk(@NotNull Sdk[] allSdks,
+                             @NotNull VirtualFile homeDir,
+                             final SdkType sdkType,
+                             final boolean silent,
                              @Nullable final SdkAdditionalData additionalData,
                              @Nullable final String customSdkSuggestedName) {
     final List<Sdk> sdksList = Arrays.asList(allSdks);

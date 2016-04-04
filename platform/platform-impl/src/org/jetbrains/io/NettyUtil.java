@@ -17,12 +17,10 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.SystemProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -34,8 +32,10 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -45,21 +45,13 @@ import java.net.BindException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
   public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
 
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
-
-  static {
-    // IDEA-120811
-    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
-      System.setProperty("io.netty.machineId", "9e43d860");
-      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
-    }
-  }
 
   public static void logAndClose(@NotNull Throwable error, @NotNull Logger log, @NotNull Channel channel) {
     // don't report about errors while connecting
@@ -207,9 +199,11 @@ public final class NettyUtil {
            (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   @NotNull
   public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
-    ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(eventLoopGroup instanceof NioEventLoopGroup ? NioServerSocketChannel.class : EpollServerSocketChannel.class);
+    ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(NioServerSocketChannel.class);
     bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;
   }
@@ -257,6 +251,20 @@ public final class NettyUtil {
     @Override
     public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
       context.fireExceptionCaught(cause);
+    }
+  }
+
+  @TestOnly
+  public static void awaitQuiescenceOfGlobalEventExecutor(long timeout, @NotNull TimeUnit unit) {
+    try {
+      @NotNull GlobalEventExecutor executor = GlobalEventExecutor.INSTANCE;
+      executor.awaitInactivity(timeout, unit);
+    }
+    catch (InterruptedException ignored) {
+
+    }
+    catch (IllegalStateException ignored) {
+      // thread did not start
     }
   }
 }

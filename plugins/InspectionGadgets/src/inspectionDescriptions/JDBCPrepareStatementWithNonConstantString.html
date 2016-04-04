@@ -1,11 +1,18 @@
 <html>
 <body>
-Reports the calls to <b>java.sql.Connection.prepareStatement()</b>,
-<b>java.sql.Connection.prepareCall()</b>or any
-of their variants which take a dynamically-constructed string as the statement to prepare.
+Reports calls to <b>java.sql.Connection.prepareStatement()</b>,
+<b>java.sql.Connection.prepareCall()</b>, or any
+of their variants, which take a dynamically-constructed string as the statement to prepare.
 Constructed SQL statements are a common source of security breaches.
+By default this inspection ignores compile-time constants.
 <!-- tooltip end -->
 <p>
-
+Use the checkbox below to consider any <b>static</b> <b>final</b> fields as constant.
+Be careful, because strings like the following will be ignored when the option is enabled:
+<pre>
+<code><b>private static final</b> String SQL =
+  "SELECT * FROM user WHERE name='" + getUserInput() + "'";</code>
+</pre>
+<p>
 </body>
 </html>

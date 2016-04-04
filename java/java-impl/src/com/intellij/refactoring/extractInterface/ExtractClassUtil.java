@@ -53,7 +53,7 @@ public class ExtractClassUtil {
         final boolean isPreviewUsages = dialog.isPreviewUsages();
         JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES = isPreviewUsages;
         TurnRefsToSuperProcessor processor =
-          new TurnRefsToSuperProcessor(project, (PsiClass)classElement, superClass, true);
+          new TurnRefsToSuperProcessor(project, (PsiClass)classElement, superClass, false);
         processor.setPreviewUsages(isPreviewUsages);
         processor.run();
       }

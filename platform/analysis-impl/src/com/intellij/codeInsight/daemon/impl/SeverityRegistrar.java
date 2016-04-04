@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -47,6 +48,8 @@ import java.util.List;
  * Date: 24-Feb-2006
  */
 public class SeverityRegistrar implements Comparator<HighlightSeverity> {
+  private final static Logger LOG = Logger.getInstance(SeverityRegistrar.class);
+
   @NonNls private static final String INFO_TAG = "info";
   @NonNls private static final String COLOR_ATTRIBUTE = "color";
   private final Map<String, SeverityBasedTextAttributes> myMap = ContainerUtil.newConcurrentMap();
@@ -283,11 +286,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   @Override
-  public int compare(final HighlightSeverity s1, final HighlightSeverity s2) {
+  public int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2) {
     return compare(s1, s2, getOrderMap());
   }
 
-  private static int compare(HighlightSeverity s1, HighlightSeverity s2, OrderMap orderMap) {
+  private static int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2, @NotNull OrderMap orderMap) {
     int o1 = orderMap.getOrder(s1, -1);
     int o2 = orderMap.getOrder(s2, -1);
     return o1 - o2;
@@ -315,6 +318,9 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @NotNull
   private static OrderMap fromList(@NotNull List<HighlightSeverity> orderList) {
+    if (orderList.size() != new HashSet<HighlightSeverity>(orderList).size()) {
+      LOG.error("Severities order list MUST contain only unique severities: " + orderList);
+    }
     TObjectIntHashMap<HighlightSeverity> map = new TObjectIntHashMap<HighlightSeverity>();
     for (int i = 0; i < orderList.size(); i++) {
       HighlightSeverity severity = orderList.get(i);

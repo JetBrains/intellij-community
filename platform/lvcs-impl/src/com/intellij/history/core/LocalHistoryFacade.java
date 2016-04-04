@@ -105,6 +105,12 @@ public class LocalHistoryFacade {
   private LabelImpl putLabel(@NotNull final PutLabelChange c) {
     addChange(c);
     return new LabelImpl() {
+
+      @Override
+      public long getLabelChangeId() {
+        return c.getId();
+      }
+
       @Override
       public ByteContent getByteContent(RootEntry root, String path) {
         return getByteContentBefore(root, path, c);
@@ -124,8 +130,8 @@ public class LocalHistoryFacade {
 
   private ByteContent getByteContentBefore(RootEntry root, String path, Change change) {
     root = root.copy();
-    revertUpTo(root, "", null, change, false, false);
-    Entry entry = root.findEntry(path);
+    String newPath = revertUpTo(root, path, null, change, false, false);
+    Entry entry = root.findEntry(newPath);
     if (entry == null) return new ByteContent(false, null);
     if (entry.isDirectory()) return new ByteContent(true, null);
 

@@ -143,6 +143,16 @@ public class SyncScrollSupport {
       return ContainerUtil.list(myHelper12, myHelper21, myHelper23, myHelper32);
     }
 
+    @NotNull
+    public SyncScrollable getScrollable12() {
+      return myScrollable12;
+    }
+
+    @NotNull
+    public SyncScrollable getScrollable23() {
+      return myScrollable23;
+    }
+
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (isDuringSyncScroll()) return;
 

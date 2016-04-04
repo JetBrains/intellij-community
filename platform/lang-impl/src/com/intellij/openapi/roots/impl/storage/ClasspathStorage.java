@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
@@ -56,8 +55,6 @@ import java.util.Set;
 // Boolean - false as not loaded, true as loaded
 public final class ClasspathStorage extends StateStorageBase<Boolean> {
   private static final Logger LOG = Logger.getInstance(ClasspathStorage.class);
-
-  @NonNls public static final String SPECIAL_STORAGE = "special";
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
 

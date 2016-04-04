@@ -28,7 +28,6 @@ public class PythonDialectsTokenSetProvider {
 
   private final TokenSet myStatementTokens;
   private final TokenSet myExpressionTokens;
-  private final TokenSet myNameDefinerTokens;
   private final TokenSet myKeywordTokens;
   private final TokenSet myParameterTokens;
   private final TokenSet myFunctionDeclarationTokens;
@@ -38,7 +37,6 @@ public class PythonDialectsTokenSetProvider {
   private PythonDialectsTokenSetProvider() {
     TokenSet stmts = TokenSet.EMPTY;
     TokenSet exprs = TokenSet.EMPTY;
-    TokenSet definers = TokenSet.EMPTY;
     TokenSet keywords = TokenSet.EMPTY;
     TokenSet parameters = TokenSet.EMPTY;
     TokenSet functionDeclarations = TokenSet.EMPTY;
@@ -47,7 +45,6 @@ public class PythonDialectsTokenSetProvider {
     for(PythonDialectsTokenSetContributor contributor: Extensions.getExtensions(PythonDialectsTokenSetContributor.EP_NAME)) {
       stmts = TokenSet.orSet(stmts, contributor.getStatementTokens());
       exprs = TokenSet.orSet(exprs, contributor.getExpressionTokens());
-      definers = TokenSet.orSet(definers, contributor.getNameDefinerTokens());
       keywords = TokenSet.orSet(keywords, contributor.getKeywordTokens());
       parameters = TokenSet.orSet(parameters, contributor.getParameterTokens());
       functionDeclarations = TokenSet.orSet(functionDeclarations, contributor.getFunctionDeclarationTokens());
@@ -56,7 +53,6 @@ public class PythonDialectsTokenSetProvider {
     }
     myStatementTokens = stmts;
     myExpressionTokens = exprs;
-    myNameDefinerTokens = definers;
     myKeywordTokens = keywords;
     myParameterTokens = parameters;
     myFunctionDeclarationTokens = functionDeclarations;
@@ -76,13 +72,6 @@ public class PythonDialectsTokenSetProvider {
    */
   public TokenSet getExpressionTokens() {
     return myExpressionTokens;
-  }
-
-  /**
-   * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.NameDefiner}.
-   */
-  public TokenSet getNameDefinerTokens() {
-    return myNameDefinerTokens;
   }
 
   /**

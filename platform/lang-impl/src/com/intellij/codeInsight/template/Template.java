@@ -83,6 +83,18 @@ public abstract class Template {
 
   public abstract int getSegmentOffset(int segmentIndex);
 
+  /**
+   * @return template text as it appears in Live Template settings, including variables surrounded with '$'
+   * @see #getTemplateText()
+   */
+  @NotNull
+  public abstract String getString();
+
+  /**
+   * @return template text without any variables and with '$' character escapes removed.
+   * @see #getString()
+   */
+  @NotNull
   public abstract String getTemplateText();
 
   public abstract boolean isToShortenLongNames();

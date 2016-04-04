@@ -54,18 +54,22 @@ public class JavaProjectRootsUtil {
   public static List<VirtualFile> getSuitableDestinationSourceRoots(@NotNull Project project) {
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-        for (SourceFolder sourceFolder : entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
-          if (!isForGeneratedSources(sourceFolder)) {
-            ContainerUtil.addIfNotNull(roots, sourceFolder.getFile());
-          }
-        }
-      }
+      collectSuitableDestinationSourceRoots(module, roots);
     }
     return roots;
   }
 
-  private static boolean isForGeneratedSources(SourceFolder sourceFolder) {
+  public static void collectSuitableDestinationSourceRoots(@NotNull Module module, @NotNull List<VirtualFile> result) {
+    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      for (SourceFolder sourceFolder : entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
+        if (!isForGeneratedSources(sourceFolder)) {
+          ContainerUtil.addIfNotNull(result, sourceFolder.getFile());
+        }
+      }
+    }
+  }
+
+  public static boolean isForGeneratedSources(SourceFolder sourceFolder) {
     JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
     JavaResourceRootProperties resourceProperties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.RESOURCES);
     return properties != null && properties.isForGeneratedSources() || resourceProperties != null && resourceProperties.isForGeneratedSources();

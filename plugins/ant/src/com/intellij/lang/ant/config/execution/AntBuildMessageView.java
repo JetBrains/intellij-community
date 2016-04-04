@@ -44,6 +44,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -468,9 +469,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private static AntMessage createErrorMessage(int priority, String text) {
-    if (text.startsWith(FILE_PREFIX)) {
-      text = text.substring(FILE_PREFIX.length());
-    }
+    text = StringUtil.trimStart(text, FILE_PREFIX);
 
     int afterLineNumberIndex = text.indexOf(": "); // end of file_name_and_line_number sequence
     if (afterLineNumberIndex != -1) {

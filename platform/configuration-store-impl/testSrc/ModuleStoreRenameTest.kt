@@ -28,6 +28,7 @@ import kotlin.properties.Delegates
 
 internal class ModuleStoreRenameTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
 
     private val Module.storage: FileBasedStorage
@@ -46,7 +47,7 @@ internal class ModuleStoreRenameTest {
     object : ExternalResource() {
       override fun before() {
         runInEdtAndWait {
-          module = projectRule.createModule(tempDirManager.newPath().resolve("m.iml"))
+          module = projectRule.createModule(tempDirManager.newPath(refreshVfs = true).resolve("m.iml"))
         }
 
         module.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
@@ -131,7 +132,7 @@ internal class ModuleStoreRenameTest {
     val parentVirtualDir = storage.getVirtualFile()!!.parent
     runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
 
-    val newFile = Paths.get(parentVirtualDir.getPath(), "${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    val newFile = Paths.get(parentVirtualDir.path, "${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     try {
       assertThat(newFile).isRegularFile()
       assertRename(module.name, oldFile)

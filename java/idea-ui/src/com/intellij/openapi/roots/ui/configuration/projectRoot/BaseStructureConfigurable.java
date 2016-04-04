@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
@@ -295,7 +294,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     result.addAll(copyActions);
     result.add(Separator.getInstance());
 
-    if (fromPopup || !Registry.is("ide.new.project.settings")) {
+    if (fromPopup) {
       result.add(new MyFindUsagesAction(myTree));
     }
 

@@ -16,6 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyTestCase;
 
@@ -199,7 +200,7 @@ public class PyIndentTest extends PyTestCase {
   public void testEnterInNonEmptyArgList() {  // PY-1947
     doTest("Task(<caret>params=1)",
            "Task(\n" +
-           "        <caret>params=1)");
+           "    <caret>params=1)");
   }
 
   public void testEnterInNonClosedArgList() {   // PY-4863

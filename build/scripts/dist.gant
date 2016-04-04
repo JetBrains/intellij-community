@@ -71,6 +71,9 @@ def loadProductProperties(String home, String buildNumber) {
     throw new BuildException("No product specific properties file found at: " + productPropertiesPath)
   }
   setProperty("productProperties", includeFile(productPropertiesPath).getProperties(home, buildNumber))
+  productProperties.ideJvmArgs = productProperties.ideJvmArgs != null ?
+                                 productProperties.ideJvmArgs + " -Didea.jre.check=true" :
+                                 "-Didea.jre.check=true"
 }
 
 target(compile: "Compile project") {
@@ -84,8 +87,8 @@ target(compile: "Compile project") {
   }
 
   projectBuilder.targetFolder = "$out/classes"
+  clearBuildCaches()
   projectBuilder.cleanOutput()
-  bundledJDKs()
   projectBuilder.buildProduction()
   projectBuilder.makeModuleTests(findModule("jps-builders"))
 
@@ -202,7 +205,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   def linuxAppRoot = productProperties.linuxAppRoot()
   def archiveName = productProperties.archiveName()
 
-  List pathsDist = new File("${paths.sandbox}/bundled.win.jdk/jre").exists() ? [paths.distAll, paths.distWin, "${paths.sandbox}/bundled.win.jdk"] : [paths.distAll, paths.distWin]
+  List pathsDist = new File("${paths.sandbox}/jdk.win/jre").exists() ? [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"] : [paths.distAll, paths.distWin]
   buildWinZip("$paths.artifacts/${archiveName}.win.zip", pathsDist, winAppRoot)
 
   buildCrossPlatformZip("$paths.artifacts/${archiveName}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
@@ -211,9 +214,10 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   String macZip = "$paths.artifacts/${archiveName}.mac.zip"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac, productProperties.extraMacBins)
 
-  buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix], productProperties.extraLinuxBins)
-  if (p("jdk.bundled.linux") != "false") {
-    buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
+  buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}-no-jdk.tar", [paths.distAll, paths.distUnix], productProperties.extraLinuxBins)
+  requireProperty("jdk.linux", "false")
+  if (p("jdk.linux") != "false") {
+    buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
   }
   return info
 }
@@ -268,6 +272,7 @@ private layoutMac(Map _args, String home, Paths paths) {
       </dict>
 """
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
+  args."idea.properties" = ["idea.jre.check": true];
   args.urlSchemes = ["idea"]
   args.mac_no_yjp = true
   args.executable = prefix

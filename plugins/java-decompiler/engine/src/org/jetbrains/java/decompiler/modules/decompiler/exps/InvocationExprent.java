@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -36,6 +29,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
@@ -44,6 +38,9 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextUtil;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 public class InvocationExprent extends Exprent {
 
@@ -69,16 +66,22 @@ public class InvocationExprent extends Exprent {
   private String invokeDynamicClassSuffix;
   private int invocationTyp = INVOKE_VIRTUAL;
   private List<Exprent> lstParameters = new ArrayList<Exprent>();
+  private List<PooledConstant> bootstrapArguments;
 
   public InvocationExprent() {
     super(EXPRENT_INVOCATION);
   }
 
-  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamicInvocationType, Set<Integer> bytecodeOffsets) {
+  public InvocationExprent(int opcode,
+                           LinkConstant cn,
+                           List<PooledConstant> bootstrapArguments,
+                           ListStack<Exprent> stack,
+                           Set<Integer> bytecodeOffsets) {
     this();
 
     name = cn.elementname;
     classname = cn.classname;
+    this.bootstrapArguments = bootstrapArguments;
 
     switch (opcode) {
       case CodeConstants.opc_invokestatic:
@@ -115,6 +118,15 @@ public class InvocationExprent extends Exprent {
     }
 
     if (opcode == CodeConstants.opc_invokedynamic) {
+      int dynamicInvocationType = -1;
+      if (bootstrapArguments != null) {
+        if (bootstrapArguments.size() > 1) { // INVOKEDYNAMIC is used not only for lambdas
+          PooledConstant link = bootstrapArguments.get(1);
+          if (link instanceof LinkConstant) {
+            dynamicInvocationType = ((LinkConstant)link).index1;
+          }
+        }
+      }
       if (dynamicInvocationType == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic) {
         isStatic = true;
       }
@@ -154,6 +166,7 @@ public class InvocationExprent extends Exprent {
     ExprProcessor.copyEntries(lstParameters);
 
     addBytecodeOffsets(expr.bytecode);
+    bootstrapArguments = expr.getBootstrapArguments();
   }
 
   @Override
@@ -490,6 +503,10 @@ public class InvocationExprent extends Exprent {
 
   public String getInvokeDynamicClassSuffix() {
     return invokeDynamicClassSuffix;
+  }
+
+  public List<PooledConstant> getBootstrapArguments() {
+    return bootstrapArguments;
   }
 
   // *****************************************************************************

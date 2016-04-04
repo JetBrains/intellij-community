@@ -29,7 +29,7 @@ class Main {
   }
   @NotNull
   private Object test7(@NotNull Object defVal, @Nullable final Object val) {
-    if (<warning descr="Method invocation 'val.equals(defVal)' may produce 'java.lang.NullPointerException'">val.equals(defVal)</warning>) {
+    if (val.<warning descr="Method invocation 'equals' may produce 'java.lang.NullPointerException'">equals</warning>(defVal)) {
       return defVal;
     }
     return defVal;

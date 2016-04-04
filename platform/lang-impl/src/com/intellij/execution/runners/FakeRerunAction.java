@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,5 +85,10 @@ class FakeRerunAction extends AnAction  {
     return environment != null &&
            !ExecutorRegistry.getInstance().isStarting(environment) &&
            !(processHandler != null && processHandler.isProcessTerminating());
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return Registry.is("dumb.aware.run.configurations");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,26 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.concurrent.*;
-
-import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
+import java.util.concurrent.Future;
 
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
@@ -39,13 +42,21 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   protected final Process myProcess;
   protected final String myCommandLine;
   protected final Charset myCharset;
+  protected final String myPresentableName;
   protected final ProcessWaitFor myWaitFor;
 
-  public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public BaseOSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     myProcess = process;
     myCommandLine = commandLine;
     myCharset = charset;
-    myWaitFor = new ProcessWaitFor(process, this);
+    if (StringUtil.isEmpty(commandLine)) {
+      LOG.warn(new IllegalArgumentException("Must specify non-empty 'commandLine' parameter"));
+    }
+    myPresentableName = CommandLineUtil.extractPresentableName(StringUtil.notNullize(commandLine));
+    myWaitFor = new ProcessWaitFor(process, this, myPresentableName);
   }
 
   /**
@@ -53,12 +64,14 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
    *
    * @param task a task to run
    */
-  protected Future<?> executeOnPooledThread(Runnable task) {
-    return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
+  @NotNull
+  protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
+    return AppExecutorUtil.getAppExecutorService().submit(task);
   }
 
   @Override
-  public Future<?> executeTask(Runnable task) {
+  @NotNull
+  public Future<?> executeTask(@NotNull Runnable task) {
     return executeOnPooledThread(task);
   }
 
@@ -126,9 +139,10 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     super.startNotify();
   }
 
+  @NotNull
   private BaseDataReader.SleepingPolicy getPolicy() {
     if (useNonBlockingRead()) {
-      return useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
+      return useAdaptiveSleepingPolicyWhenReadingOutput() ? new BaseDataReader.AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
     }
     else {
       //use blocking read policy
@@ -137,32 +151,36 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   @NotNull
-  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy);
+  protected BaseDataReader createErrorDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy, "error stream of " + myPresentableName);
   }
 
   @NotNull
-  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
+  protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy, "output stream of " + myPresentableName);
   }
 
   protected void onOSProcessTerminated(final int exitCode) {
     notifyProcessTerminated(exitCode);
   }
 
+  @NotNull
   protected Reader createProcessOutReader() {
     return createInputStreamReader(myProcess.getInputStream());
   }
 
+  @NotNull
   protected Reader createProcessErrReader() {
     return createInputStreamReader(myProcess.getErrorStream());
   }
 
-  private Reader createInputStreamReader(InputStream streamToRead) {
+  @NotNull
+  private Reader createInputStreamReader(@NotNull InputStream streamToRead) {
     Charset charset = charsetNotNull();
     return new BaseInputStreamReader(streamToRead, charset);
   }
 
+  @NotNull
   private Charset charsetNotNull() {
     Charset charset = getCharset();
     if (charset == null) {
@@ -220,7 +238,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myProcess.getOutputStream();
   }
 
-  @Nullable
+  /*@NotNull*/
   public String getCommandLine() {
     return myCommandLine;
   }
@@ -231,29 +249,26 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   public static class ExecutorServiceHolder {
-    private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
-
-    private static ThreadPoolExecutor createServiceImpl() {
-      ThreadFactory factory = ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread");
-      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
-    }
-
-    public static Future<?> submit(Runnable task) {
-      return ourThreadExecutorsService.submit(task);
+    /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 16) */
+    @Deprecated
+    public static Future<?> submit(@NotNull Runnable task) {
+      LOG.warn("Deprecated method. Please use com.intellij.execution.process.BaseOSProcessHandler.executeTask() instead", new Throwable());
+      return AppExecutorUtil.getAppExecutorService().submit(task);
     }
   }
 
   private class SimpleOutputReader extends BaseOutputReader {
     private final Key myProcessOutputType;
 
-    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy) {
+    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy, @NotNull String presentableName) {
       super(reader, sleepingPolicy);
       myProcessOutputType = processOutputType;
-      start();
+      start(presentableName);
     }
 
+    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(Runnable runnable) {
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return BaseOSProcessHandler.this.executeOnPooledThread(runnable);
     }
 
@@ -261,5 +276,22 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     protected void onTextAvailable(@NotNull String text) {
       notifyTextAvailable(text, myProcessOutputType);
     }
+  }
+
+  @Override
+  public String toString() {
+    return myCommandLine;
+  }
+
+  @Override
+  public boolean waitFor() {
+    boolean result = super.waitFor();
+    try {
+      myWaitFor.waitFor();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return result;
   }
 }

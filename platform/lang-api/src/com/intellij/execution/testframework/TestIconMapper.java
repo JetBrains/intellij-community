@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ public class TestIconMapper implements PoolOfTestIcons {
   }
 
   @Nullable
-  public static Icon getIcon(TestStateInfo.Magnitude magnitude) {
+  public static Icon getIcon(@NotNull TestStateInfo.Magnitude magnitude) {
     switch (magnitude) {
       case SKIPPED_INDEX:
         return SKIPPED_ICON;

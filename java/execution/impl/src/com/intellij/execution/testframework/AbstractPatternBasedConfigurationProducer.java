@@ -26,6 +26,8 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -34,6 +36,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -156,13 +160,26 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
                                          PsiElementProcessor.CollectElements<PsiElement> processor) {
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
-      collectTestMembers(elements, checkAbstract, checkIsTest, processor);
-      for (PsiElement psiClass : processor.getCollection()) {
-        classes.add(getQName(psiClass));
-      }
-      return true;
+      return collectTestMembers(elements, checkAbstract, checkIsTest, processor, classes);
     }
     else {
+      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+      if (editor != null) {
+        final List<Caret> allCarets = editor.getCaretModel().getAllCarets();
+        if (allCarets.size() > 1) {
+          final PsiFile editorFile = CommonDataKeys.PSI_FILE.getData(dataContext);
+          if (editorFile != null) {
+            final Set<PsiMethod> methods = new LinkedHashSet<PsiMethod>();
+            for (Caret caret : allCarets) {
+              ContainerUtil.addIfNotNull(methods, PsiTreeUtil.getParentOfType(editorFile.findElementAt(caret.getOffset()), PsiMethod.class));
+            }
+            if (!methods.isEmpty()) {
+              return collectTestMembers(methods.toArray(new PsiElement[0]), checkAbstract, checkIsTest, processor, classes);
+            }
+          }
+        }
+      }
+      final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (files != null) {
         Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -171,7 +188,16 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
           for (VirtualFile file : files) {
             final PsiFile psiFile = psiManager.findFile(file);
             if (psiFile instanceof PsiClassOwner) {
-              collectTestMembers(((PsiClassOwner)psiFile).getClasses(), checkAbstract, checkIsTest, processor);
+              PsiClass[] psiClasses = ((PsiClassOwner)psiFile).getClasses();
+              if (element != null && psiClasses.length > 0) {
+                for (PsiClass aClass : psiClasses) {
+                  if (PsiTreeUtil.isAncestor(aClass, element, false)) {
+                    psiClasses = new PsiClass[] {aClass};
+                    break;
+                  }
+                }
+              }
+              collectTestMembers(psiClasses, checkAbstract, checkIsTest, processor);
               for (PsiElement psiMember : processor.getCollection()) {
                 classes.add(((PsiClass)psiMember).getQualifiedName());
               }
@@ -182,6 +208,17 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
       }
     }
     return false;
+  }
+
+  private boolean collectTestMembers(PsiElement[] elements,
+                                     boolean checkAbstract,
+                                     boolean checkIsTest,
+                                     PsiElementProcessor.CollectElements<PsiElement> processor, LinkedHashSet<String> classes) {
+    collectTestMembers(elements, checkAbstract, checkIsTest, processor);
+    for (PsiElement psiClass : processor.getCollection()) {
+      classes.add(getQName(psiClass));
+    }
+    return classes.size() > 1;
   }
 
   private static PsiElement[] collectLocationElements(LinkedHashSet<String> classes, DataContext dataContext) {

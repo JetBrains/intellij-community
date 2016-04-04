@@ -15,12 +15,13 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,10 +103,13 @@ public abstract class PropertyBunch<MType> {
   protected static boolean resolvesLocally(@NotNull PyReferenceExpression ref) {
     final String name = ref.getName();
     if (name != null) {
-      final ResolveProcessor processor = new ResolveProcessor(name);
-      processor.setLocalResolve();
+      final PyResolveProcessor processor = new PyResolveProcessor(name, true);
       PyResolveUtil.scopeCrawlUp(processor, ref, name, null);
-      return processor.getResult() != null;
+      for (PsiElement element : processor.getElements()) {
+        if (element != null) {
+          return true;
+        }
+      }
     }
     return false;
   }

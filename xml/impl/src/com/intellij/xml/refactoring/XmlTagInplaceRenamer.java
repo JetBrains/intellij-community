@@ -132,9 +132,12 @@ public class XmlTagInplaceRenamer {
     ourRenamersStack.pop();
 
     if (myHighlighters != null) {
-      final HighlightManager highlightManager = HighlightManager.getInstance(myEditor.getProject());
-      for (final RangeHighlighter highlighter : myHighlighters) {
-        highlightManager.removeSegmentHighlighter(myEditor, highlighter);
+      Project project = myEditor.getProject();
+      if (project != null && !project.isDisposed()) {
+        final HighlightManager highlightManager = HighlightManager.getInstance(project);
+        for (final RangeHighlighter highlighter : myHighlighters) {
+          highlightManager.removeSegmentHighlighter(myEditor, highlighter);
+        }
       }
     }
   }

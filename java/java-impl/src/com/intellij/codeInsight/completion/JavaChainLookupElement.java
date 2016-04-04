@@ -102,6 +102,9 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
       String locationString = ((JavaPsiClassReferenceElement)myQualifier).getLocationString();
       presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + locationString);
     }
+    if (qualifierPresentation.isStrikeout()) {
+      presentation.setStrikeout(true);
+    }
   }
 
   @Override

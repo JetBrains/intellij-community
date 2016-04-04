@@ -20,7 +20,7 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
   @Override
   public PsiElement adjustElementToCopy(PsiElement element) {
-    return element;
+    return null;
   }
 
   @Nullable

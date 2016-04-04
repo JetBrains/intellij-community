@@ -270,7 +270,9 @@ public class PsiClassImplUtil {
                         ? r.symbolIcon
                         : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
       RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(symbolIcon, r.psiClass, isLocked);
-      return ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
+      Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
+      Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
+      return result;
     }
   };
 
@@ -730,7 +732,7 @@ public class PsiClassImplUtil {
     return new TypeCorrector(resolveScope).correctType(originalType);
   }
 
-  private static List<PsiClassType.ClassResolveResult> getScopeCorrectedSuperTypes(final PsiClass aClass, GlobalSearchScope resolveScope) {
+  public static List<PsiClassType.ClassResolveResult> getScopeCorrectedSuperTypes(final PsiClass aClass, GlobalSearchScope resolveScope) {
     Map<GlobalSearchScope, List<PsiClassType.ClassResolveResult>> cache =
       CachedValuesManager.getCachedValue(aClass, new CachedValueProvider<Map<GlobalSearchScope, List<PsiClassType.ClassResolveResult>>>() {
         @Nullable
@@ -756,7 +758,7 @@ public class PsiClassImplUtil {
       PsiClassType corrected = correctType(type, resolveScope);
       if (corrected == null) continue;
 
-      PsiClassType.ClassResolveResult result = corrected.resolveGenerics();
+      PsiClassType.ClassResolveResult result = ((PsiClassType)PsiUtil.captureToplevelWildcards(corrected, aClass)).resolveGenerics();
       PsiClass superClass = result.getElement();
       if (superClass == null || !PsiSearchScopeUtil.isInScope(resolveScope, superClass)) continue;
 
@@ -903,10 +905,6 @@ public class PsiClassImplUtil {
       result[0] = objectType;
     }
     System.arraycopy(implementsTypes, 0, result, extendsListLength, implementsTypes.length);
-    for (int i = 0; i < result.length; i++) {
-      PsiClassType type = result[i];
-      result[i] = (PsiClassType)PsiUtil.captureToplevelWildcards(type, psiClass);
-    }
     return result;
   }
 
@@ -1033,6 +1031,23 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
+    PsiType upperBound = psiClass.getUserData(InferenceSession.UPPER_BOUND);
+    if (upperBound == null && psiClass instanceof PsiTypeParameter) {
+      upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
+    }
+    if (upperBound instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)upperBound).getConjuncts();
+      final List<PsiClassType> result = new ArrayList<PsiClassType>();
+      for (PsiType conjunct : conjuncts) {
+        if (conjunct instanceof PsiClassType) {
+          result.add((PsiClassType)conjunct);
+        }
+      }
+      return result.toArray(new PsiClassType[result.size()]);
+    }
+    else if (upperBound instanceof PsiClassType) {
+      return new PsiClassType[] {(PsiClassType)upperBound};
+    }
     final PsiReferenceList extendsList = psiClass.getExtendsList();
     if (extendsList != null) {
       return extendsList.getReferencedTypes();
@@ -1070,7 +1085,7 @@ public class PsiClassImplUtil {
         PsiTypeParameter p2 = (PsiTypeParameter)another;
 
         return p1.getIndex() == p2.getIndex() &&
-               (aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner()) || InferenceSession.areSameFreshVariables(p1, p2));
+               (aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner()) || TypeConversionUtil.areSameFreshVariables(p1, p2));
       }
       else {
         return false;

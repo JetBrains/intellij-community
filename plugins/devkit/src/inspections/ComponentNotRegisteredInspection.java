@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-/**
- * @author swr
- */
 public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   public boolean CHECK_ACTIONS = true;
   public boolean IGNORE_NON_PUBLIC = true;
@@ -65,7 +62,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
 
   @Nullable
   public JComponent createOptionsPanel() {
-    final JPanel jPanel = new JPanel();
+    JPanel jPanel = new JPanel();
     jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 
     final JCheckBox ignoreNonPublic = new JCheckBox(
@@ -82,7 +79,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
             CHECK_ACTIONS);
     checkJavaActions.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        final boolean selected = checkJavaActions.isSelected();
+        boolean selected = checkJavaActions.isSelected();
         CHECK_ACTIONS = selected;
         ignoreNonPublic.setEnabled(selected);
       }
@@ -95,8 +92,8 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
 
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final PsiFile psiFile = checkedClass.getContainingFile();
-    final PsiIdentifier classIdentifier = checkedClass.getNameIdentifier();
+    PsiFile psiFile = checkedClass.getContainingFile();
+    PsiIdentifier classIdentifier = checkedClass.getNameIdentifier();
     if (checkedClass.getQualifiedName() != null &&
         classIdentifier != null &&
         psiFile != null &&
@@ -108,11 +105,11 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
         return null;
       }
 
-      final PsiManager psiManager = checkedClass.getManager();
-      final GlobalSearchScope scope = checkedClass.getResolveScope();
+      PsiManager psiManager = checkedClass.getManager();
+      GlobalSearchScope scope = checkedClass.getResolveScope();
 
       if (CHECK_ACTIONS) {
-        final PsiClass actionClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnAction.class.getName(), scope);
+        PsiClass actionClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnAction.class.getName(), scope);
         if (actionClass == null) {
           // stop if action class cannot be found (non-devkit module/project)
           return null;
@@ -122,8 +119,8 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
             return null;
           }
           if (!isActionRegistered(checkedClass) && canFix(checkedClass)) {
-            final LocalQuickFix fix = new RegisterActionFix(checkedClass);
-            final ProblemDescriptor problem = manager.createProblemDescriptor(
+            LocalQuickFix fix = new RegisterActionFix(org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
+            ProblemDescriptor problem = manager.createProblemDescriptor(
                     classIdentifier,
                     DevKitBundle.message("inspections.component.not.registered.message",
                                          DevKitBundle.message("new.menu.action.text")),
@@ -136,17 +133,17 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
         }
       }
 
-      final ComponentType[] types = ComponentType.values();
+      ComponentType[] types = ComponentType.values();
       for (ComponentType type : types) {
-        final PsiClass compClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(type.myClassName, scope);
+        PsiClass compClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(type.myClassName, scope);
         if (compClass == null) {
           // stop if component classes cannot be found (non-devkit module/project)
           return null;
         }
         if (checkedClass.isInheritor(compClass, true)) {
           if (getRegistrationTypes(checkedClass, false) == null && canFix(checkedClass)) {
-            final LocalQuickFix fix = new RegisterComponentFix(type, checkedClass);
-            final ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
+            LocalQuickFix fix = new RegisterComponentFix(type, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
+            ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
                                                                               DevKitBundle.message("inspections.component.not.registered.message",
                                                                                                    DevKitBundle.message(type.myPropertyKey)),
                                                                               fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
@@ -162,10 +159,10 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   }
 
   private static boolean canFix(PsiClass psiClass) {
-    final Project project = psiClass.getProject();
-    final PsiFile psiFile = psiClass.getContainingFile();
+    Project project = psiClass.getProject();
+    PsiFile psiFile = psiClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
-    final Module module = ModuleUtilCore.findModuleForFile(psiFile.getVirtualFile(), project);
+    Module module = ModuleUtilCore.findModuleForFile(psiFile.getVirtualFile(), project);
     return PluginModuleType.isPluginModuleOrDependency(module);
   }
 }

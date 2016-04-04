@@ -51,11 +51,11 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   public interface OutputConsumer {
 
-    void registerOutputFile(BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException;
+    void registerOutputFile(@NotNull BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException;
 
-    void registerCompiledClass(BuildTarget<?> target, CompiledClass compiled) throws IOException;
+    void registerCompiledClass(@Nullable BuildTarget<?> target, CompiledClass compiled) throws IOException;
 
-    Collection<CompiledClass> getTargetCompiledClasses(BuildTarget<?> target);
+    Collection<CompiledClass> getTargetCompiledClasses(@NotNull BuildTarget<?> target);
     @NotNull
     Map<String, CompiledClass> getCompiledClasses();
 

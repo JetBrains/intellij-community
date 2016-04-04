@@ -531,10 +531,10 @@ public class AbstractTreeBuilder implements Disposable {
 
   @NotNull
   public AsyncResult<Object> revalidateElement(Object element) {
-    if (isDisposed()) return new AsyncResult.Rejected<Object>();
+    if (isDisposed()) return AsyncResult.rejected();
 
     AbstractTreeStructure structure = getTreeStructure();
-    if (structure == null) return new AsyncResult.Rejected<Object>();
+    if (structure == null) return AsyncResult.rejected();
 
     return structure.revalidateElement(element);
   }

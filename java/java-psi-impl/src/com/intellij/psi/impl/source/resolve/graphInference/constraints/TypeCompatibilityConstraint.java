@@ -39,16 +39,20 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
-      return TypeConversionUtil.isAssignable(myT, myS);
+      final boolean assignable = TypeConversionUtil.isAssignable(myT, myS);
+      if (!assignable) {
+        session.registerIncompatibleErrorMessage("Incompatible types: " + session.getPresentableText(myS) + " is not convertible to " + session.getPresentableText(myT));
+      }
+      return assignable;
     }
-    if (myS instanceof PsiPrimitiveType) {
+    if (myS instanceof PsiPrimitiveType && !PsiType.VOID.equals(myS)) {
       final PsiClassType boxedType = ((PsiPrimitiveType)myS).getBoxedType(session.getManager(), session.getScope());
       if (boxedType != null) {
         constraints.add(new TypeCompatibilityConstraint(myT, boxedType));
         return true;
       }
     }
-    if (myT instanceof PsiPrimitiveType) {
+    if (myT instanceof PsiPrimitiveType && !PsiType.VOID.equals(myT)) {
       final PsiClassType boxedType = ((PsiPrimitiveType)myT).getBoxedType(session.getManager(), session.getScope());
       if (boxedType != null) {
         constraints.add(new TypeEqualityConstraint(boxedType, myS));
@@ -71,7 +75,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
       final PsiClassType.ClassResolveResult sResult = ((PsiClassType)s).resolveGenerics();
       final PsiClass tClass = tResult.getElement();
       final PsiClass sClass = sResult.getElement();
-      if (tClass != null && sClass != null) {
+      if (tClass != null && sClass != null && !(sClass instanceof InferenceVariable)) {
         final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
         if (sSubstitutor != null) {
           if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "outDir": "out",
+    "newLine": "LF",
+    "noResolve": true,
+    "noEmitOnError": true,
+    "inlineSources": true,
+    "sourceMap": true
+  },
+  "filesGlob": [
+    "src/*.ts",
+    "typings/**/*.d.ts"
+  ],
+  "files": [
+    "typings/bluebird/bluebird.d.ts",
+    "typings/node/node.d.ts",
+    "src/rpc-node.ts",
+    "src/rpc.ts"
+  ]
+}

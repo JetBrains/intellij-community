@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,10 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
     }
 
     @Override
-    public void applyHeavyFilter(final Document copiedFragment,
+    public void applyHeavyFilter(@NotNull final Document copiedFragment,
                                  final int startOffset,
                                  int startLineNumber,
-                                 final Consumer<AdditionalHighlight> consumer) {
+                                 @NotNull final Consumer<AdditionalHighlight> consumer) {
       Map<String, Trinity<TextRange, TextRange, TextRange>> visited = new THashMap<String, Trinity<TextRange, TextRange, TextRange>>();
       final Trinity<TextRange, TextRange, TextRange> emptyInfo = Trinity.create(null, null, null);
 
@@ -92,9 +92,10 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
             OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();
             if (descriptor == null) continue;
 
-            int offset = descriptor.getOffset();
             PsiFile psiFile = worker.getFile();
-            if (offset <= 0 || psiFile == null) continue;
+            if (psiFile == null || psiFile instanceof PsiCompiledFile) continue;
+            int offset = descriptor.getOffset();
+            if (offset <= 0) continue;
 
             PsiElement element = psiFile.findElementAt(offset);
             PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
@@ -110,6 +111,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
         int off = startOffset + lineStartOffset;
         final Color color = UIUtil.getInactiveTextColor();
         consumer.consume(new AdditionalHighlight(off + info.first.getStartOffset(), off + info.second.getEndOffset()) {
+          @NotNull
           @Override
           public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
             return new TextAttributes(null, null, color, EffectType.BOLD_DOTTED_LINE, Font.PLAIN);
@@ -118,6 +120,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
       }
     }
 
+    @NotNull
     @Override
     public String getUpdateMessage() {
       return "Highlighting try blocks...";

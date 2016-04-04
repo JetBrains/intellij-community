@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyElementImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -68,7 +70,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
       return classMembers;
     }
     if (myFields.contains(name)) {
-      return Collections.singletonList(new RatedResolveResult(1000, new PyElementImpl(myDeclaration.getNode())));
+      return Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_HIGH, new PyElementImpl(myDeclaration.getNode())));
     }
     return null;
   }
@@ -97,7 +99,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (myDefinitionLevel > 0) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel-1);
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel - 1);
     }
     return null;
   }
@@ -112,35 +114,72 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return "PyNamedTupleType: " + myName;
   }
 
+  @NotNull
+  @Override
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> result = super.getMemberNames(inherited, context);
+    result.addAll(myFields);
+
+    return result;
+  }
+
   @Nullable
-  public static PyType fromCall(PyCallExpression call, int level) {
+  public static PyType fromCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context, int level) {
     final String name = PyPsiUtils.strValue(call.getArgument(0, PyExpression.class));
-    final PyExpression fieldNamesExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
-    if (name == null || fieldNamesExpression == null) {
+    final PyExpression fieldsExpression = resolveFieldsExpression(call, context);
+
+    if (name == null || fieldsExpression == null) {
       return null;
     }
-    List<String> fieldNames = null;
-    if (fieldNamesExpression instanceof PySequenceExpression) {
-      fieldNames = PyUtil.strListValue(fieldNamesExpression);
-    }
-    else {
-      final String fieldNamesString = PyPsiUtils.strValue(fieldNamesExpression);
-      if (fieldNamesString != null) {
-        fieldNames = parseFieldNamesString(fieldNamesString);
-      }
-    }
+
+    final List<String> fieldNames = getFieldNames(fieldsExpression);
+
     if (fieldNames != null) {
       PyClass tuple = PyBuiltinCache.getInstance(call).getClass(PyNames.FAKE_NAMEDTUPLE);
       if (tuple != null) {
         return new PyNamedTupleType(tuple, call, name, fieldNames, level);
       }
     }
+
     return null;
   }
 
-  private static List<String> parseFieldNamesString(String fieldNamesString) {
-    List<String> result = new ArrayList<String>();
-    for(String name: StringUtil.tokenize(fieldNamesString, ", ")) {
+  @Nullable
+  private static PyExpression resolveFieldsExpression(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PyExpression fieldsExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
+
+    if (fieldsExpression instanceof PyReferenceExpression) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)fieldsExpression).followAssignmentsChain(resolveContext);
+
+      final PsiElement resolvedFieldsExpression = resolveResult.getElement();
+
+      if (resolvedFieldsExpression instanceof PyExpression) {
+        return (PyExpression)resolvedFieldsExpression;
+      }
+    }
+
+    return fieldsExpression;
+  }
+
+  @Nullable
+  private static List<String> getFieldNames(@NotNull PyExpression fieldsExpression) {
+    if (fieldsExpression instanceof PySequenceExpression) {
+      return PyUtil.strListValue(fieldsExpression);
+    }
+    else {
+      return parseFieldNames(PyPsiUtils.strValue(fieldsExpression));
+    }
+  }
+
+  @Nullable
+  private static List<String> parseFieldNames(@Nullable String fieldsString) {
+    if (fieldsString == null) {
+      return null;
+    }
+
+    final List<String> result = new ArrayList<String>();
+    for (String name : StringUtil.tokenize(fieldsString, ", ")) {
       result.add(name);
     }
     return result;
@@ -148,5 +187,10 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   public int getElementCount() {
     return myFields.size();
+  }
+
+  @NotNull
+  public List<String> getElementNames() {
+    return Collections.unmodifiableList(myFields);
   }
 }

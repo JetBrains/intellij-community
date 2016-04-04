@@ -16,8 +16,11 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import java.util.ArrayList;
@@ -29,8 +32,8 @@ import java.util.regex.Pattern;
  * @since 2/28/14
  */
 public class AfterTestEvent extends AbstractTestEvent {
-  public AfterTestEvent(GradleTestsExecutionConsoleManager consoleManager) {
-    super(consoleManager);
+  public AfterTestEvent(GradleTestsExecutionConsole executionConsole) {
+    super(executionConsole);
   }
 
   @Override
@@ -68,7 +71,17 @@ public class AfterTestEvent extends AbstractTestEvent {
         if ("comparison".equals(failureType)) {
           String actualText = eventXml.queryXml("/ijLog/event/test/result/actual");
           String expectedText = eventXml.queryXml("/ijLog/event/test/result/expected");
-          testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, actualText, expectedText);
+          final Condition<String> emptyString = new Condition<String>() {
+            @Override
+            public boolean value(String s) {
+              return StringUtil.isEmpty(s);
+            }
+          };
+          String filePath = ObjectUtils.nullizeByCondition(
+            eventXml.queryXml("/ijLog/event/test/result/filePath"), emptyString);
+          String actualFilePath = ObjectUtils.nullizeByCondition(
+            eventXml.queryXml("/ijLog/event/test/result/actualFilePath"), emptyString);
+          testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, actualText, expectedText, filePath, actualFilePath);
         }
         else {
           Couple<String> comparisonPair =

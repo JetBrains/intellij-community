@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -25,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -103,12 +103,18 @@ public class ArgumentList {
   private static boolean argumentParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker argMarker = builder.mark();
 
-    if (argumentLabelStartCheck(builder, parser)) {
+    Pair<Boolean, Boolean> check = argumentLabelStartCheck(builder, parser);
+    if (check.first) {
       ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON, GroovyBundle.message("colon.expected"));
       if (!AssignmentExpression.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       argMarker.done(GroovyElementTypes.NAMED_ARGUMENT);
+      return true;
+    }
+
+    if (check.second) {
+      argMarker.drop();
       return true;
     }
 
@@ -132,14 +138,15 @@ public class ArgumentList {
    * initial position
    *
    * @param builder
-   * @return
+   * @return pair of two booleans, first value indicates that label was parsed, second value indicates that argument was parsed.
+   * If first value is {@code true} then second is always {@code null}.
    */
-  public static boolean argumentLabelStartCheck(PsiBuilder builder, GroovyParser parser) {
+  public static Pair<Boolean, Boolean> argumentLabelStartCheck(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mSTAR, GroovyTokenTypes.mCOLON)) {
       builder.advanceLexer();
       marker.done(GroovyElementTypes.ARGUMENT_LABEL);
-      return true;
+      return Pair.create(true, null);
     }
 
     final IElementType type = builder.getTokenType();
@@ -150,11 +157,11 @@ public class ArgumentList {
       builder.advanceLexer();
       if (GroovyTokenTypes.mCOLON.equals(builder.getTokenType())) {
         marker.done(GroovyElementTypes.ARGUMENT_LABEL);
-        return true;
+        return Pair.create(true, null);
       }
       else {
         marker.rollbackTo();
-        return false;
+        return Pair.create(false, false);
       }
     }
 
@@ -165,18 +172,34 @@ public class ArgumentList {
         GroovyTokenTypes.mLBRACK.equals(type) ||
         GroovyTokenTypes.mLPAREN.equals(type) ||
         GroovyTokenTypes.mLCURLY.equals(type)) {
-      PrimaryExpression.parsePrimaryExpression(builder, parser);
-      if (GroovyTokenTypes.mCOLON.equals(builder.getTokenType())) {
-        marker.done(GroovyElementTypes.ARGUMENT_LABEL);
-        return true;
+      PsiBuilder.Marker label = builder.mark();
+      if (AssignmentExpression.parse(builder, parser)) {
+        if (GroovyTokenTypes.mCOLON.equals(builder.getTokenType())) {
+          label.done(GroovyElementTypes.ARGUMENT_LABEL);
+          ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON, GroovyBundle.message("colon.expected"));
+          if (AssignmentExpression.parse(builder, parser)) {
+            marker.done(GroovyElementTypes.NAMED_ARGUMENT);
+          }
+          else {
+            builder.error(GroovyBundle.message("expression.expected"));
+            marker.drop();
+          }
+        }
+        else {
+          label.drop();
+          marker.drop();
+        }
+        return Pair.create(false, true);
       }
       else {
+        label.drop();
         marker.rollbackTo();
-        return false;
       }
     }
+    else {
+      marker.drop();
+    }
 
-    marker.drop();
-    return false;
+    return Pair.create(false, false);
   }
 }

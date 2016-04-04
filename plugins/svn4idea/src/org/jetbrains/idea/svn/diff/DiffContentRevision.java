@@ -18,21 +18,20 @@ package org.jetbrains.idea.svn.diff;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.nio.charset.Charset;
 
-public class DiffContentRevision implements ContentRevision {
+public class DiffContentRevision implements ByteBackedContentRevision {
   private String myPath;
   private SVNRepository myRepository;
-  private String myContents;
+  private byte[] myContents;
   private FilePath myFilePath;
   private long myRevision;
 
@@ -47,19 +46,26 @@ public class DiffContentRevision implements ContentRevision {
     myRevision = revision;
   }
 
-  @Nullable
+  @NotNull
   public String getContent() throws VcsException {
+    final byte[] bytes = getContentAsBytes();
+    final Charset charset = myFilePath.getCharset();
+    return CharsetToolkit.bytesToString(bytes, charset);
+  }
+
+  @NotNull
+  @Override
+  public byte[] getContentAsBytes() throws VcsException {
     if (myContents == null) {
       BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream(2048);
       try {
         myRepository.getFile(myPath, -1, null, bos);
         myRepository.closeSession();
-      } catch (SVNException e) {
+      }
+      catch (SVNException e) {
         throw new VcsException(e);
       }
-      final byte[] bytes = bos.toByteArray();
-      final Charset charset = myFilePath.getCharset();
-      myContents = CharsetToolkit.bytesToString(bytes, charset);
+      myContents = bos.toByteArray();
     }
     return myContents;
   }

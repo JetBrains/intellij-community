@@ -6,7 +6,7 @@ class CaptureTest <T> {
     private List<? extends List<T>> listOfSets;
 
     private void foo() {
-        <ref>doGenericThing(listOfSets.get(0));
+        <ref>doGenericThing(listOfSets.get());
     }
 
     public <U> List<U> doGenericThing(List<U> set) {

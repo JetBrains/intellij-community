@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.xml.util.documentation;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -35,7 +34,6 @@ public class HtmlDescriptorsTable {
 
   private static final HashMap<String,HtmlTagDescriptor> ourTagTable = new HashMap<String, HtmlTagDescriptor>();
   private static final HashMap<String,HtmlAttributeDescriptor> ourAttributeTable = new HashMap<String, HtmlAttributeDescriptor>();
-  private static String[] ourHtmlTagNames;
 
   @NonNls
   public static final String HTMLTABLE_RESOURCE_NAME = "htmltable.xml";
@@ -95,11 +93,8 @@ public class HtmlDescriptorsTable {
 
       loadHtmlElements(SVG_RESOURCE_NAME, htmlTagNames);
 
-      ourHtmlTagNames = ArrayUtil.toStringArray(htmlTagNames);
-
     } catch (Exception ex) {
       LOG.error(ex);
-      ourHtmlTagNames = ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
 
@@ -188,15 +183,11 @@ public class HtmlDescriptorsTable {
     }
   }
 
-  static HtmlTagDescriptor getTagDescriptor(String tagName) {
+  public static HtmlTagDescriptor getTagDescriptor(String tagName) {
     return ourTagTable.get(tagName);
   }
 
   public static HtmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
     return ourAttributeTable.get(attributeName);
-  }
-
-  public static String[] getHtmlTagNames() {
-    return ourHtmlTagNames;
   }
 }

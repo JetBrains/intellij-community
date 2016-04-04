@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private final String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
+  private boolean myDocumentRegionWasChanged;
 
   FoldRegionImpl(@NotNull Editor editor,
                  int startOffset,
@@ -118,6 +120,26 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   @Override
   public boolean shouldNeverExpand() {
     return myShouldNeverExpand;
+  }
+  
+  boolean hasDocumentRegionChanged() {
+    return myDocumentRegionWasChanged;
+  }
+  
+  void resetDocumentRegionChanged() {
+    myDocumentRegionWasChanged = false;
+  }
+
+  @Override
+  protected void changedUpdateImpl(@NotNull DocumentEvent e) {
+    if (isValid()) {
+      int oldStart = intervalStart();
+      int oldEnd = intervalEnd();
+      int changeStart = e.getOffset();
+      int changeEnd = e.getOffset() + e.getOldLength();
+      if (changeStart < oldEnd && changeEnd > oldStart) myDocumentRegionWasChanged = true;
+    }
+    super.changedUpdateImpl(e);
   }
 
   @Override

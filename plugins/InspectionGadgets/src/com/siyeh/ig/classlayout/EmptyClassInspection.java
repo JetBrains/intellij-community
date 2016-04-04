@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,9 @@ public class EmptyClassInspection extends EmptyClassInspectionBase {
     constraints.gridy++;
     final CheckBox checkBox2 = new CheckBox("Ignore subclasses of java.lang.Throwable", this, "ignoreThrowables");
     panel.add(checkBox2, constraints);
+    constraints.gridy++;
+    final CheckBox checkBox3 = new CheckBox(InspectionGadgetsBundle.message("empty.catch.block.comments.option"), this, "commentsAreContent");
+    panel.add(checkBox3, constraints);
     return panel;
   }
 }

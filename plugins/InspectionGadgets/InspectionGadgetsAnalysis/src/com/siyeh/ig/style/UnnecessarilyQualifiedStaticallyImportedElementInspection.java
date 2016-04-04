@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Bas Leijdekkers
+ * Copyright 2010-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -127,13 +126,12 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
       if (member instanceof PsiMethod) {
-        final PsiElementFactory factory = psiFacade.getElementFactory();
-        final PsiExpression expression = factory.createExpressionFromText(referenceName + "()", reference);
-        final CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates((PsiCallExpression)expression, false);
-        for (CandidateInfo methodCandidate : methodCandidates) {
-          if (!(methodCandidate.getCurrentFileResolveScope() instanceof PsiImportStaticStatement)) {
-            return false;
-          }
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)reference.getParent().copy();
+        final PsiElement qualifier = methodCallExpression.getMethodExpression().getQualifier();
+        assert qualifier != null;
+        qualifier.delete();
+        if (!member.equals(methodCallExpression.resolveMethod())) {
+          return false;
         }
       }
       else if (member instanceof PsiField) {

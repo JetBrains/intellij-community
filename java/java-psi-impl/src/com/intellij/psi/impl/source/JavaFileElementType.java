@@ -38,7 +38,7 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 21;
+  public static final int STUB_VERSION = 22;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);
@@ -106,5 +106,12 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) { }
+  public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) {
+    //Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
+    //if (fileId == null) return;
+    //IndexTree.Unit unit = JavaStubIndexer.translate(fileId, stub);
+    //if (unit != null) {
+    //  sink.occurrence(JavaStubIndexKeys.UNITS, unit);
+    //}
+  }
 }

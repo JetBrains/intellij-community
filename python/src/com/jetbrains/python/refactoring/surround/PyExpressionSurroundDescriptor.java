@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyWithParenthesesSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +31,8 @@ import org.jetbrains.annotations.NotNull;
  * Time: 5:59:04 PM
  */
 public class PyExpressionSurroundDescriptor implements SurroundDescriptor {
-  private static final Surrounder[] SURROUNDERS = {new PyWithParenthesesSurrounder()};
+  private static final Surrounder[] SURROUNDERS = {new PyWithParenthesesSurrounder(), new PyIfExpressionSurrounder(),
+    new PyWhileExpressionSurrounder(), new PyIsNoneSurrounder(), new PyIsNotNoneSurrounder()};
 
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {

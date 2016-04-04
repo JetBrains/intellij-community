@@ -42,7 +42,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
 
     <colorSettingsPage implementation="org.intellij.lang.xpath.XPathColorSettingsPage" />
 

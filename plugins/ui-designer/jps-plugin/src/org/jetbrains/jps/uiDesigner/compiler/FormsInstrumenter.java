@@ -204,7 +204,7 @@ public class FormsInstrumenter extends FormsBuilder {
           new FailSafeClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
 
         final int version = ClassProcessingBuilder.getClassFileVersion(classReader);
-        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(ClassProcessingBuilder.getAsmClassWriterFlags(version), finder);
+        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(classReader, ClassProcessingBuilder.getAsmClassWriterFlags(version), finder);
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, nestedFormsLoader, false, classWriter);
         final byte[] patchedBytes = codeGenerator.patchClass(classReader);
         if (patchedBytes != null) {

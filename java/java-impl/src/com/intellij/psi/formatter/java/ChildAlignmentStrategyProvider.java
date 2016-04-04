@@ -17,17 +17,23 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.TokenType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface ChildAlignmentStrategyProvider {
+public abstract class ChildAlignmentStrategyProvider {
 
-  AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child);
+  public abstract AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child);
 
-  ChildAlignmentStrategyProvider NULL_STRATEGY_PROVIDER = new ChildAlignmentStrategyProvider() {
+  public static ChildAlignmentStrategyProvider NULL_STRATEGY_PROVIDER = new ChildAlignmentStrategyProvider() {
     @Override
     public AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child) {
       return AlignmentStrategy.getNullStrategy();
     }
   };
-
+  
+  public static boolean isWhiteSpaceWithBlankLines(@Nullable ASTNode node) {
+    return node != null && node.getElementType() == TokenType.WHITE_SPACE && StringUtil.countNewLines(node.getChars()) > 1;
+  }
 }

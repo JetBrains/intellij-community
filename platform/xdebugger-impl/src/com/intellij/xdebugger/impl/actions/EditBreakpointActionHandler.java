@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,11 +54,10 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
   public void editBreakpoint(@NotNull Project project, @NotNull Editor editor, @NotNull Object breakpoint, @NotNull GutterIconRenderer breakpointGutterRenderer) {
     if (BreakpointsDialogFactory.getInstance(project).isBreakpointPopupShowing()) return;
     EditorGutterComponentEx gutterComponent = ((EditorEx)editor).getGutterComponentEx();
-    Point point = gutterComponent.getPoint(breakpointGutterRenderer);
-    if (point == null) return;
-    final Icon icon = breakpointGutterRenderer.getIcon();
-    Point whereToShow = new Point(point.x + icon.getIconWidth() / 2, point.y + icon.getIconHeight() / 2);
-    doShowPopup(project, gutterComponent, whereToShow, breakpoint);
+    Point point = gutterComponent.getCenterPoint(breakpointGutterRenderer);
+    if (point != null) {
+      doShowPopup(project, gutterComponent, point, breakpoint);
+    }
   }
 
   public void editBreakpoint(@NotNull Project project, @NotNull JComponent parent, @NotNull Point whereToShow, @NotNull BreakpointItem breakpoint) {

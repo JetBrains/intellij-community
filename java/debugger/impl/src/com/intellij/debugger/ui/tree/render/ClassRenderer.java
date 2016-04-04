@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
@@ -80,6 +81,11 @@ public class ClassRenderer extends NodeRendererImpl{
     if (SHOW_FQ_TYPE_NAMES) {
       return typeName;
     }
+    String baseLambdaClassName = DebuggerUtilsEx.getLambdaBaseClassName(typeName);
+    if (baseLambdaClassName != null) {
+      return renderTypeName(baseLambdaClassName) + "$lambda";
+    }
+
     final int dotIndex = typeName.lastIndexOf('.');
     if (dotIndex > 0) {
       return typeName.substring(dotIndex + 1);
@@ -156,14 +162,14 @@ public class ClassRenderer extends NodeRendererImpl{
     final NodeManager nodeManager = builder.getNodeManager();
     final NodeDescriptorFactory nodeDescriptorFactory = builder.getDescriptorManager();
 
-    List<DebuggerTreeNode> children = new ArrayList<DebuggerTreeNode>();
+    List<DebuggerTreeNode> children = new ArrayList<>();
     if (value instanceof ObjectReference) {
       final ObjectReference objRef = (ObjectReference)value;
       final ReferenceType refType = objRef.referenceType();
       // default ObjectReference processing
       List<Field> fields = refType.allFields();
       if (!fields.isEmpty()) {
-        Set<String> names = new HashSet<String>();
+        Set<String> names = new HashSet<>();
         for (Field field : fields) {
           if (shouldDisplay(evaluationContext, objRef, field)) {
             FieldDescriptor fieldDescriptor = createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);

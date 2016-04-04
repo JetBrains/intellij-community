@@ -107,9 +107,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   private final ConfigurableEP myEp;
+  int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
   private ConfigurableWrapper(@NotNull ConfigurableEP ep) {
     myEp = ep;
+    myWeight = ep.groupWeight;
   }
 
   private UnnamedConfigurable myConfigurable;
@@ -129,7 +131,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
 
   @Override
   public int getWeight() {
-    return myEp.groupWeight;
+    return myWeight;
   }
 
   @Nls

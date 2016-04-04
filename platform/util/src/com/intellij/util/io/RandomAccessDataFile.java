@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   private final int myCount = ourFilesCount++;
   private final File myFile;
   private final PagePool myPool;
-  private long lastSeek = -1l;
+  private long lastSeek = -1L;
 
   private final byte[] myTypedIOBuffer = new byte[8];
 

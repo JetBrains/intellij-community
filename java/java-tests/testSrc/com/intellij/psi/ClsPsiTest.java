@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,6 +368,19 @@ public class ClsPsiTest extends LightIdeaTestCase {
   public void testFqnCorrectness() {
     PsiClass aClass = getFile("$Weird$Name").getClasses()[0].getInnerClasses()[0];
     assertEquals("pack.$Weird$Name.Inner", aClass.getQualifiedName());
+  }
+
+  public void testFieldConstantValue() {
+    PsiClass dbl = getJavaFacade().findClass(Double.class.getName(), myScope);
+    assertNotNull(dbl);
+    PsiField dnn = dbl.findFieldByName("NaN", false);
+    assertNotNull(dnn);
+    assertEquals(Double.NaN, dnn.computeConstantValue());
+
+    PsiClass cls = getFile("../../mirror/pkg/Primitives").getClasses()[0];
+    PsiField lng = cls.findFieldByName("LONG", false);
+    assertNotNull(lng);
+    assertEquals(42L, lng.computeConstantValue());
   }
 
   private PsiJavaFile getFile() {

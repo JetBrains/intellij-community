@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public abstract class DebuggerAction extends AnAction {
     if (paths == null || paths.length == 0) {
       return EMPTY_TREE_NODE_ARRAY;
     }
-    List<DebuggerTreeNodeImpl> nodes = new ArrayList<DebuggerTreeNodeImpl>(paths.length);
+    List<DebuggerTreeNodeImpl> nodes = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       Object component = path.getLastPathComponent();
       if (component instanceof DebuggerTreeNodeImpl) {
@@ -97,6 +97,7 @@ public abstract class DebuggerAction extends AnAction {
     return nodes.toArray(new DebuggerTreeNodeImpl[nodes.size()]);
   }
 
+  @NotNull
   public static DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
     DebuggerTreePanel panel = getPanel(dataContext);
     if(panel != null) {

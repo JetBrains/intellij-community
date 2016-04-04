@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.intellij.tasks.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -31,9 +29,7 @@ import java.util.List;
 /**
 * @author Dmitry Avdeev
 */
-@State(
-  name = "TaskProjectConfiguration",
-  storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)})
+@State(name = "TaskProjectConfiguration")
 public class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
 
   @Tag("server")

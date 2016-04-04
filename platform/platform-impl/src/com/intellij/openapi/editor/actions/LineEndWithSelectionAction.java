@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
+import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class LineEndWithSelectionAction extends TextComponentEditorAction {
   public LineEndWithSelectionAction() {
@@ -38,6 +41,12 @@ public class LineEndWithSelectionAction extends TextComponentEditorAction {
   private static class Handler extends EditorActionHandler {
     public Handler() {
       super(true);
+    }
+
+    @Override
+    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return !ModifierKeyDoubleClickHandler.getInstance().isRunningAction() ||
+             EditorSettingsExternalizable.getInstance().addCaretsOnDoubleCtrl();
     }
 
     @Override

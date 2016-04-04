@@ -23,7 +23,7 @@ class Test {
   private static final Object CONST = getNull();
 
   public static void test() {
-    System.out.println(<warning descr="Method invocation 'CONST.toString()' may produce 'java.lang.NullPointerException'">CONST.toString()</warning>);
+    System.out.println(CONST.<warning descr="Method invocation 'toString' may produce 'java.lang.NullPointerException'">toString</warning>());
   }
 }
 

@@ -18,8 +18,12 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -49,10 +53,15 @@ public interface PyImportElement extends PyElement, PyImportedNameDefiner, StubB
   PsiElement getElementNamed(String name, boolean resolveImportElement);
 
   /**
-   * Resolves the import element to the element being imported.
-   *
-   * @return the resolve result or null if the resolution failed.
+   * @deprecated Use {@link #multiResolve()} instead.
    */
+  @Deprecated
   @Nullable
   PsiElement resolve();
+
+  /**
+   * Resolves the import element to the elements being imported.
+   */
+  @NotNull
+  List<RatedResolveResult> multiResolve();
 }

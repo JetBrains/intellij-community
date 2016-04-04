@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diagnostic;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,7 @@ import java.util.logging.Logger;
  */
 public abstract class LoggerRt {
   private interface Factory {
-    LoggerRt getInstance(@NotNull @NonNls final String category);
+    LoggerRt getInstance(@NotNull final String category);
   }
 
   private static Factory ourFactory;
@@ -48,11 +47,16 @@ public abstract class LoggerRt {
   }
 
   @NotNull
-  public static LoggerRt getInstance(@NotNull @NonNls final String category) {
+  public static LoggerRt getInstance(@NotNull final String category) {
     return getFactory().getInstance(category);
   }
 
-  public void info(@Nullable @NonNls final String message) {
+  @NotNull
+  public static LoggerRt getInstance(@NotNull final Class<?> clazz) {
+    return getInstance('#' + clazz.getName());
+  }
+
+  public void info(@Nullable final String message) {
     info(message, null);
   }
 
@@ -60,7 +64,7 @@ public abstract class LoggerRt {
     info(t.getMessage(), t);
   }
 
-  public void warn(@Nullable @NonNls final String message) {
+  public void warn(@Nullable final String message) {
     warn(message, null);
   }
 
@@ -68,7 +72,7 @@ public abstract class LoggerRt {
     warn(t.getMessage(), t);
   }
 
-  public void error(@Nullable @NonNls final String message) {
+  public void error(@Nullable final String message) {
     error(message, null);
   }
 
@@ -76,27 +80,26 @@ public abstract class LoggerRt {
     error(t.getMessage(), t);
   }
 
-  public abstract void info(@Nullable @NonNls final String message, @Nullable final Throwable t);
-  public abstract void warn(@Nullable @NonNls final String message, @Nullable final Throwable t);
-  public abstract void error(@Nullable @NonNls final String message, @Nullable final Throwable t);
+  public abstract void info(@Nullable final String message, @Nullable final Throwable t);
+  public abstract void warn(@Nullable final String message, @Nullable final Throwable t);
+  public abstract void error(@Nullable final String message, @Nullable final Throwable t);
 
   private static class JavaFactory implements Factory {
-    @Override
-    public LoggerRt getInstance(@NotNull @NonNls final String category) {
+    public LoggerRt getInstance(@NotNull final String category) {
       final Logger logger = Logger.getLogger(category);
       return new LoggerRt() {
         @Override
-        public void info(@Nullable @NonNls final String message, @Nullable final Throwable t) {
+        public void info(@Nullable final String message, @Nullable final Throwable t) {
           logger.log(Level.INFO, message, t);
         }
 
         @Override
-        public void warn(@Nullable @NonNls final String message, @Nullable final Throwable t) {
+        public void warn(@Nullable final String message, @Nullable final Throwable t) {
           logger.log(Level.WARNING, message, t);
         }
 
         @Override
-        public void error(@Nullable @NonNls final String message, @Nullable final Throwable t) {
+        public void error(@Nullable final String message, @Nullable final Throwable t) {
           logger.log(Level.SEVERE, message, t);
         }
       };
@@ -121,13 +124,12 @@ public abstract class LoggerRt {
       myError.setAccessible(true);
     }
 
-    @Override
-    public LoggerRt getInstance(@NotNull @NonNls final String category) {
+    public LoggerRt getInstance(@NotNull final String category) {
       try {
         final Object logger = myGetInstance.invoke(null, category);
         return new LoggerRt() {
           @Override
-          public void info(@Nullable @NonNls final String message, @Nullable final Throwable t) {
+          public void info(@Nullable final String message, @Nullable final Throwable t) {
             try {
               myInfo.invoke(logger, message, t);
             }
@@ -135,7 +137,7 @@ public abstract class LoggerRt {
           }
 
           @Override
-          public void warn(@Nullable @NonNls final String message, @Nullable final Throwable t) {
+          public void warn(@Nullable final String message, @Nullable final Throwable t) {
             try {
               myWarn.invoke(logger, message, t);
             }
@@ -143,7 +145,7 @@ public abstract class LoggerRt {
           }
 
           @Override
-          public void error(@Nullable @NonNls final String message, @Nullable final Throwable t) {
+          public void error(@Nullable final String message, @Nullable final Throwable t) {
             try {
               myError.invoke(logger, message, t);
             }

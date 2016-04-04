@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -160,22 +161,18 @@ public class EmptyCatchBlockInspectionBase extends BaseInspection {
     private boolean isEmpty(PsiElement element) {
       if (!m_includeComments && element instanceof PsiComment) {
         return true;
-      } else if (element instanceof PsiEmptyStatement) {
-        if (m_includeComments) {
-          final PsiElement[] children = element.getChildren();
-          for (PsiElement child : children) {
-            if (child instanceof PsiComment) {
-              return false;
-            }
-          }
-        }
+      }
+      else if (element instanceof PsiEmptyStatement) {
+        return !m_includeComments || PsiTreeUtil.getChildOfType(element, PsiComment.class) == null;
+      }
+      else if (element instanceof PsiWhiteSpace) {
         return true;
-      } else if (element instanceof PsiWhiteSpace) {
-        return true;
-      } else if (element instanceof PsiBlockStatement) {
+      }
+      else if (element instanceof PsiBlockStatement) {
         final PsiBlockStatement block = (PsiBlockStatement)element;
         return isEmpty(block.getCodeBlock());
-      } else if (element instanceof PsiCodeBlock) {
+      }
+      else if (element instanceof PsiCodeBlock) {
         final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
         PsiElement bodyElement = codeBlock.getFirstBodyElement();
         final PsiElement lastBodyElement = codeBlock.getLastBodyElement();

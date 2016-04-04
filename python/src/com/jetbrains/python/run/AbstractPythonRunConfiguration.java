@@ -58,7 +58,7 @@ import java.util.Map;
 /**
  * @author Leonid Shalupov
  */
-public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfiguration> extends AbstractRunConfiguration
+public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRunConfiguration> extends AbstractRunConfiguration
   implements LocatableConfiguration, AbstractPythonRunConfigurationParams, CommandLinePatcher {
   /**
    * When passing path to test to runners, you should join parts with this char.
@@ -73,6 +73,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private boolean myAddSourceRoots = true;
 
   protected PathMappingSettings myMappingSettings;
+  /**
+   * To prevent "double module saving" child may enable this flag
+   * and no module info would be saved
+   */
+  protected boolean mySkipModuleSerialization;
 
   public AbstractPythonRunConfiguration(Project project, final ConfigurationFactory factory) {
     super(project, factory);
@@ -124,7 +129,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   @NotNull
   @Override
   public final SettingsEditor<T> getConfigurationEditor() {
-    final SettingsEditor<T> runConfigurationEditor = createConfigurationEditor();
+    final SettingsEditor<T> runConfigurationEditor = PythonExtendedConfigurationEditor.create(createConfigurationEditor());
 
     final SettingsEditorGroup<T> group = new SettingsEditorGroup<T>();
 
@@ -235,7 +240,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     myAddContentRoots = addContentRoots == null || Boolean.parseBoolean(addContentRoots);
     final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
     myAddSourceRoots = addSourceRoots == null || Boolean.parseBoolean(addSourceRoots);
-    getConfigurationModule().readExternal(element);
+    if ( !mySkipModuleSerialization) {
+      getConfigurationModule().readExternal(element);
+    }
 
     setMappingSettings(PathMappingSettings.readExternal(element));
     // extension settings:
@@ -259,7 +266,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
     JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", Boolean.toString(myAddSourceRoots));
-    getConfigurationModule().writeExternal(element);
+    if ( !mySkipModuleSerialization) {
+      getConfigurationModule().writeExternal(element);
+    }
 
     // extension settings:
     PythonRunConfigurationExtensionsManager.getInstance().writeExternal(this, element);

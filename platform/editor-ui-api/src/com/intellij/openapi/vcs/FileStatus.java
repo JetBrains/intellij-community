@@ -59,6 +59,8 @@ public interface FileStatus {
   FileStatus SWITCHED = FileStatusFactory.getInstance().createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"), COLOR_SWITCHED);
   FileStatus OBSOLETE = FileStatusFactory.getInstance().createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.obsolete"), COLOR_OUT_OF_DATE);
 
+  FileStatus SUPPRESSED = FileStatusFactory.getInstance().createFileStatus("SUPPRESSED", VcsBundle.message("file.status.name.suppressed"), COLOR_NOT_CHANGED);
+
   String getText();
 
   Color getColor();

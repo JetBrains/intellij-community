@@ -27,40 +27,32 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
 public class ChooseActionsDialog extends DialogWrapper {
   private final ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
   private TreeExpansionMonitor myTreeExpansionMonitor;
+  private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
   private Keymap myKeymap;
   private QuickList[] myQuicklists;
-  private JBPopup myPopup;
 
   public ChooseActionsDialog(Component parent, Keymap keymap, QuickList[] quicklists) {
     super(parent, true);
@@ -81,6 +73,12 @@ public class ChooseActionsDialog extends DialogWrapper {
 
 
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree.getTree());
+    myFilteringPanel.addPropertyChangeListener("shortcut", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent event) {
+        filterTreeByShortcut(myFilteringPanel.getShortcut());
+      }
+    });
 
     setTitle("Add Actions to Quick List");
     init();
@@ -185,14 +183,8 @@ public class ChooseActionsDialog extends DialogWrapper {
                            AllIcons.Actions.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
-        if (myPopup == null || myPopup.getContent() == null) {
-          myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(createFilteringPanel(), null)
-            .setRequestFocus(true)
-            .setTitle(KeyMapBundle.message("filter.settings.popup.title"))
-            .setMovable(true)
-            .createPopup();
-        }
-        myPopup.showUnderneathOf(searchToolbar);
+        myActionsTree.reset(myKeymap, myQuicklists);
+        myFilteringPanel.showPopup(searchToolbar);
       }
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
@@ -208,77 +200,17 @@ public class ChooseActionsDialog extends DialogWrapper {
     return panel;
   }
 
-  private void filterTreeByShortcut(final ShortcutTextField firstShortcut,
-                                    final JCheckBox enable2Shortcut,
-                                    final ShortcutTextField secondShortcut) {
-    final KeyStroke keyStroke = firstShortcut.getKeyStroke();
-    if (keyStroke != null) {
-      if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
-      myActionsTree.filterTree(new KeyboardShortcut(keyStroke, enable2Shortcut.isSelected() ? secondShortcut.getKeyStroke() : null),
-                               myQuicklists);
-      final JTree tree = myActionsTree.getTree();
-      TreeUtil.expandAll(tree);
-    }
-  }
-
-  private JPanel createFilteringPanel() {
+  private void filterTreeByShortcut(Shortcut shortcut) {
+    if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
     myActionsTree.reset(myKeymap, myQuicklists);
-
-    final JLabel firstLabel = new JLabel(KeyMapBundle.message("filter.first.stroke.input"));
-    final JCheckBox enable2Shortcut = new JCheckBox(KeyMapBundle.message("filter.second.stroke.input"));
-    final ShortcutTextField firstShortcut = new ShortcutTextField();
-    firstShortcut.setColumns(10);
-    final ShortcutTextField secondShortcut = new ShortcutTextField();
-    secondShortcut.setColumns(10);
-
-    enable2Shortcut.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        secondShortcut.setEnabled(enable2Shortcut.isSelected());
-        if (enable2Shortcut.isSelected()) {
-          secondShortcut.requestFocusInWindow();
-        }
-      }
-    });
-
-    firstShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
-      }
-    });
-
-    secondShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
-      }
-    });
-
-    IJSwingUtilities.adjustComponentsOnMac(firstLabel, firstShortcut);
-    JPanel filterComponent = FormBuilder.createFormBuilder()
-      .addLabeledComponent(firstLabel, firstShortcut, true)
-      .addComponent(enable2Shortcut)
-      .setVerticalGap(0)
-      .setIndent(5)
-      .addComponent(secondShortcut)
-      .getPanel();
-
-    filterComponent.setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
-
-    enable2Shortcut.setSelected(false);
-    secondShortcut.setEnabled(false);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        firstShortcut.requestFocus();
-      }
-    });
-    return filterComponent;
+    myActionsTree.filterTree(shortcut, myQuicklists);
+    final JTree tree = myActionsTree.getTree();
+    TreeUtil.expandAll(tree);
   }
-
 
   public void dispose() {
     super.dispose();
-    if (myPopup != null && myPopup.isVisible()) {
-      myPopup.cancel();
-    }
+    myFilteringPanel.hidePopup();
     if (myFilterComponent != null) {
       myFilterComponent.dispose();
     }

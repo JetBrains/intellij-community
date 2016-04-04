@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -28,8 +29,14 @@ import java.util.Set;
  */
 
 public class Interner<T> {
+  private final OpenTHashSet<T> mySet;
 
-  private final OpenTHashSet<T> mySet = new OpenTHashSet<T>();
+  public Interner() {
+    mySet = new OpenTHashSet<T>();
+  }
+  public Interner(@NotNull TObjectHashingStrategy<T> strategy) {
+    mySet = new OpenTHashSet<T>(strategy);
+  }
 
   @NotNull
   public T intern(@NotNull T name) {

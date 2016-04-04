@@ -181,8 +181,14 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   @Override
-  public PsiDocComment createDocCommentFromText(@NotNull final String text) throws IncorrectOperationException {
-    final PsiMethod method = createMethodFromText(text.trim() + "void m();", null);
+  public PsiDocComment createDocCommentFromText(@NotNull String docCommentText) throws IncorrectOperationException {
+    return createDocCommentFromText(docCommentText, null);
+  }
+
+  @NotNull
+  @Override
+  public PsiDocComment createDocCommentFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
+    final PsiMethod method = createMethodFromText(text.trim() + "void m();", context);
     final PsiDocComment comment = method.getDocComment();
     if (comment == null) {
       throw new IncorrectOperationException("Incorrect comment '" + text + "'");

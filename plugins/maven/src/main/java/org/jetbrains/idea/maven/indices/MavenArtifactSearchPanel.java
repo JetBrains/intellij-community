@@ -85,7 +85,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
   private void initComponents(String initialText) {
     myResultList = new Tree();
-    myResultList.getExpandableItemsHandler().setEnabled(false);
+    myResultList.setExpandableItemsEnabled(false);
     myResultList.getEmptyText().setText("Loading...");
     myResultList.setRootVisible(false);
     myResultList.setShowsRootHandles(true);

@@ -53,12 +53,10 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
     jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.zip") }
   }
   if (jdkFiles.empty) {
-    projectBuilder.info("Cannot unpack JDK: jdk$majorVersion* not found in $osDir")
-    return
+    projectBuilder.error("Cannot unpack JDK: jdk$majorVersion* not found in $osDir")
   }
   if (jdkFiles.size() > 1) {
-    projectBuilder.info("Cannot unpack JDK: several matching files are found ($jdkFiles)")
-    return
+    projectBuilder.error("Cannot unpack JDK: several matching files are found ($jdkFiles)")
   }
 
   File jdkFile = jdkFiles.first()
@@ -87,7 +85,7 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
     }
   }
   else {
-    projectBuilder.info("Cannot unpack JDK: unknown extension of file '${jdkFile.name}'")
+    projectBuilder.error("Cannot unpack JDK: unknown extension of file '${jdkFile.name}'")
   }
 }
 

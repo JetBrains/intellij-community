@@ -16,8 +16,8 @@
 package org.jetbrains.settingsRepository.test
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
-import com.intellij.testFramework.exists
-import com.intellij.testFramework.isFile
+import com.intellij.util.exists
+import com.intellij.util.isFile
 import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants

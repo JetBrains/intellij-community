@@ -20,6 +20,7 @@ import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,16 +69,40 @@ public class DiffNotifications {
 
   @NotNull
   public static JPanel createNotification(@NotNull String text) {
-    return new EditorNotificationPanel().text(text);
+    return createNotification(text, null);
   }
 
   @NotNull
-  public static JPanel createNotification(@NotNull String text, @NotNull final Color background) {
-    return new EditorNotificationPanel() {
-      @Override
-      public Color getBackground() {
-        return background;
-      }
-    }.text(text);
+  public static JPanel createNotification(@NotNull String text, @Nullable final Color background) {
+    return createNotification(text, background, true);
+  }
+
+  @NotNull
+  public static JPanel createNotification(@NotNull String text, @Nullable final Color background, boolean showHideAction) {
+    final MyEditorNotificationPanel panel = new MyEditorNotificationPanel();
+    panel.text(text);
+    panel.setBackgroundColor(background);
+    if (showHideAction) {
+      panel.createActionLabel("Hide", new Runnable() {
+        public void run() {
+          panel.setVisible(false);
+        }
+      }).setToolTipText("Hide this notification");
+    }
+    return panel;
+  }
+
+  private static class MyEditorNotificationPanel extends EditorNotificationPanel {
+    @Nullable private Color myBackground;
+
+    public void setBackgroundColor(@Nullable Color value) {
+      myBackground = value;
+    }
+
+    @Override
+    @Nullable
+    public Color getBackground() {
+      return myBackground != null ? myBackground : super.getBackground();
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,21 +29,23 @@ import org.jetbrains.annotations.NotNull;
  * @author Maxim.Mossienko
  */
 public class HtmlLexer extends BaseHtmlLexer {
-  private static IElementType ourStyleElementType;
-  private static IElementType ourInlineStyleElementType;
+  private static final IElementType ourInlineStyleElementType;
   private static final IElementType ourInlineScriptElementType;
 
+  public static final String INLINE_STYLE_NAME = "css-ruleset-block";
+
   static {
-    HtmlEmbeddedTokenTypesProvider[] extensions = Extensions.getExtensions(HtmlEmbeddedTokenTypesProvider.EXTENSION_POINT_NAME);
-    for (HtmlEmbeddedTokenTypesProvider extension : extensions) {
-      if ("style".equals(extension.getName())) {
-        ourStyleElementType = extension.getElementType();
-        ourInlineStyleElementType = extension.getInlineElementType();
+    EmbeddedTokenTypesProvider[] extensions = Extensions.getExtensions(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME);
+    IElementType inlineStyleElementType = null;
+    for (EmbeddedTokenTypesProvider extension : extensions) {
+      if (INLINE_STYLE_NAME.equals(extension.getName())) {
+        inlineStyleElementType = extension.getElementType();
+        break;
       }
     }
+    ourInlineStyleElementType = inlineStyleElementType;
     // At the moment only JS.
-    HtmlInlineScriptTokenTypesProvider provider =
-      LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(ourDefaultLanguage);
+    HtmlInlineScriptTokenTypesProvider provider = LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(ourDefaultLanguage);
     ourInlineScriptElementType = provider != null ? provider.getElementType() : null;
   }
 
@@ -70,19 +72,24 @@ public class HtmlLexer extends BaseHtmlLexer {
     myTokenEnd = super.getTokenEnd();
 
     if (hasSeenStyle()) {
-      if (hasSeenTag() && ourStyleElementType!=null && isStartOfEmbeddmentTagContent(tokenType)) {
-        myTokenEnd = skipToTheEndOfTheEmbeddment();
-        tokenType = ourStyleElementType;
+      if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType)) {
+        Language stylesheetLanguage = getStyleLanguage();
+        if (stylesheetLanguage == null || LanguageUtil.isInjectableLanguage(stylesheetLanguage)) {
+          myTokenEnd = skipToTheEndOfTheEmbeddment();
+          IElementType currentStylesheetElementType = getCurrentStylesheetElementType();
+          tokenType = currentStylesheetElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentStylesheetElementType;
+        }
       } else if (ourInlineStyleElementType!=null && isStartOfEmbeddmentAttributeValue(tokenType) && hasSeenAttribute()) {
         tokenType = ourInlineStyleElementType;
       }
     } else if (hasSeenScript()) {
-      Language scriptLanguage = getScriptLanguage();
-      boolean canInject = scriptLanguage == null || LanguageUtil.isInjectableLanguage(scriptLanguage);
-      if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType) && canInject) {
-        myTokenEnd = skipToTheEndOfTheEmbeddment();
-        IElementType currentScriptElementType = getCurrentScriptElementType();
-        tokenType = currentScriptElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentScriptElementType;
+      if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType)) {
+        Language scriptLanguage = getScriptLanguage();
+        if (scriptLanguage == null || LanguageUtil.isInjectableLanguage(scriptLanguage)) {
+          myTokenEnd = skipToTheEndOfTheEmbeddment();
+          IElementType currentScriptElementType = getCurrentScriptElementType();
+          tokenType = currentScriptElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentScriptElementType;
+        }
       } else if (hasSeenAttribute() && isStartOfEmbeddmentAttributeValue(tokenType) && ourInlineScriptElementType!=null) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
         tokenType = ourInlineScriptElementType;

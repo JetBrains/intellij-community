@@ -49,7 +49,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PyClass psiClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
-    if (psiClass != null && PyTestUtil.isPyTestClass(psiClass))
+    if (psiClass != null && PyTestUtil.isPyTestClass(psiClass, null))
       return false;
     return true;
   }
@@ -109,7 +109,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
-        PsiFile e = PyTestCreator.generateTest(project, d);
+        PsiFile e = PyTestCreator.generateTestAndNavigate(project, d);
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
         documentManager.commitAllDocuments();
       }

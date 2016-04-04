@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,16 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 03.04.2003
- * Time: 11:22:05
- *
- * @see com.intellij.psi.ElementManipulators
+ * @see AbstractElementManipulator
+ * @see ElementManipulators
  */
 public interface ElementManipulator<T extends PsiElement> {
 
   /**
-   * Changes the element's text to a new value
+   * Changes the element's text to the given new text.
    *
-   * @param element element to be changed
-   * @param range range within the element
+   * @param element    element to be changed
+   * @param range      range within the element
    * @param newContent new element text
    * @return changed element
    * @throws IncorrectOperationException if something goes wrong

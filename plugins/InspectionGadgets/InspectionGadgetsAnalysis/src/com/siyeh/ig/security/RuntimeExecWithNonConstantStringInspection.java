@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,21 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean considerStaticFinalConstant = false;
 
   @Override
   @NotNull
@@ -43,44 +49,24 @@ public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("runtime.exec.with.non.constant.string.problem.descriptor");
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("consider.static.final.fields.constant.option"),
+                                          this, "considerStaticFinalConstant");
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new RuntimeExecVisitor();
   }
 
-  private static class RuntimeExecVisitor extends BaseInspectionVisitor {
+  private class RuntimeExecVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!"exec".equals(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      final String className = aClass.getQualifiedName();
-      if (!"java.lang.Runtime".equals(className)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 0) {
-        return;
-      }
-      final PsiExpression argument = arguments[0];
-      final PsiType type = argument.getType();
-      if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        return;
-      }
-      if (PsiUtil.isConstantExpression(argument)) {
+      if (!MethodCallUtils.callWithNonConstantString(expression, considerStaticFinalConstant, "java.lang.Runtime", "exec")) {
         return;
       }
       registerMethodCallError(expression);

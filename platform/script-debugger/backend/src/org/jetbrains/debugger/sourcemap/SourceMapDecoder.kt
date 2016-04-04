@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ private fun parseMap(reader: JsonReaderEx,
       }
       "sourceRoot" -> {
         sourceRoot = readSourcePath(reader)
-        if (sourceRoot != null) {
+        if (sourceRoot != null && sourceRoot != "/") {
           sourceRoot = UriUtil.trimTrailingSlashes(sourceRoot)
         }
       }
@@ -237,7 +237,7 @@ private fun readMappings(value: String,
   }
 }
 
-private fun readSources(reader: JsonReaderEx, sourceRootUrl: String?): List<String> {
+private fun readSources(reader: JsonReaderEx, sourceRoot: String?): List<String> {
   reader.beginArray()
   val sources: List<String>
   if (reader.peek() == JsonToken.END_ARRAY) {
@@ -247,8 +247,13 @@ private fun readSources(reader: JsonReaderEx, sourceRootUrl: String?): List<Stri
     sources = SmartList<String>()
     do {
       var sourceUrl = readSourcePath(reader)
-      if (!sourceRootUrl.isNullOrEmpty()) {
-        sourceUrl = "$sourceRootUrl/$sourceUrl"
+      if (!sourceRoot.isNullOrEmpty()) {
+        if (sourceRoot == "/") {
+          sourceUrl = "/$sourceUrl"
+        }
+        else {
+          sourceUrl = "$sourceRoot/$sourceUrl"
+        }
       }
       sources.add(sourceUrl)
     }

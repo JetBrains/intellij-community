@@ -22,11 +22,21 @@ package com.intellij.openapi.options;
  * @author Rustam Vishnyakov
  */
 public class SchemeImportException extends Exception {
+  boolean myIsWarning;
   public SchemeImportException(String message) {
     super(message);
   }
 
   public SchemeImportException(Throwable cause) {
     super(cause);
+  }
+
+  public SchemeImportException setWarning() {
+    myIsWarning = true;
+    return this;
+  }
+
+  public boolean isWarning() {
+    return myIsWarning;
   }
 }

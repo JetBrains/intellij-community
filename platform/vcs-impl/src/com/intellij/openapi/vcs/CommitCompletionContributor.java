@@ -40,27 +40,31 @@ public class CommitCompletionContributor extends CompletionContributor {
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document != null) {
-      DataContext dataContext = document.getUserData(CommitMessage.DATA_CONTEXT_KEY);
-      if (dataContext != null) {
-        result.stopHere();
-        if (parameters.getInvocationCount() > 0) {
-          ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dataContext);
-          if (lists != null) {
-            String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
-            CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
-            for (ChangeList list : lists) {
-              for (Change change : list.getChanges()) {
-                ContentRevision revision = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
-                if (revision != null) {
-                  FilePath filePath = revision.getFile();
-                  LookupElementBuilder element = LookupElementBuilder.create(filePath.getName()).
-                      withIcon(filePath.getFileType().getIcon());
-                  insensitive.addElement(element);
-                }
-              }
-            }
-          }
+    if (document == null) {
+      return;
+    }
+    DataContext dataContext = document.getUserData(CommitMessage.DATA_CONTEXT_KEY);
+    if (dataContext == null) {
+      return;
+    }
+    result.stopHere();
+    if (parameters.getInvocationCount() <= 0) {
+      return;
+    }
+    ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dataContext);
+    if (lists == null) {
+      return;
+    }
+    String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
+    CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
+    for (ChangeList list : lists) {
+      for (Change change : list.getChanges()) {
+        ContentRevision revision = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
+        if (revision != null) {
+          FilePath filePath = revision.getFile();
+          LookupElementBuilder element = LookupElementBuilder.create(filePath.getName()).
+              withIcon(filePath.getFileType().getIcon());
+          insensitive.addElement(element);
         }
       }
     }

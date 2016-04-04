@@ -236,6 +236,39 @@ public class PyRenameTest extends PyTestCase {
     renameWithDocStringFormat(DocStringFormat.NUMPY, "bar");
   }
 
+  //PY-2748
+  public void testFormatStringKeyword() {
+    doTest("renamed");
+  }
+
+  //PY-2748
+  public void testFormatStringDictLiteral() {
+    myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
+    try {
+      myFixture.renameElementAtCaret("renamed");
+    }
+    catch (RuntimeException e) {
+      if ("com.intellij.util.IncorrectOperationException".equals(e.getMessage())) {
+        return;
+      }
+    }
+    fail();
+  }
+
+  //PY-2748
+  public void testFormatStringNumericLiteralExpression() {
+    myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
+    try {
+        myFixture.renameElementAtCaret("renamed");
+    }
+    catch (RuntimeException e) {
+      if ("com.intellij.util.IncorrectOperationException".equals(e.getMessage())) {
+        return;
+      }
+    }
+    fail();
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, new Runnable() {
       public void run() {

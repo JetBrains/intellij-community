@@ -31,11 +31,13 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
   private final String myPluginId;
   private final String myMinVersion;
   private final String myMaxVersion;
+  private final String myChannel;
 
-  public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion) {
+  public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion, @Nullable String channel) {
     myPluginId = pluginId;
     myMinVersion = minVersion;
     myMaxVersion = maxVersion;
+    myChannel = channel;
   }
 
   public String getPluginId() {
@@ -50,6 +52,10 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
     return myMaxVersion;
   }
 
+  public String getChannel() {
+    return myChannel;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -60,12 +66,13 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
 
     return myPluginId.equals(plugin.myPluginId)
            && Comparing.equal(myMinVersion, plugin.myMinVersion)
-           && Comparing.equal(myMaxVersion, plugin.myMaxVersion);
+           && Comparing.equal(myMaxVersion, plugin.myMaxVersion)
+           && Comparing.equal(myChannel,    plugin.myChannel);
   }
 
   @Override
   public int hashCode() {
-    return 31 * (31 * myPluginId.hashCode() + Comparing.hashcode(myMinVersion)) + Comparing.hashcode(myMaxVersion);
+    return 31 * (31 * (31 * myPluginId.hashCode() + Comparing.hashcode(myMinVersion)) + Comparing.hashcode(myMaxVersion)) + Comparing.hashcode(myChannel);
   }
 
   @Override

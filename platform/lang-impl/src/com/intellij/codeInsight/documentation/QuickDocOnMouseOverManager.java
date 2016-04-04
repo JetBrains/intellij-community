@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,11 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
@@ -56,8 +59,7 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final VisibleAreaListener       myVisibleAreaListener = new MyVisibleAreaListener();
   @NotNull private final CaretListener             myCaretListener       = new MyCaretListener();
   @NotNull private final DocumentListener          myDocumentListener    = new MyDocumentListener();
-  @NotNull private final Alarm                     myAlarm               = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  @NotNull private final Runnable                  myRequest             = new MyShowQuickDocRequest();
+  @NotNull private final Alarm                     myAlarm;
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
   @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = new WeakHashMap<Document, Boolean>();
 
@@ -67,11 +69,14 @@ public class QuickDocOnMouseOverManager {
   /** Holds a reference (if any) to the documentation manager used last time to show an 'auto quick doc' popup. */
   @Nullable private WeakReference<DocumentationManager> myDocumentationManager;
 
-  @Nullable private DelayedQuickDocInfo myDelayedQuickDocInfo;
   private           boolean             myEnabled;
   private           boolean             myApplicationActive;
+  
+  private MyShowQuickDocRequest myCurrentRequest; // accessed only in EDT
 
   public QuickDocOnMouseOverManager(@NotNull Application application) {
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, application);
+    
     EditorFactory factory = EditorFactory.getInstance();
     if (factory != null) {
       factory.addEditorFactoryListener(new MyEditorFactoryListener(), application);
@@ -144,7 +149,8 @@ public class QuickDocOnMouseOverManager {
   }
 
   private void processMouseExited() {
-    myDelayedQuickDocInfo = null;
+    myActiveElements.clear();
+    myAlarm.cancelAllRequests();
   }
   
   private void processMouseMove(@NotNull EditorMouseEvent e) {
@@ -198,6 +204,7 @@ public class QuickDocOnMouseOverManager {
     }
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (psiFile instanceof PsiCompiledFile) psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
     if (psiFile == null) {
       closeQuickDocIfPossible();
       return;
@@ -222,15 +229,8 @@ public class QuickDocOnMouseOverManager {
       return;
     }
     
-    PsiElement targetElementUnderMouse = documentationManager.findTargetElement(editor, mouseOffset, psiFile, elementUnderMouse);
-    if (targetElementUnderMouse == null) {
-      // No PSI element is located under the current mouse position - close quick doc if any.
-      closeQuickDocIfPossible();
-      return;
-    }
-
     PsiElement activeElement = myActiveElements.get(editor);
-    if (targetElementUnderMouse.equals(activeElement)
+    if (elementUnderMouse.equals(activeElement)
         && (!myAlarm.isEmpty() // Request to show documentation for the target component has been already queued.
             || hint != null)) // Documentation for the target component is being shown.
     { 
@@ -238,11 +238,12 @@ public class QuickDocOnMouseOverManager {
     }
     allowUpdateFromContext(project, false);
     closeQuickDocIfPossible();
-    myActiveElements.put(editor, targetElementUnderMouse);
-    myDelayedQuickDocInfo = new DelayedQuickDocInfo(documentationManager, editor, targetElementUnderMouse, elementUnderMouse);
+    myActiveElements.put(editor, elementUnderMouse);
 
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(myRequest, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
+    if (myCurrentRequest != null) myCurrentRequest.cancel();
+    myCurrentRequest = new MyShowQuickDocRequest(documentationManager, editor, mouseOffset, elementUnderMouse);
+    myAlarm.addRequest(myCurrentRequest, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
   }
 
   private void closeQuickDocIfPossible() {
@@ -279,59 +280,81 @@ public class QuickDocOnMouseOverManager {
     return manager == null ? null : manager.getEditor();
   }
   
-  private static class DelayedQuickDocInfo {
+  private class MyShowQuickDocRequest implements Runnable {
+    @NotNull private final DocumentationManager docManager;
+    @NotNull private final Editor editor;
+    private final int offset;
+    @NotNull private final PsiElement originalElement;
+    @NotNull private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
+    private final HintManager myHintManager = HintManager.getInstance();
 
-    @NotNull public final DocumentationManager docManager;
-    @NotNull public final Editor               editor;
-    @NotNull public final PsiElement           targetElement;
-    @NotNull public final PsiElement           originalElement;
-
-    private DelayedQuickDocInfo(@NotNull DocumentationManager docManager,
-                                @NotNull Editor editor, @NotNull PsiElement targetElement,
-                                @NotNull PsiElement originalElement)
-    {
+    private MyShowQuickDocRequest(@NotNull DocumentationManager docManager, @NotNull Editor editor, int offset, 
+                                  @NotNull PsiElement originalElement) {
       this.docManager = docManager;
       this.editor = editor;
-      this.targetElement = targetElement;
+      this.offset = offset;
       this.originalElement = originalElement;
     }
-  }
-
-  private class MyShowQuickDocRequest implements Runnable {
     
-    private final HintManager myHintManager = HintManager.getInstance();
+    private void cancel() {
+      myProgressIndicator.cancel();
+    }
     
     @Override
     public void run() {
-      myAlarm.cancelAllRequests();
-
-      // Skip the request if it's outdated (the mouse is moved other another element).
-      DelayedQuickDocInfo info = myDelayedQuickDocInfo;
-      if (info == null || !info.targetElement.equals(myActiveElements.get(info.editor))) {
-        return;
-      }
-
-      // Skip the request if there is a control shown as a result of explicit 'show quick doc' (Ctrl + Q) invocation.
-      if (info.docManager.getDocInfoHint() != null && !info.docManager.isCloseOnSneeze()) {
-        return;
-      }
+      Ref<PsiElement> targetElementRef = new Ref<>();
       
-      // We don't want to show a quick doc control if there is an active hint (e.g. the mouse is under an invalid element
-      // and corresponding error info is shown).
-      if (!info.docManager.hasActiveDockedDocWindow() && myHintManager.hasShownHintsThatWillHideByOtherHint(false)) {
-        myAlarm.addRequest(this, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
-        return;
-      }
+      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(new Runnable() {
+        @Override
+        public void run() {
+          if (originalElement.isValid()) {
+            targetElementRef.set(docManager.findTargetElement(editor, offset, originalElement.getContainingFile(), originalElement));
+          }
+        }
+      }, 5000, 100, myProgressIndicator);
       
-      info.editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
-                              info.editor.offsetToVisualPosition(info.originalElement.getTextRange().getStartOffset()));
-      try {
-        info.docManager.showJavaDocInfo(info.editor, info.targetElement, info.originalElement, myHintCloseCallback, true);
-        myDocumentationManager = new WeakReference<DocumentationManager>(info.docManager);
-      }
-      finally {
-        info.editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
-      }
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myCurrentRequest = null;
+          
+          if (editor.isDisposed()) return;
+            
+          PsiElement targetElement = targetElementRef.get();
+          if (targetElement == null) {
+            closeQuickDocIfPossible();
+            return;
+          }
+          
+          myAlarm.cancelAllRequests();
+
+          if (!originalElement.equals(myActiveElements.get(editor))) {
+            return;
+          }
+
+          // Skip the request if there is a control shown as a result of explicit 'show quick doc' (Ctrl + Q) invocation.
+          if (docManager.getDocInfoHint() != null && !docManager.isCloseOnSneeze()) {
+            return;
+          }
+
+          // We don't want to show a quick doc control if there is an active hint (e.g. the mouse is under an invalid element
+          // and corresponding error info is shown).
+          if (!docManager.hasActiveDockedDocWindow() && myHintManager.hasShownHintsThatWillHideByOtherHint(false)) {
+            myAlarm.addRequest(MyShowQuickDocRequest.this, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
+            return;
+          }
+
+          editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
+                                  editor.offsetToVisualPosition(originalElement.getTextRange().getStartOffset()));
+          try {
+            docManager.showJavaDocInfo(editor, targetElement, originalElement, myHintCloseCallback, true);
+            myDocumentationManager = new WeakReference<DocumentationManager>(docManager);
+          }
+          finally {
+            editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
+          }
+        }
+      }, ApplicationManager.getApplication().getNoneModalityState());
     }
   }
   

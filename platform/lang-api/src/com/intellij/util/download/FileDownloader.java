@@ -37,7 +37,7 @@ public interface FileDownloader {
    * @param targetDirectoryPath target directory for downloaded files. If {@code null} a file chooser will be shown to select target directory
    * @param project project instance used to show the progress window
    * @param parentComponent parent component for the progress window
-   * @return list of downloaded files of {@code null} if the downloading process was failed or cancelled
+   * @return list of downloaded files or {@code null} if the downloading process was failed or cancelled
    */
   @Nullable
   List<VirtualFile> downloadFilesWithProgress(@Nullable String targetDirectoryPath, @Nullable Project project, @Nullable JComponent parentComponent);

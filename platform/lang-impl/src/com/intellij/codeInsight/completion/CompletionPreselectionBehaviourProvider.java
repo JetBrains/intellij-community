@@ -19,7 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CompletionPreselectionBehaviourProvider {
-  public static ExtensionPointName<CompletionPreselectionBehaviourProvider> EP_NAME = ExtensionPointName.create("com.intellij.completion.preselectionBehaviourProvider");
+  public static final ExtensionPointName<CompletionPreselectionBehaviourProvider> EP_NAME = ExtensionPointName.create("com.intellij.completion.preselectionBehaviourProvider");
 
   public boolean shouldPreselectFirstSuggestion(@NotNull CompletionParameters parameters) {
     return true;

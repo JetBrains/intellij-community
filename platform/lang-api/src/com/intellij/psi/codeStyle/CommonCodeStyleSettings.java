@@ -225,6 +225,11 @@ public class CommonCodeStyleSettings {
   public boolean LINE_COMMENT_AT_FIRST_COLUMN = true;
   public boolean BLOCK_COMMENT_AT_FIRST_COLUMN = true;
 
+  /**
+   * Tells if a space is added when commenting/uncommenting lines with a line comment.
+   */
+  public boolean LINE_COMMENT_ADD_SPACE = false;
+
   public boolean KEEP_LINE_BREAKS = true;
 
   /**
@@ -438,6 +443,7 @@ public class CommonCodeStyleSettings {
    */
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
   public boolean ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = false;
+  public boolean ALIGN_SUBSEQUENT_SIMPLE_METHODS = false;
 
 //----------------- SPACES --------------------
 
@@ -827,6 +833,7 @@ public class CommonCodeStyleSettings {
 
   public boolean KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
   public boolean KEEP_SIMPLE_METHODS_IN_ONE_LINE = false;
+  public boolean KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
   public boolean KEEP_SIMPLE_CLASSES_IN_ONE_LINE = false;
   public boolean KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
 

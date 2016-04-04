@@ -15,7 +15,7 @@
     <extensionPoint name="dom.extender"
                     beanClass="com.intellij.util.xml.reflect.DomExtenderEP">
       <with attribute="domClassName" implements="com.intellij.util.xml.DomElement"/>
-      <with attribute="extenderClassName" implements="com.intellij.util.xml.reflect.DomExtender"/>
+      <with attribute="extenderClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
     </extensionPoint>
 
     <extensionPoint name="dom.customAnnotationChecker"

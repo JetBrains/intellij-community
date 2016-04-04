@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,12 @@ public class PsiUtil {
   private PsiUtil() { }
 
   public static boolean isInstantiable(@NotNull PsiClass cls) {
-    final PsiModifierList modList = cls.getModifierList();
+    PsiModifierList modList = cls.getModifierList();
     if (modList == null || cls.isInterface() || modList.hasModifierProperty(PsiModifier.ABSTRACT) || !isPublicOrStaticInnerClass(cls)) {
       return false;
     }
 
-    final PsiMethod[] constructors = cls.getConstructors();
+    PsiMethod[] constructors = cls.getConstructors();
     if (constructors.length == 0) return true;
 
     for (PsiMethod constructor : constructors) {
@@ -57,7 +57,7 @@ public class PsiUtil {
   }
 
   public static boolean isPublicOrStaticInnerClass(@NotNull PsiClass cls) {
-    final PsiModifierList modifiers = cls.getModifierList();
+    PsiModifierList modifiers = cls.getModifierList();
     if (modifiers == null) return false;
 
     return modifiers.hasModifierProperty(PsiModifier.PUBLIC) &&
@@ -66,9 +66,9 @@ public class PsiUtil {
 
   @Nullable
   public static String getReturnedLiteral(PsiMethod method, PsiClass cls) {
-    final PsiExpression value = getReturnedExpression(method);
+    PsiExpression value = getReturnedExpression(method);
     if (value instanceof PsiLiteralExpression) {
-      final Object str = ((PsiLiteralExpression)value).getValue();
+      Object str = ((PsiLiteralExpression)value).getValue();
       return str == null ? null : str.toString();
     }
     else if (value instanceof PsiMethodCallExpression) {
@@ -95,11 +95,11 @@ public class PsiUtil {
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
       if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
-        final PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
+        PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
         if (value instanceof PsiReferenceExpression) {
-          final PsiElement element = ((PsiReferenceExpression)value).resolve();
+          PsiElement element = ((PsiReferenceExpression)value).resolve();
           if (element instanceof PsiField) {
-            final PsiField field = (PsiField)element;
+            PsiField field = (PsiField)element;
             if (field.hasModifierProperty(PsiModifier.FINAL)) {
               return field.getInitializer();
             }
@@ -182,5 +182,10 @@ public class PsiUtil {
     }
 
     return true;
+  }
+
+  @NotNull
+  public static <E extends PsiElement> SmartPsiElementPointer<E> createPointer(@NotNull E e) {
+    return SmartPointerManager.getInstance(e.getProject()).createSmartPsiElementPointer(e);
   }
 }

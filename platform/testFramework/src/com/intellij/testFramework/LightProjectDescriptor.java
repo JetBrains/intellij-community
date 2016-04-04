@@ -16,9 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -30,6 +28,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -41,6 +40,7 @@ import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 
 import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
@@ -49,20 +49,19 @@ import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
-  public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
-    AccessToken token = WriteAction.start();
-    try {
-      Module module = createMainModule(project);
-      handler.moduleCreated(module);
-      VirtualFile sourceRoot = createSourcesRoot(module);
-      if (sourceRoot != null) {
-        handler.sourceRootCreated(sourceRoot);
-        createContentEntry(module, sourceRoot);
+  public void setUpProject(@NotNull final Project project, @NotNull final SetupHandler handler) throws Exception {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        Module module = createMainModule(project);
+        handler.moduleCreated(module);
+        VirtualFile sourceRoot = createSourcesRoot(module);
+        if (sourceRoot != null) {
+          handler.sourceRootCreated(sourceRoot);
+          createContentEntry(module, sourceRoot);
+        }
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 
   @NotNull
@@ -70,7 +69,13 @@ public class LightProjectDescriptor {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       @Override
       public Module compute() {
-        return ModuleManager.getInstance(project).newModule("light_idea_test_case.iml", getModuleType().getId());
+        String moduleFilePath = "light_idea_test_case.iml";
+        File imlFile = new File(moduleFilePath);
+        if (imlFile.exists()) {
+          //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
+          FileUtil.delete(imlFile);
+        }
+        return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
       }
     });
   }

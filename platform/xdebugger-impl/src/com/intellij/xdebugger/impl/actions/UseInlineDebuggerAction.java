@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,23 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.RegistryToggleAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UseInlineDebuggerAction extends RegistryToggleAction {
-  public UseInlineDebuggerAction() {
-    super("ide.debugger.inline");
+public class UseInlineDebuggerAction extends ToggleAction implements DumbAware {
+  @Override
+  public boolean isSelected(AnActionEvent e) {
+    return XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowValuesInline();
   }
 
   @Override
-  public void doWhenDone(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor != null) {
-        editor.getComponent().repaint();
-      }
-    }
+  public void setSelected(AnActionEvent e, boolean state) {
+    XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setShowValuesInline(state);
+    XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
   }
 }

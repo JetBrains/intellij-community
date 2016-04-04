@@ -1,11 +1,26 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
-import com.intellij.testFramework.vcs.MockContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
@@ -15,9 +30,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.vcs.MockChangeListManager;
+import com.intellij.testFramework.vcs.MockContentRevision;
 import com.intellij.vcsUtil.VcsUtil;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -31,7 +45,7 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
   private MockChangeListManager myChangeListManager;
   private VirtualFile myBaseDir;
 
-  @Before
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -43,6 +57,12 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     substituteChangeListManager();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    ((ChangeListManagerImpl) ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
+    super.tearDown();
+  }
+
   // This is not good, but declaring MockChangeListManager might break other tests
   private void substituteChangeListManager() throws NoSuchFieldException, IllegalAccessException {
     Field myChangeManager = LocalChangesUnderRoots.class.getDeclaredField("myChangeManager");
@@ -50,7 +70,6 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     myChangeManager.set(myLocalChangesUnderRoots, myChangeListManager);
   }
 
-  @Test
   public void testChangesInTwoGitRoots() {
     AllVcsesI myVcses = AllVcses.getInstance(myProject);
     myVcses.registerManually(new MockAbstractVcs(myProject, "Mock"));
@@ -67,7 +86,7 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     
     Map<VirtualFile, Collection<Change>> expected = new HashMap<VirtualFile, Collection<Change>>();
     expected.put(roots.get(0), Arrays.asList(changeBeforeCommunity, changeAfterCommunity));
-    expected.put(roots.get(1), Arrays.asList(changeInCommunity));
+    expected.put(roots.get(1), Collections.singletonList(changeInCommunity));
 
     Map<VirtualFile, Collection<Change>> changesUnderRoots = myLocalChangesUnderRoots.getChangesUnderRoots(roots);
     assertEqualMaps(expected, changesUnderRoots);

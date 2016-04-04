@@ -18,7 +18,6 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -35,6 +34,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.xdebugger.Obsolescent;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -400,16 +401,33 @@ public class DebuggerUIUtil {
     return true;
   }
 
-  public static void registerExtraHandleShortcuts(final ListPopupImpl popup, String actionName) {
-    AnAction action = ActionManager.getInstance().getAction(actionName);
-    KeyStroke stroke = KeymapUtil.getKeyStroke(action.getShortcutSet());
-    if (stroke != null) {
-      popup.registerAction("handleSelection " + stroke, stroke, new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          popup.handleSelect(true);
-        }
-      });
+  public static void registerExtraHandleShortcuts(final ListPopupImpl popup, String... actionNames) {
+    for (String name : actionNames) {
+      KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(name).getShortcutSet());
+      if (stroke != null) {
+        popup.registerAction("handleSelection " + stroke, stroke, new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            popup.handleSelect(true);
+          }
+        });
+      }
     }
+  }
+
+  public static String getSelectionShortcutsAdText(String... actionNames) {
+    StringBuilder res = new StringBuilder();
+    for (String name : actionNames) {
+      KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(name).getShortcutSet());
+      if (stroke != null) {
+        if (res.length() > 0) res.append(", ");
+        res.append(KeymapUtil.getKeystrokeText(stroke));
+      }
+    }
+    return XDebuggerBundle.message("ad.extra.selection.shortcut", res.toString());
+  }
+
+  public static boolean isObsolete(Object object) {
+    return object instanceof Obsolescent && ((Obsolescent)object).isObsolete();
   }
 }

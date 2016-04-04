@@ -31,7 +31,7 @@ internal class BareGitTest {
   @Rule fun getTemporaryFolder() = tempDirManager
 
   @Test fun `remote doesn't have commits`() {
-    val repository = cloneBare(tempDirManager.createRepository("remote").getWorkTree().absolutePath, tempDirManager.newDirectory("local"))
+    val repository = cloneBare(tempDirManager.createRepository("remote").workTree.absolutePath, tempDirManager.newPath("local"))
     assertThat(repository.read("\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml")).isNull()
   }
 
@@ -41,7 +41,7 @@ internal class BareGitTest {
     remoteRepository.add(filePath, SAMPLE_FILE_CONTENT)
     remoteRepository.commit("")
 
-    val repository = cloneBare(remoteRepository.getWorkTree().absolutePath, tempDirManager.newDirectory())
+    val repository = cloneBare(remoteRepository.workTree.absolutePath, tempDirManager.newPath())
     assertThat(FileUtil.loadTextAndClose(repository.read(filePath)!!)).isEqualTo(SAMPLE_FILE_CONTENT)
   }
 
@@ -52,7 +52,7 @@ internal class BareGitTest {
     remoteRepository.add(filePath, SAMPLE_FILE_CONTENT)
     remoteRepository.commit("")
 
-    val repository = cloneBare(remoteRepository.getWorkTree().absolutePath, tempDirManager.newDirectory())
+    val repository = cloneBare(remoteRepository.workTree.absolutePath, tempDirManager.newPath())
 
     val data = THashMap<String, String>()
     repository.processChildren("keymaps") {name, input ->

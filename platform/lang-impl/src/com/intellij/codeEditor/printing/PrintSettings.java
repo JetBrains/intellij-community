@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 
-@State(
-  name = "PrintSettings",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/print.xml")}
-)
+@State(name = "PrintSettings", storages = @Storage("print.xml"))
 public class PrintSettings implements PersistentStateComponent<PrintSettings> {
   @NonNls public String PAPER_SIZE = "A4";
 

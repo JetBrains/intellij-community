@@ -12,7 +12,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="org.jetbrains.settingsRepository.IcsApplicationLoadListener"/>
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectService serviceInterface="org.jetbrains.settingsRepository.ProjectId"
                     serviceImplementation="org.jetbrains.settingsRepository.ProjectId"/>
     <!--<checkinHandlerFactory implementation="org.jetbrains.settingsRepository.actions.CommitToIcsAction$IcsBeforeCommitDialogHandler" order="first"/>-->

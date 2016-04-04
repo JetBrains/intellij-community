@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,10 @@ public class FontPreferences {
   @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<String>();
   @NotNull private final List<String> myEffectiveFontFamilies = ContainerUtilRt.newArrayList();
   @NotNull private final List<String> myRealFontFamilies = ContainerUtilRt.newArrayList();
+  
+  private boolean myUseLigatures;
 
-  @Nullable Runnable myChangeListener;
+  @Nullable private Runnable myChangeListener;
 
   /**
    * Font size to use by default. Default value is {@link #DEFAULT_FONT_SIZE}.
@@ -163,11 +165,13 @@ public class FontPreferences {
     preferences.myRealFontFamilies.clear();
     preferences.myRealFontFamilies.addAll(myRealFontFamilies);
     preferences.myFontSizes.clear();
+    preferences.myTemplateFontSize = myTemplateFontSize;
     for (String fontFamily : myRealFontFamilies) {
       if (myFontSizes.containsKey(fontFamily)) {
         preferences.myFontSizes.put(fontFamily, myFontSizes.get(fontFamily));
       }
     }
+    preferences.myUseLigatures = myUseLigatures;
   }
 
   @Override
@@ -188,6 +192,8 @@ public class FontPreferences {
         return false;
       }
     }
+    
+    if (myUseLigatures != that.myUseLigatures) return false;
 
     return true;
   }
@@ -225,6 +231,19 @@ public class FontPreferences {
       return fallbackScheme == null ? DEFAULT_FONT_NAME : fallbackScheme.getEditorFontName();
     }
     return null;
+  }
+  
+  public boolean useLigatures() {
+    return myUseLigatures;
+  }
+  
+  public void setUseLigatures(boolean useLigatures) {
+    if (useLigatures != myUseLigatures) {
+      myUseLigatures = useLigatures;
+      if (myChangeListener != null) {
+        myChangeListener.run();
+      }
+    }
   }
 
   @Override

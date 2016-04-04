@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.service.task.ui.ConfigureTasksActivat
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +56,8 @@ public class OpenTasksActivationManagerAction extends ExternalSystemNodeAction<A
     e.getPresentation().setText(ExternalSystemBundle.message("external.system.task.activation.title"));
     e.getPresentation().setDescription(
       ExternalSystemBundle.message("external.system.task.activation.description", projectSystemId.getReadableName()));
-    return (externalData instanceof ProjectData || externalData instanceof ModuleData);
+    final boolean isProjectNode = externalData instanceof ProjectData || externalData instanceof ModuleData;
+    return isProjectNode && StringUtil.isNotEmpty(((ExternalConfigPathAware) externalData).getLinkedExternalProjectPath());
   }
 
   @Override

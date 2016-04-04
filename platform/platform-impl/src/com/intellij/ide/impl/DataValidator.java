@@ -90,7 +90,7 @@ public abstract class DataValidator<T> {
         }
         T invalid = myElementValidator.findInvalid(dataId, element, dataSource);
         if (invalid != null) {
-          T[] result = (T[])Array.newInstance(array[0].getClass(), 1);
+          T[] result = (T[])Array.newInstance(array.getClass().getComponentType(), 1);
           result[0] = invalid;
           return result;
         }

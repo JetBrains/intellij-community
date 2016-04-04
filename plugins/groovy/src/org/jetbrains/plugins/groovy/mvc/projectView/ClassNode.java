@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +35,12 @@ import java.util.List;
 public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   public ClassNode(@NotNull final Module module,
                    @NotNull final GrTypeDefinition rClass,
-                   @Nullable final String locationMark,
                    @Nullable final ViewSettings viewSettings) {
-    super(module, viewSettings, new NodeId(rClass, locationMark), CLASS);
+    super(module, viewSettings, rClass, CLASS);
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "GrTypeDefinition: " + ((GrTypeDefinition)psiElement).getName();
   }
 
@@ -65,13 +64,12 @@ public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   }
 
   protected void buildChildren(final Module module, final GrTypeDefinition grClass, final List<AbstractTreeNode> children) {
-    final String parentLocationRootMark = getValue().getLocationRootMark();
 
     final GrMethod[] methods = grClass.getCodeMethods();
     for (final GrMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) continue;
 
-      final MethodNode node = createNodeForMethod(module, method, parentLocationRootMark);
+      final MethodNode node = createNodeForMethod(module, method);
       if (node != null) children.add(node);
     }
   }
@@ -82,7 +80,7 @@ public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   }
 
   @Nullable
-  protected MethodNode createNodeForMethod(final Module module, final GrMethod method, final String parentLocationRootMark) {
+  protected MethodNode createNodeForMethod(final Module module, final GrMethod method) {
     return null;
   }
 

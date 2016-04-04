@@ -157,7 +157,7 @@ public class HgUpdateCommand {
     HgCommandResult result = hgUpdateCommand.execute();
     new HgConflictResolver(project).resolve(repository);
     boolean success = !HgErrorUtil.isCommandExecutionFailed(result);
-    boolean hasUnresolvedConflicts = !HgConflictResolver.findConflicts(project, repository).isEmpty();
+    boolean hasUnresolvedConflicts = HgConflictResolver.hasConflicts(project, repository);
     if (!success) {
       new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
     }

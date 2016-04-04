@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
-public class CharComparisonUtilTest : ComparisonUtilTestBase() {
-  public fun testEqualStrings() {
+class CharComparisonUtilTest : ComparisonUtilTestBase() {
+  fun testEqualStrings() {
     chars {
       ("" - "")
       ("" - "").default()
@@ -60,7 +60,7 @@ public class CharComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testTrivialCases() {
+  fun testTrivialCases() {
     chars {
       ("x" - "")
       ("-" - "").default()
@@ -106,7 +106,7 @@ public class CharComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testSimpleCases() {
+  fun testSimpleCases() {
     chars {
       ("xyx" - "xxx")
       (" - " - " - ").default()
@@ -150,7 +150,7 @@ public class CharComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testWhitespaceChangesOnly() {
+  fun testWhitespaceChangesOnly() {
     chars {
       (" x y z " - "xyz")
       ("- - - -" - "   ").default()
@@ -194,7 +194,7 @@ public class CharComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testWhitespaceChanges() {
+  fun testWhitespaceChanges() {
     chars {
       (" x " - "z")
       ("---" - "-").default()
@@ -224,7 +224,7 @@ public class CharComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testIgnoreInnerWhitespaces() {
+  fun testIgnoreInnerWhitespaces() {
     chars {
       ("x z y" - "xmn")
       (" ----" - " --").default()
@@ -283,7 +283,7 @@ public class CharComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testEmptyRangePositions() {
+  fun testEmptyRangePositions() {
     chars {
       ("x y" - "x zy")
       default(ins(2, 2, 1))
@@ -333,7 +333,7 @@ public class CharComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testAlgorithmSpecific() {
+  fun testAlgorithmSpecific() {
     // This is a strange example: "ignore whitespace" produces lesser matching, than "Default".
     // This is fine, as the main goal of "ignore whitespaces" is to reduce 'noise' of diff, and 1 change is better than 3 changes
     // So we actually "ignore" whitespaces during comparison, rather than "mark all whitespaces as matched".
@@ -345,7 +345,7 @@ public class CharComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testNonDeterministicCases() {
+  fun testNonDeterministicCases() {
     chars {
       ("x" - "  ")
       ignore(del(0, 0, 1))

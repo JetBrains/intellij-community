@@ -605,7 +605,7 @@ public class InjectedLanguageUtil {
     PsiLanguageInjectionHost.Shred shred = places.get(0);
     PsiLanguageInjectionHost host = shred.getHost();
     assert host != null;
-    return shred.getRangeInsideHost().getStartOffset() + host.getTextOffset();
+    return shred.getRangeInsideHost().getStartOffset() + host.getTextRange().getStartOffset();
   }
 
   @Nullable

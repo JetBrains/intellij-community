@@ -26,6 +26,7 @@ import io.netty.channel.Channel
 import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.SingleConnectionNetService
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.doneRun
 import org.jetbrains.io.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -41,7 +42,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
       it.pipeline().addLast("fastCgiDecoder", FastCgiDecoder(errorOutputConsumer, this@FastCgiService))
       it.pipeline().addLast("exceptionHandler", ChannelExceptionHandler.getInstance())
 
-      it.closeFuture().addListener {
+      it.closeFuture().addChannelListener {
         requestIdCounter.set(0)
         if (!requests.isEmpty) {
           val waitingClients = requests.elements().toList()
@@ -82,8 +83,8 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
         promise = processHandler.get()
       }
 
-      (promise as Promise<Any?>)
-        .done { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
+      promise
+        .doneRun { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
         .rejected {
           Promise.logError(LOG, it)
           handleError(fastCgiRequest, notEmptyContent)

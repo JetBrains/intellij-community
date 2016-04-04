@@ -19,9 +19,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Small size key, constructed by hashing method signature.
+ * 'H' in this and related class names stands for 'Hash'.
  * @see com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter for details of construction.
  */
 final class HKey {
@@ -84,6 +86,9 @@ final class HKey {
   }
 }
 
+/**
+ * Represents a lattice product of a constant {@link #value} and all {@link #ids}.
+ */
 final class HComponent {
   @NotNull Value value;
   @NotNull final HKey[] ids;
@@ -286,7 +291,7 @@ final class HFinal implements HResult {
 }
 
 final class HPending implements HResult {
-  @NotNull final HComponent[] delta;
+  @NotNull final HComponent[] delta; // sum
 
   HPending(@NotNull HComponent[] delta) {
     this.delta = delta;
@@ -314,5 +319,26 @@ final class HPending implements HResult {
 
     }
     return new HPending(delta1);
+  }
+}
+
+final class HEffects implements HResult {
+  @NotNull final Set<HEffectQuantum> effects;
+
+  HEffects(@NotNull Set<HEffectQuantum> effects) {
+    this.effects = effects;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    HEffects hEffects = (HEffects)o;
+    return effects.equals(hEffects.effects);
+  }
+
+  @Override
+  public int hashCode() {
+    return effects.hashCode();
   }
 }

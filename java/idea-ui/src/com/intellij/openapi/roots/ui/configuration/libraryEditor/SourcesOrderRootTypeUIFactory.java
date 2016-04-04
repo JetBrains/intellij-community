@@ -23,7 +23,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
-import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
+import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -61,7 +61,7 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     @Override
     protected VirtualFile[] adjustAddedFileSet(final Component component, final VirtualFile[] files) {
       if (mySdk.getSdkType() instanceof JavaSdkType) {
-        return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(component, files);
+        return LibrarySourceRootDetectorUtil.scanAndSelectDetectedJavaSourceRoots(component, files);
       }
       return super.adjustAddedFileSet(component, files);
     }

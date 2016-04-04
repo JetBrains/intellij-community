@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,27 @@ import java.util.Collections;
 import java.util.List;
 
 public class StructInnerClassesAttribute extends StructGeneralAttribute {
+  public static class Entry {
+    public final int innerNameIdx;
+    public final int outerNameIdx;
+    public final int simpleNameIdx;
+    public final int accessFlags;
+    public final String innerName;
+    public final String enclosingName;
+    public final String simpleName;
 
-  private List<int[]> classEntries;
-  private List<String[]> stringEntries;
+    private Entry(int innerNameIdx, int outerNameIdx, int simpleNameIdx, int accessFlags, String innerName, String enclosingName, String simpleName) {
+      this.innerNameIdx = innerNameIdx;
+      this.outerNameIdx = outerNameIdx;
+      this.simpleNameIdx = simpleNameIdx;
+      this.accessFlags = accessFlags;
+      this.innerName = innerName;
+      this.enclosingName = enclosingName;
+      this.simpleName = simpleName;
+    }
+  }
+
+  private List<Entry> entries;
 
   @Override
   public void initContent(ConstantPool pool) throws IOException {
@@ -34,39 +52,27 @@ public class StructInnerClassesAttribute extends StructGeneralAttribute {
 
     int len = data.readUnsignedShort();
     if (len > 0) {
-      classEntries = new ArrayList<int[]>(len);
-      stringEntries = new ArrayList<String[]>(len);
+      entries = new ArrayList<Entry>(len);
 
       for (int i = 0; i < len; i++) {
-        int[] classEntry = new int[4];
-        for (int j = 0; j < 4; j++) {
-          classEntry[j] = data.readUnsignedShort();
-        }
-        classEntries.add(classEntry);
+        int innerNameIdx = data.readUnsignedShort();
+        int outerNameIdx = data.readUnsignedShort();
+        int simpleNameIdx = data.readUnsignedShort();
+        int accessFlags = data.readUnsignedShort();
 
-        // inner name, enclosing class, original simple name
-        String[] stringEntry = new String[3];
-        stringEntry[0] = pool.getPrimitiveConstant(classEntry[0]).getString();
-        if (classEntry[1] != 0) {
-          stringEntry[1] = pool.getPrimitiveConstant(classEntry[1]).getString();
-        }
-        if (classEntry[2] != 0) {
-          stringEntry[2] = pool.getPrimitiveConstant(classEntry[2]).getString();
-        }
-        stringEntries.add(stringEntry);
+        String innerName = pool.getPrimitiveConstant(innerNameIdx).getString();
+        String outerName = outerNameIdx != 0 ? pool.getPrimitiveConstant(outerNameIdx).getString() : null;
+        String simpleName = simpleNameIdx != 0 ? pool.getPrimitiveConstant(simpleNameIdx).getString() : null;
+
+        entries.add(new Entry(innerNameIdx, outerNameIdx, simpleNameIdx, accessFlags, innerName, outerName, simpleName));
       }
     }
     else {
-      classEntries = Collections.emptyList();
-      stringEntries = Collections.emptyList();
+      entries = Collections.emptyList();
     }
   }
 
-  public List<int[]> getClassEntries() {
-    return classEntries;
-  }
-
-  public List<String[]> getStringEntries() {
-    return stringEntries;
+  public List<Entry> getEntries() {
+    return entries;
   }
 }

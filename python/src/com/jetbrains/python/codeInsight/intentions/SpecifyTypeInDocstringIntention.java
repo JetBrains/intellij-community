@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -78,7 +79,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     }
 
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
-    String type = "object";
+    String type = PyNames.OBJECT;
     if (param != null) {
       final String paramName = StringUtil.notNullize(param.getName());
       final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
@@ -88,6 +89,10 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
       docstringGenerator.withParamTypedByName(param, type);
     }
     else {
+      final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
+      if (signature != null) {
+        type = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), type);
+      }
       docstringGenerator.withReturnValue(type);
     }
 
@@ -97,7 +102,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
 
   @Override
   protected void updateText(boolean isReturn) {
-    myText = isReturn ? PyBundle.message("INTN.specify.return.type") : PyBundle.message("INTN.specify.type");
+    myText = PyBundle.message(isReturn ? "INTN.specify.return.type" : "INTN.specify.type");
   }
 
   @Override

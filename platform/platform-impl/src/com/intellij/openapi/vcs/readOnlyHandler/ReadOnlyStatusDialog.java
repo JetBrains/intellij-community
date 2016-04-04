@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +16,7 @@
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -24,10 +24,9 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Function;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -40,9 +39,9 @@ import java.util.List;
  * @author yole
  */
 public class ReadOnlyStatusDialog extends OptionsDialog {
-
-  static final SimpleTextAttributes BOLD_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground());
-  static final SimpleTextAttributes SELECTED_BOLD_ATTRIBUTES =
+  private static final SimpleTextAttributes BOLD_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground());
+  private static final SimpleTextAttributes SELECTED_BOLD_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListSelectionForeground());
 
   private JPanel myTopPanel;
@@ -54,6 +53,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
   public ReadOnlyStatusDialog(Project project, final FileInfo[] files) {
     super(project);
+    setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;
     initFileList();
 
@@ -65,16 +65,11 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     };
     myUsingVcsRadioButton.addActionListener(listener);
     myUsingFileSystemRadioButton.addActionListener(listener);
-    
-    if (myUsingVcsRadioButton.isEnabled()) {
-      myUsingVcsRadioButton.setSelected(true);
-    }
-    else {
-      myUsingFileSystemRadioButton.setSelected(true);
-    }
+    (myUsingVcsRadioButton.isEnabled() ? myUsingVcsRadioButton : myUsingFileSystemRadioButton).setSelected(true);
     myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
+
+    //noinspection unchecked
     myFileList.setCellRenderer(new FileListRenderer());
-    setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
 
     init();
   }
@@ -85,25 +80,28 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   }
 
   private void initFileList() {
+    //noinspection unchecked
     myFileList.setModel(new AbstractListModel() {
       public int getSize() {
         return myFiles.length;
       }
 
       public Object getElementAt(final int index) {
-        return myFiles [index].getFile();
+        return myFiles[index].getFile();
       }
     });
 
     boolean hasVcs = false;
-    for(FileInfo info: myFiles) {
+    for (FileInfo info : myFiles) {
       if (info.hasVersionControl()) {
         hasVcs = true;
         HandleType handleType = info.getSelectedHandleType();
         List<String> changelists = handleType.getChangelists();
         final String defaultChangelist = handleType.getDefaultChangelist();
+        //noinspection unchecked
         myChangelist.setModel(new CollectionComboBoxModel(changelists, defaultChangelist));
 
+        //noinspection unchecked
         myChangelist.setRenderer(new ColoredListCellRendererWrapper<String>() {
           @Override
           protected void doCustomize(JList list, String value, int index, boolean selected, boolean hasFocus) {
@@ -116,41 +114,48 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
               append(trimmed, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
             }
           }
-        }); 
-        
+        });
+
         break;
       }
     }
     myUsingVcsRadioButton.setEnabled(hasVcs);
   }
 
+  @Override
   protected boolean isToBeShown() {
-    return ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG;
+    ReadonlyStatusHandlerImpl.State state = ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState();
+    return state != null && state.SHOW_DIALOG;
   }
 
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     if (onOk) {
-      ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG = value;
+      ReadonlyStatusHandlerImpl.State state = ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState();
+      if (state != null) {
+        state.SHOW_DIALOG = value;
+      }
     }
   }
 
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return false;
   }
 
-  @Nullable
+  @Override
   protected JComponent createCenterPanel() {
     return myTopPanel;
   }
 
   @Override
-  @NonNls
   protected String getDimensionServiceKey() {
     return "vcs.readOnlyHandler.ReadOnlyStatusDialog";
   }
 
+  @Override
   protected void doOKAction() {
-    for(FileInfo info: myFiles) {
+    for (FileInfo info : myFiles) {
       if (myUsingFileSystemRadioButton.isSelected()) {
         info.getHandleType().selectFirst();
       }
@@ -159,7 +164,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       }
     }
 
-    ArrayList<FileInfo> files = new ArrayList<FileInfo>();
+    List<FileInfo> files = new ArrayList<FileInfo>();
     Collections.addAll(files, myFiles);
     String changelist = (String)myChangelist.getSelectedItem();
     ReadonlyStatusHandlerImpl.processFiles(files, changelist);
@@ -168,15 +173,22 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       super.doOKAction();
     }
     else {
+      String list = StringUtil.join(files, new Function<FileInfo, String>() {
+        @Override
+        public String fun(FileInfo info) {
+          return info.getFile().getPresentableUrl();
+        }
+      }, "<br>");
+      String message = VcsBundle.message("handle.ro.file.status.failed", list);
+      Messages.showErrorDialog(getRootPane(), message, VcsBundle.message("dialog.title.clear.read.only.file.status"));
       myFiles = files.toArray(new FileInfo[files.size()]);
       initFileList();
     }
   }
 
-  @Override @Nullable
+  @Override
   public JComponent getPreferredFocusedComponent() {
     final JRootPane pane = getRootPane();
     return pane != null ? pane.getDefaultButton() : null;
   }
-
 }

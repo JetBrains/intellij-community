@@ -25,8 +25,12 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfiguration;
 import com.intellij.execution.testDiscovery.TestDiscoverySearchHelper;
 import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.FunctionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,18 +75,52 @@ public class JUnitTestDiscoveryConfiguration extends TestDiscoveryConfiguration 
     public JUnitTestDiscoveryRunnableState(ExecutionEnvironment environment) {
       super(((JUnitConfiguration)myDelegate), environment);
     }
-    
+
+    @Override
+    protected TestSearchScope getScope() {
+      return getConfigurationModule().getModule() != null ? TestSearchScope.MODULE_WITH_DEPENDENCIES : TestSearchScope.WHOLE_PROJECT;
+    }
+
+    @Override
+    protected boolean forkPerModule() {
+      return spansMultipleModules("");
+    }
+
+    @Override
+    protected PsiElement retrievePsiElement(Object pattern) {
+      if (pattern instanceof String) {
+        final String className = StringUtil.getPackageName((String)pattern, ',');
+        if (!pattern.equals(className)) {
+          final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+          final SourceScope sourceScope = getSourceScope();
+          final GlobalSearchScope globalSearchScope = sourceScope != null ? sourceScope.getGlobalSearchScope()
+                                                                          : GlobalSearchScope.projectScope(getProject());
+          return facade.findClass(className, globalSearchScope);
+        }
+      }
+      return null;
+    }
+
     @Override
     public SearchForTestsTask createSearchingForTestsTask() {
       return new SearchForTestsTask(getProject(), myServerSocket) {
+
+        private Set<String> myPatterns;
+
         @Override
         protected void search() throws ExecutionException {
-          final Set<String> patterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList(), getFrameworkPrefix());
-          addClassesListToJavaParameters(patterns, FunctionUtil.<String>id(), "", false, getJavaParameters());
+          myPatterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList(), getFrameworkPrefix());
         }
 
         @Override
-        protected void onFound() {}
+        protected void onFound() {
+          if (myPatterns != null) {
+            try {
+              addClassesListToJavaParameters(myPatterns, FunctionUtil.<String>id(), "", false, getJavaParameters());
+            }
+            catch (ExecutionException ignored) {}
+          }
+        }
       };
     }
 

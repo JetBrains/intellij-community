@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
@@ -87,8 +88,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -111,6 +110,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
   @NotNull private final FilePath myFilePath;
+  @Nullable private final VcsRevisionNumber myStartingRevision;
   @NotNull private final FileHistoryRefresherI myRefresherI;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private final DualView myDualView;
@@ -127,8 +127,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
   private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
+  private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
+
   private boolean myIsStaticAndEmbedded;
+  private boolean myColumnSizesSet;
+
   private final Splitter myDetailsSplitter = new Splitter(false, 0.5f);
+  private Splitter mySplitter;
 
   private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = new Comparator<VcsFileRevision>() {
     @Override
@@ -138,30 +143,40 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   };
 
-  private final DualViewColumnInfo REVISION =
-    new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
-      protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
-        return object.getRevisionNumber();
-      }
+  public static class RevisionColumnInfo extends VcsColumnInfo<VcsRevisionNumber> {
+    private final Comparator<VcsFileRevision> myComparator;
 
-      @Override
-      public Comparator<VcsFileRevision> getComparator() {
-        return myRevisionsInOrderComparator;
-      }
+    public RevisionColumnInfo(Comparator<VcsFileRevision> comparator) {
+      super(VcsBundle.message("column.name.revision.version"));
+      myComparator = comparator;
+    }
 
-      public String valueOf(VcsFileRevision object) {
-        final VcsRevisionNumber revisionNumber = object.getRevisionNumber();
-        return revisionNumber instanceof ShortVcsRevisionNumber ? ((ShortVcsRevisionNumber)revisionNumber).toShortString() : revisionNumber.asString();
-      }
+    @Override
+    protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
+      return object.getRevisionNumber();
+    }
 
-      @Override
-      public String getPreferredStringValue() {
-        return "123.4567";
-      }
+    @Override
+    public Comparator<VcsFileRevision> getComparator() {
+      return myComparator;
+    }
 
-    };
+    public String valueOf(VcsFileRevision object) {
+      final VcsRevisionNumber revisionNumber = object.getRevisionNumber();
+      return revisionNumber instanceof ShortVcsRevisionNumber ? ((ShortVcsRevisionNumber)revisionNumber).toShortString() : revisionNumber.asString();
+    }
 
-  private final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
+    @Override
+    public String getPreferredStringValue() {
+      return "123.4567";
+    }
+  }
+
+  public static class DateColumnInfo extends VcsColumnInfo<String> {
+    public DateColumnInfo() {
+      super(VcsBundle.message("column.name.revision.date"));
+    }
+
     protected String getDataOf(VcsFileRevision object) {
       Date date = object.getRevisionDate();
       if (date == null) return "";
@@ -176,9 +191,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public String getPreferredStringValue() {
       return DateFormatUtil.formatPrettyDateTime(Clock.getTime());
     }
-
-  };
-  private boolean myColumnSizesSet;
+  }
 
   public void scheduleRefresh(final boolean canUseLastRevision) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -187,6 +200,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         refreshImpl(canUseLastRevision);
       }
     });
+  }
+
+  @Nullable
+  public VcsRevisionNumber getStartingRevision() {
+    return myStartingRevision;
   }
 
   private static class AuthorCellRenderer extends DefaultTableCellRenderer {
@@ -214,9 +232,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private static final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
 
-  private final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
+  public static class AuthorColumnInfo extends VcsColumnInfo<String> {
+    private final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
+
+    public AuthorColumnInfo() {
+      super(VcsBundle.message("column.name.revision.list.author"));
+    }
+
     protected String getDataOf(VcsFileRevision object) {
       VcsFileRevision rev = object;
       if (object instanceof TreeNodeOnVcsRevision) {
@@ -263,55 +286,33 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public String getPreferredStringValue() {
       return "author_author";
     }
-
- };
-
-  private Splitter mySplitter;
-
-
-  private static class MessageRenderer extends ColoredTableCellRenderer {
-    private final IssueLinkRenderer myIssueLinkRenderer;
-
-    public MessageRenderer(Project project) {
-      myIssueLinkRenderer = new IssueLinkRenderer(project, this);
-    }
-
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      setOpaque(selected);
-      if (value instanceof String) {
-        String message = (String) value;
-        myIssueLinkRenderer.appendTextWithLinks(message);
-      }
-    }
-
-
   }
 
-  private static class MessageColumnInfo extends VcsColumnInfo<String> {
-    private final MessageRenderer myRenderer;
+  public static class MessageColumnInfo extends VcsColumnInfo<String> {
+    private final ColoredTableCellRenderer myRenderer;
+    private final IssueLinkRenderer myIssueLinkRenderer;
 
     public MessageColumnInfo(Project project) {
-      super(FileHistoryPanelImpl.COMMIT_MESSAGE_TITLE);
-      myRenderer = new MessageRenderer(project);
+      super(COMMIT_MESSAGE_TITLE);
+      myRenderer = new ColoredTableCellRenderer() {
+        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          setOpaque(selected);
+          if (value instanceof String) {
+            String message = (String)value;
+            myIssueLinkRenderer.appendTextWithLinks(message);
+          }
+        }
+      };
+      myIssueLinkRenderer = new IssueLinkRenderer(project, myRenderer);
     }
 
     protected String getDataOf(VcsFileRevision object) {
       final String originalMessage = object.getCommitMessage();
-      if (originalMessage != null) {
-        String commitMessage = originalMessage.trim();
-        int index13 = commitMessage.indexOf('\r');
-        int index10 = commitMessage.indexOf('\n');
+      if (originalMessage == null) return "";
 
-        if (index10 < 0 && index13 < 0) {
-          return commitMessage;
-        }
-        else {
-          return commitMessage.substring(0, getSuitableIndex(index10, index13)) + "...";
-        }
-      }
-      else {
-        return "";
-      }
+      int index = StringUtil.indexOfAny(originalMessage, "\n\r");
+      if (index == -1) return originalMessage;
+      return originalMessage.substring(0, index) + "...";
     }
 
     @Override
@@ -322,23 +323,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public TableCellRenderer getRenderer(VcsFileRevision p0) {
       return myRenderer;
     }
-
   }
-
-  private static int getSuitableIndex(int index10, int index13) {
-    if (index10 < 0) {
-      return index13;
-    }
-    else if (index13 < 0) {
-      return index10;
-    }
-    else {
-      return Math.min(index10, index13);
-    }
-  }
-
-
-  private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
   public FileHistoryPanelImpl(AbstractVcs vcs,
                               FilePath filePath, VcsHistorySession session,
@@ -354,6 +339,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
                               ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
                               final boolean isStaticEmbedded) {
+    this(vcs, filePath, null, session, provider, contentManager, refresherI, isStaticEmbedded);
+  }
+  
+  public FileHistoryPanelImpl(AbstractVcs vcs,
+                              @NotNull FilePath filePath,
+                              @Nullable VcsRevisionNumber startingRevision,
+                              VcsHistorySession session,
+                              VcsHistoryProvider provider,
+                              ContentManager contentManager,
+                              @NotNull FileHistoryRefresherI refresherI,
+                              final boolean isStaticEmbedded) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history", ! isStaticEmbedded);
     myProject = vcs.getProject();
     myIsStaticAndEmbedded = false;
@@ -363,6 +359,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myRefresherI = refresherI;
     myHistorySession = session;
     myFilePath = filePath;
+    myStartingRevision = startingRevision;
 
     DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
     myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
@@ -519,13 +516,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myListener = components.getRevisionListener();
 
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
-    if (provider.isDateOmittable()) {
-      columns.addAll(Arrays.asList(REVISION, AUTHOR));
-    }
-    else {
-      columns.addAll(Arrays.asList(REVISION, DATE, AUTHOR));
-    }
-
+    columns.add(new RevisionColumnInfo(myRevisionsInOrderComparator));
+    if (!provider.isDateOmittable()) columns.add(new DateColumnInfo());
+    columns.add(new AuthorColumnInfo());
     columns.addAll(wrapAdditionalColumns(components.getColumns()));
     columns.add(new MessageColumnInfo(project));
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
@@ -640,6 +633,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myDualView.setTreeCellRenderer(new MyTreeCellRenderer(defaultCellRenderer, sessionGetter));
 
     myDualView.setCellWrapper(new MyCellWrapper(sessionGetter));
+
+    myDualView.installDoubleClickHandler(new MyDiffAction());
 
     final TableView flatView = myDualView.getFlatView();
     TableViewModel sortableModel = flatView.getTableViewModel();
@@ -768,19 +763,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     final MyDiffAction diffAction = new MyDiffAction();
+    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), null);
     result.add(diffAction);
-    if (!popup) {
-      List<Shortcut> shortcuts = new SmartList<Shortcut>();
-      ContainerUtil.addAll(shortcuts, CommonShortcuts.getDiff().getShortcuts());
-      ContainerUtil.addAll(shortcuts, CommonShortcuts.DOUBLE_CLICK_1.getShortcuts());
-      CustomShortcutSet shortcutSet = new CustomShortcutSet(ContainerUtil.toArray(shortcuts, new Shortcut[shortcuts.size()]));
 
-      diffAction.registerCustomShortcutSet(shortcutSet, myDualView.getFlatView());
-      diffAction.registerCustomShortcutSet(shortcutSet, myDualView.getTreeView());
-    }
-    else {
-      diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
-    }
     result.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"));
 
     final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
@@ -1044,11 +1029,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     private String createGetActionTitle(final VcsFileRevision revision) {
-      return VcsBundle.message("action.name.for.file.get.version", getIOFile().getAbsolutePath(), revision.getRevisionNumber());
-    }
-
-    private File getIOFile() {
-      return myFilePath.getIOFile();
+      return VcsBundle.message("action.name.for.file.get.version", myFilePath.getPath(), revision.getRevisionNumber());
     }
 
     private void write(byte[] revision) throws IOException {
@@ -1071,13 +1052,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     private void writeContentToIOFile(byte[] revisionContent) throws IOException {
-      FileOutputStream outputStream = new FileOutputStream(getIOFile());
-      try {
-        outputStream.write(revisionContent);
-      }
-      finally {
-        outputStream.close();
-      }
+      FileUtil.writeToFile(myFilePath.getIOFile(), revisionContent);
     }
 
     private void writeContentToDocument(final Document document, byte[] revisionContent) throws IOException {
@@ -1219,7 +1194,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     return null;
   }
 
-  private static class LoadedContentRevision implements ContentRevision {
+  private static class LoadedContentRevision implements ByteBackedContentRevision {
     private final FilePath myFile;
     private final VcsFileRevision myRevision;
     private final Project myProject;
@@ -1233,6 +1208,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public String getContent() throws VcsException {
       try {
         return VcsHistoryUtil.loadRevisionContentGuessEncoding(myRevision, myFile.getVirtualFile(), myProject);
+      }
+      catch (IOException e) {
+        throw new VcsException(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()));
+      }
+    }
+
+    @Nullable
+    @Override
+    public byte[] getContentAsBytes() throws VcsException {
+      try {
+        return VcsHistoryUtil.loadRevisionContent(myRevision);
       }
       catch (IOException e) {
         throw new VcsException(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()));
@@ -1757,13 +1743,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof FileHistoryPanelImpl && Comparing.equal(((FileHistoryPanelImpl)obj).getVirtualFile(), getVirtualFile());
+    return obj instanceof FileHistoryPanelImpl && sameHistories((FileHistoryPanelImpl)obj, myFilePath, myStartingRevision);
   }
 
   @Override
   public int hashCode() {
-    final VirtualFile file = getVirtualFile();
-    return file == null ? 0 : file.hashCode();
+    int result = myFilePath.hashCode();
+    result = 31 * result + (myStartingRevision != null ? myStartingRevision.asString().hashCode() : 0); // NB: asString to conform to equals
+    return result;
+  }
+
+  /**
+   * Checks if the given historyPanel shows the history for given path and revision number.
+   */
+  static boolean sameHistories(@NotNull FileHistoryPanelImpl historyPanel,
+                               @NotNull FilePath path,
+                               @Nullable VcsRevisionNumber startingRevisionNumber) {
+    String existingRevision = historyPanel.getStartingRevision() == null ? null : historyPanel.getStartingRevision().asString();
+    String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
+    return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
   private class MyToggleAction extends ToggleAction implements DumbAware {

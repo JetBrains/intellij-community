@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -32,6 +33,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +94,8 @@ public class RegistryUi implements Disposable {
     myTable.setStriped(true);
 
     myDescriptionLabel = new JTextArea(3, 50);
+    myDescriptionLabel.setWrapStyleWord(true);
+    myDescriptionLabel.setLineWrap(true);
     myDescriptionLabel.setEditable(false);
     final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel);
     final JPanel descriptionPanel = new JPanel(new BorderLayout());
@@ -303,6 +307,19 @@ public class RegistryUi implements Disposable {
 
       private AbstractAction myCloseAction;
 
+      @Nullable
+      @Override
+      protected JComponent createNorthPanel() {
+        if (!ApplicationManager.getApplication().isInternal()) {
+          JLabel warningLabel = new JLabel(XmlStringUtil.wrapInHtml("<b>Changing these values may cause unwanted behavior of " +
+                                                                    ApplicationNamesInfo.getInstance().getFullProductName() + ". Please do not change these unless you have been asked.</b>"));
+          warningLabel.setIcon(UIUtil.getWarningIcon());
+          warningLabel.setForeground(JBColor.RED);
+          return warningLabel;
+        }
+        return null;
+      }
+
       @Override
       protected JComponent createCenterPanel() {
         return myContent;
@@ -408,7 +425,7 @@ public class RegistryUi implements Disposable {
       myLabel.setIcon(null);
       myLabel.setText(null);
       myLabel.setHorizontalAlignment(SwingConstants.LEFT);
-      Color fg = isSelected ? table.getSelectionForeground() : table.getForeground();
+      Color fg = isSelected ? table.getSelectionForeground() : v.isChangedFromDefault() ? JBColor.blue : table.getForeground();
       Color bg = isSelected ? table.getSelectionBackground() : table.getBackground();
       
       if (v != null) {

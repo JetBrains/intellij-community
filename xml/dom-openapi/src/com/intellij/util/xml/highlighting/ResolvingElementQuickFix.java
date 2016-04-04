@@ -80,7 +80,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   @Override
   @NotNull
   public String getFamilyName() {
-    return DomBundle.message("quick.fixes.family");
+    return DomBundle.message("create.new.element.family");
   }
 
   @Override

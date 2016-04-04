@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ private fun LinearGraph.redNodes(vararg redNode: Int = IntArray(0)): FragmentGen
 private val Int?.s: String get() = if (this == null) "n" else toString()
 
 private infix fun FragmentGenerator.GreenFragment.assert(s: String)
-    = assertEquals(s, "${getUpRedNode().s}|${getDownRedNode().s}|${getMiddleGreenNodes().sorted().joinToString(",")}")
+    = assertEquals(s, "${upRedNode.s}|${downRedNode.s}|${middleGreenNodes.sorted().joinToString(",")}")
 
 /*
 0

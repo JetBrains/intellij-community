@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -58,7 +57,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.security.action.GetPropertyAction;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -80,15 +78,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 import java.util.*;
 import java.util.List;
 
 @State(
   name = "LafManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_OS),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", deprecated = true)
+    @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS),
+    @Storage(value = "options.xml", deprecated = true)
   }
 )
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
@@ -310,53 +307,34 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     return myCurrentLaf;
   }
 
-  /**
-   * @return default LookAndFeelInfo for the running OS. For Win32 and
-   * Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
-   * RubyMine uses Native L&F for linux as well
-   */
   private UIManager.LookAndFeelInfo getDefaultLaf() {
-    if (WelcomeWizardUtil.getWizardLAF() != null) {
-      UIManager.LookAndFeelInfo laf = findLaf(WelcomeWizardUtil.getWizardLAF());
-      LOG.assertTrue(laf != null);
-      return laf;
+    String wizardLafName = WelcomeWizardUtil.getWizardLAF();
+    if (wizardLafName != null) {
+      UIManager.LookAndFeelInfo laf = findLaf(wizardLafName);
+      if (laf != null) return laf;
+      LOG.error("Could not find wizard L&F: " + wizardLafName);
     }
-    final String systemLafClassName = UIManager.getSystemLookAndFeelClassName();
+
     if (SystemInfo.isMac) {
-      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : systemLafClassName;
+      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
-      LOG.assertTrue(laf != null, "Could not find look and feel: " + className);
-      return laf;
+      if (laf != null) return laf;
+      LOG.error("Could not find OS X L&F: " + className);
     }
-    if (PlatformUtils.isRubyMine() || PlatformUtils.isPyCharm()) {
-      final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
-      if ("gnome".equals(desktop)) {
-        UIManager.LookAndFeelInfo laf = findLaf(systemLafClassName);
-        if (laf != null) {
-          return laf;
-        }
-        LOG.info("Could not find system look and feel: " + systemLafClassName);
-      }
+
+    String appLafName = WelcomeWizardUtil.getDefaultLAF();
+    if (appLafName != null) {
+      UIManager.LookAndFeelInfo laf = findLaf(appLafName);
+      if (laf != null) return laf;
+      LOG.error("Could not find app L&F: " + appLafName);
     }
-    // Default
-    final String defaultLafName = WelcomeWizardUtil.getDefaultLAF();
-    if (defaultLafName != null) {
-      UIManager.LookAndFeelInfo defaultLaf = findLaf(defaultLafName);
-      if (defaultLaf != null) {
-        return defaultLaf;
-      }
-    }
-    UIManager.LookAndFeelInfo ideaLaf = findLaf(isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME);
-    if (ideaLaf != null) {
-      return ideaLaf;
-    }
-    throw new IllegalStateException("No default look&feel found");
+
+    String defaultLafName = isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME;
+    UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
+    if (laf != null) return laf;
+    throw new IllegalStateException("No default L&F found: " + defaultLafName);
   }
 
-  /**
-   * Finds LAF by its class name.
-   * will be returned.
-   */
   @Nullable
   private UIManager.LookAndFeelInfo findLaf(@Nullable String className) {
     if (className == null) {
@@ -559,11 +537,13 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void patchHiDPI(UIDefaults defaults) {
-    if (!JBUI.isHiDPI()) return;
+    Object prevScaleVal = defaults.get("hidpi.scaleFactor");
+    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
+
+    if (prevScale == JBUI.scale(1f)) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
-                                         "Tree.rightChildIndent");
-    List<String> patched = new ArrayList<String>();
+                                           "Tree.rightChildIndent");
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();
@@ -573,16 +553,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
       } else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
-          if (!"true".equals(defaults.get(key +".hidpi.patched"))) {
-            entry.setValue(Integer.valueOf(JBUI.scale((Integer)value)));
-            patched.add(key);
-          }
+          int normValue = (int)((Integer)value / prevScale);
+          entry.setValue(Integer.valueOf(JBUI.scale(normValue)));
         }
       }
     }
-    for (String key : patched) {
-      defaults.put(key + ".hidpi.patched", "true");
-    }
+    defaults.put("hidpi.scaleFactor", JBUI.scale(1f));
   }
 
   public static void updateToolWindows() {
@@ -754,7 +730,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
       JBUI.setScaleFactor(uiSettings.FONT_SIZE/12f);
-      initFontDefaults(uiDefaults, uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
+      initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -861,9 +837,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  static void initFontDefaults(UIDefaults defaults, String fontFace, int fontSize) {
+  static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
     defaults.put("Tree.ancestorInputMap", null);
-    FontUIResource uiFont = new FontUIResource(fontFace, Font.PLAIN, fontSize);
     FontUIResource textFont = new FontUIResource("Serif", Font.PLAIN, fontSize);
     FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, fontSize);
 

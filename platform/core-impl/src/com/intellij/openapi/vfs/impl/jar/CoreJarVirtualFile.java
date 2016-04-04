@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl.jar;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.SmartList;
@@ -68,7 +69,9 @@ public class CoreJarVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public String getPath() {
-    if (myParent == null) return myHandler.getFile().getPath() + "!/";
+    if (myParent == null) {
+      return FileUtil.toSystemIndependentName(myHandler.getFile().getPath()) + "!/";
+    }
 
     String parentPath = myParent.getPath();
     StringBuilder answer = new StringBuilder(parentPath.length() + 1 + myName.length());

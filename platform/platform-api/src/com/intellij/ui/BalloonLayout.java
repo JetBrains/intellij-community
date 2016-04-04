@@ -20,7 +20,11 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.Balloon;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface BalloonLayout {
-  void add(Balloon balloon);
+  void add(@NotNull Balloon balloon);
+
+  void add(@NotNull Balloon balloon, @Nullable Object layoutData);
 }

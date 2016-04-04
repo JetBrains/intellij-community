@@ -65,7 +65,9 @@ public class GradleProjectImportNotificationListener extends ExternalSystemTaskN
 
           errorMessage = text.substring(start).replaceAll(EOL_TAG, "\n");
           NotificationData notification = new NotificationData(
-            group, errorMessage, NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
+            group, errorMessage,
+            StringUtil.equals("Performance statistics", group) ? NotificationCategory.INFO : NotificationCategory.WARNING,
+            NotificationSource.PROJECT_SYNC);
 
           if (path != null) {
             notification.setNavigatable(new MyNavigatable(new File(path), project));

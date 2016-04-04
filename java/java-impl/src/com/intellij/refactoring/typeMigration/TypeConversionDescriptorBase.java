@@ -16,7 +16,12 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TypeConversionDescriptorBase {
 
@@ -33,7 +38,26 @@ public class TypeConversionDescriptorBase {
     myRoot = root;
   }
 
-  public void replace(PsiExpression expression){}
+  /**
+   * @return converted expression type or null if not known
+   */
+  @Nullable
+  public PsiType conversionType() {
+    return null;
+  }
+
+  /**
+   * @return substitutor of converted method parameters
+   * or null if expression is not method call expression
+   */
+  @Nullable
+  public PsiSubstitutor getConvertedMethodParameters() {
+    return null;
+  }
+
+  public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+    return expression;
+  }
 
   @Override
   public String toString() {

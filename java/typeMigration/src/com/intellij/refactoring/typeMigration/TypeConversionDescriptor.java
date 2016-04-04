@@ -5,12 +5,14 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,16 +27,26 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
   private String myStringToReplace = null;
   private String myReplaceByString = "$";
   private PsiExpression myExpression;
+  private PsiType myConversionType;
 
   public TypeConversionDescriptor(@NonNls final String stringToReplace, @NonNls final String replaceByString) {
-    myStringToReplace = stringToReplace;
-    myReplaceByString = replaceByString;
+    this(stringToReplace, replaceByString, (PsiExpression)null);
   }
 
   public TypeConversionDescriptor(@NonNls final String stringToReplace, @NonNls final String replaceByString, final PsiExpression expression) {
     myStringToReplace = stringToReplace;
     myReplaceByString = replaceByString;
     myExpression = expression;
+  }
+
+  public TypeConversionDescriptor(@NonNls final String stringToReplace, @NonNls final String replaceByString, PsiType conversionType) {
+    this(stringToReplace, replaceByString);
+    myConversionType = conversionType;
+  }
+
+  public TypeConversionDescriptor withConversionType(PsiType conversionType) {
+    myConversionType = conversionType;
+    return this;
   }
 
   public void setStringToReplace(String stringToReplace) {
@@ -61,33 +73,35 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     myExpression = expression;
   }
 
+  @Nullable
   @Override
-  public void replace(PsiExpression expression) {
+  public PsiType conversionType() {
+    return myConversionType;
+  }
+
+  @Override
+  public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
     if (getExpression() != null) expression = getExpression();
-    final Project project = expression.getProject();
+    return replaceExpression(expression, getStringToReplace(), getReplaceByString());
+  }
+
+  @NotNull
+  public static PsiExpression replaceExpression(@NotNull PsiExpression expression,
+                                                String stringToReplace,
+                                                String replaceByString) {
+    Project project = expression.getProject();
     final ReplaceOptions options = new ReplaceOptions();
-    final MatchOptions matchOptions = new MatchOptions();
+    final MatchOptions matchOptions = options.getMatchOptions();
     matchOptions.setFileType(StdFileTypes.JAVA);
-    options.setMatchOptions(matchOptions);
     final Replacer replacer = new Replacer(project, null);
-    try {
-      final String replacement = replacer.testReplace(expression.getText(), getStringToReplace(), getReplaceByString(), options);
-      try {
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(
-          JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression)));
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    final String replacement = replacer.testReplace(expression.getText(), stringToReplace, replaceByString, options);
+    return (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(
+      JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression)));
   }
 
   @Override
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     if (myReplaceByString != null) {
       buf.append(myReplaceByString);
     }

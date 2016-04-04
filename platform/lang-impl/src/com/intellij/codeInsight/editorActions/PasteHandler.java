@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,8 @@ import java.util.Map;
 public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.customPasteProvider");
+  
+  private static final int LINE_LIMIT_FOR_BULK_CHANGE = 5000;
 
   private final EditorActionHandler myOriginalHandler;
 
@@ -350,28 +352,19 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   private static void indentPlainTextBlock(final Document document, final int startOffset, final int endOffset, final int indentLevel) {
     CharSequence chars = document.getCharsSequence();
     int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");
-    int line = document.getLineNumber(startOffset);
-    if (spaceEnd > endOffset || indentLevel <= 0 || line >= document.getLineCount() - 1 || chars.charAt(spaceEnd) == '\n') {
+    final int startLine = document.getLineNumber(startOffset);
+    if (spaceEnd > endOffset || indentLevel <= 0 || startLine >= document.getLineCount() - 1 || chars.charAt(spaceEnd) == '\n') {
       return;
     }
 
-    int linesToAdjustIndent = 0;
-    for (int i = line + 1; i < document.getLineCount(); i++) {
-      if (document.getLineStartOffset(i) >= endOffset) {
-        break;
-      }
-      linesToAdjustIndent++;
-    }
+    int endLine = startLine + 1;
+    while (endLine < document.getLineCount() && document.getLineStartOffset(endLine) < endOffset) endLine++;
 
-    String indentString = StringUtil.repeatSymbol(' ', indentLevel);
-
-    for (; linesToAdjustIndent > 0; linesToAdjustIndent--) {
-      int lineStartOffset = document.getLineStartOffset(++line);
-      document.insertString(lineStartOffset, indentString);
-    }
+    final String indentString = StringUtil.repeatSymbol(' ', indentLevel);
+    indentLines(document, startLine + 1, endLine - 1, indentString);
   }
 
-  private static void indentBlockWithFormatter(Project project, Document document, int startOffset, int endOffset, PsiFile file) {
+  private static void indentBlockWithFormatter(Project project, final Document document, int startOffset, int endOffset, PsiFile file) {
 
     // Algorithm: the main idea is to process the first line of the pasted block, adjust its indent if necessary, calculate indent
     // adjustment string and apply to each line of the pasted block starting from the second one.
@@ -404,7 +397,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     //         pasted line 2]
     //       We adjust the first line via formatter then and apply first line's indent to all subsequent pasted lines.
 
-    CharSequence chars = document.getCharsSequence();
+    final CharSequence chars = document.getCharsSequence();
     final int firstLine = document.getLineNumber(startOffset);
     final int firstLineStart = document.getLineStartOffset(firstLine);
 
@@ -462,9 +455,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       int firstNonWsOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
       if (firstNonWsOffset > firstLineStart) {
         CharSequence toInsert = chars.subSequence(firstLineStart, firstNonWsOffset);
-        for (int line = firstLine + 1; line <= lastLine; line++) {
-          document.insertString(document.getLineStartOffset(line), toInsert);
-        }
+        indentLines(document, firstLine + 1, lastLine, toInsert);
       }
       return;
     }
@@ -491,9 +482,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       int indentOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
       if (indentOffset > firstLineStart) {
         CharSequence toInsert = chars.subSequence(firstLineStart, indentOffset);
-        for (int line = firstLine + 1; line <= lastLine; line++) {
-          document.insertString(document.getLineStartOffset(line), toInsert);
-        }
+        indentLines(document, firstLine + 1, lastLine, toInsert);
       }
       return;
     }
@@ -507,9 +496,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
     if (diff > 0) {
       CharSequence toInsert = chars.subSequence(anchorLineStart, anchorLineStart + diff);
-      for (int line = anchorLine + 1; line <= lastLine; line++) {
-        document.insertString(document.getLineStartOffset(line), toInsert);
-      }
+      indentLines(document, anchorLine + 1, lastLine, toInsert);
       return;
     }
 
@@ -537,20 +524,39 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         desiredSymbolsToRemove = -diff;
       }
 
-      for (int line = anchorLine + 1; line <= lastLine; line++) {
-        int currentLineStart = document.getLineStartOffset(line);
-        int currentLineIndentOffset = CharArrayUtil.shiftForward(chars, currentLineStart, " \t");
-        int symbolsToRemove = Math.min(currentLineIndentOffset - currentLineStart, desiredSymbolsToRemove);
-        if (symbolsToRemove > 0) {
-          document.deleteString(currentLineStart, currentLineStart + symbolsToRemove);
+      Runnable deindentTask = new Runnable() {
+        public void run() {
+          for (int line = anchorLine + 1; line <= lastLine; line++) {
+            int currentLineStart = document.getLineStartOffset(line);
+            int currentLineIndentOffset = CharArrayUtil.shiftForward(chars, currentLineStart, " \t");
+            int symbolsToRemove = Math.min(currentLineIndentOffset - currentLineStart, desiredSymbolsToRemove);
+            if (symbolsToRemove > 0) {
+              document.deleteString(currentLineStart, currentLineStart + symbolsToRemove);
+            }
+          }
         }
-      }
+      };
+      DocumentUtil.executeInBulk(document, lastLine - anchorLine > LINE_LIMIT_FOR_BULK_CHANGE, deindentTask);
     }
     else {
       CharSequence toInsert = chars.subSequence(anchorLineStart, diff + startOffset);
-      for (int line = anchorLine + 1; line <= lastLine; line++) {
-        document.insertString(document.getLineStartOffset(line), toInsert);
-      }
+      indentLines(document, anchorLine + 1, lastLine, toInsert);
     }
+  }
+
+  /**
+   * Inserts specified string at the beginning of lines from <code>startLine</code> to <code>endLine</code> inclusive.
+   */
+  private static void indentLines(final @NotNull Document document, 
+                                  final int startLine, final int endLine, final @NotNull CharSequence indentString) {
+    Runnable indentTask = new Runnable() {
+      public void run() {
+        for (int line = startLine; line <= endLine; line++) {
+          int lineStartOffset = document.getLineStartOffset(line);
+          document.insertString(lineStartOffset, indentString);
+        }
+      }
+    };
+    DocumentUtil.executeInBulk(document, endLine - startLine > LINE_LIMIT_FOR_BULK_CHANGE, indentTask);
   }
 }

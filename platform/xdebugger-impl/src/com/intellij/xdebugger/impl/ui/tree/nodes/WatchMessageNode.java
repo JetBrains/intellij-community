@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import javax.swing.*;
  */
 public class WatchMessageNode extends MessageTreeNode implements WatchNode {
   private final XExpression myExpression;
+  private volatile boolean myObsolete;
 
   private WatchMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull XExpression expression, final Icon icon) {
     super(tree, parent, true);
@@ -64,5 +65,15 @@ public class WatchMessageNode extends MessageTreeNode implements WatchNode {
   @Override
   public String toString() {
     return myExpression.getExpression();
+  }
+
+  @Override
+  public void setObsolete() {
+    myObsolete = true;
+  }
+
+  @Override
+  public boolean isObsolete() {
+    return myObsolete;
   }
 }

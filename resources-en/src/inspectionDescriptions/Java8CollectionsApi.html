@@ -1,0 +1,11 @@
+<html>
+<body>
+Inspection detects usages of java's <b>Map</b> when they can be replaced with methods <b>putIfAbsent</b>. For example:
+<code><pre>
+  if (!map.containsKey(aKey)) {
+    map.put(aKey, aValue);
+  }
+</pre>
+</code>
+</body>
+</html>

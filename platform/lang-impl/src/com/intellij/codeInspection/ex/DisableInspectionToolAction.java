@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,18 +68,27 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
   }
 
   @Override
-  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+  public void applyFix(@NotNull Project project, final PsiFile file, @Nullable Editor editor) {
+    modifyAndCommitProjectProfile(new Consumer<ModifiableModel>() {
+      @Override
+      public void consume(ModifiableModel modifiableModel) {
+        modifiableModel.disableTool(myToolId, file);
+      }
+    }, project);
+    DaemonCodeAnalyzer.getInstance(project).restart();
+  }
+
+  public static void modifyAndCommitProjectProfile(Consumer<ModifiableModel> action, Project project) {
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
     ModifiableModel model = inspectionProfile.getModifiableModel();
-    model.disableTool(myToolId, file);
+    action.consume(model);
     try {
       model.commit();
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
     }
-    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
   @Override

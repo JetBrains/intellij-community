@@ -221,7 +221,6 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_AFTER_QUEST",
                                    "SPACE_BEFORE_COLON",
                                    "SPACE_AFTER_COLON",
-                                   "SPACE_BEFORE_TYPE_PARAMETER_LIST",
                                    "SPACE_BEFORE_ANOTATION_PARAMETER_LIST",
                                    "SPACE_WITHIN_ANNOTATION_PARENTHESES"
       );

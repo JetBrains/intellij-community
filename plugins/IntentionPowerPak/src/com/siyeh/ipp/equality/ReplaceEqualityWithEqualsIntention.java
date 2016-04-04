@@ -15,7 +15,10 @@
  */
 package com.siyeh.ipp.equality;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -44,46 +47,31 @@ public class ReplaceEqualityWithEqualsIntention extends MutablyNamedIntention {
     return new ObjectEqualityPredicate();
   }
 
-  public void processIntention(PsiElement element) {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiBinaryExpression exp = (PsiBinaryExpression)element;
     final PsiExpression lhs = exp.getLOperand();
     final PsiExpression rhs = exp.getROperand();
     if (rhs == null) {
       return;
     }
-    final PsiExpression strippedLhs =
-      ParenthesesUtils.stripParentheses(lhs);
+    final PsiExpression strippedLhs = ParenthesesUtils.stripParentheses(lhs);
     if (strippedLhs == null) {
       return;
     }
-    final PsiExpression strippedRhs =
-      ParenthesesUtils.stripParentheses(rhs);
+    final PsiExpression strippedRhs = ParenthesesUtils.stripParentheses(rhs);
     if (strippedRhs == null) {
       return;
     }
-    final IElementType tokenType = exp.getOperationTokenType();
+    final String lhText = strippedLhs.getText();
+    final String rhText = strippedRhs.getText();
+
+    final String prefix = exp.getOperationTokenType().equals(JavaTokenType.EQEQ) ? "" : "!";
     @NonNls final String expString;
-    if (tokenType.equals(JavaTokenType.EQEQ)) {
-      if (ParenthesesUtils.getPrecedence(strippedLhs) >
-          ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-        expString = '(' + strippedLhs.getText() + ").equals(" +
-                    strippedRhs.getText() + ')';
-      }
-      else {
-        expString = strippedLhs.getText() + ".equals(" +
-                    strippedRhs.getText() + ')';
-      }
+    if (ParenthesesUtils.getPrecedence(strippedLhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+      expString = prefix + '(' + lhText + ").equals(" + rhText + ')';
     }
     else {
-      if (ParenthesesUtils.getPrecedence(strippedLhs) >
-          ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-        expString = "!(" + strippedLhs.getText() + ").equals(" +
-                    strippedRhs.getText() + ')';
-      }
-      else {
-        expString = '!' + strippedLhs.getText() + ".equals(" +
-                    strippedRhs.getText() + ')';
-      }
+      expString = prefix + lhText + ".equals(" + rhText + ')';
     }
     PsiReplacementUtil.replaceExpression(exp, expString);
   }

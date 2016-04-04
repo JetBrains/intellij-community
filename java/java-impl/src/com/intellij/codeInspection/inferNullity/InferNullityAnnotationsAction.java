@@ -103,6 +103,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
               }
               progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
             }
+            if (!(file instanceof PsiJavaFile)) return;
             final Module module = ModuleUtilCore.findModuleForPsiElement(file);
             if (module != null && processed.add(module)) {
               if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) < 0) {

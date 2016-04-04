@@ -26,6 +26,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,16 +40,14 @@ import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameIdea");
-  private final Reference<PsiElement> myContext;
+  private final SmartPsiElementPointer myContext;
 
-  public DefaultChooseByNameItemProvider(PsiElement context) {
-    myContext = new WeakReference<PsiElement>(context);
+  public DefaultChooseByNameItemProvider(@Nullable PsiElement context) {
+    myContext = context == null ? null : SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(context);
   }
 
   @Override
@@ -63,6 +63,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     final ChooseByNameModel model = base.getModel();
     String matchingPattern = convertToMatchingPattern(base, namePattern);
+    if (matchingPattern == null) return true;
+
     List<MatchResult> namesList = new ArrayList<MatchResult>();
 
     final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<MatchResult>(namesList);
@@ -110,7 +112,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     final Map<Object, MatchResult> qualifierMatchResults = ContainerUtil.newIdentityTroveMap();
 
     Comparator<Object> weightComparator = new Comparator<Object>() {
-      Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model : new PathProximityComparator(myContext.get());
+      Comparator<Object> modelComparator = model instanceof Comparator
+                                           ? (Comparator<Object>)model
+                                           : new PathProximityComparator(myContext == null ? null :myContext.getElement());
 
       @Override
       public int compare(Object o1, Object o2) {
@@ -294,8 +298,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   @NotNull
   @Override
   public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
+    pattern = convertToMatchingPattern(base, pattern);
+    if (pattern == null) return Collections.emptyList();
+
     final List<String> filtered = new ArrayList<String>();
-    processNamesByPattern(base, names, convertToMatchingPattern(base, pattern), ProgressIndicatorProvider.getGlobalProgressIndicator(), new Consumer<MatchResult>() {
+    processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), new Consumer<MatchResult>() {
       @Override
       public void consume(MatchResult result) {
         synchronized (filtered) {
@@ -330,12 +337,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  @NotNull
+  @Nullable
   private static String convertToMatchingPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
     pattern = removeModelSpecificMarkup(base.getModel(), pattern);
 
-    if (!base.canShowListForEmptyPattern()) {
-      LOG.assertTrue(!pattern.isEmpty(), base);
+    if (!base.canShowListForEmptyPattern() && pattern.isEmpty()) {
+      return null;
     }
 
     return addSearchAnywherePatternDecorationIfNeeded(base, pattern);

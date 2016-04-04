@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWildcardType;
@@ -63,18 +62,18 @@ public class SubtypingConstraint implements ConstraintFormula {
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+    final boolean reduceResult = doReduce(constraints);
+    if (!reduceResult) {
+      session.registerIncompatibleErrorMessage(session.getInferenceVariables(), session.getPresentableText(myS) + " can be converted to " + session.getPresentableText(myT));
+    }
+    return reduceResult;
+  }
+
+  private boolean doReduce(List<ConstraintFormula> constraints) {
     if (myT instanceof PsiWildcardType) {
       PsiType tBound = ((PsiWildcardType)myT).getBound();
       if (tBound == null) {
         return true;
-      }
-
-      if (tBound instanceof PsiCapturedWildcardType) {
-        tBound = ((PsiCapturedWildcardType)tBound).getUpperBound();
-      }
-
-      if (myS instanceof PsiCapturedWildcardType) {
-        myS = ((PsiCapturedWildcardType)myS).getWildcard();
       }
 
       if (((PsiWildcardType)myT).isExtends()) {
@@ -86,7 +85,7 @@ public class SubtypingConstraint implements ConstraintFormula {
           }
 
           if (((PsiWildcardType)myS).isExtends()) {
-            constraints.add(new StrictSubtypingConstraint(tBound, sBound instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)sBound).getUpperBound() : sBound));
+            constraints.add(new StrictSubtypingConstraint(tBound, sBound));
             return true;
           }
           
@@ -108,9 +107,6 @@ public class SubtypingConstraint implements ConstraintFormula {
         if (myS instanceof PsiWildcardType) {
           final PsiType sBound = ((PsiWildcardType)myS).getBound();
           if (sBound != null && ((PsiWildcardType)myS).isSuper()) {
-            if (sBound instanceof PsiCapturedWildcardType) {
-              return false;
-            }
             constraints.add(new StrictSubtypingConstraint(sBound, tBound));
             return true;
           }

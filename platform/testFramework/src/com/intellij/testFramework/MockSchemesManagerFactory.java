@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@ package com.intellij.testFramework;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MockSchemesManagerFactory extends SchemesManagerFactory {
   private static final SchemesManager EMPTY = new EmptySchemesManager();
 
-  @NotNull
   @Override
-  public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String directoryName,
-                                                                                                      @NotNull SchemeProcessor<E> processor,
-                                                                                                      @NotNull RoamingType roamingType) {
-    //noinspection unchecked
+  protected <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> create(@NotNull String directoryName,
+                                                                                           @NotNull SchemeProcessor<E> processor,
+                                                                                           @NotNull RoamingType roamingType,
+                                                                                           @Nullable String presentableName) {
     return EMPTY;
   }
 }

@@ -17,49 +17,62 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
-public class DummyFileSystemTest extends PlatformTestCase {
-  private DummyFileSystem fs;
+import java.io.IOException;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    fs = new DummyFileSystem();
-  }
+import static com.intellij.openapi.util.Pair.pair;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+public class DummyFileSystemTest extends BareTestFixtureTestCase {
+  @Test
   public void testDeletionEvents() throws Exception {
-    final VirtualFile root = fs.createRoot("root");
-    VirtualFile f = new WriteAction<VirtualFile>() {
+    DummyFileSystem fs = new DummyFileSystem();
+
+    Pair<VirtualFile, VirtualFile> pair = new WriteAction<Pair<VirtualFile, VirtualFile>>() {
       @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile res = root.createChildData(this, "f");
-        result.setResult(res);
+      protected void run(@NotNull Result<Pair<VirtualFile, VirtualFile>> result) throws IOException {
+        VirtualFile root = fs.createRoot("root");
+        VirtualFile file = root.createChildData(this, "f");
+        result.setResult(pair(root, file));
       }
     }.execute().getResultObject();
+    VirtualFile root = pair.first, file = pair.second;
 
-    final VirtualFileEvent[] events = new VirtualFileEvent[2];
-    fs.addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileEvent[] events = new VirtualFileEvent[2];
+
+    VirtualFileAdapter listener = new VirtualFileAdapter() {
       @Override
-      public void fileDeleted(@NotNull VirtualFileEvent e) {
+      public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
         events[0] = e;
       }
 
       @Override
-      public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
+      public void fileDeleted(@NotNull VirtualFileEvent e) {
         events[1] = e;
       }
-    });
+    };
+    fs.addVirtualFileListener(listener);
+    Disposer.register(getTestRootDisposable(), () -> fs.removeVirtualFileListener(listener));
 
-    f.delete(this);
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws IOException {
+        file.delete(this);
+      }
+    }.execute();
 
-    for (int i = 0; i < 2; i++) {
-      assertNotNull(events[i]);
-      assertEquals(f, events[i].getFile());
-      assertEquals("f", events[i].getFileName());
-      assertEquals(root, events[i].getParent());
+    for (VirtualFileEvent event : events) {
+      assertNotNull(event);
+      assertEquals(file, event.getFile());
+      assertEquals("f", event.getFileName());
+      assertEquals(root, event.getParent());
     }
   }
 }

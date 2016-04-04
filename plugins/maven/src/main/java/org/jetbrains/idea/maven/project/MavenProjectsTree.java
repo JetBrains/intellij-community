@@ -25,8 +25,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
+import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
@@ -1237,27 +1240,60 @@ public class MavenProjectsTree {
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    resolve(project, mavenProject, generalSettings, embeddersManager, console, new ResolveContext(), process);
+    resolve(project, ContainerUtil.list(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(), process);
   }
 
   public void resolve(@NotNull Project project,
-                      @NotNull MavenProject mavenProject,
+                      @NotNull Collection<MavenProject> mavenProjects,
                       @NotNull MavenGeneralSettings generalSettings,
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
                       @NotNull ResolveContext context,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+
+    if(mavenProjects.isEmpty()) return;
+
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
     embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots());
 
     try {
       process.checkCanceled();
-      process.setText(ProjectBundle.message("maven.resolving.pom", mavenProject.getDisplayName()));
+      final List<String> names = ContainerUtil.mapNotNull(mavenProjects, new Function<MavenProject, String>() {
+        @Override
+        public String fun(MavenProject project) {
+          return project.getDisplayName();
+        }
+      });
+      final String text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200);
+      process.setText(ProjectBundle.message("maven.resolving.pom", text));
       process.setText2("");
-      Pair<MavenProjectChanges, NativeMavenProjectHolder> resolveResult =
-        mavenProject.resolve(project, generalSettings, embedder, new MavenProjectReader(), myProjectLocator, context);
 
-      fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second);
+      final MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(new LinkedHashSet<String>(), new LinkedHashSet<String>());
+      Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, new Function<MavenProject, VirtualFile>() {
+        @Override
+        public VirtualFile fun(MavenProject project) {
+          explicitProfiles.getEnabledProfiles().addAll(project.getActivatedProfilesIds().getEnabledProfiles());
+          explicitProfiles.getDisabledProfiles().addAll(project.getActivatedProfilesIds().getDisabledProfiles());
+          return project.getFile();
+        }
+      });
+      Collection<MavenProjectReaderResult> results = new MavenProjectReader().resolveProject(
+        generalSettings, embedder, files, explicitProfiles, myProjectLocator);
+
+      for (MavenProjectReaderResult result : results) {
+        for (MavenProject mavenProject : mavenProjects) {
+          if (mavenProject.getMavenId().equals(result.mavenModel.getMavenId())) {
+            MavenProjectChanges changes = mavenProject.set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
+            if (result.nativeMavenProject != null) {
+              for (MavenImporter eachImporter : mavenProject.getSuitableImporters()) {
+                eachImporter.resolve(project, mavenProject, result.nativeMavenProject, embedder, context);
+              }
+            }
+
+            fireProjectResolved(Pair.create(mavenProject, changes), result.nativeMavenProject);
+          }
+        }
+      }
     }
     finally {
       embeddersManager.release(embedder);

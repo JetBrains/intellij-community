@@ -2,7 +2,7 @@ import os  # @NoMove
 import sys  # @NoMove
 sys.path.insert(0, os.path.realpath(os.path.abspath('..')))
 
-import pydevd_reload
+from _pydevd_bundle import pydevd_reload
 import tempfile
 import unittest
 
@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
     def test_pydevd_reload(self):
 
         self.make_mod()
-        import x
+        import x  # @UnresolvedImport
 
         C = x.C
         COut = C
@@ -107,7 +107,7 @@ class Test(unittest.TestCase):
     def test_pydevd_reload2(self):
 
         self.make_mod()
-        import x
+        import x  # @UnresolvedImport
 
         c = x.C()
         cfoo = c.foo
@@ -269,7 +269,7 @@ class C:
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         foo = x.C().foo
         self.assertEqual(foo(), 0)
         self.make_mod(sample=SAMPLE_CODE2)
@@ -293,7 +293,7 @@ class C(object):
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         foo = x.C().foo
         self.assertEqual(foo(), 0)
         self.make_mod(sample=SAMPLE_CODE2)
@@ -324,7 +324,7 @@ class C(B):
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         call = x.C().call
         self.assertEqual(call(), 0)
         self.make_mod(sample=SAMPLE_CODE2)
@@ -349,7 +349,7 @@ class B(object):
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         foo = x.B().foo
         self.assertEqual(foo(), 1)
         self.make_mod(sample=SAMPLE_CODE2)
@@ -378,7 +378,7 @@ class B(object):
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         foo = x.B().foo
         self.assertEqual(foo(), 1)
         self.make_mod(sample=SAMPLE_CODE2)
@@ -406,7 +406,7 @@ class B(object):
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         foo = x.B().foo
         self.assertEqual(foo(), 1)
         self.make_mod(sample=SAMPLE_CODE2)
@@ -438,7 +438,7 @@ class B(object):
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         foo = x.B().foo
         self.assertEqual(foo(), 1)
         self.make_mod(sample=SAMPLE_CODE2)
@@ -446,7 +446,7 @@ class B(object):
         self.assertEqual(foo(), 2) #Actually updated it now!
 
 
-    def test_update_constant_with_custom_code(self):
+    def test_update_constant_with_custom_code2(self):
         SAMPLE_CODE1 = """
 
 class B(object):
@@ -472,7 +472,7 @@ class B(object):
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         foo = x.B().foo
         self.assertEqual(foo(), 1)
         self.make_mod(sample=SAMPLE_CODE2)
@@ -499,7 +499,7 @@ class B(object):
 """
 
         self.make_mod(sample=SAMPLE_CODE1)
-        import x
+        import x  # @UnresolvedImport
         B = x.B
         self.make_mod(sample=SAMPLE_CODE2)
         pydevd_reload.xreload(x)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
@@ -36,12 +37,14 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable {
+public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable {
   private final EditorImpl myEditor;
   
   private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
@@ -510,6 +513,21 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   void fireCaretRemoved(@NotNull Caret caret) {
     myCaretListeners.getMulticaster().caretRemoved(new CaretEvent(myEditor, caret, caret.getLogicalPosition(), caret.getLogicalPosition()));
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return "[in update: " + myIsInUpdate +
+           ", document changed: " + isDocumentChanged +
+           ", perform caret merging: " + myPerformCaretMergingAfterCurrentOperation +
+           ", current caret: " + myCurrentCaret +
+           ", all carets: " + ContainerUtil.map(myCarets, new Function<CaretImpl, String>() {
+      @Override
+      public String fun(CaretImpl caret) {
+        return caret.dumpState();
+      }
+    }) + "]";
   }
 
   private static class VisualPositionComparator implements Comparator<VisualPosition> {

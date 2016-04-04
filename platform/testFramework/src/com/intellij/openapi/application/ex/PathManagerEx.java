@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +39,7 @@ import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 
@@ -68,13 +70,11 @@ public class PathManagerEx {
   /**
    * Caches test data lookup strategy by class.
    */
-  private static final ConcurrentMap<Class, TestDataLookupStrategy> CLASS_STRATEGY_CACHE =
-    ContainerUtil.newConcurrentMap();
+  private static final ConcurrentMap<Class, TestDataLookupStrategy> CLASS_STRATEGY_CACHE = ContainerUtil.newConcurrentMap();
   private static final ConcurrentMap<String, Class> CLASS_CACHE = ContainerUtil.newConcurrentMap();
   private static Set<String> ourCommunityModules;
 
-  private PathManagerEx() {
-  }
+  private PathManagerEx() { }
 
   /**
    * Enumerates possible strategies of test data lookup.
@@ -175,7 +175,8 @@ public class PathManagerEx {
   /**
    * @return path to 'community' project home irrespective of current project
    */
-  private static String getCommunityHomePath() {
+  @NotNull
+  public static String getCommunityHomePath() {
     String path = PathManager.getHomePath();
     return isLocatedInCommunity() ? path : path + File.separator + "community";
   }
@@ -202,8 +203,8 @@ public class PathManagerEx {
   }
 
   /**
-   * Find file by its path relative to project home directory (the 'commmunity' project if {@code testClass} is located in the community project
-   * and the 'ultimate' project otherwise)
+   * Find file by its path relative to project home directory (the 'community' project if {@code testClass} is located
+   * in the community project, and the 'ultimate' project otherwise)
    */
   public static File findFileUnderProjectHome(String relativePath, Class<? extends TestCase> testClass) {
     String homePath = getHomePath(testClass);
@@ -340,8 +341,9 @@ public class PathManagerEx {
     }
   }
 
+  @SuppressWarnings("TestOnlyProblems")
   private static boolean isJUnitClass(Class<?> clazz) {
-    return TestCase.class.isAssignableFrom(clazz) || TestRunnerUtil.isJUnit4TestClass(clazz) || com.intellij.testFramework.Parameterized.class.isAssignableFrom(clazz);
+    return TestCase.class.isAssignableFrom(clazz) || TestRunnerUtil.isJUnit4TestClass(clazz) || Parameterized.class.isAssignableFrom(clazz);
   }
 
   @Nullable
@@ -404,9 +406,9 @@ public class PathManagerEx {
     }
 
     try {
-      Element componentRoot = JDomSerializationUtil
-        .findComponent(JDOMUtil.loadDocument(modulesXml).getRootElement(), ModuleManagerImpl.COMPONENT_NAME);
-      ModuleManagerImpl.ModulePath[] files = ModuleManagerImpl.getPathsToModuleFiles(componentRoot);
+      Element element = JDomSerializationUtil.findComponent(JDOMUtil.loadDocument(modulesXml).getRootElement(), ModuleManagerImpl.COMPONENT_NAME);
+      assert element != null;
+      ModuleManagerImpl.ModulePath[] files = ModuleManagerImpl.getPathsToModuleFiles(element);
       for (ModuleManagerImpl.ModulePath file : files) {
         String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(file.getPath()));
         ourCommunityModules.add(name);

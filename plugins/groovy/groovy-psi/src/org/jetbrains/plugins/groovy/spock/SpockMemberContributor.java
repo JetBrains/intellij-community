@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.Map;
 
@@ -41,8 +43,8 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
-    ClassHint classHint = processor.getHint(ClassHint.KEY);
-    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
       GrMethod method = PsiTreeUtil.getParentOfType(place, GrMethod.class);
       if (method == null) return;
 
@@ -64,8 +66,13 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
       }
     }
 
-    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
-      if ("get_".equals(ResolveUtil.getNameHint(processor))) {
+    if (ResolveUtil.shouldProcessMethods(classHint)) {
+      String nameHint = ResolveUtil.getNameHint(processor);
+      if (nameHint == null) {
+        nameHint = place instanceof GrReferenceExpression ? ((GrReferenceExpression)place).getReferenceName() : null;
+        if (nameHint != null) nameHint = GroovyPropertyUtils.getGetterNameNonBoolean(nameHint);
+      }
+      if ("get_".equals(nameHint)) {
         GrLightMethodBuilder m = new GrLightMethodBuilder(aClass.getManager(), "get_");
         m.setReturnType(null);
         if (!processor.execute(m, state)) return;

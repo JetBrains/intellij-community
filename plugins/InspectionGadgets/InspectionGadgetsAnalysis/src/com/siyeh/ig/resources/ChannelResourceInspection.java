@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class ChannelResourceInspection extends ResourceInspection {
     return InspectionGadgetsBundle.message("channel.opened.not.closed.display.name");
   }
 
+  @Override
   protected boolean isResourceCreation(PsiExpression expression) {
     if (!(expression instanceof PsiMethodCallExpression)) {
       return false;
@@ -59,7 +60,7 @@ public class ChannelResourceInspection extends ResourceInspection {
   }
 
   @Override
-  protected boolean isResourceFactoryClosed(PsiExpression expression, boolean insideTryAllowed) {
+  protected boolean isResourceFactoryClosed(PsiExpression expression) {
     if (!(expression instanceof PsiMethodCallExpression)) {
       return false;
     }

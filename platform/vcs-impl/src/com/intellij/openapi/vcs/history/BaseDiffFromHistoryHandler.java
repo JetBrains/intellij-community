@@ -20,12 +20,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -128,16 +126,7 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
   protected abstract String getPresentableName(@NotNull T revision);
 
   protected void showChangesDialog(@NotNull String title, @NotNull List<Change> changes) {
-    DialogBuilder dialogBuilder = new DialogBuilder(myProject);
-
-    dialogBuilder.setTitle(title);
-    dialogBuilder.setActionDescriptors(new DialogBuilder.ActionDescriptor[]{new DialogBuilder.CloseDialogAction()});
-    final ChangesBrowser changesBrowser =
-      new ChangesBrowser(myProject, null, changes, null, false, true, null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
-    changesBrowser.setChangesToDisplay(changes);
-    dialogBuilder.setCenterPanel(changesBrowser);
-    dialogBuilder.setPreferredFocusComponent(changesBrowser.getPreferredFocusedComponent());
-    dialogBuilder.showNotModal();
+    VcsDiffUtil.showChangesDialog(myProject, title, changes);
   }
 
   protected void showError(@NotNull VcsException e, @NotNull String logMessage) {

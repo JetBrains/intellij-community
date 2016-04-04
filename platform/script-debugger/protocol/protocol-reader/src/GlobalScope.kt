@@ -51,7 +51,7 @@ internal class State(typeWriters: Collection<TypeWriter<*>?>, private val basePa
     throw RuntimeException()
   }
 
-  public fun requireFactoryGenerationAndGetName(typeWriter: TypeWriter<*>): String {
+  fun requireFactoryGenerationAndGetName(typeWriter: TypeWriter<*>): String {
     val name = getTypeImplShortName(typeWriter)
     if (typesWithFactories.add(typeWriter)) {
       typesWithFactoriesList.add(typeWriter)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,10 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,19 +55,18 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
       return FoldingDescriptor.EMPTY;
     }
     final PsiJavaFile file = (PsiJavaFile) element;
-    final Project project = file.getProject();
     final List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
     boolean hasJsp = ContainerUtil.intersects(Arrays.asList(StdLanguages.JSP, StdLanguages.JSPX), file.getViewProvider().getLanguages());
     //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
     file.accept(hasJsp ? new JavaRecursiveElementVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        checkLiteral(project, expression, result);
+        checkLiteral(expression, result);
       }
     } : new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        checkLiteral(project, expression, result);
+        checkLiteral(expression, result);
       }
     });
 
@@ -80,9 +77,9 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return JavaCodeFoldingSettings.getInstance().isCollapseI18nMessages();
   }
 
-  private static void checkLiteral(Project project, PsiLiteralExpression expression, List<FoldingDescriptor> result) {
-    if (isI18nProperty(project, expression)) {
-      final IProperty property = getI18nProperty(project, expression);
+  private static void checkLiteral(PsiLiteralExpression expression, List<FoldingDescriptor> result) {
+    if (isI18nProperty(expression)) {
+      final IProperty property = getI18nProperty(expression);
       final HashSet<Object> set = new HashSet<Object>();
       set.add(property != null ? property : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       final String msg = formatI18nProperty(expression, property);
@@ -119,24 +116,24 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
-    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
+    final PsiElement element = node.getPsi();
     if (element instanceof PsiLiteralExpression) {
-      return getI18nMessage(element.getProject(), (PsiLiteralExpression)element);
+      return getI18nMessage((PsiLiteralExpression)element);
     } else if (element instanceof PsiMethodCallExpression) {
-      return formatMethodCallExpression(element.getProject(), (PsiMethodCallExpression)element);
+      return formatMethodCallExpression((PsiMethodCallExpression)element);
     }
     return element.getText();
   }
 
-  private static String formatMethodCallExpression(Project project, PsiMethodCallExpression methodCallExpression) {
+  private static String formatMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
     final PsiExpression[] args = methodCallExpression.getArgumentList().getExpressions();
     if (args.length > 0
         && args[0] instanceof PsiLiteralExpression
         && args[0].isValid()
-        && isI18nProperty(project, (PsiLiteralExpression)args[0])) {
-      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount((PsiLiteralExpression)args[0]);
+        && isI18nProperty((PsiLiteralExpression)args[0])) {
+      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(args[0]);
       if (args.length == 1 + count) {
-        String text = getI18nMessage(project, (PsiLiteralExpression)args[0]);
+        String text = getI18nMessage((PsiLiteralExpression)args[0]);
         for (int i = 1; i < count + 1; i++) {
           Object value = JavaConstantExpressionEvaluator.computeConstantExpression(args[i], false);
           if (value == null) {
@@ -162,17 +159,17 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return methodCallExpression.getText();
   }
 
-  private static String getI18nMessage(@NotNull Project project, PsiLiteralExpression literal) {
-    final IProperty property = getI18nProperty(project, literal);
+  private static String getI18nMessage(PsiLiteralExpression literal) {
+    final IProperty property = getI18nProperty(literal);
     return property == null ? literal.getText() : formatI18nProperty(literal, property);
   }
 
   @Nullable
-  private static IProperty getI18nProperty(Project project, PsiLiteralExpression literal) {
+  public static IProperty getI18nProperty(PsiLiteralExpression literal) {
     final Property property = (Property)literal.getUserData(CACHE);
     if (property == NULL) return null;
     if (property != null && isValid(property, literal)) return property;
-    if (isI18nProperty(project, literal)) {
+    if (isI18nProperty(literal)) {
       final PsiReference[] references = literal.getReferences();
       for (PsiReference reference : references) {
         if (reference instanceof PsiPolyVariantReference) {
@@ -213,8 +210,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return isFoldingsOn();
   }
 
-
-  public static boolean isI18nProperty(@NotNull Project project, @NotNull PsiLiteralExpression expr) {
+  public static boolean isI18nProperty(@NotNull PsiLiteralExpression expr) {
     if (! isStringLiteral(expr)) return false;
     final IProperty property = expr.getUserData(CACHE);
     if (property == NULL) return false;
@@ -222,7 +218,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
     final Map<String, Object> annotationParams = new HashMap<String, Object>();
     annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(project, expr, annotationParams);
+    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, annotationParams);
     if (!isI18n) {
       expr.putUserData(CACHE, NULL);
     }

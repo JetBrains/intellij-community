@@ -19,7 +19,7 @@ class DefaultConstructor {
         
         void test2() {
             I1<Inner> i1 = Inner :: new;
-            <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor.I1<java.lang.Integer>'">I1<Integer> i1Int = Inner :: new;</error>
+            I1<Integer> i1Int = <error descr="Bad return type in method reference: cannot convert DefaultConstructor.Outer.Inner to java.lang.Integer">Inner :: new</error>;
             I2<Inner, Outer> i2 =  Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
         }
     }

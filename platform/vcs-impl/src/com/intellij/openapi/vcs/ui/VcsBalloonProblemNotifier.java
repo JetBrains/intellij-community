@@ -41,38 +41,38 @@ public class VcsBalloonProblemNotifier implements Runnable {
   private final Project myProject;
   private final String myMessage;
   private final MessageType myMessageType;
-  private final boolean myShowOverChangesView;
   @Nullable private final NamedRunnable[] myNotificationListener;
 
   public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull final String message, final MessageType messageType) {
-    this(project, message, messageType, true, null);
+    this(project, message, messageType, null);
   }
 
-  public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull final String message, final MessageType messageType, boolean showOverChangesView,
+  public VcsBalloonProblemNotifier(@NotNull final Project project,
+                                   @NotNull final String message,
+                                   final MessageType messageType,
                                    @Nullable final NamedRunnable[] notificationListener) {
     myProject = project;
     myMessage = message;
     myMessageType = messageType;
-    myShowOverChangesView = showOverChangesView;
     myNotificationListener = notificationListener;
   }
 
   public static void showOverChangesView(@NotNull final Project project, @NotNull final String message, final MessageType type,
                                          final NamedRunnable... notificationListener) {
-    show(project, message, type, true, notificationListener);
+    show(project, message, type, notificationListener);
   }
 
   public static void showOverVersionControlView(@NotNull final Project project, @NotNull final String message, final MessageType type) {
-    show(project, message, type, false, null);
+    show(project, message, type, null);
   }
 
-  private static void show(final Project project, final String message, final MessageType type, final boolean showOverChangesView,
+  private static void show(final Project project, final String message, final MessageType type,
                            @Nullable final NamedRunnable[] notificationListener) {
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment()) return;
     final Runnable showErrorAction = new Runnable() {
       public void run() {
-        new VcsBalloonProblemNotifier(project, message, type, showOverChangesView, notificationListener).run();
+        new VcsBalloonProblemNotifier(project, message, type, notificationListener).run();
       }
     };
     if (application.isDispatchThread()) {

@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
@@ -35,6 +37,8 @@ import java.util.*;
  * @see LineLayout
  */
 class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
+  private static final Logger LOG = Logger.getInstance(TextLayoutCache.class);
+  
   private static final int MAX_CHUNKS_IN_ACTIVE_EDITOR = 1000;
   private static final int MAX_CHUNKS_IN_INACTIVE_EDITOR = 10;
   
@@ -61,7 +65,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     myView = view;
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
-    myBidiNotRequiredMarker = new LineLayout(view, "", Font.PLAIN);
+    myBidiNotRequiredMarker = LineLayout.create(view, "", Font.PLAIN);
     Disposer.register(this, new UiNotifyConnector(view.getEditor().getContentComponent(), new Activatable.Adapter() {
       @Override
       public void hideNotify() {
@@ -125,19 +129,18 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   @NotNull
   LineLayout getLineLayout(int line) {
     checkDisposed();
+    if (line >= myLines.size()) LOG.error("Unexpected cache state", new Attachment("editorState.txt", myView.getEditor().dumpState()));
     LineLayout result = myLines.get(line);
     if (result == null || result == myBidiNotRequiredMarker) {
-      result = createLineLayout(line, result == myBidiNotRequiredMarker);
+      result = LineLayout.create(myView, line, result == myBidiNotRequiredMarker);
       myLines.set(line, result);
     }
     return result;
   }
 
-  @NotNull
-  private LineLayout createLineLayout(int line, boolean skipBidiLayout) {
-    int lineStart = myDocument.getLineStartOffset(line);
-    int lineEnd = myDocument.getLineEndOffset(line);
-    return new LineLayout(myView, lineStart, lineEnd, skipBidiLayout);
+  boolean hasCachedLayoutFor(int line) {
+    LineLayout layout = myLines.get(line);
+    return layout != null && layout != myBidiNotRequiredMarker;
   }
 
   private int getChunkCacheSizeLimit() {
@@ -161,6 +164,6 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   private void checkDisposed() {
-    if (myLines == null) throw new IllegalStateException("Editor is already disposed");
+    if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
 }

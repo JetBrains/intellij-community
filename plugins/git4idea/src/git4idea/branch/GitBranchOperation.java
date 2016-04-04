@@ -59,6 +59,7 @@ abstract class GitBranchOperation {
   private final GitVcsSettings mySettings;
 
   @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
+  @NotNull private final Collection<GitRepository> mySkippedRepositories;
   @NotNull private final Collection<GitRepository> myRemainingRepositories;
 
   protected GitBranchOperation(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git,
@@ -76,6 +77,7 @@ abstract class GitBranchOperation {
       }
     });
     mySuccessfulRepositories = new ArrayList<GitRepository>();
+    mySkippedRepositories = new ArrayList<GitRepository>();
     myRemainingRepositories = new ArrayList<GitRepository>(myRepositories);
     mySettings = myFacade.getSettings(myProject);
   }
@@ -124,17 +126,36 @@ abstract class GitBranchOperation {
   }
 
   /**
+   * Marks repositories as successful, i.e. they won't be handled again.
+   */
+  protected void markSkip(GitRepository... repositories) {
+    for (GitRepository repository : repositories) {
+      mySkippedRepositories.add(repository);
+      myRemainingRepositories.remove(repository);
+    }
+  }
+
+  /**
    * @return true if the operation has already succeeded in at least one of repositories.
    */
   protected boolean wereSuccessful() {
     return !mySuccessfulRepositories.isEmpty();
+  }
+
+  protected boolean wereSkipped() {
+    return !mySkippedRepositories.isEmpty();
   }
   
   @NotNull
   protected Collection<GitRepository> getSuccessfulRepositories() {
     return mySuccessfulRepositories;
   }
-  
+
+  @NotNull
+  protected Collection<GitRepository> getSkippedRepositories() {
+    return mySkippedRepositories;
+  }
+
   @NotNull
   protected String successfulRepositoriesJoined() {
     return GitUtil.joinToHtml(mySuccessfulRepositories);

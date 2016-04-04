@@ -21,7 +21,6 @@ import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
-import org.junit.runner.notification.Failure;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -190,7 +189,12 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
       try {
         final String trace = getTrace(failure);
         ComparisonFailureData notification = null;
-        if (failure instanceof ComparisonFailure || failure.getClass().getName().equals("org.junit.ComparisonFailure")) {
+        if (failure instanceof FileComparisonFailure) {
+          final FileComparisonFailure comparisonFailure = (FileComparisonFailure)failure;
+          notification = new ComparisonFailureData(comparisonFailure.getExpected(), comparisonFailure.getActual(), 
+                                                   comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
+        }
+        else if (failure instanceof ComparisonFailure || failure.getClass().getName().equals("org.junit.ComparisonFailure")) {
           notification = new ComparisonFailureData(ComparisonDetailsExtractor.getExpected(failure), ComparisonDetailsExtractor.getActual(failure));
         }
         ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, failure);

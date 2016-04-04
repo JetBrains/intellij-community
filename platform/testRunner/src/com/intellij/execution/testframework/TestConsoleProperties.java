@@ -69,6 +69,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   private ConsoleView myConsole;
   private boolean myUsePredefinedMessageFilter = true;
   private GlobalSearchScope myScope;
+  private boolean myPreservePresentableName = false;
 
   protected final Map<AbstractProperty, List<TestFrameworkPropertyListener>> myListeners = ContainerUtil.newHashMap();
 
@@ -107,6 +108,14 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
       scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(each, true));
     }
     return scope;
+  }
+
+  public boolean isPreservePresentableName() {
+    return myPreservePresentableName;
+  }
+
+  public void setPreservePresentableName(boolean preservePresentableName) {
+    myPreservePresentableName = preservePresentableName;
   }
 
   public <T> void addListener(@NotNull AbstractProperty<T> property, @NotNull TestFrameworkPropertyListener<T> listener) {

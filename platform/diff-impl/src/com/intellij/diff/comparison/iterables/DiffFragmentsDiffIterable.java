@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@SuppressWarnings("ConstantConditions")
 class DiffFragmentsDiffIterable extends ChangeDiffIterableBase {
   @NotNull private final List<? extends DiffFragment> myFragments;
 

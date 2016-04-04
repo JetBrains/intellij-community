@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.sdk.PythonSdkType;
 
 import java.util.List;
 
@@ -417,5 +419,13 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   // PY-11454
   public void testFromImportSubModuleDunderAll() {
     assertResolvesTo(PyFile.class, "m1.py");
+  }
+
+  // PY-17941
+  public void testEmptyModuleNamesake() {
+    final PsiElement module = doResolve();
+    assertNotNull(module);
+    final Sdk moduleSdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    assertFalse(PythonSdkType.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
   }
 }

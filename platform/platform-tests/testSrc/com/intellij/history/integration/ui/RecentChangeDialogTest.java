@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.io.IOException;
 public class RecentChangeDialogTest extends LocalHistoryUITestCase {
   public void testDialogWork() throws IOException {
     getVcs().beginChangeSet();
-    myRoot.createChildData(null, "f.txt");
+    createChildData(myRoot, "f.txt");
     getVcs().endChangeSet("change");
 
     RecentChange c = getVcs().getRecentChanges(getRootEntry()).get(0);
@@ -45,11 +45,11 @@ public class RecentChangeDialogTest extends LocalHistoryUITestCase {
 
   public void testRevertChange() throws IOException {
     getVcs().beginChangeSet();
-    myRoot.createChildData(null, "f1.txt");
+    createChildData(myRoot, "f1.txt");
     getVcs().endChangeSet("change");
 
     getVcs().beginChangeSet();
-    myRoot.createChildData(null, "f2.txt");
+    createChildData(myRoot, "f2.txt");
     getVcs().endChangeSet("another change");
 
     RecentChange c = getVcs().getRecentChanges(getRootEntry()).get(1);

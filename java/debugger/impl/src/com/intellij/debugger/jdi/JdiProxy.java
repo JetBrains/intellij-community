@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use Options | File Templates.
  */
 public abstract class JdiProxy {
-  @NotNull protected JdiTimer myTimer;
+  @NotNull protected final JdiTimer myTimer;
   private int myTimeStamp = 0;
 
   public JdiProxy(@NotNull JdiTimer timer) {

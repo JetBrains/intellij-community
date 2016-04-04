@@ -75,14 +75,14 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
           final String name = ((PsiNamedElement)element).getName();
           if (name != null && PyUtil.getInitialUnderscores(name) == 0 && !seenNames.contains(name)) {
             seenNames.add(name);
-            result.add(LookupElementBuilder.create((PsiNamedElement) element).withIcon(element.getIcon(0)));
+            result.add(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(element.getIcon(0)));
           }
         }
         else if (element instanceof PyImportElement) {
           final String visibleName = ((PyImportElement)element).getVisibleName();
           if (visibleName != null && !seenNames.contains(visibleName)) {
             seenNames.add(visibleName);
-            result.add(LookupElementBuilder.create(element, visibleName));
+            result.add(LookupElementBuilder.createWithSmartPointer(visibleName, element));
           }
         }
         return true;

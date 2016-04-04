@@ -16,11 +16,9 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -35,8 +33,11 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author nik
@@ -45,6 +46,7 @@ public class CompilerTestUtil {
   private CompilerTestUtil() {
   }
 
+  @TestOnly
   public static void setupJavacForTests(Project project) {
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
@@ -56,6 +58,7 @@ public class CompilerTestUtil {
   public static void scanSourceRootsToRecompile(Project project) {
   }
 
+  @TestOnly
   public static void saveApplicationSettings() {
     EdtTestUtil.runInEdtAndWait(new Runnable() {
       @Override
@@ -66,6 +69,7 @@ public class CompilerTestUtil {
     });
   }
 
+  @TestOnly
   public static void saveApplicationComponent(final Object appComponent) {
     EdtTestUtil.runInEdtAndWait(new Runnable() {
       @Override
@@ -80,8 +84,8 @@ public class CompilerTestUtil {
     ServiceKt.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(appComponent);
   }
 
+  @TestOnly
   public static void enableExternalCompiler() {
-    ApplicationManagerEx.getApplicationEx().doNotSave(false);
     final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
     new WriteAction() {
       @Override
@@ -91,14 +95,15 @@ public class CompilerTestUtil {
     }.execute();
   }
 
+  @TestOnly
   public static void disableExternalCompiler(@NotNull  final Project project) {
-    try {
-      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-        @Override
-        public void run() throws Throwable {
-          JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-          AccessToken token = WriteAction.start();
-          try {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+      @Override
+      public void run() throws Throwable {
+        final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
             Sdk internalJdk = table.getInternalJdk();
             List<Module> modulesToRestore = new SmartList<Module>();
             for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -112,15 +117,16 @@ public class CompilerTestUtil {
               ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
             }
             BuildManager.getInstance().clearState(project);
+            Future<?> future = BuildManager.getInstance().stopListening();
+            try {
+              future.get(100, TimeUnit.SECONDS);
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
           }
-          finally {
-            token.finish();
-          }
-        }
-      });
-    }
-    finally {
-      ApplicationManagerEx.getApplicationEx().doNotSave(true);
-    }
+        });
+      }
+    });
   }
 }

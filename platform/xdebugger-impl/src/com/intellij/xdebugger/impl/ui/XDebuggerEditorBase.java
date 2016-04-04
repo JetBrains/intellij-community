@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -24,7 +25,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -82,16 +82,19 @@ public abstract class XDebuggerEditorBase {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        ListPopup oldPopup = SoftReference.dereference(myPopup);
-        if (oldPopup != null && !oldPopup.isDisposed()) {
-          oldPopup.cancel();
-          myPopup = null;
+        if (myChooseFactory.isEnabled()) {
+          ListPopup oldPopup = SoftReference.dereference(myPopup);
+          if (oldPopup != null && !oldPopup.isDisposed()) {
+            oldPopup.cancel();
+            myPopup = null;
+            return true;
+          }
+          ListPopup popup = createLanguagePopup();
+          popup.showUnderneathOf(myChooseFactory);
+          myPopup = new WeakReference<ListPopup>(popup);
           return true;
         }
-        ListPopup popup = createLanguagePopup();
-        popup.showUnderneathOf(myChooseFactory);
-        myPopup = new WeakReference<ListPopup>(popup);
-        return true;
+        return false;
       }
     }.installOn(myChooseFactory);
   }
@@ -111,7 +114,7 @@ public abstract class XDebuggerEditorBase {
     }
 
     DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
-    return JBPopupFactory.getInstance().createActionGroupPopup("Choose language", actions, dataContext,
+    return JBPopupFactory.getInstance().createActionGroupPopup("Choose Language", actions, dataContext,
                                                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                false);
   }
@@ -156,10 +159,10 @@ public abstract class XDebuggerEditorBase {
     Language language = text.getLanguage();
     if (language == null) {
       if (mySourcePosition != null) {
-        language = getFileTypeLanguage(mySourcePosition.getFile().getFileType());
+        language = LanguageUtil.getFileLanguage(mySourcePosition.getFile());
       }
       if (language == null) {
-        language = getFileTypeLanguage(getEditorsProvider().getFileType());
+        language = LanguageUtil.getFileTypeLanguage(getEditorsProvider().getFileType());
       }
     }
     text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), getMode());
@@ -180,14 +183,6 @@ public abstract class XDebuggerEditorBase {
     }
 
     doSetText(text);
-  }
-
-  @Nullable
-  public static Language getFileTypeLanguage(@Nullable FileType fileType) {
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).getLanguage();
-    }
-    return null;
   }
 
   public abstract XExpression getExpression();
@@ -226,6 +221,15 @@ public abstract class XDebuggerEditorBase {
         onHistoryChanged();
       }
     }
+  }
+
+  @NotNull
+  protected FileType getFileType(@NotNull XExpression expression) {
+    FileType fileType = LanguageUtil.getLanguageFileType(expression.getLanguage());
+    if (fileType != null) {
+      return fileType;
+    }
+    return getEditorsProvider().getFileType();
   }
 
   public XDebuggerEditorsProvider getEditorsProvider() {

@@ -21,9 +21,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,11 +35,7 @@ import java.util.List;
 public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection");
 
-  public RedundantTypeArgsInspection() {
-    myQuickFixAction = new MyQuickFixAction();
-  }
-
-  private final LocalQuickFix myQuickFixAction;
+  private final static LocalQuickFix ourQuickFixAction = new MyQuickFixAction();
 
   @Override
   @NotNull
@@ -101,57 +96,36 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         super.visitMethodReferenceExpression(expression);
         checkMethodReference(expression, inspectionManager, problems);
       }
-
-      private void checkCallExpression(final PsiJavaCodeReferenceElement reference,
-                                       final PsiType[] typeArguments,
-                                       PsiCallExpression expression,
-                                       final InspectionManager inspectionManager, final List<ProblemDescriptor> problems) {
-
-        PsiExpressionList argumentList = expression.getArgumentList();
-        if (argumentList == null) return;
-        final JavaResolveResult resolveResult = reference.advancedResolve(false);
-
-        final PsiElement element = resolveResult.getElement();
-        if (element instanceof PsiMethod && resolveResult.isValidResult()) {
-          PsiMethod method = (PsiMethod)element;
-          final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-          if (typeParameters.length == typeArguments.length) {
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
-            PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
-            final PsiSubstitutor psiSubstitutor = resolveHelper
-              .inferTypeArguments(typeParameters, parameters, argumentList.getExpressions(), PsiSubstitutor.EMPTY, expression, DefaultParameterTypeInferencePolicy.INSTANCE);
-            for (int i = 0, length = typeParameters.length; i < length; i++) {
-              PsiTypeParameter typeParameter = typeParameters[i];
-              final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
-              if (!typeArguments[i].equals(inferredType)) return;
-              if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferredType) != null) return;
-            }
-
-            final PsiCallExpression copy = (PsiCallExpression)expression.copy(); //see IDEADEV-8174
-            try {
-              final PsiMethodCallExpression expr = (PsiMethodCallExpression)
-                JavaPsiFacade.getInstance(copy.getProject()).getElementFactory().createExpressionFromText("foo()", null);
-              copy.getTypeArgumentList().replace(expr.getTypeArgumentList());
-              if (copy.resolveMethod() != element) return;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-              return;
-            }
-
-            final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
-                                                                                           InspectionsBundle.message("inspection.redundant.type.problem.descriptor"),
-                                                                                           myQuickFixAction,
-                                                                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
-            problems.add(descriptor);
-          }
-        }
-      }
-
     });
 
     if (problems.isEmpty()) return null;
     return problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  private static void checkCallExpression(final PsiJavaCodeReferenceElement reference,
+                                          final PsiType[] typeArguments,
+                                          PsiCallExpression expression,
+                                          final InspectionManager inspectionManager,
+                                          final List<ProblemDescriptor> problems) {
+    PsiExpressionList argumentList = expression.getArgumentList();
+    if (argumentList == null) return;
+    final JavaResolveResult resolveResult = reference.advancedResolve(false);
+
+    final PsiElement element = resolveResult.getElement();
+    if (element instanceof PsiMethod && resolveResult.isValidResult()) {
+      PsiMethod method = (PsiMethod)element;
+      final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+      if (typeParameters.length == typeArguments.length) {
+        if (PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, method, typeParameters)) {
+          final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
+                                                                                         InspectionsBundle.message(
+                                                                                           "inspection.redundant.type.problem.descriptor"),
+                                                                                         ourQuickFixAction,
+                                                                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+          problems.add(descriptor);
+        }
+      }
+    }
   }
 
   private static void checkMethodReference(PsiMethodReferenceExpression expression,

@@ -27,6 +27,11 @@ public class JsonFormattingTest extends JsonTestCase {
   public void testSpacesInsertion() {
     doTest();
   }
+  
+  public void testDoNotThrowFailedToAlignException() {
+    getCustomCodeStyleSettings().PROPERTY_ALIGNMENT = PropertyAlignment.ALIGN_ON_VALUE.getId(); 
+    doTest();
+  }
 
   public void testWrapping() {
     getCodeStyleSettings().setRightMargin(JsonLanguage.INSTANCE, 20);

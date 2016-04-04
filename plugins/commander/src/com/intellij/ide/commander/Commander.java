@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.commander;
 
+import com.intellij.diff.actions.CompareFilesAction;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.TwoPaneIdeView;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -25,15 +26,11 @@ import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.diff.actions.CompareFilesAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -62,13 +59,7 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-@State(
-  name="Commander",
-  storages= {
-    @Storage(
-      file = "$WORKSPACE_FILE$"
-    )}
-)
+@State(name = "Commander", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class Commander extends JPanel implements PersistentStateComponent<Element>, DataProvider, TwoPaneIdeView, Disposable {
   private final Project myProject;
   private CommanderPanel myLeftPanel;

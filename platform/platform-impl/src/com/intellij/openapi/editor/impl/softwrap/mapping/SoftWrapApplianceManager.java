@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,8 +193,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       for (Segment range : ranges) {
         int lastOffset = lastRecalculatedOffset[0];
         if (range.getEndOffset() > lastOffset) {
-          recalculateSoftWraps(new IncrementalCacheUpdateEvent(myEditor.getDocument(),
-                                                               Math.max(range.getStartOffset(), lastOffset), range.getEndOffset(),
+          recalculateSoftWraps(new IncrementalCacheUpdateEvent(Math.max(range.getStartOffset(), lastOffset), range.getEndOffset(),
                                                                myDataMapper, myEditor));
         }
       }
@@ -240,8 +239,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       LOG.error("Soft wrapping is not supported for documents with non-standard line endings. File: " + myEditor.getVirtualFile());
     }
     if (myInProgress) {
-      LogMessageEx.error(LOG, "Detected race condition at soft wraps recalculation",
-                         (myEditor instanceof EditorImpl) ? ((EditorImpl)myEditor).dumpState() : "", event.toString());
+      LogMessageEx.error(LOG, "Detected race condition at soft wraps recalculation", myEditor.dumpState(), event.toString());
     }
     myInProgress = true;
     try {
@@ -459,10 +457,9 @@ public class SoftWrapApplianceManager implements Dumpable {
     int startOffset = myContext.currentPosition.offset;
     while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
       if (counter++ > limit) {
-        String editorInfo = myEditor instanceof EditorImpl ? ((EditorImpl)myEditor).dumpState() : myEditor.getClass().toString();
         LogMessageEx.error(LOG, "Cycled soft wraps recalculation detected", String.format(
           "Start recalculation offset: %d, visible area width: %d, calculation context: %s, editor info: %s",
-          startOffset, myVisibleAreaWidth, myContext, editorInfo));
+          startOffset, myVisibleAreaWidth, myContext, myEditor.dumpState()));
         for (int i = myContext.currentPosition.offset; i < myContext.tokenEndOffset; i++) {
           char c = myContext.text.charAt(i);
           if (c == '\n') {
@@ -1110,15 +1107,20 @@ public class SoftWrapApplianceManager implements Dumpable {
 
   private static class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
 
-    private final Editor myEditor;
+    private final EditorImpl myEditor;
 
-    DefaultVisibleAreaWidthProvider(Editor editor) {
+    DefaultVisibleAreaWidthProvider(EditorImpl editor) {
       myEditor = editor;
     }
 
     @Override
     public int getVisibleAreaWidth() {
-      return myEditor.getScrollingModel().getVisibleArea().width;
+      if (myEditor.isInDistractionFreeMode()) {
+        int rightMargin = myEditor.getSettings().getRightMargin(myEditor.getProject());
+        if (rightMargin > 0) return rightMargin * EditorUtil.getPlainSpaceWidth(myEditor);
+      }
+      Insets insets = myEditor.getContentComponent().getInsets();
+      return Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
     }
   }
 

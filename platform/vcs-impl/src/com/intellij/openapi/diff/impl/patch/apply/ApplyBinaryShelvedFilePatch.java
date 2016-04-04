@@ -23,15 +23,15 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryContentRevision;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
 
-public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelveChangesManager.ShelvedBinaryFilePatch> {
-  public ApplyBinaryShelvedFilePatch(ShelveChangesManager.ShelvedBinaryFilePatch patch) {
+public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinaryFilePatch> {
+  public ApplyBinaryShelvedFilePatch(ShelvedBinaryFilePatch patch) {
     super(patch);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -38,6 +39,9 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FavoritesTreeStructure extends ProjectTreeStructure {
+
+  private static final Logger LOGGER = Logger.getInstance(FavoritesTreeStructure.class);
+
   public FavoritesTreeStructure(Project project) {
     super(project, FavoritesProjectViewPane.ID);
   }
@@ -95,6 +99,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
       return ArrayUtil.toObjectArray(result);
     }
     catch (Exception e) {
+      LOGGER.error(e);
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

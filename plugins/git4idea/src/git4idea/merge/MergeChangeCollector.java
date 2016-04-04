@@ -28,7 +28,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.repo.GitRepositoryFiles;
+import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * Collect change for merge or pull operations
@@ -45,11 +47,13 @@ public class MergeChangeCollector {
   private final Project myProject;
   private final VirtualFile myRoot;
   private final GitRevisionNumber myStart; // Revision number before update (used for diff)
+  @NotNull private final GitRepository myRepository;
 
   public MergeChangeCollector(final Project project, final VirtualFile root, final GitRevisionNumber start) {
     myStart = start;
     myProject = project;
     myRoot = root;
+    myRepository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root));
   }
 
   /**
@@ -120,7 +124,7 @@ public class MergeChangeCollector {
       // should be available. In case of --no-commit option, the MERGE_HEAD might contain
       // multiple heads separated by newline. The changes are collected separately for each head
       // and they are merged using TreeSet class (that also sorts the changes).
-      File mergeHeadsFile = new File(root, GitRepositoryFiles.GIT_MERGE_HEAD);
+      File mergeHeadsFile = myRepository.getRepositoryFiles().getMergeHeadFile();
       try {
         if (mergeHeadsFile.exists()) {
           String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, CharsetToolkit.UTF8));

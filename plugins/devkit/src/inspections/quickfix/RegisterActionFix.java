@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +32,8 @@ import org.jetbrains.idea.devkit.util.ActionType;
 public class RegisterActionFix extends AbstractRegisterFix {
   private NewActionDialog myDialog;
 
-  public RegisterActionFix(PsiClass klass) {
-    super(klass);
+  public RegisterActionFix(@NotNull SmartPsiElementPointer<PsiClass> pointer) {
+    super(pointer);
   }
 
   protected String getType() {
@@ -46,7 +47,12 @@ public class RegisterActionFix extends AbstractRegisterFix {
     }
 
     try {
-      myDialog = new NewActionDialog(myClass);
+      PsiClass element = myPointer.getElement();
+      if (element == null) {
+        LOG.info("Element is null for PsiPointer: " + myPointer);
+        return;
+      }
+      myDialog = new NewActionDialog(element);
       if (myDialog.showAndGet()) {
         super.applyFix(project, descriptor);
       }

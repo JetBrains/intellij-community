@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter imple
       try {
         ObjectReference reference = proxy.thisObject();
         if (reference != null) {
-          DebugProcessImpl debugProcess = context.getDebugProcessNoAssert();
+          DebugProcessImpl debugProcess = context.getDebugProcess();
           BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
           StepIntoBreakpoint breakpoint = breakpointManager.addStepIntoBreakpoint(myMethodFilter);
           if (breakpoint != null) {

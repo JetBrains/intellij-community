@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,7 +61,7 @@ public class ShowRunningListAction extends AnAction {
     final Ref<Pair<? extends JComponent, String>> stateRef = new Ref<Pair<? extends JComponent, String>>();
     final Ref<Balloon> balloonRef = new Ref<Balloon>();
 
-    final Timer timer = new Timer(250, null);
+    final Timer timer = UIUtil.createNamedTimer("runningLists", 250);
     ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {

@@ -15,29 +15,45 @@
  */
 package git4idea.changes;
 
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
-import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
+import com.intellij.vcs.CommittedChangeListForRevision;
 import git4idea.GitRevisionNumber;
+import git4idea.GitVcs;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Date;
 
-/**
- * @author irengrig
- *         Date: 6/30/11
- *         Time: 4:03 PM
- */
-public class GitCommittedChangeList extends CommittedChangeListImpl implements VcsRevisionNumberAware {
+public class GitCommittedChangeList extends CommittedChangeListForRevision {
 
-  private final GitRevisionNumber myRevisionNumber;
   private final boolean myModifiable;
+  private final AbstractVcs myVcs;
 
-  public GitCommittedChangeList(String name, String comment, String committerName, GitRevisionNumber revisionNumber, Date commitDate,
-                                Collection<Change> changes, boolean isModifiable) {
-    super(name, comment, committerName, GitChangeUtils.longForSHAHash(revisionNumber.asString()), commitDate, changes);
-    myRevisionNumber = revisionNumber;
+  @SuppressWarnings("unused") // used externally
+  @Deprecated
+  public GitCommittedChangeList(@NotNull String name,
+                                @NotNull String comment,
+                                @NotNull String committerName,
+                                @NotNull GitRevisionNumber revisionNumber,
+                                @NotNull Date commitDate,
+                                @NotNull Collection<Change> changes,
+                                boolean isModifiable) {
+    super(name, comment, committerName, commitDate, changes, revisionNumber);
+    myVcs = null;
+    myModifiable = isModifiable;
+  }
+
+  public GitCommittedChangeList(@NotNull String name,
+                                @NotNull String comment,
+                                @NotNull String committerName,
+                                @NotNull GitRevisionNumber revisionNumber,
+                                @NotNull Date commitDate,
+                                @NotNull Collection<Change> changes,
+                                @NotNull GitVcs vcs,
+                                boolean isModifiable) {
+    super(name, comment, committerName, commitDate, changes, revisionNumber);
+    myVcs = vcs;
     myModifiable = isModifiable;
   }
 
@@ -47,7 +63,18 @@ public class GitCommittedChangeList extends CommittedChangeListImpl implements V
   }
 
   @Override
-  public VcsRevisionNumber getRevisionNumber() {
-    return myRevisionNumber;
+  public long getNumber() {
+    return GitChangeUtils.longForSHAHash(getRevisionNumber().asString());
+  }
+
+  @Override
+  @NotNull
+  public GitRevisionNumber getRevisionNumber() {
+    return (GitRevisionNumber)super.getRevisionNumber();
+  }
+
+  @Override
+  public AbstractVcs getVcs() {
+    return myVcs;
   }
 }

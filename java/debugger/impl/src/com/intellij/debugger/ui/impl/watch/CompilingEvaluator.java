@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,12 +85,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
     try {
       // invoke base evaluator on call code
-      final Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-        @Override
-        public Project compute() {
-          return myPsiContext.getProject();
-        }
-      });
+      final Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)myPsiContext::getProject);
       ExpressionEvaluator evaluator =
         DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
           @Override

@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -31,6 +32,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
   private PsiType myS;
   private PsiType myT;
 
+  //t < s
   public StrictSubtypingConstraint(PsiType t, PsiType s) {
     myT = t;
     myS = s;
@@ -45,9 +47,18 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    if (session.isProperType(myS) && session.isProperType(myT)) {
-      if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
-      if (myS == null) return true; 
+    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    final boolean reduceResult = doReduce(session, dependencies, constraints);
+    if (!reduceResult) {
+      session.registerIncompatibleErrorMessage(dependencies, session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
+    }
+    return reduceResult;
+  }
+
+  private boolean doReduce(InferenceSession session, HashSet<InferenceVariable> dependencies, List<ConstraintFormula> constraints) {
+    if (!session.collectDependencies(myS, dependencies) && !session.collectDependencies(myT, dependencies)) {
+      if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
+      if (myS == null) return true;
       return TypeConversionUtil.isAssignable(myT, myS);
     }
 
@@ -58,18 +69,25 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
-      inferenceVariable.addBound(myT, InferenceBound.UPPER);
+      inferenceVariable.addBound(myT, InferenceBound.UPPER, session.myIncorporationPhase);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
     if (inferenceVariable != null) {
-      inferenceVariable.addBound(myS, InferenceBound.LOWER);
+      inferenceVariable.addBound(myS, InferenceBound.LOWER, session.myIncorporationPhase);
       return true;
     }
     if (myT instanceof PsiArrayType) {
-      if (!(myS instanceof PsiArrayType)) return false; //todo most specific array supertype
+      PsiType sType = myS;
+      if (myS instanceof PsiCapturedWildcardType) {
+        final PsiType upperBound = ((PsiCapturedWildcardType)myS).getUpperBound();
+        if (upperBound instanceof PsiArrayType) {
+          sType = upperBound;
+        }
+      }
+      if (!(sType instanceof PsiArrayType)) return false; //todo most specific array supertype
       final PsiType tComponentType = ((PsiArrayType)myT).getComponentType();
-      final PsiType sComponentType = ((PsiArrayType)myS).getComponentType();
+      final PsiType sComponentType = ((PsiArrayType)sType).getComponentType();
       if (!(tComponentType instanceof PsiPrimitiveType) && !(sComponentType instanceof PsiPrimitiveType)) {
         constraints.add(new StrictSubtypingConstraint(tComponentType, sComponentType));
         return true;
@@ -94,26 +112,33 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           return false;
         }
 
-        PsiClassType.ClassResolveResult SResult = null;
+        PsiClassType sType = null;
         if (myS instanceof PsiIntersectionType) {
           for (PsiType conjunct : ((PsiIntersectionType)myS).getConjuncts()) {
             if (conjunct instanceof PsiClassType) {
               final PsiClassType.ClassResolveResult conjunctResult = ((PsiClassType)conjunct).resolveGenerics();
               if (InheritanceUtil.isInheritorOrSelf(conjunctResult.getElement(), CClass, true)) {
-                SResult = conjunctResult;
+                sType = (PsiClassType)conjunct;
                 break;
               }
             }
           }
         }
         else if (myS instanceof PsiClassType) {
-          SResult = ((PsiClassType)myS).resolveGenerics();
+          sType = (PsiClassType)myS;
         }
         else if (myS instanceof PsiArrayType) {
           return myT.isAssignableFrom(myS);
         }
+        else if (myS instanceof PsiCapturedWildcardType) {
+          final PsiType upperBound = ((PsiCapturedWildcardType)myS).getUpperBound();
+          if (upperBound instanceof PsiClassType) {
+            sType = (PsiClassType)upperBound;
+          }
+        }
 
-        if (SResult == null) return false;
+        if (sType == null) return false;
+        final PsiClassType.ClassResolveResult SResult = sType.resolveGenerics();
         PsiClass SClass = SResult.getElement();
         if (((PsiClassType)myT).isRaw()) {
           return SClass != null && InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
@@ -124,6 +149,9 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
             final PsiType tSubstituted = tSubstitutor.substitute(parameter);
             final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(parameter);
+            if (tSubstituted == null ^ sSubstituted == null) {
+              return false;
+            }
             constraints.add(new SubtypingConstraint(tSubstituted, sSubstituted));
           }
           return true;

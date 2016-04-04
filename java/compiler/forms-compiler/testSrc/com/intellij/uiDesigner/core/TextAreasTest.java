@@ -20,12 +20,11 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class TextAreasTest extends TestCase{
+public final class TextAreasTest extends TestCase {
   /**
    * label   |    label
    * text area (span 2)
-   */ 
-  
+   */
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 0, 0));
 
@@ -46,6 +45,8 @@ public final class TextAreasTest extends TestCase{
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0));
 
+    assertFalse(UIManager.getLookAndFeel().getName().equals("Windows"));
+    // This check fails for Windows LaF due to its default TextArea settings, so it's not expected here. By default it's Metal on Windows.
     assertEquals(100, textArea.getPreferredSize().width);
 
     final Dimension initialPreferredSize = panel.getPreferredSize();

@@ -21,7 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -324,7 +327,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     if (revision != null) {
       // TODO: Seems peg revision should also be tracked here.
       final VcsRevisionNumber local = revision.getRevisionNumber();
-      final String path = revision.getFile().getIOFile().getAbsolutePath();
+      final String path = revision.getFile().getPath();
       final VcsRevisionNumber remote = getNumber(path);
 
       return NOT_LOADED == remote || UNKNOWN == remote || local.compareTo(remote) >= 0;

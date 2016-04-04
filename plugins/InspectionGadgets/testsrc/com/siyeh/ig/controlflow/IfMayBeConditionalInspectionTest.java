@@ -1,12 +1,20 @@
 package com.siyeh.ig.controlflow;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class IfMayBeConditionalInspectionTest extends IGInspectionTestCase {
+public class IfMayBeConditionalInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final IfMayBeConditionalInspection tool = new IfMayBeConditionalInspection();
-    tool.reportMethodCalls = true;
-    doTest("com/siyeh/igtest/controlflow/if_may_be_conditional", tool);
+  public void testIfMayBeConditional() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final IfMayBeConditionalInspection inspection = new IfMayBeConditionalInspection();
+    inspection.reportMethodCalls = true;
+    return inspection;
   }
 }

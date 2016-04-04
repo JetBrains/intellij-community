@@ -641,12 +641,6 @@ public class ArrayUtil extends ArrayUtilRt {
     return newArray;
   }
 
-  public static void reverse(@NotNull char[] array) {
-    for (int i = 0; i < array.length / 2; i++) {
-      swap(array, array.length - i - 1, i);
-    }
-  }
-
   @Contract(pure=true)
   public static int lexicographicCompare(@NotNull String[] obj1, @NotNull String[] obj2) {
     for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
@@ -893,6 +887,11 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <T> T getLastElement(@Nullable T[] array) {
     return array != null && array.length > 0 ? array[array.length - 1] : null;
+  }
+
+  @Contract(value = "null -> true", pure=true)
+  public static <T> boolean isEmpty(@Nullable T[] array) {
+    return array == null || array.length == 0;
   }
 
   @NotNull

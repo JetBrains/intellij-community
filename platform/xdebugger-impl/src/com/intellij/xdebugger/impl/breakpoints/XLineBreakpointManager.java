@@ -39,7 +39,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -301,25 +300,27 @@ public class XLineBreakpointManager {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
                   ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
 
-                  AsyncResult<XLineBreakpoint> result = XBreakpointUtil.toggleLineBreakpoint(
-                    myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false);
-                  result.doWhenDone(new Consumer<XLineBreakpoint>() {
-                    @Override
-                    public void consume(XLineBreakpoint breakpoint) {
-                      if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
-                        breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
-                        String selection = editor.getSelectionModel().getSelectedText();
-                        if (selection != null) {
-                          breakpoint.setLogExpression(selection);
+                  XBreakpointUtil
+                    .toggleLineBreakpoint(myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false)
+                    .done(new Consumer<XLineBreakpoint>() {
+                      @Override
+                      public void consume(XLineBreakpoint breakpoint) {
+                        if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
+                          breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
+                          String selection = editor.getSelectionModel().getSelectedText();
+                          if (selection != null) {
+                            breakpoint.setLogExpression(selection);
+                          }
+                          else {
+                            breakpoint.setLogMessage(true);
+                          }
+                          // edit breakpoint
+                          DebuggerUIUtil
+                            .showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(),
+                                                          false, breakpoint);
                         }
-                        else {
-                          breakpoint.setLogMessage(true);
-                        }
-                        // edit breakpoint
-                        DebuggerUIUtil.showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(), false, breakpoint);
                       }
-                    }
-                  });
+                    });
                 }
               }
             });

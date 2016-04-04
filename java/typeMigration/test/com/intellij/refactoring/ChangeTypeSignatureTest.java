@@ -1,4 +1,20 @@
 /*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * User: anna
  * Date: 18-Mar-2008
  */
@@ -8,11 +24,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
@@ -35,10 +51,12 @@ public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
     PsiType migrationType = getJavaFacade().getElementFactory().createTypeFromText(migrationTypeText, null);
 
     try {
-      final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(parameterList));
-      rules.setMigrationRootType(PsiSubstitutor.EMPTY.put(superClass.getTypeParameters()[0], migrationType).substitute(new PsiImmediateClassType(superClass, PsiSubstitutor.EMPTY)));
+      final TypeMigrationRules rules = new TypeMigrationRules();
       rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
-      new TypeMigrationProcessor(getProject(), parameterList, rules).run();
+      new TypeMigrationProcessor(getProject(),
+                                 new PsiElement[]{parameterList},
+                                 Functions.<PsiElement, PsiType>constant(PsiSubstitutor.EMPTY.put(superClass.getTypeParameters()[0], migrationType).substitute(new PsiImmediateClassType(superClass, PsiSubstitutor.EMPTY))),
+                                 rules).run();
       if (success) {
         checkResultByFile(dataPath + getTestName(false) + ".java.after");
       } else {
@@ -139,10 +157,5 @@ public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
 
   public void testMethodReturnTypeMigration() throws Exception {
     doTest(true, "java.lang.Integer");
-  }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
   }
 }

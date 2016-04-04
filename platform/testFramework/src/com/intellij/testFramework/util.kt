@@ -28,5 +28,5 @@ fun <T> ComponentManager.registerServiceInstance(interfaceClass: Class<T>, insta
 }
 
 fun deleteFile(file: VirtualFile) {
-  EdtTestUtil.runInEdtAndWait { runWriteAction { file.delete(null) } }
+  runInEdtAndWait { runWriteAction { file.delete(null) } }
 }

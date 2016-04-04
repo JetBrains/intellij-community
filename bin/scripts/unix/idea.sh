@@ -8,13 +8,13 @@
 message()
 {
   TITLE="Cannot start @@product_full@@"
-  if [ -n `which zenity` ]; then
+  if [ -n "`which zenity`" ]; then
     zenity --error --title="$TITLE" --text="$1"
-  elif [ -n `which kdialog` ]; then
+  elif [ -n "`which kdialog`" ]; then
     kdialog --error --title "$TITLE" "$1"
-  elif [ -n `which xmessage` ]; then
+  elif [ -n "`which xmessage`" ]; then
     xmessage -center "ERROR: $TITLE: $1"
-  elif [ -n `which notify-send` ]; then
+  elif [ -n "`which notify-send`" ]; then
     notify-send "ERROR: $TITLE: $1"
   else
     echo "ERROR: $TITLE\n$1"
@@ -59,6 +59,11 @@ IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
+elif [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
+  JDK=`$CAT $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
+  if [ ! -d $JDK ]; then
+    JDK=$IDE_HOME/$JDK
+  fi
 elif [ -x "$IDE_HOME/jre/jre/bin/java" ] && "$IDE_HOME/jre/jre/bin/java" -version > /dev/null 2>&1 ; then
   JDK="$IDE_HOME/jre"
 elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
@@ -120,21 +125,11 @@ JAVA_TOOL_OPTIONS= "$JAVA_BIN" -version 2> "$VERSION_LOG"
 "$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
-if [ $BITS -eq 0 ]; then
-  BITS="64"
-else
-  BITS=""
-fi
+test $BITS -eq 0 && BITS="64" || BITS=""
 
 # ---------------------------------------------------------------------
-# Collect JVM options and properties.
+# Collect JVM options and IDE properties.
 # ---------------------------------------------------------------------
-if [ "$OS_TYPE" = "Darwin" ]; then
-  OS_SPECIFIC_BIN_DIR=$IDE_BIN_HOME/mac
-else
-  OS_SPECIFIC_BIN_DIR=$IDE_BIN_HOME/linux
-fi
-
 if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
 fi
@@ -161,8 +156,6 @@ if [ "$IS_EAP" = "true" ]; then
   fi
 fi
 
-IDE_JVM_ARGS="@@ide_jvm_args@@"
-
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
@@ -176,18 +169,22 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
+IFS="$(printf '\n\t')"
 LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   $AGENT \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
-  $VM_OPTIONS "-Djb.vmOptionsFile=$VM_OPTIONS_FILES_USED" \
+  `echo "$VM_OPTIONS" | "$TR" '\n' '\t'` \
+  "-Djb.vmOptionsFile=$VM_OPTIONS_FILES_USED" \
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
+  "-XX:HeapDumpPath=$HOME/java_error_in_@@product_uc@@.hprof" \
   -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
   $IDE_PROPERTIES_PROPERTY \
-  $IDE_JVM_ARGS \
+  `echo "$IDE_JVM_ARGS" | "$TR" ' ' '\t'` \
   @@main_class_name@@ \
   "$@"
 EC=$?
+unset IFS
 
 test $EC -ne 88 && exit $EC
 

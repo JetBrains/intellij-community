@@ -173,7 +173,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   @Nullable
   public String getMavenHome() {
     String mavenHome = FileUtil.toSystemIndependentName(mavenHomeField.getText().trim());
-    final File mavenHomeFile = MavenServerManager.getInstance().getMavenHomeFile(mavenHome);
+    final File mavenHomeFile = MavenServerManager.getMavenHomeFile(mavenHome);
     return mavenHomeFile != null ? mavenHomeFile.getPath() : null;
   }
 

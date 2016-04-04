@@ -17,10 +17,10 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.OutputLineSplitter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.concurrency.FutureResult;
+import com.intellij.testFramework.PlatformTestCase;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class OutputLineSplitterTest extends UsefulTestCase {
+public class OutputLineSplitterTest extends PlatformTestCase {
   private static final Key RED = Key.create(OutputLineSplitterTest.class + ".RED");
   private static final Key GREEN = Key.create(OutputLineSplitterTest.class + ".GREEN");
   private static final Key BLUE = Key.create(OutputLineSplitterTest.class + ".BLUE");
@@ -183,7 +183,7 @@ public class OutputLineSplitterTest extends UsefulTestCase {
         isFinished.set(true);
 
         for (Future<?> each : futures) {
-          each.get(10, TimeUnit.SECONDS);
+          each.get();
         }
       }
       catch (Exception e) {
@@ -193,19 +193,6 @@ public class OutputLineSplitterTest extends UsefulTestCase {
   }
 
   private Future<?> execute(final Runnable runnable) {
-    final FutureResult<?> result = new FutureResult<Object>();
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runnable.run();
-          result.set(null);
-        }
-        catch (Throwable e) {
-          result.setException(e);
-        }
-      }
-    },"line split").start();
-    return result;
+    return ApplicationManager.getApplication().executeOnPooledThread(runnable);
   }
 }

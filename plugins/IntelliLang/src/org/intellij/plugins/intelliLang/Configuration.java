@@ -21,7 +21,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -74,12 +77,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
   };
 
-  @State(
-    name = Configuration.COMPONENT_NAME,
-    defaultStateAsResource = true,
-    storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
+  @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"))
   public static class App extends Configuration {
-
     private final List<BaseInjection> myDefaultInjections;
     private final AdvancedConfiguration myAdvancedConfiguration;
 
@@ -112,13 +111,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
   }
 
-  @State(
-    name = Configuration.COMPONENT_NAME,
-    defaultStateAsResource = true,
-    storages = {
-      @Storage(file = StoragePathMacros.PROJECT_FILE),
-      @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    })
+  @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"))
   public static class Prj extends Configuration {
 
     private final Configuration myParentConfiguration;

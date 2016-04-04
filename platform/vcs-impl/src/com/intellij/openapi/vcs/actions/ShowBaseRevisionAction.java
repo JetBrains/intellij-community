@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.diff.DiffMixin;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +62,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
     private VcsContext vcsContext;
 
     private MyTask(VirtualFile selectedFile, AbstractVcs vcs, VcsContext vcsContext) {
-      super(vcsContext.getProject(), "Loading current revision", true, BackgroundFromStartOption.getInstance());
+      super(vcsContext.getProject(), "Loading current revision", true);
       this.selectedFile = selectedFile;
       this.vcs = vcs;
       this.vcsContext = vcsContext;

@@ -40,6 +40,10 @@ public class DeleteTrySectionsFixTest extends IGQuickFixesTestCase {
     doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
   }
 
+  public void testKeepComments() {
+    doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
+  }
+
   public void testDeleteEmptyFinally() {
     doTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"));
   }

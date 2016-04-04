@@ -92,7 +92,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myTargetDirectoryField.getChildComponent();
+    return myTargetDirectoryField;
   }
 
   @Override
@@ -169,8 +169,13 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
                           RefactoringBundle.message("move.specified.elements"));
     }
 
-    myTargetDirectoryField.getChildComponent()
-      .setText(initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl());
+    final String initialTargetPath = initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl();
+    myTargetDirectoryField.getChildComponent().setText(initialTargetPath);
+    final int lastDirectoryIdx = initialTargetPath.lastIndexOf(File.separator);
+    final int textLength = initialTargetPath.length();
+    if (lastDirectoryIdx > 0 && lastDirectoryIdx + 1 < textLength) {
+      myTargetDirectoryField.getChildComponent().getTextEditor().select(lastDirectoryIdx + 1, textLength);
+    }
 
     validateOKButton();
     myHelpID = helpID;
@@ -185,7 +190,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return false;
     }
-    return PropertiesComponent.getInstance().getBoolean(MOVE_FILES_OPEN_IN_EDITOR, true);
+    return PropertiesComponent.getInstance().getBoolean(MOVE_FILES_OPEN_IN_EDITOR, false);
   } 
 
   private void validateOKButton() {
@@ -194,7 +199,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    PropertiesComponent.getInstance().setValue(MOVE_FILES_OPEN_IN_EDITOR, myOpenInEditorCb.isSelected(), true);
+    PropertiesComponent.getInstance().setValue(MOVE_FILES_OPEN_IN_EDITOR, myOpenInEditorCb.isSelected(), false);
     //myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, myTargetDirectoryField.getChildComponent().getText());
     RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
@@ -239,4 +244,15 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
   }
+
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        MoveFilesOrDirectoriesDialog.super.show();
+      }
+    });
+  }
+
 }

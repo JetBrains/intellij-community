@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
 
   @NotNull
   public MvcCommand createCommand() {
-    return MvcCommand.parse(getTargetArguments(), getVmOptions());
+    return MvcCommand.parse(getTargetArguments()).setVmOptions(getVmOptions());
   }
 
   @Override
@@ -159,9 +159,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     String text = getSelectedText();
 
     text = text.trim();
-    if (text.startsWith(GRAILS_PREFIX)) {
-      text = text.substring(GRAILS_PREFIX.length());
-    }
+    text = StringUtil.trimStart(text, GRAILS_PREFIX);
 
     return text;
   }

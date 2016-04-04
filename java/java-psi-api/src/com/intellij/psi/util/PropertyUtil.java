@@ -401,7 +401,7 @@ public class PropertyUtil {
         PsiUtil.setModifierProperty(getMethod, PsiModifier.STATIC, true);
       }
 
-      annotateWithNullableStuff(field, getMethod);
+      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, getMethod);
 
       PsiCodeBlock body = factory.createCodeBlockFromText("{\nreturn " + name + ";\n}", null);
       getMethod.getBody().replace(body);
@@ -457,7 +457,7 @@ public class PropertyUtil {
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       PsiParameter param = factory.createParameter(parameterName, field.getType());
 
-      annotateWithNullableStuff(field, param);
+      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, param);
 
       setMethod.getParameterList().add(param);
       PsiUtil.setModifierProperty(setMethod, PsiModifier.PUBLIC, true);
@@ -496,27 +496,11 @@ public class PropertyUtil {
     }
   }
 
+  /** @deprecated use {@link NullableNotNullManager#copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static void annotateWithNullableStuff(@NotNull PsiModifierListOwner field,
-                                               @NotNull PsiModifierListOwner listOwner)
-    throws IncorrectOperationException {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
-    final PsiAnnotation notNull = manager.copyNotNullAnnotation(field);
-    if (notNull != null) {
-      annotate(listOwner, notNull);
-    }
-    else {
-      final PsiAnnotation nullable = manager.copyNullableAnnotation(field);
-      if (nullable != null) {
-        annotate(listOwner, nullable);
-      }
-    }
-  }
-
-  private static void annotate(@NotNull PsiModifierListOwner listOwner, @NotNull PsiAnnotation annotation)
-    throws IncorrectOperationException {
-    final PsiModifierList modifierList = listOwner.getModifierList();
-    LOG.assertTrue(modifierList != null);
-    modifierList.addAfter(annotation, null);
+                                               @NotNull PsiModifierListOwner listOwner) throws IncorrectOperationException {
+    NullableNotNullManager.getInstance(field.getProject()).copyNullableOrNotNullAnnotation(field, listOwner);
   }
 
   public static String suggestPropertyName(@NotNull PsiField field) {

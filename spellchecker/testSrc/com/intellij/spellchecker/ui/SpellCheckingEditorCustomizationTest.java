@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.EditorCustomization;
 
 @SuppressWarnings("SpellCheckingInspection")
@@ -35,7 +34,7 @@ public class SpellCheckingEditorCustomizationTest extends LightPlatformCodeInsig
   }
 
   public void testEnabledEvenIfDisabledInMainProfile() throws Exception {
-    ((CodeInsightTestFixtureImpl)myFixture).myDisabledInspections.add(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
+    //todo[batrak] ((CodeInsightTestFixtureImpl)myFixture).myDisabledInspections.add(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
     testEnabled();
   }
 

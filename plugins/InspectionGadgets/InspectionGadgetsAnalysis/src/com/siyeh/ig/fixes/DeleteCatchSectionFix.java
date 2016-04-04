@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,11 +71,6 @@ public class DeleteCatchSectionFix extends InspectionGadgetsFix {
       if (codeBlock == null) {
         return;
       }
-      final PsiStatement[] statements = codeBlock.getStatements();
-      if (statements.length == 0) {
-        tryStatement.delete();
-        return;
-      }
       final PsiElement containingElement = tryStatement.getParent();
       final boolean keepBlock;
       if (containingElement instanceof PsiCodeBlock) {
@@ -86,18 +81,13 @@ public class DeleteCatchSectionFix extends InspectionGadgetsFix {
         keepBlock = true;
       }
       if (keepBlock) {
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiElementFactory factory = psiFacade.getElementFactory();
-        final PsiBlockStatement resultStatement = (PsiBlockStatement)factory.createStatementFromText("{}", element);
-        final PsiCodeBlock resultBlock = resultStatement.getCodeBlock();
-        for (PsiStatement statement : statements) {
-          resultBlock.add(statement);
-        }
-        tryStatement.replace(resultStatement);
+        tryStatement.replace(codeBlock);
       }
       else {
-        for (PsiStatement statement : statements) {
-          containingElement.addBefore(statement, tryStatement);
+        final PsiElement firstBodyElement = codeBlock.getFirstBodyElement();
+        final PsiElement lastBodyElement = codeBlock.getLastBodyElement();
+        if (firstBodyElement != null && lastBodyElement != null) {
+          containingElement.addRangeBefore(firstBodyElement, lastBodyElement, tryStatement);
         }
         tryStatement.delete();
       }

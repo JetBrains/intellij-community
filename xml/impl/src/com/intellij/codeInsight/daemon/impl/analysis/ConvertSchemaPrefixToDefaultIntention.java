@@ -15,10 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -29,10 +33,13 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -45,7 +52,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final XmlAttribute xmlns = getXmlnsDeclaration(element);
     if (xmlns == null) return;
     SchemaPrefixReference prefixRef = null;
@@ -81,23 +88,78 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
         }
       }
     });
+
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(xmlns.getContainingFile())) return;
+
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        convertTagsAndAttributes(ns, tags, attrs, project);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            xmlns.setName("xmlns");
+          }
+        });
+      }
+    }, NAME, null);
+
     new WriteCommandAction(project, NAME, xmlns.getContainingFile()) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        final int index = ns.length() + 1;
-        for (XmlTag tag : tags) {
-          final String s = tag.getName().substring(index);
-          if (!s.isEmpty()) {
-            tag.setName(s);
-          }
-        }
-        for (XmlAttribute attr : attrs) {
-          //noinspection ConstantConditions
-          attr.setValue(attr.getValue().substring(index));
-        }
         xmlns.setName("xmlns");
       }
     }.execute();
+  }
+
+  private static void convertTagsAndAttributes(String ns, final List<XmlTag> tags, final List<XmlAttribute> attrs, Project project) {
+    final int localNameIndex = ns.length() + 1;
+    final int totalCount = tags.size() + attrs.size();
+
+    final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, "Changing to default namespace", true);
+    progressTask.setTask(new SequentialTask() {
+      int tagIndex = 0;
+      int attrIndex = 0;
+
+      @Override
+      public void prepare() {
+      }
+
+      @Override
+      public boolean isDone() {
+        return tagIndex + attrIndex >= totalCount;
+      }
+
+      @Override
+      public boolean iteration() {
+        progressTask.getIndicator().setFraction(((double) (tagIndex + attrIndex)) / totalCount);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            if (tagIndex < tags.size()) {
+              XmlTag tag = tags.get(tagIndex++);
+              final String s = tag.getName().substring(localNameIndex);
+              if (!s.isEmpty()) {
+                tag.setName(s);
+              }
+            }
+            else if (attrIndex < attrs.size()) {
+              XmlAttribute attr = attrs.get(attrIndex++);
+              //noinspection ConstantConditions
+              attr.setValue(attr.getValue().substring(localNameIndex));
+            }
+          }
+        });
+
+        return isDone();
+      }
+
+      @Override
+      public void stop() {
+
+      }
+    });
+    ProgressManager.getInstance().run(progressTask);
   }
 
   @Override
@@ -130,5 +192,10 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

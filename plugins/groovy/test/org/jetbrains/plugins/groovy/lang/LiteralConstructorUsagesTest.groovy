@@ -47,7 +47,6 @@ class LiteralConstructorUsagesTest extends LightGroovyTestCase {
   }
 
   void testLiteralConstructorWithNamedArgs() {
-    addLinkedHashMap()
     myFixture.addFileToProject "a.groovy", """\
 import groovy.transform.Immutable
 

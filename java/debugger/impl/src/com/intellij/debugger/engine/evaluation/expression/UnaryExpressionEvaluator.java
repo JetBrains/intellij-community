@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -53,24 +54,24 @@ class UnaryExpressionEvaluator implements Evaluator {
     Value operand = (Value)myOperandEvaluator.evaluate(context);
     VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
     if (myOperationType == JavaTokenType.PLUS) {
-      if (DebuggerUtilsEx.isNumeric(operand)) {
+      if (DebuggerUtils.isNumeric(operand)) {
         return operand;
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.numeric.expected"));
     }
     else if (myOperationType == JavaTokenType.MINUS) {
-      if (DebuggerUtilsEx.isInteger(operand)) {
+      if (DebuggerUtils.isInteger(operand)) {
         long v = ((PrimitiveValue)operand).longValue();
         return DebuggerUtilsEx.createValue(vm, myExpectedType, -v);
       }
-      if (DebuggerUtilsEx.isNumeric(operand)) {
+      if (DebuggerUtils.isNumeric(operand)) {
         double v = ((PrimitiveValue)operand).doubleValue();
         return DebuggerUtilsEx.createValue(vm, myExpectedType, -v);
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.numeric.expected"));
     }
     else if (myOperationType == JavaTokenType.TILDE) {
-      if (DebuggerUtilsEx.isInteger(operand)) {
+      if (DebuggerUtils.isInteger(operand)) {
         long v = ((PrimitiveValue)operand).longValue();
         return DebuggerUtilsEx.createValue(vm, myExpectedType, ~v);
       }

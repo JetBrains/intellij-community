@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -75,13 +76,12 @@ public class OpenTaskDialog extends DialogWrapper {
     super(project, false);
     myProject = project;
     myTask = task;
-    TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
     setTitle("Open Task");
     myTaskNameLabel.setText(TaskUtil.getTrimmedSummary(task));
     myTaskNameLabel.setIcon(task.getIcon());
 
-    TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
-    ControlBinder binder = new ControlBinder(manager.getState());
+    TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
+    ControlBinder binder = new ControlBinder(taskManager.getState());
     binder.bindAnnotations(this);
     binder.reset();
 
@@ -106,7 +106,7 @@ public class OpenTaskDialog extends DialogWrapper {
     TaskManagerImpl.Config state = taskManager.getState();
     myClearContext.setSelected(state.clearContext);
 
-    AbstractVcs vcs = manager.getActiveVcs();
+    AbstractVcs vcs = taskManager.getActiveVcs();
     if (vcs == null) {
       myVcsPanel.setVisible(false);
     }
@@ -119,7 +119,7 @@ public class OpenTaskDialog extends DialogWrapper {
       };
       myCreateChangelist.addActionListener(listener);
       myCreateBranch.addActionListener(listener);
-      myCreateChangelist.setSelected(manager.getState().createChangelist);
+      myCreateChangelist.setSelected(taskManager.getState().createChangelist);
 
       VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
       if (handlers.length == 0) {
@@ -134,6 +134,7 @@ public class OpenTaskDialog extends DialogWrapper {
           VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
           if (tasks.length > 0) {
             myVcsTaskHandler = handler;
+            Arrays.sort(tasks);
             //noinspection unchecked
             myBranchFrom.setModel(new DefaultComboBoxModel(tasks));
             myBranchFrom.setEnabled(true);
@@ -164,7 +165,7 @@ public class OpenTaskDialog extends DialogWrapper {
             break;
           }
         }
-        myCreateBranch.setSelected(manager.getState().createBranch && myBranchFrom.getItemCount() > 0);
+        myCreateBranch.setSelected(taskManager.getState().createBranch && myBranchFrom.getItemCount() > 0);
         myBranchFrom.setRenderer(new ColoredListCellRenderer<VcsTaskHandler.TaskInfo>() {
           @Override
           protected void customizeCellRenderer(JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
@@ -174,8 +175,9 @@ public class OpenTaskDialog extends DialogWrapper {
           }
         });
       }
-
-      myBranchName.setText(taskManager.suggestBranchName(task));
+      myBranchName.setText(myVcsTaskHandler != null
+                           ? myVcsTaskHandler.cleanUpBranchName(taskManager.constructDefaultBranchName(task))
+                           : taskManager.suggestBranchName(task));
       myChangelistName.setText(taskManager.getChangelistName(task));
     }
     updateFields(true);
@@ -258,6 +260,11 @@ public class OpenTaskDialog extends DialogWrapper {
       String branchName = myBranchName.getText().trim();
       if (branchName.isEmpty()) {
         return new ValidationInfo("Branch name should not be empty", myBranchName);
+      }
+      else if (myVcsTaskHandler != null) {
+        return myVcsTaskHandler.isBranchNameValid(branchName)
+               ? null
+               : new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.");
       }
       else if (branchName.contains(" ")) {
         return new ValidationInfo("Branch name should not contain spaces");

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,10 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
           message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor2", "<code>" + returnValue + "</code>");
         }
 
-        return new ProblemDescriptor[] {manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+        final PsiModifierListOwner element = refMethod.getElement();
+        if (element != null) {
+          return new ProblemDescriptor[] {manager.createProblemDescriptor(element.getNavigationElement(), message, false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+        }
       }
     }
 

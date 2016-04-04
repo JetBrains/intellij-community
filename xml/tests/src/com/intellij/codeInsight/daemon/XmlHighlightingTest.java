@@ -210,6 +210,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  public void testSvg() throws Exception {
+    doTest(getFullRelativeTestName(".svg"), true, false);
+  }
+
   public void testNavigateToDeclDefinedWithEntity() throws Exception {
     final String baseName = BASE_PATH + getTestName(false);
 
@@ -621,6 +625,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testWrongRegExpInSchema() throws Exception {
     doTest(getFullRelativeTestName(".xsd"), true, false);
     doTest(getFullRelativeTestName("2.xsd"), true, false);
+  }
+
+  public void testWrongRegExpCategory() throws Exception {
+    doTest(getFullRelativeTestName(".xsd"), true, false);
   }
 
   public void testXercesMessagesBinding2() throws Exception {

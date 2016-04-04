@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
 import com.intellij.util.ui.JBUI;
@@ -47,6 +48,9 @@ public class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
+  public static final int OUT_OF_MEMORY = 9;
+  public static final int UNSUPPORTED_JAVA_VERSION = 10;
+  public static final int PRIVACY_POLICY_REJECTION = 11;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
@@ -76,6 +80,12 @@ public class Main {
     }
     else if (!checkGraphics()) {
       System.exit(NO_GRAPHICS);
+    }
+
+    if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
+      showMessage("Unsupported Java Version",
+                  "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
+      System.exit(UNSUPPORTED_JAVA_VERSION);
     }
 
     if (args.length == 0 || (args.length == 1 && "nosplash".equals(args[0]))) {
@@ -134,6 +144,7 @@ public class Main {
     return Comparing.strEqual(firstArg, "ant") ||
            Comparing.strEqual(firstArg, "duplocate") ||
            Comparing.strEqual(firstArg, "traverseUI") ||
+           Comparing.strEqual(firstArg, "buildAppcodeCache") ||
            (firstArg.length() < 20 && firstArg.endsWith("inspect"));
   }
 
@@ -177,7 +188,14 @@ public class Main {
   }
 
   private static String getBundledJava(String javaHome) throws Exception {
-    String javaHomeCopy = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/jre";
+    // remove the code after one cycle of EAP/patch
+    File removeRestartFromHome = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    if (removeRestartFromHome.exists()) {
+      FileUtil.delete(removeRestartFromHome);
+    }
+    // remove the code after one cycle of EAP/patch
+
+    String javaHomeCopy = Restarter.getRestarterDir() + "/jre";
     File javaCopy = SystemInfoRt.isWindows ? new File(javaHomeCopy + "/bin/java.exe") : new File(javaHomeCopy + "/bin/java");
     if (javaCopy != null && javaCopy.isFile() && checkBundledJava(javaCopy)) {
       javaHome = javaHomeCopy;
@@ -208,10 +226,11 @@ public class Main {
     File patch = new File(tempDir, patchFileName);
 
     // always delete previous patch copy
-    File patchCopy = new File(tempDir, patchFileName + "_copy");
-    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
-    File jnaUtilsCopy = new File(tempDir, "jna-platform.jar." + platform + "_copy");
-    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy");
+    String userName = System.getProperty("user.name");
+    File patchCopy = new File(tempDir, patchFileName + "_copy_" + userName);
+    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy_" + userName);
+    File jnaUtilsCopy = new File(tempDir, "jna-platform.jar." + platform + "_copy_" + userName);
+    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy_" + userName);
     if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy) || !FileUtilRt.delete(jnaUtilsCopy) || !FileUtilRt.delete(jnaCopy)) {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
@@ -303,7 +322,7 @@ public class Main {
       t = awtError;
     }
     else {
-      message.append("Please report to https://");
+      message.append("Please report to ");
       message.append(isStudio() ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors");
       message.append("\n\n");
     }
@@ -349,7 +368,7 @@ public class Main {
           scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
         }
 
-        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
+        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE;
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
       catch (Throwable t) {

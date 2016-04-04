@@ -3,12 +3,11 @@
   <name>Commander</name>
   <description>Provides a two-panel view for navigating and working with the project structure</description>
   <version>999.999</version>
-  <idea-version since-build="142.1" until-build="144.0"/>
+  <idea-version since-build="142.1" until-build="145.0"/>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
   <resource-bundle>com.intellij.ide.commander.CommanderBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <selectInTarget implementation="com.intellij.ide.commander.CommanderSelectInTarget"/>
     <toolWindow id="Commander" anchor="right" icon="AllIcons.Toolwindows.ToolWindowCommander"
                 factoryClass="com.intellij.ide.commander.CommanderToolWindowFactory"/>

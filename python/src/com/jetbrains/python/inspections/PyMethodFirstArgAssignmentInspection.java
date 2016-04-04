@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -83,11 +84,11 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
       return first_param_name;
     }
 
-    private void markNameDefiner(NameDefiner definer) {
+    private void markNameDefiner(PyNamedElementContainer definer) {
       final String first_param_name = extractFirstParamName((PyElement)definer);
       if (first_param_name != null) {
         // check the targets
-        for (PyElement elt : definer.iterateNames()) {
+        for (PsiNamedElement elt : definer.getNamedElements()) {
           if (elt instanceof PyTargetExpression) handleTarget((PyTargetExpression)elt, first_param_name);
         }
       }

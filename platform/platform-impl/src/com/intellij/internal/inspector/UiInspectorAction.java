@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,9 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.UIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -61,6 +61,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+
+import static java.util.Locale.ENGLISH;
 
 /**
  * User: spLeaner
@@ -115,7 +117,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       Window window = findWindow(component);
       setModal(window instanceof JDialog && ((JDialog)window).isModal());
       myComponent = component;
-      getRootPane().setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+      getRootPane().setBorder(JBUI.Borders.empty(5));
 
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -234,7 +236,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         return;
       }
       if (enable) {
-        myHighlightComponent = new HighlightComponent(JBColor.GREEN);
+        myHighlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED));
 
         Point pt = SwingUtilities.convertPoint(myComponent, new Point(0, 0), rootPane);
         myHighlightComponent.setBounds(pt.x, pt.y, myComponent.getWidth(), myComponent.getHeight());
@@ -256,7 +258,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     ComponentTreeCellRenderer(Component initialSelection) {
       myInitialSelection = initialSelection;
       setFont(JBUI.Fonts.label(11));
-      setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
+      setBorder(JBUI.Borders.empty(0, 3));
     }
 
     @Override
@@ -281,7 +283,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             foreground = JBColor.GRAY;
           }
           else if (component.getWidth() == 0 || component.getHeight() == 0) {
-            foreground = new Color(128, 10, 0);
+            foreground = new JBColor(new Color(128, 10, 0), JBColor.BLUE);
           }
           else if (component.getPreferredSize() != null &&
                    (component.getSize().width < component.getPreferredSize().width
@@ -457,12 +459,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       TableColumnModel columnModel = table.getColumnModel();
       TableColumn propertyColumn = columnModel.getColumn(0);
-      propertyColumn.setMinWidth(200);
-      propertyColumn.setMaxWidth(200);
+      propertyColumn.setMinWidth(JBUI.scale(200));
+      propertyColumn.setMaxWidth(JBUI.scale(200));
       propertyColumn.setResizable(false);
 
       TableColumn valueColumn = columnModel.getColumn(1);
-      valueColumn.setMinWidth(200);
+      valueColumn.setMinWidth(JBUI.scale(200));
       valueColumn.setResizable(false);
       valueColumn.setCellRenderer(new ValueCellRenderer());
 
@@ -491,9 +493,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myComponent = component;
       setOpaque(true);
       setBackground(JBColor.WHITE);
-      setBorder(new EmptyBorder(5, 0, 5, 0));
+      setBorder(JBUI.Borders.empty(5, 0));
 
-      setFont(new JLabel().getFont().deriveFont(Font.PLAIN, 9));
+      setFont(JBUI.Fonts.label(9));
 
       update();
     }
@@ -571,12 +573,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     @Override
     public Dimension getMinimumSize() {
-      return new Dimension(120, 120);
+      return JBUI.size(120);
     }
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(150, 150);
+      return JBUI.size(150);
     }
   }
 
@@ -676,7 +678,16 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class ColorRenderer extends JLabel implements Renderer<Color> {
     public JComponent setValue(@NotNull final Color value) {
-      setText("r:" + value.getRed() + ", g:" + value.getGreen() + ", b:" + value.getBlue() + ", a:" + value.getAlpha());
+      StringBuilder sb = new StringBuilder();
+      String hex = Integer.toHexString(value.getRGB());
+      for (int i = hex.length(); i < 8; i++) sb.append('0');
+      sb.append(hex.toUpperCase(ENGLISH));
+      sb.append(", r:").append(value.getRed());
+      sb.append(", g:").append(value.getGreen());
+      sb.append(", b:").append(value.getBlue());
+      sb.append(", a:").append(value.getAlpha());
+      if (value instanceof UIResource) sb.append(" [UI]");
+      setText(sb.toString());
       setIcon(new ColorIcon(13, 11, value, true));
       return this;
     }
@@ -684,7 +695,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class FontRenderer extends JLabel implements Renderer<Font> {
     public JComponent setValue(@NotNull final Font value) {
-      setText(value.getFontName() + " (" + value.getFamily() + "), " + value.getSize() + "px");
+      StringBuilder sb = new StringBuilder();
+      sb.append(value.getFontName()).append(" (").append(value.getFamily()).append("), ").append(value.getSize()).append("px");
+      if (Font.BOLD == (Font.BOLD & value.getStyle())) sb.append(" bold");
+      if (Font.ITALIC == (Font.ITALIC & value.getStyle())) sb.append(" italic");
+      if (value instanceof UIResource) sb.append(" [UI]");
+      setText(sb.toString());
       return this;
     }
   }
@@ -728,7 +744,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     final List<String> PROPERTIES = Arrays.asList(
       "ui", "getLocation", "getLocationOnScreen",
       "getSize", "isOpaque", "getBorder",
-      "getForeground", "getBackground", "getFont",
+      "getForeground", "isForegroundSet",
+      "getBackground", "isBackgroundSet",
+      "getFont", "isFontSet",
       "getMinimumSize", "getMaximumSize", "getPreferredSize",
       "getAlignmentX", "getAlignmentY",
       "getText", "isEditable", "getIcon",

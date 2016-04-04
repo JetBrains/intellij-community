@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@ package com.intellij.util;
 
 public interface Consumer<T> {
   Consumer EMPTY_CONSUMER = new Consumer() {
-    public void consume(final Object t) {
-    }
+    public void consume(Object t) { }
   };
 
   /**
@@ -26,5 +25,4 @@ public interface Consumer<T> {
    * t is supposed to be a not-null value. If you need to pass {@code null}s to the consumer use {@link NullableConsumer} instead
    */
   void consume(T t);
-
 }

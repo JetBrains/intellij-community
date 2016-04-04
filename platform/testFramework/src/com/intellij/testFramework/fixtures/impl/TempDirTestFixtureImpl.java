@@ -13,46 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * @author Dmitry Avdeev
  */
 public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-  private final ArrayList<File> myFilesToDelete = new ArrayList<File>();
   private File myTempDir;
-
-  @NotNull
-  @Override
-  public VirtualFile copyFile(@NotNull VirtualFile file, @NotNull String targetPath) {
-    try {
-      createTempDirectory();
-      VirtualFile tempDir =
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.getCanonicalPath().replace(File.separatorChar, '/'));
-      return VfsUtilCore.copyFile(this, file, tempDir);
-    }
-    catch (IOException e) {
-      throw new RuntimeException("Cannot copy " + file, e);
-    }
-  }
 
   @NotNull
   @Override
@@ -107,37 +91,24 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   }
 
   @Override
-  @Nullable
   public VirtualFile getFile(@NotNull final String path) {
-
-    final Ref<VirtualFile> result = new Ref<VirtualFile>(null);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    return new WriteAction<VirtualFile>() {
       @Override
-      public void run() {
-        try {
-          final String fullPath = myTempDir.getCanonicalPath().replace(File.separatorChar, '/') + "/" + path;
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath);
-          result.set(file);
-        }
-        catch (IOException e) {
-          Assert.fail("Cannot find " + path + ": " + e);
-        }
+      protected void run(@NotNull Result<VirtualFile> result) throws IOException {
+        final String fullPath = myTempDir.getCanonicalPath() + '/' + path;
+        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath);
+        result.setResult(file);
       }
-    });
-    return result.get();
+    }.execute().getResultObject();
   }
 
   @Override
   @NotNull
   public VirtualFile createFile(@NotNull final String name) {
-    final File file = createTempDirectory();
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        final File file1 = new File(file, name);
-        FileUtil.createIfDoesntExist(file1);
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-      }
+    final File file = new File(createTempDirectory(), name);
+    return ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> {
+      FileUtil.createIfDoesntExist(file);
+      return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     });
   }
 
@@ -149,14 +120,14 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @Override
   @NotNull
-  public VirtualFile createFile(@NotNull final String name, final String text) throws IOException {
+  public VirtualFile createFile(@NotNull String name, @NotNull final String text) throws IOException {
     final VirtualFile file = createFile(name);
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws IOException {
         VfsUtil.saveText(file, text);
       }
-    }.execute().throwException();
+    }.execute();
     return file;
   }
 
@@ -168,11 +139,20 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @Override
   public void tearDown() throws Exception {
-    for (final File fileToDelete : myFilesToDelete) {
-      boolean deleted = FileUtil.delete(fileToDelete);
-      Assert.assertTrue("Can't delete " + fileToDelete, deleted);
+    try {
+      if (myTempDir != null) {
+        new WriteAction() {
+          @Override
+          protected void run(@NotNull Result result) throws IOException {
+            findOrCreateDir("").delete(this);
+          }
+        }.execute();
+      }
     }
-    super.tearDown();
+    finally {
+      //noinspection ThrowFromFinallyBlock
+      super.tearDown();
+    }
   }
 
   protected File getTempHome() {
@@ -186,7 +166,6 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
         File tempHome = getTempHome();
         myTempDir = tempHome == null ? FileUtil.createTempDirectory("unitTest", null, false) :
                     FileUtil.createTempDirectory(tempHome, "unitTest", null, false);
-        myFilesToDelete.add(myTempDir);
       }
       return myTempDir;
     }
@@ -194,5 +173,4 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
       throw new RuntimeException("Cannot create temp dir", e);
     }
   }
-
 }

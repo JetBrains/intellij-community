@@ -168,7 +168,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
-    if (myWrongElement == null || !myWrongElement.isValid()) return false;
+    if (!myWrongElement.isValid()) return false;
 
     final List<PsiClassType> unhandled = new ArrayList<PsiClassType>();
     if (collectExceptions(unhandled) == null) return false;

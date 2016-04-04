@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.Constructor;
 
+@SuppressWarnings("deprecation")
 public class StringFactory {
   // String(char[], boolean). Works since JDK1.7, earlier JDKs have too slow reflection anyway
   private static final ConstructorAccessor ourConstructorAccessor;
@@ -35,7 +36,6 @@ public class StringFactory {
     }
     ourConstructorAccessor = constructorAccessor;
   }
-
 
   /**
    * @return new instance of String which backed by 'chars' array.

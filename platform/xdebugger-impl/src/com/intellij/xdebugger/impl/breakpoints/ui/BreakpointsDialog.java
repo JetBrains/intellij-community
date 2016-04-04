@@ -36,6 +36,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -62,16 +63,16 @@ import java.util.*;
 import java.util.List;
 
 public class BreakpointsDialog extends DialogWrapper {
-  @NotNull private Project myProject;
+  @NotNull private final Project myProject;
 
-  private Object myInitialBreakpoint;
-  private List<BreakpointPanelProvider> myBreakpointsPanelProviders;
+  private final Object myInitialBreakpoint;
+  private final List<BreakpointPanelProvider> myBreakpointsPanelProviders;
 
   private BreakpointItemsTreeController myTreeController;
 
-  JLabel temp = new JLabel();
+  final JLabel temp = new JLabel();
 
-  private MasterController myMasterController = new MasterController() {
+  private final MasterController myMasterController = new MasterController() {
     @Override
     public ItemWrapper[] getSelectedItems() {
       final List<BreakpointItem> res = myTreeController.getSelectedBreakpoints(false);
@@ -189,7 +190,7 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
-    private XBreakpointGroupingRule myRule;
+    private final XBreakpointGroupingRule myRule;
 
     public ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
       super(rule.getPresentableName(), rule.getIcon());
@@ -344,14 +345,15 @@ public class BreakpointsDialog extends DialogWrapper {
       setToolbarPosition(ActionToolbarPosition.TOP).
       setToolbarBorder(IdeBorderFactory.createEmptyBorder());
 
-    tree.setBorder(IdeBorderFactory.createBorder());
-
     for (ToggleActionButton action : myToggleRuleActions) {
       decorator.addExtraAction(action);
     }
 
     JPanel decoratedTree = decorator.createPanel();
     decoratedTree.setBorder(IdeBorderFactory.createEmptyBorder());
+
+    JScrollPane pane = UIUtil.findParentByClass(tree, JScrollPane.class);
+    if (pane != null) pane.setBorder(IdeBorderFactory.createBorder());
 
     myTreeController.setTreeView(tree);
 

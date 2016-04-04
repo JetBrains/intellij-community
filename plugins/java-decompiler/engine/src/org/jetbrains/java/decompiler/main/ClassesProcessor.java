@@ -40,14 +40,22 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class ClassesProcessor {
-
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
 
   private final Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
 
-  public ClassesProcessor(StructContext context) {
+  private static class Inner {
+    private String simpleName;
+    private int type;
+    private int accessFlags;
 
-    Map<String, Object[]> mapInnerClasses = new HashMap<String, Object[]>();
+    private static boolean equal(Inner o1, Inner o2) {
+      return o1.type == o2.type && o1.accessFlags == o2.accessFlags && InterpreterUtil.equalObjects(o1.simpleName, o2.simpleName);
+    }
+  }
+
+  public ClassesProcessor(StructContext context) {
+    Map<String, Inner> mapInnerClasses = new HashMap<String, Inner>();
     Map<String, Set<String>> mapNestedClassReferences = new HashMap<String, Set<String>>();
     Map<String, Set<String>> mapEnclosingClassReferences = new HashMap<String, Set<String>>();
     Map<String, String> mapNewSimpleNames = new HashMap<String, String>();
@@ -57,25 +65,16 @@ public class ClassesProcessor {
     // create class nodes
     for (StructClass cl : context.getClasses().values()) {
       if (cl.isOwn() && !mapRootClasses.containsKey(cl.qualifiedName)) {
-
         if (bDecompileInner) {
           StructInnerClassesAttribute inner = (StructInnerClassesAttribute)cl.getAttributes().getWithKey("InnerClasses");
+
           if (inner != null) {
-
-            for (int i = 0; i < inner.getClassEntries().size(); i++) {
-
-              int[] entry = inner.getClassEntries().get(i);
-              String[] strEntry = inner.getStringEntries().get(i);
-              Object[] arr = new Object[4]; // arr[0] not used
-              String innerName = strEntry[0];
-
-              // nested class type
-              arr[2] = entry[1] == 0 ? (entry[2] == 0 ? ClassNode.CLASS_ANONYMOUS : ClassNode.CLASS_LOCAL) : ClassNode.CLASS_MEMBER;
+            for (StructInnerClassesAttribute.Entry entry : inner.getEntries()) {
+              String innerName = entry.innerName;
 
               // original simple name
-              String simpleName = strEntry[2];
+              String simpleName = entry.simpleName;
               String savedName = mapNewSimpleNames.get(innerName);
-
               if (savedName != null) {
                 simpleName = savedName;
               }
@@ -87,15 +86,15 @@ public class ClassesProcessor {
                 }
               }
 
-              arr[1] = simpleName;
-
-              // original access flags
-              arr[3] = entry[3];
+              Inner rec = new Inner();
+              rec.simpleName = simpleName;
+              rec.type = entry.outerNameIdx != 0 ? ClassNode.CLASS_MEMBER : entry.simpleNameIdx != 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_ANONYMOUS;
+              rec.accessFlags = entry.accessFlags;
 
               // enclosing class
               String enclClassName;
-              if (entry[1] != 0) {
-                enclClassName = strEntry[1];
+              if (entry.outerNameIdx != 0) {
+                enclClassName = entry.enclosingName;
               }
               else {
                 enclClassName = cl.qualifiedName;
@@ -105,11 +104,11 @@ public class ClassesProcessor {
                 StructClass enclosing_class = context.getClasses().get(enclClassName);
                 if (enclosing_class != null && enclosing_class.isOwn()) { // own classes only
 
-                  Object[] arrOld = mapInnerClasses.get(innerName);
-                  if (arrOld == null) {
-                    mapInnerClasses.put(innerName, arr);
+                  Inner existingRec = mapInnerClasses.get(innerName);
+                  if (existingRec == null) {
+                    mapInnerClasses.put(innerName, rec);
                   }
-                  else if (!InterpreterUtil.equalObjectArrays(arrOld, arr)) {
+                  else if (!Inner.equal(existingRec, rec)) {
                     String message = "Inconsistent inner class entries for " + innerName + "!";
                     DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
                   }
@@ -140,12 +139,10 @@ public class ClassesProcessor {
     }
 
     if (bDecompileInner) {
-
       // connect nested classes
       for (Entry<String, ClassNode> ent : mapRootClasses.entrySet()) {
         // root class?
         if (!mapInnerClasses.containsKey(ent.getKey())) {
-
           Set<String> setVisited = new HashSet<String>();
           LinkedList<String> stack = new LinkedList<String>();
 
@@ -153,7 +150,6 @@ public class ClassesProcessor {
           setVisited.add(ent.getKey());
 
           while (!stack.isEmpty()) {
-
             String superClass = stack.removeFirst();
             ClassNode superNode = mapRootClasses.get(superClass);
 
@@ -163,13 +159,13 @@ public class ClassesProcessor {
               StructClass scl = superNode.classStruct;
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
 
-              if (inner == null || inner.getStringEntries().isEmpty()) {
+              if (inner == null || inner.getEntries().isEmpty()) {
                 DecompilerContext.getLogger().writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);
                 continue;
               }
 
-              for (int i = 0; i < inner.getStringEntries().size(); i++) {
-                String nestedClass = inner.getStringEntries().get(i)[0];
+              for (StructInnerClassesAttribute.Entry entry : inner.getEntries()) {
+                String nestedClass = entry.innerName;
                 if (!setNestedClasses.contains(nestedClass)) {
                   continue;
                 }
@@ -184,21 +180,20 @@ public class ClassesProcessor {
                   continue;
                 }
 
-                Object[] arr = mapInnerClasses.get(nestedClass);
+                Inner rec = mapInnerClasses.get(nestedClass);
 
                 //if ((Integer)arr[2] == ClassNode.CLASS_MEMBER) {
                   // FIXME: check for consistent naming
                 //}
 
-                nestedNode.type = (Integer)arr[2];
-                nestedNode.simpleName = (String)arr[1];
-                nestedNode.access = (Integer)arr[3];
+                nestedNode.simpleName = rec.simpleName;
+                nestedNode.type = rec.type;
+                nestedNode.access = rec.accessFlags;
 
                 if (nestedNode.type == ClassNode.CLASS_ANONYMOUS) {
                   StructClass cl = nestedNode.classStruct;
 
-                  // remove static if anonymous class
-                  // a common compiler bug
+                  // remove static if anonymous class (a common compiler bug)
                   nestedNode.access &= ~CodeConstants.ACC_STATIC;
 
                   int[] interfaces = cl.getInterfaces();
@@ -215,8 +210,7 @@ public class ClassesProcessor {
                   }
                 }
                 else if (nestedNode.type == ClassNode.CLASS_LOCAL) {
-                  // only abstract and final are permitted
-                  // a common compiler bug
+                  // only abstract and final are permitted (a common compiler bug)
                   nestedNode.access &= (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_FINAL);
                 }
 
@@ -301,7 +295,6 @@ public class ClassesProcessor {
   }
 
   private static void initWrappers(ClassNode node) throws IOException {
-
     if (node.type == ClassNode.CLASS_LAMBDA) {
       return;
     }
@@ -317,7 +310,6 @@ public class ClassesProcessor {
   }
 
   private static void addClassnameToImport(ClassNode node, ImportCollector imp) {
-
     if (node.simpleName != null && node.simpleName.length() > 0) {
       imp.getShortName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
     }
@@ -328,7 +320,6 @@ public class ClassesProcessor {
   }
 
   private static void destroyWrappers(ClassNode node) {
-
     node.wrapper = null;
     node.classStruct.releaseResources();
 
@@ -343,7 +334,6 @@ public class ClassesProcessor {
 
 
   public static class ClassNode {
-
     public static final int CLASS_ROOT = 0;
     public static final int CLASS_MEMBER = 1;
     public static final int CLASS_ANONYMOUS = 2;

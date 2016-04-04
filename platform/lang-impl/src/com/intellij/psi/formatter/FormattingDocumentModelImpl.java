@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -61,17 +62,17 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
   public static FormattingDocumentModelImpl createOn(PsiFile file) {
     Document document = getDocumentToBeUsedFor(file);
     if (document != null) {
-      if (PsiDocumentManager.getInstance(file.getProject()).isUncommited(document)) {
-        LOG.error("Document is uncommitted");
-      }
-      if (file.getTextLength() != document.getTextLength()) {
-        LOG.error("Document and psi file texts should be equal: " +
-                  file + " file length = " + file.getTextLength() + ", document length = " + document.getTextLength());
-      }
+      checkDocument(file, document);
       return new FormattingDocumentModelImpl(document, file);
     }
     else {
       return new FormattingDocumentModelImpl(new DocumentImpl(file.getViewProvider().getContents(), true), file);
+    }
+  }
+
+  private static void checkDocument(PsiFile file, Document document) {
+    if (file.getTextLength() != document.getTextLength()) {
+      LOG.error(DebugUtil.diagnosePsiDocumentInconsistency(file, document));
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,9 +106,6 @@ class ReloadClassesWorker {
 
     final DebugProcessImpl debugProcess = getDebugProcess();
     final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-    if(virtualMachineProxy == null) {
-      return;
-    }
 
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
@@ -249,7 +246,7 @@ class ReloadClassesWorker {
      */
     private static final int CLASSES_CHUNK_SIZE = 100;
     private final VirtualMachineProxyImpl myVirtualMachineProxy;
-    private final Map<ReferenceType, byte[]> myRedefineMap = new HashMap<ReferenceType, byte[]>();
+    private final Map<ReferenceType, byte[]> myRedefineMap = new HashMap<>();
     private int myProcessedClassesCount;
     private int myPartiallyRedefinedClassesCount;
 

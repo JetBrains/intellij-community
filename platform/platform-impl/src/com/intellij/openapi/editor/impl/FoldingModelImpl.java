@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +44,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable {
+public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
   
   private static final Key<LogicalPosition> SAVED_CARET_POSITION = Key.create("saved.position.before.folding");
@@ -63,6 +65,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   private int mySavedCaretShift;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
   private boolean myDocumentChangeProcessed = true;
+  private final AtomicLong myExpansionCounter = new AtomicLong();
 
   public FoldingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -82,6 +85,18 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @NotNull
   public List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
     return (List<FoldRegion>)myGroups.get(group);
+  }
+
+  @Override
+  public void clearDocumentRangesModificationStatus() {
+    assertIsDispatchThreadForEditor();
+    myFoldTree.clearDocumentRangesModificationStatus();
+  }
+
+  @Override
+  public boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region) {
+    assertReadAccess();
+    return region instanceof FoldRegionImpl && ((FoldRegionImpl)region).hasDocumentRegionChanged();
   }
 
   @NotNull
@@ -334,6 +349,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     }
 
     myFoldRegionsProcessed = true;
+    myExpansionCounter.incrementAndGet();
     ((FoldRegionImpl) region).setExpandedInternal(true);
     notifyListenersOnFoldRegionStateChange(region);
   }
@@ -583,5 +599,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public String toString() {
     return dumpState();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myExpansionCounter.get();
   }
 }

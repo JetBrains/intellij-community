@@ -68,9 +68,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -88,7 +86,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
 
   @Override
   public List<FrameworkDependency> getDependenciesFrameworkIds() {
-    return Arrays.asList(FrameworkDependency.required("web"), FrameworkDependency.optional(JPA_FRAMEWORK_ID));
+    return AppEngineWebIntegration.getInstance().getAppEngineFrameworkDependencies();
   }
 
   @Override

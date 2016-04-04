@@ -15,22 +15,29 @@
  */
 package com.intellij.notification.impl.actions;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.connect.StatisticsNotification;
+import com.intellij.internal.statistic.updater.StatisticsNotificationManager;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -38,9 +45,12 @@ import java.awt.*;
  */
 public class NotificationTestAction extends AnAction implements DumbAware {
   public static final String TEST_GROUP_ID = "Test Notification";
+  private static final NotificationGroup TEST_STICKY_GROUP =
+    new NotificationGroup("Test Sticky Notification", NotificationDisplayType.STICKY_BALLOON, true);
+  private static final String MESSAGE_KEY = "NotificationTestAction_Message";
 
   public void actionPerformed(@NotNull AnActionEvent event) {
-    new NotificationDialog(event.getProject()).show();
+    new NotificationDialog(event.getProject(), NotificationsManagerImpl.newEnabled()).show();
   }
 
   private static final class NotificationDialog extends DialogWrapper {
@@ -48,25 +58,41 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     private final JTextArea myMessage = new JTextArea(10, 50);
     private final JComboBox myType = new JComboBox(NotificationType.values());
     private final MessageBus myMessageBus;
+    private final boolean myIsNew;
 
-    private NotificationDialog(Project project) {
+    private NotificationDialog(@Nullable Project project, boolean isNew) {
       super(project, true, IdeModalityType.MODELESS);
+      myIsNew = isNew;
       myMessageBus = project != null ? project.getMessageBus() : ApplicationManager.getApplication().getMessageBus();
       init();
       setOKButtonText("Notify");
       setTitle("Test Notification");
-      myMessage.setText("You can close<br>\n" +
-                        "this very very very very long notification\n" +
-                        "by clicking <a href=\"close\">this link</a>.\n" +
-                        "<p>Long long long long. It should be long. Very long. Too long. And even longer.");
+      if (isNew) {
+        myMessage.setText(
+          PropertiesComponent.getInstance().getValue(MESSAGE_KEY, "GroupID:\nTitle:\nSubtitle:\nContent:\nContent:\nActions:\nSticky:\n"));
+      }
+      else {
+        myMessage.setText("You can close<br>\n" +
+                          "this very very very very long notification\n" +
+                          "by clicking <a href=\"close\">this link</a>.\n" +
+                          "<p>Long long long long. It should be long. Very long. Too long. And even longer.");
+      }
+    }
+
+    @Nullable
+    @Override
+    protected String getDimensionServiceKey() {
+      return myIsNew ? "NotificationTestAction" : null;
     }
 
     @Override
     protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new BorderLayout(10, 10));
-      panel.add(BorderLayout.NORTH, myTitle);
+      if (!myIsNew) {
+        panel.add(BorderLayout.NORTH, myTitle);
+        panel.add(BorderLayout.SOUTH, myType);
+      }
       panel.add(BorderLayout.CENTER, new JScrollPane(myMessage));
-      panel.add(BorderLayout.SOUTH, myType);
       return panel;
     }
 
@@ -77,9 +103,21 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     }
 
     @Override
+    public void doCancelAction() {
+      if (myIsNew) {
+        PropertiesComponent.getInstance().setValue(MESSAGE_KEY, myMessage.getText());
+      }
+      super.doCancelAction();
+    }
+
+    @Override
     protected void doOKAction() {
-      String title = myTitle.getText();
       String message = myMessage.getText();
+      if (myIsNew) {
+        newNotification(message);
+        return;
+      }
+      String title = myTitle.getText();
       Object value = myType.getSelectedItem();
       NotificationType type = value instanceof NotificationType ? (NotificationType)value : NotificationType.ERROR;
       final Notification notification = new Notification(TEST_GROUP_ID, title, message, type, new NotificationListener() {
@@ -93,6 +131,158 @@ public class NotificationTestAction extends AnAction implements DumbAware {
           myMessageBus.syncPublisher(Notifications.TOPIC).notify(notification);
         }
       });
+    }
+
+    private void newNotification(String text) {
+      final List<NotificationInfo> notifications = new ArrayList<NotificationInfo>();
+      NotificationInfo notification = null;
+
+      for (String line : StringUtil.splitByLines(text, false)) {
+        if (line.length() == 0) {
+          if (notification != null) {
+            notification = null;
+            continue;
+          }
+        }
+        if (line.startsWith("//")) {
+          continue;
+        }
+        if (line.startsWith("--")) {
+          break;
+        }
+        if (notification == null) {
+          notification = new NotificationInfo();
+          notifications.add(notification);
+        }
+        if (line.startsWith("GroupID:")) {
+          notification.setGroupId(StringUtil.substringAfter(line, ":"));
+        }
+        else if (line.startsWith("Title:")) {
+          notification.setTitle(StringUtil.substringAfter(line, ":"));
+        }
+        else if (line.startsWith("Content:")) {
+          String value = StringUtil.substringAfter(line, ":");
+          if (value != null) {
+            notification.addContent(value);
+          }
+        }
+        else if (line.startsWith("Subtitle:")) {
+          notification.setSubtitle(StringUtil.substringAfter(line, ":"));
+        }
+        else if (line.startsWith("Actions:")) {
+          String value = StringUtil.substringAfter(line, ":");
+          if (value != null) {
+            notification.setActions(StringUtil.split(value, ","));
+          }
+        }
+        else if (line.startsWith("Sticky:")) {
+          notification.setSticky("true".equals(StringUtil.substringAfter(line, ":")));
+        }
+      }
+
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          for (NotificationInfo info : notifications) {
+            myMessageBus.syncPublisher(Notifications.TOPIC).notify(info.getNotification());
+          }
+        }
+      });
+    }
+  }
+
+  private static class NotificationInfo implements NotificationListener {
+    private String myGroupId;
+    private String myTitle;
+    private String mySubtitle;
+    private List<String> myContent;
+    private List<String> myActions;
+    private boolean mySticky;
+
+    private Notification myNotification;
+
+    public Notification getNotification() {
+      if (myNotification == null) {
+        Icon icon = null;
+        if (myGroupId != null) {
+          icon = IconLoader.findIcon(myGroupId);
+        }
+        if ("!!!St!!!".equals(myTitle)) {
+          return myNotification = new StatisticsNotification(StatisticsNotificationManager.GROUP_DISPLAY_ID, this).setIcon(icon);
+        }
+        String displayId = mySticky ? TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
+        String content = myContent == null ? "" : StringUtil.join(myContent, "\n");
+        if (icon == null) {
+          myNotification = new Notification(displayId, StringUtil.notNullize(myTitle), content, NotificationType.INFORMATION, this);
+        }
+        else {
+          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, NotificationType.INFORMATION, this);
+          if (myActions != null) {
+            for (String action : myActions) {
+              myNotification.addAction(new MyAnAction(action));
+            }
+          }
+        }
+      }
+      return myNotification;
+    }
+
+    public void setGroupId(@Nullable String groupId) {
+      myGroupId = groupId;
+    }
+
+    public void setTitle(@Nullable String title) {
+      myTitle = title;
+    }
+
+    public void setSubtitle(@Nullable String subtitle) {
+      mySubtitle = subtitle;
+    }
+
+    public void addContent(@NotNull String content) {
+      if (myContent == null) {
+        myContent = new ArrayList<String>();
+      }
+      myContent.add(content);
+    }
+
+    public void setActions(@NotNull List<String> actions) {
+      myActions = actions;
+    }
+
+    public void setSticky(boolean sticky) {
+      mySticky = sticky;
+    }
+
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      if (MessageDialogBuilder.yesNo("Notification Listener", event.getDescription() + "      Expire?").is()) {
+        myNotification.expire();
+        myNotification = null;
+      }
+    }
+
+    private class MyAnAction extends AnAction {
+      private MyAnAction(@Nullable String text) {
+        if (text != null) {
+          if (text.endsWith(".png")) {
+            Icon icon = IconLoader.findIcon(text);
+            if (icon != null) {
+              getTemplatePresentation().setIcon(icon);
+              return;
+            }
+          }
+          getTemplatePresentation().setText(text);
+        }
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (MessageDialogBuilder.yesNo("AnAction", getTemplatePresentation().getText() + "      Expire?").is()) {
+          myNotification.expire();
+          myNotification = null;
+        }
+      }
     }
   }
 }

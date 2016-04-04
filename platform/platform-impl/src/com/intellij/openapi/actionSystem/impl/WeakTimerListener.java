@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.TimerListener;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 /**
@@ -26,13 +28,14 @@ import java.lang.ref.WeakReference;
  */
 public class WeakTimerListener implements TimerListener {
   private final ActionManagerEx myManager;
-  private final WeakReference<TimerListener> myRef;
+  private final Reference<TimerListener> myRef;
 
-  public WeakTimerListener(ActionManagerEx manager, TimerListener delegate) {
+  public WeakTimerListener(@NotNull ActionManagerEx manager, @NotNull TimerListener delegate) {
     myManager = manager;
     myRef = new WeakReference<TimerListener>(delegate);
   }
 
+  @Override
   public ModalityState getModalityState() {
     TimerListener delegate = myRef.get();
     if (delegate != null) {
@@ -44,6 +47,7 @@ public class WeakTimerListener implements TimerListener {
     }
   }
 
+  @Override
   public void run() {
     TimerListener delegate = myRef.get();
     if (delegate != null) {

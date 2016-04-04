@@ -15,7 +15,6 @@
  */
 package com.intellij.byteCodeViewer;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -138,7 +137,7 @@ public class ShowByteCodeAction extends AnAction {
 
           final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
             .setProject(project)
-            .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+            .setDimensionServiceKey(project, ShowByteCodeAction.class.getName(), false)
             .setResizable(true)
             .setMovable(true)
             .setRequestFocus(LookupManager.getActiveLookup(editor) == null)

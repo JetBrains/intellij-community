@@ -88,6 +88,12 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   private static boolean allowInjectionInComment(@NotNull PsiLanguageInjectionHost host) {
     // XXX: Don't inject PyDocstringLanguage during completion inside comments due to an exception related to finding ShredImpl's
     // hostElementPointer
-    return CompletionUtil.getOriginalOrSelf(host) == host;
+    if (CompletionUtil.getOriginalOrSelf(host) != host) {
+      return false;
+    }
+    if (PyFunctionTypeCommentReferenceContributor.TYPE_COMMENT_PATTERN.accepts(host)) {
+      return false;
+    }
+    return true;
   }
 }

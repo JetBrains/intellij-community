@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
+import com.intellij.ide.hierarchy.HierarchyBrowserBase;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -30,12 +31,17 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
@@ -47,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
+import javax.swing.*;
 import java.util.*;
 
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
@@ -139,6 +146,9 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     }
 
     if (usageView) {
+      if (prevSearchFiles) {
+        addHierarchyScope(project, result);
+      }
       UsageView selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView();
       if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
         final Set<Usage> usages = selectedUsageView.getUsages();
@@ -239,6 +249,28 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return ContainerUtil.newArrayList(result);
   }
 
+  private static void addHierarchyScope(@NotNull Project project, Collection<SearchScope> result) {
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY);
+    if (toolWindow == null) {
+      return;
+    }
+    final ContentManager contentManager = toolWindow.getContentManager();
+    final Content content = contentManager.getSelectedContent();
+    if (content == null) {
+      return;
+    }
+    final String name = content.getDisplayName();
+    final JComponent component = content.getComponent();
+    if (!(component instanceof HierarchyBrowserBase)) {
+      return;
+    }
+    final HierarchyBrowserBase hierarchyBrowserBase = (HierarchyBrowserBase)component;
+    final PsiElement[] elements = hierarchyBrowserBase.getAvailableElements();
+    if (elements.length > 0) {
+      result.add(new LocalSearchScope(elements, "Hierarchy '" + name + "' (visible nodes only)"));
+    }
+  }
+
   @Nullable
   private static SearchScope getSelectedFilesScope(final Project project, @Nullable DataContext dataContext) {
     final VirtualFile[] filesOrDirs = dataContext == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
@@ -250,13 +282,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
         }
       });
       if (!selectedFiles.isEmpty()) {
-        return new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, selectedFiles)) {
-          @NotNull
-          @Override
-          public String getDisplayName() {
-            return "Selected Files";
-          }
-        };
+        return GlobalSearchScope.filesScope(project, selectedFiles, "Selected Files");
       }
     }
     return null;

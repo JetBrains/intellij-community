@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -385,7 +386,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
         startupManager.runPostStartupActivitiesFromExtensions();
 
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        GuiUtils.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             if (!project.isDisposed()) {
@@ -397,7 +398,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
               }
             }
           }
-        });
+        }, ModalityState.NON_MODAL);
       }
     }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
 

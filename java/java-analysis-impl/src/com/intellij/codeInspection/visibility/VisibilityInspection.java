@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +122,12 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
+  }
+
+  @Nullable
+  @Override
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return new AccessCanBeTightenedInspection(this);
   }
 
   @Override
@@ -363,7 +369,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getExtendsList())) return false;
         if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getImplementsList())) return false;
         if (fromTopLevelElement != null && isInAnnotations(to, fromTopLevelElement)) return false;
-        return fromTopLevel == toOwner || fromOwner == toTopLevel || toOwner != null && refUtil.getOwnerClass(toOwner) == from;
+        return fromTopLevel == toOwner || fromOwner == toTopLevel || toOwner != null && (
+          refUtil.getOwnerClass(toOwner) == from || from instanceof RefMethod && toOwner == ((RefMethod)from).getOwnerClass() ||
+          from instanceof RefField && toOwner == ((RefField)from).getOwnerClass());
       }
 
       if (fromOwner != null && fromOwner.isStatic() && !to.isStatic() && refUtil.isInheritor(fromOwner, toOwner)) return false;

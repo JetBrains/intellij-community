@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,13 +36,16 @@ public class StoragePathMacros {
   /**
    * Points to the application-level options root directory.
    */
-  @NonNls @NotNull public static final String APP_CONFIG = "$APP_CONFIG$";
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final String APP_CONFIG = "$APP_CONFIG$";
 
-  /** <code>'.ipr'</code> file path key. */
-  @NonNls @NotNull public static final String PROJECT_FILE = "$PROJECT_FILE$";
+  @Deprecated
+  public static final String PROJECT_FILE = "$PROJECT_FILE$";
 
-  /** <code>'.idea'</code> directory path key. */
-  @NonNls @NotNull public static final String PROJECT_CONFIG_DIR = "$PROJECT_CONFIG_DIR$";
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final String PROJECT_CONFIG_DIR = "$PROJECT_CONFIG_DIR$";
 
   /**
    * {@link Project#getWorkspaceFile() Workspace} file key.
@@ -55,23 +58,5 @@ public class StoragePathMacros {
   @NonNls @NotNull public static final String MODULE_FILE = "$MODULE_FILE$";
 
   private StoragePathMacros() {
-  }
-
-  /**
-   * Allows to extract macro name from the given macro definition.
-   * <p/>
-   * Basically, performs conversion like {@code '$NAME$' -> 'NAME'}.
-   *
-   * @param macro  macro definition which name should be extracted.
-   * @return       name of the given macro definition
-   * @throws IllegalArgumentException   if given macro definition has unexpected format
-   */
-  @NotNull
-  @Deprecated
-  public static String getMacroName(@NotNull String macro) throws IllegalArgumentException {
-    if (macro.length() < 3 || macro.charAt(0) != '$' || macro.charAt(macro.length() - 1) != '$') {
-      throw new IllegalArgumentException("Malformed macro definition (" + macro + ")");
-    }
-    return macro.substring(1, macro.length() - 1);
   }
 }

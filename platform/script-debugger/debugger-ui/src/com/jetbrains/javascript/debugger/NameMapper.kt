@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.jetbrains.javascript.debugger
 import com.google.common.base.CharMatcher
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import gnu.trove.THashMap
@@ -26,14 +27,14 @@ import org.jetbrains.debugger.sourcemap.MappingList
 import org.jetbrains.debugger.sourcemap.SourceMap
 import org.jetbrains.rpc.LOG
 
-
 private val S1 = ",()[]{}="
 // don't trim trailing .&: - could be part of expression
 private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
 
 val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
 
-open class NameMapper(private val document: Document, private val generatedDocument: Document, private val sourceMappings: MappingList, private val sourceMap: SourceMap) {
+// generateVirtualFile only for debug purposes
+open class NameMapper(private val document: Document, private val transpiledDocument: Document, private val sourceMappings: MappingList, private val sourceMap: SourceMap, private val transpiledFile: VirtualFile? = null) {
   var rawNameToSource: MutableMap<String, String>? = null
     private set
 
@@ -55,7 +56,12 @@ open class NameMapper(private val document: Document, private val generatedDocum
       return null
     }
 
-    val generatedName = extractName(getGeneratedName(generatedDocument, sourceMap, sourceEntry))
+    if (sourceEntry.generatedLine > document.lineCount) {
+      LOG.warn("Cannot get generated name: source entry line ${sourceEntry.generatedLine} > ${document.lineCount}. Transpiled File: " + transpiledFile?.path)
+      return null
+    }
+
+    val generatedName = extractName(getGeneratedName(transpiledDocument, sourceMap, sourceEntry))
     if (generatedName.isEmpty()) {
       return null
     }

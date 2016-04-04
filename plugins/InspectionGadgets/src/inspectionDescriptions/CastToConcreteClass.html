@@ -2,12 +2,10 @@
 <body>
 Reports casting a value to a concrete class, rather than an interface.
 Such declarations may represent a failure of abstraction, and may make testing more difficult.
-Declarations whose classes come from system or third-party libraries will not be reported by this inspection.
+Casts to system or library classes and casts inside <b>equals()</b> and <b>clone()</b> methods will not be reported by this inspection.
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to have this inspection ignore casts to abstract classes.
-<p>
-Use the second checkbox below to have this inspection ignore casts inside <code>equals()</code> methods.
+Use the checkbox below to have this inspection ignore casts to abstract classes.
 <p>
 
 </body>

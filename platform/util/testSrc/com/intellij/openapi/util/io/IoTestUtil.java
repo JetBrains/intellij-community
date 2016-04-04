@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,18 @@ public class IoTestUtil {
   @NotNull
   public static File getTempDirectory() {
     File dir = new File(FileUtil.getTempDirectory());
-    if (SystemInfo.isWindows && dir.getPath().contains("~")) {
+    dir = expandWindowsPath(dir);
+    return dir;
+  }
+
+  private static File expandWindowsPath(File file) {
+    if (SystemInfo.isWindows && file.getPath().indexOf('~') > 0) {
       try {
-        dir = dir.getCanonicalFile();
+        return file.getCanonicalFile();
       }
       catch (IOException ignored) { }
     }
-    return dir;
+    return file;
   }
 
   @NotNull
@@ -73,7 +78,11 @@ public class IoTestUtil {
       command = new ProcessBuilder("ln", "-s", targetFile.getPath(), linkFile.getPath());
     }
     final int res = runCommand(command);
-    assertEquals(command.command().toString(), 0, res);
+    String message = command.command().toString();
+    if (SystemInfo.isWindows)  {
+      message = "Cannot create a symlink; configure permissions as described: http://superuser.com/a/105381\n" + message;
+    }
+    assertEquals(message, 0, res);
 
     shouldExist |= SystemInfo.isWindows && SystemInfo.JAVA_VERSION.startsWith("1.6");
     assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
@@ -208,7 +217,7 @@ public class IoTestUtil {
   private static int runCommand(final ProcessBuilder command) throws IOException, InterruptedException {
     command.redirectErrorStream(true);
     final Process process = command.start();
-    new Thread(new Runnable() {
+    Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
         try {
@@ -228,8 +237,11 @@ public class IoTestUtil {
           throw new RuntimeException(e);
         }
       }
-    },"io test").start();
-    return process.waitFor();
+    }, "io test");
+    thread.start();
+    int ret = process.waitFor();
+    thread.join();
+    return ret;
   }
 
   public static void assertTimestampsEqual(final long expected, final long actual) {
@@ -248,7 +260,7 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestJar() throws IOException {
-    File jarFile = FileUtil.createTempFile("test.", ".jar");
+    File jarFile = expandWindowsPath(FileUtil.createTempFile("test.", ".jar"));
     return createTestJar(jarFile);
   }
 

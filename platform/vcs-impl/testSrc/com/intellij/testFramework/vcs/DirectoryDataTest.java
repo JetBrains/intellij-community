@@ -15,11 +15,17 @@
  */
 package com.intellij.testFramework.vcs;
 
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import junit.framework.Assert;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,6 +34,30 @@ import java.io.File;
  * Time: 8:24 PM
  */
 public class DirectoryDataTest extends FileBasedTest {
+  @Test
+  public void testVisitRecursively() throws Exception {
+    DirectoryData data = new DirectoryData(myProject.getBaseDir());
+    try {
+      data.clear();
+      data.create();
+
+      File subDir = new File(data.getBase().getPath(), "DL0N1");
+      final VirtualFile vSubDir = LocalFileSystem.getInstance().findFileByIoFile(subDir);
+      assertNotNull(vSubDir);
+
+      VfsUtilCore.visitChildrenRecursively(data.getBase(), new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          assertTrue(!VfsUtilCore.isAncestor(vSubDir, file, true));
+          return !vSubDir.equals(file);
+        }
+      });
+    }
+    finally {
+      data.clear();
+    }
+  }
+
   @Test
   public void testQuadro() throws Exception {
     final DirectoryData data = new DirectoryData(myProject.getBaseDir(), 2, 2, ".txt");
@@ -40,16 +70,16 @@ public class DirectoryDataTest extends FileBasedTest {
 
       for (String dir : dirs) {
         final VirtualFile vDir = myLocalFileSystem.refreshAndFindFileByIoFile(new File(data.getBase().getPath(), dir));
-        Assert.assertTrue(vDir != null);
-        Assert.assertTrue(vDir.exists());
-        Assert.assertTrue(vDir.isDirectory());
+        assertTrue(vDir != null);
+        assertTrue(vDir.exists());
+        assertTrue(vDir.isDirectory());
       }
 
       for (String file : files) {
         final VirtualFile vFile = myLocalFileSystem.refreshAndFindFileByIoFile(new File(data.getBase().getPath(), file));
-        Assert.assertTrue(vFile != null);
-        Assert.assertTrue(vFile.exists());
-        Assert.assertTrue(! vFile.isDirectory());
+        assertTrue(vFile != null);
+        assertTrue(vFile.exists());
+        assertTrue(! vFile.isDirectory());
       }
     }
     finally {

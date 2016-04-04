@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -1854,8 +1869,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       final String expected2 = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
       assertEquals("don't add broken static imports", expected2, replacer.testReplace(in2, what, by, options, true));
 
-      final String by2 = "new java.util.AbstractMap.SimpleEntry(\"\", \"\")";
-      final String expected3 = "import static java.util.AbstractMap.SimpleEntry;class X {{ new SimpleEntry(\"\", \"\"); }}";
+      final String by2 = "new java.util.Map.Entry() {}";
+      final String expected3 = "import static java.util.Map.Entry;class X {{ new Entry() {}; }}";
       assertEquals("", expected3, replacer.testReplace(in, what, by2, options, true));
 
       final String in3 = "import java.util.Collections;" +
@@ -1874,6 +1889,24 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                                "  }" +
                                "}";
       assertEquals("don't break references with type parameters", expected4, replacer.testReplace(in3, what3, by3, options, true));
+
+      final String in4 = "import java.util.Collections;\n" +
+                         "public class X {\n" +
+                         "    void some() {\n" +
+                         "        System.out.println(1);\n" +
+                         "        boolean b = Collections.eq(null, null);\n" +
+                         "    }\n" +
+                         "}";
+      final String what4 = "System.out.println(1);";
+      final String by4 = "System.out.println(2);";
+      final String expected5 = "import java.util.Collections;import static java.lang.System.out;\n" +
+                               "public class X {\n" +
+                               "    void some() {\n" +
+                               "        out.println(2);\n" +
+                               "        boolean b = Collections.eq(null, null);\n" +
+                               "    }\n" +
+                               "}";
+      assertEquals("don't add static import to inaccessible members", expected5, replacer.testReplace(in4, what4, by4, options, true));
     } finally {
       options.setToUseStaticImport(save);
     }
@@ -1917,7 +1950,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                                                 doTest(testName, ext, message);
                                               }
                                             }
-      ).cpuBound().assertTiming();
+      ).cpuBound().useLegacyScaling().assertTiming();
     } finally {
       options.setToReformatAccordingToStyle(false);
       options.setToShortenFQN(false);
@@ -2388,5 +2421,29 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(expected, replacer.testReplace(in, what, by, options));
 
     options.clearVariableDefinitions();
+  }
+
+  public void testMethodContentReplacement() {
+    final String in = "class A extends TestCase {\n" +
+                      "  void testOne() {\n" +
+                      "    System.out.println();\n" +
+                      "  }\n" +
+                      "}\n";
+    final String what = "class '_A { void '_b:[regex( test.* )](); }";
+    final String by = "class $A$ {\n  @java.lang.Override void $b$();\n}";
+    assertEquals("class A extends TestCase {\n" +
+                 "  @Override void testOne(){\n" +
+                 "    System.out.println();\n" +
+                 "  }\n" +
+                 "}\n", replacer.testReplace(in, what, by, options));
+
+    final String what2 = "void '_a:[regex( test.* )]();";
+    final String by2 = "@org.junit.Test void $a$();";
+    assertEquals("class A extends TestCase {\n" +
+                 "  @org.junit.Test void testOne(){\n" +
+                 "    System.out.println();\n" +
+                 "  }\n" +
+                 "}\n",
+                 replacer.testReplace(in, what2, by2, options));
   }
 }

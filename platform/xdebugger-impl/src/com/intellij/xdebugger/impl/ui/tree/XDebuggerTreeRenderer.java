@@ -18,8 +18,8 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
@@ -69,7 +69,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     node.appendToComponent(this);
     setIcon(node.getIcon());
 
-    Rectangle treeVisibleRect = tree.getVisibleRect();
+    Rectangle treeVisibleRect = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
     TreePath path = tree.getPathForRow(row);
     int rowX = path != null ? getRowX((BasicTreeUI)tree.getUI(), row, path.getPathCount() - 1) : 0;
 
@@ -90,7 +90,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
         }
       }
     }
-    putClientProperty(AbstractExpandableItemsHandler.DISABLE_EXPANDABLE_HANDLER, myHaveLink ? true : null);
+    putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
   }
 
   private static Method ourGetRowXMethod = null;

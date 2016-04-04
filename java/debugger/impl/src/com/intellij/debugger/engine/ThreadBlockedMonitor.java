@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ObjectReference;
@@ -37,24 +36,23 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author egor
  */
 public class ThreadBlockedMonitor {
-  private final Collection<ThreadReferenceProxy> myWatchedThreads = new HashSet<ThreadReferenceProxy>();
+  private static final Logger LOG = Logger.getInstance(ThreadBlockedMonitor.class);
 
-  private final SingleAlarm myAlarm;
+  private final Collection<ThreadReferenceProxy> myWatchedThreads = new HashSet<>();
+
+  private ScheduledFuture<?> myTask;
   private final DebugProcessImpl myProcess;
 
   public ThreadBlockedMonitor(DebugProcessImpl process, Disposable disposable) {
     myProcess = process;
-    myAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        checkBlockingThread();
-      }
-    }, 5000, Alarm.ThreadToUse.POOLED_THREAD, disposable);
+    Disposer.register(disposable, this::cancelTask);
   }
 
   public void startWatching(@Nullable ThreadReferenceProxy thread) {
@@ -62,7 +60,9 @@ public class ThreadBlockedMonitor {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (thread != null) {
       myWatchedThreads.add(thread);
-      myAlarm.request();
+      if (myTask == null) {
+        myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(this::checkBlockingThread, 5, 5, TimeUnit.SECONDS);
+      }
     }
   }
 
@@ -71,34 +71,46 @@ public class ThreadBlockedMonitor {
     if (thread != null) {
       myWatchedThreads.remove(thread);
     }
+    else {
+      myWatchedThreads.clear();
+    }
     if (myWatchedThreads.isEmpty()) {
-      myAlarm.cancel();
+      cancelTask();
     }
   }
 
-  private void onThreadBlocked(@NotNull final ThreadReference blockedThread,
-                               @NotNull final ThreadReference blockingThread,
-                               final DebugProcessImpl process) {
+  private void cancelTask() {
+    if (myTask != null) {
+      myTask.cancel(true);
+      myTask = null;
+    }
+  }
+
+  private static void onThreadBlocked(@NotNull final ThreadReference blockedThread,
+                                      @NotNull final ThreadReference blockingThread,
+                                      final DebugProcessImpl process) {
     XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
       DebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
       DebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
-      NotificationType.INFORMATION, new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            notification.expire();
-            process.getManagerThread().schedule(new DebuggerCommandImpl() {
-              @Override
-              protected void action() throws Exception {
-                ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
-                SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
-                process.getManagerThread()
-                  .invoke(process.createResumeThreadCommand(suspendingContext, threadProxy));
-              }
-            });
-          }
+      NotificationType.INFORMATION, (notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          notification.expire();
+          process.getManagerThread().schedule(new DebuggerCommandImpl() {
+            @Override
+            protected void action() throws Exception {
+              ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
+              SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
+              process.getManagerThread()
+                .invoke(process.createResumeThreadCommand(suspendingContext, threadProxy));
+            }
+          });
         }
       }).notify(process.getProject());
+  }
+
+  private ThreadReference getCurrentThread() {
+    ThreadReferenceProxyImpl threadProxy = myProcess.getDebuggerContext().getThreadProxy();
+    return threadProxy != null ? threadProxy.getThreadReference() : null;
   }
 
   private void checkBlockingThread() {
@@ -115,18 +127,19 @@ public class ThreadBlockedMonitor {
               vmProxy.canGetCurrentContendedMonitor() ? thread.getThreadReference().currentContendedMonitor() : null;
             if (waitedMonitor != null && vmProxy.canGetMonitorInfo()) {
               ThreadReference blockingThread = waitedMonitor.owningThread();
-              if (blockingThread != null) {
+              if (blockingThread != null
+                  && blockingThread.suspendCount() > 1
+                  && getCurrentThread() != blockingThread) {
                 onThreadBlocked(thread.getThreadReference(), blockingThread, myProcess);
               }
             }
           }
         }
         catch (IncompatibleThreadStateException e) {
-          e.printStackTrace();
+          LOG.info(e);
         }
         finally {
           vmProxy.getVirtualMachine().resume();
-          myAlarm.request();
         }
       }
     });

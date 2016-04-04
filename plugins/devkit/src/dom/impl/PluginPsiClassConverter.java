@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -23,13 +24,21 @@ import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.PsiClassConverter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 /**
  * @author peter
-*/
+ */
 public class PluginPsiClassConverter extends PsiClassConverter {
+
   protected GlobalSearchScope getScope(@NotNull ConvertContext context) {
-    return GlobalSearchScope.allScope(context.getProject());
+    final Project project = context.getProject();
+
+    if (PsiUtil.isIdeaProject(project)) {
+      return GlobalSearchScope.allScope(project);
+    }
+
+    return super.getScope(context);
   }
 
   @Override

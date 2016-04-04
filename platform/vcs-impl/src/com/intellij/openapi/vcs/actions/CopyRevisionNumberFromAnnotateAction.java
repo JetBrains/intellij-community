@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -26,7 +26,7 @@ import com.intellij.util.ui.TextTransferable;
 /**
  * @author Konstantin Bulenkov
  */
-public class CopyRevisionNumberFromAnnotateAction extends AnAction implements UpToDateLineNumberListener {
+public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implements UpToDateLineNumberListener {
   private final FileAnnotation myAnnotation;
   private int myLineNumber = -1;
 

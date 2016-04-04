@@ -17,6 +17,8 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -44,19 +46,11 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                                                     @NotNull final GraphColorManager<CommitId> graphColorManager,
                                                                     @NotNull Set<CommitId> branchesCommitId) {
     PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
-    final Map<Integer, CommitId> notLoadCommits = ContainerUtil.newHashMap();
-    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(new NotNullFunction<CommitId, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(CommitId dom) {
-        int nodeId = -(notLoadCommits.size() + 2);
-        notLoadCommits.put(nodeId, dom);
-        return nodeId;
-      }
-    });
+    NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<CommitId>();
+    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(idsGenerator);
 
-    final PermanentCommitsInfoIml<CommitId> commitIdPermanentCommitsInfo =
-      PermanentCommitsInfoIml.newInstance(graphCommits, notLoadCommits);
+    final PermanentCommitsInfoImpl<CommitId> commitIdPermanentCommitsInfo =
+      PermanentCommitsInfoImpl.newInstance(graphCommits, idsGenerator.getNotLoadedCommits());
 
     GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, new Comparator<Integer>() {
       @Override
@@ -71,18 +65,18 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                             branchesCommitId);
   }
 
-  @NotNull private final PermanentCommitsInfoIml<CommitId> myPermanentCommitsInfo;
+  @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
   @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
   @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
   @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
   @NotNull private final Set<CommitId> myBranchesCommitId;
   @NotNull private final Set<Integer> myBranchNodeIds;
   @NotNull private final ReachableNodes myReachableNodes;
-  @NotNull private final BekIntMap myBekIntMap;
+  @NotNull private final Supplier<BekIntMap> myBekIntMap;
 
   public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
                             @NotNull GraphLayoutImpl permanentGraphLayout,
-                            @NotNull PermanentCommitsInfoIml<CommitId> permanentCommitsInfo,
+                            @NotNull PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo,
                             @NotNull GraphColorManager<CommitId> graphColorManager,
                             @NotNull Set<CommitId> branchesCommitId) {
     myPermanentGraphLayout = permanentGraphLayout;
@@ -92,7 +86,12 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     myBranchesCommitId = branchesCommitId;
     myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
     myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
-    myBekIntMap = BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
+    myBekIntMap = Suppliers.memoize(new Supplier<BekIntMap>() {
+      @Override
+      public BekIntMap get() {
+        return BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
+      }
+    });
   }
 
   @NotNull
@@ -105,10 +104,10 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       baseController = new BaseController(this);
     }
     else if (sortType == SortType.LinearBek) {
-      baseController = new LinearBekController(new BekBaseController(this, myBekIntMap), this);
+      baseController = new LinearBekController(new BekBaseController(this, myBekIntMap.get()), this);
     }
     else {
-      baseController = new BekBaseController(this, myBekIntMap);
+      baseController = new BekBaseController(this, myBekIntMap.get());
     }
 
     LinearGraphController controller;
@@ -206,7 +205,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public PermanentCommitsInfoIml<CommitId> getPermanentCommitsInfo() {
+  public PermanentCommitsInfoImpl<CommitId> getPermanentCommitsInfo() {
     return myPermanentCommitsInfo;
   }
 
@@ -235,4 +234,20 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     return myBranchNodeIds;
   }
 
+  private static class NotLoadedCommitsIdsGenerator<CommitId> implements NotNullFunction<CommitId, Integer> {
+    @NotNull private final Map<Integer, CommitId> myNotLoadedCommits = ContainerUtil.newHashMap();
+
+    @NotNull
+    @Override
+    public Integer fun(CommitId dom) {
+      int nodeId = -(myNotLoadedCommits.size() + 2);
+      myNotLoadedCommits.put(nodeId, dom);
+      return nodeId;
+    }
+
+    @NotNull
+    public Map<Integer, CommitId> getNotLoadedCommits() {
+      return myNotLoadedCommits;
+    }
+  }
 }

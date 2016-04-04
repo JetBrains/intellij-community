@@ -17,7 +17,6 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.testFramework.EditorTestUtil;
 
@@ -26,7 +25,6 @@ public class IdeDocumentHistoryFunctionalTest extends HeavyFileEditorManagerTest
   public void setUp() throws Exception {
     super.setUp();
     ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(getProject())).projectOpened();
-    EditorHistoryManager.getInstance(getProject()).projectOpened();
   }
 
   public void testNavigateBetweenEditLocations() {

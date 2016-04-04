@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.*;
+
 /**
  * @author irengrig
  */
@@ -46,6 +48,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   private FileHistoryPanelImpl myFileHistoryPanel;
   private final VcsHistoryProvider myVcsHistoryProvider;
   @NotNull private final FilePath myPath;
+  @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
   private final AbstractVcs myVcs;
   private final FileHistoryRefresherI myRefresherI;
   private volatile VcsAbstractHistorySession mySession;
@@ -53,10 +56,12 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
   public FileHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider,
                                    @NotNull final FilePath path,
+                                   @Nullable VcsRevisionNumber startingRevisionNumber,
                                    final AbstractVcs vcs,
                                    final FileHistoryRefresherI refresherI) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
+    myStartingRevisionNumber = startingRevisionNumber;
     myLimitHistoryCheck = new LimitHistoryCheck(vcs.getProject(), path.getPath());
     myVcs = vcs;
     myRefresherI = refresherI;
@@ -85,11 +90,13 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   }
 
   @Nullable
-  static FileHistoryRefresherI findExistingHistoryRefresher(@NotNull Project project, @NotNull final FilePath path) {
+  static FileHistoryRefresherI findExistingHistoryRefresher(@NotNull Project project,
+                                                            @NotNull final FilePath path,
+                                                            @Nullable final VcsRevisionNumber startingRevisionNumber) {
     JComponent component = ContentUtilEx.findContentComponent(getToolWindow(project).getContentManager(), new Condition<JComponent>() {
       @Override
       public boolean value(JComponent component) {
-        return component instanceof FileHistoryPanelImpl && ((FileHistoryPanelImpl)component).getFilePath().equals(path);
+        return component instanceof FileHistoryPanelImpl && sameHistories((FileHistoryPanelImpl)component, path, startingRevisionNumber);
       }
     });
     return component == null ? null : ((FileHistoryPanelImpl)component).getRefresher();
@@ -110,7 +117,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   @NotNull
   private FileHistoryPanelImpl createFileHistoryPanel(@NotNull VcsHistorySession copy) {
     ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-    return new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider, contentManager, myRefresherI);
+    return new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, copy, myVcsHistoryProvider, contentManager, myRefresherI, false);
   }
 
   public void reportCreatedEmptySession(final VcsAbstractHistorySession session) {
@@ -162,7 +169,18 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
       ContentManager manager = toolWindow.getContentManager();
       boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myFileHistoryPanel, true);
       if (!selectedExistingContent) {
-        ContentUtilEx.addTabbedContent(manager, myFileHistoryPanel, "History", myPath.getName(), true);
+        String tabName = myPath.getName();
+        if (myStartingRevisionNumber != null) {
+          tabName += " (";
+          if (myStartingRevisionNumber instanceof ShortVcsRevisionNumber) {
+            tabName += ((ShortVcsRevisionNumber)myStartingRevisionNumber).toShortString();
+          }
+          else {
+            tabName += myStartingRevisionNumber.asString();
+          }
+          tabName += ")";
+        }
+        ContentUtilEx.addTabbedContent(manager, myFileHistoryPanel, "History", tabName, true);
       }
       toolWindow.activate(null);
     }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -44,8 +59,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   public void testSuggestArraysAsListWildcard() throws Throwable { doTest(); }
 
   public void testSuggestToArrayWithNewEmptyArray() throws Throwable { doTest(); }
-  public void testSuggestToArrayWithNewNonEmptyArray() throws Throwable { doTest(); }
-  
+
   public void testSuggestToArrayWithExistingEmptyArray() throws Throwable {
     configure();
     assertStringItems("foos().toArray(EMPTY_ARRAY)", "foos().toArray(EMPTY_ARRAY2)");
@@ -92,7 +106,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
         assertNotNull(myItems);
         LookupManager.getInstance(getProject()).hideActiveLookup();
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
 
   }
 
@@ -171,6 +185,10 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     super.checkResultByFile(filePath);
   }
 
+  public void testChainDuplicationAfterInstanceof() {
+    configure();
+    assertStringItems("test.test", "toString");
+  }
 
   private void doTest() throws Exception {
     configure();

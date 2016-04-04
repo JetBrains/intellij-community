@@ -68,7 +68,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	body.attrs.onpagehide?
 		&	body.attrs.onpageshow?
 		&	body.attrs.onpopstate?
-		&	body.attrs.onresize?
 		&	body.attrs.onstorage?
 		&	body.attrs.onunload?
 		)
@@ -159,6 +158,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.other
 		&	link.attrs.href
 		&	link.attrs.rel
+		&	link.attrs.integrity?
 		&	shared-hyperlink.attrs.hreflang?
 		&	shared-hyperlink.attrs.media?
 		&	shared-hyperlink.attrs.type?
@@ -178,6 +178,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute rel {
 				w:link-rel
 			}
+		link.attrs.integrity =
+			attribute integrity {
+				common.data.integrity
+			}
 		link.attrs.sizes =
 			attribute sizes {
 				w:string "any" | common.data.sizes
@@ -195,6 +199,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	style.attrs.type?
 		&	style.attrs.media?
+		&	style.attrs.nonce?
 		#	style.attrs.title included in common.attrs
 		&	(	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.menuitem
@@ -207,6 +212,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		style.attrs.media =
 			attribute media {
 				common.data.mediaquery
+			}
+		style.attrs.nonce =
+			attribute nonce{
+				string
 			}
 	style.inner =
 		( common.inner.anything )
@@ -314,6 +323,31 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.elem.metadata |= meta.http-equiv.default-style.elem # not quite right per spec
                                                                # if the definition is 
                                                                # reused in another language
+
+## Content Security Policy pragma directive: <meta http-equiv='content-security-policy'>
+
+	meta.http-equiv.content-security-policy.elem =
+		element meta { meta.inner & meta.http-equiv.content-security-policy.attrs }
+	meta.http-equiv.content-security-policy.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	meta.http-equiv.attrs.http-equiv.content-security-policy
+		&	meta.http-equiv.attrs.content.content-security-policy
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		meta.http-equiv.attrs.http-equiv.content-security-policy =
+			attribute http-equiv {
+				w:string "content-security-policy"
+			}
+		meta.http-equiv.attrs.content.content-security-policy =
+			attribute content {
+				common.data.content-security-policy
+			}
+	common.elem.metadata |= meta.http-equiv.content-security-policy.elem
 
 ## "x-ua-compatible" pragma directive: <meta http-equiv='x-ua-compatible'>
 

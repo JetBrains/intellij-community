@@ -334,6 +334,12 @@ public class ExtractMethodSignatureSuggester {
     for (PsiParameter parameter : parameters) {
       uniqueNameGenerator.addExistingName(parameter.getName());
     }
+
+    SyntaxTraverser.psiTraverser().withRoot(myExtractedMethod.getBody())
+      .filter(element -> element instanceof PsiVariable)
+      .forEach(element -> uniqueNameGenerator.addExistingName(((PsiVariable)element).getName()));
+
+    
     final THashMap<PsiExpression, String> unique = new THashMap<PsiExpression, String>(ourEquivalenceStrategy);
     final Map<PsiExpression, String> replacement = new HashMap<PsiExpression, String>();
     for (PsiExpression expr : exprs) {

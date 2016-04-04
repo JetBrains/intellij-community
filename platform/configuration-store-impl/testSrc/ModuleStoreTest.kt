@@ -14,6 +14,9 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
+import com.intellij.util.parentSystemIndependentPath
+import com.intellij.util.readText
+import com.intellij.util.systemIndependentPath
 import gnu.trove.TObjectIntHashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
@@ -26,7 +29,8 @@ import java.nio.file.Paths
 @RunsInActiveStoreMode
 class ModuleStoreTest {
   companion object {
-     @ClassRule val projectRule = ProjectRule()
+    @JvmField
+    @ClassRule val projectRule = ProjectRule()
 
     val MODULE_DIR = "\$MODULE_DIR$"
 
@@ -72,7 +76,7 @@ class ModuleStoreTest {
 
   @Test fun `must be empty if classpath storage`() {
     // we must not use VFS here, file must not be created
-    val moduleFile = tempDirManager.newPath("module").resolve("test.iml")
+    val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
     moduleFile.createModule().useAndDispose {
       ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
       saveStore()
@@ -88,7 +92,7 @@ class ModuleStoreTest {
 
   @Test fun `one batch update session if several modules changed`() {
     val nameToCount = TObjectIntHashMap<String>()
-    val root = tempDirManager.newPath()
+    val root = tempDirManager.newPath(refreshVfs = true)
 
     fun Module.addContentRoot() {
       val moduleName = name

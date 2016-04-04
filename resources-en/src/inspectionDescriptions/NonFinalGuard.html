@@ -1,6 +1,6 @@
 <html>
 <body>
-               This inspection reports any @net.jcip.annotations.GuardedBy annotations where the guarding field
+               This inspection reports any @GuardedBy annotations (net.jcip.annotations|javax.annotation.concurrent|org.apache.http.annotation) annotations where the guarding field
                 is not final. Gaurding on a non-final field may result in unexpected race conditions, as locks will
                 be held on the value of the field (which may change), rather than the field itself.
 </body>

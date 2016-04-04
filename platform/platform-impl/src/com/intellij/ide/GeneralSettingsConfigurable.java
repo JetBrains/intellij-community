@@ -38,7 +38,7 @@ import java.util.List;
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
 public class GeneralSettingsConfigurable extends CompositeConfigurable<SearchableConfigurable> implements SearchableConfigurable, Configurable.NoScroll {
-  private static ExtensionPointName<GeneralSettingsConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.generalOptionsProvider");
+  private static final ExtensionPointName<GeneralSettingsConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.generalOptionsProvider");
   
   private MyComponent myComponent;
 

@@ -26,189 +26,189 @@ abstract class A<T>  {
   <K> void baz4(B<K, K> a) {}
   abstract B<T,? super T> foo4();
   void bar4(A<?> a){
-    baz4<error descr="'baz4(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo4())</error>;
+    baz4<error descr="'baz4(B<K,K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo4())</error>;
   }
 
 
   <K> void baz5(B<K, K> a) {}
   abstract B<T,? super T> foo5();
   void bar5(A<? super T> a){
-    baz5<error descr="'baz5(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo5())</error>;
+    baz5<error descr="'baz5(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo5())</error>;
   }
 
 
   <K> void baz6(B<K, K> a) {}
   abstract B<T,? super T> foo6();
   void bar6(A<? extends T> a){
-    baz6<error descr="'baz6(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo6())</error>;
+    baz6<error descr="'baz6(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo6())</error>;
   }
 
 
   <K> void baz7(B<K, K> a) {}
   abstract B<T,? extends T> foo7();
   void bar7(A<?> a){
-    baz7<error descr="'baz7(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo7())</error>;
+    baz7<error descr="'baz7(B<K,K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo7())</error>;
   }
 
 
   <K> void baz8(B<K, K> a) {}
   abstract B<T,? extends T> foo8();
   void bar8(A<? super T> a){
-    baz8<error descr="'baz8(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo8())</error>;
+    baz8<error descr="'baz8(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo8())</error>;
   }
 
 
   <K> void baz9(B<K, K> a) {}
   abstract B<T,? extends T> foo9();
   void bar9(A<? extends T> a){
-    baz9<error descr="'baz9(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo9())</error>;
+    baz9<error descr="'baz9(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo9())</error>;
   }
 
 
   <K> void baz10(B<K, K> a) {}
   abstract B<T,?> foo10();
   void bar10(A<?> a){
-    baz10<error descr="'baz10(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo10())</error>;
+    baz10<error descr="'baz10(B<K,K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo10())</error>;
   }
 
 
   <K> void baz11(B<K, K> a) {}
   abstract B<T,?> foo11();
   void bar11(A<? super T> a){
-    baz11<error descr="'baz11(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo11())</error>;
+    baz11<error descr="'baz11(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo11())</error>;
   }
 
 
   <K> void baz12(B<K, K> a) {}
   abstract B<T,?> foo12();
   void bar12(A<? extends T> a){
-    baz12<error descr="'baz12(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo12())</error>;
+    baz12<error descr="'baz12(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo12())</error>;
   }
 
 
   <K> void baz13(B<K, K> a) {}
   abstract B<? super T,? super T> foo13();
   void bar13(A<?> a){
-    baz13<error descr="'baz13(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo13())</error>;
+    baz13<error descr="'baz13(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo13())</error>;
   }
 
 
   <K> void baz14(B<K, K> a) {}
   abstract B<? super T,? super T> foo14();
   void bar14(A<? super T> a){
-    baz14<error descr="'baz14(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo14())</error>;
+    baz14<error descr="'baz14(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo14())</error>;
   }
 
 
   <K> void baz15(B<K, K> a) {}
   abstract B<? super T,? super T> foo15();
   void bar15(A<? extends T> a){
-    baz15<error descr="'baz15(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo15())</error>;
+    baz15<error descr="'baz15(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo15())</error>;
   }
 
 
   <K> void baz16(B<K, K> a) {}
   abstract B<? super T,? extends T> foo16();
   void bar16(A<?> a){
-    baz16<error descr="'baz16(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo16())</error>;
+    baz16<error descr="'baz16(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo16())</error>;
   }
 
 
   <K> void baz17(B<K, K> a) {}
   abstract B<? super T,? extends T> foo17();
   void bar17(A<? super T> a){
-    baz17<error descr="'baz17(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo17())</error>;
+    baz17<error descr="'baz17(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo17())</error>;
   }
 
 
   <K> void baz18(B<K, K> a) {}
   abstract B<? super T,? extends T> foo18();
   void bar18(A<? extends T> a){
-    baz18<error descr="'baz18(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo18())</error>;
+    baz18<error descr="'baz18(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo18())</error>;
   }
 
 
   <K> void baz19(B<K, K> a) {}
   abstract B<? super T,?> foo19();
   void bar19(A<?> a){
-    baz19<error descr="'baz19(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo19())</error>;
+    baz19<error descr="'baz19(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo19())</error>;
   }
 
 
   <K> void baz20(B<K, K> a) {}
   abstract B<? super T,?> foo20();
   void bar20(A<? super T> a){
-    baz20<error descr="'baz20(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo20())</error>;
+    baz20<error descr="'baz20(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo20())</error>;
   }
 
 
   <K> void baz21(B<K, K> a) {}
   abstract B<? super T,?> foo21();
   void bar21(A<? extends T> a){
-    baz21<error descr="'baz21(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo21())</error>;
+    baz21<error descr="'baz21(B<K,K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo21())</error>;
   }
 
 
   <K> void baz22(B<K, K> a) {}
   abstract B<? extends T,? extends T> foo22();
   void bar22(A<?> a){
-    baz22<error descr="'baz22(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo22())</error>;
+    baz22<error descr="'baz22(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo22())</error>;
   }
 
 
   <K> void baz23(B<K, K> a) {}
   abstract B<? extends T,? extends T> foo23();
   void bar23(A<? super T> a){
-    baz23<error descr="'baz23(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo23())</error>;
+    baz23<error descr="'baz23(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo23())</error>;
   }
 
 
   <K> void baz24(B<K, K> a) {}
   abstract B<? extends T,? extends T> foo24();
   void bar24(A<? extends T> a){
-    baz24<error descr="'baz24(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo24())</error>;
+    baz24<error descr="'baz24(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo24())</error>;
   }
 
 
   <K> void baz25(B<K, K> a) {}
   abstract B<? extends T,?> foo25();
   void bar25(A<?> a){
-    baz25<error descr="'baz25(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo25())</error>;
+    baz25<error descr="'baz25(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo25())</error>;
   }
 
 
   <K> void baz26(B<K, K> a) {}
   abstract B<? extends T,?> foo26();
   void bar26(A<? super T> a){
-    baz26<error descr="'baz26(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo26())</error>;
+    baz26<error descr="'baz26(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo26())</error>;
   }
 
 
   <K> void baz27(B<K, K> a) {}
   abstract B<? extends T,?> foo27();
   void bar27(A<? extends T> a){
-    baz27<error descr="'baz27(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo27())</error>;
+    baz27<error descr="'baz27(B<K,K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo27())</error>;
   }
 
 
   <K> void baz28(B<K, K> a) {}
   abstract B<?,?> foo28();
   void bar28(A<?> a){
-    baz28<error descr="'baz28(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo28())</error>;
+    baz28<error descr="'baz28(B<K,K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo28())</error>;
   }
 
 
   <K> void baz29(B<K, K> a) {}
   abstract B<?,?> foo29();
   void bar29(A<? super T> a){
-    baz29<error descr="'baz29(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo29())</error>;
+    baz29<error descr="'baz29(B<K,K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo29())</error>;
   }
 
 
   <K> void baz30(B<K, K> a) {}
   abstract B<?,?> foo30();
   void bar30(A<? extends T> a){
-    baz30<error descr="'baz30(B<java.lang.Object,java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo30())</error>;
+    baz30<error descr="'baz30(B<K,K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo30())</error>;
   }
 
 
@@ -222,7 +222,7 @@ abstract class A<T>  {
   <K> void baz32(B<K, ? extends K> a) {}
   abstract B<T,T> foo32();
   void bar32(A<? super T> a){
-    baz32<error descr="'baz32(B<java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo32())</error>;
+    baz32<error descr="'baz32(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo32())</error>;
   }
 
 
@@ -236,21 +236,21 @@ abstract class A<T>  {
   <K> void baz34(B<K, ? extends K> a) {}
   abstract B<T,? super T> foo34();
   void bar34(A<?> a){
-    baz34<error descr="'baz34(B<java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo34())</error>;
+    baz34<error descr="'baz34(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo34())</error>;
   }
 
 
   <K> void baz35(B<K, ? extends K> a) {}
   abstract B<T,? super T> foo35();
   void bar35(A<? super T> a){
-    baz35<error descr="'baz35(B<java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo35())</error>;
+    baz35<error descr="'baz35(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo35())</error>;
   }
 
 
   <K> void baz36(B<K, ? extends K> a) {}
   abstract B<T,? super T> foo36();
   void bar36(A<? extends T> a){
-    baz36<error descr="'baz36(B<java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo36())</error>;
+    baz36<error descr="'baz36(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo36())</error>;
   }
 
 
@@ -299,21 +299,21 @@ abstract class A<T>  {
   <K> void baz43(B<K, ? extends K> a) {}
   abstract B<? super T,? super T> foo43();
   void bar43(A<?> a){
-    baz43<error descr="'baz43(B<java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo43())</error>;
+    baz43<error descr="'baz43(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo43())</error>;
   }
 
 
   <K> void baz44(B<K, ? extends K> a) {}
   abstract B<? super T,? super T> foo44();
   void bar44(A<? super T> a){
-    baz44<error descr="'baz44(B<java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo44())</error>;
+    baz44<error descr="'baz44(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? super T>>)'">(a.foo44())</error>;
   }
 
 
   <K> void baz45(B<K, ? extends K> a) {}
   abstract B<? super T,? super T> foo45();
   void bar45(A<? extends T> a){
-    baz45<error descr="'baz45(B<java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo45())</error>;
+    baz45<error descr="'baz45(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo45())</error>;
   }
 
 
@@ -425,7 +425,7 @@ abstract class A<T>  {
   <K> void baz61(B<K, ? super K> a) {}
   abstract B<T,T> foo61();
   void bar61(A<?> a){
-    baz61<error descr="'baz61(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo61())</error>;
+    baz61<error descr="'baz61(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo61())</error>;
   }
 
 
@@ -439,14 +439,14 @@ abstract class A<T>  {
   <K> void baz63(B<K, ? super K> a) {}
   abstract B<T,T> foo63();
   void bar63(A<? extends T> a){
-    baz63<error descr="'baz63(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo63())</error>;
+    baz63<error descr="'baz63(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo63())</error>;
   }
 
 
   <K> void baz64(B<K, ? super K> a) {}
   abstract B<T,? super T> foo64();
   void bar64(A<?> a){
-    baz64<error descr="'baz64(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo64())</error>;
+    baz64<error descr="'baz64(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo64())</error>;
   }
 
 
@@ -460,56 +460,56 @@ abstract class A<T>  {
   <K> void baz66(B<K, ? super K> a) {}
   abstract B<T,? super T> foo66();
   void bar66(A<? extends T> a){
-    baz66<error descr="'baz66(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo66())</error>;
+    baz66<error descr="'baz66(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo66())</error>;
   }
 
 
   <K> void baz67(B<K, ? super K> a) {}
   abstract B<T,? extends T> foo67();
   void bar67(A<?> a){
-    baz67<error descr="'baz67(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo67())</error>;
+    baz67<error descr="'baz67(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo67())</error>;
   }
 
 
   <K> void baz68(B<K, ? super K> a) {}
   abstract B<T,? extends T> foo68();
   void bar68(A<? super T> a){
-    baz68<error descr="'baz68(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo68())</error>;
+    baz68<error descr="'baz68(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo68())</error>;
   }
 
 
   <K> void baz69(B<K, ? super K> a) {}
   abstract B<T,? extends T> foo69();
   void bar69(A<? extends T> a){
-    baz69<error descr="'baz69(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo69())</error>;
+    baz69<error descr="'baz69(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo69())</error>;
   }
 
 
   <K> void baz70(B<K, ? super K> a) {}
   abstract B<T,?> foo70();
   void bar70(A<?> a){
-    baz70<error descr="'baz70(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo70())</error>;
+    baz70<error descr="'baz70(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo70())</error>;
   }
 
 
   <K> void baz71(B<K, ? super K> a) {}
   abstract B<T,?> foo71();
   void bar71(A<? super T> a){
-    baz71<error descr="'baz71(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo71())</error>;
+    baz71<error descr="'baz71(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo71())</error>;
   }
 
 
   <K> void baz72(B<K, ? super K> a) {}
   abstract B<T,?> foo72();
   void bar72(A<? extends T> a){
-    baz72<error descr="'baz72(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo72())</error>;
+    baz72<error descr="'baz72(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo72())</error>;
   }
 
 
   <K> void baz73(B<K, ? super K> a) {}
   abstract B<? super T,? super T> foo73();
   void bar73(A<?> a){
-    baz73<error descr="'baz73(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo73())</error>;
+    baz73<error descr="'baz73(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo73())</error>;
   }
 
 
@@ -523,112 +523,112 @@ abstract class A<T>  {
   <K> void baz75(B<K, ? super K> a) {}
   abstract B<? super T,? super T> foo75();
   void bar75(A<? extends T> a){
-    baz75<error descr="'baz75(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo75())</error>;
+    baz75<error descr="'baz75(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo75())</error>;
   }
 
 
   <K> void baz76(B<K, ? super K> a) {}
   abstract B<? super T,? extends T> foo76();
   void bar76(A<?> a){
-    baz76<error descr="'baz76(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo76())</error>;
+    baz76<error descr="'baz76(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo76())</error>;
   }
 
 
   <K> void baz77(B<K, ? super K> a) {}
   abstract B<? super T,? extends T> foo77();
   void bar77(A<? super T> a){
-    baz77<error descr="'baz77(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo77())</error>;
+    baz77<error descr="'baz77(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo77())</error>;
   }
 
 
   <K> void baz78(B<K, ? super K> a) {}
   abstract B<? super T,? extends T> foo78();
   void bar78(A<? extends T> a){
-    baz78<error descr="'baz78(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo78())</error>;
+    baz78<error descr="'baz78(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo78())</error>;
   }
 
 
   <K> void baz79(B<K, ? super K> a) {}
   abstract B<? super T,?> foo79();
   void bar79(A<?> a){
-    baz79<error descr="'baz79(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo79())</error>;
+    baz79<error descr="'baz79(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo79())</error>;
   }
 
 
   <K> void baz80(B<K, ? super K> a) {}
   abstract B<? super T,?> foo80();
   void bar80(A<? super T> a){
-    baz80<error descr="'baz80(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo80())</error>;
+    baz80<error descr="'baz80(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo80())</error>;
   }
 
 
   <K> void baz81(B<K, ? super K> a) {}
   abstract B<? super T,?> foo81();
   void bar81(A<? extends T> a){
-    baz81<error descr="'baz81(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo81())</error>;
+    baz81<error descr="'baz81(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo81())</error>;
   }
 
 
   <K> void baz82(B<K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo82();
   void bar82(A<?> a){
-    baz82<error descr="'baz82(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo82())</error>;
+    baz82<error descr="'baz82(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo82())</error>;
   }
 
 
   <K> void baz83(B<K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo83();
   void bar83(A<? super T> a){
-    baz83<error descr="'baz83(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo83())</error>;
+    baz83<error descr="'baz83(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo83())</error>;
   }
 
 
   <K> void baz84(B<K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo84();
   void bar84(A<? extends T> a){
-    baz84<error descr="'baz84(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo84())</error>;
+    baz84<error descr="'baz84(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo84())</error>;
   }
 
 
   <K> void baz85(B<K, ? super K> a) {}
   abstract B<? extends T,?> foo85();
   void bar85(A<?> a){
-    baz85<error descr="'baz85(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo85())</error>;
+    baz85<error descr="'baz85(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo85())</error>;
   }
 
 
   <K> void baz86(B<K, ? super K> a) {}
   abstract B<? extends T,?> foo86();
   void bar86(A<? super T> a){
-    baz86<error descr="'baz86(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo86())</error>;
+    baz86<error descr="'baz86(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo86())</error>;
   }
 
 
   <K> void baz87(B<K, ? super K> a) {}
   abstract B<? extends T,?> foo87();
   void bar87(A<? extends T> a){
-    baz87<error descr="'baz87(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo87())</error>;
+    baz87<error descr="'baz87(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo87())</error>;
   }
 
 
   <K> void baz88(B<K, ? super K> a) {}
   abstract B<?,?> foo88();
   void bar88(A<?> a){
-    baz88<error descr="'baz88(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo88())</error>;
+    baz88<error descr="'baz88(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo88())</error>;
   }
 
 
   <K> void baz89(B<K, ? super K> a) {}
   abstract B<?,?> foo89();
   void bar89(A<? super T> a){
-    baz89<error descr="'baz89(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo89())</error>;
+    baz89<error descr="'baz89(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo89())</error>;
   }
 
 
   <K> void baz90(B<K, ? super K> a) {}
   abstract B<?,?> foo90();
   void bar90(A<? extends T> a){
-    baz90<error descr="'baz90(B<java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo90())</error>;
+    baz90<error descr="'baz90(B<K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo90())</error>;
   }
 
 
@@ -1055,7 +1055,7 @@ abstract class A<T>  {
   <K> void baz151(B<? extends K, ? super K> a) {}
   abstract B<T,T> foo151();
   void bar151(A<?> a){
-    baz151<error descr="'baz151(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo151())</error>;
+    baz151<error descr="'baz151(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo151())</error>;
   }
 
 
@@ -1069,14 +1069,14 @@ abstract class A<T>  {
   <K> void baz153(B<? extends K, ? super K> a) {}
   abstract B<T,T> foo153();
   void bar153(A<? extends T> a){
-    baz153<error descr="'baz153(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo153())</error>;
+    baz153<error descr="'baz153(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo153())</error>;
   }
 
 
   <K> void baz154(B<? extends K, ? super K> a) {}
   abstract B<T,? super T> foo154();
   void bar154(A<?> a){
-    baz154<error descr="'baz154(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo154())</error>;
+    baz154<error descr="'baz154(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo154())</error>;
   }
 
 
@@ -1090,56 +1090,56 @@ abstract class A<T>  {
   <K> void baz156(B<? extends K, ? super K> a) {}
   abstract B<T,? super T> foo156();
   void bar156(A<? extends T> a){
-    baz156<error descr="'baz156(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo156())</error>;
+    baz156<error descr="'baz156(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo156())</error>;
   }
 
 
   <K> void baz157(B<? extends K, ? super K> a) {}
   abstract B<T,? extends T> foo157();
   void bar157(A<?> a){
-    baz157<error descr="'baz157(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo157())</error>;
+    baz157<error descr="'baz157(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo157())</error>;
   }
 
 
   <K> void baz158(B<? extends K, ? super K> a) {}
   abstract B<T,? extends T> foo158();
   void bar158(A<? super T> a){
-    baz158<error descr="'baz158(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo158())</error>;
+    baz158<error descr="'baz158(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo158())</error>;
   }
 
 
   <K> void baz159(B<? extends K, ? super K> a) {}
   abstract B<T,? extends T> foo159();
   void bar159(A<? extends T> a){
-    baz159<error descr="'baz159(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo159())</error>;
+    baz159<error descr="'baz159(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo159())</error>;
   }
 
 
   <K> void baz160(B<? extends K, ? super K> a) {}
   abstract B<T,?> foo160();
   void bar160(A<?> a){
-    baz160<error descr="'baz160(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo160())</error>;
+    baz160<error descr="'baz160(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo160())</error>;
   }
 
 
   <K> void baz161(B<? extends K, ? super K> a) {}
   abstract B<T,?> foo161();
   void bar161(A<? super T> a){
-    baz161<error descr="'baz161(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo161())</error>;
+    baz161<error descr="'baz161(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo161())</error>;
   }
 
 
   <K> void baz162(B<? extends K, ? super K> a) {}
   abstract B<T,?> foo162();
   void bar162(A<? extends T> a){
-    baz162<error descr="'baz162(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo162())</error>;
+    baz162<error descr="'baz162(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo162())</error>;
   }
 
 
   <K> void baz163(B<? extends K, ? super K> a) {}
   abstract B<? super T,? super T> foo163();
   void bar163(A<?> a){
-    baz163<error descr="'baz163(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo163())</error>;
+    baz163<error descr="'baz163(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo163())</error>;
   }
 
 
@@ -1153,112 +1153,112 @@ abstract class A<T>  {
   <K> void baz165(B<? extends K, ? super K> a) {}
   abstract B<? super T,? super T> foo165();
   void bar165(A<? extends T> a){
-    baz165<error descr="'baz165(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo165())</error>;
+    baz165<error descr="'baz165(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo165())</error>;
   }
 
 
   <K> void baz166(B<? extends K, ? super K> a) {}
   abstract B<? super T,? extends T> foo166();
   void bar166(A<?> a){
-    baz166<error descr="'baz166(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo166())</error>;
+    baz166<error descr="'baz166(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo166())</error>;
   }
 
 
   <K> void baz167(B<? extends K, ? super K> a) {}
   abstract B<? super T,? extends T> foo167();
   void bar167(A<? super T> a){
-    baz167<error descr="'baz167(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo167())</error>;
+    baz167<error descr="'baz167(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo167())</error>;
   }
 
 
   <K> void baz168(B<? extends K, ? super K> a) {}
   abstract B<? super T,? extends T> foo168();
   void bar168(A<? extends T> a){
-    baz168<error descr="'baz168(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo168())</error>;
+    baz168<error descr="'baz168(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo168())</error>;
   }
 
 
   <K> void baz169(B<? extends K, ? super K> a) {}
   abstract B<? super T,?> foo169();
   void bar169(A<?> a){
-    baz169<error descr="'baz169(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo169())</error>;
+    baz169<error descr="'baz169(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo169())</error>;
   }
 
 
   <K> void baz170(B<? extends K, ? super K> a) {}
   abstract B<? super T,?> foo170();
   void bar170(A<? super T> a){
-    baz170<error descr="'baz170(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo170())</error>;
+    baz170<error descr="'baz170(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo170())</error>;
   }
 
 
   <K> void baz171(B<? extends K, ? super K> a) {}
   abstract B<? super T,?> foo171();
   void bar171(A<? extends T> a){
-    baz171<error descr="'baz171(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo171())</error>;
+    baz171<error descr="'baz171(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo171())</error>;
   }
 
 
   <K> void baz172(B<? extends K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo172();
   void bar172(A<?> a){
-    baz172<error descr="'baz172(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo172())</error>;
+    baz172<error descr="'baz172(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo172())</error>;
   }
 
 
   <K> void baz173(B<? extends K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo173();
   void bar173(A<? super T> a){
-    baz173<error descr="'baz173(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo173())</error>;
+    baz173<error descr="'baz173(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo173())</error>;
   }
 
 
   <K> void baz174(B<? extends K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo174();
   void bar174(A<? extends T> a){
-    baz174<error descr="'baz174(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo174())</error>;
+    baz174<error descr="'baz174(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo174())</error>;
   }
 
 
   <K> void baz175(B<? extends K, ? super K> a) {}
   abstract B<? extends T,?> foo175();
   void bar175(A<?> a){
-    baz175<error descr="'baz175(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo175())</error>;
+    baz175<error descr="'baz175(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo175())</error>;
   }
 
 
   <K> void baz176(B<? extends K, ? super K> a) {}
   abstract B<? extends T,?> foo176();
   void bar176(A<? super T> a){
-    baz176<error descr="'baz176(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo176())</error>;
+    baz176<error descr="'baz176(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo176())</error>;
   }
 
 
   <K> void baz177(B<? extends K, ? super K> a) {}
   abstract B<? extends T,?> foo177();
   void bar177(A<? extends T> a){
-    baz177<error descr="'baz177(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo177())</error>;
+    baz177<error descr="'baz177(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo177())</error>;
   }
 
 
   <K> void baz178(B<? extends K, ? super K> a) {}
   abstract B<?,?> foo178();
   void bar178(A<?> a){
-    baz178<error descr="'baz178(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo178())</error>;
+    baz178<error descr="'baz178(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo178())</error>;
   }
 
 
   <K> void baz179(B<? extends K, ? super K> a) {}
   abstract B<?,?> foo179();
   void bar179(A<? super T> a){
-    baz179<error descr="'baz179(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo179())</error>;
+    baz179<error descr="'baz179(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo179())</error>;
   }
 
 
   <K> void baz180(B<? extends K, ? super K> a) {}
   abstract B<?,?> foo180();
   void bar180(A<? extends T> a){
-    baz180<error descr="'baz180(B<?,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo180())</error>;
+    baz180<error descr="'baz180(B<? extends K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo180())</error>;
   }
 
 
@@ -1475,7 +1475,7 @@ abstract class A<T>  {
   <K> void baz211(B<? super K, ? super K> a) {}
   abstract B<T,T> foo211();
   void bar211(A<?> a){
-    baz211<error descr="'baz211(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo211())</error>;
+    baz211<error descr="'baz211(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo211())</error>;
   }
 
 
@@ -1489,14 +1489,14 @@ abstract class A<T>  {
   <K> void baz213(B<? super K, ? super K> a) {}
   abstract B<T,T> foo213();
   void bar213(A<? extends T> a){
-    baz213<error descr="'baz213(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo213())</error>;
+    baz213<error descr="'baz213(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo213())</error>;
   }
 
 
   <K> void baz214(B<? super K, ? super K> a) {}
   abstract B<T,? super T> foo214();
   void bar214(A<?> a){
-    baz214<error descr="'baz214(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo214())</error>;
+    baz214<error descr="'baz214(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo214())</error>;
   }
 
 
@@ -1510,56 +1510,56 @@ abstract class A<T>  {
   <K> void baz216(B<? super K, ? super K> a) {}
   abstract B<T,? super T> foo216();
   void bar216(A<? extends T> a){
-    baz216<error descr="'baz216(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo216())</error>;
+    baz216<error descr="'baz216(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo216())</error>;
   }
 
 
   <K> void baz217(B<? super K, ? super K> a) {}
   abstract B<T,? extends T> foo217();
   void bar217(A<?> a){
-    baz217<error descr="'baz217(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo217())</error>;
+    baz217<error descr="'baz217(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo217())</error>;
   }
 
 
   <K> void baz218(B<? super K, ? super K> a) {}
   abstract B<T,? extends T> foo218();
   void bar218(A<? super T> a){
-    baz218<error descr="'baz218(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo218())</error>;
+    baz218<error descr="'baz218(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo218())</error>;
   }
 
 
   <K> void baz219(B<? super K, ? super K> a) {}
   abstract B<T,? extends T> foo219();
   void bar219(A<? extends T> a){
-    baz219<error descr="'baz219(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo219())</error>;
+    baz219<error descr="'baz219(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo219())</error>;
   }
 
 
   <K> void baz220(B<? super K, ? super K> a) {}
   abstract B<T,?> foo220();
   void bar220(A<?> a){
-    baz220<error descr="'baz220(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo220())</error>;
+    baz220<error descr="'baz220(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo220())</error>;
   }
 
 
   <K> void baz221(B<? super K, ? super K> a) {}
   abstract B<T,?> foo221();
   void bar221(A<? super T> a){
-    baz221<error descr="'baz221(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo221())</error>;
+    baz221<error descr="'baz221(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo221())</error>;
   }
 
 
   <K> void baz222(B<? super K, ? super K> a) {}
   abstract B<T,?> foo222();
   void bar222(A<? extends T> a){
-    baz222<error descr="'baz222(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo222())</error>;
+    baz222<error descr="'baz222(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo222())</error>;
   }
 
 
   <K> void baz223(B<? super K, ? super K> a) {}
   abstract B<? super T,? super T> foo223();
   void bar223(A<?> a){
-    baz223<error descr="'baz223(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo223())</error>;
+    baz223<error descr="'baz223(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo223())</error>;
   }
 
 
@@ -1573,119 +1573,119 @@ abstract class A<T>  {
   <K> void baz225(B<? super K, ? super K> a) {}
   abstract B<? super T,? super T> foo225();
   void bar225(A<? extends T> a){
-    baz225<error descr="'baz225(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo225())</error>;
+    baz225<error descr="'baz225(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo225())</error>;
   }
 
 
   <K> void baz226(B<? super K, ? super K> a) {}
   abstract B<? super T,? extends T> foo226();
   void bar226(A<?> a){
-    baz226<error descr="'baz226(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo226())</error>;
+    baz226<error descr="'baz226(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo226())</error>;
   }
 
 
   <K> void baz227(B<? super K, ? super K> a) {}
   abstract B<? super T,? extends T> foo227();
   void bar227(A<? super T> a){
-    baz227<error descr="'baz227(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo227())</error>;
+    baz227<error descr="'baz227(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<? extends capture<? super T>>>)'">(a.foo227())</error>;
   }
 
 
   <K> void baz228(B<? super K, ? super K> a) {}
   abstract B<? super T,? extends T> foo228();
   void bar228(A<? extends T> a){
-    baz228<error descr="'baz228(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo228())</error>;
+    baz228<error descr="'baz228(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo228())</error>;
   }
 
 
   <K> void baz229(B<? super K, ? super K> a) {}
   abstract B<? super T,?> foo229();
   void bar229(A<?> a){
-    baz229<error descr="'baz229(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo229())</error>;
+    baz229<error descr="'baz229(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo229())</error>;
   }
 
 
   <K> void baz230(B<? super K, ? super K> a) {}
   abstract B<? super T,?> foo230();
   void bar230(A<? super T> a){
-    baz230<error descr="'baz230(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo230())</error>;
+    baz230<error descr="'baz230(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super T>,capture<?>>)'">(a.foo230())</error>;
   }
 
 
   <K> void baz231(B<? super K, ? super K> a) {}
   abstract B<? super T,?> foo231();
   void bar231(A<? extends T> a){
-    baz231<error descr="'baz231(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo231())</error>;
+    baz231<error descr="'baz231(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo231())</error>;
   }
 
 
   <K> void baz232(B<? super K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo232();
   void bar232(A<?> a){
-    baz232<error descr="'baz232(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo232())</error>;
+    baz232<error descr="'baz232(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo232())</error>;
   }
 
 
   <K> void baz233(B<? super K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo233();
   void bar233(A<? super T> a){
-    baz233<error descr="'baz233(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo233())</error>;
+    baz233<error descr="'baz233(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo233())</error>;
   }
 
 
   <K> void baz234(B<? super K, ? super K> a) {}
   abstract B<? extends T,? extends T> foo234();
   void bar234(A<? extends T> a){
-    baz234<error descr="'baz234(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo234())</error>;
+    baz234<error descr="'baz234(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo234())</error>;
   }
 
 
   <K> void baz235(B<? super K, ? super K> a) {}
   abstract B<? extends T,?> foo235();
   void bar235(A<?> a){
-    baz235<error descr="'baz235(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo235())</error>;
+    baz235<error descr="'baz235(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo235())</error>;
   }
 
 
   <K> void baz236(B<? super K, ? super K> a) {}
   abstract B<? extends T,?> foo236();
   void bar236(A<? super T> a){
-    baz236<error descr="'baz236(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo236())</error>;
+    baz236<error descr="'baz236(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo236())</error>;
   }
 
 
   <K> void baz237(B<? super K, ? super K> a) {}
   abstract B<? extends T,?> foo237();
   void bar237(A<? extends T> a){
-    baz237<error descr="'baz237(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo237())</error>;
+    baz237<error descr="'baz237(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo237())</error>;
   }
 
 
   <K> void baz238(B<? super K, ? super K> a) {}
   abstract B<?,?> foo238();
   void bar238(A<?> a){
-    baz238<error descr="'baz238(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo238())</error>;
+    baz238<error descr="'baz238(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo238())</error>;
   }
 
 
   <K> void baz239(B<? super K, ? super K> a) {}
   abstract B<?,?> foo239();
   void bar239(A<? super T> a){
-    baz239<error descr="'baz239(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo239())</error>;
+    baz239<error descr="'baz239(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo239())</error>;
   }
 
 
   <K> void baz240(B<? super K, ? super K> a) {}
   abstract B<?,?> foo240();
   void bar240(A<? extends T> a){
-    baz240<error descr="'baz240(B<? super java.lang.Object,? super java.lang.Object>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo240())</error>;
+    baz240<error descr="'baz240(B<? super K,? super K>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo240())</error>;
   }
 
 
   <K> void baz241(B<? super K, ?> a) {}
   abstract B<T,T> foo241();
   void bar241(A<?> a){
-    baz241<error descr="'baz241(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo241())</error>;
+    baz241<error descr="'baz241(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo241())</error>;
   }
 
 
@@ -1699,14 +1699,14 @@ abstract class A<T>  {
   <K> void baz243(B<? super K, ?> a) {}
   abstract B<T,T> foo243();
   void bar243(A<? extends T> a){
-    baz243<error descr="'baz243(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo243())</error>;
+    baz243<error descr="'baz243(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo243())</error>;
   }
 
 
   <K> void baz244(B<? super K, ?> a) {}
   abstract B<T,? super T> foo244();
   void bar244(A<?> a){
-    baz244<error descr="'baz244(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo244())</error>;
+    baz244<error descr="'baz244(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<? super capture<?>>>)'">(a.foo244())</error>;
   }
 
 
@@ -1720,14 +1720,14 @@ abstract class A<T>  {
   <K> void baz246(B<? super K, ?> a) {}
   abstract B<T,? super T> foo246();
   void bar246(A<? extends T> a){
-    baz246<error descr="'baz246(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo246())</error>;
+    baz246<error descr="'baz246(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? super capture<? extends T>>>)'">(a.foo246())</error>;
   }
 
 
   <K> void baz247(B<? super K, ?> a) {}
   abstract B<T,? extends T> foo247();
   void bar247(A<?> a){
-    baz247<error descr="'baz247(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo247())</error>;
+    baz247<error descr="'baz247(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo247())</error>;
   }
 
 
@@ -1741,14 +1741,14 @@ abstract class A<T>  {
   <K> void baz249(B<? super K, ?> a) {}
   abstract B<T,? extends T> foo249();
   void bar249(A<? extends T> a){
-    baz249<error descr="'baz249(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo249())</error>;
+    baz249<error descr="'baz249(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo249())</error>;
   }
 
 
   <K> void baz250(B<? super K, ?> a) {}
   abstract B<T,?> foo250();
   void bar250(A<?> a){
-    baz250<error descr="'baz250(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo250())</error>;
+    baz250<error descr="'baz250(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo250())</error>;
   }
 
 
@@ -1762,14 +1762,14 @@ abstract class A<T>  {
   <K> void baz252(B<? super K, ?> a) {}
   abstract B<T,?> foo252();
   void bar252(A<? extends T> a){
-    baz252<error descr="'baz252(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo252())</error>;
+    baz252<error descr="'baz252(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo252())</error>;
   }
 
 
   <K> void baz253(B<? super K, ?> a) {}
   abstract B<? super T,? super T> foo253();
   void bar253(A<?> a){
-    baz253<error descr="'baz253(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo253())</error>;
+    baz253<error descr="'baz253(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? super capture<?>>>)'">(a.foo253())</error>;
   }
 
 
@@ -1783,14 +1783,14 @@ abstract class A<T>  {
   <K> void baz255(B<? super K, ?> a) {}
   abstract B<? super T,? super T> foo255();
   void bar255(A<? extends T> a){
-    baz255<error descr="'baz255(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo255())</error>;
+    baz255<error descr="'baz255(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? super capture<? extends T>>>)'">(a.foo255())</error>;
   }
 
 
   <K> void baz256(B<? super K, ?> a) {}
   abstract B<? super T,? extends T> foo256();
   void bar256(A<?> a){
-    baz256<error descr="'baz256(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo256())</error>;
+    baz256<error descr="'baz256(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo256())</error>;
   }
 
 
@@ -1804,14 +1804,14 @@ abstract class A<T>  {
   <K> void baz258(B<? super K, ?> a) {}
   abstract B<? super T,? extends T> foo258();
   void bar258(A<? extends T> a){
-    baz258<error descr="'baz258(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo258())</error>;
+    baz258<error descr="'baz258(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<? extends T>>)'">(a.foo258())</error>;
   }
 
 
   <K> void baz259(B<? super K, ?> a) {}
   abstract B<? super T,?> foo259();
   void bar259(A<?> a){
-    baz259<error descr="'baz259(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo259())</error>;
+    baz259<error descr="'baz259(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo259())</error>;
   }
 
 
@@ -1825,70 +1825,70 @@ abstract class A<T>  {
   <K> void baz261(B<? super K, ?> a) {}
   abstract B<? super T,?> foo261();
   void bar261(A<? extends T> a){
-    baz261<error descr="'baz261(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo261())</error>;
+    baz261<error descr="'baz261(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? super capture<? extends T>>,capture<?>>)'">(a.foo261())</error>;
   }
 
 
   <K> void baz262(B<? super K, ?> a) {}
   abstract B<? extends T,? extends T> foo262();
   void bar262(A<?> a){
-    baz262<error descr="'baz262(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo262())</error>;
+    baz262<error descr="'baz262(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)'">(a.foo262())</error>;
   }
 
 
   <K> void baz263(B<? super K, ?> a) {}
   abstract B<? extends T,? extends T> foo263();
   void bar263(A<? super T> a){
-    baz263<error descr="'baz263(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo263())</error>;
+    baz263<error descr="'baz263(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<? extends capture<? super T>>>)'">(a.foo263())</error>;
   }
 
 
   <K> void baz264(B<? super K, ?> a) {}
   abstract B<? extends T,? extends T> foo264();
   void bar264(A<? extends T> a){
-    baz264<error descr="'baz264(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo264())</error>;
+    baz264<error descr="'baz264(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<? extends T>>)'">(a.foo264())</error>;
   }
 
 
   <K> void baz265(B<? super K, ?> a) {}
   abstract B<? extends T,?> foo265();
   void bar265(A<?> a){
-    baz265<error descr="'baz265(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo265())</error>;
+    baz265<error descr="'baz265(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends capture<?>>,capture<?>>)'">(a.foo265())</error>;
   }
 
 
   <K> void baz266(B<? super K, ?> a) {}
   abstract B<? extends T,?> foo266();
   void bar266(A<? super T> a){
-    baz266<error descr="'baz266(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo266())</error>;
+    baz266<error descr="'baz266(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends capture<? super T>>,capture<?>>)'">(a.foo266())</error>;
   }
 
 
   <K> void baz267(B<? super K, ?> a) {}
   abstract B<? extends T,?> foo267();
   void bar267(A<? extends T> a){
-    baz267<error descr="'baz267(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo267())</error>;
+    baz267<error descr="'baz267(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<? extends T>,capture<?>>)'">(a.foo267())</error>;
   }
 
 
   <K> void baz268(B<? super K, ?> a) {}
   abstract B<?,?> foo268();
   void bar268(A<?> a){
-    baz268<error descr="'baz268(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo268())</error>;
+    baz268<error descr="'baz268(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo268())</error>;
   }
 
 
   <K> void baz269(B<? super K, ?> a) {}
   abstract B<?,?> foo269();
   void bar269(A<? super T> a){
-    baz269<error descr="'baz269(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo269())</error>;
+    baz269<error descr="'baz269(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo269())</error>;
   }
 
 
   <K> void baz270(B<? super K, ?> a) {}
   abstract B<?,?> foo270();
   void bar270(A<? extends T> a){
-    baz270<error descr="'baz270(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo270())</error>;
+    baz270<error descr="'baz270(B<? super K,?>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo270())</error>;
   }
 
 

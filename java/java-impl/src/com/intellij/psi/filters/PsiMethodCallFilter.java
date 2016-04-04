@@ -37,15 +37,14 @@ public class PsiMethodCallFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)element;
-      final PsiMethod psiMethod = callExpression.resolveMethod();
-      if (psiMethod != null) {
-        if (!myMethodNames.contains(psiMethod.getName())) {
-          return false;
-        }
-        final PsiClass psiClass = psiMethod.getContainingClass();
-        final PsiClass expectedClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(myClassName, psiClass.getResolveScope());
-        return InheritanceUtil.isInheritorOrSelf(psiClass, expectedClass, true);
+      if (!myMethodNames.contains(callExpression.getMethodExpression().getReferenceName())) {
+        return false;
       }
+
+      final PsiMethod psiMethod = callExpression.resolveMethod();
+      return psiMethod != null &&
+             myMethodNames.contains(psiMethod.getName()) &&
+             InheritanceUtil.isInheritor(psiMethod.getContainingClass(), myClassName);
     }
     return false;
   }

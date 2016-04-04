@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.awt.*;
  */
 @State(
   name = "WindowStateProjectService",
-  storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
+  storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
 final class WindowStateProjectService extends WindowStateServiceImpl {
   private final Project myProject;

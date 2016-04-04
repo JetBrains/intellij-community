@@ -18,6 +18,8 @@ package org.jetbrains.plugins.gradle.model;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
+import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
+import org.gradle.tooling.internal.adapter.TargetTypeProvider;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -48,6 +51,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Nullable
   @Override
   public AllModels execute(final BuildController controller) {
+    configureAdditionalTypes(controller);
+
     //outer conditional is needed to be compatible with 1.8
     final IdeaProject ideaProject = myIsPreviewMode ? controller.getModel(BasicIdeaProject.class) : controller.getModel(IdeaProject.class);
     if (ideaProject == null || ideaProject.getModules().isEmpty()) {
@@ -61,6 +66,31 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     return allModels;
+  }
+
+  private static void configureAdditionalTypes(BuildController controller) {
+    try {
+      Field adapterField = controller.getClass().getDeclaredField("adapter");
+      adapterField.setAccessible(true);
+      ProtocolToModelAdapter adapter = (ProtocolToModelAdapter)adapterField.get(controller);
+
+      Field typeProviderField = adapter.getClass().getDeclaredField("targetTypeProvider");
+      typeProviderField.setAccessible(true);
+      TargetTypeProvider typeProvider = (TargetTypeProvider)typeProviderField.get(adapter);
+
+      Field targetTypesField = typeProvider.getClass().getDeclaredField("configuredTargetTypes");
+      targetTypesField.setAccessible(true);
+      //noinspection unchecked
+      Map<String, Class<?>> targetTypes = (Map<String, Class<?>>)targetTypesField.get(typeProvider);
+
+      targetTypes.put(ExternalProjectDependency.class.getCanonicalName(), ExternalProjectDependency.class);
+      targetTypes.put(ExternalLibraryDependency.class.getCanonicalName(), ExternalLibraryDependency.class);
+      targetTypes.put(FileCollectionDependency.class.getCanonicalName(), FileCollectionDependency.class);
+      targetTypes.put(UnresolvedExternalDependency.class.getCanonicalName(), UnresolvedExternalDependency.class);
+    }
+    catch (Exception ignore) {
+      // TODO handle error
+    }
   }
 
   private void addExtraProject(@NotNull BuildController controller, @NotNull AllModels allModels, @Nullable IdeaModule model) {
@@ -79,85 +109,33 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  public static class AllModels implements Serializable {
-    @NotNull private final Map<String, Object> projectsByPath = new HashMap<String, Object>();
-    @NotNull private final IdeaProject myIdeaProject;
-    @Nullable private BuildEnvironment myBuildEnvironment;
+  public static class AllModels extends ModelsHolder<IdeaProject, IdeaModule> {
 
-    public AllModels(@NotNull IdeaProject project) {
-      myIdeaProject = project;
+    public AllModels(@NotNull IdeaProject ideaProject) {
+      super(ideaProject);
     }
 
     @NotNull
     public IdeaProject getIdeaProject() {
-      return myIdeaProject;
+      return getRootModel();
     }
 
     @Nullable
     public BuildEnvironment getBuildEnvironment() {
-      return myBuildEnvironment;
+      return getExtraProject(BuildEnvironment.class);
     }
 
     public void setBuildEnvironment(@Nullable BuildEnvironment buildEnvironment) {
-      myBuildEnvironment = buildEnvironment;
-    }
-
-    @Nullable
-    public <T> T getExtraProject(Class<T> modelClazz) {
-      return getExtraProject(null, modelClazz);
-    }
-
-    @Nullable
-    public <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz) {
-      Object extraProject = projectsByPath.get(extractMapKey(modelClazz, module));
-      if (modelClazz.isInstance(extraProject)) {
-        //noinspection unchecked
-        return (T)extraProject;
+      if (buildEnvironment != null) {
+        addExtraProject(buildEnvironment, BuildEnvironment.class);
       }
-      return null;
-    }
-
-    /**
-     * Return collection path of modules provides the model
-     *
-     * @param modelClazz extra project model
-     * @return modules path collection
-     */
-    @NotNull
-    public Collection<String> findModulesWithModel(@NotNull Class modelClazz) {
-      List<String> modules = new ArrayList<String>();
-      for (Map.Entry<String, Object> set : projectsByPath.entrySet()) {
-        if (modelClazz.isInstance(set.getValue())) {
-          modules.add(extractModulePath(modelClazz, set.getKey()));
-        }
-      }
-      return modules;
-    }
-
-    public void addExtraProject(@NotNull Object project, @NotNull Class modelClazz) {
-      projectsByPath.put(extractMapKey(modelClazz, null), project);
-    }
-
-    public void addExtraProject(@NotNull Object project, @NotNull Class modelClazz, @Nullable IdeaModule module) {
-      projectsByPath.put(extractMapKey(modelClazz, module), project);
     }
 
     @NotNull
-    private String extractMapKey(Class modelClazz, @Nullable IdeaModule module) {
-      return modelClazz.getName() + '@' + (module != null ? module.getGradleProject().getPath() : "root" + myIdeaProject.getName().hashCode());
-    }
-
-    @NotNull
-    private static String extractModulePath(Class modelClazz, String key) {
-      return key.replaceFirst(modelClazz.getName() + '@', "");
-    }
-
     @Override
-    public String toString() {
-      return "AllModels{" +
-             "projectsByPath=" + projectsByPath +
-             ", myIdeaProject=" + myIdeaProject +
-             '}';
+    protected String extractMapKey(Class modelClazz, @Nullable IdeaModule module) {
+      return modelClazz.getName() + '@' +
+             (module != null ? module.getGradleProject().getPath() : "root" + getRootModel().getName().hashCode());
     }
   }
 }

@@ -595,6 +595,7 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
   protected synchronized void markCorrupted() {
     if (!myCorrupted) {
       myCorrupted = true;
+      if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
       try {
         markDirty(true);
         force();

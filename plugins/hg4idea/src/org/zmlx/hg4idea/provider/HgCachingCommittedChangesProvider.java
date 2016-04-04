@@ -85,7 +85,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
 
   public void writeChangeList(DataOutput dataOutput, CommittedChangeList committedChangeList) throws IOException {
     HgCommittedChangeList changeList = (HgCommittedChangeList)committedChangeList;
-    writeRevisionNumber(dataOutput, changeList.getRevision());
+    writeRevisionNumber(dataOutput, changeList.getRevisionNumber());
     dataOutput.writeUTF(changeList.getBranch());
     dataOutput.writeUTF(changeList.getCommitterName());
     dataOutput.writeUTF(changeList.getComment());
@@ -283,7 +283,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       public void actionPerformed(AnActionEvent e) {
         ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
         if (changeLists != null && changeLists[0] instanceof HgCommittedChangeList) {
-          HgRevisionNumber revisionNumber = ((HgCommittedChangeList)changeLists[0]).getRevision();
+          HgRevisionNumber revisionNumber = ((HgCommittedChangeList)changeLists[0]).getRevisionNumber();
           CopyPasteManager.getInstance().setContents(new StringSelection(revisionNumber.getChangeset()));
         }
       }

@@ -16,62 +16,38 @@
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.fragments.LineFragmentImpl;
+import com.intellij.diff.util.LineRange;
 import org.jetbrains.annotations.NotNull;
 
 class ChangedBlock {
-  private final int myStartOffset1;
-  private final int myEndOffset1;
-  private final int myStartOffset2;
-  private final int myEndOffset2;
-
   private final int myLine1;
   private final int myLine2;
 
+  @NotNull private final LineRange myRange1;
+  @NotNull private final LineRange myRange2;
+
   @NotNull private final LineFragment myLineFragment;
 
-  public ChangedBlock(int startOffset1,
-                      int endOffset1,
-                      int startOffset2,
-                      int endOffset2,
-                      int line1,
+  public ChangedBlock(int line1,
                       int line2,
+                      @NotNull LineRange range1,
+                      @NotNull LineRange range2,
                       @NotNull LineFragment lineFragment) {
-    myStartOffset1 = startOffset1;
-    myEndOffset1 = endOffset1;
-    myStartOffset2 = startOffset2;
-    myEndOffset2 = endOffset2;
     myLine1 = line1;
     myLine2 = line2;
+    myRange1 = range1;
+    myRange2 = range2;
     myLineFragment = lineFragment;
   }
 
   @NotNull
-  public static ChangedBlock createInserted(int length, int lines) {
-    LineFragmentImpl lineFragment = new LineFragmentImpl(0, 0, 0, lines, 0, 0, 0, length);
-    return new ChangedBlock(0, 0, 0, length, 0, lines, lineFragment);
+  public LineRange getRange1() {
+    return myRange1;
   }
 
   @NotNull
-  public static ChangedBlock createDeleted(int length, int lines) {
-    LineFragmentImpl lineFragment = new LineFragmentImpl(0, lines, 0, 0, 0, length, 0, 0);
-    return new ChangedBlock(0, length, 0, 0, 0, lines, lineFragment);
-  }
-
-  public int getStartOffset1() {
-    return myStartOffset1;
-  }
-
-  public int getEndOffset1() {
-    return myEndOffset1;
-  }
-
-  public int getStartOffset2() {
-    return myStartOffset2;
-  }
-
-  public int getEndOffset2() {
-    return myEndOffset2;
+  public LineRange getRange2() {
+    return myRange2;
   }
 
   public int getLine1() {

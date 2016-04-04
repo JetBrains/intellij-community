@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.regexp.validation;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
@@ -31,46 +32,53 @@ import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
 import org.jetbrains.annotations.NotNull;
 
 class RemoveRedundantEscapeAction implements IntentionAction {
-    private final RegExpChar myChar;
+  private final RegExpChar myChar;
 
-    public RemoveRedundantEscapeAction(RegExpChar ch) {
-        myChar = ch;
-    }
+  RemoveRedundantEscapeAction(@NotNull RegExpChar ch) {
+    myChar = ch;
+  }
 
-    @NotNull
-    public String getText() {
-        return "Remove redundant escape";
-    }
+  @Override
+  @NotNull
+  public String getText() {
+    return "Remove redundant escape";
+  }
 
-    @NotNull
-    public String getFamilyName() {
-        return "Redundant character escape";
-    }
+  @Override
+  @NotNull
+  public String getFamilyName() {
+    return "Redundant character escape";
+  }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        return myChar.isValid() && myChar.getUnescapedText().startsWith("\\");
-    }
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return myChar.isValid() && myChar.getUnescapedText().startsWith("\\");
+  }
 
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        final Character v = myChar.getValue();
-        assert v != null;
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    final Character v = myChar.getValue();
+    assert v != null;
 
-        final ASTNode node = myChar.getNode().getFirstChildNode();
-        final ASTNode parent = node.getTreeParent();
-        parent.addLeaf(RegExpTT.CHARACTER, replacement(v), node);
-        parent.removeChild(node);
-    }
+    final ASTNode node = myChar.getNode().getFirstChildNode();
+    final ASTNode parent = node.getTreeParent();
+    parent.addLeaf(RegExpTT.CHARACTER, replacement(v), node);
+    parent.removeChild(node);
+  }
 
-    private String replacement(Character v) {
-        final PsiElement context = myChar.getContainingFile().getContext();
-        return RegExpElementImpl.isLiteralExpression(context) ?
-                StringUtil.escapeStringCharacters(v.toString()) :
-                (context instanceof XmlElement ?
-                        XmlStringUtil.escapeString(v.toString()) :
-                        v.toString());
-    }
+  @NotNull
+  private String replacement(@NotNull Character v) {
+    final PsiElement context = myChar.getContainingFile().getContext();
+    return RegExpElementImpl.isLiteralExpression(context) ?
+           StringUtil.escapeStringCharacters(v.toString()) :
+           context instanceof XmlElement ?
+           XmlStringUtil.escapeString(v.toString()) :
+           v.toString();
+  }
 
+  @Override
   public boolean startInWriteAction() {
-        return true;
-    }
+    return true;
+  }
 }

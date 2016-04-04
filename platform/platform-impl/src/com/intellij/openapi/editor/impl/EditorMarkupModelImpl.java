@@ -125,6 +125,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   @NotNull private final EditorFragmentRenderer myEditorFragmentRenderer;
   private int myRowAdjuster = 0;
   private int myWheelAccumulator = 0;
+  private int myLastVisualLine = 0;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -188,6 +189,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                               e.isPopupTrigger());
 
     final int visualLine = getVisualLineByEvent(e);
+    myLastVisualLine = visualLine;
     Rectangle area = myEditor.getScrollingModel().getVisibleArea();
     int visualY = myEditor.getLineHeight() * visualLine;
     boolean isVisible = area.contains(area.x, visualY) && myWheelAccumulator == 0;
@@ -196,7 +198,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (IJSwingUtilities.findParentByInterface(myEditor.getComponent(), EditorWindowHolder.class) == null || isVisible || !UISettings.getInstance().SHOW_EDITOR_TOOLTIP) {
       final Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
       getNearestHighlighters(this, me.getY(), highlighters);
-      getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me.getY(), highlighters);
+      getNearestHighlighters(((EditorEx)getEditor()).getFilteredDocumentMarkupModel(), me.getY(), highlighters);
       if (highlighters.isEmpty()) return false;
 
       int y = e.getY();
@@ -221,9 +223,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), y, me.getClickCount(), me.isPopupTrigger());
       final List<RangeHighlighterEx> highlighters = new ArrayList<RangeHighlighterEx>();
       collectRangeHighlighters(this, visualLine, highlighters);
-      collectRangeHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true),
-                               visualLine,
-                               highlighters);
+      collectRangeHighlighters(myEditor.getFilteredDocumentMarkupModel(), visualLine, highlighters);
       myEditorFragmentRenderer.update(visualLine, highlighters, me.isAltDown());
       myEditorFragmentRenderer.show(myEditor, me.getPoint(), true, ERROR_STRIPE_TOOLTIP_GROUP, createHint(me));
       return true;
@@ -254,8 +254,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(@NotNull RangeHighlighterEx highlighter) {
-        if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
-
         if (highlighter.getErrorStripeMarkColor() != null) {
           if (highlighter.getStartOffset() < endOffset && highlighter.getEndOffset() > startOffset) {
             highlighters.add(highlighter);
@@ -270,8 +268,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private RangeHighlighter getNearestRangeHighlighter(@NotNull final MouseEvent e) {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     getNearestHighlighters(this, e.getY(), highlighters);
-    getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), myEditor.getProject(), true), e.getY(),
-                           highlighters);
+    getNearestHighlighters(myEditor.getFilteredDocumentMarkupModel(), e.getY(), highlighters);
     RangeHighlighter nearestMarker = null;
     int yPos = 0;
     for (RangeHighlighter highlighter : highlighters) {
@@ -293,8 +290,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(@NotNull RangeHighlighterEx highlighter) {
-        if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
-
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
           if (scrollBarY >= range.getStartOffset() - myMinMarkHeight * 2 &&
@@ -352,46 +347,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   public void setErrorStripeVisible(boolean val) {
     if (val) {
       myEditor.getVerticalScrollBar().setPersistentUI(new MyErrorPanel());
-      myEditor.getHorizontalScrollBar().setPersistentUI(new ButtonlessScrollBarUI() {
-        @Override
-        public boolean alwaysShowTrack() {
-          return false;
-        }
-
-        @Override
-        protected boolean isDark() {
-          return myEditor.isDarkEnough();
-        }
-
-        @Override
-        protected Color adjustColor(Color c) {
-          return isMacOverlayScrollbar() ? super.adjustColor(c) : EditorImpl.adjustThumbColor(super.adjustColor(c), isDark());
-        }
-
-        @Override
-        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-          if (!isMacOverlayScrollbar()) {
-            int half = getThickness() / 2;
-            int shift = half - 1;
-            g.translate(0, shift);
-            super.paintThumb(g, c, thumbBounds);
-            g.translate(0, -shift);
-          }
-          else {
-            super.paintThumb(g, c, thumbBounds);
-          }
-        }
-
-        protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
-          int arc = JBUI.scale(3);
-          g.setColor(adjustColor(getGradientDarkColor()));
-          g.fillRoundRect(JBUI.scale(2), 0, thumbBounds.width, thumbBounds.height, arc, arc);
-        }
-      });
+      myEditor.setHorizontalScrollBarPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
     }
     else {
-      myEditor.getVerticalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
-      myEditor.getHorizontalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
+      myEditor.getVerticalScrollBar().setPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
+      myEditor.setHorizontalScrollBarPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
     }
   }
 
@@ -458,7 +418,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     final MyErrorPanel panel = getErrorPanel();
     if (panel != null) {
       panel.uninstallListeners();
+    } else {
+      ScrollBarUI ui = myEditor.getVerticalScrollBar().getUI();
+      if(ui instanceof ButtonlessScrollBarUI){
+        ((ButtonlessScrollBarUI)ui).uninstallListeners();
+      }
     }
+
+    ScrollBarUI ui = myEditor.getScrollPane().getHorizontalScrollBar().getUI();
+    if(ui instanceof ButtonlessScrollBarUI){
+      ((ButtonlessScrollBarUI)ui).uninstallListeners();
+    }
+
 
     if (myErrorStripeRenderer instanceof Disposable) {
       Disposer.dispose((Disposable)myErrorStripeRenderer);
@@ -575,7 +546,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected void uninstallListeners() {
+    public void uninstallListeners() {
       scrollbar.removeMouseMotionListener(this);
       scrollbar.removeMouseListener(this);
       myErrorStripeButton.removeMouseMotionListener(this);
@@ -611,6 +582,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           g2d.setTransform(old);
         }
       }
+      else if (Registry.is("ide.scroll.new.layout")) {
+        super.paintThumb(g, c, thumbBounds);
+      }
       else {
         int shift;
         if (Registry.is("editor.full.width.scrollbar")) {
@@ -624,6 +598,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         super.paintThumb(g, c, thumbBounds);
         g.translate(-shift, 0);
       }
+    }
+
+    @Override
+    protected boolean isThumbTranslucent() {
+      return true;
+    }
+
+    @Override
+    protected int getThumbOffset(int value) {
+      if (Registry.is("editor.full.width.scrollbar")) return myMinMarkHeight + JBUI.scale(2);
+      return super.getThumbOffset(value);
     }
 
     @Override
@@ -739,7 +724,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       g.clipRect(clip.x, clip.y, clip.width, clip.height);
 
       drawMarkup(g, startOffset, endOffset,
-                 (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true), EditorMarkupModelImpl.this);
+                 myEditor.getFilteredDocumentMarkupModel(), EditorMarkupModelImpl.this);
 
       g.setClip(oldClip);
     }
@@ -763,17 +748,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      DisposableIterator<RangeHighlighterEx> iterator1 = markup1.overlappingIterator(startOffset, endOffset);
-      DisposableIterator<RangeHighlighterEx> iterator2 = markup2.overlappingIterator(startOffset, endOffset);
-      IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> iterator = IntervalTreeImpl
-        .mergeIterators((IntervalTreeImpl.PeekableIterator<RangeHighlighterEx>)iterator1,
-                        (IntervalTreeImpl.PeekableIterator<RangeHighlighterEx>)iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+      MarkupIterator<RangeHighlighterEx> iterator1 = markup1.overlappingIterator(startOffset, endOffset);
+      MarkupIterator<RangeHighlighterEx> iterator2 = markup2.overlappingIterator(startOffset, endOffset);
+      MarkupIterator<RangeHighlighterEx> iterator =
+        IntervalTreeImpl.mergeIterators(iterator1, iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
       try {
         ContainerUtil.process(iterator, new Processor<RangeHighlighterEx>() {
           @Override
           public boolean process(@NotNull RangeHighlighterEx highlighter) {
-            if (!highlighter.getEditorFilter().avaliableIn(myEditor)) return true;
-
             Color color = highlighter.getErrorStripeMarkColor();
             if (color == null) return true;
             boolean isThin = highlighter.isThinErrorStripeMark();
@@ -954,8 +936,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     public void mouseWheelMoved(@NotNull MouseWheelEvent e) {
       if (myEditorPreviewHint == null) return;
-      myWheelAccumulator += e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
-                            e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
+      int inc = e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
+              e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
+      // Stop accumulating when the last or the first line has been reached as 'adjusted' position to show lens.
+      if ((myLastVisualLine < myEditor.getVisibleLineCount() - 1 && inc > 0) || (myLastVisualLine > 0 && inc < 0)) {
+        myWheelAccumulator += inc;
+      }
       myRowAdjuster = myWheelAccumulator / myEditor.getLineHeight();
       showToolTipByMouseMove(e);
     }
@@ -995,6 +981,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myEditorPreviewHint = null;
         myRowAdjuster = 0;
         myWheelAccumulator = 0;
+        myLastVisualLine = 0;
       }
     }
 

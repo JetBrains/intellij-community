@@ -12,7 +12,10 @@ class TypeArgsConsistency {
       I<Integer> i1 = (i, j) -> i + j;
       foo((i, j) -> i + j);
       I<Integer> i2 = bar((i, j) -> i + j);
-      I<Integer> i3 = bar((i, j) -> <error descr="Bad return type in lambda expression: String cannot be converted to Integer">"" + i + j</error>);
+      I<Integer> i3 = bar(<error descr="no instance(s) of type variable(s)  exist so that String conforms to Integer
+inference variable X has incompatible bounds:
+ equality constraints: Integer
+lower bounds: String">(i, j) -> "" + i + j</error>);
     }
 }
 
@@ -30,7 +33,7 @@ class TypeArgsConsistency1 {
         I<Integer> i1 = (i, j) -> i + j;
         foo((i, j) -> i + j);
         I<Integer> i2 =bar((i, j) -> i) ;
-        I<Integer> i3 = bar((i, j) -> <error descr="Bad return type in lambda expression: String cannot be converted to int">"" + i + j</error>);
+        I<Integer> i3 = bar(<error descr="Bad return type in lambda expression: String cannot be converted to int">(i, j) -> "" + i + j</error>);
     }
 }
 
@@ -43,7 +46,10 @@ class TypeArgsConsistency2 {
         I<Integer> i1 = bar(x -> x);
         I1<Integer> i2 = bar1(x -> 1);
         I2<String> aI2 = bar2(x -> "");
-        I2<Integer> aI28 = bar2( x-> <error descr="Bad return type in lambda expression: String cannot be converted to Integer">""</error>);
+        I2<Integer> aI28 = bar2( <error descr="no instance(s) of type variable(s)  exist so that String conforms to Integer
+inference variable T has incompatible bounds:
+ equality constraints: Integer
+lower bounds: String">x-> ""</error>);
         I2<Integer> i3 = bar2(x -> x);
         I2<Integer> i4 = bar2(x -> foooI());
         System.out.println(i4.foo(2));

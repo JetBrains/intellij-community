@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -36,15 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.11.2007
- */
-@State(
-        name = "NoNamespaceConfig.Mappings",
-        storages = { @Storage(
-                file = StoragePathMacros.WORKSPACE_FILE) })
+@State(name = "NoNamespaceConfig.Mappings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentStateComponent<NoNamespaceConfigImpl.Mappings> {
 
   private final Map<VirtualFilePointer, VirtualFilePointer> myMappings = new HashMap<VirtualFilePointer, VirtualFilePointer>();

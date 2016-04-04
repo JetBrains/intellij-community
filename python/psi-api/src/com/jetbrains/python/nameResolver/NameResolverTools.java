@@ -27,6 +27,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,8 +109,8 @@ public final class NameResolverTools {
    * Same as {@link #isName(PyElement, FQNamesProvider...)} for call expr, but first checks name.
    * Aliases not supported, but much lighter that way
    *
-   * @param call expr
-   * @param function   names to check
+   * @param call     expr
+   * @param function names to check
    * @return true if callee is correct
    */
   public static boolean isCalleeShortCut(@NotNull final PyCallExpression call,
@@ -142,7 +143,8 @@ public final class NameResolverTools {
 
   /**
    * Checks if some string contains last component one of name
-   * @param text test to check
+   *
+   * @param text  test to check
    * @param names
    */
   public static boolean isContainsName(@NotNull final String text, @NotNull final FQNamesProvider names) {
@@ -153,13 +155,30 @@ public final class NameResolverTools {
     }
     return false;
   }
+
   /**
    * Checks if some file contains last component one of name
-   * @param  file file to check
+   *
+   * @param file  file to check
    * @param names
    */
   public static boolean isContainsName(@NotNull final PsiFile file, @NotNull final FQNamesProvider names) {
     return isContainsName(file.getText(), names);
+  }
+
+  /**
+   * Check if class has parent with some name
+   * @param child class to check
+   */
+  public static boolean isSubclass(@NotNull final PyClass child,
+                                   @NotNull final FQNamesProvider parentName,
+                                   @NotNull final TypeEvalContext context) {
+    for (final String nameToCheck : parentName.getNames()) {
+      if (child.isSubclass(nameToCheck, context)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

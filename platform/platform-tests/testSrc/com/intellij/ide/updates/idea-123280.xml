@@ -1,0 +1,32 @@
+<products>
+    <product name="IntelliJ IDEA">
+        <code>IU</code>
+        <code>IC</code>
+
+        <channel id="IDEA_15_EAP" name="IntelliJ IDEA 15 EAP" status="eap" url="" feedback="" majorVersion="15" licensing="eap">
+            <build number="143.747" version="15.0.2 EAP" releaseDate="20151102">
+                <message/>
+                <button name="Download" url="https://confluence.jetbrains.com/display/IDEADEV/IDEA+15+EAP" download="true" />
+                <button name="Release Notes" url="https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+15+143.747.6+Release+Notes" />
+                <patch from="143.381" size="from 4 to 20" />
+                <patch from="143.382" size="from 4 to 18" />
+            </build>
+        </channel>
+
+        <channel id="IDEA_Beta" name="IntelliJ IDEA Beta" status="beta" url="" feedback="" majorVersion="15" licensing="eap"/>
+
+        <channel id="IDEA_Release" name="IntelliJ IDEA Release" status="release" url="" feedback="" majorVersion="15" licensing="release">
+            <build number="143.382" version="15.0.1" releaseDate="20151102">
+                <message/>
+                <button name="Release Notes" url="https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+15.0.1+Release+Notes" />
+                <patch from="143.381" size="from 1 to 12" />
+            </build>
+            <build number="143.381" version="15" releaseDate="20151102">
+                <message/>
+                <button name="Download" url="https://www.jetbrains.com/idea/download/" download="true" />
+                <button name="What's New" url="https://www.jetbrains.com/idea/whatsnew/"/>
+                <patch from="143.380" size="from 1 to 11" />
+            </build>
+        </channel>
+    </product>
+</products>

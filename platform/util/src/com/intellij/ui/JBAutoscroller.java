@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class JBAutoscroller implements ActionListener {
   private static final Key<ScrollDeltaProvider> SCROLL_HANDLER_KEY = Key.create("JBAutoScroller.AutoScrollHandler");
   private static final JBAutoscroller INSTANCE = new JBAutoscroller();
 
-  private final Timer myTimer = new Timer(SCROLL_UPDATE_INTERVAL, this);
+  private final Timer myTimer = UIUtil.createNamedTimer("JBAutoScroller",SCROLL_UPDATE_INTERVAL, this);
   private final DefaultScrollDeltaProvider myDefaultAutoScrollHandler = new DefaultScrollDeltaProvider();
 
   private SyntheticDragEvent myLatestDragEvent;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,16 +66,16 @@ import java.io.File;
 import java.util.*;
 import java.util.jar.Attributes;
 
-@State(name = "DebuggerManager", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "DebuggerManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
 
   private final Project myProject;
-  private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
+  private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
   private final BreakpointManager myBreakpointManager;
   private final List<NameMapper> myNameMappers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories =
-    new ArrayList<Function<DebugProcess, PositionManager>>();
+    new ArrayList<>();
 
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
@@ -155,6 +155,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
   }
 
+  @Nullable
   @Override
   public DebuggerSession getSession(DebugProcess process) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -164,11 +165,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return null;
   }
 
+  @NotNull
   @Override
   public Collection<DebuggerSession> getSessions() {
     synchronized (mySessions) {
       final Collection<DebuggerSession> values = mySessions.values();
-      return values.isEmpty() ? Collections.<DebuggerSession>emptyList() : new ArrayList<DebuggerSession>(values);
+      return values.isEmpty() ? Collections.<DebuggerSession>emptyList() : new ArrayList<>(values);
     }
   }
 
@@ -363,16 +365,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return "DebuggerManager";
   }
 
+  @NotNull
   @Override
   public BreakpointManager getBreakpointManager() {
     return myBreakpointManager;
   }
 
+  @NotNull
   @Override
   public DebuggerContextImpl getContext() {
     return getContextManager().getContext();
   }
 
+  @NotNull
   @Override
   public DebuggerStateManager getContextManager() {
     return myDebuggerStateManager;

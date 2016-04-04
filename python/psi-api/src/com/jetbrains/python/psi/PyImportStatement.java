@@ -21,5 +21,5 @@ import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 /**
  * @author yole
  */
-public interface PyImportStatement extends PyImportStatementBase, StubBasedPsiElement<PyImportStatementStub> {
+public interface PyImportStatement extends PyImportStatementBase, StubBasedPsiElement<PyImportStatementStub>, PyImplicitImportNameDefiner {
 }

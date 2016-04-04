@@ -69,5 +69,10 @@ public abstract class SmartPointerManager {
    * @return true if both pointers point to the same PSI element.
    */
   public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2);
-  public abstract boolean removePointer(@NotNull SmartPsiElementPointer pointer);
+
+  /**
+   * Disposes a smart pointer and frees the resources associated with it. Calling this method is not obligatory: pointers are
+   * freed correctly when they're not used anymore. But disposing the pointers explicitly might be beneficial for performance.
+   */
+  public abstract void removePointer(@NotNull SmartPsiElementPointer pointer);
 }

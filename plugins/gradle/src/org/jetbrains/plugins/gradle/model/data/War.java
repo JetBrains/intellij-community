@@ -28,11 +28,8 @@ import java.util.Set;
  * @author Vladislav.Soroka
  * @since 2/10/14
  */
-public class War implements Serializable {
+public class War extends Jar {
   private static final long serialVersionUID = 1L;
-
-  @NotNull
-  private final String myName;
 
   @NotNull
   private final String myWebAppDirName;
@@ -44,21 +41,14 @@ public class War implements Serializable {
   private List<WebResource> myWebResources;
   @NotNull
   private Set<File> myClasspath;
-  @Nullable
-  private String myManifestContent;
 
 
   public War(@NotNull String name, @NotNull String webAppDirName, @NotNull File webAppDir) {
-    myName = name;
+    super(name);
     myWebAppDirName = webAppDirName;
     myWebAppDir = webAppDir;
     myWebResources = Collections.emptyList();
     myClasspath = Collections.emptySet();
-  }
-
-  @NotNull
-  public String getName() {
-    return myName;
   }
 
   @NotNull
@@ -98,26 +88,17 @@ public class War implements Serializable {
     return myClasspath;
   }
 
-  public void setManifestContent(@Nullable String manifestContent) {
-    myManifestContent = manifestContent;
-  }
-
-  @Nullable
-  public String getManifestContent() {
-    return myManifestContent;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof War)) return false;
     if (!super.equals(o)) return false;
 
-    War that = (War)o;
+    War war = (War)o;
 
-    if (!myName.equals(that.myName)) return false;
-    if (!myWebAppDirName.equals(that.myWebAppDirName)) return false;
-    if (!myWebResources.equals(that.myWebResources)) return false;
+    if (!myWebAppDirName.equals(war.myWebAppDirName)) return false;
+    if (!myWebResources.equals(war.myWebResources)) return false;
+    if (!myClasspath.equals(war.myClasspath)) return false;
 
     return true;
   }
@@ -125,7 +106,6 @@ public class War implements Serializable {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myName.hashCode();
     result = 31 * result + myWebAppDirName.hashCode();
     result = 31 * result + myWebResources.hashCode();
     return result;
@@ -134,11 +114,11 @@ public class War implements Serializable {
   @Override
   public String toString() {
     return "War{" +
-           "myName='" + myName + '\'' +
-           ", myWebAppDirName='" + myWebAppDirName + '\'' +
-           ", myWebAppDir=" + myWebAppDir +
-           ", myWebXml=" + myWebXml +
-           ", myWebResources=" + myWebResources +
+           "name='" + getName() + '\'' +
+           ", webAppDirName='" + myWebAppDirName + '\'' +
+           ", webAppDir=" + myWebAppDir +
+           ", webXml=" + myWebXml +
+           ", webResources=" + myWebResources +
            '}';
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,30 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.codeInspection.DataFlowInspectionTestCase;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisResultsHighlightingTest extends LightCodeInsightFixtureTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setUpLibraries();
-  }
-
+public class BytecodeAnalysisResultsHighlightingTest extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
+    return new DefaultLightProjectDescriptor() {
+      @Override
+      public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+        super.configureModule(module, model, contentEntry);
+        PsiTestUtil.addLibrary(module, model, "velocity", PathManagerEx.getCommunityHomePath() + "/lib", "velocity.jar");
+      }
+    };
   }
 
   @Override
@@ -47,21 +47,5 @@ public class BytecodeAnalysisResultsHighlightingTest extends LightCodeInsightFix
     return JavaTestUtil.getJavaTestDataPath() + "/codeInspection/bytecodeAnalysis/src/";
   }
 
-  private void doTest() {
-    final DataFlowInspection inspection = new DataFlowInspection();
-    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
-    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
-    myFixture.enableInspections(inspection);
-    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
-  }
-
-  public void testExample() {
-    doTest();
-  }
-
-  private void setUpLibraries() {
-    VirtualFile lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib");
-    assertNotNull(lib);
-    PsiTestUtil.addLibrary(myModule, "velocity", lib.getPath(), new String[]{"/velocity.jar!/"}, new String[]{});
-  }
+  public void testExample() { doTest(); }
 }

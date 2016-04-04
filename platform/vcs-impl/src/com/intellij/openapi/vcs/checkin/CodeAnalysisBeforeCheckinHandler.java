@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.CodeSmellDetector;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -33,13 +34,11 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -97,14 +96,14 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     int errorCount = collectErrors(codeSmells);
     int warningCount = codeSmells.size() - errorCount;
     String commitButtonText = executor != null ? executor.getActionText() : myCheckinPanel.getCommitActionName();
-    if (commitButtonText.endsWith("...")) {
-      commitButtonText = commitButtonText.substring(0, commitButtonText.length()-3);
-    }
+    commitButtonText = StringUtil.trimEnd(commitButtonText, "...");
 
     final int answer = Messages.showYesNoCancelDialog(myProject,
-      VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text", errorCount, warningCount),
-      VcsBundle.message("code.smells.error.messages.tab.name"), VcsBundle.message("code.smells.review.button"),
-      commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon());
+                                                      VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text",
+                                                                        errorCount, warningCount),
+                                                      VcsBundle.message("code.smells.error.messages.tab.name"),
+                                                      VcsBundle.message("code.smells.review.button"),
+                                                      commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon());
     if (answer == Messages.YES) {
       CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells);
       return ReturnResult.CLOSE_WINDOW;

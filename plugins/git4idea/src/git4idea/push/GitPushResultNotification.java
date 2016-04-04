@@ -79,7 +79,7 @@ class GitPushResultNotification extends Notification {
       }
       type = NotificationType.ERROR;
     }
-    else if (!grouped.rejected.isEmpty()) {
+    else if (!grouped.rejected.isEmpty() || !grouped.customRejected.isEmpty()) {
       if (!grouped.successful.isEmpty()) {
         title = "Push partially rejected";
       }
@@ -173,8 +173,11 @@ class GitPushResultNotification extends Notification {
       case FORCED:
         description = String.format("force pushed %s to %s", sourceBranch, targetBranch);
         break;
-      case REJECTED:
+      case REJECTED_NO_FF:
         description = formDescriptionBasedOnUpdateResult(result.getUpdateResult(), targetBranch);
+        break;
+      case REJECTED_OTHER:
+        description = String.format("push %s to %s was rejected by remote", sourceBranch, targetBranch);
         break;
       case ERROR:
         description = "failed with error: " + result.getError();

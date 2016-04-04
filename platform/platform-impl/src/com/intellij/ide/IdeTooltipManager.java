@@ -132,9 +132,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     else if (me.getID() == MouseEvent.MOUSE_MOVED) {
       if (c == myCurrentComponent || c == myQueuedComponent) {
         if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
-          if (hideCurrent(me, null, null)) {
-            maybeShowFor(c, me);
-          }
+          maybeShowFor(c, me);
         }
         else {
           if (!myCurrentTipIsCentered) {

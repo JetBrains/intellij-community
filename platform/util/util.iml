@@ -7,7 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="library" scope="PROVIDED" name="Mac" level="project" />
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
@@ -21,6 +21,9 @@
     <orderEntry type="library" exported="" name="ForkJoin" level="project" />
     <orderEntry type="library" exported="" name="Snappy-Java" level="project" />
     <orderEntry type="library" name="imgscalr" level="project" />
+    <orderEntry type="library" name="batik" level="project" />
+    <orderEntry type="library" name="xmlgraphics-commons" level="project" />
+    <orderEntry type="library" name="xml-apis-ext" level="project" />
   </component>
   <component name="copyright">
     <Base>

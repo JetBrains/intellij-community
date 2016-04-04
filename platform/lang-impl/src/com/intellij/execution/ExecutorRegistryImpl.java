@@ -32,6 +32,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -215,7 +216,8 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       final Presentation presentation = e.getPresentation();
       final Project project = e.getProject();
 
-      if (project == null || !project.isInitialized() || project.isDisposed() || DumbService.getInstance(project).isDumb()) {
+      if (project == null || !project.isInitialized() || project.isDisposed() ||
+          (DumbService.getInstance(project).isDumb() && !Registry.is("dumb.aware.run.configurations"))) {
         presentation.setEnabled(false);
         return;
       }

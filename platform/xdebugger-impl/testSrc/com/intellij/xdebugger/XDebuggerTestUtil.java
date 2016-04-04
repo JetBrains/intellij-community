@@ -28,11 +28,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -116,6 +116,12 @@ public class XDebuggerTestUtil {
   public static List<XStackFrame> collectFrames(@Nullable XExecutionStack thread, @NotNull XDebugSession session)
     throws InterruptedException {
     return collectStacks(thread == null ? getActiveThread(session) : thread);
+  }
+  
+  public static String getFramePresentation(XStackFrame frame) {
+    TextTransferable.ColoredStringBuilder builder = new TextTransferable.ColoredStringBuilder();
+    frame.customizePresentation(builder);
+    return builder.getBuilder().toString();
   }
 
   public static List<XStackFrame> collectStacks(@NotNull XExecutionStack thread) throws InterruptedException {

@@ -4,8 +4,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Holds object representation of icons used at the <code>Gradle</code> plugin.
  * 
@@ -28,6 +26,8 @@ public class GradleConstants {
 
   @NotNull @NonNls public static final String OFFLINE_MODE_CMD_OPTION = "--offline";
   @NotNull @NonNls public static final String INIT_SCRIPT_CMD_OPTION = "--init-script";
+
+  @NotNull @NonNls public static final String GRADLE_SOURCE_SET_MODULE_TYPE_KEY = "sourceSet";
 
   private GradleConstants() {
   }

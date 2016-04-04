@@ -17,6 +17,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
@@ -29,7 +30,8 @@ public class HighlightingAnnotator extends PyAnnotator {
   public void visitPyParameter(PyParameter node) {
     PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
     if (function != null) {
-      Annotation annotation = getHolder().createInfoAnnotation(node, null);
+      final PsiElement anchor = node.hasDefaultValue() ? node.getFirstChild() : node;
+      final Annotation annotation = getHolder().createInfoAnnotation(anchor, null);
       annotation.setTextAttributes(node.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
     }
   }

@@ -28,6 +28,8 @@ public class JUnitRuleInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testWrongsignature() throws Exception {
     myFixture.addClass("package org.junit.rules;\n" +
                        "public interface TestRule {}");
+    myFixture.addClass("package org.junit.rules;\n" +
+                       "public @interface MethodRule {}");
     myFixture.addClass("package org.junit;\n" +
                        "public @interface Rule {}");
     myFixture.addClass("package org.junit;\n" +

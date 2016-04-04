@@ -266,9 +266,9 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     public boolean shouldBeComparedWithChange(final Change change) {
       if (FileStatus.DELETED.equals(myStatus) && (change.getAfterRevision() == null)) {
         // before path
-        return (change.getBeforeRevision() != null) && myLocalPath.equals(change.getBeforeRevision().getFile().getIOFile().getAbsolutePath());
+        return (change.getBeforeRevision() != null) && myLocalPath.equals(change.getBeforeRevision().getFile().getPath());
       } else {
-        return (change.getAfterRevision() != null) && myLocalPath.equals(change.getAfterRevision().getFile().getIOFile().getAbsolutePath());
+        return (change.getAfterRevision() != null) && myLocalPath.equals(change.getAfterRevision().getFile().getPath());
       }
     }
   }

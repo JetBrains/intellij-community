@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -23,6 +22,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import com.intellij.vcs.log.graph.utils.NormalEdge;
 import org.jetbrains.annotations.NotNull;
 
 public class ColorGetterByLayoutIndex<CommitId> {
@@ -42,10 +42,10 @@ public class ColorGetterByLayoutIndex<CommitId> {
     }
     else {
       GraphEdge edge = (GraphEdge)element;
-      Pair<Integer, Integer> normalEdge = LinearGraphUtils.asNormalEdge(edge);
+      NormalEdge normalEdge = LinearGraphUtils.asNormalEdge(edge);
       if (normalEdge != null) {
-        upNodeIndex = normalEdge.first;
-        downNodeIndex = normalEdge.second;
+        upNodeIndex = normalEdge.up;
+        downNodeIndex = normalEdge.down;
       }
       else {
         upNodeIndex = LinearGraphUtils.getNotNullNodeIndex(edge);

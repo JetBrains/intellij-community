@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.math.BigDecimal;
 public class ConvertToPlainIntention extends ConvertNumberIntentionBase {
   @Override
   protected String convertValue(final Number value, final PsiType type, final boolean negated) {
-    String text = new BigDecimal(value.toString()).toPlainString();
+    String text = new BigDecimal(value.toString()).stripTrailingZeros().toPlainString();
     if (negated) text = "-" + text;
     if (PsiType.FLOAT.equals(type)) text += "f";
     return text;

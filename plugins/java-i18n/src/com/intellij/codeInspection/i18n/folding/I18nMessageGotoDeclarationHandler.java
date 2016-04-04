@@ -67,7 +67,7 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
       if (foldRegion == null || foldRegion.isExpanded()) return null;
 
       for (PsiExpression expression : methodCall.getArgumentList().getExpressions()) {
-        if (expression instanceof PsiLiteralExpression && PropertyFoldingBuilder.isI18nProperty(expression.getProject(), (PsiLiteralExpression)expression)) {
+        if (expression instanceof PsiLiteralExpression && PropertyFoldingBuilder.isI18nProperty((PsiLiteralExpression)expression)) {
           return resolve(expression);
         }
       }

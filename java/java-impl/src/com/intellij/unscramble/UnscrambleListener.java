@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package com.intellij.unscramble;
 
 import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 
@@ -43,7 +45,9 @@ public class UnscrambleListener extends ApplicationActivationListener.Adapter {
           if (project != null && isStacktrace(stacktrace)) {
             final UnscrambleDialog dialog = new UnscrambleDialog(project);
             dialog.createNormalizeTextAction().actionPerformed(null);
-            dialog.doOKAction();
+            if (!DumbService.isDumb(project)) {
+              dialog.doOKAction();
+            }
           }
         }
       }
@@ -74,9 +78,7 @@ public class UnscrambleListener extends ApplicationActivationListener.Adapter {
     for (String line : stacktrace.split("\n")) {
       line = line.trim();
       if (line.length() == 0) continue;
-      if (line.endsWith("\r")) {
-        line = line.substring(0, line.length() - 1);
-      }
+      line = StringUtil.trimEnd(line, "\r");
       if (STACKTRACE_LINE.matcher(line).matches()) {
         linesCount++;
       }

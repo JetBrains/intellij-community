@@ -60,7 +60,9 @@ abstract class PResults {
     return sop;
   }
 
-  // Results
+  /**
+   * 'P' stands for 'Partial'
+   */
   interface PResult {}
   static final PResult Identity = new PResult() {
     @Override
@@ -192,20 +194,20 @@ class NonNullInAnalysis extends Analysis<PResult> {
   }
 
   @NotNull
-  Equation<Key, Value> mkEquation(PResult result) {
+  Equation mkEquation(PResult result) {
     if (Identity == result || Return == result) {
-      return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.Top));
+      return new Equation(aKey, new Final(Value.Top));
     }
     else if (NPE == result) {
-      return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.NotNull));
+      return new Equation(aKey, new Final(Value.NotNull));
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product<Key, Value>> components = new HashSet<Product<Key, Value>>();
+      Set<Product> components = new HashSet<Product>();
       for (Set<Key> prod : condNpe.sop) {
-        components.add(new Product<Key, Value>(Value.Top, prod));
+        components.add(new Product(Value.Top, prod));
       }
-      return new Equation<Key, Value>(aKey, new Pending<Key, Value>(components));
+      return new Equation(aKey, new Pending(components));
     }
   }
 
@@ -214,7 +216,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
   private PResult subResult = null;
 
   @NotNull
-  protected Equation<Key, Value> analyze() throws AnalyzerException {
+  protected Equation analyze() throws AnalyzerException {
     pendingPush(new ProceedState(createStartState()));
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
@@ -418,20 +420,20 @@ class NullableInAnalysis extends Analysis<PResult> {
   }
 
   @NotNull
-  Equation<Key, Value> mkEquation(PResult result) {
+  Equation mkEquation(PResult result) {
     if (NPE == result) {
-      return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.Top));
+      return new Equation(aKey, new Final(Value.Top));
     }
     if (Identity == result || Return == result) {
-      return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.Null));
+      return new Equation(aKey, new Final(Value.Null));
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product<Key, Value>> components = new HashSet<Product<Key, Value>>();
+      Set<Product> components = new HashSet<Product>();
       for (Set<Key> prod : condNpe.sop) {
-        components.add(new Product<Key, Value>(Value.Top, prod));
+        components.add(new Product(Value.Top, prod));
       }
-      return new Equation<Key, Value>(aKey, new Pending<Key, Value>(components));
+      return new Equation(aKey, new Pending(components));
     }
   }
 
@@ -442,7 +444,7 @@ class NullableInAnalysis extends Analysis<PResult> {
   private boolean top = false;
 
   @NotNull
-  protected Equation<Key, Value> analyze() throws AnalyzerException {
+  protected Equation analyze() throws AnalyzerException {
     pendingPush(createStartState());
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {

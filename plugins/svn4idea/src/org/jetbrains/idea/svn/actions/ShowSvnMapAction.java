@@ -15,63 +15,15 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ContentsUtil;
-import icons.SvnIcons;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.dialogs.CopiesPanel;
+import com.intellij.vcs.VcsShowToolWindowTabAction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.WorkingCopiesContent;
 
-public class ShowSvnMapAction extends AnAction implements DumbAware {
-  public ShowSvnMapAction() {
-    super(SvnBundle.message("action.show.svn.map.text"));
-  }
+public class ShowSvnMapAction extends VcsShowToolWindowTabAction {
 
+  @NotNull
   @Override
-  public void update(final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-
-    final Presentation presentation = e.getPresentation();
-    presentation.setVisible(project != null);
-    presentation.setEnabled(project != null);
-
-    presentation.setDescription(SvnBundle.message("action.show.svn.map.description"));
-    presentation.setIcon(SvnIcons.ShowWorkingCopies);
-  }
-
-  public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return;
-    }
-
-    final CopiesPanel copiesPanel = new CopiesPanel(project);
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    final ContentManager contentManager = toolWindow.getContentManager();
-
-    Content content = ContentFactory.SERVICE.getInstance().createContent(copiesPanel.getComponent(), SvnBundle.message("dialog.show.svn.map.title"), true);
-    ContentsUtil.addOrReplaceContent(contentManager, content, true);
-    toolWindow.activate(new Runnable() {
-      public void run() {
-        IdeFocusManager.getInstance(project).requestFocus(copiesPanel.getPreferredFocusedComponent(), true);
-      }
-    });
-    /*SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        IdeFocusManager.getInstance(project).requestFocus(copiesPanel.getPrefferedFocusComponent(), true);
-      }
-    });*/
+  protected String getTabName() {
+    return WorkingCopiesContent.TAB_NAME;
   }
 }

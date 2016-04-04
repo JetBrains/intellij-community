@@ -294,7 +294,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils boolean[] toPrimitive(java.lang.Boolean[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -303,7 +304,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils boolean[] toPrimitive(java.lang.Boolean[], boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -348,7 +350,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils byte[] toPrimitive(java.lang.Byte[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -357,7 +360,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils byte[] toPrimitive(java.lang.Byte[], byte)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -402,7 +406,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils char[] toPrimitive(java.lang.Character[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -411,7 +416,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils char[] toPrimitive(java.lang.Character[], char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -456,7 +462,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils double[] toPrimitive(java.lang.Double[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -465,7 +472,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils double[] toPrimitive(java.lang.Double[], double)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -510,7 +518,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils float[] toPrimitive(java.lang.Float[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -519,7 +528,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils float[] toPrimitive(java.lang.Float[], float)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -831,7 +841,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils int[] toPrimitive(java.lang.Integer[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -840,7 +851,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils int[] toPrimitive(java.lang.Integer[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -849,7 +861,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils java.lang.Boolean[] toObject(boolean[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -858,7 +871,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils java.lang.Byte[] toObject(byte[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -867,7 +881,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils java.lang.Character[] toObject(char[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -876,7 +891,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils java.lang.Double[] toObject(double[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -885,7 +901,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils java.lang.Float[] toObject(float[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -894,7 +911,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils java.lang.Integer[] toObject(int[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -903,7 +921,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils java.lang.Long[] toObject(long[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -957,7 +976,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils java.lang.Short[] toObject(short[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -1017,7 +1037,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils long[] toPrimitive(java.lang.Long[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -1026,7 +1047,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils long[] toPrimitive(java.lang.Long[], long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -1071,7 +1093,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils short[] toPrimitive(java.lang.Short[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -1080,7 +1103,8 @@
     </item>
     <item name='org.apache.commons.lang.ArrayUtils short[] toPrimitive(java.lang.Short[], short)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -1608,6 +1632,11 @@
     </item>
     <item name='org.apache.commons.lang.CharUtils int toIntValue(java.lang.Character, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.CharUtils java.lang.Character toCharacterObject(char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.CharUtils java.lang.Character toCharacterObject(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3230,7 +3259,8 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, char, char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>

@@ -19,9 +19,11 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -30,6 +32,7 @@ import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,15 +55,7 @@ public class SuperMethodWarningUtil {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
 
-    final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
-    superMethods.removeAll(ignore);
-
-    if (superMethods.isEmpty()) {
-      PsiMethod siblingSuperMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
-      if (siblingSuperMethod != null) {
-        superMethods.add(siblingSuperMethod);
-      }
-    }
+    final Collection<PsiMethod> superMethods = getSuperMethods(method, aClass, ignore);
     if (superMethods.isEmpty()) return new PsiMethod[]{method};
 
 
@@ -88,6 +83,23 @@ public class SuperMethodWarningUtil {
     }
 
     return PsiMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
+    final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
+    superMethods.removeAll(ignore);
+
+    if (superMethods.isEmpty()) {
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
+      if (virtualFile != null && ProjectRootManager.getInstance(aClass.getProject()).getFileIndex().isInSourceContent(virtualFile)) {
+        PsiMethod siblingSuperMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+        if (siblingSuperMethod != null) {
+          superMethods.add(siblingSuperMethod);
+        }
+      }
+    }
+    return superMethods;
   }
 
 

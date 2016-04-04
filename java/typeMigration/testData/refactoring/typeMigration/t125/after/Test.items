@@ -1,4 +1,5 @@
 Types:
+PsiMethod:meth : java.util.List<java.lang.Integer>
 PsiParameter:p : java.lang.Integer
 PsiReferenceExpression:p : java.lang.Integer
 
@@ -6,4 +7,3 @@ Conversions:
 
 New expression type changes:
 Fails:
-Collections.singletonList(p)->java.util.List<java.lang.Integer>

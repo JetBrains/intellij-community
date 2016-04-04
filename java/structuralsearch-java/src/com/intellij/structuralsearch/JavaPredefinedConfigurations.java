@@ -46,7 +46,7 @@ class JavaPredefinedConfigurations {
       // Class based
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.methods.of.the.class"),
-        "class '_Class { \n  '_ReturnType+ 'MethodName+('_ParameterType* '_Parameter*);\n}",
+        "'_ReturnType+ '_MethodName+('_ParameterType* '_Parameter*);",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
@@ -126,7 +126,7 @@ class JavaPredefinedConfigurations {
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.instance.initialization.blocks"),
-        "class '_A {\n  @Modifier(\"Instance\") {\n    'Statement*;\n  }\n}",
+        "@Modifier(\"Instance\") {\n  '_Statement*;\n}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
@@ -161,7 +161,7 @@ class JavaPredefinedConfigurations {
 
       // Generics
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.classes"),"class 'GenericClass<'_TypeParameter+> {} ", GENERICS_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.methods"),"class '_Class {\n  <'_TypeParameter+> '_Type+ 'Method+('_ParameterType* '_ParameterDcl*);\n}", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.methods"),"<'_TypeParameter+> '_Type+ '_Method+('_ParameterType* '_ParameterDcl*);", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.typed.symbol"),"'Symbol <'_GenericArgument+>", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.casts"),"( '_Type <'_GenericArgument+> ) '_Expr", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.type.var.substitutions.in.intanceof.with.generic.types"),"'_Expr instanceof '_Type <'Substitutions+> ", GENERICS_TYPE),
@@ -171,7 +171,7 @@ class JavaPredefinedConfigurations {
       // Add comments and metadata
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"),"/* 'CommentContent */", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.class"),"/** @'_Tag+ '_TagValue* */\nclass '_Class {\n}", METADATA_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),"class '_Class {\n  /** @'_Tag+ '_TagValue* */\n  '_Type+ 'Method+('_ParameterType* '_ParameterDcl*);\n}", METADATA_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),"/** @'_Tag+ '_TagValue* */\n'_Type+ '_Method+('_ParameterType* '_ParameterDcl*);", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.fields"),"class '_Class {\n  /** @'_Tag+ '_TagValue* */\n  '_Type+ 'Field+ = '_Init*;\n}", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.tags"),"/** @'Tag+ '_TagValue* */", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.xdoclet.metadata"),"/** @'Tag \n  '_Property+\n*/", METADATA_TYPE),
@@ -186,16 +186,10 @@ class JavaPredefinedConfigurations {
                                "  '_FieldType+ 'FieldName+ = '_FieldInitial*;\n" +
                                "}", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.methods"),
-                               "class '_Class {\n" +
-                               "  @'_Annotation+( )\n" +
-                               "  '_MethodType+ 'MethodName+('_ParameterType* '_ParameterName*);\n" +
-                               "}", METADATA_TYPE),
+                               "@'_Annotation+( )\n'_MethodType+ '_MethodName+('_ParameterType* '_ParameterName*);", METADATA_TYPE),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.not.annotated.methods"),
-                               "class '_Class {\n" +
-                               "  @'_Annotation{0,0}\n" +
-                               "  '_MethodType+ 'MethodName+('_ParameterType* '_ParameterName*);\n" +
-                               "}", METADATA_TYPE),
+                               "@'_Annotation{0,0}\n'_MethodType+ '_MethodName+('_ParameterType* '_ParameterName*);", METADATA_TYPE),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotation.declarations"),
                                "@interface 'Interface {}", METADATA_TYPE),
@@ -268,16 +262,15 @@ class JavaPredefinedConfigurations {
                                                                                         "    return '_Instance;\n" +
                                                                                         "  }\n"+
                                                                                         "}",MISC_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.similar.methods.structure"),"class '_Class {\n" +
-                                                                                                       "  '_RetType 'Method+('_ParameterType* '_Parameter) throws 'ExceptionType {\n" +
-                                                                                                       "    try {\n" +
-                                                                                                       "      '_OtherStatements+;\n" +
-                                                                                                       "    } catch('_SomeException '_ExceptionDcl) {\n" +
-                                                                                                       "      '_CatchStatement*;\n" +
-                                                                                                       "      throw new 'ExceptionType('_ExceptionConstructorArgs*);\n" +
-                                                                                                       "    }\n" +
-                                                                                                       "  }\n" +
-                                                                                                       "}",MISC_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.similar.methods.structure"),
+                               "'_RetType '_Method+('_ParameterType* '_Parameter) throws 'ExceptionType {\n" +
+                               "  try {\n" +
+                               "    '_OtherStatements+;\n" +
+                               "  } catch('_SomeException '_ExceptionDcl) {\n" +
+                               "    '_CatchStatement*;\n" +
+                               "    throw new 'ExceptionType('_ExceptionConstructorArgs*);\n" +
+                               "  }\n" +
+                               "}", MISC_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.bean.info.classes"),"class 'A implements '_:*java\\.beans\\.BeanInfo {\n" +
                                                                                                "}",MISC_TYPE),
 

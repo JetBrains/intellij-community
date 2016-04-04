@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jetbrains.annotations.NonNls;
 
+@Deprecated
 public interface DebuggerActions extends XDebuggerActions {
   @NonNls String POP_FRAME = "Debugger.PopFrame";
   @NonNls String EVALUATION_DIALOG_POPUP = "Debugger.EvaluationDialogPopup";

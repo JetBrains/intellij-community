@@ -31,9 +31,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -55,6 +54,7 @@ import java.util.Set;
 /**
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
+  private static final String VCS_LOG_TEXT_FILTER_HISTORY = "Vcs.Log.Text.Filter.History";
 
   private static final String HASH_PATTERN = "[a-fA-F0-9]{7,}";
   private static final Logger LOG = Logger.getInstance(VcsLogClassicFilterUi.class);
@@ -114,17 +114,46 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myDataPack = dataPack;
   }
 
+  @NotNull
+  public JComponent createTextFilter() {
+    final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory(VCS_LOG_TEXT_FILTER_HISTORY) {
+      @Override
+      protected void onFieldCleared() {
+        myTextFilterModel.setFilter(null);
+      }
+    };
+    textFilter.setText(myTextFilterModel.getText());
+    textFilter.getTextEditor().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        myTextFilterModel.setFilter(new VcsLogTextFilterImpl(textFilter.getText()));
+        textFilter.addCurrentTextToHistory();
+      }
+    });
+    textFilter.addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        try {
+          myTextFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
+        }
+        catch (BadLocationException ex) {
+          LOG.error(ex);
+        }
+      }
+    });
+    return textFilter;
+  }
+
   /**
    * Returns filter components which will be added to the Log toolbar.
    */
   @NotNull
   public ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(new TextFilterComponent(myTextFilterModel));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi();
+        return new BranchFilterPopupComponent(myUi, myUiProperties, myBranchFilterModel).initUi();
       }
     }));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
@@ -199,62 +228,15 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (filter instanceof VcsLogBranchFilter) {
       myBranchFilterModel.setFilter((VcsLogBranchFilter)filter);
-      JComponent toolbar = myUi.getMainFrame().getToolbar();
+      JComponent toolbar = myUi.getToolbar();
       toolbar.revalidate();
       toolbar.repaint();
     }
   }
 
-  private static class TextFilterComponent extends DumbAwareAction implements CustomComponentAction {
-
-    private final TextFilterModel myFilterModel;
-
-    public TextFilterComponent(TextFilterModel filterModel) {
-      myFilterModel = filterModel;
-    }
-
-    @Override
-    public JComponent createCustomComponent(Presentation presentation) {
-      JPanel panel = new JPanel();
-      JLabel filterCaption = new JLabel("Filter:");
-      filterCaption.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
-      panel.add(filterCaption);
-      panel.add(createSearchField());
-      return panel;
-    }
-
-    private Component createSearchField() {
-      final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory("Vcs.Log.Text.Filter.History") {
-        @Override
-        protected void onFieldCleared() {
-          myFilterModel.setFilter(null);
-        }
-      };
-      textFilter.setText(myFilterModel.getText());
-      textFilter.getTextEditor().addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          myFilterModel.setFilter(new VcsLogTextFilterImpl(textFilter.getText()));
-          textFilter.addCurrentTextToHistory();
-        }
-      });
-      textFilter.addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(DocumentEvent e) {
-          try {
-            myFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
-          }
-          catch (BadLocationException ex) {
-            LOG.error(ex);
-          }
-        }
-      });
-      return textFilter;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-    }
+  @NotNull
+  public VcsLogUi getLogUi() {
+    return myUi;
   }
 
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package org.jetbrains.plugins.groovy.markup;
 
 import com.intellij.psi.*;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
  * @author Sergey Evdokimov
@@ -42,11 +42,9 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends NonCodeMembersCont
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     String nameHint = ResolveUtil.getNameHint(processor);
-
     if (nameHint == null) return;
 
-    ClassHint classHint = processor.getHint(ClassHint.KEY);
-    if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) return;
+    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
 
     GrLightMethodBuilder res = new GrLightMethodBuilder(aClass.getManager(), nameHint);
     res.addParameter("attrs", CommonClassNames.JAVA_UTIL_MAP, false);

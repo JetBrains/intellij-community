@@ -21,15 +21,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.RunnableScriptFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class PythonUnitTestRunnableScriptFilter implements RunnableScriptFilter {
-  public boolean isRunnableScript(PsiFile script, @NotNull Module module, Location location) {
-    return script instanceof PyFile && PythonUnitTestUtil.getTestCaseClassesFromFile(script).size() > 0
+  public boolean isRunnableScript(PsiFile script, @NotNull Module module, Location location, @Nullable final TypeEvalContext context) {
+    return script instanceof PyFile && PythonUnitTestUtil.getTestCaseClassesFromFile(script, context).size() > 0
            && !isIfNameMain(location) && TestRunnerService.getInstance(module).getProjectConfiguration().
       equals(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
   }

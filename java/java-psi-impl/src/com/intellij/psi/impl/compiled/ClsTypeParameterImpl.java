@@ -197,7 +197,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    return getExtendsList().getReferencedTypes();
+    return PsiClassImplUtil.getExtendsListTypes(this);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -447,7 +447,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   public static PsiElement findDeclWithName(final String name, final @NotNull PsiElement element) {
     final XmlFile containingXmlFile = XmlUtil.getContainingFile(element);
     final XmlTag nearestTag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
-    final XmlFile xmlFile = nearestTag != null? XmlCompletionData.findDescriptorFile(nearestTag, containingXmlFile):containingXmlFile;
+    final XmlFile xmlFile = nearestTag != null && containingXmlFile != null ? XmlCompletionData.findDescriptorFile(nearestTag, containingXmlFile):containingXmlFile;
 
     if (xmlFile != null) {
       final PsiElement[] result = new PsiElement[1];
@@ -508,9 +508,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
           withCData = true;
         }
 
-        if (result.endsWith(CDATA_SUFFIX)) {
-          result = result.substring(0, result.length() - CDATA_SUFFIX.length());
-        }
+        result = StringUtil.trimEnd(result, CDATA_SUFFIX);
         result = result.trim();
 
         if (withCData) {

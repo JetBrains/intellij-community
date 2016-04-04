@@ -52,7 +52,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     myFontSize = -1;
   }
 
-  public static String getDateOfChangeList(final Date date) {
+  public static String getDateOfChangeList(@NotNull Date date) {
     return DateFormatUtil.formatPrettyDateTime(date);
   }
 
@@ -90,7 +90,6 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     final Container parent = tree.getParent();
     final int rowX = getRowX(myTree, 2);
     int availableWidth = parent == null ? 100 : parent.getWidth() - rowX;
-    String date = ", " + getDateOfChangeList(changeList.getCommitDate());
     final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
     final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
     final FontMetrics italicMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.ITALIC));
@@ -174,7 +173,11 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     }
 
     append(changeList.getCommitterName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-    append(date, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    if (changeList.getCommitDate() != null) {
+      String date = ", " + getDateOfChangeList(changeList.getCommitDate());
+
+      append(date, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
   }
 
   private static String trimLastWord(final String description) {

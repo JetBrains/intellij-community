@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
@@ -35,7 +34,7 @@ public class DefaultJavaProcessHandler extends OSProcessHandler {
     super(commandLine);
   }
 
-  public DefaultJavaProcessHandler(@NotNull Process process, @Nullable String commandLine, @NotNull Charset charset) {
+  public DefaultJavaProcessHandler(@NotNull Process process, @NotNull String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 }

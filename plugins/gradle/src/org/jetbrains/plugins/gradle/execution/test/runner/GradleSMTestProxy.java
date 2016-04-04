@@ -88,6 +88,11 @@ public class GradleSMTestProxy extends SMTestProxy {
     myParentId = parentId;
   }
 
+  @Nullable
+  public String getClassName() {
+    return myClassName;
+  }
+
   private void setStacktraceIfNotSet(@Nullable String stacktrace) {
     if (myStacktrace == null) myStacktrace = stacktrace;
   }

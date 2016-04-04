@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.Map;
 
-@State(name = "ExtensionsRootType", storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/extensionsRootType.xml", roamingType = RoamingType.DISABLED))
+@State(name = "ExtensionsRootType", storages = @Storage(value = "extensionsRootType.xml", roamingType = RoamingType.DISABLED))
 class ResourceVersions implements PersistentStateComponent<ResourceVersions.State> {
 
   @NotNull

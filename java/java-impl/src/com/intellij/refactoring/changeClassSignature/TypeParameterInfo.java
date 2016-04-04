@@ -15,67 +15,111 @@
  */
 package com.intellij.refactoring.changeClassSignature;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author dsl
  */
-public class TypeParameterInfo {
-  private final int myOldParameterIndex;
-  private String myNewName;
-  private CanonicalTypes.Type myDefaultValue;
+public interface TypeParameterInfo {
+  String getName(PsiTypeParameter[] parameters);
 
-  public TypeParameterInfo(int oldIndex) {
-    myOldParameterIndex = oldIndex;
-    myDefaultValue = null;
-  }
+  PsiTypeParameter getTypeParameter(PsiTypeParameter[] parameters, Project project);
 
-  public TypeParameterInfo(String name, PsiType aType) {
-    myOldParameterIndex = -1;
-    myNewName = name;
-    if (aType != null) {
+  class New implements TypeParameterInfo {
+    private String myNewName;
+    private CanonicalTypes.Type myDefaultValue;
+    private CanonicalTypes.Type myBoundValue;
+
+    public New(@NotNull String name, @Nullable PsiType aType, @Nullable PsiType boundValue) {
+      myNewName = name;
+      myDefaultValue = aType != null ? CanonicalTypes.createTypeWrapper(aType) : null;
+      myBoundValue = boundValue != null ? CanonicalTypes.createTypeWrapper(boundValue) : null;
+    }
+
+    @TestOnly
+    public New(@NotNull PsiClass aClass,
+               @NotNull @NonNls String name,
+               @NotNull @NonNls String defaultValue,
+               @NotNull @NonNls String boundValue) throws IncorrectOperationException {
+      this(name,
+           JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createTypeFromText(defaultValue, aClass.getLBrace()),
+           boundValue.isEmpty()
+           ? null
+           : JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createTypeFromText(boundValue, aClass.getLBrace()));
+    }
+
+    public void setNewName(String newName) {
+      myNewName = newName;
+    }
+
+    public void setBoundValue(PsiType aType) {
+      myBoundValue = CanonicalTypes.createTypeWrapper(aType);
+    }
+
+    public void setDefaultValue(PsiType aType) {
       myDefaultValue = CanonicalTypes.createTypeWrapper(aType);
     }
-    else {
-      myDefaultValue = null;
+
+    @Override
+    public String getName(PsiTypeParameter[] parameters) {
+      return myNewName;
+    }
+
+    @Override
+    public PsiTypeParameter getTypeParameter(PsiTypeParameter[] parameters, Project project) {
+      final String extendsText = myBoundValue == null
+                                 ? ""
+                                 : " extends " + getCanonicalText(myBoundValue.getType(null, PsiManager.getInstance(project)));
+      return JavaPsiFacade.getElementFactory(project).createTypeParameterFromText(myNewName +
+                                                                                  extendsText, null);
+    }
+
+    public CanonicalTypes.Type getDefaultValue() {
+      return myDefaultValue;
+    }
+
+    private static String getCanonicalText(PsiType boundType) {
+      if (boundType instanceof PsiIntersectionType) {
+        return StringUtil.join(ContainerUtil.map(((PsiIntersectionType)boundType).getConjuncts(), new Function<PsiType, String>() {
+          @Override
+          public String fun(PsiType type) {
+            return type.getCanonicalText();
+          }
+        }), " & ");
+      }
+      return boundType.getCanonicalText();
     }
   }
 
-  TypeParameterInfo(PsiClass aClass, @NonNls String name, @NonNls String defaultValue) throws IncorrectOperationException {
-    this(name, JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createTypeFromText(defaultValue, aClass.getLBrace()));
-  }
+  class Existing implements TypeParameterInfo {
+    private final int myOldParameterIndex;
 
+    public Existing(int oldIndex) {
+      myOldParameterIndex = oldIndex;
+    }
 
-  public int getOldParameterIndex() {
-    return myOldParameterIndex;
-  }
+    public int getParameterIndex() {
+      return myOldParameterIndex;
+    }
 
-  public String getNewName() {
-    return myNewName;
-  }
+    @Override
+    public String getName(PsiTypeParameter[] parameters) {
+      return parameters[myOldParameterIndex].getName();
+    }
 
-  public void setNewName(String newName) {
-    myNewName = newName;
-  }
-
-  public CanonicalTypes.Type getDefaultValue() {
-    return myDefaultValue;
-  }
-
-  public void setDefaultValue(CanonicalTypes.Type defaultValue) {
-    myDefaultValue = defaultValue;
-  }
-
-  public void setDefaultValue(PsiType aType) {
-    setDefaultValue(CanonicalTypes.createTypeWrapper(aType));
-  }
-
-  boolean isForExistingParameter() {
-    return myOldParameterIndex >= 0;
+    @Override
+    public PsiTypeParameter getTypeParameter(PsiTypeParameter[] parameters, Project project) {
+      return parameters[myOldParameterIndex];
+    }
   }
 }

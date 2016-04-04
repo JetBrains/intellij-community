@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -28,14 +29,14 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -44,10 +45,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.EditorTextField;
@@ -65,6 +63,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
+import javax.swing.text.Segment;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
@@ -104,12 +103,16 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // support is hardcoded to only work for JTextComponent rather than AccessibleText in
     // general.
     setupJTextComponentContext();
+
+    // Remove JTextComponent's mouse/focus listeners added in its ctor.
+    for (MouseListener l : getMouseListeners()) removeMouseListener(l);
+    for (FocusListener l : getFocusListeners()) removeFocusListener(l);
   }
 
   @Override
   public void paint(@NotNull Graphics g) {
     if (!isEnabled()) {
-      g = new Grayer((Graphics2D)g, EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+      g = new Grayer((Graphics2D)g, getBackground());
     }
     super.paint(g);
   }
@@ -121,11 +124,14 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public Object getData(String dataId) {
-    if (myEditor.isRendererMode()) return null;
+    if (myEditor.isDisposed() || myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
       // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())
       return myEditor.getVirtualFile() == null ? myEditor : null;
+    }
+    if (CommonDataKeys.CARET.is(dataId)) {
+      return myEditor.getCaretModel().getCurrentCaret();
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myEditor.getDeleteProvider();
@@ -174,9 +180,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           //noinspection fallthrough
         case InputMethodEvent.CARET_POSITION_CHANGED:
           myEditor.inputMethodCaretPositionChanged(e);
+          e.consume();
           break;
       }
-      e.consume();
     }
 
     super.processInputMethodEvent(e);
@@ -194,6 +200,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     return result;
   }
 
+  @Nullable
   @Override
   public InputMethodRequests getInputMethodRequests() {
     return IdeEventQueue.getInstance().isInputMethodEnabled() ? myEditor.getInputMethodRequests() : null;
@@ -355,24 +362,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public synchronized void addMouseListener(MouseListener l) {
-    if (l instanceof javax.swing.event.CaretEvent) {
-      // Skip JTextComponent's built-in caret listener, added in constructor
-      return;
-    }
-    super.addMouseListener(l);
-  }
-
-  @Override
-  public synchronized void addFocusListener(FocusListener l) {
-    if (l instanceof javax.swing.event.CaretEvent) {
-      // Skip JTextComponent's built-in caret listener, added in constructor
-      return;
-    }
-    super.addFocusListener(l);
-  }
-
-  @Override
   public String getToolTipText(MouseEvent event) {
     // Undo effect of JTextComponent superclass: this is the default JComponent implementation
     return this.getToolTipText();
@@ -383,7 +372,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     javax.swing.event.CaretEvent swingEvent = new javax.swing.event.CaretEvent(this) {
       @Override
       public int getDot() {
-        com.intellij.openapi.editor.Caret caret = event.getCaret();
+        Caret caret = event.getCaret();
         if (caret != null) {
           return caret.getOffset();
         }
@@ -392,7 +381,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
       @Override
       public int getMark() {
-        com.intellij.openapi.editor.Caret caret = event.getCaret();
+        Caret caret = event.getCaret();
         if (caret != null) {
           return caret.getLeadSelectionOffset();
         }
@@ -407,7 +396,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   /** Redispatch an IDE {@link DocumentEvent} to a Swing {@link javax.swing.event.DocumentListener} */
   private void fireJTextComponentDocumentChange(final DocumentEvent event) {
     //noinspection deprecation
-    java.util.List<javax.swing.event.DocumentListener> listeners = ((EditorAccessibilityDocument)getDocument()).getListeners();
+    List<javax.swing.event.DocumentListener> listeners = ((EditorAccessibilityDocument)getDocument()).getListeners();
     if (listeners == null) {
       return;
     }
@@ -699,8 +688,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   private void editDocumentSafely(final int offset, final int length, @Nullable final String text) {
     final Project project = myEditor.getProject();
     final Document document = myEditor.getDocument();
-    if (getEditor().isViewer() || !FileDocumentManager.getInstance().requestWriting(document, project)) {
-      UIManager.getLookAndFeel().provideErrorFeedback(this);
+    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
       return;
     }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -894,12 +882,22 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   private class AccessibleEditorComponentImpl extends AccessibleJComponent
-    implements AccessibleText, AccessibleEditableText, AccessibleExtendedText,
-               CaretListener, DocumentListener {
+      implements AccessibleText, AccessibleEditableText, AccessibleExtendedText,
+                 CaretListener, DocumentListener {
 
     public AccessibleEditorComponentImpl() {
+      if (myEditor.isDisposed()) return;
+
       myEditor.getCaretModel().addCaretListener(this);
       myEditor.getDocument().addDocumentListener(this);
+
+      Disposer.register(myEditor.getDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          myEditor.getCaretModel().removeCaretListener(AccessibleEditorComponentImpl.this);
+          myEditor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
+        }
+      });
     }
 
     // ---- Implements CaretListener ----
@@ -1282,16 +1280,16 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
      */
     @Nullable
     private AccessibleTextSequence getSequenceAtIndex(
-      @MagicConstant(intValues = {
-        AccessibleText.CHARACTER,
-        AccessibleText.WORD,
-        AccessibleText.SENTENCE,
-        AccessibleExtendedText.LINE,
-        AccessibleExtendedText.ATTRIBUTE_RUN})
-      int type,
-      int offset,
-      @MagicConstant(intValues = {BEFORE, HERE, AFTER})
-      int direction) {
+        @MagicConstant(intValues = {
+          AccessibleText.CHARACTER,
+          AccessibleText.WORD,
+          AccessibleText.SENTENCE,
+          AccessibleExtendedText.LINE,
+          AccessibleExtendedText.ATTRIBUTE_RUN})
+        int type,
+        int offset,
+        @MagicConstant(intValues = {BEFORE, HERE, AFTER})
+        int direction) {
       assert direction == BEFORE || direction == HERE || direction == AFTER;
 
       DocumentEx document = myEditor.getDocument();
@@ -1306,7 +1304,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
               offset + direction >= 0) {
             int startOffset = offset + direction;
             charSequence = new AccessibleTextSequence(startOffset, startOffset + 1,
-                                                      document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
+                                         document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
           }
           return charSequence;
 

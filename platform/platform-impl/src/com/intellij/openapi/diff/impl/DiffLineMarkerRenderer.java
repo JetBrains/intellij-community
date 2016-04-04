@@ -19,7 +19,7 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -28,7 +28,7 @@ import java.awt.*;
  * <p>Draws the diff change highlighters on the editor's gutter.</p>
  * <p>Has ability to draw applied changes (used in the merge tool).</p>
  */
-public class DiffLineMarkerRenderer implements LineMarkerRenderer {
+public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
 
   @NotNull private final TextDiffType myDiffType;
 
@@ -72,4 +72,8 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
     }
   }
 
+  @Override
+  public LineMarkerRendererEx.Position getPosition() {
+    return LineMarkerRendererEx.Position.CUSTOM;
+  }
 }

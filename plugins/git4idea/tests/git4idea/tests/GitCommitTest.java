@@ -15,6 +15,7 @@
  */
 package git4idea.tests;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -35,6 +36,7 @@ import static com.intellij.openapi.vcs.Executor.overwrite;
 import static git4idea.test.GitExecutor.*;
 
 public class GitCommitTest extends GitSingleRepoTest {
+  private static final Logger LOG = Logger.getInstance(GitCommitTest.class);
 
   /**
    * Tests that merge commit after resolving a conflict works fine if there is a file with spaces in its path.

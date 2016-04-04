@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -158,18 +157,11 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     final VirtualFile baseDirForCreatedInstanceDocument1 = relativeFileDir;
     String xmlFileName = baseDirForCreatedInstanceDocument1.getPath() + File.separatorChar + dialog.getOutputFileName();
 
-    FileOutputStream fileOutputStream;
     try {
-      fileOutputStream = new FileOutputStream(xmlFileName);
-      try {
         // the generated XML doesn't have any XML declaration -> utf-8
-        fileOutputStream.write(xml.getBytes("utf-8"));
-      }
-      finally {
-        fileOutputStream.close();
-      }
-
       final File xmlFile = new File(xmlFileName);
+      FileUtil.writeToFile(xmlFile, xml);
+
       VirtualFile virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
         @Override
         @Nullable

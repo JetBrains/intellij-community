@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.ThreadTracker;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SmartList;
@@ -52,19 +53,20 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeUnit;
 
 public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCase {
-  private DebugProcessListener myPauseScriptListener = null;
+  private DebugProcessListener myPauseScriptListener;
   private final List<SuspendContextRunnable> myScriptRunnables = new ArrayList<SuspendContextRunnable>();
   private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
   protected static final int RATHER_LATER_INVOKES_N = 10;
-  public DebugProcessImpl myDebugProcess = null;
+  public DebugProcessImpl myDebugProcess;
   private final List<Throwable> myException = new SmartList<Throwable>();
 
   private static class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
     private final DebugProcessImpl myDebugProcess;
-    int invokesN = 0;
+    int invokesN;
 
     public InvokeRatherLaterRequest(DebuggerCommandImpl debuggerCommand, DebugProcessImpl debugProcess) {
       myDebuggerCommand = debuggerCommand;
@@ -113,6 +115,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   @Override
   protected void tearDown() throws Exception {
+    ThreadTracker.awaitThreadTerminationWithParentParentGroup("JDI main", 100, TimeUnit.SECONDS);
     try {
       super.tearDown();
     }

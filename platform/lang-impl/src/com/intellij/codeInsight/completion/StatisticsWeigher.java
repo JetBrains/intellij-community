@@ -22,8 +22,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,19 +51,19 @@ public class StatisticsWeigher extends CompletionWeigher {
 
   public static class LookupStatisticsWeigher extends Classifier<LookupElement> {
     private final CompletionLocation myLocation;
-    private final Map<LookupElement, Integer> myWeights = new IdentityHashMap<LookupElement, Integer>();
-    @SuppressWarnings("unchecked") private final Set<LookupElement> myNoStats = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    private final Map<LookupElement, StatisticsComparable> myWeights = ContainerUtil.newIdentityHashMap();
+    private final Set<LookupElement> myNoStats = ContainerUtil.newIdentityTroveSet();
     private int myPrefixChanges;
 
     public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {
-      super(next);
+      super(next, "stats");
       myLocation = location;
     }
 
     @Override
-    public void addElement(LookupElement element, ProcessingContext context) {
+    public void addElement(@NotNull LookupElement element, @NotNull ProcessingContext context) {
       StatisticsInfo baseInfo = getBaseStatisticsInfo(element, myLocation);
-      myWeights.put(element, weigh(element, baseInfo, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)));
+      myWeights.put(element, new StatisticsComparable(weigh(element, baseInfo, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)), baseInfo));
       if (baseInfo == StatisticsInfo.EMPTY) {
         myNoStats.add(element);
       }
@@ -76,8 +78,9 @@ public class StatisticsWeigher extends CompletionWeigher {
       }
     }
 
+    @NotNull
     @Override
-    public Iterable<LookupElement> classify(Iterable<LookupElement> source, final ProcessingContext context) {
+    public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull final ProcessingContext context) {
       checkPrefixChanged(context);
 
       final Collection<List<LookupElement>> byWeight = buildMapByWeight(source, context).descendingMap().values();
@@ -122,7 +125,7 @@ public class StatisticsWeigher extends CompletionWeigher {
     private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<LookupElement> source, ProcessingContext context) {
       TreeMap<Integer, List<LookupElement>> map = new TreeMap<Integer, List<LookupElement>>();
       for (LookupElement element : source) {
-        final int weight = getWeight(element, context.get(CompletionLookupArranger.WEIGHING_CONTEXT));
+        final int weight = getWeight(element, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)).getScalar();
         List<LookupElement> list = map.get(weight);
         if (list == null) {
           map.put(weight, list = new SmartList<LookupElement>());
@@ -132,10 +135,11 @@ public class StatisticsWeigher extends CompletionWeigher {
       return map;
     }
 
-    private int getWeight(LookupElement t, WeighingContext context) {
-      Integer w = myWeights.get(t);
+    private StatisticsComparable getWeight(LookupElement t, WeighingContext context) {
+      StatisticsComparable w = myWeights.get(t);
       if (w == null) {
-        myWeights.put(t, w = weigh(t, getBaseStatisticsInfo(t, myLocation), context));
+        StatisticsInfo info = getBaseStatisticsInfo(t, myLocation);
+        myWeights.put(t, w = new StatisticsComparable(weigh(t, info, context), info));
       }
       return w;
     }
@@ -151,21 +155,20 @@ public class StatisticsWeigher extends CompletionWeigher {
       return minRecency == Integer.MAX_VALUE ? useCount : 100 - minRecency;
     }
 
+    @NotNull
     @Override
-    public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
+    public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull final ProcessingContext context) {
       checkPrefixChanged(context);
-      for (LookupElement element : map.keySet()) {
-        StringBuilder builder = map.get(element);
-        if (builder.length() > 0) {
-          builder.append(", ");
+      return ContainerUtil.map(items, new Function<LookupElement, Pair<LookupElement, Object>>() {
+        @Override
+        public Pair<LookupElement, Object> fun(LookupElement lookupElement) {
+          return new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)));
         }
-        builder.append("stats=").append(getWeight(element, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)));
-      }
-      super.describeItems(map, context);
+      });
     }
 
     @Override
-    public void removeElement(LookupElement element, ProcessingContext context) {
+    public void removeElement(@NotNull LookupElement element, @NotNull ProcessingContext context) {
       myWeights.remove(element);
       myNoStats.remove(element);
       super.removeElement(element, context);

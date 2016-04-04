@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,33 +36,46 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class DebuggerContextUtil {
-  public static void setStackFrame(DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
+  public static void setStackFrame(final DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebuggerContextImpl context = manager.getContext();
-    if(context == null) {
-      return;
-    }
 
     final DebuggerSession session = context.getDebuggerSession();
-    SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), stackFrame.threadProxy());
-    final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
+    if (session != null) {
+      session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        public Priority getPriority() {
+          return Priority.HIGH;
+        }
 
-    manager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, DebuggerSession.Event.REFRESH, null);
+        @Override
+        protected void action() throws Exception {
+          SuspendContextImpl threadSuspendContext =
+            SuspendManagerUtil.findContextByThread(session.getProcess().getSuspendManager(), stackFrame.threadProxy());
+          final DebuggerContextImpl newContext =
+            DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
+          DebuggerInvocationUtil.swingInvokeLater(session.getProject(), new Runnable() {
+            @Override
+            public void run() {
+              manager.setState(newContext, session.getState(), DebuggerSession.Event.REFRESH, null);
+              SourceCodeChecker.checkSource(newContext);
+            }
+          });
+        }
+      });
+    }
+    else {
+      manager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.REFRESH, null);
+    }
   }
 
   public static void setThread(DebuggerStateManager contextManager, ThreadDescriptorImpl item) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final DebuggerContextImpl context = contextManager.getContext();
-    if(context == null) {
-      return;
-    }
 
-    final DebuggerSession session = context.getDebuggerSession();
+    final DebuggerSession session = contextManager.getContext().getDebuggerSession();
     final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, item.getSuspendContext(), item.getThreadReference(), null);
 
     contextManager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
@@ -82,13 +96,10 @@ public class DebuggerContextUtil {
           Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
 
           //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
-          if (editor != null && position != null && file.getVirtualFile().equals(position.getFile())) {
+          if (editor != null && position != null && position.getFile().equals(file.getOriginalFile().getVirtualFile())) {
             PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
-            final Couple<Collection<TextRange>> usages =
-              IdentifierHighlighterPass.getHighlightUsages(psi, method != null ? method : file, false);
-            final List<TextRange> ranges = new ArrayList<TextRange>();
-            ranges.addAll(usages.first);
-            ranges.addAll(usages.second);
+            final Collection<TextRange> ranges =
+              IdentifierHighlighterPass.getUsages(psi, method != null ? method : file, false);
             final int breakPointLine = position.getLine();
             int bestLine = -1;
             int bestOffset = -1;

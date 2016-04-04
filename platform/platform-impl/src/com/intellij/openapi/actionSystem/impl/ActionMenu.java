@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public final class ActionMenu extends JMenu {
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myTopLevel;
-  private final Disposable myDisposable;
+  private Disposable myDisposable;
 
   public ActionMenu(final DataContext context,
                     @NotNull final String place,
@@ -84,11 +84,6 @@ public final class ActionMenu extends JMenu {
     if (UIUtil.isUnderIntelliJLaF()) {
       setOpaque(true);
     }
-    myDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-      }
-    };
 
     // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
     getPopupMenu();
@@ -98,6 +93,7 @@ public final class ActionMenu extends JMenu {
     myContext = context;
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     installSynchronizer();
@@ -115,7 +111,10 @@ public final class ActionMenu extends JMenu {
   public void removeNotify() {
     uninstallSynchronizer();
     super.removeNotify();
-    Disposer.dispose(myDisposable);
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
   }
 
   private void uninstallSynchronizer() {
@@ -126,7 +125,7 @@ public final class ActionMenu extends JMenu {
     }
   }
 
-  private JPopupMenu mySpecialMenu = null;
+  private JPopupMenu mySpecialMenu;
   @Override
   public JPopupMenu getPopupMenu() {
     if (mySpecialMenu == null) {
@@ -184,7 +183,7 @@ public final class ActionMenu extends JMenu {
   }
 
   private void init() {
-    boolean macSystemMenu = SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU;
+    boolean macSystemMenu = SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU);
 
     myStubItem = macSystemMenu ? null : new StubItem();
     addStubItem();
@@ -252,25 +251,35 @@ public final class ActionMenu extends JMenu {
   }
 
   private class MenuListenerImpl implements MenuListener {
+    @Override
     public void menuCanceled(MenuEvent e) {
       clearItems();
       addStubItem();
     }
 
+    @Override
     public void menuDeselected(MenuEvent e) {
-      Disposer.dispose(myDisposable);
+      if (myDisposable != null) {
+        Disposer.dispose(myDisposable);
+        myDisposable = null;
+      }
       clearItems();
       addStubItem();
     }
 
+    @Override
     public void menuSelected(MenuEvent e) {
-      new UsabilityHelper(ActionMenu.this, myDisposable);
+      UsabilityHelper helper = new UsabilityHelper(ActionMenu.this);
+      if (myDisposable == null) {
+        myDisposable = Disposer.newDisposable();
+      }
+      Disposer.register(myDisposable, helper);
       fillMenu();
     }
   }
 
   private void clearItems() {
-    if (SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
+    if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
       for (Component menuComponent : getMenuComponents()) {
         if (menuComponent instanceof ActionMenu) {
           ((ActionMenu)menuComponent).clearItems();
@@ -315,6 +324,7 @@ public final class ActionMenu extends JMenu {
   }
 
   private class MenuItemSynchronizer implements PropertyChangeListener {
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
       String name = e.getPropertyName();
       if (Presentation.PROP_VISIBLE.equals(name)) {
@@ -343,14 +353,13 @@ public final class ActionMenu extends JMenu {
   private static class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
 
     private Component myComponent;
-    private Point myLastMousePoint = null;
-    private Point myUpperTargetPoint = null;
-    private Point myLowerTargetPoint = null;
+    private Point myLastMousePoint;
+    private Point myUpperTargetPoint;
+    private Point myLowerTargetPoint;
     private SingleAlarm myCallbackAlarm;
-    private MouseEvent myEventToRedispatch = null;
+    private MouseEvent myEventToRedispatch;
 
-    private UsabilityHelper(Component component, @NotNull Disposable disposable) {
-      Disposer.register(disposable, this);
+    private UsabilityHelper(Component component) {
       myCallbackAlarm = new SingleAlarm(new Runnable() {
         @Override
         public void run() {

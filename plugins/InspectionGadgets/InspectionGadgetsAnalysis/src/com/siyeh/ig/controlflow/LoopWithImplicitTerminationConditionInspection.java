@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -269,20 +270,13 @@ public class LoopWithImplicitTerminationConditionInspection
     }
   }
 
-  static boolean containsUnlabeledBreakStatement(
-    @Nullable PsiStatement statement) {
+  static boolean containsUnlabeledBreakStatement(@Nullable PsiStatement statement) {
     if (!(statement instanceof PsiBlockStatement)) {
       return isUnlabeledBreakStatement(statement);
     }
-    final PsiBlockStatement blockStatement =
-      (PsiBlockStatement)statement;
-    final PsiCodeBlock codeBlock =
-      blockStatement.getCodeBlock();
-    final PsiStatement[] statements = codeBlock.getStatements();
-    if (statements.length != 1) {
-      return false;
-    }
-    final PsiStatement firstStatement = statements[0];
+    final PsiBlockStatement blockStatement = (PsiBlockStatement)statement;
+    final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+    final PsiStatement firstStatement = ControlFlowUtils.getOnlyStatementInBlock(codeBlock);
     return isUnlabeledBreakStatement(firstStatement);
   }
 

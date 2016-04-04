@@ -68,6 +68,48 @@ interface B extends A {
 """
   }
 
+  public void testImplementSameNamedInterfaces() {
+    myFixture.addClass """\
+class Main1 {
+   interface I {
+      void foo();
+   }
+}
+"""
+    myFixture.addClass """\
+class Main2 {
+   interface I {
+      void bar();
+   }
+}
+"""
+    
+    def file = myFixture.addClass("""\
+class B implements Main1.I, Main2.I {
+    <caret>
+}
+""").containingFile.virtualFile
+    myFixture.configureFromExistingVirtualFile(file)
+
+    def Presentation presentation = new Presentation()
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
+    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
+
+    myFixture.checkResult """\
+class B implements Main1.I, Main2.I {
+    @Override
+    public void foo() {
+        <caret>
+    }
+
+    @Override
+    public void bar() {
+
+    }
+}
+"""
+  }
+
   public void "test overriding overloaded method"() {
     myFixture.addClass """\
 package bar;

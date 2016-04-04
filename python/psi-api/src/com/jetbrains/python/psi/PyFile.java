@@ -18,12 +18,13 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner, NameDefiner {
+public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
   List<PyStatement> getStatements();
 
   List<PyClass> getTopLevelClasses();
@@ -52,8 +53,30 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   @NotNull
   List<PyFromImportStatement> getFromImports();
 
+  /**
+   * Return an exported PSI element defined in the file with the given name.
+   */
   @Nullable
   PsiElement findExportedName(String name);
+
+  /**
+   * Iterate over exported PSI elements defined in the file.
+   */
+  @NotNull
+  Iterable<PyElement> iterateNames();
+
+  /**
+   * Return the resolved exported elements.
+   */
+  @NotNull
+  List<RatedResolveResult> multiResolveName(@NotNull String name);
+
+  /**
+   * @deprecated Use {@link #multiResolveName(String)} instead.
+   */
+  @Deprecated
+  @Nullable
+  PsiElement getElementNamed(String name);
 
   /**
    * Returns the list of import elements in all 'import xxx' statements in the top-level scope of the file.

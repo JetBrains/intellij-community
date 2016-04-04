@@ -15,6 +15,6 @@ class Test {
 
   {
     Predicate<String> mh2 = (SerPredicate<String>)Test::test;
-    Predicate<String> mh02 = (<warning descr="Casting 'Test::test' to 'NonSerPredicate<String>' is redundant">NonSerPredicate<String></warning>)Test::test;
+    Predicate<String> mh02 = (NonSerPredicate<String>)Test::test;
   }
 }

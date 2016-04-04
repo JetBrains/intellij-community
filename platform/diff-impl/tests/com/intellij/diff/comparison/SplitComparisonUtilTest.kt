@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
-public class SplitComparisonUtilTest : ComparisonUtilTestBase() {
-  public fun testSplitter() {
+class SplitComparisonUtilTest : ComparisonUtilTestBase() {
+  fun testSplitter() {
     splitter {
       ("x" - "z")
       default(mod(0, 0, 1, 1))
@@ -76,7 +76,7 @@ public class SplitComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testSquash() {
+  fun testSquash() {
     splitter(squash = true) {
       ("x" - "z")
       default(mod(0, 0, 1, 1))
@@ -105,7 +105,7 @@ public class SplitComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testTrim() {
+  fun testTrim() {
     splitter(trim = true) {
       ("_" - "     _    ")
       default(mod(0, 0, 2, 2))

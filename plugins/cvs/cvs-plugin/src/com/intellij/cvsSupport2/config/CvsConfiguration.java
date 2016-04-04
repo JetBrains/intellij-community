@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +35,7 @@ import java.util.List;
  * author: lesya
  */
 
-@State(
-  name="Cvs2Configuration",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "Cvs2Configuration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class CvsConfiguration implements PersistentStateComponent<CvsConfiguration> {
 
   public static final int DO_NOT_MERGE = 0;

@@ -82,7 +82,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
     //TODO: this thing is just called TWICE with same arguments eating CPU on huge files :(
     Divider.divideInsideAndOutside(myFile, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, inside, insideRanges, outside,
-                                   outsideRanges, false, SHOULD_HIGHIGHT_FILTER);
+                                   outsideRanges, false, SHOULD_HIGHLIGHT_FILTER);
 
 
     // all infos for the "injected fragment for the host which is inside" are indeed inside

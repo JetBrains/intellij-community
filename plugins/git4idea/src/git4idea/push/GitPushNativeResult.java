@@ -26,6 +26,9 @@ import org.jetbrains.annotations.Nullable;
  */
 class GitPushNativeResult {
 
+  static final String NO_FF_REJECT_REASON = "non-fast-forward";
+  static final String FETCH_FIRST_REASON = "fetch first";
+
   enum Type {
     SUCCESS,
     FORCED_UPDATE,
@@ -38,11 +41,17 @@ class GitPushNativeResult {
 
   @NotNull private final Type myType;
   private final String mySourceRef;
+  @Nullable private final String myReason;
   @Nullable private final String myRange;
 
-  GitPushNativeResult(@NotNull Type type, String sourceRef, @Nullable String range) {
+  GitPushNativeResult(@NotNull Type type, String sourceRef) {
+    this(type, sourceRef, null, null);
+  }
+
+  GitPushNativeResult(@NotNull Type type, String sourceRef, @Nullable String reason, @Nullable String range) {
     myType = type;
     mySourceRef = sourceRef;
+    myReason = reason;
     myRange = range;
   }
 
@@ -60,8 +69,17 @@ class GitPushNativeResult {
     return mySourceRef;
   }
 
+  @Nullable
+  public String getReason() {
+    return myReason;
+  }
+
+  boolean isNonFFUpdate() {
+    return myType == Type.REJECTED && (NO_FF_REJECT_REASON.equals(myReason) || FETCH_FIRST_REASON.equals(myReason));
+  }
+
   @Override
   public String toString() {
-    return String.format("%s: '%s', '%s'", myType, mySourceRef, myRange);
+    return String.format("%s: '%s', '%s', '%s'", myType, mySourceRef, myRange, myReason);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.impl.compiled.SignatureParsing;
+import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.util.cls.ClsFormatException;
 import org.junit.Test;
 
@@ -29,8 +30,18 @@ import static org.junit.Assert.assertEquals;
 public class SignatureParsingTest {
   @Test
   public void testVarianceAmbiguity() throws ClsFormatException {
-    assertEquals("Psi<?,P>", SignatureParsing.parseTypeString(new StringCharacterIterator("LPsi<*TP>;")));
-    assertEquals("Psi<? extends P>", SignatureParsing.parseTypeString(new StringCharacterIterator("LPsi<+TP>;")));
-    assertEquals("Psi<? super P>", SignatureParsing.parseTypeString(new StringCharacterIterator("LPsi<-TP>;")));
+    parseTypeString("Psi<?,P>", "LPsi<*TP>;");
+    parseTypeString("Psi<? extends P>", "LPsi<+TP>;");
+    parseTypeString("Psi<? super P>", "LPsi<-TP>;");
+  }
+
+  @Test
+  public void testMapping() throws ClsFormatException {
+    parseTypeString("p.Obj.I<p.Obj1.I,p.Obj2.I>", "Lp/Obj$I<Lp/Obj1$I;Lp/Obj2$I;>;");
+    parseTypeString("p.Obj$.I<p.$Obj1.I,p.Obj2.I$>", "Lp/Obj$$I<Lp/$Obj1$I;Lp/Obj2$I$;>;");
+  }
+
+  private static void parseTypeString(String expected, String signature) throws ClsFormatException {
+    assertEquals(expected, SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER));
   }
 }

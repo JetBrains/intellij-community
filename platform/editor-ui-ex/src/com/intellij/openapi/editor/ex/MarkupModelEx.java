@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public interface MarkupModelEx extends MarkupModel {
   @Nullable
   RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged);
+  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged);
 
   void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter);
 
@@ -58,7 +58,7 @@ public interface MarkupModelEx extends MarkupModel {
   boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
 
   @NotNull
-  DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
+  MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull

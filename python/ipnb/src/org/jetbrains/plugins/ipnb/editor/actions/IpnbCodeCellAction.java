@@ -13,7 +13,6 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbEditableCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import java.util.List;
 
@@ -36,7 +35,7 @@ public class IpnbCodeCellAction extends AnAction {
 
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
     final int index = cells.indexOf(selectedCell.getCell());
-    final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.<IpnbOutputCell>newArrayList());
+    final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.newArrayList(), cell.getMetadata());
     if (index >= 0)
       cells.set(index, codeCell);
     filePanel.replaceComponent(selectedCell, codeCell);

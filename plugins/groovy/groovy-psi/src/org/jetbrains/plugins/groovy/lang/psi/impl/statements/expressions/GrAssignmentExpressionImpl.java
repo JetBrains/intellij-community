@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -34,12 +38,19 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionTypeCalculators;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryFacade;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author ilyas
@@ -157,6 +168,55 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     if (operationToken == GroovyTokenTypes.mASSIGN) return null;
 
     return this;
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (!ResolveUtil.shouldProcessProperties(classHint)) return true;
+
+    if (!(getParent() instanceof GroovyFileImpl)) return true;
+    final GroovyFileImpl file = (GroovyFileImpl)getParent();
+    if (!file.isInScriptBody(lastParent, place)) return true;
+
+    final GrExpression lValue = getLValue();
+    if (!processLValue(processor, state, place, file, lValue)) return false;
+    if (lValue instanceof GrTupleExpression) {
+      for (GrExpression expression : ((GrTupleExpression)lValue).getExpressions()) {
+        if (!processLValue(processor, state, place, file, expression)) return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static boolean processLValue(@NotNull PsiScopeProcessor processor,
+                                       @NotNull ResolveState state,
+                                       @NotNull PsiElement place,
+                                       @NotNull GroovyFileImpl file,
+                                       @NotNull GrExpression lValue) {
+    if (!(lValue instanceof GrReferenceExpression)) return true;
+    final GrReferenceExpression lReference = (GrReferenceExpression)lValue;
+    if (lReference.isQualified()) return true;
+    if (lReference != place && lReference.resolve() != null && !(lReference.resolve() instanceof GrBindingVariable)) return true;
+
+    final String name = lReference.getReferenceName();
+    if (name == null) return true;
+
+    String hintName = ResolveUtil.getNameHint(processor);
+    if (hintName != null && !name.equals(hintName)) return true;
+
+    final ConcurrentMap<String, GrBindingVariable> bindings = file.getBindings();
+    GrBindingVariable variable = bindings.get(name);
+    if (variable == null) {
+      variable = ConcurrencyUtil.cacheOrGet(bindings, name, new GrBindingVariable(file, name, true));
+    }
+
+    if (!variable.hasWriteAccess()) return true;
+    return processor.execute(variable, state);
   }
 
   private final GrBinaryFacade myFacade = new GrBinaryFacade() {

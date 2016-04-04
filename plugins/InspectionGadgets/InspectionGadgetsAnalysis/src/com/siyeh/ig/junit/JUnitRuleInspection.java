@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
@@ -83,7 +84,9 @@ public class JUnitRuleInspection extends BaseInspection {
           if (errorMessage != null) {
             registerError(field.getNameIdentifier(), InspectionGadgetsBundle.message("junit.rule.problem.descriptor", annotation, errorMessage), "Make field " + errorMessage, annotation);
           }
-          if (!InheritanceUtil.isInheritor(PsiUtil.resolveClassInClassTypeOnly(field.getType()), false, "org.junit.rules.TestRule")) {
+          final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+          if (!InheritanceUtil.isInheritor(aClass, false, "org.junit.rules.TestRule") &&
+              !InheritanceUtil.isInheritor(aClass, false, "org.junit.rules.MethodRule")) {
             registerError(field.getNameIdentifier(), InspectionGadgetsBundle.message("junit.rule.type.problem.descriptor"));
           }
         }

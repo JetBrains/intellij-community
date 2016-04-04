@@ -40,9 +40,8 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
     if (!myHandler.getExpandedItems().contains(index)) return result;
     Rectangle bounds = result.getBounds();
     ExpandedItemRendererComponentWrapper wrapper = ExpandedItemRendererComponentWrapper.wrap(result);
-    if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
-      JComponent res = ObjectUtils.tryCast(result, JComponent.class);
-      if (res != null && UIUtil.getClientProperty(res, ExpandableItemsHandler.USE_RENDERER_BOUNDS) == Boolean.TRUE) {
+    if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
+      if (UIUtil.isClientPropertyTrue(result, ExpandableItemsHandler.USE_RENDERER_BOUNDS)) {
         Insets insets = wrapper.getInsets();
         bounds.translate(-insets.left, -insets.top);
         bounds.grow(insets.left + insets.right, insets.top + insets.bottom);

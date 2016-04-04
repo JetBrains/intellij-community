@@ -1617,23 +1617,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitPostfixExpression(PsiPostfixExpression expression) {
     startElement(expression);
 
-    PsiExpression operand = expression.getOperand();
-    operand.accept(this);
-    generateBoxingUnboxingInstructionFor(operand, PsiType.INT);
+    PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
+    if (operand != null) {
+      operand.accept(this);
+      generateBoxingUnboxingInstructionFor(operand, PsiType.INT);
+    } else {
+      pushUnknown();
+    }
 
     addInstruction(new PopInstruction());
     pushUnknown();
 
-    if (operand instanceof PsiReferenceExpression) {
-      PsiVariable psiVariable = DfaValueFactory.resolveUnqualifiedVariable((PsiReferenceExpression)expression.getOperand());
-      if (psiVariable != null) {
-        DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(psiVariable, false);
-        addInstruction(new FlushVariableInstruction(dfaVariable));
-        if (psiVariable instanceof PsiField) {
-          addInstruction(new FlushVariableInstruction(null));
-        }
-      }
-    }
+    flushIncrementedValue(operand);
 
     finishElement(expression);
   }
@@ -1643,7 +1638,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     DfaValue dfaValue = myFactory.createValue(expression);
     if (dfaValue == null) {
-      PsiExpression operand = expression.getOperand();
+      PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
 
       if (operand == null) {
         pushUnknown();
@@ -1660,16 +1655,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           addInstruction(new PopInstruction());
           pushUnknown();
 
-          if (operand instanceof PsiReferenceExpression) {
-            PsiVariable psiVariable = DfaValueFactory.resolveUnqualifiedVariable((PsiReferenceExpression)operand);
-            if (psiVariable != null) {
-              DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(psiVariable, false);
-              addInstruction(new FlushVariableInstruction(dfaVariable));
-              if (psiVariable instanceof PsiField) {
-                addInstruction(new FlushVariableInstruction(null));
-              }
-            }
-          }
+          flushIncrementedValue(operand);
         }
       }
     }
@@ -1678,6 +1664,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     finishElement(expression);
+  }
+
+  private void flushIncrementedValue(@Nullable PsiExpression operand) {
+    DfaValue dfaVariable = operand == null ? null : myFactory.createValue(operand);
+    if (dfaVariable instanceof DfaVariableValue && PsiUtil.isAccessedForWriting(operand)) {
+      addInstruction(new FlushVariableInstruction((DfaVariableValue)dfaVariable));
+      if (((DfaVariableValue)dfaVariable).getPsiVariable() instanceof PsiField) {
+        addInstruction(new FlushVariableInstruction(null));
+      }
+    }
   }
 
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {

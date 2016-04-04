@@ -69,7 +69,7 @@ public final class ScriptRunnerUtil {
 
   public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<Key> outputTypeFilter, long timeout)
     throws ExecutionException {
-    return getProcessOutput(new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()), outputTypeFilter,
+    return getProcessOutput(new OSProcessHandler(commandLine), outputTypeFilter,
                             timeout);
   }
 
@@ -136,9 +136,8 @@ public final class ScriptRunnerUtil {
     if (charset == null) {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
-    final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(),
-                                                                      commandLine.getCommandLineString(),
-                                                                      charset);
+    commandLine.setCharset(charset);
+    final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine);
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override

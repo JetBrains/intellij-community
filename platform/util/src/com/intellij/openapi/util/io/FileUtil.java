@@ -1230,11 +1230,15 @@ public class FileUtil extends FileUtilRt {
     return file.canExecute();
   }
 
+  public static boolean canWrite(@NotNull String path) {
+    FileAttributes attributes = FileSystemUtil.getAttributes(path);
+    return attributes != null && attributes.isWritable();
+  }
+
   public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) {
-    final boolean writableFlag = !readOnlyFlag;
-    final File file = new File(path);
-    if (!file.setWritable(writableFlag) && file.canWrite() != writableFlag) {
-      LOG.warn("Can't set writable attribute of '" + path + "' to " + readOnlyFlag);
+    boolean writableFlag = !readOnlyFlag;
+    if (!new File(path).setWritable(writableFlag, false) && canWrite(path) != writableFlag) {
+      LOG.warn("Can't set writable attribute of '" + path + "' to '" + readOnlyFlag + "'");
     }
   }
 
@@ -1247,7 +1251,10 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
-    writeToFile(file, text.getBytes(CharsetToolkit.UTF8_CHARSET), false);
+    writeToFile(file, text, false);
+  }
+  public static void writeToFile(@NotNull File file, @NotNull String text, boolean append) throws IOException {
+    writeToFile(file, text.getBytes(CharsetToolkit.UTF8_CHARSET), append);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len) throws IOException {

@@ -16,6 +16,7 @@
 package com.intellij.find.actions;
 
 import com.intellij.ui.ActiveComponent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ class CompositeActiveComponent implements ActiveComponent {
   public CompositeActiveComponent(@NotNull ActiveComponent... components) {
     myComponents = components;
 
-    myComponent = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 4));
+    myComponent = new JPanel(new FlowLayout(FlowLayout.CENTER, JBUI.scale(2), JBUI.scale(4)));
     myComponent.setBorder(null);
     myComponent.setOpaque(false);
     for (ActiveComponent component : components) {

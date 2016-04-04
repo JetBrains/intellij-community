@@ -19,13 +19,13 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -42,12 +42,14 @@ public class ResourceBundlePropertiesUpdateManager {
   private final static Logger LOG = Logger.getInstance(ResourceBundlePropertiesUpdateManager.class);
 
   private final ResourceBundle myResourceBundle;
+  private final CodeStyleManager myCodeStyleManager;
   private boolean myOrdered;
   private boolean myAlphaSorted;
   private List<String> myKeysOrder;
 
   public ResourceBundlePropertiesUpdateManager(ResourceBundle bundle) {
     myResourceBundle = bundle;
+    myCodeStyleManager = CodeStyleManager.getInstance(bundle.getProject());
     reload();
   }
 
@@ -57,7 +59,7 @@ public class ResourceBundlePropertiesUpdateManager {
     }
     final PropertiesFile propertiesFile = myResourceBundle.getDefaultPropertiesFile();
     if (myAlphaSorted) {
-      propertiesFile.addProperty(key, value);
+      myCodeStyleManager.reformat(propertiesFile.addProperty(key, value).getPsiElement());
     } else {
       insertPropertyLast(key, value, propertiesFile);
       if (myOrdered) {
@@ -70,16 +72,19 @@ public class ResourceBundlePropertiesUpdateManager {
     final IProperty property = propertiesFile.findPropertyByKey(key);
     if (property != null) {
       property.setValue(value);
+      myCodeStyleManager.reformat(property.getPsiElement());
       return;
     }
 
     if (myOrdered) {
       if (myAlphaSorted) {
-        propertiesFile.addProperty(key, value);
+        myCodeStyleManager.reformat(propertiesFile.addProperty(key, value).getPsiElement());
         return;
       }
       final Pair<IProperty, Integer> propertyAndPosition = findExistedPrevSiblingProperty(key, propertiesFile);
-      propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null : (Property)propertyAndPosition.getFirst());
+      myCodeStyleManager.reformat(
+        propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null : (Property)propertyAndPosition.getFirst())
+          .getPsiElement());
     }
     else {
       insertPropertyLast(key, value, propertiesFile);
@@ -123,7 +128,7 @@ public class ResourceBundlePropertiesUpdateManager {
   private void insertPropertyLast(String key, String value, PropertiesFile propertiesFile) {
     final List<IProperty> properties = propertiesFile.getProperties();
     final IProperty lastProperty = properties.isEmpty() ? null : properties.get(properties.size() - 1);
-    propertiesFile.addPropertyAfter(key, value, lastProperty);
+    myCodeStyleManager.reformat(propertiesFile.addPropertyAfter(key, value, lastProperty).getPsiElement());
   }
 
   public void reload() {
@@ -139,7 +144,7 @@ public class ResourceBundlePropertiesUpdateManager {
 
   @Nullable
   private static Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
-    final boolean[] isEdgesProperlyDirection = new boolean[]{true};
+    final boolean[] isAlphaSorted = new boolean[]{true};
     final GraphGenerator<String> generator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
@@ -167,8 +172,8 @@ public class ResourceBundlePropertiesUpdateManager {
             if (sibling instanceof IProperty) {
               final String key = ((IProperty)sibling).getKey();
               if (key != null) {
-                if (isEdgesProperlyDirection[0] && n.compareTo(key) > 0) {
-                  isEdgesProperlyDirection[0] = false;
+                if (isAlphaSorted[0] && String.CASE_INSENSITIVE_ORDER.compare(n, key) > 0) {
+                  isAlphaSorted[0] = false;
                 }
                 siblings.add(key);
               }
@@ -181,7 +186,7 @@ public class ResourceBundlePropertiesUpdateManager {
     DFSTBuilder<String> dfstBuilder = new DFSTBuilder<String>(generator);
     final boolean acyclic = dfstBuilder.isAcyclic();
     if (acyclic) {
-      if (isEdgesProperlyDirection[0]) {
+      if (isAlphaSorted[0]) {
         final List<String> sortedNodes = new ArrayList<String>(generator.getNodes());
         Collections.sort(sortedNodes, String.CASE_INSENSITIVE_ORDER);
         return Pair.create(sortedNodes, true);

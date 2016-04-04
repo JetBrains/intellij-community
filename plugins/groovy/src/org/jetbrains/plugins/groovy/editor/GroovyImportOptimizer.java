@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,13 +85,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     @Override
     public Runnable compute() {
       if (!(myFile instanceof GroovyFile)) return EmptyRunnable.getInstance();
-
       final GroovyFile file = ((GroovyFile)myFile);
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-      final Document document = documentManager.getDocument(file);
-      if (document != null) {
-        documentManager.commitDocument(document);
-      }
       final Set<String> simplyImportedClasses = new LinkedHashSet<String>();
       final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
       final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
@@ -110,9 +104,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       GrImportStatement[] newImports =
         prepare(usedImports, simplyImportedClasses, staticallyImportedMembers, implicitlyImportedClasses, innerClasses, aliasImported,
                 annotatedImports, unresolvedOnDemandImports);
-      if (oldImports.isEmpty() && newImports.length == 0 && aliasImported.isEmpty()) {
-        return EmptyRunnable.getInstance();
-      }
+      if (oldImports.isEmpty() && newImports.length == 0 && aliasImported.isEmpty()) return EmptyRunnable.getInstance();
 
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
 
@@ -126,21 +118,21 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         final int startOffset = oldImports.get(0).getTextRange().getStartOffset();
         final int endOffset = oldImports.get(oldImports.size() - 1).getTextRange().getEndOffset();
         String oldText = oldImports.isEmpty() ? "" : myFile.getText().substring(startOffset, endOffset);
-        if (tempFile.getText().trim().equals(oldText)) {
-          return EmptyRunnable.getInstance();
-        }
+        if (tempFile.getText().trim().equals(oldText)) return EmptyRunnable.getInstance();
       }
+      return () -> {
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+        final Document document = documentManager.getDocument(file);
+        if (document != null) documentManager.commitDocument(document);
 
-      return new Runnable() {
-        @Override
-        public void run() {
-          for (GrImportStatement statement : tempFile.getImportStatements()) {
-            file.addImport(statement);
-          }
+        List<GrImportStatement> existingImports = PsiUtil.getValidImportStatements(file);
 
-          for (GrImportStatement importStatement : oldImports) {
-            file.removeImport(importStatement);
-          }
+        for (GrImportStatement statement : tempFile.getImportStatements()) {
+          file.addImport(statement);
+        }
+
+        for (GrImportStatement importStatement : existingImports) {
+          file.removeImport(importStatement);
         }
       };
     }

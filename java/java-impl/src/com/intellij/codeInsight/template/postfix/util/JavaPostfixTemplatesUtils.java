@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,6 +44,29 @@ public abstract class JavaPostfixTemplatesUtils {
   private JavaPostfixTemplatesUtils() {
   }
 
+  public static PostfixTemplateExpressionSelector atLeastJava8Selector(final PostfixTemplateExpressionSelector selector) {
+    return new PostfixTemplateExpressionSelector() {
+      @Override
+      public boolean hasExpression(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+        return PsiUtil.isLanguageLevel8OrHigher(context) && selector.hasExpression(context, copyDocument, newOffset);
+      }
+
+      @NotNull
+      @Override
+      public List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+        return PsiUtil.isLanguageLevel8OrHigher(context)
+               ? selector.getExpressions(context, document, offset)
+               : Collections.<PsiElement>emptyList();
+      }
+
+      @NotNull
+      @Override
+      public Function<PsiElement, String> getRenderer() {
+        return selector.getRenderer();
+      }
+    };
+  }
+  
   public static PostfixTemplateExpressionSelector selectorTopmost() {
     return selectorTopmost(Conditions.<PsiElement>alwaysTrue());
   }
@@ -116,42 +140,52 @@ public abstract class JavaPostfixTemplatesUtils {
     }
   };
 
-  public static Condition<PsiElement> IS_NUMBER = new Condition<PsiElement>() {
+  public static final Condition<PsiElement> IS_NUMBER = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {
       return element instanceof PsiExpression && isNumber(((PsiExpression)element).getType());
     }
   };
 
-  public static Condition<PsiElement> IS_BOOLEAN = new Condition<PsiElement>() {
+  public static final Condition<PsiElement> IS_BOOLEAN = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {
       return element instanceof PsiExpression && isBoolean(((PsiExpression)element).getType());
     }
   };
 
-  public static Condition<PsiElement> IS_THROWABLE = new Condition<PsiElement>() {
+  public static final Condition<PsiElement> IS_THROWABLE = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {
       return element instanceof PsiExpression && isThrowable(((PsiExpression)element).getType());
     }
   };
 
-  public static Condition<PsiElement> IS_NON_VOID = new Condition<PsiElement>() {
+  public static final Condition<PsiElement> IS_NON_VOID = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {
       return element instanceof PsiExpression && isNonVoid(((PsiExpression)element).getType());
     }
   };
 
-  public static Condition<PsiElement> IS_NOT_PRIMITIVE = new Condition<PsiElement>() {
+  public static final Condition<PsiElement> IS_NOT_PRIMITIVE = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {
       return element instanceof PsiExpression && isNotPrimitiveTypeExpression((PsiExpression)element);
     }
   };
+  
+  public static final Condition<PsiElement> IS_ARRAY = new Condition<PsiElement>() {
+    @Override
+    public boolean value(PsiElement element) {
+      if (!(element instanceof PsiExpression)) return false;
 
-  public static Condition<PsiElement> IS_ITERABLE_OR_ARRAY = new Condition<PsiElement>() {
+      PsiType type = ((PsiExpression)element).getType();
+      return isArray(type);
+    }
+  };
+
+  public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {
       if (!(element instanceof PsiExpression)) return false;

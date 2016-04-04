@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,23 +252,27 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   }
 
   private EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces() {
-    GrIntroduceContext context = getContext();
-    PsiElement[] occurrences = getOccurrences();
+    return getApplicableInitPlaces(getContext(), isReplaceAllOccurrences());
+  }
+
+  public static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context,
+                                                                               boolean replaceAllOccurrences) {
     EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.noneOf(GrIntroduceFieldSettings.Init.class);
 
-    if (context.getExpression() != null ||
-        context.getVar() != null && context.getVar().getInitializerGroovy() != null ||
-        context.getStringPart() != null) {
-      result.add(GrIntroduceFieldSettings.Init.FIELD_DECLARATION);
-    }
-
     if (!(context.getScope() instanceof GroovyScriptClass || context.getScope() instanceof GroovyFileBase)) {
+      if (context.getExpression() != null ||
+          context.getVar() != null && context.getVar().getInitializerGroovy() != null ||
+          context.getStringPart() != null) {
+        result.add(GrIntroduceFieldSettings.Init.FIELD_DECLARATION);
+      }
       result.add(GrIntroduceFieldSettings.Init.CONSTRUCTOR);
     }
 
     PsiElement scope = context.getScope();
+    if (scope instanceof GroovyScriptClass) scope = scope.getContainingFile();
 
-    if (isReplaceAllOccurrences()) {
+    if (replaceAllOccurrences || context.getExpression() != null) {
+      PsiElement[] occurrences = replaceAllOccurrences ? context.getOccurrences() : new PsiElement[]{context.getExpression()};
       PsiElement parent = PsiTreeUtil.findCommonParent(occurrences);
       PsiElement container = GrIntroduceHandlerBase.getEnclosingContainer(parent);
       if (container != null && PsiTreeUtil.isAncestor(scope, container, false)) {
@@ -277,8 +281,6 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
           result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
         }
       }
-    } else {
-      result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
     }
 
     if (scope instanceof GrTypeDefinition && TestFrameworks.getInstance().isTestClass((PsiClass)scope)) {

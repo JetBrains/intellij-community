@@ -24,6 +24,8 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.util.text.StringUtil;
 
+import java.util.Arrays;
+
 public abstract class FilePatch {
   private String myBeforeName;
   private String myAfterName;
@@ -89,4 +91,25 @@ public abstract class FilePatch {
   public abstract boolean isNewFile();
 
   public abstract boolean isDeletedFile();
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    FilePatch patch = (FilePatch)o;
+
+    if (myBeforeName != null ? !myBeforeName.equals(patch.myBeforeName) : patch.myBeforeName != null) return false;
+    if (myAfterName != null ? !myAfterName.equals(patch.myAfterName) : patch.myAfterName != null) return false;
+    if (myBeforeVersionId != null ? !myBeforeVersionId.equals(patch.myBeforeVersionId) : patch.myBeforeVersionId != null) return false;
+    if (myAfterVersionId != null ? !myAfterVersionId.equals(patch.myAfterVersionId) : patch.myAfterVersionId != null) return false;
+    if (myBaseRevisionText != null ? !myBaseRevisionText.equals(patch.myBaseRevisionText) : patch.myBaseRevisionText != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(new Object[]{myBeforeName, myAfterName, myBeforeVersionId, myAfterVersionId, myBaseRevisionText});
+  }
 }

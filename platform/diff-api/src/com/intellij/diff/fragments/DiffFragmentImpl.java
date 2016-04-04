@@ -44,19 +44,28 @@ public class DiffFragmentImpl implements DiffFragment {
     }
   }
 
+  @Override
   public int getStartOffset1() {
     return myStartOffset1;
   }
 
+  @Override
   public int getEndOffset1() {
     return myEndOffset1;
   }
 
+  @Override
   public int getStartOffset2() {
     return myStartOffset2;
   }
 
+  @Override
   public int getEndOffset2() {
     return myEndOffset2;
+  }
+
+  @Override
+  public String toString() {
+    return "DiffFragmentImpl [" + myStartOffset1 + ", " + myEndOffset1 + ") - [" + myStartOffset2 + ", " + myEndOffset2 + ")";
   }
 }

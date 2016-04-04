@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.JBProtocolCommand;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import org.jetbrains.annotations.NotNull;
 
 import java.net.URLDecoder;
 import java.util.Map;
@@ -27,18 +27,14 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class JBProtocolOpenProjectCommand extends JBProtocolCommand {
-  @NotNull
-  @Override
-  public String getCommandName() {
-    return "open";
+  public JBProtocolOpenProjectCommand() {
+    super("open");
   }
 
   @Override
   public void perform(String target, Map<String, String> parameters) {
     String path = URLDecoder.decode(target);
-    if (path.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-      path = path.substring(LocalFileSystem.PROTOCOL_PREFIX.length());
-    }
+    path = StringUtil.trimStart(path, LocalFileSystem.PROTOCOL_PREFIX);
     ProjectUtil.openProject(path, null, true);
   }
 }

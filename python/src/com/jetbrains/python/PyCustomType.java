@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,10 @@ public class PyCustomType implements PyClassLikeType {
 
     // Delegate calls to classes, we mimic but filter if filter is set.
     for (final PyClassLikeType typeToMimic : myTypesToMimic) {
-      final List<? extends RatedResolveResult> results = typeToMimic.toInstance().resolveMember(name, location, direction, resolveContext, inherited);
+      final List<? extends RatedResolveResult> results = typeToMimic.toInstance().resolveMember(
+        name, location, direction, resolveContext, inherited
+      );
+
       if (results != null) {
         globalResult.addAll(Collections2.filter(results, new ResolveFilter()));
       }
@@ -253,7 +256,9 @@ public class PyCustomType implements PyClassLikeType {
   }
 
   @Override
-  public final void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull final TypeEvalContext context) {
+  public final void visitMembers(@NotNull final Processor<PsiElement> processor,
+                                 final boolean inherited,
+                                 @NotNull final TypeEvalContext context) {
     for (final PyClassLikeType type : myTypesToMimic) {
       // Only visit methods that are allowed by filter (if any)
       type.visitMembers(new Processor<PsiElement>() {
@@ -269,6 +274,18 @@ public class PyCustomType implements PyClassLikeType {
         }
       }, inherited, context);
     }
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> result = new LinkedHashSet<>();
+
+    for (PyClassLikeType type : myTypesToMimic) {
+      result.addAll(type.getMemberNames(inherited, context));
+    }
+
+    return result;
   }
 
   /**

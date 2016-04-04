@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -33,10 +34,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import static java.util.Collections.unmodifiableMap;
 
@@ -52,14 +55,12 @@ public class EnvironmentUtil {
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
     if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
-      ExecutorService executor = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Shell Env Loader"));
-      ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
+      ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
           return unmodifiableMap(setCharsetVar(getShellEnv()));
         }
       });
-      executor.shutdown();
     }
     else {
       ourEnvGetter = new FixedFuture<Map<String, String>>(getSystemEnv());
@@ -157,21 +158,17 @@ public class EnvironmentUtil {
     File reader = FileUtil.findFirstThatExist(
       PathManager.getBinPath() + "/printenv.py",
       PathManager.getHomePath() + "/community/bin/mac/printenv.py",
-      PathManager.getHomePath() + "/bin/mac/printenv.py"
-    );
+      PathManager.getHomePath() + "/bin/mac/printenv.py");
     if (reader == null) {
       throw new Exception("bin:" + PathManager.getBinPath());
     }
 
     File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
     try {
-      String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
+      String[] command = {shell, "-l", "-i", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-      ProcessBuilder processBuilder = new ProcessBuilder(command);
-      processBuilder.redirectErrorStream(true);
-      Process process = processBuilder.start();
-
+      Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
       gobbler.stop();
@@ -308,16 +305,13 @@ public class EnvironmentUtil {
     public StreamGobbler(@NotNull InputStream stream) {
       super(stream, CharsetToolkit.getDefaultSystemCharset());
       myBuffer = new StringBuffer();
-      start();
+      start("stdout/stderr streams of shell env loading process");
     }
 
     @NotNull
     @Override
     protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      ExecutorService executor = ConcurrencyUtil.newSingleThreadExecutor("shell process streams gobbler");
-      Future<?> future = executor.submit(runnable);
-      executor.shutdown();
-      return future;
+      return AppExecutorUtil.getAppExecutorService().submit(runnable);
     }
 
     @Override

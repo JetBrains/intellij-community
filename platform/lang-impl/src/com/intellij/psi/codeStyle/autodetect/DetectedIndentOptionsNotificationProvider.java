@@ -118,6 +118,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
     {
       Project project = file.getProject();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+      if (fileEditorManager == null) return;
       FileEditor fileEditor = fileEditorManager.getSelectedEditor(vFile);
       if (fileEditor != null) {
         Boolean notifiedFlag = fileEditor.getUserData(NOTIFIED_FLAG);

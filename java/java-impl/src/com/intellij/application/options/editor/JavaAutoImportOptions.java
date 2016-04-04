@@ -39,6 +39,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private JCheckBox myCbShowImportPopup;
   private JPanel myWholePanel;
   private JCheckBox myCbAddUnambiguousImports;
+  private JCheckBox myCbAddMethodImports;
   private JCheckBox myCbOptimizeImports;
   private JPanel myExcludeFromImportAndCompletionPanel;
   private final ExcludeTable myExcludePackagesTable;
@@ -78,6 +79,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     myCbShowImportPopup.setSelected(daemonSettings.isImportHintEnabled());
     myCbOptimizeImports.setSelected(codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
     myCbAddUnambiguousImports.setSelected(codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
+    myCbAddMethodImports.setSelected(codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY);
 
     myExcludePackagesTable.reset();
   }
@@ -94,6 +96,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     daemonSettings.setImportHintEnabled(myCbShowImportPopup.isSelected());
     codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
     codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnambiguousImports.isSelected();
+    codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY = myCbAddMethodImports.isSelected();
 
     myExcludePackagesTable.apply();
 
@@ -113,6 +116,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     boolean isModified = isModified(myCbShowImportPopup, daemonSettings.isImportHintEnabled());
     isModified |= isModified(myCbOptimizeImports, codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
     isModified |= isModified(myCbAddUnambiguousImports, codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
+    isModified |= isModified(myCbAddMethodImports, codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY);
 
     isModified |= getSmartPasteValue() != codeInsightSettings.ADD_IMPORTS_ON_PASTE;
     isModified |= myExcludePackagesTable.isModified();

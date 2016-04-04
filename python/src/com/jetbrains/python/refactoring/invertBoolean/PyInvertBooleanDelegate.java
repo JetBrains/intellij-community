@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.invertBoolean.InvertBooleanDelegate;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +54,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public boolean isAvailableOnElement(@NotNull PsiElement element) {
-    final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     if (virtualFile != null && ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) return false;
     if (element instanceof PyTargetExpression) {
       final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.help.impl;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ReflectionUtil;
+import com.sun.java.help.impl.JHelpPrintHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.help.*;
@@ -30,6 +32,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Locale;
+import java.util.WeakHashMap;
 
 /**
  * It a dirty patch! Help system is so ugly that it hangs when it open some "external" links.
@@ -706,11 +709,13 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
         AppUIUtil.updateWindowIcon(myFrame);
         WindowListener l = new WindowAdapter() {
           public void windowClosing(WindowEvent e) {
-            myFrame.setVisible(false);
-          }
-
-          public void windowClosed(WindowEvent e) {
-            myFrame.setVisible(false);
+            myFrame.dispose();
+            WeakHashMap handlers = ReflectionUtil.getField(JHelpPrintHandler.class, null, WeakHashMap.class, "handlers");
+            if (handlers != null) {
+              // even though jHelp is a weak key in the map, corresponding map entry will never be removed, as it's also referenced 
+              // from the mapped value
+              handlers.remove(jhelp);
+            }
           }
         };
         myFrame.addWindowListener(l);

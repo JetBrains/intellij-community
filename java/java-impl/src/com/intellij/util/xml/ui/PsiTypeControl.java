@@ -18,11 +18,10 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.JavaReferenceEditorUtil;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.AbstractConvertContext;
@@ -49,13 +48,9 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
         return s;
       }
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException ignored) {
     }
     return rawValue;
-  }
-
-  private PsiManager getPsiManager() {
-    return PsiManager.getInstance(getProject());
   }
 
   protected void setValue(String value) {
@@ -63,10 +58,6 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
       @NotNull
       public DomElement getInvocationElement() {
         return getDomElement();
-      }
-
-      public PsiManager getPsiManager() {
-        return PsiTypeControl.this.getPsiManager();
       }
     });
     if (type != null) {

@@ -156,7 +156,9 @@ public class RepositoryAttachHandler {
         return true;
       }
     }, indicator);
-    return result.get();
+
+    List<OrderRoot> roots = result.get();
+    return roots == null ? Collections.<OrderRoot>emptyList() : roots;
   }
 
   public static void notifyArtifactsDownloaded(Project project, List<OrderRoot> roots) {

@@ -788,7 +788,7 @@ class Foo {
     final Template template = manager.createTemplate("result", "user", '$A$ $B$ c');
     template.addVariable('A', new EmptyNode(), true)
 
-    def macroCallNode = new MacroCallNode(new SnakeCaseMacro())
+    def macroCallNode = new MacroCallNode(new SplitWordsMacro.SnakeCaseMacro())
     macroCallNode.addParameter(new VariableNode('A', null))
     template.addVariable('B', macroCallNode, false)
 
@@ -1097,5 +1097,17 @@ class Foo {
   }
 }
 """)
+  }
+
+  public void "test sout template in expression lambda"() {
+    myFixture.configureByText 'a.java', '''class Foo {{
+  strings.stream().forEach(o -> sout<caret>);
+}}
+'''
+    myFixture.type('\t')
+    myFixture.checkResult '''class Foo {{
+  strings.stream().forEach(o -> System.out.println(<caret>));
+}}
+'''
   }
 }

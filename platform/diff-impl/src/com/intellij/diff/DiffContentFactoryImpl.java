@@ -16,11 +16,13 @@
 package com.intellij.diff;
 
 import com.intellij.diff.contents.*;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -42,7 +44,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactory {
-  public final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
+  public static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
 
   @NotNull
   public static DiffContentFactoryImpl getInstanceImpl() {
@@ -73,6 +75,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return createImpl(text, type, null, null, respectLineSeparators, true);
   }
 
+  @Override
   @NotNull
   public DocumentContent create(@NotNull String text, @Nullable VirtualFile highlightFile) {
     return createImpl(text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, null, true, true);
@@ -191,8 +194,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
                                   @NotNull String name,
                                   @NotNull FileType type,
                                   @NotNull byte[] content) throws IOException {
-    boolean useTemporalFile = true; // TODO: workaround for Decompiler
-    //boolean useTemporalFile = type instanceof ArchiveFileType; // workaround - our JarFileSystem can't process non-local files
+    // workaround - our JarFileSystem and decompilers can't process non-local files
+    boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.INSTANCE.forFileType(type) != null;
 
     VirtualFile file;
     if (useTemporalFile) {
@@ -205,6 +208,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     }
     else {
       file = new BinaryLightVirtualFile(name, type, content);
+      file.setWritable(false);
     }
 
     return create(project, file);
@@ -220,6 +224,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
     }
+    if (!tempFile.setWritable(false, false)) LOG.warn("Can't set writable attribute of temporal file");
+
     VirtualFile file = VfsUtil.findFileByIoFile(tempFile, true);
     if (file == null) {
       throw new IOException("Can't create temp file for revision content");

@@ -63,6 +63,20 @@ public class ExpressionUtils {
     return ClassUtils.isImmutable(type);
   }
 
+  public static boolean hasExpressionCount(@Nullable PsiExpressionList expressionList, int count) {
+    return ControlFlowUtils.hasChildrenOfTypeCount(expressionList, count, PsiExpression.class);
+  }
+
+  @Nullable
+  public static PsiExpression getFirstExpressionInList(@Nullable PsiExpressionList expressionList) {
+    return PsiTreeUtil.getChildOfType(expressionList, PsiExpression.class);
+  }
+
+  @Nullable
+  public static PsiExpression getOnlyExpressionInList(@Nullable PsiExpressionList expressionList) {
+    return ControlFlowUtils.getOnlyChildOfType(expressionList, PsiExpression.class);
+  }
+
   public static boolean isDeclaredConstant(PsiExpression expression) {
     PsiField field =
       PsiTreeUtil.getParentOfType(expression, PsiField.class);

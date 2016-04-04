@@ -102,7 +102,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final Object LOCK = new Object();
   private final GitRepositoryManager myRepositoryManager;
 
-  GitUntrackedFilesHolder(@NotNull GitRepository repository) {
+  GitUntrackedFilesHolder(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myProject = repository.getProject();
     myRepository = repository;
     myRoot = repository.getRoot();
@@ -112,7 +112,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    myRepositoryFiles = GitRepositoryFiles.getInstance(repository.getGitDir());
+    myRepositoryFiles = gitFiles;
   }
 
   void setupVfsListener(@NotNull Project project) {
@@ -256,7 +256,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     // if index has changed, no need to refresh specific files - we get the full status of all files
     if (allChanged) {
-      LOG.debug(String.format("GitUntrackedFilesHolder: Index has changed, marking %s recursively dirty", myRoot));
+      LOG.debug(String.format("GitUntrackedFilesHolder: total refresh is needed, marking %s recursively dirty", myRoot));
       myDirtyScopeManager.dirDirtyRecursively(myRoot);
       synchronized (LOCK) {
         myReady = false;

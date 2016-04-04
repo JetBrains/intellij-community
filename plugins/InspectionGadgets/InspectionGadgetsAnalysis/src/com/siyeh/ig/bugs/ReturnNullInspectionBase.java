@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,8 +74,17 @@ public class ReturnNullInspectionBase extends BaseInspection {
       return null;
     }
 
-    if (PsiTreeUtil.getParentOfType(elt, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression) {
+    final PsiElement element = PsiTreeUtil.getParentOfType(elt, PsiMethod.class, PsiLambdaExpression.class);
+    if (element instanceof PsiLambdaExpression) {
       return null;
+    }
+    if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
+      final PsiType type = method.getReturnType();
+      if (TypeUtils.isOptional(type)) {
+        // don't suggest to annotate Optional methods as Nullable
+        return new ReplaceWithEmptyOptionalFix(((PsiClassType)type).rawType().getCanonicalText());
+      }
     }
 
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
@@ -87,6 +96,45 @@ public class ReturnNullInspectionBase extends BaseInspection {
         return ReturnNullInspectionBase.this.shouldAnnotateBaseMethod(method, superMethod);
       }
     });
+  }
+
+  private static class ReplaceWithEmptyOptionalFix extends InspectionGadgetsFix {
+
+    private final String myTypeText;
+
+    public ReplaceWithEmptyOptionalFix(String typeText) {
+      myTypeText = typeText;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix", myTypeText,
+                                             "com.google.common.base.Optional".equals(myTypeText) ? "absent" : "empty");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix.family");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiLiteralExpression)) {
+        return;
+      }
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+      if ("com.google.common.base.Optional".equals(myTypeText)) {
+        PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".absent()");
+      }
+      else {
+        PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".empty()");
+      }
+    }
   }
 
   protected int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod) {
@@ -152,11 +200,15 @@ public class ReturnNullInspectionBase extends BaseInspection {
         return;
       }
 
+      if (TypeUtils.isOptional(returnType)) {
+        registerError(value, value);
+        return;
+      }
+
       if (m_ignorePrivateMethods && method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
 
-      final boolean isArray = returnType.getArrayDimensions() > 0;
       final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(method.getProject());
       if (nullableNotNullManager.isNullable(method, false)) {
         return;
@@ -166,7 +218,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
           registerError(value, value);
         }
       }
-      else if (isArray) {
+      else if (returnType.getArrayDimensions() > 0) {
         if (m_reportArrayMethods) {
           registerError(value, value);
         }

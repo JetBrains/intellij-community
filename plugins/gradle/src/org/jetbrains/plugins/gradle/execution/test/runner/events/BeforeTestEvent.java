@@ -19,7 +19,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import java.util.List;
@@ -30,8 +30,8 @@ import java.util.List;
  */
 public class BeforeTestEvent extends AbstractTestEvent {
 
-  public BeforeTestEvent(GradleTestsExecutionConsoleManager consoleManager) {
-    super(consoleManager);
+  public BeforeTestEvent(GradleTestsExecutionConsole executionConsole) {
+    super(executionConsole);
   }
 
   @Override
@@ -45,7 +45,7 @@ public class BeforeTestEvent extends AbstractTestEvent {
     final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, false, locationUrl, fqClassName);
 
     testProxy.setStarted();
-    testProxy.setLocator(getConsoleManager().getUrlProvider());
+    testProxy.setLocator(getExecutionConsole().getUrlProvider());
     registerTestProxy(testId, testProxy);
 
     if (StringUtil.isEmpty(parentTestId)) {

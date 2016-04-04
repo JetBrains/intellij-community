@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -82,6 +81,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -142,6 +142,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               @Nullable String repositoryPath,
                               @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs);
+    refresher.run(false, true);
+  }
+
+  public void showFileHistory(@NotNull VcsHistoryProviderEx historyProvider,
+                              @NotNull FilePath path,
+                              @NotNull AbstractVcs vcs,
+                              @Nullable VcsRevisionNumber startingRevisionNumber) {
+    FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs, startingRevisionNumber);
     refresher.run(false, true);
   }
 
@@ -669,7 +677,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final CommittedChangeList[] list = new CommittedChangeList[1];
     final FilePath[] targetPath = new FilePath[1];
     final VcsException[] exc = new VcsException[1];
-    Task.Backgroundable task = new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {
+
+    final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
+                                                                           revision, virtualFile.getPath());
+    if (lock.isLocked()) return;
+    lock.lock();
+
+    Task.Backgroundable task = new Task.Backgroundable(project, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -701,7 +715,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       }
 
       @Override
+      public void onCancel() {
+        lock.unlock();
+      }
+
+      @Override
       public void onSuccess() {
+        lock.unlock();
         if (exc[0] != null) {
           showError(exc[0], failedText(virtualFile, revision));
         }
@@ -760,7 +780,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     private AsynchronousListsLoader(@Nullable Project project, final CommittedChangesProvider provider,
                                     final RepositoryLocation location, final ChangeBrowserSettings settings, final ChangesBrowserDialog dlg) {
-      super(project, VcsBundle.message("browse.changes.progress.title"), true, BackgroundFromStartOption.getInstance());
+      super(project, VcsBundle.message("browse.changes.progress.title"), true);
       myProvider = provider;
       myLocation = location;
       mySettings = settings;

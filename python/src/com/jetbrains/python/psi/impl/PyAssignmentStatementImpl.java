@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -205,31 +206,30 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   }
 
   @NotNull
-  public Iterable<PyElement> iterateNames() {
+  public List<PsiNamedElement> getNamedElements() {
     final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(getTargets());
-    List<PyElement> result = new ArrayList<PyElement>();
+    List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
     for (PyExpression expression : expressions) {
       if (expression instanceof PyQualifiedExpression && ((PyQualifiedExpression)expression).isQualified()) {
         continue;
       }
-      result.add(expression);
+      if (expression instanceof PsiNamedElement) {
+        result.add((PsiNamedElement)expression);
+      }
     }
     return result;
 
   }
 
-  public PyElement getElementNamed(final String the_name) {
+  @Nullable
+  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
     // performance: check simple case first
     PyExpression[] targets = getTargets();
     if (targets.length == 1 && targets[0] instanceof PyTargetExpression) {
       PyTargetExpression target = (PyTargetExpression)targets[0];
       return !target.isQualified() && the_name.equals(target.getName()) ? target : null;
     }
-    return IterHelper.findName(iterateNames(), the_name);
-  }
-
-  public boolean mustResolveOutside() {
-    return true; // a = a+1 resolves 'a' outside itself.
+    return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }
 
   @Override

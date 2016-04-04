@@ -376,13 +376,7 @@ public class BraceMatchingUtil {
   @NotNull
   public static BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull HighlighterIterator iterator) {
     IElementType tokenType = iterator.getTokenType();
-    if (tokenType == null) {
-      throw new AssertionError("Null token for iterator " + iterator +
-                               " at " + iterator.getStart() +
-                               " in " + iterator.getDocument() +
-                               "; atEnd=" + iterator.atEnd());
-    }
-    return getBraceMatcher(fileType, tokenType);
+    return tokenType == null ? BraceMatcherHolder.ourDefaultBraceMatcher : getBraceMatcher(fileType, tokenType);
   }
 
   @NotNull

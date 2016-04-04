@@ -27,12 +27,15 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -360,11 +363,8 @@ public class GenericsHighlightUtil {
                                                                  Map<PsiClass, PsiSubstitutor> inheritedClasses,
                                                                  Set<PsiClass> visited,
                                                                  TextRange textRange) {
-    final PsiClassType[] superTypes = aClass.getSuperTypes();
-    for (PsiClassType superType : superTypes) {
-      superType = PsiClassImplUtil.correctType(superType, place.getResolveScope());
-      if (superType == null) continue;
-      final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
+    final List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, place.getResolveScope());
+    for (PsiClassType.ClassResolveResult result : superTypes) {
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
@@ -441,58 +441,143 @@ public class GenericsHighlightUtil {
   }
 
   static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass,
-                                                            @NotNull Collection<HierarchicalMethodSignature> signaturesWithSupers,
-                                                            @NotNull PsiIdentifier classIdentifier) {
-    for (HierarchicalMethodSignature methodSignature : signaturesWithSupers) {
-      final PsiMethod method = methodSignature.getMethod();
-      final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-      if (method.hasModifierProperty(PsiModifier.DEFAULT) || isAbstract) {
+                                                    @NotNull PsiIdentifier classIdentifier) {
+    final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
+      new THashMap<MethodSignature, Set<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+    PsiClass[] supers = aClass.getSupers();
+    for (int i = 0; i < supers.length; i++) {
+      PsiClass superClass = supers[i];
+      boolean subType = false;
+      for (int j = 0; j < supers.length; j++) {
+        if (j == i) continue;
+        subType |= supers[j].isInheritor(supers[i], true);
+      }
+      if (subType) continue;
+      final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
+      for (HierarchicalMethodSignature hms : superClass.getVisibleSignatures()) {
+        final PsiMethod method = hms.getMethod();
+        if (MethodSignatureUtil.findMethodBySignature(aClass, method.getSignature(superClassSubstitutor), false) != null) continue;
         final PsiClass containingClass = method.getContainingClass();
-        List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-        if (!superSignatures.isEmpty()) {
-          for (HierarchicalMethodSignature signature : superSignatures) {
-            final PsiMethod superMethod = signature.getMethod();
-            final PsiClass superContainingClass = superMethod.getContainingClass();
-            if (containingClass != null && superContainingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true)) {
-              final boolean isDefault = superMethod.hasModifierProperty(PsiModifier.DEFAULT);
-              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !isDefault && !isAbstract) {
-                final String message = JavaErrorMessages.message(
-                  aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract",
-                  HighlightUtil.formatClass(superContainingClass),
-                  JavaHighlightUtil.formatMethod(superMethod),
-                  HighlightUtil.formatClass(superContainingClass, false));
-                final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                  .range(classIdentifier).descriptionAndTooltip(message)
-                  .create();
-                QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
-                return info;
-              }
+        if (containingClass == null) continue;
+        final PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY);
+        if (containingClassSubstitutor == null) continue;
+        final PsiSubstitutor finalSubstitutor =
+          PsiSuperMethodImplUtil.obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
+        final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
+        Set<PsiMethod> methods = overrideEquivalent.get(signature);
+        if (methods == null) {
+          methods = new LinkedHashSet<PsiMethod>();
+          overrideEquivalent.put(signature, methods);
+        }
+        methods.add(method);
+      }
+    }
 
-              if (isDefault || !isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                final String message = isDefault && !isAbstract
-                                       ? " inherits unrelated defaults for "
-                                       : " inherits abstract and default for ";
-                final String inheritUnrelatedDefaultsMessage = HighlightUtil.formatClass(aClass) +
-                                                               message +
-                                                               JavaHighlightUtil.formatMethod(method) +
-                                                               " from types " +
-                                                               HighlightUtil.formatClass(containingClass) +
-                                                               " and " +
-                                                               HighlightUtil.formatClass(superContainingClass);
-                final HighlightInfo info = HighlightInfo
-                  .newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(inheritUnrelatedDefaultsMessage)
-                  .create();
-                QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
-                return info;
-              }
-            }
+    final boolean isInterface = aClass.isInterface();
+    for (Set<PsiMethod> overrideEquivalentMethods : overrideEquivalent.values()) {
+      if (overrideEquivalentMethods.size() <= 1) continue;
+      List<PsiMethod> defaults = null;
+      List<PsiMethod> astracts = null;
+      boolean hasConcrete = false;
+      for (PsiMethod method : overrideEquivalentMethods) {
+        final boolean isDefault = method.hasModifierProperty(PsiModifier.DEFAULT);
+        final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+        if (isDefault) {
+          if (defaults == null) defaults = new ArrayList<PsiMethod>(2);
+          defaults.add(method);
+        }
+        if (isAbstract) {
+          if (astracts == null) astracts = new ArrayList<PsiMethod>(2);
+          astracts.add(method);
+        }
+        hasConcrete |= !isDefault && !isAbstract;
+      }
+
+      if (!hasConcrete && defaults != null) {
+        final PsiMethod defaultMethod = defaults.get(0);
+        final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
+        if (defaultMethodContainingClass == null) continue;
+        final PsiMethod unrelatedMethod = astracts != null ? astracts.get(0) : defaults.get(1);
+        final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
+        if (unrelatedMethodContainingClass == null) continue;
+        if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter) 
+            && astracts != null && unrelatedMethodContainingClass.isInterface()) {
+          if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) && 
+              MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(unrelatedMethodContainingClass, defaultMethodContainingClass, PsiSubstitutor.EMPTY)), 
+                                                 defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
+            continue;
           }
+          final String key = aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract";
+          final String message = JavaErrorMessages.message(key, HighlightUtil.formatClass(aClass, false), JavaHighlightUtil.formatMethod(astracts.get(0)), 
+                                                           HighlightUtil.formatClass(unrelatedMethodContainingClass, false));
+          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(message).create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+          return info;
+        }
+        if (isInterface || astracts == null || unrelatedMethodContainingClass.isInterface()) {
+          if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) || 
+              unrelatedMethodContainingClass.isInheritor(defaultMethodContainingClass, true)) {
+            continue;
+          }
+          final String message = astracts != null ? " inherits abstract and default for " : " inherits unrelated defaults for ";
+          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(
+            HighlightUtil.formatClass(aClass) +
+            message +
+            JavaHighlightUtil.formatMethod(defaultMethod) +
+            " from types " +
+            HighlightUtil.formatClass(defaultMethodContainingClass) +
+            " and " +
+            HighlightUtil.formatClass(unrelatedMethodContainingClass))
+            .create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+          return info;
         }
       }
     }
     return null;
   }
 
+  static HighlightInfo checkUnrelatedConcrete(@NotNull PsiClass psiClass,
+                                              @NotNull PsiIdentifier classIdentifier) {
+    final PsiClass superClass = psiClass.getSuperClass();
+    if (superClass != null && superClass.hasTypeParameters()) {
+      final Collection<HierarchicalMethodSignature> visibleSignatures = superClass.getVisibleSignatures();
+      final Map<MethodSignature, PsiMethod> overrideEquivalent = new THashMap<MethodSignature, PsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      for (HierarchicalMethodSignature hms : visibleSignatures) {
+        final PsiMethod method = hms.getMethod();
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT)) continue;
+        if (psiClass.findMethodsBySignature(method, false).length > 0) continue;
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) continue;
+        final PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+        final PsiSubstitutor finalSubstitutor = PsiSuperMethodImplUtil.obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
+        final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
+        final PsiMethod foundMethod = overrideEquivalent.get(signature);
+        PsiClass foundMethodContainingClass;
+        if (foundMethod != null &&
+            !foundMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !foundMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+            (foundMethodContainingClass = foundMethod.getContainingClass()) != null) {
+          final String description =
+            "Methods " +
+            JavaHighlightUtil.formatMethod(foundMethod) + " from " + HighlightUtil.formatClass(foundMethodContainingClass) +
+            " and " +
+            JavaHighlightUtil.formatMethod(method) + " from " + HighlightUtil.formatClass(containingClass) +
+            " are inherited with the same signature";
+          
+          final HighlightInfo info = HighlightInfo
+            .newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(
+              description)
+            .create();
+          //todo override fix
+          return info;
+        }
+        overrideEquivalent.put(signature, method);
+      }
+    }
+    return null;
+  }
+  
   @Nullable
   private static HighlightInfo checkSameErasureNotSubSignatureInner(@NotNull HierarchicalMethodSignature signature,
                                                                     @NotNull PsiManager manager,
@@ -741,7 +826,7 @@ public class GenericsHighlightUtil {
       if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) return null;
     }
 
-    if (PsiUtil.isCompileTimeConstant(field)) return null;
+    if (PsiUtil.isCompileTimeConstant((PsiVariable)field)) return null;
 
     String description = JavaErrorMessages.message(
       "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
@@ -1317,24 +1402,14 @@ public class GenericsHighlightUtil {
 
   static HighlightInfo checkInferredIntersections(PsiSubstitutor substitutor, TextRange ref) {
     for (Map.Entry<PsiTypeParameter, PsiType> typeEntry : substitutor.getSubstitutionMap().entrySet()) {
+      final String parameterName = typeEntry.getKey().getName();
       final PsiType type = typeEntry.getValue();
       if (type instanceof PsiIntersectionType) {
-        final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
-        for (int i = 0; i < conjuncts.length; i++) {
-          PsiClass conjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i]);
-          if (conjunct != null && !conjunct.isInterface()) {
-            for (int i1 = i + 1; i1 < conjuncts.length; i1++) {
-              PsiClass oppositeConjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i1]);
-              if (oppositeConjunct != null && !oppositeConjunct.isInterface()) {
-                if (!conjunct.isInheritor(oppositeConjunct, true) && !oppositeConjunct.isInheritor(conjunct, true)) {
-                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                    .descriptionAndTooltip("Type parameter " + typeEntry.getKey().getName() + " has incompatible upper bounds: " +
-                                           conjunct.getName() + " and " + oppositeConjunct.getName())
-                    .range(ref).create();
-                }
-              }
-            }
-          }
+        final String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
+        if (conflictingConjunctsMessage != null) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip("Type parameter " + parameterName + " has incompatible upper bounds: " + conflictingConjunctsMessage)
+            .range(ref).create();
         }
       }
     }
@@ -1342,19 +1417,63 @@ public class GenericsHighlightUtil {
   }
 
   static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass) {
-    return areSupersAccessible(aClass, aClass.getResolveScope(), HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+    return areSupersAccessible(aClass, aClass.getResolveScope(), HighlightNamesUtil.getClassDeclarationTextRange(aClass), true);
   }
 
-  static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass, PsiElement ref) {
-    return areSupersAccessible(aClass, ref.getResolveScope(), ref.getTextRange());
+  static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass, PsiReferenceExpression ref) {
+    final GlobalSearchScope resolveScope = ref.getResolveScope();
+    final HighlightInfo info = areSupersAccessible(aClass, resolveScope, ref.getTextRange(), false);
+    if (info != null) {
+      return info;
+    }
+
+    String message = null;
+    final PsiElement parent = ref.getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      final JavaResolveResult resolveResult = ((PsiMethodCallExpression)parent).resolveMethodGenerics();
+      final PsiMethod method = (PsiMethod)resolveResult.getElement();
+      if (method != null) {
+        final HashSet<PsiClass> classes = new HashSet<>();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(aClass.getProject());
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        
+        message = isSuperTypeAccessible(substitutor.substitute(method.getReturnType()), classes, false, resolveScope, facade);
+        if (message == null) {
+          for (PsiType type : method.getSignature(substitutor).getParameterTypes()) {
+            
+            message = isSuperTypeAccessible(type, classes, false, resolveScope, facade);
+            if (message != null) {
+              break;
+            }
+          }
+        }
+      }
+    }
+    else {
+      final PsiElement resolve = ref.resolve();
+      if (resolve instanceof PsiField) {
+        message = isSuperTypeAccessible(((PsiField)resolve).getType(), new HashSet<>(), false, resolveScope, JavaPsiFacade.getInstance(aClass.getProject()));
+      }
+    }
+
+    if (message != null) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .descriptionAndTooltip(message)
+        .range(ref.getTextRange())
+        .create();
+    }
+
+    
+    return null;
   }
 
   private static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass,
                                                    GlobalSearchScope resolveScope,
-                                                   TextRange range) {
+                                                   TextRange range,
+                                                   boolean checkParameters) {
     final JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
     for (PsiClassType superType : aClass.getSuperTypes()) {
-      final String notAccessibleErrorMessage = isSuperTypeAccessible(superType, new HashSet<PsiClass>(), resolveScope, factory);
+      final String notAccessibleErrorMessage = isSuperTypeAccessible(superType, new HashSet<PsiClass>(), checkParameters, resolveScope, factory);
       if (notAccessibleErrorMessage != null) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .descriptionAndTooltip(notAccessibleErrorMessage)
@@ -1368,28 +1487,41 @@ public class GenericsHighlightUtil {
   @Nullable
   private static String isSuperTypeAccessible(PsiType superType,
                                               HashSet<PsiClass> classes,
+                                              boolean checkParameters, 
                                               GlobalSearchScope resolveScope,
                                               JavaPsiFacade factory) {
     final PsiClass aClass = PsiUtil.resolveClassInType(superType);
     if (aClass != null && classes.add(aClass)) {
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
+      if (vFile == null) {
+        return null;
+      }
+      FileIndexFacade index = FileIndexFacade.getInstance(aClass.getProject());
+      if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) {
+        return null;
+      }
+
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
         return "Cannot access " + HighlightUtil.formatClass(aClass);
       }
 
-      if (superType instanceof PsiClassType) {
-        for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
-          final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, resolveScope, factory);
+      if (checkParameters) {
+        boolean isInLibrary = !index.isInContent(vFile);
+        if (superType instanceof PsiClassType) {
+          for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
+            final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, true, resolveScope, factory);
+            if (notAccessibleMessage != null) {
+              return notAccessibleMessage;
+            }
+          }
+        }
+
+        for (PsiClassType type : aClass.getSuperTypes()) {
+          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, !isInLibrary, resolveScope, factory);
           if (notAccessibleMessage != null) {
             return notAccessibleMessage;
           }
-        }
-      }
-
-      for (PsiClassType type : aClass.getSuperTypes()) {
-        final String notAccessibleMessage = isSuperTypeAccessible(type, classes, resolveScope, factory);
-        if (notAccessibleMessage != null) {
-          return notAccessibleMessage;
         }
       }
     }

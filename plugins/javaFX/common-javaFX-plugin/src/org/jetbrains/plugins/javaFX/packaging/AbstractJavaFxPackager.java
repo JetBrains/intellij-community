@@ -26,9 +26,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -284,13 +282,7 @@ public abstract class AbstractJavaFxPackager {
     try {
       File tempFile = FileUtil.createTempFile("build", ".xml");
       tempFile.deleteOnExit();
-      OutputStream outputStream = new FileOutputStream(tempFile.getAbsolutePath());
-      try {
-        outputStream.write(buildText.getBytes(Charset.defaultCharset()));
-      }
-      finally {
-        outputStream.close();
-      }
+      FileUtil.writeToFile(tempFile, buildText.getBytes(Charset.defaultCharset()));
       commands.add(tempFile.getCanonicalPath());
     }
     catch (IOException e) {

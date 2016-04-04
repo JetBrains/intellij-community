@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -37,6 +36,7 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testStaticMethodCalls() { doTest(false, false); }
   public void testStaticMethodCallsAndOverloadResolution() { doTest(false, false); }
   public void testDefaultMethodOverrideEquivalentObject() { doTest(false, false); }
+  public void testDefaultMethodOverrideAbstract() { doTest(false, false); }
   public void testModifierNativeInInterface() { doTest(false, false); }
   public void testStaticMethods() { doTest(false, false); }
   public void testFinalStaticDefaultMethods() { doTest(false, false); }
@@ -56,6 +56,14 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
 
   public void testInheritanceOfStaticMethodFromDefault() throws Exception {
     doTest();
+  }
+
+  public void testUnrelatedDefaultsOverriddenWithConcreteMethodNonEmptySubstitutor() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testUnrelatedDefaultsWithTypeParameter() throws Exception {
+    doTest(false, false);
   }
 
   public void testStaticMethodAccessibleBothThroughStaticImportAndInheritance() throws Exception {
@@ -83,6 +91,18 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   }
 
   public void testAcceptStaticInterfaceMethodsImportedViaStaticImports() throws Exception {
+    doTest();
+  }
+
+  public void testInherit2MethodsWithSameOverrideEquivalentSignatureFromOneSuperclass() throws Exception {
+    doTest();
+  }
+
+  public void testMultipleDefaultsAndAbstractsSomeOfWhichOverridesEachOther() throws Exception {
+    doTest();
+  }
+
+  public void testSubsignatureCheckWhen2DifferentMethodsBecomeOverrideEquivalent() throws Exception {
     doTest();
   }
 

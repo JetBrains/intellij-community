@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,7 +225,8 @@ public interface IdeActions {
 
   @NonNls String GROUP_OTHER_MENU = "OtherMenu";
   @NonNls String GROUP_EDITOR = "EditorActions";
-  @NonNls String GROUP_DEBUGGER = "DebuggerActions";
+
+  @Deprecated @NonNls String GROUP_DEBUGGER = "DebuggerActions";
   
   @NonNls String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
 
@@ -287,6 +288,7 @@ public interface IdeActions {
   @NonNls String ACTION_ANALYZE_DEPENDENCIES = "ShowPackageDeps";
   @NonNls String ACTION_ANALYZE_BACK_DEPENDENCIES = "ShowBackwardPackageDeps";
   @NonNls String ACTION_ANALYZE_CYCLIC_DEPENDENCIES = "ShowPackageCycles";
+  @NonNls String ACTION_ANALYZE_MODULE_DEPENDENCIES = "ShowModulesDependencies";
   @NonNls String GROUP_MOVE_MODULE_TO_GROUP = "MoveModuleToGroup";
   @NonNls String ACTION_CLEAR_TEXT = "TextComponent.ClearAction";
   @NonNls String ACTION_HIGHLIGHT_USAGES_IN_FILE = "HighlightUsagesInFile";
@@ -302,6 +304,8 @@ public interface IdeActions {
 
   String ACTION_MOVE_STATEMENT_UP_ACTION = "MoveStatementUp";
   String ACTION_MOVE_STATEMENT_DOWN_ACTION = "MoveStatementDown";
+  String MOVE_ELEMENT_LEFT = "MoveElementLeft";
+  String MOVE_ELEMENT_RIGHT = "MoveElementRight";
   
   String ACTION_MOVE_LINE_UP_ACTION = "MoveLineUp";
 

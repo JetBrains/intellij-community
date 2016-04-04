@@ -44,7 +44,6 @@ import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
@@ -53,6 +52,7 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -118,7 +118,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   @Override
   public JComponent createOptionsPanel() {
-    myDetailsComponent = new DetailsComponent(!Registry.is("ide.new.project.settings"), !Registry.is("ide.new.project.settings"));
+    myDetailsComponent = new DetailsComponent(false, false);
     myDetailsComponent.setContent(myPanel);
     myDetailsComponent.setText(getBannerSlogan());
 
@@ -173,7 +173,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myProjectJdkConfigurable.addChangeListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myLanguageLevelCombo.sdkUpdated(myProjectJdkConfigurable.getSelectedProjectJdk());
+        myLanguageLevelCombo.sdkUpdated(myProjectJdkConfigurable.getSelectedProjectJdk(), myProject.isDefault());
         LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).setCurrentLevel(myLanguageLevelCombo.getSelectedLevel());
       }
     });
@@ -245,12 +245,15 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
         }
 
         LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
-        extension.setLanguageLevel(myLanguageLevelCombo.getSelectedLevel());
+        LanguageLevel level = myLanguageLevelCombo.getSelectedLevel();
+        if (level != null) {
+          extension.setLanguageLevel(level);
+        }
         extension.setDefault(myLanguageLevelCombo.isDefault());
         myProjectJdkConfigurable.apply();
 
         if (myProjectName != null) {
-          ((ProjectEx)myProject).setProjectName(myProjectName.getText().trim());
+          ((ProjectEx)myProject).setProjectName(getProjectName());
           if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
         }
       }
@@ -295,19 +298,22 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
-    if (!extension.getLanguageLevel().equals(myLanguageLevelCombo.getSelectedLevel()) ||
-         extension.isDefault() != myLanguageLevelCombo.isDefault()) {
+    if (extension.isDefault() != myLanguageLevelCombo.isDefault() ||
+        !extension.isDefault() && !extension.getLanguageLevel().equals(myLanguageLevelCombo.getSelectedLevel())) {
       return true;
     }
     final String compilerOutput = getOriginalCompilerOutputUrl();
     if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtilCore.urlToPath(compilerOutput)),
                             FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;
-    if (myProjectName != null) {
-      if (!myProjectName.getText().trim().equals(myProject.getName())) return true;
-    }
+    if (!getProjectName().equals(myProject.getName())) return true;
 
     return false;
+  }
+
+  @NotNull
+  public String getProjectName() {
+    return myProjectName != null ? myProjectName.getText().trim() : myProject.getName();
   }
 
   @Nullable

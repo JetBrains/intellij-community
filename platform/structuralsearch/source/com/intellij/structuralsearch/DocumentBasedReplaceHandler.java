@@ -21,7 +21,7 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
   private final Project myProject;
   private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<ReplacementInfo, RangeMarker>();
 
-  DocumentBasedReplaceHandler(Project project) {
+  public DocumentBasedReplaceHandler(Project project) {
     myProject = project;
   }
 
@@ -45,7 +45,7 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
     PsiElement element = result.getMatch();
     PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-    TextRange textRange = result.getMatchRef().getElement().getTextRange();
+    TextRange textRange = result.getMatch().getTextRange();
     assert textRange != null;
     RangeMarker rangeMarker = document.createRangeMarker(textRange);
     rangeMarker.setGreedyToLeft(true);

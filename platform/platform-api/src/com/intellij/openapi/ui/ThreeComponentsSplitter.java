@@ -745,7 +745,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         case MouseEvent.MOUSE_PRESSED:
           if (isInside(e.getPoint())) {
             myWasPressedOnMe = true;
-            myGlassPane.setCursor(getResizeCursor(), myListener);
+            if (myGlassPane != null) {
+              myGlassPane.setCursor(getResizeCursor(), myListener);
+            }
             e.consume();
           } else {
             myWasPressedOnMe = false;
@@ -755,7 +757,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           if (myWasPressedOnMe) {
             e.consume();
           }
-          if (isInside(e.getPoint())) {
+          if (isInside(e.getPoint()) && myGlassPane != null) {
             myGlassPane.setCursor(getResizeCursor(), myListener);
           }
           myWasPressedOnMe = false;

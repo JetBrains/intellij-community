@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xmlb
 
 import com.intellij.util.xmlb.annotations.MapAnnotation
@@ -11,8 +26,7 @@ internal class XmlSerializerMapTest {
   @Test fun beanValueUsingSkipDefaultsFilter() {
     @Tag("bean")
     class BeanWithMapWithBeanValue2 {
-      @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-      public var values: Map<String, BeanWithProperty> = THashMap()
+      @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false) var values: Map<String, BeanWithProperty> = THashMap()
     }
 
     val bean = BeanWithMapWithBeanValue2()
@@ -126,7 +140,7 @@ internal class XmlSerializerMapTest {
   }
 
   private class BeanWithMap {
-    public var VALUES: MutableMap<String, String> = LinkedHashMap()
+    var VALUES: MutableMap<String, String> = LinkedHashMap()
 
     init {
       VALUES.put("a", "1")
@@ -150,7 +164,7 @@ internal class XmlSerializerMapTest {
   private class BeanWithMapWithAnnotations {
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
-    public var VALUES: MutableMap<String, String> = LinkedHashMap()
+    var VALUES: MutableMap<String, String> = LinkedHashMap()
 
     init {
       VALUES.put("a", "1")
@@ -171,7 +185,7 @@ internal class XmlSerializerMapTest {
   }
 
   private class BeanWithMapWithBeanValue {
-    public var VALUES: MutableMap<String, BeanWithProperty> = LinkedHashMap()
+    var VALUES: MutableMap<String, BeanWithProperty> = LinkedHashMap()
   }
 
   @Test fun withBeanValue() {

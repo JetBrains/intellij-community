@@ -314,7 +314,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   private void doSetText(final CharSequence text) {
     final TokenProcessor processor = createTokenProcessor(0);
-    myLexer.start(text, 0, text.length(),myInitialState);
+    final int textLength = text.length();
+    myLexer.start(text, 0, textLength, myInitialState);
     mySegments.removeAll();
     int i = 0;
     while (true) {
@@ -327,12 +328,16 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       myLexer.advance();
     }
     processor.finish();
+    
+    if (textLength > 0 && (mySegments.mySegmentCount == 0 || mySegments.myEnds[mySegments.mySegmentCount - 1] != textLength)) {
+      throw new IllegalStateException("Unexpected termination offset for lexer " + myLexer);
+    }
 
     if(myEditor != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
         @Override
         public void run() {
-          myEditor.repaint(0, text.length());
+          myEditor.repaint(0, textLength);
         }
       });
     }
@@ -409,11 +414,21 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attrs;
   }
 
+  @Override
+  public String toString() {
+    return getClass().getName() + "(" + myLexer.getClass().getName() + ")";
+  }
+
   public class HighlighterIteratorImpl implements HighlighterIterator {
     private int mySegmentIndex = 0;
 
     HighlighterIteratorImpl(int startOffset) {
-      mySegmentIndex = mySegments.findSegmentIndex(startOffset);
+      try {
+        mySegmentIndex = mySegments.findSegmentIndex(startOffset);
+      }
+      catch (IllegalStateException e) {
+        throw new IllegalStateException("Wrong state of " + LexerEditorHighlighter.this, e);
+      }
     }
 
     public int currentIndex() {

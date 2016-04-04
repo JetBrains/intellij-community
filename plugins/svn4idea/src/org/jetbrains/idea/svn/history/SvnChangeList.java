@@ -170,6 +170,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return myAuthor;
   }
 
+  @Nullable
   public Date getCommitDate() {
     return myDate;
   }
@@ -336,12 +337,11 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       return myPathToChangeMapping.get(path);
     }
 
-    private FilePath localDeletedPath(final String fullPath, final boolean isDir) {
+    private FilePath localDeletedPath(@NotNull String fullPath, final boolean isDir) {
       final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
-      final String path = urlMapping.getLocalPath(fullPath);
-      if (path != null) {
-        File file = new File(path);
-        return VcsUtil.getFilePathForDeletedFile(path, isDir || file.isDirectory());
+      final File file = urlMapping.getLocalPath(fullPath);
+      if (file != null) {
+        return VcsUtil.getFilePathForDeletedFile(file.getAbsolutePath(), isDir || file.isDirectory());
       }
 
       return null;

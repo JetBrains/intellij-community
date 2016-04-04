@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -457,20 +457,16 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       final FileReferenceHelper helper = FileReferenceHelperRegistrar.getNotNullHelper(file);
 
       final Collection<PsiFileSystemItem> contexts = getContextsForBindToElement(curVFile, project, helper);
-      switch (contexts.size()) {
-        case 0:
-          break;
-        default:
-          for (PsiFileSystemItem context : contexts) {
-            final VirtualFile contextFile = context.getVirtualFile();
-            assert contextFile != null;
-            if (VfsUtilCore.isAncestor(contextFile, dstVFile, true)) {
-              final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
-              if (path != null) {
-                return rename(path);
-              }
-            }
+
+      for (PsiFileSystemItem context : contexts) {
+        final VirtualFile contextFile = context.getVirtualFile();
+        assert contextFile != null;
+        if (VfsUtilCore.isAncestor(contextFile, dstVFile, true)) {
+          final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
+          if (path != null) {
+            return rename(path);
           }
+        }
       }
 
       PsiFileSystemItem dstItem = helper.getPsiFileSystemItem(project, dstVFile);
@@ -543,7 +539,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @Override
   public String getUnresolvedMessagePattern() {
     return LangBundle.message("error.cannot.resolve")
-           + " " + (isLast() ? LangBundle.message("terms.file") : LangBundle.message("terms.directory"))
+           + " " + (LangBundle.message(isLast() ? "terms.file" : "terms.directory"))
            + " '" + StringUtil.escapePattern(decode(getCanonicalText())) + "'";
   }
 

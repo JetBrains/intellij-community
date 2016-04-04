@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
 import java.util.*;
@@ -81,19 +81,19 @@ public class DynamicMemberUtils {
   }
 
   public static boolean process(PsiScopeProcessor processor, boolean isInStaticContext, PsiElement place, String classSource) {
-    ClassHint classHint = processor.getHint(ClassHint.KEY);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     String name = ResolveUtil.getNameHint(processor);
 
     ClassMemberHolder memberHolder = getMembers(place.getProject(), classSource);
 
-    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
+    if (ResolveUtil.shouldProcessMethods(classHint)) {
       PsiMethod[] methods = isInStaticContext ? memberHolder.getStaticMethods(name) : memberHolder.getMethods(name);
       for (PsiMethod method : methods) {
         if (!processor.execute(method, ResolveState.initial())) return false;
       }
     }
 
-    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
       PsiField[] fields = isInStaticContext ? memberHolder.getStaticFields(name) : memberHolder.getFields(name);
       for (PsiField field : fields) {
         if (!processor.execute(field, ResolveState.initial())) return false;

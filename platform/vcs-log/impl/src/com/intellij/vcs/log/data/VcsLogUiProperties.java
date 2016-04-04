@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.*;
  * Differs from {@link VcsLogSettings} in the fact, that these settings have no representation in the UI settings,
  * and have insignificant effect to the logic of the log, they are just gracefully remember what user prefers to see in the UI.
  */
-@State(name = "Vcs.Log.UiProperties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "Vcs.Log.UiProperties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProperties.State> {
 
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
@@ -44,7 +44,6 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     public boolean LONG_EDGES_VISIBLE = false;
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
-    public boolean HIGHLIGHT_MY_COMMITS = true;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
@@ -144,14 +143,6 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public void enableHighlighter(@NotNull String id, boolean value) {
     myState.HIGHLIGHTERS.put(id, value);
-  }
-
-  public boolean isHighlightMyCommits() {
-    return myState.HIGHLIGHT_MY_COMMITS;
-  }
-
-  public void setHighlightMyCommits(boolean isHighlightMyCommits) {
-    myState.HIGHLIGHT_MY_COMMITS = isHighlightMyCommits;
   }
 
   public static class UserGroup {

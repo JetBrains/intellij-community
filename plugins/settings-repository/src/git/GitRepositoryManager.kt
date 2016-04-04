@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.SmartList
+import com.intellij.util.*
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.api.errors.UnmergedPathsException
@@ -41,16 +40,17 @@ import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
-import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.concurrent.write
 
-class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>, dir: File) : BaseRepositoryManager(dir) {
+class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>, dir: Path) : BaseRepositoryManager(dir) {
   val repository: Repository
     get() {
       var r = _repository
       if (r == null) {
-        r = FileRepositoryBuilder().setWorkTree(dir).build()
+        r = FileRepositoryBuilder().setWorkTree(dir.toFile()).build()
         _repository = r
         if (ApplicationManager.getApplication()?.isUnitTestMode != true) {
           ShutDownTracker.getInstance().registerShutdownTask { _repository?.close() }
@@ -103,7 +103,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   override fun isRepositoryExists(): Boolean {
     val repo = _repository
     if (repo == null) {
-      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir).setup().objectDirectory.exists()
+      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir.toFile()).setup().objectDirectory.exists()
     }
     else {
       return repo.objectDatabase.exists()
@@ -112,8 +112,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   override fun hasUpstream() = getUpstream() != null
 
-  override fun addToIndex(file: File, path: String, content: ByteArray, size: Int) {
-    repository.edit(AddLoadedFile(path, content, size, file.lastModified()))
+  override fun addToIndex(file: Path, path: String, content: ByteArray, size: Int) {
+    repository.edit(AddLoadedFile(path, content, size, file.lastModified().toMillis()))
   }
 
   override fun deleteFromIndex(path: String, isFile: Boolean) {
@@ -166,7 +166,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
     val refSpecs = SmartList(RemoteConfig(repository.config, Constants.DEFAULT_REMOTE_NAME).pushRefSpecs)
     if (refSpecs.isEmpty()) {
-      val head = repository.getRef(Constants.HEAD)
+      val head = repository.findRef(Constants.HEAD)
       if (head != null && head.isSymbolic) {
         refSpecs.add(RefSpec(head.leaf.name))
       }
@@ -239,27 +239,25 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     var addCommand: AddCommand? = null
     val toDelete = SmartList<DeleteDirectory>()
     for ((oldPath, newPath) in pairs) {
-      val old = File(dir, oldPath)
+      val old = dir.resolve(oldPath)
       if (!old.exists()) {
         continue
       }
 
       LOG.info("Rename $oldPath to $newPath")
-
-      val files = old.listFiles()
-      if (files != null) {
-        val new = if (newPath == null) dir else File(dir, newPath)
-        for (file in files) {
+      old.directoryStreamIfExists {
+        val new = if (newPath == null) dir else dir.resolve(newPath)
+        for (file in it) {
           try {
-            if (file.isHidden) {
-              FileUtil.delete(file)
+            if (file.isHidden()) {
+              file.delete()
             }
             else {
-              file.renameTo(File(new, file.name))
+              Files.move(file, new.resolve(file.fileName))
               if (addCommand == null) {
                 addCommand = AddCommand(repository)
               }
-              addCommand.addFilepattern(if (newPath == null) file.name else "$newPath/${file.name}")
+              addCommand!!.addFilepattern(if (newPath == null) file.fileName.toString() else "$newPath/${file.fileName}")
             }
           }
           catch (e: Throwable) {
@@ -270,7 +268,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       }
 
       try {
-        FileUtil.delete(old)
+        old.deleteRecursively()
       }
       catch (e: Throwable) {
         LOG.error(e)
@@ -283,7 +281,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
     repository.edit(toDelete)
     if (addCommand != null) {
-      addCommand.call()
+      addCommand!!.call()
     }
 
     repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
@@ -293,7 +291,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   private fun getIgnoreRules(): IgnoreNode? {
     var node = ignoreRules
     if (node == null) {
-      val file = File(dir, Constants.DOT_GIT_IGNORE)
+      val file = dir.resolve(Constants.DOT_GIT_IGNORE)
       if (file.exists()) {
         node = IgnoreNode()
         file.inputStream().use { node!!.parse(it) }
@@ -319,14 +317,14 @@ fun printMessages(fetchResult: OperationResult) {
 }
 
 class GitRepositoryService : RepositoryService {
-  override fun isValidRepository(file: File): Boolean {
-    if (File(file, Constants.DOT_GIT).exists()) {
+  override fun isValidRepository(file: Path): Boolean {
+    if (file.resolve(Constants.DOT_GIT).exists()) {
       return true
     }
 
     // existing bare repository
     try {
-      FileRepositoryBuilder().setGitDir(file).setMustExist(true).build()
+      FileRepositoryBuilder().setGitDir(file.toFile()).setMustExist(true).build()
     }
     catch (e: IOException) {
       return false

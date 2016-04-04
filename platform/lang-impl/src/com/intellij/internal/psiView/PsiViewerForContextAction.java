@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,36 +18,24 @@ package com.intellij.internal.psiView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Nadya.Zabrodina
- * Date: 7/4/11
- * Time: 4:16 PM
+ * @author Nadya.Zabrodina
  */
 public class PsiViewerForContextAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
-
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile currentFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    new PsiViewerDialog(currentFile.getProject(), false, currentFile, editor).show();
+    DataContext ctx = e.getDataContext();
+    new PsiViewerDialog(e.getProject(), false, CommonDataKeys.PSI_FILE.getData(ctx), CommonDataKeys.EDITOR.getData(ctx)).show();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) {
-      e.getPresentation().setVisible(false);
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    PsiFile currentFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    e.getPresentation().setEnabled(project != null && currentFile != null);
+    boolean enabled = ApplicationManagerEx.getApplicationEx().isInternal() && e.getProject() != null;
+    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(enabled && CommonDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
   }
 }

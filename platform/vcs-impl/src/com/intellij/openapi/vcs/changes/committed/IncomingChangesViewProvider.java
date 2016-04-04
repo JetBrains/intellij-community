@@ -36,7 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -78,9 +77,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
     loadChangesToBrowser(false, true);
 
-    JPanel contentPane = new JPanel(new BorderLayout());
-    contentPane.add(myBrowser, BorderLayout.CENTER);
-    return contentPane;
+    return myBrowser;
   }
 
   public void disposeContent() {

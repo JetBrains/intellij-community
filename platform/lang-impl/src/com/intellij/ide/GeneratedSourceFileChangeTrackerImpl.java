@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +121,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
       protected void run(final @NotNull Result result) {
         if (myProject.isDisposed()) return;
         for (VirtualFile file : files) {
-          if (isGenerated(file)) {
+          if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
             newEditedGeneratedFiles.add(file);
           }
         }
@@ -133,14 +132,5 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
       myEditedGeneratedFiles.addAll(newEditedGeneratedFiles);
       myEditorNotifications.updateAllNotifications();
     }
-  }
-
-  private boolean isGenerated(VirtualFile file) {
-    for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensions()) {
-      if (filter.isGeneratedSource(file, myProject)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

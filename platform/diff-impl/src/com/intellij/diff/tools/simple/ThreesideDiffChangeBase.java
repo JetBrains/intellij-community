@@ -22,11 +22,11 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,7 +36,13 @@ public abstract class ThreesideDiffChangeBase {
   public ThreesideDiffChangeBase(@NotNull MergeLineFragment fragment,
                                  @NotNull List<? extends EditorEx> editors,
                                  @NotNull ComparisonPolicy policy) {
-    myType = calcType(fragment, editors, policy);
+    List<Document> documents = ContainerUtil.map(editors, new Function<EditorEx, Document>() {
+      @Override
+      public Document fun(EditorEx editorEx) {
+        return editorEx.getDocument();
+      }
+    });
+    myType = calcType(fragment, documents, policy);
   }
 
   //
@@ -83,9 +89,9 @@ public abstract class ThreesideDiffChangeBase {
   //
 
   @NotNull
-  private static ConflictType calcType(@NotNull MergeLineFragment fragment,
-                                       @NotNull List<? extends EditorEx> editors,
-                                       @NotNull ComparisonPolicy policy) {
+  public static ConflictType calcType(@NotNull MergeLineFragment fragment,
+                                      @NotNull List<? extends Document> documents,
+                                      @NotNull ComparisonPolicy policy) {
     boolean isLeftEmpty = isIntervalEmpty(fragment, ThreeSide.LEFT);
     boolean isBaseEmpty = isIntervalEmpty(fragment, ThreeSide.BASE);
     boolean isRightEmpty = isIntervalEmpty(fragment, ThreeSide.RIGHT);
@@ -99,7 +105,7 @@ public abstract class ThreesideDiffChangeBase {
         return new ConflictType(TextDiffType.INSERTED, true, false);
       }
       else { // =-=
-        boolean equalModifications = compareLeftAndRight(fragment, editors, policy);
+        boolean equalModifications = compareContents(fragment, documents, policy, ThreeSide.LEFT, ThreeSide.RIGHT);
         return new ConflictType(equalModifications ? TextDiffType.INSERTED : TextDiffType.CONFLICT);
       }
     }
@@ -108,54 +114,44 @@ public abstract class ThreesideDiffChangeBase {
         return new ConflictType(TextDiffType.DELETED);
       }
       else { // -==, ==-, ===
-        boolean unchangedLeft = compareWithBase(fragment, editors, ThreeSide.LEFT);
-        boolean unchangedRight = compareWithBase(fragment, editors, ThreeSide.RIGHT);
+        boolean unchangedLeft = compareContents(fragment, documents, policy, ThreeSide.BASE, ThreeSide.LEFT);
+        boolean unchangedRight = compareContents(fragment, documents, policy, ThreeSide.BASE, ThreeSide.RIGHT);
         assert !unchangedLeft || !unchangedRight;
 
         if (unchangedLeft) return new ConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
         if (unchangedRight) return new ConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
 
-        boolean equalModifications = compareLeftAndRight(fragment, editors, policy);
+        boolean equalModifications = compareContents(fragment, documents, policy, ThreeSide.LEFT, ThreeSide.RIGHT);
         return new ConflictType(equalModifications ? TextDiffType.MODIFIED : TextDiffType.CONFLICT);
       }
     }
   }
 
-  private static boolean compareLeftAndRight(@NotNull MergeLineFragment fragment,
-                                             @NotNull List<? extends EditorEx> editors,
-                                             @NotNull ComparisonPolicy policy) {
-    CharSequence content1 = getRangeContent(fragment, editors, ThreeSide.LEFT);
-    CharSequence content2 = getRangeContent(fragment, editors, ThreeSide.RIGHT);
+  private static boolean compareContents(@NotNull MergeLineFragment fragment,
+                                         @NotNull List<? extends Document> documents,
+                                         @NotNull ComparisonPolicy policy,
+                                         @NotNull ThreeSide side1,
+                                         @NotNull ThreeSide side2) {
+    int start1 = fragment.getStartLine(side1);
+    int end1 = fragment.getEndLine(side1);
+    int start2 = fragment.getStartLine(side2);
+    int end2 = fragment.getEndLine(side2);
 
-    if (policy == ComparisonPolicy.IGNORE_WHITESPACES) {
-      if (content1 == null) content1 = "";
-      if (content2 == null) content2 = "";
+    if (end2 - start2 != end1 - start1) return false;
+
+    Document document1 = side1.select(documents);
+    Document document2 = side2.select(documents);
+
+    for (int i = 0; i < end1 - start1; i++) {
+      int line1 = start1 + i;
+      int line2 = start2 + i;
+
+      CharSequence content1 = DiffUtil.getLinesContent(document1, line1, line1 + 1);
+      CharSequence content2 = DiffUtil.getLinesContent(document2, line2, line2 + 1);
+      if (!ComparisonManager.getInstance().isEquals(content1, content2, policy)) return false;
     }
 
-    if (content1 == null && content2 == null) return true;
-    if (content1 == null ^ content2 == null) return false;
-
-    return ComparisonManager.getInstance().isEquals(content1, content2, policy);
-  }
-
-  private static boolean compareWithBase(@NotNull MergeLineFragment fragment,
-                                         @NotNull List<? extends EditorEx> editors,
-                                         @NotNull ThreeSide side) {
-    CharSequence content1 = getRangeContent(fragment, editors, ThreeSide.BASE);
-    CharSequence content2 = getRangeContent(fragment, editors, side);
-
-    return StringUtil.equals(content1, content2);
-  }
-
-  @Nullable
-  private static CharSequence getRangeContent(@NotNull MergeLineFragment fragment,
-                                              @NotNull List<? extends EditorEx> editors,
-                                              @NotNull ThreeSide side) {
-    DocumentEx document = side.select(editors).getDocument();
-    int line1 = fragment.getStartLine(side);
-    int line2 = fragment.getEndLine(side);
-    if (line1 == line2) return null;
-    return DiffUtil.getLinesContent(document, line1, line2);
+    return true;
   }
 
   private static boolean isIntervalEmpty(@NotNull MergeLineFragment fragment, @NotNull ThreeSide side) {

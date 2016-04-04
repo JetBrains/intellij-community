@@ -104,6 +104,10 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   public void testLinkToPackageSummaryWithReference() throws Exception {
     doTest("class Foo implements com.jetbrains.<caret>SimpleInterface {}");
   }
+  
+  public void testLinkBetweenMethods() throws Exception {
+    doTest("class Foo {{ new com.jetbrains.LinkBetweenMethods().<caret>m1(); }}");
+  }
 
   private void doTest(String text) throws Exception {
     String actualText = getDocumentationText(text);
@@ -176,13 +180,8 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
     }
-  } 
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
   }
-  
+
   private static class MockDocumentationComponent extends DocumentationComponent {
     private String myText;
     

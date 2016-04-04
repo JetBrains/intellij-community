@@ -43,6 +43,7 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
 
   private JPanel myPanel;
   private JBCheckBox myAddTrailingBlankLineCheckbox;
+  private JBCheckBox myUseContinuationIndentForArguments;
   private ComboBox myDictAlignmentCombo;
   private JPanel myPreviewPanel;
 
@@ -66,6 +67,13 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
     });
 
     myAddTrailingBlankLineCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        somethingChanged();
+      }
+    });
+    
+    myUseContinuationIndentForArguments.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         somethingChanged();
@@ -103,6 +111,7 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
       }
     }
     myAddTrailingBlankLineCheckbox.setSelected(getCustomSettings(settings).BLANK_LINE_AT_FILE_END);
+    myUseContinuationIndentForArguments.setSelected(getCustomSettings(settings).USE_CONTINUATION_INDENT_FOR_ARGUMENTS);
   }
 
   @Override
@@ -110,13 +119,15 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     customSettings.DICT_ALIGNMENT = getDictAlignmentAsInt();
     customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();
+    customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS = useContinuationIndentForArguments();
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     return customSettings.DICT_ALIGNMENT != getDictAlignmentAsInt() ||
-           customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine();
+           customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine() || 
+           customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS != useContinuationIndentForArguments() ;
   }
 
   @Override
@@ -137,8 +148,17 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
     return myAddTrailingBlankLineCheckbox.isSelected();
   }
 
-  public static final String PREVIEW = "{\n" +
-                                       "    \"green\": 42,\n" +
-                                       "    \"eggs and ham\": -0.0e0\n" +
-                                       "}";
+  private boolean useContinuationIndentForArguments() {
+    return myUseContinuationIndentForArguments.isSelected();
+  }
+
+  public static final String PREVIEW = "x = max(\n" +
+    "    1,\n" +
+    "    2,\n" +
+    "    3)\n" +
+    "\n" +
+    "{\n" +
+    "    \"green\": 42,\n" +
+    "    \"eggs and ham\": -0.0e0\n" +
+    "}";
 }

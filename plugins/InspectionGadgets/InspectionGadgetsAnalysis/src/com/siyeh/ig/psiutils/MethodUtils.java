@@ -21,6 +21,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
@@ -191,10 +192,19 @@ public class MethodUtils {
   }
 
   public static boolean hasSuper(@NotNull PsiMethod method) {
+    return getSuper(method) != null;
+  }
+
+  @Nullable
+  public static PsiMethod getSuper(@NotNull PsiMethod method) {
     if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return false;
+      return null;
     }
-    return SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
+    final MethodSignatureBackedByPsiMethod signature = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    if (signature == null) {
+      return null;
+    }
+    return signature.getMethod();
   }
 
   public static boolean isOverridden(PsiMethod method) {
@@ -227,14 +237,13 @@ public class MethodUtils {
   }
 
   public static boolean isEmpty(PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      return true;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    return statements.length == 0;
+    return ControlFlowUtils.isEmptyCodeBlock(method.getBody());
   }
 
+  /**
+   * Returns true if the method or constructor is trivial, i.e. does nothing of consequence. This is true when the method is empty, but
+   * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
+   */
   public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
     return isTrivial(method.getBody(), throwIsTrivial);
   }
@@ -313,5 +322,23 @@ public class MethodUtils {
       }
     }
     return false;
+  }
+
+  public static boolean isChainable(PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiElement navigationElement = method.getNavigationElement();
+    if (!(navigationElement instanceof PsiMethod)) {
+      return false;
+    }
+    method = (PsiMethod)navigationElement;
+    final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
+    if (!(lastStatement instanceof PsiReturnStatement)) {
+      return false;
+    }
+    final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
+    final PsiExpression returnValue = returnStatement.getReturnValue();
+    return returnValue instanceof PsiThisExpression;
   }
 }

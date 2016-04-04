@@ -41,7 +41,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
@@ -62,7 +61,7 @@ public class CoreProjectEnvironment {
     preregisterServices();
 
     myFileIndexFacade = createFileIndexFacade();
-    myMessageBus = MessageBusFactory.newMessageBus("CoreProjectEnvironment");
+    myMessageBus = myProject.getMessageBus();
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);

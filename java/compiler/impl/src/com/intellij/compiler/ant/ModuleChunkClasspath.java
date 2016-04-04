@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.compiler.ant.taskdefs.PathRef;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -163,9 +164,7 @@ public class ModuleChunkClasspath extends Path {
                 // Module source entry?
                 for (String url : getCompilationClasses(module, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath,
                                                         generateTestClasspath, dependencyLevel == 0)) {
-                  if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-                    url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
-                  }
+                  url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
                   final String propertyRef = genOptions.getPropertyRefForUrl(url);
                   if (propertyRef != null) {
                     pathItems.add(new PathElementItem(propertyRef));

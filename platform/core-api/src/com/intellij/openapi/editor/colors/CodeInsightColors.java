@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors;
 
+@SuppressWarnings({"deprecation", "unused"})
 public interface CodeInsightColors {
   TextAttributesKey WRONG_REFERENCES_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("WRONG_REFERENCES_ATTRIBUTES");
   TextAttributesKey ERRORS_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ERRORS_ATTRIBUTES");
@@ -31,30 +32,210 @@ public interface CodeInsightColors {
   TextAttributesKey NOT_USED_ELEMENT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("NOT_USED_ELEMENT_ATTRIBUTES");
   TextAttributesKey DEPRECATED_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("DEPRECATED_ATTRIBUTES");
 
-  TextAttributesKey LOCAL_VARIABLE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("LOCAL_VARIABLE_ATTRIBUTES");
-  TextAttributesKey PARAMETER_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("PARAMETER_ATTRIBUTES");
-  TextAttributesKey REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES", LOCAL_VARIABLE_ATTRIBUTES);
-  TextAttributesKey REASSIGNED_PARAMETER_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("REASSIGNED_PARAMETER_ATTRIBUTES", PARAMETER_ATTRIBUTES);
-  TextAttributesKey IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES");
-  TextAttributesKey INSTANCE_FIELD_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INSTANCE_FIELD_ATTRIBUTES");
-  TextAttributesKey STATIC_FIELD_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_ATTRIBUTES");
-  TextAttributesKey STATIC_FINAL_FIELD_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("STATIC_FINAL_FIELD_ATTRIBUTES", STATIC_FIELD_ATTRIBUTES);
-  TextAttributesKey CLASS_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("CLASS_NAME_ATTRIBUTES");
-  TextAttributesKey ANONYMOUS_CLASS_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ANONYMOUS_CLASS_NAME_ATTRIBUTES");
-  TextAttributesKey TYPE_PARAMETER_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TYPE_PARAMETER_NAME_ATTRIBUTES");
-  TextAttributesKey INTERFACE_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INTERFACE_NAME_ATTRIBUTES");
-  TextAttributesKey ENUM_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ENUM_NAME_ATTRIBUTES", CLASS_NAME_ATTRIBUTES);
-  TextAttributesKey ABSTRACT_CLASS_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ABSTRACT_CLASS_NAME_ATTRIBUTES");
-  TextAttributesKey METHOD_CALL_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("METHOD_CALL_ATTRIBUTES");
-  TextAttributesKey METHOD_DECLARATION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("METHOD_DECLARATION_ATTRIBUTES");
-  TextAttributesKey STATIC_METHOD_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("STATIC_METHOD_ATTRIBUTES");
-  TextAttributesKey ABSTRACT_METHOD_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ABSTRACT_METHOD_ATTRIBUTES", METHOD_CALL_ATTRIBUTES);
-  TextAttributesKey INHERITED_METHOD_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INHERITED_METHOD_ATTRIBUTES", METHOD_CALL_ATTRIBUTES);
-  TextAttributesKey CONSTRUCTOR_CALL_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("CONSTRUCTOR_CALL_ATTRIBUTES");
-  TextAttributesKey CONSTRUCTOR_DECLARATION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("CONSTRUCTOR_DECLARATION_ATTRIBUTES");
-  TextAttributesKey ANNOTATION_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ANNOTATION_NAME_ATTRIBUTES");
-  TextAttributesKey ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES");
-  TextAttributesKey ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES");
+  /**
+   * @deprecated For internal use only.
+   */
+  @Deprecated
+  TextAttributesKey DUMMY_DEPRECATED_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("__deprecated__");
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.LOCAL_VARIABLE or define your own. 
+   * For Java-related code use JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey LOCAL_VARIABLE_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.PARAMETER or define your own. 
+   * For Java-related code use JavaHighlightingColors.PARAMETER_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey PARAMETER_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.LOCAL_VARIABLE or define your own. 
+   * For Java-related code use JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.PARAMETER or define your own. 
+   * For Java-related code use JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey REASSIGNED_PARAMETER_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.IDENTIFIER or define your own. 
+   * For Java-related code use JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  TextAttributesKey IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.INSTANCE_FIELD or define your own. 
+   * For Java-related code use JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey INSTANCE_FIELD_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.INSTANCE_FIELD or define your own. 
+   * For Java-related code use JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey INSTANCE_FINAL_FIELD_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.STATIC_FIELD or define your own. 
+   * For Java-related code use JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey STATIC_FIELD_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.STATIC_FIELD or define your own. 
+   * For Java-related code use JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey STATIC_FINAL_FIELD_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.CLASS_NAME or define your own. 
+   * For Java-related code use JavaHighlightingColors.CLASS_NAME_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey CLASS_NAME_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.CLASS_NAME or define your own. 
+   * For Java-related code use JavaHighlightingColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey ANONYMOUS_CLASS_NAME_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.IDENTIFIER or define your own. 
+   * For Java-related code use JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey TYPE_PARAMETER_NAME_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.INTERFACE_NAME or define your own. 
+   * For Java-related code use JavaHighlightingColors.INTERFACE_NAME_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey INTERFACE_NAME_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.CLASS_NAME or define your own. 
+   * For Java-related code use JavaHighlightingColors.ENUM_NAME_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey ENUM_NAME_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.CLASS_NAME or define your own. 
+   * For Java-related code use JavaHighlightingColors.ABSTRACT_CLASS_NAME_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey ABSTRACT_CLASS_NAME_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.FUNCTION_CALL or define your own. 
+   * For Java-related code use JavaHighlightingColors.METHOD_CALL_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey METHOD_CALL_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.FUNCTION_DECLARATION or define your own. 
+   * For Java-related code use JavaHighlightingColors.METHOD_DECLARATION_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey METHOD_DECLARATION_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.STATIC_METHOD or define your own. 
+   * For Java-related code use JavaHighlightingColors.STATIC_METHOD_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey STATIC_METHOD_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.FUNCTION_CALL or define your own. 
+   * For Java-related code use JavaHighlightingColors.ABSTRACT_METHOD_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey ABSTRACT_METHOD_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.FUNCTION_CALL or define your own. 
+   * For Java-related code use JavaHighlightingColors.INHERITED_METHOD_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey INHERITED_METHOD_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.FUNCTION_CALL or define your own. 
+   * For Java-related code use JavaHighlightingColors.CONSTRUCTOR_CALL_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey CONSTRUCTOR_CALL_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.FUNCTION_DECLARATION or define your own. 
+   * For Java-related code use JavaHighlightingColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey CONSTRUCTOR_DECLARATION_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.METADATA or define your own. 
+   * For Java-related code use JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey ANNOTATION_NAME_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.METADATA or define your own. 
+   * For Java-related code use JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
+  /**
+   * @deprecated as of version 16. 
+   * For non-Java code use DefaultLanguageHighlighterColors.METADATA or define your own. 
+   * For Java-related code use JavaHighlightingColors.ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES.
+   * The field will be removed in future versions.
+   */
+  @Deprecated
+  TextAttributesKey ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES = DUMMY_DEPRECATED_ATTRIBUTES;
 
   TextAttributesKey MATCHED_BRACE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MATCHED_BRACE_ATTRIBUTES");
   TextAttributesKey UNMATCHED_BRACE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("UNMATCHED_BRACE_ATTRIBUTES");

@@ -17,7 +17,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.filters.TextConsoleBuilderImpl;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
@@ -34,9 +34,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  * @since 2/18/14
  */
-public class DefaultExternalSystemExecutionConsoleManager implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration> {
-
-  private ProcessHandler myProcessHandler;
+public class DefaultExternalSystemExecutionConsoleManager
+  implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler> {
 
   @NotNull
   @Override
@@ -52,16 +51,17 @@ public class DefaultExternalSystemExecutionConsoleManager implements ExternalSys
                                                  @NotNull Executor executor,
                                                  @NotNull ExecutionEnvironment env,
                                                  @NotNull ProcessHandler processHandler) throws ExecutionException {
-    myProcessHandler = processHandler;
-    ConsoleView executionConsole = new TextConsoleBuilderImpl(project).getConsole();
+    ConsoleView executionConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     executionConsole.attachToProcess(processHandler);
     return executionConsole;
   }
 
   @Override
-  public void onOutput(@NotNull String text, @NotNull Key processOutputType) {
-    assert myProcessHandler != null;
-    myProcessHandler.notifyTextAvailable(text, processOutputType);
+  public void onOutput(@NotNull ExecutionConsole executionConsole,
+                       @NotNull ProcessHandler processHandler,
+                       @NotNull String text,
+                       @NotNull Key processOutputType) {
+    processHandler.notifyTextAvailable(text, processOutputType);
   }
 
   @Override
@@ -70,7 +70,7 @@ public class DefaultExternalSystemExecutionConsoleManager implements ExternalSys
   }
 
   @Override
-  public AnAction[] getRestartActions() {
+  public AnAction[] getRestartActions(@NotNull ExecutionConsole consoleView) {
     return new AnAction[0];
   }
 }

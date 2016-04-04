@@ -16,7 +16,7 @@
 package git4idea.actions;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.Hash;
 import git4idea.branch.GitBrancher;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +26,9 @@ import java.util.Collections;
 public class GitCheckoutRevisionAction extends GitLogSingleCommitAction {
 
   @Override
-  protected void actionPerformed(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
+  protected void actionPerformed(@NotNull GitRepository repository, @NotNull Hash commit) {
     GitBrancher brancher = ServiceManager.getService(repository.getProject(), GitBrancher.class);
-    brancher.checkout(commit.getId().asString(), false, Collections.singletonList(repository), null);
+    brancher.checkout(commit.asString(), false, Collections.singletonList(repository), null);
   }
 
 }

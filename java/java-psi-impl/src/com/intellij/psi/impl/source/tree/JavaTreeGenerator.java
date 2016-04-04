@@ -49,7 +49,7 @@ public class JavaTreeGenerator implements TreeGenerator {
 
   @Override
   @Nullable
-  public TreeElement generateTreeFor(PsiElement original, final CharTable table, final PsiManager manager) {
+  public TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull final CharTable table, @NotNull final PsiManager manager) {
     if (original instanceof PsiKeyword || original instanceof PsiIdentifier) {
       final String text = original.getText();
       return createLeafFromText(text, table, manager, original, ((PsiJavaToken)original).getTokenType());

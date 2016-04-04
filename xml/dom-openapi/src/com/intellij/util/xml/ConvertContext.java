@@ -61,9 +61,11 @@ public abstract class ConvertContext {
   @Nullable
   public abstract GlobalSearchScope getSearchScope();
   
-  public abstract PsiManager getPsiManager();
+  public PsiManager getPsiManager() {
+    return PsiManager.getInstance(getProject());
+  }
 
   public Project getProject() {
-    return getPsiManager().getProject();
+    return getInvocationElement().getManager().getProject();
   }
 }

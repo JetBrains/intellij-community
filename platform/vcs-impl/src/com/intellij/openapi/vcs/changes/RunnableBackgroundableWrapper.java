@@ -25,7 +25,7 @@ public class RunnableBackgroundableWrapper extends Task.Backgroundable {
   private final Runnable myNonCancellable;
 
   public RunnableBackgroundableWrapper(@Nullable Project project, @NotNull String title, Runnable nonCancellable) {
-    super(project, title, false, BackgroundFromStartOption.getInstance());
+    super(project, title, false);
     myNonCancellable = nonCancellable;
   }
 

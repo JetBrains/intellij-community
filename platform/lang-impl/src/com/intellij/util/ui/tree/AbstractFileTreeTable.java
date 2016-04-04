@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.TreeTableSpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
@@ -100,25 +102,31 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     getTree().setRootVisible(showProjectNode);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     getTree().setCellRenderer(new DefaultTreeCellRenderer() {
+      private SimpleColoredComponent myComponent = new SimpleColoredComponent();
       @Override
-      public Component getTreeCellRendererComponent(final JTree tree, final Object value, final boolean sel, final boolean expanded,
-                                                    final boolean leaf, final int row, final boolean hasFocus) {
-        super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+      public Component getTreeCellRendererComponent(JTree tree,
+                                                    Object value,
+                                                    boolean sel,
+                                                    boolean expanded,
+                                                    boolean leaf,
+                                                    int row,
+                                                    boolean hasFocus) {
+        myComponent.clear();
         if (value instanceof ProjectRootNode) {
-          setText(getProjectNodeText());
-          setIcon(AllIcons.Nodes.Project);
-          return this;
-        }
-        FileNode fileNode = (FileNode)value;
-        VirtualFile file = fileNode.getObject();
-        setText(fileNode.getParent() instanceof FileNode ? file.getName() : file.getPresentableUrl());
-        if (file.isDirectory()) {
-          setIcon(fileIndex.isExcluded(file) ? AllIcons.Modules.ExcludeRoot : PlatformIcons.DIRECTORY_CLOSED_ICON);
+          myComponent.append(getProjectNodeText());
+          myComponent.setIcon(AllIcons.Nodes.Project);
         }
         else {
-          setIcon(IconUtil.getIcon(file, 0, null));
+          FileNode fileNode = (FileNode)value;
+          VirtualFile file = fileNode.getObject();
+          myComponent.append(fileNode.getParent() instanceof FileNode ? file.getName() : file.getPresentableUrl());
+          Icon icon = file.isDirectory()
+                      ? fileIndex.isExcluded(file) ? AllIcons.Modules.ExcludeRoot
+                                                   : PlatformIcons.DIRECTORY_CLOSED_ICON : IconUtil.getIcon(file, 0, null);
+          myComponent.setIcon(icon);
         }
-        return this;
+        SpeedSearchUtil.applySpeedSearchHighlighting(AbstractFileTreeTable.this, myComponent, false, selected);
+        return myComponent;
       }
     });
     getTableHeader().setReorderingAllowed(false);

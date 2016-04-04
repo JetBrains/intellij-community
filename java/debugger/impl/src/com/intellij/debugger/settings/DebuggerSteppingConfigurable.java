@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   private JRadioButton myRbEvaluateFinallyAlways;
   private JRadioButton myRbEvaluateFinallyNever;
   private JRadioButton myRbEvaluateFinallyAsk;
+  private JCheckBox myCbResumeOnlyCurrentThread;
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
@@ -59,6 +60,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     else {
       myRbEvaluateFinallyAsk.setSelected(true);
     }
+    myCbResumeOnlyCurrentThread.setSelected(settings.RESUME_ONLY_CURRENT_THREAD);
   }
 
   @Override
@@ -84,6 +86,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
       settings.EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ASK;
     }
 
+    settings.RESUME_ONLY_CURRENT_THREAD = myCbResumeOnlyCurrentThread.isSelected();
     settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
   }
 
@@ -144,6 +147,9 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     evalFinallyPanel.add(box, BorderLayout.CENTER);
     evalFinallyPanel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.on.pop")), BorderLayout.WEST);
     panel.add(evalFinallyPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, cbLeftOffset, 0, 0), 0, 0));
+
+    myCbResumeOnlyCurrentThread = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.resume.only.current.thread"));
+    panel.add(myCbResumeOnlyCurrentThread, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
 
     return panel;
   }

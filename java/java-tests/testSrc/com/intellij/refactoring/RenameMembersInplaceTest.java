@@ -44,6 +44,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     doTestInplaceRename("NEW_NAME");
   }
   
+  public void testClassWithConstructorReferenceInside() throws Exception {
+    doTestInplaceRename("NewName");
+  }
+  
   public void testIncomplete() throws Exception {
     doTestInplaceRename("Klazz");
   }

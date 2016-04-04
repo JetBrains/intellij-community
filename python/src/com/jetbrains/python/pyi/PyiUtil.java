@@ -184,8 +184,8 @@ public class PyiUtil {
           }
         }
       }
-      else if (originalOwner instanceof NameDefiner) {
-        return ((NameDefiner)originalOwner).getElementNamed(name);
+      else if (originalOwner instanceof PyFile) {
+        return ((PyFile)originalOwner).getElementNamed(name);
       }
     }
     return null;

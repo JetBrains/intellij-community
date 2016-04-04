@@ -390,6 +390,18 @@ common.attrs.other =
 	common.data.source.size.list =
 		w:source-size-list
 
+## Subresource Integrity
+	common.data.integrity =
+		w:integrity-metadata
+
+## Content Security Policy
+	common.data.content-security-policy =
+		w:content-security-policy
+
+## List of sandbox keywords
+	common.data.sandbox-allow-list =
+		w:string "" | w:sandbox-allow-list
+
 ## Microdata Properties
   common.data.microdata-properties =
     list { w:microdata-property+ }
@@ -458,6 +470,7 @@ common.attrs.aria.role.separator = ( notAllowed )
 common.attrs.aria.role.slider = ( notAllowed )
 common.attrs.aria.role.spinbutton = ( notAllowed )
 common.attrs.aria.role.status = ( notAllowed )
+common.attrs.aria.role.switch = ( notAllowed )
 common.attrs.aria.role.tab = ( notAllowed )
 common.attrs.aria.role.tablist = ( notAllowed )
 common.attrs.aria.role.tabpanel = ( notAllowed )
@@ -475,6 +488,7 @@ common.attrs.aria.implicit.complementary = ( notAllowed )
 common.attrs.aria.implicit.contentinfo = ( notAllowed )
 common.attrs.aria.implicit.dialog = ( notAllowed )
 common.attrs.aria.implicit.document = ( notAllowed )
+common.attrs.aria.implicit.form = ( notAllowed )
 common.attrs.aria.implicit.group = ( notAllowed )
 common.attrs.aria.implicit.heading = ( notAllowed )
 common.attrs.aria.implicit.img = ( notAllowed )

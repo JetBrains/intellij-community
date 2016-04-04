@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -58,7 +59,7 @@ public class EditTaskDialog extends DialogWrapper {
   protected EditTaskDialog(Project project, LocalTaskImpl task) {
     super(project);
     myTask = task;
-    setTitle("Edit Task " + (task.isIssue() ? task.getId() : ""));
+    setTitle("Edit Task " + (task.isIssue() ? task.getPresentableId() : ""));
 
 //    mySummary.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, "");
     mySummary.setText(task.getSummary());
@@ -92,9 +93,10 @@ public class EditTaskDialog extends DialogWrapper {
       else {
         VcsTaskHandler.TaskInfo[] tasks = handlers[0].getAllExistingTasks();
         ArrayList<VcsTaskHandler.TaskInfo> infos = new ArrayList<VcsTaskHandler.TaskInfo>(Arrays.asList(tasks));
+        Collections.sort(infos);
         infos.add(null);
         myBranch.setModel(new CollectionComboBoxModel<VcsTaskHandler.TaskInfo>(infos));
-        final List<BranchInfo> branches = task.getBranches();
+        final List<BranchInfo> branches = task.getBranches(false);
         if (!branches.isEmpty()) {
           VcsTaskHandler.TaskInfo info = ContainerUtil.find(tasks, new Condition<VcsTaskHandler.TaskInfo>() {
             @Override

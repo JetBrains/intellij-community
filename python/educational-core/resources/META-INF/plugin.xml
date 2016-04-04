@@ -1,0 +1,33 @@
+<idea-plugin version="2">
+  <id>com.jetbrains.edu.core</id>
+  <name>Educational utils and Stepic connector plugin</name>
+  <version>2.0.3</version>
+  <idea-version since-build="143.403"/>
+  <description><![CDATA[
+      Language-independent edu utils and stepic connector for Course creator and Student plugins.
+      ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <change-notes><![CDATA[
+
+      ]]>
+  </change-notes>
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <project-components>
+
+  </project-components>
+
+  <application-components>
+
+  </application-components>
+
+  <actions>
+
+  </actions>
+
+</idea-plugin>

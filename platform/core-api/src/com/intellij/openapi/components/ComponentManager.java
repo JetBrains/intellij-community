@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -49,7 +48,6 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @param interfaceClass the interface class of the component
    * @return component that matches interface class or null if there is no such component
    */
-  @Nullable
   <T> T getComponent(@NotNull Class<T> interfaceClass);
 
   /**

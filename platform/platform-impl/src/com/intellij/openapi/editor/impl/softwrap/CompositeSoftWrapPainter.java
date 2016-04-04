@@ -16,8 +16,6 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ColorProvider;
@@ -145,13 +143,6 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
   @Override
   public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
     initDelegateIfNecessary();
-    if (!myEditor.getSettings().isAllSoftWrapsShown()) {
-      int visualLine = y / lineHeight;
-      LogicalPosition position = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
-      if (position.line != myEditor.getCaretModel().getLogicalPosition().line) {
-        return myDelegate.getDrawingHorizontalOffset(g, drawingType, x, y, lineHeight);
-      }
-    }
     return myDelegate.paint(g, drawingType, x, y, lineHeight);
   }
 

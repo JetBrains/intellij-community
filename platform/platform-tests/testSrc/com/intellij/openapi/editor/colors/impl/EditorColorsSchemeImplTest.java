@@ -16,7 +16,10 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -221,12 +224,12 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     TextAttributes abstractMethodAttrs = new TextAttributes();
     assertTrue(abstractMethodAttrs.isFallbackEnabled());
     Pair<EditorColorsScheme, TextAttributes> result =
-      doTestWriteRead(CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES, abstractMethodAttrs);
+      doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, abstractMethodAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(
-      CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES.getFallbackAttributeKey()
+      DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey()
     );
     TextAttributes directlyDefined =
-      ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
+      ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
     assertTrue(directlyDefined != null && directlyDefined.isFallbackEnabled());
     assertSame(fallbackAttrs, result.second);
   }
@@ -258,6 +261,34 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     TextAttributes classAttrs = scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME);
     TextAttributes classFallbackAttrs = scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME.getFallbackAttributeKey());
     assertSame(classFallbackAttrs, classAttrs);
+  }
+  
+  public void testPreventCyclicTextAttributeDependency() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
+    editorColorsScheme.setName("test");
+    TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
+    TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
+    TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B", keyC);
+    TextAttributesKey keyA = TextAttributesKey.createTextAttributesKey("A", keyB);
+    try {
+      keyD.setFallbackAttributeKey(keyB);
+      editorColorsScheme.getAttributes(keyA);
+    }
+    catch (StackOverflowError e) {
+      fail("Stack overflow detected!");
+    }
+    catch (Throwable e) {
+      String s = e.getMessage();
+      assertTrue(s.contains("B->C->D"));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey("A");
+      TextAttributesKey.removeTextAttributesKey("B");
+      TextAttributesKey.removeTextAttributesKey("C");
+      TextAttributesKey.removeTextAttributesKey("D");
+    }
+    
   }
 
 

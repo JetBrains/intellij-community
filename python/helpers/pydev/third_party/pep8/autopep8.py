@@ -179,11 +179,11 @@ def extended_blank_lines(logical_line,
     elif pep8.DOCSTRING_REGEX.match(previous_logical):
         # Missing blank line between class docstring and method declaration.
         if (
-                                indent_level and
-                                not blank_lines and
-                            not blank_before and
-                        logical_line.startswith(('def ')) and
-                        '(self' in logical_line
+            indent_level and
+            not blank_lines and
+            not blank_before and
+            logical_line.startswith(('def ')) and
+            '(self' in logical_line
         ):
             yield (0, 'E301 expected 1 blank line, found 0')
 pep8.register_check(extended_blank_lines)
@@ -271,8 +271,8 @@ def continued_indentation(logical_line, tokens, indent_level, indent_char,
                 # Visual indent is broken.
                 yield (start, 'E128 {0}'.format(indent[depth]))
             elif (hanging_indent or
-                      (indent_next and
-                               rel_indent[row] == 2 * DEFAULT_INDENT_SIZE)):
+                  (indent_next and
+                   rel_indent[row] == 2 * DEFAULT_INDENT_SIZE)):
                 # Hanging indent is verified.
                 if close_bracket:
                     yield (start, 'E123 {0}'.format(indent_level +
@@ -302,15 +302,15 @@ def continued_indentation(logical_line, tokens, indent_level, indent_char,
 
         # Look for visual indenting.
         if (
-                        parens[row] and
-                            token_type not in (tokenize.NL, tokenize.COMMENT) and
-                    not indent[depth]
+            parens[row] and
+            token_type not in (tokenize.NL, tokenize.COMMENT) and
+            not indent[depth]
         ):
             indent[depth] = start[1]
             indent_chances[start[1]] = True
         # Deal with implicit string concatenation.
         elif (token_type in (tokenize.STRING, tokenize.COMMENT) or
-                      text in ('u', 'ur', 'b', 'br')):
+              text in ('u', 'ur', 'b', 'br')):
             indent_chances[start[1]] = unicode
         # Special case for the "if" statement because len("if (") is equal to
         # 4.
@@ -349,9 +349,9 @@ def continued_indentation(logical_line, tokens, indent_level, indent_char,
                         break
             assert len(indent) == depth + 1
             if (
-                            start[1] not in indent_chances and
-                    # This is for purposes of speeding up E121 (GitHub #90).
-                        not last_line.rstrip().endswith(',')
+                start[1] not in indent_chances and
+                # This is for purposes of speeding up E121 (GitHub #90).
+                not last_line.rstrip().endswith(',')
             ):
                 # Allow to line up tokens.
                 indent_chances[start[1]] = text
@@ -363,9 +363,9 @@ def continued_indentation(logical_line, tokens, indent_level, indent_char,
         last_line = line
 
     if (
-                    indent_next and
-                    not last_line_begins_with_multiline and
-                    pep8.expand_indent(line) == indent_level + DEFAULT_INDENT_SIZE
+        indent_next and
+        not last_line_begins_with_multiline and
+        pep8.expand_indent(line) == indent_level + DEFAULT_INDENT_SIZE
     ):
         pos = (start[0], indent[0] + 4)
         yield (pos, 'E125 {0}'.format(indent_level +
@@ -490,9 +490,9 @@ class FixPEP8(object):
                                                logical_start,
                                                logical_end)
                         if logical and set(range(
-                                        logical[0][0] + 1,
-                                        logical[1][0] + 1)).intersection(
-                            completed_lines):
+                            logical[0][0] + 1,
+                            logical[1][0] + 1)).intersection(
+                                completed_lines):
                             continue
 
                     modified_lines = fix(result, logical)
@@ -650,8 +650,8 @@ class FixPEP8(object):
         # Only proceed if non-whitespace characters match.
         # And make sure we don't break the indentation.
         if (
-                        fixed.replace(' ', '') == target.replace(' ', '') and
-                        _get_indentation(fixed) == _get_indentation(target)
+            fixed.replace(' ', '') == target.replace(' ', '') and
+            _get_indentation(fixed) == _get_indentation(target)
         ):
             self.source[result['line'] - 1] = fixed
         else:
@@ -776,9 +776,9 @@ class FixPEP8(object):
     def fix_long_line_logically(self, result, logical):
         """Try to make lines fit within --max-line-length characters."""
         if (
-                        not logical or
-                            len(logical[2]) == 1 or
-                    self.source[result['line'] - 1].lstrip().startswith('#')
+            not logical or
+            len(logical[2]) == 1 or
+            self.source[result['line'] - 1].lstrip().startswith('#')
         ):
             return self.fix_long_line_physically(result)
 
@@ -1057,8 +1057,8 @@ def untokenize_without_newlines(tokens):
         if start_row > last_row:
             last_column = 0
         if (
-                    (start_column > last_column or token_string == '\n') and
-                    not text.endswith(' ')
+            (start_column > last_column or token_string == '\n') and
+            not text.endswith(' ')
         ):
             text += ' '
 
@@ -1175,8 +1175,8 @@ def fix_e265(source, aggressive=False):  # pylint: disable=unused-argument
     sio = io.StringIO(source)
     for (line_number, line) in enumerate(sio.readlines(), start=1):
         if (
-                    line.lstrip().startswith('#') and
-                        line_number not in ignored_line_numbers
+            line.lstrip().startswith('#') and
+            line_number not in ignored_line_numbers
         ):
             indentation = _get_indentation(line)
             line = line.lstrip()
@@ -1186,10 +1186,10 @@ def fix_e265(source, aggressive=False):  # pylint: disable=unused-argument
                 pos = next((index for index, c in enumerate(line)
                             if c != '#'))
                 if (
-                        # Leave multiple spaces like '#    ' alone.
-                            (line[:pos].count('#') > 1 or line[1].isalnum()) and
-                        # Leave stylistic outlined blocks alone.
-                            not line.rstrip().endswith('#')
+                    # Leave multiple spaces like '#    ' alone.
+                    (line[:pos].count('#') > 1 or line[1].isalnum()) and
+                    # Leave stylistic outlined blocks alone.
+                    not line.rstrip().endswith('#')
                 ):
                     line = '# ' + line.lstrip('# \t')
 
@@ -1408,11 +1408,11 @@ def _shorten_line(tokens, source, indentation, indent_word,
          end_offset) in token_offsets(tokens):
 
         if (
-                                token_type == tokenize.COMMENT and
-                            not is_probably_part_of_multiline(previous_line) and
-                        not is_probably_part_of_multiline(source) and
-                    not source[start_offset + 1:].strip().lower().startswith(
-                        ('noqa', 'pragma:', 'pylint:'))
+            token_type == tokenize.COMMENT and
+            not is_probably_part_of_multiline(previous_line) and
+            not is_probably_part_of_multiline(source) and
+            not source[start_offset + 1:].strip().lower().startswith(
+                ('noqa', 'pragma:', 'pylint:'))
         ):
             # Move inline comments to previous line.
             first = source[:start_offset]
@@ -1436,8 +1436,8 @@ def _shorten_line(tokens, source, indentation, indent_word,
 
             second = (second_indent + source[end_offset:].lstrip())
             if (
-                        not second.strip() or
-                        second.lstrip().startswith('#')
+                not second.strip() or
+                second.lstrip().startswith('#')
             ):
                 continue
 
@@ -1558,8 +1558,8 @@ class ReformattedLines(object):
 
     def add_space_if_needed(self, curr_text, equal=False):
         if (
-                    not self._lines or isinstance(
-                    self._lines[-1], (self._LineBreak, self._Indent, self._Space))
+            not self._lines or isinstance(
+                self._lines[-1], (self._LineBreak, self._Indent, self._Space))
         ):
             return
 
@@ -1568,37 +1568,37 @@ class ReformattedLines(object):
             unicode(self._prev_prev_item) if self._prev_prev_item else '')
 
         if (
-                # The previous item was a keyword or identifier and the current
-                # item isn't an operator that doesn't require a space.
-                    ((self._prev_item.is_keyword or self._prev_item.is_string or
-                          self._prev_item.is_name or self._prev_item.is_number) and
-                         (curr_text[0] not in '([{.,:}])' or
-                              (curr_text[0] == '=' and equal))) or
+            # The previous item was a keyword or identifier and the current
+            # item isn't an operator that doesn't require a space.
+            ((self._prev_item.is_keyword or self._prev_item.is_string or
+              self._prev_item.is_name or self._prev_item.is_number) and
+             (curr_text[0] not in '([{.,:}])' or
+              (curr_text[0] == '=' and equal))) or
 
-                # Don't place spaces around a '.', unless it's in an 'import'
-                # statement.
-                    ((prev_prev_text != 'from' and prev_text[-1] != '.' and
-                              curr_text != 'import') and
+            # Don't place spaces around a '.', unless it's in an 'import'
+            # statement.
+            ((prev_prev_text != 'from' and prev_text[-1] != '.' and
+              curr_text != 'import') and
 
-                     # Don't place a space before a colon.
-                             curr_text[0] != ':' and
+             # Don't place a space before a colon.
+             curr_text[0] != ':' and
 
-                     # Don't split up ending brackets by spaces.
-                         ((prev_text[-1] in '}])' and curr_text[0] not in '.,}])') or
+             # Don't split up ending brackets by spaces.
+             ((prev_text[-1] in '}])' and curr_text[0] not in '.,}])') or
 
-                          # Put a space after a colon or comma.
-                                  prev_text[-1] in ':,' or
+              # Put a space after a colon or comma.
+              prev_text[-1] in ':,' or
 
-                          # Put space around '=' if asked to.
-                              (equal and prev_text == '=') or
+              # Put space around '=' if asked to.
+              (equal and prev_text == '=') or
 
-                          # Put spaces around non-unary arithmetic operators.
-                              ((self._prev_prev_item and
-                                    (prev_text not in '+-' and
-                                         (self._prev_prev_item.is_name or
-                                              self._prev_prev_item.is_number or
-                                              self._prev_prev_item.is_string)) and
-                                        prev_text in ('+', '-', '%', '*', '/', '//', '**', 'in')))))
+              # Put spaces around non-unary arithmetic operators.
+              ((self._prev_prev_item and
+                (prev_text not in '+-' and
+                 (self._prev_prev_item.is_name or
+                  self._prev_prev_item.is_number or
+                  self._prev_prev_item.is_string)) and
+                prev_text in ('+', '-', '%', '*', '/', '//', '**', 'in')))))
         ):
             self._lines.append(self._Space())
 
@@ -1681,10 +1681,10 @@ class ReformattedLines(object):
         actual_indent = indent_amt + 1
 
         if (
-                            unicode(self._prev_item) != '=' and
-                        not self.line_empty() and
-                    not self.fits_on_current_line(
-                                container.size + self._bracket_depth + 2)
+            unicode(self._prev_item) != '=' and
+            not self.line_empty() and
+            not self.fits_on_current_line(
+                container.size + self._bracket_depth + 2)
         ):
 
             if unicode(container)[0] == '(' and self._prev_item.is_name:
@@ -1692,8 +1692,8 @@ class ReformattedLines(object):
                 break_after_open_bracket = True
                 actual_indent = indent_amt + 4
             elif (
-                        break_after_open_bracket or
-                            unicode(self._prev_item) not in '([{'
+                break_after_open_bracket or
+                unicode(self._prev_item) not in '([{'
             ):
                 # If the container doesn't fit on the current line and the
                 # current line isn't empty, place the container on the next
@@ -1731,15 +1731,15 @@ class ReformattedLines(object):
             return
 
         if (not self._prev_item or not self._prev_prev_item or
-                    unicode(self._prev_item) != '='):
+                unicode(self._prev_item) != '='):
             return
 
         self._delete_whitespace()
         prev_prev_index = self._lines.index(self._prev_prev_item)
 
         if (
-                    isinstance(self._lines[prev_prev_index - 1], self._Indent) or
-                    self.fits_on_current_line(item.size + 1)
+            isinstance(self._lines[prev_prev_index - 1], self._Indent) or
+            self.fits_on_current_line(item.size + 1)
         ):
             # The default initializer is already the only item on this line.
             # Don't insert a newline here.
@@ -1762,8 +1762,8 @@ class ReformattedLines(object):
         last_space = None
         for item in reversed(self._lines):
             if (
-                        last_space and
-                        (not isinstance(item, Atom) or not item.is_colon)
+                last_space and
+                (not isinstance(item, Atom) or not item.is_colon)
             ):
                 break
             else:
@@ -1798,9 +1798,9 @@ class ReformattedLines(object):
         # Prefer a space around a '.' in an import statement, and between the
         # 'import' and '('.
         if (
-                        (item_text == '.' and prev_text == 'from') or
-                        (item_text == 'import' and prev_text == '.') or
-                    (item_text == '(' and prev_text == 'import')
+            (item_text == '.' and prev_text == 'from') or
+            (item_text == 'import' and prev_text == '.') or
+            (item_text == '(' and prev_text == 'import')
         ):
             self._lines.append(self._Space())
 
@@ -1825,10 +1825,10 @@ class Atom(object):
         return self.size
 
     def reflow(
-            self, reflowed_lines, continued_indent, extent,
-            break_after_open_bracket=False,
-            is_list_comp_or_if_expr=False,
-            next_is_dot=False
+        self, reflowed_lines, continued_indent, extent,
+        break_after_open_bracket=False,
+        is_list_comp_or_if_expr=False,
+        next_is_dot=False
     ):
         if self._atom.token_type == tokenize.COMMENT:
             reflowed_lines.add_comment(self)
@@ -1842,14 +1842,14 @@ class Atom(object):
 
         prev_item = reflowed_lines.previous_item()
         if (
-                                    not is_list_comp_or_if_expr and
-                                    not reflowed_lines.fits_on_current_line(total_size) and
-                                not (next_is_dot and
-                                         reflowed_lines.fits_on_current_line(self.size + 1)) and
-                            not reflowed_lines.line_empty() and
-                        not self.is_colon and
-                    not (prev_item and prev_item.is_name and
-                                 unicode(self) == '(')
+            not is_list_comp_or_if_expr and
+            not reflowed_lines.fits_on_current_line(total_size) and
+            not (next_is_dot and
+                 reflowed_lines.fits_on_current_line(self.size + 1)) and
+            not reflowed_lines.line_empty() and
+            not self.is_colon and
+            not (prev_item and prev_item.is_name and
+                 unicode(self) == '(')
         ):
             # Start a new line if there is already something on the line and
             # adding this atom would make it go over the max line length.
@@ -1911,10 +1911,10 @@ class Container(object):
             else:
                 item_string = unicode(item)
                 if (
-                            string and
-                            (last_was_keyword or
-                                 (not string.endswith(tuple('([{,.:}]) ')) and
-                                      not item_string.startswith(tuple('([{,.:}])'))))
+                    string and
+                    (last_was_keyword or
+                     (not string.endswith(tuple('([{,.:}]) ')) and
+                      not item_string.startswith(tuple('([{,.:}])'))))
                 ):
                     string += ' '
                 string += item_string
@@ -1953,26 +1953,26 @@ class Container(object):
                                                            IfExpression))
 
             if (
-                                    break_after_open_bracket and index == 0 and
-                            # Prefer to keep empty containers together instead of
-                            # separating them.
-                                    unicode(item) == self.open_bracket and
-                            (not next_item or unicode(next_item) != self.close_bracket) and
-                        (len(self._items) != 3 or not isinstance(next_item, Atom))
+                break_after_open_bracket and index == 0 and
+                # Prefer to keep empty containers together instead of
+                # separating them.
+                unicode(item) == self.open_bracket and
+                (not next_item or unicode(next_item) != self.close_bracket) and
+                (len(self._items) != 3 or not isinstance(next_item, Atom))
             ):
                 reflowed_lines.add_line_break(continued_indent)
                 break_after_open_bracket = False
             else:
                 next_next_item = get_item(self._items, index + 2)
                 if (
-                                                        unicode(item) not in ['.', '%', 'in'] and
-                                                    next_item and not isinstance(next_item, Container) and
-                                                unicode(next_item) != ':' and
-                                        next_next_item and (not isinstance(next_next_item, Atom) or
-                                                                    unicode(next_item) == 'not') and
-                                not reflowed_lines.line_empty() and
-                            not reflowed_lines.fits_on_current_line(
-                                    self._get_extent(index + 1) + 2)
+                    unicode(item) not in ['.', '%', 'in'] and
+                    next_item and not isinstance(next_item, Container) and
+                    unicode(next_item) != ':' and
+                    next_next_item and (not isinstance(next_next_item, Atom) or
+                                        unicode(next_item) == 'not') and
+                    not reflowed_lines.line_empty() and
+                    not reflowed_lines.fits_on_current_line(
+                        self._get_extent(index + 1) + 2)
                 ):
                     reflowed_lines.add_line_break(continued_indent)
 
@@ -2002,7 +2002,7 @@ class Container(object):
                     prev_item = item
                     continue
             elif (unicode(item) not in ['.', '=', ':', 'not'] and
-                      not item.is_name and not item.is_string):
+                  not item.is_name and not item.is_string):
                 break
 
             if unicode(item) == '.':
@@ -2218,9 +2218,9 @@ def _reflow_lines(parsed_tokens, indentation, max_line_length,
         second_token = get_item(parsed_tokens, 1)
 
         if (
-                            first_token and second_token and
-                            unicode(second_token)[0] == '(' and
-                                len(indentation) + len(first_token) + 1 == len(continued_indent)
+            first_token and second_token and
+            unicode(second_token)[0] == '(' and
+            len(indentation) + len(first_token) + 1 == len(continued_indent)
         ):
             return None
 
@@ -2291,18 +2291,18 @@ def _shorten_line_at_tokens(tokens, source, indentation, indent_word,
                 '{': '}'}.get(token_string)
             if unwanted_next_token:
                 if (
-                                get_item(tokens,
-                                         index + 1,
-                                         default=[None, None])[1] == unwanted_next_token or
-                                get_item(tokens,
-                                         index + 2,
-                                         default=[None, None])[1] == unwanted_next_token
+                    get_item(tokens,
+                             index + 1,
+                             default=[None, None])[1] == unwanted_next_token or
+                    get_item(tokens,
+                             index + 2,
+                             default=[None, None])[1] == unwanted_next_token
                 ):
                     continue
 
             if (
-                                index > 2 and token_string == '(' and
-                            tokens[index - 1][1] in ',(%['
+                index > 2 and token_string == '(' and
+                tokens[index - 1][1] in ',(%['
             ):
                 # Don't split after a tuple start, or before a tuple start if
                 # the tuple is in a list.
@@ -2316,8 +2316,8 @@ def _shorten_line_at_tokens(tokens, source, indentation, indent_word,
             # separate lines in the first place.
             previous_token = get_item(tokens, index - 1)
             if (
-                                token_type == tokenize.STRING and
-                            previous_token and previous_token[0] == tokenize.STRING
+                token_type == tokenize.STRING and
+                previous_token and previous_token[0] == tokenize.STRING
             ):
                 offsets.append(start_offset)
 
@@ -2525,14 +2525,14 @@ class Reindenter(object):
                                     want = jlevel * indent_size
                                 break
                     if want < 0:            # Maybe it's a hanging
-                        # comment like this one,
+                                            # comment like this one,
                         # in which case we should shift it like its base
                         # line got shifted.
                         for j in range(i - 1, -1, -1):
                             jline, jlevel = stats[j]
                             if jlevel >= 0:
                                 want = (have + _leading_space_count(
-                                    after[jline - 1]) -
+                                        after[jline - 1]) -
                                         _leading_space_count(lines[jline]))
                                 break
                     if want < 0:
@@ -2731,8 +2731,8 @@ def multiline_string_lines(source, include_docstrings=False):
 
             if token_type == tokenize.STRING and start_row != end_row:
                 if (
-                            include_docstrings or
-                                previous_token_type != tokenize.INDENT
+                    include_docstrings or
+                    previous_token_type != tokenize.INDENT
                 ):
                     # We increment by one since we want the contents of the
                     # string.
@@ -2767,9 +2767,9 @@ def commented_out_code_lines(source):
             if token_type == tokenize.COMMENT:
                 stripped_line = token_string.lstrip('#').strip()
                 if (
-                                    ' ' in stripped_line and
-                                    '#' not in stripped_line and
-                            check_syntax(stripped_line)
+                    ' ' in stripped_line and
+                    '#' not in stripped_line and
+                    check_syntax(stripped_line)
                 ):
                     line_numbers.append(start_row)
     except (SyntaxError, tokenize.TokenError):
@@ -2796,8 +2796,8 @@ def shorten_comment(line, max_line_length, last_comment=False):
 
     MIN_CHARACTER_REPEAT = 5
     if (
-                        len(line) - len(line.rstrip(line[-1])) >= MIN_CHARACTER_REPEAT and
-                not line[-1].isalnum()
+        len(line) - len(line.rstrip(line[-1])) >= MIN_CHARACTER_REPEAT and
+        not line[-1].isalnum()
     ):
         # Trim comments that end with things like ---------
         return line[:max_line_length] + '\n'
@@ -3058,8 +3058,8 @@ def apply_local_fixes(source, options):
         # does not change in this multiline line.
         changed_lines = len(fixed_subsource)
         if (
-                        start_lines[end_log] != end_lines[end_log] and
-                        end_lines[end_log] > last_line
+            start_lines[end_log] != end_lines[end_log] and
+            end_lines[end_log] > last_line
         ):
             after_end = end_lines[end_log] - last_line
             fixed_subsource = (fixed_subsource[:-after_end] +
@@ -3105,9 +3105,9 @@ def apply_local_fixes(source, options):
     # then we can move to this previous line knowing that its
     # indentation level will not be changed.
     if (
-                        start_log > 0 and
-                        indents[start_log - 1] < indents[start_log] and
-                not is_continued_stmt(source[start_log - 1])
+        start_log > 0 and
+        indents[start_log - 1] < indents[start_log] and
+        not is_continued_stmt(source[start_log - 1])
     ):
         start_log -= 1
         start = start_lines[start_log]
@@ -3142,8 +3142,8 @@ def apply_local_fixes(source, options):
                 continue
 
             if (
-                            indents[after_end_log] == indents[start_log] and
-                        is_continued_stmt(source[after_end])
+                indents[after_end_log] == indents[start_log] and
+                is_continued_stmt(source[after_end])
             ):
                 # Find n, the beginning of the last continued statement.
                 # Apply fix to previous block if there is one.
@@ -3234,7 +3234,7 @@ def create_parser():
                              'comma-separated globs')
     parser.add_argument('--list-fixes', action='store_true',
                         help='list codes for fixes; '
-                             'used by --ignore and --select')
+                        'used by --ignore and --select')
     parser.add_argument('--ignore', metavar='errors', default='',
                         help='do not fix these errors/warnings '
                              '(default: {0})'.format(DEFAULT_IGNORE))
@@ -3433,8 +3433,8 @@ def line_shortening_rank(candidate, indent_word, max_line_length,
 
     offset = 0
     if (
-                not lines[0].lstrip().startswith('#') and
-                    lines[0].rstrip()[-1] not in '([{'
+        not lines[0].lstrip().startswith('#') and
+        lines[0].rstrip()[-1] not in '([{'
     ):
         for (opening, closing) in ('()', '[]', '{}'):
             # Don't penalize empty containers that aren't split up. Things like
@@ -3461,8 +3461,8 @@ def line_shortening_rank(candidate, indent_word, max_line_length,
 
     if len(lines) > 1:
         if (
-                    bad_staring_symbol and
-                    lines[1].lstrip().startswith(bad_staring_symbol)
+            bad_staring_symbol and
+            lines[1].lstrip().startswith(bad_staring_symbol)
         ):
             rank += 20
 
@@ -3487,8 +3487,8 @@ def line_shortening_rank(candidate, indent_word, max_line_length,
 
             # Avoid the ugliness of ", (\n".
             if (
-                        current_line.endswith('(') and
-                        current_line[:-1].rstrip().endswith(',')
+                current_line.endswith('(') and
+                current_line[:-1].rstrip().endswith(',')
             ):
                 rank += 100
 

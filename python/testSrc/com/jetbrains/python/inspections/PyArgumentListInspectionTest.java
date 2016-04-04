@@ -190,4 +190,9 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   public void testUnionTypeAttributeCall() {
     doTest();
   }
+
+  // PY-18275
+  public void testStrFormat() {
+    doTest();
+  }
 }

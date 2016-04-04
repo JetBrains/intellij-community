@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -162,33 +162,29 @@ public class PsiCopyPasteManager {
     public PsiElement[] getElements() {
       if (myElements == null) return PsiElement.EMPTY_ARRAY;
 
-      int validElementsCount = 0;
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          int validElementsCount = 0;
+          for (PsiElement element : myElements) {
+            if (element.isValid()) {
+              validElementsCount++;
+            }
+          }
 
-      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        for (PsiElement element : myElements) {
-          if (element.isValid()) {
-            validElementsCount++;
+          if (validElementsCount != myElements.length) {
+            PsiElement[] validElements = new PsiElement[validElementsCount];
+            int j = 0;
+            for (PsiElement element : myElements) {
+              if (element.isValid()) {
+                validElements[j++] = element;
+              }
+            }
+
+            myElements = validElements;
           }
         }
-
-        if (validElementsCount == myElements.length) {
-          return myElements;
-        }
-
-        PsiElement[] validElements = new PsiElement[validElementsCount];
-        int j=0;
-        for (PsiElement element : myElements) {
-          if (element.isValid()) {
-            validElements[j++] = element;
-          }
-        }
-
-        myElements = validElements;
-      }
-      finally {
-        token.finish();
-      }
+      });
 
       return myElements;
     }
@@ -261,33 +257,31 @@ public class PsiCopyPasteManager {
 
     @Nullable
     private String getDataAsText() {
-      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        final List<String> names = new ArrayList<String>();
-        for (PsiElement element : myDataProxy.getElements()) {
-          if (element instanceof PsiNamedElement) {
-            String name = ((PsiNamedElement)element).getName();
-            if (name != null) {
-              names.add(name);
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          final List<String> names = new ArrayList<String>();
+          for (PsiElement element : myDataProxy.getElements()) {
+            if (element instanceof PsiNamedElement) {
+              String name = ((PsiNamedElement)element).getName();
+              if (name != null) {
+                names.add(name);
+              }
             }
           }
+          return names.isEmpty() ? null : StringUtil.join(names, "\n");
         }
-        return names.isEmpty() ? null : StringUtil.join(names, "\n");
-      }
-      finally {
-        token.finish();
-      }
+      });
     }
 
     @Nullable
     private List<File> getDataAsFileList() {
-      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        return asFileList(myDataProxy.getElements());
-      }
-      finally {
-        token.finish();
-      }
+      return ApplicationManager.getApplication().runReadAction(new Computable<List<File>>() {
+        @Override
+        public List<File> compute() {
+          return asFileList(myDataProxy.getElements());
+        }
+      });
     }
 
     @Override

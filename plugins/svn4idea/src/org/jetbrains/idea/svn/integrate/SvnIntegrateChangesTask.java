@@ -25,14 +25,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -337,7 +335,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
         if (!myVcs.getProject().isDisposed()) {
           try {
-            new SvnChangeProvider(myVcs).getChanges(dirtyScope, changesBuilder, indicator, null);
+            new SvnChangeProvider(myVcs).getChanges(dirtyScope, changesBuilder, indicator, new FakeGate());
           }
           catch (VcsException e) {
             caughtError.set(SvnBundle.message("action.Subversion.integrate.changes.error.unable.to.collect.changes.text", e.getMessage()));
@@ -356,5 +354,64 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         }
       }
     }.queue();
+  }
+
+  private static class FakeGate implements ChangeListManagerGate {
+    @Override
+    public List<LocalChangeList> getListsCopy() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public LocalChangeList findChangeList(String name) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public LocalChangeList addChangeList(String name, String comment) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public LocalChangeList findOrCreateList(String name, String comment) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void editComment(String name, String comment) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void editName(String oldName, String newName) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setListsToDisappear(Collection<String> names) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FileStatus getStatus(VirtualFile file) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public FileStatus getStatus(@NotNull FilePath filePath) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FileStatus getStatus(File file) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setDefaultChangeList(@NotNull String list) {
+      throw new UnsupportedOperationException();
+    }
   }
 }

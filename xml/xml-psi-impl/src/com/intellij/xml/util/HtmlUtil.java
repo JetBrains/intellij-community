@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -232,10 +231,6 @@ public class HtmlUtil {
     return HtmlPsiUtil.getRealXmlDocument(doc);
   }
 
-  public static String[] getHtmlTagNames() {
-    return HtmlDescriptorsTable.getHtmlTagNames();
-  }
-  
   public static boolean isShortNotationOfBooleanAttributePreferred() {
     return Registry.is("html.prefer.short.notation.of.boolean.attributes", true);
   }
@@ -323,22 +318,7 @@ public class HtmlUtil {
       final String tagName = tokenizer.nextToken();
       if (tagName.length() == 0) continue;
 
-      descriptors[index++] = new XmlElementDescriptorImpl(null) {
-        @Override
-        public String getName(PsiElement context) {
-          return tagName;
-        }
-
-        @Override
-        public String getDefaultName() {
-          return tagName;
-        }
-
-        @Override
-        public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
-          return true;
-        }
-      };
+      descriptors[index++] = new CustomXmlTagDescriptor(tagName);
     }
 
     return descriptors;
@@ -688,5 +668,29 @@ public class HtmlUtil {
 
   public static boolean isScriptTag(@Nullable XmlTag tag) {
     return tag != null && tag.getLocalName().equalsIgnoreCase(SCRIPT_TAG_NAME);
+  }
+
+  public static class CustomXmlTagDescriptor extends XmlElementDescriptorImpl {
+    private final String myTagName;
+
+    public CustomXmlTagDescriptor(String tagName) {
+      super(null);
+      myTagName = tagName;
+    }
+
+    @Override
+    public String getName(PsiElement context) {
+      return myTagName;
+    }
+
+    @Override
+    public String getDefaultName() {
+      return myTagName;
+    }
+
+    @Override
+    public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
+      return true;
+    }
   }
 }

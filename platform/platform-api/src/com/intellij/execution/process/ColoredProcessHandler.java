@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -21,7 +20,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -39,11 +37,17 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
     super(commandLine);
   }
 
-  public ColoredProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
   }
 
-  public ColoredProcessHandler(@NotNull Process process, @Nullable String commandLine, @NotNull Charset charset) {
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 
@@ -57,8 +61,6 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
    * Overrides should call super.coloredTextAvailable() if they want to pass lines to registered listeners
    * To receive chunks of data instead of fragments inherit your class from ColoredChunksAcceptor interface and
    * override coloredChunksAvailable method.
-   * @param text
-   * @param attributes
    */
   @Override
   public void coloredTextAvailable(String text, Key attributes) {

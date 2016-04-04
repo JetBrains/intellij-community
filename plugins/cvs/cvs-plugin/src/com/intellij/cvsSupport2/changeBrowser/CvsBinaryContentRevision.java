@@ -42,10 +42,7 @@ public class CvsBinaryContentRevision extends CvsContentRevision implements Bina
 
   @Nullable
   public byte[] getBinaryContent() throws VcsException {
-    if (myContent == null) {
-      myContent = loadContent();
-    }
-    return myContent;
+    return getContentAsBytes();
   }
 
   @Override @NonNls

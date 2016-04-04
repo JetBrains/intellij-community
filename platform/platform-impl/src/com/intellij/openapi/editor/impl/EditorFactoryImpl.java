@@ -106,7 +106,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   @NonNls
   public static void throwNotReleasedError(@NotNull Editor editor) {
     if (editor instanceof EditorImpl) {
-      ((EditorImpl)editor).throwDisposalError("Editor of " + editor.getClass() + " hasn't been released:");
+      ((EditorImpl)editor).throwEditorNotDisposedError("Editor of " + editor.getClass() + " hasn't been released:");
     }
     else {
       throw new RuntimeException("Editor of " + editor.getClass() +

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -504,7 +504,7 @@ public class GenerationUtil {
     final Map<PsiMethod, String> setters = context.getSetters();
     while (setters.containsValue(name) || ResolveUtil.resolveExistingElement(
         place,
-        new MethodResolverProcessor(name, place, false, null, null, null, true, true),
+        new MethodResolverProcessor(name, place, false, null, null, null, true),
         classes) != null) {
       name = initialName + count;
       count++;

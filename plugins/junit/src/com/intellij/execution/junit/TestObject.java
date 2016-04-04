@@ -338,8 +338,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
           continue;
         }
 
-        if (perModule != null && element instanceof PsiElement) {
-          final Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)element);
+        final PsiElement psiElement = retrievePsiElement(element);
+        if (perModule != null && psiElement != null) {
+          final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
           if (module != null) {
             List<String> list = perModule.get(module);
             if (list == null) {
@@ -372,6 +373,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  protected PsiElement retrievePsiElement(Object element) {
+    return element instanceof PsiElement ? (PsiElement)element : null;
   }
 
   @Override

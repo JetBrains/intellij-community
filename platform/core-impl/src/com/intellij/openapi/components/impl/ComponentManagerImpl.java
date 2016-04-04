@@ -157,11 +157,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         LOG.error(e);
       }
     }
+    myBaseComponents.clear();
 
     myComponentConfigCount = -1;
   }
 
-  @Nullable
   @SuppressWarnings("unchecked")
   @Override
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
@@ -313,6 +313,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     myPicoContainer = null;
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      myNameToComponent.clear();
+    }
   }
 
   @Override

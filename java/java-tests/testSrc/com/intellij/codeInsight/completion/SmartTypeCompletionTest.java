@@ -724,6 +724,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodColon() throws Exception { doFirstItemTest(':'); }
   public void testVariableColon() throws Exception { doFirstItemTest(':'); }
+  public void testConditionalColonOnNextLine() { doFirstItemTest(':'); }
 
   private void doFirstItemTest(char c) {
     configureByTestName();
@@ -1158,7 +1159,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSuggestCastReturnTypeByCalledMethod() { doTest(); }
 
+  public void testOnlyInterfacesInImplements() { doTest(); }
+
   public void testNonStaticField() throws Exception { doAntiTest(); }
+
+  public void testLocalClassInExpectedTypeArguments() { doTest(); }
 
   private void doActionTest() throws Exception {
     configureByTestName();

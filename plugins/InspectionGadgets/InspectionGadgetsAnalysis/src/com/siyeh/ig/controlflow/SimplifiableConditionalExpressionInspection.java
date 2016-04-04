@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
@@ -31,7 +32,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplifiableConditionalExpressionInspection extends BaseInspection {
+public class SimplifiableConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

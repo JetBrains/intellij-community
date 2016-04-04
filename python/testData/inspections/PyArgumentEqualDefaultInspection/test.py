@@ -79,3 +79,10 @@ def f1(value=-1):
 
 def f2():
     f1(value =-2)
+
+def decorator(arg='baz'):
+    return lambda x: x
+
+@decorator(<weak_warning descr="Argument equals to default parameter value">arg='baz'</weak_warning>)
+def f<error descr="'(' expected">:</error>
+  pass

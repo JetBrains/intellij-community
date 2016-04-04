@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
-public class ComparisonMergeUtilTest : ComparisonMergeUtilTestBase() {
-  public fun testSimpleCases() {
+class ComparisonMergeUtilTest : ComparisonMergeUtilTestBase() {
+  fun testSimpleCases() {
     chars {
       ("" - "" - "")
       ("" - "" - "").matching()
@@ -63,7 +63,7 @@ public class ComparisonMergeUtilTest : ComparisonMergeUtilTestBase() {
     }
   }
 
-  public fun testConflictTYpes() {
+  fun testConflictTYpes() {
     chars {
       ("abcd" - "abcd" - "abXcd")
       ("    " - "    " - "  -  ").matching()
@@ -119,7 +119,7 @@ public class ComparisonMergeUtilTest : ComparisonMergeUtilTestBase() {
     }
   }
 
-  public fun testBoundaryConflicts() {
+  fun testBoundaryConflicts() {
     chars {
       ("abcd" - "abcd" - "abcdx")
       ("    " - "    " - "    -").matching()
@@ -163,7 +163,7 @@ public class ComparisonMergeUtilTest : ComparisonMergeUtilTestBase() {
     }
   }
 
-  public fun testMultipleChanges() {
+  fun testMultipleChanges() {
     chars {
       ("XXbXcXXeX" - "XyXzXXnXkX" - "XqXXeXrXX")
       ("  - -  - " - " - -  - - " - " -  - -  ").matching()

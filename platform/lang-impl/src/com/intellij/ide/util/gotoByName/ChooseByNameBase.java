@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.actions.WindowAction;
@@ -42,6 +41,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -49,6 +49,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -165,6 +166,7 @@ public abstract class ChooseByNameBase {
   static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   private boolean myFixLostTyping = true;
   private boolean myAlwaysHasMore = false;
+  private Point myFocusPoint;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -495,7 +497,7 @@ public abstract class ChooseByNameBase {
 
     if (checkBoxName != null) {
       if (myCheckBox != null && myCheckBoxShortcut != null) {
-        new AnAction("change goto check box", null, null) {
+        new DumbAwareAction("change goto check box", null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             myCheckBox.setSelected(!myCheckBox.isSelected());
@@ -508,6 +510,20 @@ public abstract class ChooseByNameBase {
       myTextField.addFocusListener(new FocusAdapter() {
         @Override
         public void focusLost(@NotNull final FocusEvent e) {
+          if (Registry.is("focus.follows.mouse.workarounds")) {
+            if (myFocusPoint != null) {
+              PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+              if (pointerInfo != null && myFocusPoint.equals(pointerInfo.getLocation())) {
+                // Ignore the loss of focus if the mouse hasn't moved between the last dropdown resize
+                // and the loss of focus event. This happens in focus follows mouse mode if the mouse is
+                // over the dropdown and it resizes to leave the mouse outside the dropdown.
+                IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
+                myFocusPoint = null;
+                return;
+              }
+            }
+            myFocusPoint = null;
+          }
           cancelListUpdater(); // cancel thread as early as possible
           myHideAlarm.addRequest(new Runnable() {
             @Override
@@ -540,15 +556,7 @@ public abstract class ChooseByNameBase {
                   return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
                 }
 
-                EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-                if (queue instanceof IdeEventQueue) {
-                  if (((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
-                    Component root = SwingUtilities.getRoot(myTextField);
-                    if (root == null || root.isShowing()) {
-                      hideHint();
-                    }
-                  }
-                }
+                hideHint();
               }
             }
           }, 5);
@@ -1051,6 +1059,12 @@ public abstract class ChooseByNameBase {
   private void setElementsToList(int pos, @NotNull Collection<?> elements) {
     myListUpdater.cancelAll();
     if (checkDisposed()) return;
+    if (isCloseByFocusLost() && Registry.is("focus.follows.mouse.workarounds")) {
+      PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+      if (pointerInfo != null) {
+        myFocusPoint = pointerInfo.getLocation();
+      }
+    }
     if (elements.isEmpty()) {
       myListModel.clear();
       myTextField.setForeground(JBColor.red);
@@ -1374,11 +1388,8 @@ public abstract class ChooseByNameBase {
     }
 
     private void fillInCommonPrefix(@NotNull final String pattern) {
-      if (StringUtil.isEmpty(pattern) && !canShowListForEmptyPattern()) {
-        return;
-      }
-
       final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(myCheckBox.isSelected()), pattern);
+      if (list.isEmpty()) return;
 
       if (isComplexPattern(pattern)) return; //TODO: support '*'
       final String oldText = getTrimmedText();
@@ -1524,23 +1535,21 @@ public abstract class ChooseByNameBase {
     }
 
     @Override
-    public void runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
-      Runnable r = new Runnable() {
+    public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
+      if (DumbService.isDumbAware(myModel)) return super.runBackgroundProcess(indicator);
+
+      return DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Continuation>() {
         @Override
-        public void run() {
-          computeInReadAction(indicator);
+        public Continuation compute() {
+          return performInReadAction(indicator);
         }
-      };
-      if (DumbService.isDumbAware(myModel)) {
-        ApplicationManager.getApplication().runReadAction(r);
-      } else {
-        DumbService.getInstance(myProject).runReadActionInSmartMode(r);
-      }
+      });
     }
 
+    @Nullable
     @Override
-    public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-      if (myProject != null && myProject.isDisposed()) return;
+    public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+      if (myProject != null && myProject.isDisposed()) return null;
 
       final Set<Object> elements = new LinkedHashSet<Object>();
 
@@ -1554,7 +1563,7 @@ public abstract class ChooseByNameBase {
 
       final boolean edt = myModel instanceof EdtSortingModel;
       final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      return new Continuation(new Runnable() {
         @Override
         public void run() {
           if (!checkDisposed() && !myProgress.isCanceled()) {
@@ -1694,7 +1703,7 @@ public abstract class ChooseByNameBase {
 
   private static final String ACTION_NAME = "Show All in View";
 
-  private abstract class ShowFindUsagesAction extends AnAction {
+  private abstract class ShowFindUsagesAction extends DumbAwareAction {
     public ShowFindUsagesAction() {
       super(ACTION_NAME, ACTION_NAME, AllIcons.General.AutohideOff);
     }

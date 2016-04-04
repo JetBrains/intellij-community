@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,24 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
+import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -32,19 +40,33 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.SwingHelper;
 import com.sun.jna.Native;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
+import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +78,7 @@ import java.util.Locale;
 public class StartupUtil {
   public static final String NO_SPLASH = "nosplash";
 
-  private static SocketLock ourLock;
+  private static SocketLock ourSocketLock;
 
   private StartupUtil() { }
 
@@ -66,17 +88,19 @@ public class StartupUtil {
 
   public synchronized static void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
     // method called by app after startup
-    ourLock.setExternalInstanceListener(consumer);
+    if (ourSocketLock != null) {
+      ourSocketLock.setExternalInstanceListener(consumer);
+    }
   }
 
-  public synchronized static int getAcquiredPort() {
-    BuiltInServer server = ourLock.getServer();
+  public static int getAcquiredPort() {
+    BuiltInServer server = getServer();
     return server == null ? -1 : server.getPort();
   }
 
   @Nullable
   public synchronized static BuiltInServer getServer() {
-    return ourLock == null ? null : ourLock.getServer();
+    return ourSocketLock == null ? null : ourSocketLock.getServer();
   }
 
   interface AppStarter {
@@ -94,6 +118,21 @@ public class StartupUtil {
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
     }
+
+    // avoiding "log4j:WARN No appenders could be found"
+    System.setProperty("log4j.defaultInitOverride", "true");
+    try {
+      org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
+      if (!root.getAllAppenders().hasMoreElements()) {
+        root.setLevel(Level.WARN);
+        root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+      }
+    }
+    catch (Throwable e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+    }
+
     // note: uses config folder!
     if (!checkSystemFolders()) {
       System.exit(Main.DIR_CHECK_FAILED);
@@ -115,6 +154,20 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
+      final Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
+      if (!PrivacyPolicy.isVersionAccepted(policy.getFirst())) {
+        try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              showPrivacyPolicyAgreement(policy.getSecond());
+            }
+          });
+          PrivacyPolicy.setVersionAccepted(policy.getFirst());
+        }
+        catch (Exception ignored) {
+        }
+      }
     }
 
     appStarter.start(newConfigFolder);
@@ -124,7 +177,8 @@ public class StartupUtil {
    * Checks if the program can run under the JDK it was started with.
    */
   private static boolean checkJdkVersion() {
-    if (!"true".equals(System.getProperty("idea.no.jre.check"))) {
+    String jreCheck = System.getProperty("idea.jre.check");
+    if (jreCheck != null && "true".equals(jreCheck)) {
       try {
         // try to find a class from tools.jar
         Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
@@ -148,8 +202,8 @@ public class StartupUtil {
         return false;
       }
     }
-
-    if (!"true".equals(System.getProperty("idea.no.64bit.check"))) {
+    jreCheck = System.getProperty("idea.64bit.check");
+    if (jreCheck != null && "true".equals(jreCheck)) {
       if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
           String message = "32-bit JVM is not supported. Please install 64-bit version.";
           Main.showMessage("Unsupported JVM", message, true);
@@ -252,15 +306,15 @@ public class StartupUtil {
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
-    if (ourLock != null) {
+    if (ourSocketLock != null) {
       throw new AssertionError();
     }
 
-    ourLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
+    ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
     SocketLock.ActivateStatus status;
     try {
-      status = ourLock.lock(args);
+      status = ourSocketLock.lock(args);
     }
     catch (Exception e) {
       Main.showMessage("Cannot Lock System Folders", e);
@@ -269,9 +323,13 @@ public class StartupUtil {
 
     if (status == SocketLock.ActivateStatus.NO_INSTANCE) {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+        @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
         @Override
         public void run() {
-          ourLock.dispose();
+          synchronized (StartupUtil.class) {
+            ourSocketLock.dispose();
+            ourSocketLock = null;
+          }
         }
       });
       return true;
@@ -279,6 +337,11 @@ public class StartupUtil {
     else if (Main.isHeadless() || status == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
       String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
       Main.showMessage("Too Many Instances", message, true);
+    }
+
+    if (status == SocketLock.ActivateStatus.ACTIVATED) {
+      System.out.println("Already running");
+      System.exit(0);
     }
 
     return false;
@@ -294,8 +357,6 @@ public class StartupUtil {
     }
   }
 
-  private static final String JAVA_IO_TEMP_DIR = "java.io.tmpdir";
-
   private static void loadSystemLibraries(final Logger log) {
     // load JNA and Snappy in own temp directory - to avoid collisions and work around no-exec /tmp
     File ideTempDir = new File(PathManager.getTempPath());
@@ -303,24 +364,18 @@ public class StartupUtil {
       throw new RuntimeException("Unable to create temp directory '" + ideTempDir + "'");
     }
 
-    String javaTempDir = System.getProperty(JAVA_IO_TEMP_DIR);
-    try {
-      System.setProperty(JAVA_IO_TEMP_DIR, ideTempDir.getPath());
-      if (System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
-        // force using bundled JNA dispatcher (if not explicitly stated)
-        System.setProperty("jna.nosys", "true");
-        System.setProperty("jna.nounpack", "false");
-      }
-      try {
-        final long t = System.currentTimeMillis();
-        log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
-      }
-      catch (Throwable t) {
-        logError(log, "Unable to load JNA library", t);
-      }
+    if (System.getProperty("jna.tmpdir") == null) {
+      System.setProperty("jna.tmpdir", ideTempDir.getPath());
     }
-    finally {
-      System.setProperty(JAVA_IO_TEMP_DIR, javaTempDir);
+    if (System.getProperty("jna.nosys") == null) {
+      System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
+    }
+    try {
+      long t = System.currentTimeMillis();
+      log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
+    }
+    catch (Throwable t) {
+      logError(log, "Unable to load JNA library", t);
     }
 
     if (SystemInfo.isWin2kOrNewer) {
@@ -379,29 +434,104 @@ public class StartupUtil {
         }
       }
     }
+
+    log.info("JNU charset: " + System.getProperty("sun.jnu.encoding"));
+  }
+
+  /**
+   * @param htmlText Updated version of Privacy Policy text if any.
+   *                        If it's <code>null</code> the standard text from bundled resources would be used.
+   */
+  public static void showPrivacyPolicyAgreement(@NotNull String htmlText) {
+    DialogWrapper dialog = new DialogWrapper(true) {
+      @Nullable
+      @Override
+      protected JComponent createCenterPanel() {
+        JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
+        JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        viewer.setFocusable(true);
+        viewer.addHyperlinkListener(new HyperlinkAdapter() {
+          @Override
+          protected void hyperlinkActivated(HyperlinkEvent e) {
+            URL url = e.getURL();
+            if (url != null) {
+              BrowserUtil.browse(url);
+            }
+            else {
+              SwingHelper.scrollToReference(viewer, e.getDescription());
+            }
+          }
+        });
+        viewer.setText(htmlText);
+        StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
+        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
+        styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+        styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
+        styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
+        styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
+        styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
+        viewer.setCaretPosition(0);
+        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
+        centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
+        centerPanel
+          .add(new JBScrollPane(viewer, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+               BorderLayout.CENTER);
+        return centerPanel;
+      }
+
+      @Override
+      protected void createDefaultActions() {
+        super.createDefaultActions();
+        init();
+        setOKButtonText("Accept");
+        setCancelButtonText("Reject and Exit");
+        setAutoAdjustable(false);
+      }
+
+      @Override
+      public void doCancelAction() {
+        super.doCancelAction();
+        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+        if (application == null) {
+          System.exit(Main.PRIVACY_POLICY_REJECTION);
+        }
+        else {
+          ((ApplicationImpl)application).exit(true, true, false, false);
+        }
+      }
+    };
+    dialog.setModal(true);
+    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement");
+    dialog.setSize(JBUI.scale(509), JBUI.scale(395));
+    dialog.show();
   }
 
   static void runStartupWizard() {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
-    String stepsProvider = appInfo.getCustomizeIDEWizardStepsProvider();
-    if (stepsProvider != null) {
-      CustomizeIDEWizardDialog.showCustomSteps(stepsProvider);
-      PluginManagerCore.invalidatePlugins();
-      return;
-    }
+    String stepsProviderName = appInfo.getCustomizeIDEWizardStepsProvider();
+    if (stepsProviderName != null) {
+      CustomizeIDEWizardStepsProvider provider;
 
-    if (PlatformUtils.isIntelliJ()) {
-      new CustomizeIDEWizardDialog().show();
+      try {
+        Class<?> providerClass = Class.forName(stepsProviderName);
+        provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
+      }
+      catch (Throwable e) {
+        Main.showMessage("Configuration Wizard Failed", e);
+        return;
+      }
+
+      new CustomizeIDEWizardDialog(provider).show();
       PluginManagerCore.invalidatePlugins();
       return;
     }
 
     List<ApplicationInfoEx.PluginChooserPage> pages = appInfo.getPluginChooserPages();
     if (!pages.isEmpty()) {
-      StartupWizard startupWizard = new StartupWizard(pages);
-      startupWizard.setCancelText("Skip");
-      startupWizard.show();
+      new StartupWizard(pages).show();
       PluginManagerCore.invalidatePlugins();
     }
   }

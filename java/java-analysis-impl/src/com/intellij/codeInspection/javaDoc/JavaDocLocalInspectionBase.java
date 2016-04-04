@@ -258,7 +258,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     }
     else {
       return required
-             ? new ProblemDescriptor[]{createDescriptor(elementToHighlight, REQUIRED_JAVADOC_IS_ABSENT, manager, isOnTheFly)}
+             ? new ProblemDescriptor[]{createRequiredJavadocAbsentDescription(elementToHighlight, manager, isOnTheFly)}
              : null;
     }
 
@@ -293,7 +293,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     final boolean required = isJavaDocRequired(psiClass);
     if (docComment == null) {
       return required
-             ? new ProblemDescriptor[]{createDescriptor(elementToHighlight, REQUIRED_JAVADOC_IS_ABSENT, manager, isOnTheFly)}
+             ? new ProblemDescriptor[]{createRequiredJavadocAbsentDescription(elementToHighlight, manager, isOnTheFly)}
              : null;
     }
 
@@ -398,8 +398,9 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
 
     PsiDocComment docComment = psiField.getDocComment();
     if (docComment == null) {
+      final PsiIdentifier nameIdentifier = psiField.getNameIdentifier();
       return isJavaDocRequired(psiField)
-             ? new ProblemDescriptor[]{createDescriptor(psiField.getNameIdentifier(), REQUIRED_JAVADOC_IS_ABSENT, manager, isOnTheFly)}
+             ? new ProblemDescriptor[]{createRequiredJavadocAbsentDescription(nameIdentifier, manager, isOnTheFly)}
              : null;
     }
 
@@ -416,6 +417,19 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     return problems.isEmpty()
            ? null
            : problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  private ProblemDescriptor createRequiredJavadocAbsentDescription(@NotNull PsiElement nameIdentifier,
+                                                                   @NotNull InspectionManager manager,
+                                                                   boolean isOnTheFly) {
+    LocalQuickFix fix = createAddJavadocFix(nameIdentifier, isOnTheFly);
+    return fix != null ? 
+           createDescriptor(nameIdentifier, REQUIRED_JAVADOC_IS_ABSENT, fix, manager, isOnTheFly):
+           createDescriptor(nameIdentifier, REQUIRED_JAVADOC_IS_ABSENT, manager, isOnTheFly);
+  }
+
+  protected LocalQuickFix createAddJavadocFix(@NotNull PsiElement nameIdentifier, boolean isOnTheFly) {
+    return null;
   }
 
   @Override
@@ -440,8 +454,8 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
         }
         if (superMethods.length == 0) {
           final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
-          return nameIdentifier != null ? new ProblemDescriptor[] { createDescriptor(nameIdentifier, REQUIRED_JAVADOC_IS_ABSENT, manager,
-                                                                                     isOnTheFly)} : null;
+          return nameIdentifier != null ? new ProblemDescriptor[] {
+            createRequiredJavadocAbsentDescription(nameIdentifier, manager, isOnTheFly)} : null;
         }
         else {
           return null;

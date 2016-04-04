@@ -25,7 +25,7 @@ import java.io.File
 
 internal class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   companion object {
-    const val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
+    const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
   }
 
   // see note about default state in project store
@@ -79,7 +79,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
   
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, StorageScheme.DEFAULT)
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
 
   override fun setPath(path: String) {
   }
@@ -98,7 +98,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 }
 
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
-@State(name = "ProjectManager", storages = arrayOf(Storage(file = DefaultProjectStoreImpl.FILE_SPEC)))
+@State(name = "ProjectManager", storages = arrayOf(Storage(DefaultProjectStoreImpl.FILE_SPEC)))
 private class DefaultProjectExportableAndSaveTrigger : SettingsSavingComponent {
   @Volatile var project: Project? = null
 

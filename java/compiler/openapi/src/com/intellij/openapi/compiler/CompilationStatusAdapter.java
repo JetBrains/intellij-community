@@ -16,6 +16,9 @@
 package com.intellij.openapi.compiler;
 
 public class CompilationStatusAdapter implements CompilationStatusListener {
+  public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+  }
+
   public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
   }
 

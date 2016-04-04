@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.findDefinitions;
@@ -209,7 +210,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
           }
         });
         // no references here is OK by us.
-        if (showConflicts(project, findDefinitions(target_name, references, null), target_name, null)) {
+        if (showConflicts(project, findDefinitions(target_name, references, Collections.<PsiElement>emptySet()), target_name, null)) {
           return; // got conflicts
         }
 

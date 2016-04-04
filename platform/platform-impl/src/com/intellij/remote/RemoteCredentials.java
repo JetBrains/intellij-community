@@ -25,6 +25,8 @@ public interface RemoteCredentials {
 
   int getPort();
 
+  String getLiteralPort();
+
   @Transient
   String getUserName();
 

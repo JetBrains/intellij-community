@@ -22,7 +22,8 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -45,7 +46,9 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
     if (psiExpression instanceof PsiFunctionalExpression) {
       final InferenceVariable inferenceVariable = session.getInferenceVariable(type);
       if (inferenceVariable != null) {
-        return Collections.singleton(inferenceVariable);
+        final HashSet<InferenceVariable> result = new HashSet<InferenceVariable>();
+        result.add(inferenceVariable);
+        return result;
       }
       if (LambdaUtil.isFunctionalType(type)) {
         final PsiType functionType =

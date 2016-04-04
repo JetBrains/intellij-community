@@ -30,7 +30,7 @@ import java.util.*;
 
 public class TemplateImpl extends Template implements SchemeElement {
   private String myKey;
-  private String myString = null;
+  @NotNull private String myString;
   private String myDescription;
   private String myGroupName;
   private char myShortcutChar = TemplateSettings.DEFAULT_CHAR;
@@ -52,7 +52,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     if (myDescription != null ? !myDescription.equals(template.myDescription) : template.myDescription != null) return false;
     if (myGroupName != null ? !myGroupName.equals(template.myGroupName) : template.myGroupName != null) return false;
     if (myKey != null ? !myKey.equals(template.myKey) : template.myKey != null) return false;
-    if (myString != null ? !myString.equals(template.myString) : template.myString != null) return false;
+    if (!myString.equals(template.myString)) return false;
     if (myTemplateText != null ? !myTemplateText.equals(template.myTemplateText) : template.myTemplateText != null) return false;
 
     if (!new HashSet<Variable>(myVariables).equals(new HashSet<Variable>(template.myVariables))) return false;
@@ -67,7 +67,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     }
     int result;
     result = myKey.hashCode();
-    result = 29 * result + (myString == null ? 0 : myString.hashCode());
+    result = 29 * result + myString.hashCode();
     result = 29 * result + myGroupName.hashCode();
     return result;
   }
@@ -113,7 +113,7 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   public TemplateImpl(@NotNull String key, String string, @NotNull String group) {
     myKey = key;
-    myString = string;
+    myString = StringUtil.convertLineSeparators(StringUtil.notNullize(string));
     myGroupName = group;
   }
 
@@ -271,6 +271,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return -1;
   }
 
+  @NotNull
   @Override
   public String getTemplateText() {
     parseSegments();
@@ -303,8 +304,6 @@ public class TemplateImpl extends Template implements SchemeElement {
       return;
     }
 
-    if (myString == null) myString = "";
-    myString = StringUtil.convertLineSeparators(myString);
     mySegments = new ArrayList<Segment>();
     StringBuilder buffer = new StringBuilder("");
     TemplateTextLexer lexer = new TemplateTextLexer();
@@ -385,13 +384,21 @@ public class TemplateImpl extends Template implements SchemeElement {
     myKey = key;
   }
 
+  @NotNull
+  @Override
   public String getString() {
     parseSegments();
     return myString;
   }
 
-  public void setString(String string) {
-    myString = string;
+  /**
+   * Set template text as it appears in Live Template settings, including variables surrounded with '$'.
+   * The text will be reparsed when needed.
+   * @param string template string text
+   */
+  public void setString(@NotNull String string) {
+    myString = StringUtil.convertLineSeparators(string);
+    toParseSegments = true;
   }
 
   @Override

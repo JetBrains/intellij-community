@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.MacUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,23 +57,26 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   private static void installMacOSXFonts(UIDefaults defaults) {
-    String face = "HelveticaNeue-Regular";
-    LafManagerImpl.initFontDefaults(defaults, face, 13);
+    final String face = "HelveticaNeue-Regular";
+    final String elCapitan = null;//"SFNSText-RegularG2"; // we can experiment with different fonts: /System/Library/Fonts/SFNS*
+    final FontUIResource uiFont = getFont(face, elCapitan, 13, Font.PLAIN);
+    LafManagerImpl.initFontDefaults(defaults, 13, uiFont);
     for (Object key : new HashSet<Object>(defaults.keySet())) {
       Object value = defaults.get(key);
       if (value instanceof FontUIResource) {
         FontUIResource font = (FontUIResource)value;
         if (font.getFamily().equals("Lucida Grande") || font.getFamily().equals("Serif")) {
           if (!key.toString().contains("Menu")) {
-            defaults.put(key, new FontUIResource(face, font.getStyle(), font.getSize()));
+            defaults.put(key, getFont(face, elCapitan, font.getSize(), font.getStyle()));
           }
         }
       }
     }
-    FontUIResource uiFont11 = new FontUIResource("HelveticaNeue-Medium", Font.PLAIN, 11);
+
+    FontUIResource uiFont11 = getFont(face, elCapitan, 11, Font.PLAIN);
     defaults.put("TableHeader.font", uiFont11);
 
-    FontUIResource buttonFont = new FontUIResource("HelveticaNeue-Medium", Font.PLAIN, 13);
+    FontUIResource buttonFont = getFont("HelveticaNeue-Medium", elCapitan, 13, Font.PLAIN);
     defaults.put("Button.font", buttonFont);
     Font menuFont = new FontUIResource("Lucida Grande", Font.PLAIN, 14);
     defaults.put("Menu.font", menuFont);
@@ -101,5 +105,10 @@ public class IntelliJLaf extends DarculaLaf {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  public static Color getSelectedControlColor() {
+    // https://developer.apple.com/library/mac/e/Cocoa/Reference/ApplicationKit/Classes/NSColor_Class/#//apple_ref/occ/clm/NSColor/alternateSelectedControlColor
+    return MacUtil.colorFromNative(Foundation.invoke("NSColor", "alternateSelectedControlColor"));
   }
 }

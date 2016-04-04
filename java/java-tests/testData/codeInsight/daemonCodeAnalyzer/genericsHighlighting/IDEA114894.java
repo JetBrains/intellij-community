@@ -3,7 +3,7 @@ import java.util.List;
 
 class IdeaBugTest {
     public void foo(List<Base> base) {
-        MyCollection.fun<error descr="'fun(java.util.List<? extends Base>, java.util.Comparator<? super Base>)' in 'MyCollection' cannot be applied to '(java.util.List<Base>, SubComparator)'">(base, new SubComparator())</error>;
+        MyCollection.fun(base, <error descr="'fun(java.util.List<? extends Base>, java.util.Comparator<? super Base>)' in 'MyCollection' cannot be applied to '(java.util.List<Base>, SubComparator)'">new SubComparator()</error>);
     }
 }
 

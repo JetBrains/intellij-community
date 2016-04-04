@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 
 /**
  * @author Maxim.Medvedev
@@ -42,6 +44,12 @@ public abstract class GrDocCommentUtil {
     element = skipWhiteSpacesAndStopOnDoc(element, true);
 
     if (element instanceof GrDocCommentOwner) return (GrDocCommentOwner)element;
+    if (element instanceof GrMembersDeclaration) {
+      GrMember[] members = ((GrMembersDeclaration)element).getMembers();
+      if (members.length > 0 && members[0] instanceof GrDocCommentOwner) {
+        return (GrDocCommentOwner)members[0];
+      }
+    }
     return null;
   }
 

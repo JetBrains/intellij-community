@@ -18,43 +18,17 @@ package com.intellij.openapi.editor.impl.view;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphVector;
-import java.awt.geom.Point2D;
 
 /**
  * Fragment of text using a common font
  */
-class TextFragment implements LineFragment {
-  // glyph location that should definitely be outside of painted region
-  private static final Point NOWHERE = new Point(1000000000, 1000000000);
-  
+abstract class TextFragment implements LineFragment {
   @NotNull
-  private final GlyphVector myGlyphVector;
-  @NotNull
-  private final float[] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
+  final float[] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
   
-  TextFragment(@NotNull char[] lineChars, int start, int end, boolean isRtl, 
-               @NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
-    assert start >= 0;
-    assert end <= lineChars.length;
-    assert start < end;
-    myGlyphVector = FontLayoutService.getInstance().layoutGlyphVector(font, fontRenderContext, lineChars, start, end, isRtl);
-    int charCount = end - start;
-    myCharPositions = new float[charCount]; 
-    int charIndex = 0;
-    int numGlyphs = myGlyphVector.getNumGlyphs();
-    for (int i = 0; i <= numGlyphs; i++) {
-      int newCharIndex = i == numGlyphs ? charCount : 
-                         isRtl ? (charCount - 1 - myGlyphVector.getGlyphCharIndex(i)) : myGlyphVector.getGlyphCharIndex(i);
-      if (newCharIndex > charIndex) {
-        float x = (float)myGlyphVector.getGlyphPosition(i).getX();
-        for (int j = charIndex; j < newCharIndex; j++) {
-          myCharPositions[j] = x;
-        }
-        charIndex = newCharIndex;
-      }
-    }
+  TextFragment(int charCount) {
+    assert charCount > 0;
+    myCharPositions = new float[charCount]; // populated by subclasses' constructors
   }
 
   @Override
@@ -71,53 +45,8 @@ class TextFragment implements LineFragment {
   public int getVisualColumnCount(float startX) {
     return myCharPositions.length;
   }
-
-  @Override
-  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
-    assert startColumn >= 0; 
-    assert endColumn <= myCharPositions.length;
-    assert startColumn < endColumn;
-    if (startColumn == 0 && endColumn == myCharPositions.length) {
-      g.drawGlyphVector(myGlyphVector, x, y);
-    }
-    else {
-      // We cannot use our own GlyphVector implementation, as it wouldn't support
-      // Mac-specific automatic font fallback (negative glyph indices will be rejected,
-      // even though they are used inside StandardGlyphVector in that case).
-      // We also cannot clone myGlyphVector without casting to sun.font.StandardGlyphVector, 
-      // as clone() method is not public in GlyphVector (even though it's Cloneable).
-      // So we are modifying glyph positions in-place, and restore them after painting.
-      int logicalStartOffset = isRtl() ? myCharPositions.length - endColumn : startColumn;
-      int logicalEndOffset = isRtl() ? myCharPositions.length - startColumn : endColumn;
-      int glyphCount = myGlyphVector.getNumGlyphs();
-      Point2D[] savedPositions = new Point2D[glyphCount + 1];
-      int lastPaintedGlyph = -1;
-      for (int i = 0; i < glyphCount; i++) {
-        savedPositions[i] = myGlyphVector.getGlyphPosition(i);
-        int c = myGlyphVector.getGlyphCharIndex(i);
-        if (c >= logicalStartOffset && c < logicalEndOffset) {
-          lastPaintedGlyph = i;
-        }
-        else {
-          myGlyphVector.setGlyphPosition(i, NOWHERE);
-        }
-      }
-      savedPositions[glyphCount] = myGlyphVector.getGlyphPosition(glyphCount);
-      myGlyphVector.setGlyphPosition(glyphCount, savedPositions[lastPaintedGlyph + 1]);
-      try {
-        g.drawGlyphVector(myGlyphVector, x - getX(startColumn), y);
-      }
-      finally {
-        for (int i = 0; i <= glyphCount; i++) {
-          myGlyphVector.setGlyphPosition(i, savedPositions[i]);
-        }
-      }
-    }
-  }
   
-  private boolean isRtl() {
-    return (myGlyphVector.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0;
-  }
+  abstract boolean isRtl();
 
   @NotNull
   @Override
@@ -134,7 +63,7 @@ class TextFragment implements LineFragment {
     return startX + getX(offset) - getX(startOffset);
   }
   
-  private float getX(int offset) {
+  float getX(int offset) {
     return offset <= 0 ? 0 : myCharPositions[Math.min(myCharPositions.length, offset) - 1];
   }
 

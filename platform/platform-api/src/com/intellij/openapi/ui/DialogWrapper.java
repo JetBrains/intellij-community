@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
@@ -63,10 +65,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * The standard base class for modal dialog boxes. The dialog wrapper could be used only on event dispatch thread.
@@ -152,7 +152,7 @@ public abstract class DialogWrapper {
   protected Action myOKAction;
   protected Action myCancelAction;
   protected Action myHelpAction;
-  private JButton[] myButtons;
+  private final Map<Action, JButton> myButtonMap = new LinkedHashMap<Action, JButton>();
 
   private boolean myClosed = false;
 
@@ -168,6 +168,7 @@ public abstract class DialogWrapper {
   protected JComponent myPreferredFocusedComponent;
   private Computable<Point> myInitialLocationCallback;
 
+  @NotNull
   protected final Disposable myDisposable = new Disposable() {
     @Override
     public String toString() {
@@ -455,7 +456,7 @@ public abstract class DialogWrapper {
   protected JComponent createSouthPanel() {
     Action[] actions = filter(createActions());
     Action[] leftSideActions = createLeftSideActions();
-    List<JButton> buttons = new ArrayList<JButton>();
+    Map<Action, JButton> buttonMap = new LinkedHashMap<Action, JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
     if ((UIUtil.isUnderAquaBasedLookAndFeel())
@@ -487,7 +488,7 @@ public abstract class DialogWrapper {
     if (actions.length > 0 || leftSideActions.length > 0) {
       int gridX = 0;
       if (leftSideActions.length > 0) {
-        JPanel buttonsPanel = createButtons(leftSideActions, buttons);
+        JPanel buttonsPanel = createButtons(leftSideActions, buttonMap);
         if (actions.length > 0) {
           buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
         }
@@ -520,7 +521,7 @@ public abstract class DialogWrapper {
           }*/
         }
 
-        JPanel buttonsPanel = createButtons(actions, buttons);
+        JPanel buttonsPanel = createButtons(actions, buttonMap);
         lrButtonsPanel.add(buttonsPanel,
                            new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
                                                   0));
@@ -530,7 +531,8 @@ public abstract class DialogWrapper {
                            new GridBagConstraints(gridX, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
                                                   0));
       }
-      myButtons = buttons.toArray(new JButton[buttons.size()]);
+      myButtonMap.clear();
+      myButtonMap.putAll(buttonMap);
     }
 
     if (hasHelpToMoveToLeftSide) {
@@ -602,10 +604,21 @@ public abstract class DialogWrapper {
 
     JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(checkBox);
-
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
     checkBox.setBorder(JBUI.Borders.emptyRight(20));
+    if (SystemInfo.isMac) {
+      JButton helpButton = null;
+      for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
+        if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
+          helpButton = button;
+          break;
+        }
+      }
+      if (helpButton != null) {
+        return JBUI.Panels.simplePanel(panel).addToLeft(helpButton);
+      }
+    }
 
     return panel;
   }
@@ -621,7 +634,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createButtons(@NotNull Action[] actions, @NotNull List<JButton> buttons) {
+  private JPanel createButtons(@NotNull Action[] actions, @NotNull Map<Action, JButton> buttons) {
     if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
       final List<Action> actionList = new ArrayList<Action>();
       for (Action action : actions) {
@@ -656,10 +669,20 @@ public abstract class DialogWrapper {
         myPreferredFocusedComponent = button;
       }
 
-      buttons.add(button);
+      buttons.put(action, button);
       buttonsPanel.add(button);
     }
     return buttonsPanel;
+  }
+
+  /**
+   *
+   * @param action should be registered to find corresponding JButton
+   * @return button for specified action or null if it's not found
+   */
+  @Nullable
+  protected JButton getButton(@NotNull Action action) {
+    return myButtonMap.get(action);
   }
 
   /**
@@ -688,7 +711,7 @@ public abstract class DialogWrapper {
           final char mnemonic = (char)eachInfo.getMnemonic();
           JRootPane rootPane = getPeer().getRootPane();
           if (rootPane != null) {
-            new AnAction() {
+            new DumbAwareAction() {
               @Override
               public void actionPerformed(AnActionEvent e) {
                 final JBOptionButton buttonToActivate = eachInfo.getButton();
@@ -867,10 +890,11 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.cancelAllRequests();
     myValidationAlarm.cancelAllRequests();
     myDisposed = true;
-    if (myButtons != null) {
-      for (JButton button : myButtons) {
+    if (myButtonMap != null) {
+      for (JButton button : myButtonMap.values()) {
         button.setAction(null); // avoid memory leak via KeyboardManager
       }
+      myButtonMap.clear();
     }
 
     final JRootPane rootPane = getRootPane();
@@ -1227,7 +1251,7 @@ public abstract class DialogWrapper {
     myPeer.setContentPane(root);
 
     final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
-    final AnAction toggleShowOptions = new AnAction() {
+    final AnAction toggleShowOptions = new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         expandNextOptionButton();
@@ -1283,7 +1307,7 @@ public abstract class DialogWrapper {
   }
 
   private static void installEnterHook(JComponent root, Disposable disposable) {
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -1661,7 +1685,7 @@ public abstract class DialogWrapper {
     if (cancelKeyboardAction != null) {
       rootPane
         .registerKeyboardAction(cancelKeyboardAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-      registerForEveryKeyboardShortcut(cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
+      ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
     }
 
     if (ApplicationInfo.contextHelpAvailable()) {
@@ -1672,11 +1696,11 @@ public abstract class DialogWrapper {
         }
       };
 
-      registerForEveryKeyboardShortcut(helpAction, CommonShortcuts.getContextHelp());
+      ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), helpAction, CommonShortcuts.getContextHelp());
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
-    if (myButtons != null) {
+    if (myButtonMap != null) {
       rootPane.registerKeyboardAction(new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -1716,20 +1740,8 @@ public abstract class DialogWrapper {
       };
   }
 
-  private void registerForEveryKeyboardShortcut(ActionListener action, @NotNull ShortcutSet shortcuts) {
-    for (Shortcut shortcut : shortcuts.getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut ks = (KeyboardShortcut)shortcut;
-        KeyStroke first = ks.getFirstKeyStroke();
-        KeyStroke second = ks.getSecondKeyStroke();
-        if (second == null) {
-          getRootPane().registerKeyboardAction(action, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
-        }
-      }
-    }
-  }
-
   private void focusPreviousButton() {
+    JButton[] myButtons = new ArrayList<JButton>(myButtonMap.values()).toArray(new JButton[0]);
     for (int i = 0; i < myButtons.length; i++) {
       if (myButtons[i].hasFocus()) {
         if (i == 0) {
@@ -1743,6 +1755,7 @@ public abstract class DialogWrapper {
   }
 
   private void focusNextButton() {
+    JButton[] myButtons = new ArrayList<JButton>(myButtonMap.values()).toArray(new JButton[0]);
     for (int i = 0; i < myButtons.length; i++) {
       if (myButtons[i].hasFocus()) {
         if (i == myButtons.length - 1) {
@@ -1756,7 +1769,7 @@ public abstract class DialogWrapper {
   }
 
   public long getTypeAheadTimeoutMs() {
-    return 0l;
+    return 0L;
   }
 
   public boolean isToDispatchTypeAhead() {

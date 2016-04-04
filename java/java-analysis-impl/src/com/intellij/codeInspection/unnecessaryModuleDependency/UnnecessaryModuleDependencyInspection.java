@@ -123,7 +123,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       final String allContainsMessage = InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName());
       return manager.createProblemDescriptor(allContainsMessage, new RemoveModuleDependencyFix(module, dependency));
     } else {
-      String message = InspectionsBundle.message("suspected.module.dependency.problem.descriptor", module.getName(), dependency.getName(), scope.getDisplayName(), dependency.getName());
+      String message = InspectionsBundle.message("suspected.module.dependency.problem.descriptor", module.getName(), dependency.getName(), scope.getDisplayName());
       return manager.createProblemDescriptor(message);
     }
   }

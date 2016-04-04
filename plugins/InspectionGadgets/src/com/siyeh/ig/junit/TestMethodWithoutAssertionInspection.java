@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,12 @@ import java.util.Arrays;
 
 public class TestMethodWithoutAssertionInspection extends TestMethodWithoutAssertionInspectionBase {
 
-  public TestMethodWithoutAssertionInspection() {
-  }
-
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(classNames, methodNamePatterns), "Assertion class name",
-                                 InspectionGadgetsBundle.message("method.name.pattern")));
+      new ListWrappingTableModel(Arrays.asList(methodMatcher.getClassNames(), methodMatcher.getMethodNamePatterns()), "Assertion class name",
+                                 InspectionGadgetsBundle.message("method.name.regex")));
     final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose assertion class");
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion");

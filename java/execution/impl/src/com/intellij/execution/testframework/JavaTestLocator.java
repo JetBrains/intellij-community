@@ -67,7 +67,7 @@ public class JavaTestLocator implements SMTestLocator {
         PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
         if (aClass != null) {
           results = ContainerUtil.newSmartList();
-          PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
+          PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
           if (methods.length > 0) {
             for (PsiMethod method : methods) {
               results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)

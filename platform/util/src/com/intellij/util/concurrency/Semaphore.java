@@ -80,7 +80,8 @@ public class Semaphore {
     sync.acquireSharedInterruptibly(1);
   }
 
-  public boolean waitFor(final long msTimeout)  {
+  // true if semaphore became free
+  public boolean waitFor(final long msTimeout) {
     try {
       return waitForUnsafe(msTimeout);
     }
@@ -89,6 +90,7 @@ public class Semaphore {
     }
   }
 
+  // true if semaphore became free
   public boolean waitForUnsafe(long msTimeout) throws InterruptedException {
     if (sync.tryAcquireShared(1) >= 0) return true;
     return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(msTimeout));

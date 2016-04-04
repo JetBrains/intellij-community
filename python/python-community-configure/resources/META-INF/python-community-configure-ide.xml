@@ -1,0 +1,20 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
+  <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
+       Both Community and Professional editions. -->
+
+  <xi:include href="/META-INF/python-community-configure-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
+                         displayName="Project Structure"
+                         provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         displayName="Project Interpreter"
+                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
+                         displayName="Project Dependencies"
+                         provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
+  </extensions>
+</idea-plugin>

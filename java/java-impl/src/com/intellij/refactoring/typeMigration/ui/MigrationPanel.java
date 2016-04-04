@@ -37,7 +37,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandler;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
@@ -68,7 +67,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -79,7 +80,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   @NonNls private static final String MIGRATION_USAGES = "migration.usages";
   private static final DataKey<TypeMigrationUsageInfo[]> MIGRATION_USAGES_KEYS = DataKey.create(MIGRATION_USAGES);
 
-  private final PsiElement myInitialRoot;
+  private final PsiElement[] myInitialRoots;
   private final TypeMigrationLabeler myLabeler;
 
 
@@ -89,15 +90,16 @@ public class MigrationPanel extends JPanel implements Disposable {
   private final MigrationUsagesPanel myUsagesPanel;
   private final MigrationConflictsPanel myConflictsPanel;
 
-  public MigrationPanel(final PsiElement root, TypeMigrationLabeler labeler, final Project project, final boolean previewUsages) {
+  public MigrationPanel(final PsiElement[] roots, TypeMigrationLabeler labeler, final Project project, final boolean previewUsages) {
     super(new BorderLayout());
-    myInitialRoot = root;
+    myInitialRoots = roots;
     myLabeler = labeler;
     myProject = project;
 
     myRootsTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     final TypeMigrationTreeBuilder builder = new TypeMigrationTreeBuilder(myRootsTree, project);
-    final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, builder, root, previewUsages);
+
+    final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, roots, previewUsages);
     builder.setRoot(currentRoot);
     initTree(myRootsTree);
     myRootsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -159,7 +161,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     final Object userObject = migrationNodes[0].getUserObject();
     if (userObject instanceof MigrationNode) {
       final MigrationNode migrationNode = (MigrationNode)userObject;
-      final UsageInfo[] failedUsages = myLabeler.getFailedUsages();
+      final UsageInfo[] failedUsages = myLabeler.getFailedUsages(migrationNode.getInfo());
       if (failedUsages.length > 0) {
         myConflictsPanel.showUsages(PsiElement.EMPTY_ARRAY, failedUsages);
       }
@@ -254,7 +256,9 @@ public class MigrationPanel extends JPanel implements Disposable {
         UsageViewManager.getInstance(myProject).closeContent(myContent);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            ChangeTypeSignatureHandler.invoke(myProject, myInitialRoot, myLabeler.getRules(), null);
+            final TypeMigrationDialog.MultipleElements dialog =
+              new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
+            dialog.show();
           }
         });
       }

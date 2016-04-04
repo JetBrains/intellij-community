@@ -27,6 +27,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Locale;
+
 /**
  * @author nik
  */
@@ -40,11 +42,12 @@ public class MarkSourceRootAction extends MarkRootActionBase {
     ModuleSourceRootEditHandler<?> editHandler = ModuleSourceRootEditHandler.getEditHandler(type);
     LOG.assertTrue(editHandler != null);
     presentation.setIcon(editHandler.getRootIcon());
-    presentation.setText(editHandler.getRootTypeName() + " Root");
-    presentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootTypeName()));
+    presentation.setText(editHandler.getFullRootTypeName());
+    presentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", 
+                                                      editHandler.getFullRootTypeName().toLowerCase(Locale.getDefault())));
   }
 
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
     entry.addSourceFolder(vFile, myRootType);
   }
 

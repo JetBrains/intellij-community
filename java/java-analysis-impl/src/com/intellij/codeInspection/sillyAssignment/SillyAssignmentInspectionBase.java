@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,26 +97,51 @@ public class SillyAssignmentInspectionBase extends BaseJavaBatchLocalInspectionT
     PsiExpression lExpression = assignment.getLExpression();
     PsiExpression rExpression = assignment.getRExpression();
     if (rExpression == null) return;
+
     lExpression = PsiUtil.deparenthesizeExpression(lExpression);
-    rExpression = PsiUtil.deparenthesizeExpression(rExpression);
     if (!(lExpression instanceof PsiReferenceExpression)) return;
+    PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
+    final PsiElement resolved = lRef.resolve();
+    if (!(resolved instanceof PsiVariable)) return;
+    final PsiVariable variable = (PsiVariable)resolved;
+
+    rExpression = deparenthesizeRExpr(rExpression, variable);
+
     PsiReferenceExpression rRef;
     if (!(rExpression instanceof PsiReferenceExpression)) {
       if (!(rExpression instanceof PsiAssignmentExpression)) return;
       final PsiAssignmentExpression rAssignmentExpression = (PsiAssignmentExpression)rExpression;
-      final PsiExpression assignee = PsiUtil.deparenthesizeExpression(rAssignmentExpression.getLExpression());
+      final PsiExpression assignee = deparenthesizeRExpr(rAssignmentExpression.getLExpression(), variable);
       if (!(assignee instanceof PsiReferenceExpression)) return;
       rRef = (PsiReferenceExpression)assignee;
     } else {
       rRef = (PsiReferenceExpression)rExpression;
     }
-    PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
     PsiManager manager = assignment.getManager();
     if (!sameInstanceReferences(lRef, rRef, manager)) return;
-    final PsiVariable variable = (PsiVariable)lRef.resolve();
-    if (variable == null) return;
     holder.registerProblem(assignment, InspectionsBundle.message("assignment.to.itself.problem.descriptor", variable.getName()),
                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix());
+  }
+
+  private static PsiExpression deparenthesizeRExpr(PsiExpression rExpression, PsiVariable variable) {
+    rExpression = PsiUtil.skipParenthesizedExprDown(rExpression);
+    if (rExpression instanceof PsiTypeCastExpression) {
+      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)rExpression;
+      final PsiExpression operand = typeCastExpression.getOperand();
+      final PsiTypeElement castTypeElement = typeCastExpression.getCastType();
+      if (castTypeElement == null || operand == null) return null;
+      final PsiType castType = castTypeElement.getType();
+      if (castType instanceof PsiPrimitiveType) {
+        if (variable.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          return rExpression;
+        }
+        else if (TypeUtils.isNarrowingConversion(operand.getType(), castType)) {
+          return null;
+        }
+      }
+      return deparenthesizeRExpr(operand, variable);
+    }
+    return rExpression;
   }
 
   protected LocalQuickFix createRemoveAssignmentFix() {

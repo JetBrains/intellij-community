@@ -16,9 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -64,11 +62,9 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
 
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    if (myName.equals(FxmlConstants.FX_ROOT)) {
-      final JavaFxClassBackedElementDescriptor tagDescriptor = getRootTagDescriptor(context);
-      if (tagDescriptor != null) {
-        return tagDescriptor.getElementsDescriptors(context);
-      }
+    final JavaFxClassBackedElementDescriptor tagDescriptor = getFxRootTagDescriptor(context);
+    if (tagDescriptor != null) {
+      return tagDescriptor.getElementsDescriptors(context);
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
@@ -85,7 +81,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
     }
 
     if (FxmlConstants.FX_ROOT.equals(myName)) {
-      final JavaFxClassBackedElementDescriptor tagDescriptor = getRootTagDescriptor(contextTag);
+      final JavaFxClassBackedElementDescriptor tagDescriptor = getFxRootTagDescriptor(contextTag);
       if (tagDescriptor != null) {
         return tagDescriptor.getElementDescriptor(childTag, contextTag);
       }
@@ -100,9 +96,10 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
     if (defaultAttributeList != null) {
       final List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
       for (String defaultAttrName : defaultAttributeList) {
-        descriptors.add(new JavaFxDefaultAttributeDescriptor(defaultAttrName, getName()));
+        descriptors.add(new JavaFxDefaultPropertyAttributeDescriptor(defaultAttrName, getName()));
       }
       JavaFxClassBackedElementDescriptor.collectStaticAttributesDescriptors(context, descriptors);
+
       final XmlTag referencedTag = getReferencedTag(myXmlTag);
       if (referencedTag != null) {
         final XmlElementDescriptor referencedDescriptor = referencedTag.getDescriptor();
@@ -112,28 +109,68 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
             Collections.addAll(descriptors, attributesDescriptors);
           }
         }
-      } else {
-        final JavaFxClassBackedElementDescriptor rootTagDescriptor = getRootTagDescriptor(context);
-        if (rootTagDescriptor != null) {
-          Collections.addAll(descriptors, rootTagDescriptor.getAttributesDescriptors(context));
+      }
+
+      final JavaFxClassBackedElementDescriptor rootTagDescriptor = getFxRootTagDescriptor(context);
+      if (rootTagDescriptor != null) {
+        Collections.addAll(descriptors, rootTagDescriptor.getAttributesDescriptors(context));
+      }
+
+      final XmlTag includedRoot = getIncludedRoot(context);
+      if (includedRoot != null) {
+        final XmlElementDescriptor includedRootDescriptor = includedRoot.getDescriptor();
+        if (includedRootDescriptor instanceof JavaFxClassBackedElementDescriptor) {
+          ((JavaFxClassBackedElementDescriptor)includedRootDescriptor).collectInstanceProperties(descriptors);
         }
-        final XmlTag includedRoot = getIncludedRoot(context);
-        if (includedRoot != null) {
-          final XmlElementDescriptor includedRootDescriptor = includedRoot.getDescriptor();
-          if (includedRootDescriptor instanceof JavaFxClassBackedElementDescriptor) {
-            ((JavaFxClassBackedElementDescriptor)includedRootDescriptor).collectInstanceProperties(descriptors);
-          } 
-          else if (includedRootDescriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
-            final JavaFxClassBackedElementDescriptor includedRootTagDescriptor = ((JavaFxDefaultPropertyElementDescriptor)includedRootDescriptor).getRootTagDescriptor(includedRoot);
-            if (includedRootTagDescriptor != null) {
-              includedRootTagDescriptor.collectInstanceProperties(descriptors);
-            }
+        else if (includedRootDescriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
+          final JavaFxClassBackedElementDescriptor includedRootTagDescriptor = ((JavaFxDefaultPropertyElementDescriptor)includedRootDescriptor).getFxRootTagDescriptor(includedRoot);
+          if (includedRootTagDescriptor != null) {
+            includedRootTagDescriptor.collectInstanceProperties(descriptors);
           }
         }
       }
-      return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
+      return descriptors.isEmpty() ? XmlAttributeDescriptor.EMPTY : descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
     }
     return XmlAttributeDescriptor.EMPTY;
+  }
+
+  @Nullable
+  @Override
+  public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
+    final List<String> defaultAttributeList = FxmlConstants.FX_ELEMENT_ATTRIBUTES.get(getName());
+    if (defaultAttributeList != null) {
+      if (defaultAttributeList.contains(attributeName)) {
+        return new JavaFxDefaultPropertyAttributeDescriptor(attributeName, getName());
+      }
+      final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
+      if (propertySetter != null) {
+        return new JavaFxStaticSetterAttributeDescriptor(propertySetter, attributeName);
+      }
+
+      final XmlTag referencedTag = getReferencedTag(myXmlTag);
+      if (referencedTag != null) {
+        final XmlElementDescriptor referencedDescriptor = referencedTag.getDescriptor();
+        if (referencedDescriptor != null) {
+          return referencedDescriptor.getAttributeDescriptor(attributeName, referencedTag);
+        }
+      }
+
+      final JavaFxClassBackedElementDescriptor rootTagDescriptor = getFxRootTagDescriptor(context);
+      if (rootTagDescriptor != null) {
+        return rootTagDescriptor.getAttributeDescriptor(attributeName, context);
+      }
+
+      if (context != null && FxmlConstants.FX_INCLUDE.equals(getName())) {
+        final XmlTag includedRoot = getIncludedRoot(context);
+        if (includedRoot != null) {
+          final XmlElementDescriptor includedRootDescriptor = includedRoot.getDescriptor();
+          if (includedRootDescriptor != null) {
+            return includedRootDescriptor.getAttributeDescriptor(attributeName, includedRoot);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -150,42 +187,6 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
             if (resolve instanceof XmlAttributeValue) {
               return PsiTreeUtil.getParentOfType(resolve, XmlTag.class);
             }
-          }
-        }
-      }
-    }
-    return null;
-  }
-  
-  @Nullable
-  @Override
-  public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
-    final List<String> defaultAttributeList = FxmlConstants.FX_ELEMENT_ATTRIBUTES.get(getName());
-    if (defaultAttributeList != null) {
-      if (defaultAttributeList.contains(attributeName)) {
-        return new JavaFxDefaultAttributeDescriptor(attributeName, getName());
-      }
-      final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
-      if (propertySetter != null) {
-        return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
-      }
-      final XmlTag referencedTag = getReferencedTag(myXmlTag);
-      if (referencedTag != null) {
-        final XmlElementDescriptor referencedDescriptor = referencedTag.getDescriptor();
-        if (referencedDescriptor != null) {
-          return referencedDescriptor.getAttributeDescriptor(attributeName, referencedTag);
-        }
-      }
-      final JavaFxClassBackedElementDescriptor rootTagDescriptor = getRootTagDescriptor(context);
-      if (rootTagDescriptor != null) {
-        return rootTagDescriptor.getAttributeDescriptor(attributeName, context);
-      }
-      if (context != null && FxmlConstants.FX_INCLUDE.equals(getName())) {
-        final XmlTag includedRoot = getIncludedRoot(context);
-        if (includedRoot != null) {
-          final XmlElementDescriptor includedRootDescriptor = includedRoot.getDescriptor();
-          if (includedRootDescriptor != null) {
-            return includedRootDescriptor.getAttributeDescriptor(attributeName, includedRoot);
           }
         }
       }
@@ -214,13 +215,12 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
     return null;
   }
 
-  public JavaFxClassBackedElementDescriptor getRootTagDescriptor(XmlTag context) {
+  public JavaFxClassBackedElementDescriptor getFxRootTagDescriptor(XmlTag context) {
     if (context != null && FxmlConstants.FX_ROOT.equals(getName())) {
       final XmlAttribute typeAttr = context.getAttribute(FxmlConstants.TYPE);
       if (typeAttr != null) {
         final String rootClassName = typeAttr.getValue();
-        final Project project = context.getProject();
-        final PsiClass rootClass = rootClassName != null ? JavaPsiFacade.getInstance(project).findClass(rootClassName, GlobalSearchScope.allScope(project)) : null;
+        final PsiClass rootClass = rootClassName != null ?JavaFxPsiUtil.findPsiClass(rootClassName, context) : null;
         if (rootClass != null) {
           return new JavaFxClassBackedElementDescriptor(getName(), rootClass);
         }

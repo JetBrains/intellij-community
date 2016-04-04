@@ -15,30 +15,27 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 
-import java.util.HashSet;
-import java.util.Set;
-
+@Deprecated
 public class BackgroundableActionEnabledHandler {
-  private final Set<Object> myInProgress;
+  private final Project myProject;
+  private final VcsBackgroundableActions myAction;
 
-  public BackgroundableActionEnabledHandler() {
-    myInProgress = new HashSet<Object>();
+  BackgroundableActionEnabledHandler(Project project, VcsBackgroundableActions action) {
+    myProject = project;
+    myAction = action;
   }
 
   public void register(final Object path) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myInProgress.add(path);
+    BackgroundableActionLock.lock(myProject, myAction, path);
   }
 
   public boolean isInProgress(final Object path) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myInProgress.contains(path);
+    return BackgroundableActionLock.isLocked(myProject, myAction, path);
   }
 
   public void completed(final Object path) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myInProgress.remove(path);
+    BackgroundableActionLock.unlock(myProject, myAction, path);
   }
 }

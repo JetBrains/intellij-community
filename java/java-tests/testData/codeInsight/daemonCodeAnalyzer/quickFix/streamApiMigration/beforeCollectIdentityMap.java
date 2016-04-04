@@ -1,4 +1,4 @@
-// "Replace with collect" "true"
+// "Replace with addAll" "true"
 import java.util.*;
 
 public class Collect {

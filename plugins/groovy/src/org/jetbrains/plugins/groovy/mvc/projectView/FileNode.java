@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -34,14 +33,12 @@ import java.util.Collection;
 public class FileNode extends AbstractMvcPsiNodeDescriptor {
   public FileNode(@NotNull final Module module,
                   @NotNull final PsiFile file,
-                  @Nullable final String locationMark,
                   final ViewSettings viewSettings) {
-    super(module, viewSettings, new NodeId(file, locationMark), FILE);
+    super(module, viewSettings, file, FILE);
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId,
-                                           @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "File: " + ((PsiFile)psiElement).getName();
   }
 

@@ -165,7 +165,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     }
   }
 
-  public fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
+  fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
     if (roamingType == RoamingType.DISABLED) {
       // storage roaming was changed to DISABLED, but settings repository has old state
       return
@@ -200,7 +200,7 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
 
   val rootElement = Element(rootElementName)
   for (componentName in states.keys()) {
-    val element = states.getElement(componentName, newLiveStates)
+    val element = states.getElement(componentName, newLiveStates) ?: continue
     // name attribute should be first
     val elementAttributes = element.attributes
     if (elementAttributes.isEmpty()) {

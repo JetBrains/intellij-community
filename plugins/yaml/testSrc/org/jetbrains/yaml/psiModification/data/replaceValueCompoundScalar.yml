@@ -1,0 +1,4 @@
+foo:
+  ba<caret>r:
+    baz: vaz
+  taz: niz

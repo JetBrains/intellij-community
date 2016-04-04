@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.tools;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.Tag;
 
@@ -26,10 +23,7 @@ import com.intellij.util.xmlb.annotations.Tag;
  * @author lene
  *         Date: 06.08.12
  */
-@State(
-  name = "ToolsProjectConfig",
-  storages = {@Storage(file = "$WORKSPACE_FILE$")}
-)
+@State(name = "ToolsProjectConfig", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ToolsProjectConfig implements PersistentStateComponent<ToolsProjectConfig.State> {
   private String myAfterCommitToolsId;
 

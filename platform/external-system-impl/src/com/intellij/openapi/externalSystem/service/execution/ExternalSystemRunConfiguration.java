@@ -19,21 +19,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
@@ -43,7 +40,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -70,7 +68,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   }
 
   @Override
-  public RunConfiguration clone() {
+  public ExternalSystemRunConfiguration clone() {
     ExternalSystemRunConfiguration result = (ExternalSystemRunConfiguration)super.clone();
     result.mySettings = mySettings.clone();
     return result;
@@ -174,7 +172,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                                                                                    debuggerSetup);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);
-      final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration> consoleManager = getConsoleManagerFor(task);
+      final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+        consoleManager = getConsoleManagerFor(task);
 
       final ExecutionConsole consoleView =
         consoleManager.attachExecutionConsole(task, myProject, myConfiguration, executor, myEnv, processHandler);
@@ -205,7 +204,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                 myResetGreeting = false;
               }
 
-              consoleManager.onOutput(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+              consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
             }
 
             @Override
@@ -235,7 +234,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
         }
       });
       DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
-      result.setRestartActions(consoleManager.getRestartActions());
+      result.setRestartActions(consoleManager.getRestartActions(consoleView));
       return result;
     }
   }
@@ -275,7 +274,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   }
 
   @NotNull
-  private static ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration> getConsoleManagerFor(@NotNull ExternalSystemTask task) {
+  private static ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+  getConsoleManagerFor(@NotNull ExternalSystemTask task) {
     for (ExternalSystemExecutionConsoleManager executionConsoleManager : ExternalSystemExecutionConsoleManager.EP_NAME.getExtensions()) {
       if (executionConsoleManager.isApplicableFor(task))
         //noinspection unchecked

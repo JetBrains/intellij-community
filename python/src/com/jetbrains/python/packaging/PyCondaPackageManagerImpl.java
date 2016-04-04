@@ -86,8 +86,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     parameters.addAll(arguments);
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
-    final Process process = commandLine.createProcess();
-    final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final ProcessOutput result;
     if (indicator != null) {
@@ -184,8 +183,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
                                                             "python=" + version, "-y");
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
-    final Process process = commandLine.createProcess();
-    final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final ProcessOutput result = handler.runProcessWithProgressIndicator(indicator);
     if (result.isCancelled()) {

@@ -18,6 +18,7 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -25,9 +26,6 @@ import java.io.IOException;
  * @author Dmitry Avdeev
  */
 public interface TempDirTestFixture extends IdeaTestFixture {
-  @NotNull
-  VirtualFile copyFile(@NotNull VirtualFile file, @NotNull String targetPath);
-
   @NotNull
   VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir);
 
@@ -37,6 +35,7 @@ public interface TempDirTestFixture extends IdeaTestFixture {
   @NotNull
   String getTempDirPath();
 
+  @Nullable
   VirtualFile getFile(@NotNull String path);
 
   @NotNull
@@ -46,5 +45,5 @@ public interface TempDirTestFixture extends IdeaTestFixture {
   VirtualFile findOrCreateDir(@NotNull String name) throws IOException;
 
   @NotNull
-  VirtualFile createFile(@NotNull String name, String text) throws IOException;
+  VirtualFile createFile(@NotNull String name, @NotNull String text) throws IOException;
 }

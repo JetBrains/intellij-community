@@ -1,11 +1,18 @@
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ObjectToStringInspectionTest extends IGInspectionTestCase {
+public class ObjectToStringInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/bugs/object_to_string",
-           new ObjectToStringInspection());
+  public void testObjectToString() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ObjectToStringInspection();
   }
 }

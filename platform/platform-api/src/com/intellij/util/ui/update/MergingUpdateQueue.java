@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,10 +241,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
         return;
       }
     }
-    flush(true);
-  }
-
-  public void flush(boolean invokeLaterIfNotDispatch) {
     if (myFlushing) {
       return;
     }
@@ -279,7 +275,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       }
     };
 
-    if (myExecuteInDispatchThread && invokeLaterIfNotDispatch) {
+    if (myExecuteInDispatchThread) {
       UIUtil.invokeLaterIfNeeded(toRun);
     }
     else {
@@ -426,7 +422,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myWaiterForMerge.cancelAllRequests();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     synchronized (myScheduledUpdates) {
       return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();
@@ -496,7 +492,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   @NotNull
-  protected UiActivity getActivityId() {
+  private UiActivity getActivityId() {
     if (myUiActivity == null) {
       myUiActivity = new UiActivity.AsyncBgOperation("UpdateQueue:" + myName + hashCode());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    f = myRoot.createChildData(null, "f.txt");
+    f = createChildData(myRoot, "f.txt");
   }
 
   public void testBasics() throws IOException {
@@ -54,8 +54,8 @@ public class SelectionReverterTest extends IntegrationTestCase {
                    "  public abstract bar();\n" +
                    "}\n";
 
-    f.setBinaryContent(before.getBytes());
-    f.setBinaryContent(after.getBytes());
+    setBinaryContent(f, before.getBytes());
+    setBinaryContent(f, after.getBytes());
 
     revertToPreviousRevision(2, 2);
     
@@ -72,8 +72,8 @@ public class SelectionReverterTest extends IntegrationTestCase {
     long time = new Date(2001, 1, 11, 12, 30).getTime();
     Clock.setTime(time);
 
-    f.setBinaryContent("one".getBytes());
-    f.setBinaryContent("two".getBytes());
+    setBinaryContent(f, "one".getBytes());
+    setBinaryContent(f, "two".getBytes());
 
     revertToPreviousRevision(0, 0);
 
@@ -83,11 +83,11 @@ public class SelectionReverterTest extends IntegrationTestCase {
   }
 
   public void testAskingForReadOnlyStatusClearingOnlyForTheSpecifiedFile() throws Exception {
-    myRoot.createChildData(null, "foo1.txt");
-    f.setBinaryContent("one".getBytes());
-    myRoot.createChildData(null, "foo2.txt");
-    f.setBinaryContent("two".getBytes());
-    myRoot.createChildData(null, "foo3.txt");
+    createChildData(myRoot, "foo1.txt");
+    setBinaryContent(f, "one".getBytes());
+    createChildData(myRoot, "foo2.txt");
+    setBinaryContent(f, "two".getBytes());
+    createChildData(myRoot, "foo3.txt");
 
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     myGateway = new IdeaGateway() {

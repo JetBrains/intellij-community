@@ -15,11 +15,11 @@
  */
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.utils.NormalEdge;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -39,25 +39,25 @@ public class GraphElementComparatorByLayoutIndex implements Comparator<GraphElem
     if (o1 instanceof GraphEdge && o2 instanceof GraphEdge) {
       GraphEdge edge1 = (GraphEdge)o1;
       GraphEdge edge2 = (GraphEdge)o2;
-      Pair<Integer, Integer> normalEdge1 = asNormalEdge(edge1);
-      Pair<Integer, Integer> normalEdge2 = asNormalEdge(edge2);
+      NormalEdge normalEdge1 = asNormalEdge(edge1);
+      NormalEdge normalEdge2 = asNormalEdge(edge2);
       if (normalEdge1 == null) return -compare2(edge2, new GraphNode(getNotNullNodeIndex(edge1)));
       if (normalEdge2 == null) return compare2(edge1, new GraphNode(getNotNullNodeIndex(edge2)));
 
-      if (normalEdge1.first.equals(normalEdge2.first)) {
-        if (getLayoutIndex(normalEdge1.second) != getLayoutIndex(normalEdge2.second)) {
-          return getLayoutIndex(normalEdge1.second) - getLayoutIndex(normalEdge2.second);
+      if (normalEdge1.up == normalEdge2.up) {
+        if (getLayoutIndex(normalEdge1.down) != getLayoutIndex(normalEdge2.down)) {
+          return getLayoutIndex(normalEdge1.down) - getLayoutIndex(normalEdge2.down);
         }
         else {
-          return normalEdge1.second - (int)normalEdge2.second;
+          return normalEdge1.down - normalEdge2.down;
         }
       }
 
-      if (normalEdge1.first < normalEdge2.first) {
-        return compare2(edge1, new GraphNode(normalEdge2.first));
+      if (normalEdge1.up < normalEdge2.up) {
+        return compare2(edge1, new GraphNode(normalEdge2.up));
       }
       else {
-        return -compare2(edge2, new GraphNode(normalEdge1.first));
+        return -compare2(edge2, new GraphNode(normalEdge1.up));
       }
     }
 
@@ -70,20 +70,20 @@ public class GraphElementComparatorByLayoutIndex implements Comparator<GraphElem
   }
 
   private int compare2(@NotNull GraphEdge edge, @NotNull GraphNode node) {
-    Pair<Integer, Integer> normalEdge = asNormalEdge(edge);
+    NormalEdge normalEdge = asNormalEdge(edge);
     if (normalEdge == null) {
       return getLayoutIndex(getNotNullNodeIndex(edge)) - getLayoutIndex(node.getNodeIndex());
     }
 
-    int upEdgeLI = getLayoutIndex(normalEdge.first);
-    int downEdgeLI = getLayoutIndex(normalEdge.second);
+    int upEdgeLI = getLayoutIndex(normalEdge.up);
+    int downEdgeLI = getLayoutIndex(normalEdge.down);
 
     int nodeLI = getLayoutIndex(node.getNodeIndex());
     if (Math.max(upEdgeLI, downEdgeLI) != nodeLI) {
       return Math.max(upEdgeLI, downEdgeLI) - nodeLI;
     }
     else {
-      return normalEdge.first - node.getNodeIndex();
+      return normalEdge.up - node.getNodeIndex();
     }
   }
 

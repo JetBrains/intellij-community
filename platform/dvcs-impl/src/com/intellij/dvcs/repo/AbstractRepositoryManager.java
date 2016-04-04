@@ -106,6 +106,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     return vcsDir != null && vcsDir.exists() ? (T)repository : null;
   }
 
+  @Override
   @NotNull
   public AbstractVcs getVcs() {
     return myVcs;

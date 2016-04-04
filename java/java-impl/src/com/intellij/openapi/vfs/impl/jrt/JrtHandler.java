@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,27 @@
  */
 package com.intellij.openapi.vfs.impl.jrt;
 
-import com.intellij.Patches;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.*;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 class JrtHandler extends ArchiveHandler {
-  static {
-    //noinspection ConstantConditions
-    assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
-  }
-
   private static final URI ROOT_URI = URI.create("jrt:/");
-  private static final Map<String, Object> EMPTY_ENV = Collections.emptyMap();
 
   private static class JrtEntryInfo extends EntryInfo {
     private final String myModule;
@@ -53,20 +46,25 @@ class JrtHandler extends ArchiveHandler {
     }
   }
 
-  private SoftReference<Object> myFileSystem;
+  private SoftReference<FileSystem> myFileSystem;
+  private final StringInterner myInterner = new StringInterner();
 
   public JrtHandler(@NotNull String path) {
     super(path);
   }
 
-  private synchronized Object getFileSystem() throws IOException {
-    Object fs = SoftReference.dereference(myFileSystem);
+  private synchronized FileSystem getFileSystem() throws IOException {
+    FileSystem fs = SoftReference.dereference(myFileSystem);
     if (fs == null) {
-      URL url = new File(getFile(), "jrt-fs.jar").toURI().toURL();
-      ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
-      //fs = FileSystems.newFileSystem(ROOT_URI, EMPTY_ENV, loader);
-      fs = call(newFileSystem, ROOT_URI, EMPTY_ENV, loader);
-      myFileSystem = new SoftReference<Object>(fs);
+      if (SystemInfo.isJavaVersionAtLeast("9")) {
+        fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", getFile().getPath()));
+      }
+      else {
+        URL url = new File(getFile(), "jrt-fs.jar").toURI().toURL();
+        ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
+        fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
+      }
+      myFileSystem = new SoftReference<>(fs);
     }
     return fs;
   }
@@ -74,64 +72,47 @@ class JrtHandler extends ArchiveHandler {
   @NotNull
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
-    final Map<String, EntryInfo> map = ContainerUtil.newHashMap();
+    Map<String, EntryInfo> map = ContainerUtil.newHashMap();
     map.put("", createRootEntry());
 
-    //FileSystem fs = (FileSystem)getFileSystem();
-    //Path root = fs.getPath("/modules"); // b74+
-    //if (!Files.exists(root)) root = fs.getPath("/");
-    Object fs = getFileSystem();
-    Object root = call(getPath, fs, "/modules", ArrayUtil.EMPTY_STRING_ARRAY);
-    if (Boolean.FALSE.equals(call(exists, root, linkOptions))) {
-      root = call(getPath, fs, "/", ArrayUtil.EMPTY_STRING_ARRAY);
-    }
+    Path root = getFileSystem().getPath("/modules");
+    if (!Files.exists(root)) throw new FileNotFoundException("JRT root missing");
 
-    final int start = root.toString().length() + 1;
-    //Files.walk(root).forEachOrdered((p) -> {
-    Object stream = call(walk, root, Array.newInstance(cls("java.nio.file.FileVisitOption"), 0));
-    call(forEachOrdered, stream, Proxy.newProxyInstance(
-      getClass().getClassLoader(), new Class[]{cls("java.util.function.Consumer")}, new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-          //String path = p.toString();
-          String path = args[0].toString();
+    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        process(dir, attrs);
+        return FileVisitResult.CONTINUE;
+      }
 
-          int p = path.indexOf('/', start);
-          if (p < 0) return null;
-          String module = path.substring(1, p);
-          path = path.substring(p + 1);
-          if (map.containsKey(path)) return null;
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        process(file, attrs);
+        return FileVisitResult.CONTINUE;
+      }
 
-          String shortName;
-          EntryInfo parent;
+      private void process(Path entry, BasicFileAttributes attrs) throws IOException {
+        int pathLength = entry.getNameCount();
+        if (pathLength <= 2) return;
 
-          p = path.lastIndexOf('/');
-          if (p < 0) {
-            shortName = path;
-            parent = map.get("");
-          }
-          else {
-            shortName = path.substring(p + 1);
-            parent = map.get(path.substring(0, p));
-          }
-          assert parent != null : path;
+        Path relativePath = entry.subpath(2, pathLength);
+        String path = relativePath.toString(), shortName = entry.getFileName().toString();
+        if (map.containsKey(path) || "module-info.class".equals(shortName)) return;
 
-          //BasicFileAttributes attributes = Files.readAttributes(p, BasicFileAttributes.class);
-          //boolean dir = attributes.isDirectory();
-          //long length = attributes.size();
-          //long modified = attributes.lastModifiedTime().toMillis();
-          Object attributes = call(readAttributes, args[0], cls("java.nio.file.attribute.BasicFileAttributes"), linkOptions);
-          boolean dir = (Boolean)call(isDirectory, attributes);
-          long length = (Long)call(size, attributes);
-          long modified = (Long)call(toMillis, call(lastModifiedTime, attributes));
-          EntryInfo entry = dir ? new EntryInfo(shortName, true, length, modified, parent)
-                                : new JrtEntryInfo(shortName, module, length, modified, parent);
-          map.put(path, entry);
+        EntryInfo parent = map.get(pathLength > 3 ? relativePath.getParent().toString() : "");
+        if (parent == null) throw new IOException("Out of order: " + entry);
 
-          return null;
+        long length = attrs.size();
+        long modified = attrs.lastModifiedTime().toMillis();
+        if (attrs.isDirectory()) {
+          map.put(path, new EntryInfo(shortName, true, length, modified, parent));
         }
-      }));
-    //});
+        else {
+          String module = myInterner.intern(entry.getName(1).toString());
+          map.put(path, new JrtEntryInfo(shortName, module, length, modified, parent));
+        }
+      }
+    });
 
     return map;
   }
@@ -140,62 +121,26 @@ class JrtHandler extends ArchiveHandler {
   @Override
   public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
     EntryInfo entry = getEntryInfo(relativePath);
-    if (!(entry instanceof JrtEntryInfo)) {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
-    }
+    if (!(entry instanceof JrtEntryInfo)) throw new FileNotFoundException(getFile() + " : " + relativePath);
+    Path path = getFileSystem().getPath("/modules/" + ((JrtEntryInfo)entry).myModule + '/' + relativePath);
+    return Files.readAllBytes(path);
+  }
+}
 
-    //FileSystem fs = (FileSystem)getFileSystem();
-    //Path path = fs.getPath(((JrtEntryInfo)entry).myModule, relativePath);
-    //return Files.readAllBytes(path);
-    Object fs = getFileSystem();
-    Object path = call(getPath, fs, ((JrtEntryInfo)entry).myModule, new String[]{relativePath});
-    return (byte[])call(readAllBytes, path);
+class JrtHandlerStub extends ArchiveHandler {
+  public JrtHandlerStub(@NotNull String path) {
+    super(path);
   }
 
-  // reflection stuff
-  // todo[r.sh] drop reflection after migration to Java 8
-
-  private static final Method newFileSystem = method("java.nio.file.FileSystems#newFileSystem", URI.class, Map.class, ClassLoader.class);
-  private static final Method getPath = method("java.nio.file.FileSystem#getPath", String.class, String[].class);
-  private static final Method exists = method("java.nio.file.Files#exists", cls("java.nio.file.Path"), cls("java.nio.file.LinkOption", true));
-  private static final Method walk = method("java.nio.file.Files#walk", cls("java.nio.file.Path"), cls("java.nio.file.FileVisitOption", true));
-  private static final Method forEachOrdered = method("java.util.stream.Stream#forEachOrdered", cls("java.util.function.Consumer"));
-  private static final Method readAttributes =
-    method("java.nio.file.Files#readAttributes", cls("java.nio.file.Path"), Class.class, cls("java.nio.file.LinkOption", true));
-  private static final Method isDirectory = method("java.nio.file.attribute.BasicFileAttributes#isDirectory");
-  private static final Method size = method("java.nio.file.attribute.BasicFileAttributes#size");
-  private static final Method lastModifiedTime = method("java.nio.file.attribute.BasicFileAttributes#lastModifiedTime");
-  private static final Method toMillis = method("java.nio.file.attribute.FileTime#toMillis");
-  private static final Method readAllBytes = method("java.nio.file.Files#readAllBytes", cls("java.nio.file.Path"));
-  private static final Object linkOptions = Array.newInstance(cls("java.nio.file.LinkOption"), 0);
-
-  private static Class<?> cls(String name) {
-    return cls(name, false);
+  @NotNull
+  @Override
+  protected Map<String, EntryInfo> createEntriesMap() {
+    return Collections.emptyMap();
   }
 
-  private static Class<?> cls(String name, boolean array) {
-    if (array) name = "[L" + name + ";";
-    return ReflectionUtil.forName(name);
-  }
-
-  private static Method method(String name, Class<?>... parameterTypes) {
-    List<String> parts = StringUtil.split(name, "#");
-    Class<?> aClass = cls(parts.get(0));
-    String methodName = parts.get(1);
-    return ReflectionUtil.getMethod(aClass, methodName, parameterTypes);
-  }
-
-  private static Object call(Method method, Object... args) {
-    try {
-      if (Modifier.isStatic(method.getModifiers())) {
-        return method.invoke(null, args);
-      }
-      else {
-        return method.invoke(args[0], Arrays.copyOfRange(args, 1, args.length));
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  @NotNull
+  @Override
+  public byte[] contentsToByteArray(@NotNull String relativePath) {
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 }

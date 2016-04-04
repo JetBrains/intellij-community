@@ -27,4 +27,6 @@ abstract class SuspendContextBase<VM: Vm, VALUE_MANAGER : ValueManager, F : Call
       val topFrame = topFrame
       return if (topFrame == null || valueManager !is VmAwareValueManager<*>) null else valueManager.vm.scriptManager.getScript(topFrame)
     }
+
+  override val workerId: String? = null
 }

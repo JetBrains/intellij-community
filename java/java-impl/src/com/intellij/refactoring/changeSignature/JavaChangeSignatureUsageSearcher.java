@@ -257,6 +257,9 @@ class JavaChangeSignatureUsageSearcher {
         else if (ref instanceof PsiCallReference) {
           result.add(new CallReferenceUsageInfo((PsiCallReference)ref));
         }
+        else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
+          result.add(new MethodReferenceUsageInfo(element, method, isToModifyArgs, isToCatchExceptions));
+        }
         else {
           result.add(new MoveRenameUsageInfo(element, ref, method));
         }
@@ -327,18 +330,6 @@ class JavaChangeSignatureUsageSearcher {
       return RefactoringBundle.message("there.is.already.a.0.in.the.1.it.will.conflict.with.the.renamed.parameter",
                                        RefactoringUIUtil.getDescription(myCollidingElement, true),
                                        RefactoringUIUtil.getDescription(myMethod, true));
-    }
-  }
-  
-  private static class FunctionalInterfaceChangedUsageInfo extends UnresolvableCollisionUsageInfo {
-
-    public FunctionalInterfaceChangedUsageInfo(PsiElement element, PsiElement referencedElement) {
-      super(element, referencedElement);
-    }
-
-    @Override
-    public String getDescription() {
-      return "Functional expression will be corrupted";
     }
   }
 }

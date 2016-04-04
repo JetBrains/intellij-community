@@ -20,22 +20,12 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 public class HgBranchReferenceValidator extends HgReferenceValidator {
-  private static final Pattern DIGITS_ILLEGAL = Pattern.compile("[0-9]*");  // reference names couldn't contain only digits
+  private final HgRepository myRepository;
 
   public HgBranchReferenceValidator(@NotNull HgRepository repository) {
-    super(repository);
-  }
-
-  @Override
-  public boolean checkInput(@Nullable String name) {
-    if (name != null && DIGITS_ILLEGAL.matcher(name).matches()) {
-      myErrorText = "Invalid name for branch/tag";
-      return false;
-    }
-    return super.checkInput(name);
+    myRepository = repository;
   }
 
   @Override

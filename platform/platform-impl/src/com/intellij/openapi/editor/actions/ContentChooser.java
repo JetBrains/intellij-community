@@ -57,7 +57,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private final boolean myUseIdeaEditor;
 
-  private final JList      myList;
+  private final JBList     myList;
   private final JBSplitter mySplitter;
   private final Project    myProject;
   private final boolean    myAllowMultipleSelections;
@@ -77,6 +77,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     mySplitter = new JBSplitter(true, 0.3f);
     mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
     myList = new JBList(new CollectionListModel<Item>());
+    myList.setExpandableItemsEnabled(false);
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);

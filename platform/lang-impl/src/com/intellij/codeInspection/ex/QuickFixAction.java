@@ -40,6 +40,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SequentialModalProgressTask;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -138,6 +140,14 @@ public class QuickFixAction extends AnAction {
     }
 
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
+    
+    Arrays.sort(descriptors, (c1, c2) -> {
+      if (c1 instanceof ProblemDescriptor && c2 instanceof ProblemDescriptor) {
+        return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(), 
+                                                     ((ProblemDescriptor)c1).getPsiElement());
+      }
+      return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate()); 
+    });
 
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
 

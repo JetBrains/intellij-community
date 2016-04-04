@@ -94,4 +94,8 @@ public class ILazyParseableElementType extends IElementType {
   public ASTNode createNode(CharSequence text) {
     return null;
   }
+
+  public boolean reuseCollapsedTokens() {
+    return false;
+  }
 }

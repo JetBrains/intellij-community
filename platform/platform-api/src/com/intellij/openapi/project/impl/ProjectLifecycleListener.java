@@ -20,21 +20,25 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Reports some project lifecycle events. Note that these events are published on application-level {@link com.intellij.util.messages.MessageBus}.
+ * They're also delivered for subscribers on project and module levels, but they will need to check that the events are relevant, i.e. the
+ * {@code project} parameter is the project those subscribers are associated with.
+ *
  * @author max
  */
 public interface ProjectLifecycleListener {
   Topic<ProjectLifecycleListener> TOPIC = Topic.create("Various stages of project lifecycle notifications", ProjectLifecycleListener.class);
 
-  void projectComponentsInitialized(Project project);
+  void projectComponentsInitialized(@NotNull Project project);
 
   void beforeProjectLoaded(@NotNull Project project);
 
   void afterProjectClosed(@NotNull Project project);
 
   abstract class Adapter implements ProjectLifecycleListener {
-    public void projectComponentsInitialized(final Project project) { }
+    public void projectComponentsInitialized(@NotNull Project project) { }
 
-    public void beforeProjectLoaded(@NotNull final Project project) { }
+    public void beforeProjectLoaded(@NotNull Project project) { }
 
     public void afterProjectClosed(@NotNull Project project) { }
   }

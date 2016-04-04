@@ -1,6 +1,7 @@
 package com.jetbrains.python.sdkTools;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -15,7 +16,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import org.hamcrest.Matchers;
@@ -55,25 +58,16 @@ public final class PyTestSdkTools {
   )
     throws InvalidSdkException, IOException {
     final Ref<Sdk> ref = Ref.create();
-    UsefulTestCase.edt(new Runnable() {
-
-      @Override
-      public void run() {
-        final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, null);
-        Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
-        ref.set(sdk);
-      }
+    UsefulTestCase.edt(() -> {
+      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, null);
+      Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
+      ref.set(sdk);
     });
     final Sdk sdk = ref.get();
     if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
       generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
     }
-    UsefulTestCase.edt(new Runnable() {
-      @Override
-      public void run() {
-        SdkConfigurationUtil.addSdk(sdk);
-      }
-    });
+    UsefulTestCase.edt(() -> SdkConfigurationUtil.addSdk(sdk));
     return sdk;
   }
 
@@ -91,10 +85,12 @@ public final class PyTestSdkTools {
                                                       final boolean addSkeletons,
                                                       @Nullable final Module module)
     throws InvalidSdkException, IOException {
+    Project project = null;
 
     if (module != null) {
+      project = module.getProject();
+      final Project finalProject = project;
       // Associate with module
-      final Project project = module.getProject();
       ModuleRootModificationUtil.setModuleSdk(module, sdk);
 
       UsefulTestCase.edt(new Runnable() {
@@ -103,7 +99,7 @@ public final class PyTestSdkTools {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+              ProjectRootManager.getInstance(finalProject).setProjectSdk(sdk);
             }
           });
         }
@@ -114,37 +110,23 @@ public final class PyTestSdkTools {
     final SdkModificator modificator = sdk.getSdkModificator();
     modificator.removeRoots(OrderRootType.CLASSES);
 
+    modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
+
     for (final String path : PythonSdkType.getSysPathsFromScript(sdk.getHomePath())) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
-      UsefulTestCase.edt(new Runnable() {
-        @Override
-        public void run() {
-          modificator.commitChanges();
-        }
-      });
+      UsefulTestCase.edt(() -> modificator.commitChanges());
       return;
     }
 
-    final File tempDir = FileUtil.createTempDirectory(PyTestSdkTools.class.getName(), null);
-    final File skeletonsDir = new File(tempDir, PythonSdkType.SKELETON_DIR_NAME);
-    FileUtil.createDirectory(skeletonsDir);
-    final String skeletonsPath = skeletonsDir.toString();
+    final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     addTestSdkRoot(modificator, skeletonsPath);
 
-    UsefulTestCase.edt(new Runnable() {
-      @Override
-      public void run() {
-        modificator.commitChanges();
-      }
-    });
+    UsefulTestCase.edt(() -> modificator.commitChanges());
 
-    final SkeletonVersionChecker checker = new SkeletonVersionChecker(0);
-
-    final PySkeletonRefresher refresher = new PySkeletonRefresher(null, null, sdk, skeletonsPath, null, null);
-    final List<String> errors = refresher.regenerateSkeletons(checker);
-    Assert.assertThat("Errors found", errors, Matchers.empty());
+    PySkeletonRefresher
+      .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);
   }
 
   public static void addTestSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull String path) {

@@ -16,21 +16,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.*;
-import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
-import com.intellij.openapi.options.newEditor.OptionsEditor;
-import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.ui.update.Activatable;
@@ -59,34 +54,15 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   public static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
     project = getProject(project);
     final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
-    if (Registry.is("ide.new.settings.dialog")) {
-      return Registry.is("ide.new.settings.view")
-             ? new SettingsDialog(project, filteredGroups, toSelect, null)
-             : new IdeSettingsDialog(project, filteredGroups, toSelect);
-    }
-    //noinspection deprecation
-    return Registry.is("ide.perProjectModality")
-           ? new OptionsEditorDialog(project, filteredGroups, toSelect, true)
-           : new OptionsEditorDialog(project, filteredGroups, toSelect);
+    return new SettingsDialog(project, filteredGroups, toSelect, null);
   }
 
   @NotNull
   public static ConfigurableGroup[] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
-    if (Registry.is("ide.new.settings.dialog")) {
-      if (!withIdeSettings) {
-        project = getProject(project);
-      }
-      return new ConfigurableGroup[]{ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings)};
+    if (!withIdeSettings) {
+      project = getProject(project);
     }
-    ConfigurableGroup[] groups = !withIdeSettings
-           ? new ConfigurableGroup[]{new ProjectConfigurablesGroup(getProject(project))}
-           : (project == null)
-             ? new ConfigurableGroup[]{new IdeConfigurablesGroup()}
-             : new ConfigurableGroup[]{
-               new ProjectConfigurablesGroup(project),
-               new IdeConfigurablesGroup()};
-
-    return groups;
+    return new ConfigurableGroup[]{ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings)};
   }
 
   @NotNull
@@ -162,21 +138,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = id2Select == null ? null : new ConfigurableVisitor.ByID(id2Select).find(group);
 
-    if (Registry.is("ide.new.settings.view")) {
-      new SettingsDialog(getProject(project), group, configurable2Select, filter).show();
-      return;
-    }
-    final DialogWrapper dialog = getDialog(project, group, configurable2Select);
-
-    new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable.Adapter() {
-      @Override
-      public void showNotify() {
-        final OptionsEditor editor = (OptionsEditor)((DataProvider)dialog).getData(OptionsEditor.KEY.getName());
-        LOG.assertTrue(editor != null);
-        editor.select(configurable2Select, filter);
-      }
-    });
-    dialog.show();
+    new SettingsDialog(getProject(project), group, configurable2Select, filter).show();
   }
 
   @Override
@@ -250,14 +212,10 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                           boolean showApplyButton) {
     final DialogWrapper editor;
     if (parent == null) {
-      editor = Registry.is("ide.new.settings.view")
-               ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton, false)
-               : new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
+      editor = new SettingsDialog(project, dimensionKey, configurable, showApplyButton, false);
     }
     else {
-      editor = Registry.is("ide.new.settings.view")
-               ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton, false)
-               : new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
+      editor = new SettingsDialog(parent, dimensionKey, configurable, showApplyButton, false);
     }
     if (advancedInitialization != null) {
       new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {

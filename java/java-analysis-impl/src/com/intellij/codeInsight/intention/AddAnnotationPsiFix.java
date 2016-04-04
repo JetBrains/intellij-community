@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,9 +155,9 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     return inserted;
   }
 
-  public static void removePhysicalAnnotations(PsiModifierListOwner owner, String... fqns) {
+  public static void removePhysicalAnnotations(@NotNull PsiModifierListOwner owner, @NotNull String... fqns) {
     for (String fqn : fqns) {
-      PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, fqn);
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, true, fqn);
       if (annotation != null && !AnnotationUtil.isInferredAnnotation(annotation)) {
         annotation.delete();
       }

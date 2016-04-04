@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 
 public class DefaultRemoteContentProvider extends RemoteContentProvider {
   private static final Logger LOG = Logger.getInstance(DefaultRemoteContentProvider.class);
@@ -65,10 +63,6 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
           public Object process(@NotNull HttpRequests.Request request) throws IOException {
-            if (!request.isSuccessful()) {
-              throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", ((HttpURLConnection)request.getConnection()).getResponseCode()));
-            }
-
             int size = request.getConnection().getContentLength();
             callback.setProgressText(VfsBundle.message("download.progress.downloading", presentableUrl), size == -1);
             request.saveToFile(file, new AbstractProgressIndicatorExBase() {

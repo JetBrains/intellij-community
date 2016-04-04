@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 public interface VcsLogDataProvider {
 
   @NotNull
-  Hash getHash(int commitIndex);
+  CommitId getCommitId(int commitIndex);
 
-  int getCommitIndex(@NotNull Hash hash);
+  int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
 
 }

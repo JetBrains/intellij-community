@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.FilteringProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -76,17 +77,23 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
           FileReference.getOriginalFile(fileSystemItem));
       }
     };
+    
+    List<Object> additionalItems = ContainerUtil.newArrayList();
     for (PsiFileSystemItem context : reference.getContexts()) {
       for (final PsiElement child : context.getChildren()) {
         if (child instanceof PsiFileSystemItem) {
           processor.execute((PsiFileSystemItem)child);
         }
       }
+      if (context instanceof FileReferenceResolver) {
+        additionalItems.addAll(((FileReferenceResolver)context).getVariants(reference));
+      }
     }
+
     final THashSet<PsiElement> set = new THashSet<PsiElement>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
     final PsiElement[] candidates = PsiUtilCore.toPsiElementArray(set);
 
-    final Object[] variants = new Object[candidates.length];
+    final Object[] variants = new Object[candidates.length + additionalItems.size()];
     for (int i = 0; i < candidates.length; i++) {
       PsiElement candidate = candidates[i];
       Object item = reference.createLookupItem(candidate);
@@ -95,10 +102,14 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
       }
       variants[i] = item;
     }
+    
+    for (int i = 0; i < additionalItems.size(); i++) {
+      variants[i + candidates.length] = additionalItems.get(i);
+    }
     if (!reference.getFileReferenceSet().isUrlEncoded()) {
       return variants;
     }
-    List<Object> encodedVariants = new ArrayList<Object>(variants.length);
+    List<Object> encodedVariants = new ArrayList<Object>(variants.length + additionalItems.size());
     for (int i = 0; i < candidates.length; i++) {
       final PsiElement element = candidates[i];
       if (element instanceof PsiNamedElement) {
@@ -116,6 +127,7 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
         }
       }
     }
+    encodedVariants.addAll(additionalItems);
     return ArrayUtil.toObjectArray(encodedVariants);
   }
 }

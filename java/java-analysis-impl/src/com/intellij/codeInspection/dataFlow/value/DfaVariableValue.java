@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,10 +81,10 @@ public class DfaVariableValue extends DfaValue {
       return result;
     }
 
-    public List<DfaVariableValue> getAllQualifiedBy(DfaVariableValue value) {
+    @NotNull
+    public List<DfaVariableValue> getAllQualifiedBy(@NotNull DfaVariableValue value) {
       return value.myDependents;
     }
-
   }
 
   private final PsiModifierListOwner myVariable;
@@ -159,6 +159,7 @@ public class DfaVariableValue extends DfaValue {
     return myQualifier;
   }
 
+  @NotNull
   public Nullness getInherentNullability() {
     if (myInherentNullability != null) {
       return myInherentNullability;
@@ -167,6 +168,7 @@ public class DfaVariableValue extends DfaValue {
     return myInherentNullability = calcInherentNullability();
   }
 
+  @NotNull
   private Nullness calcInherentNullability() {
     PsiModifierListOwner var = getPsiVariable();
     Nullness nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);

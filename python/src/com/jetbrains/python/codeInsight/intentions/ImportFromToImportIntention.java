@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -242,13 +243,9 @@ public class ImportFromToImportIntention implements IntentionAction {
         possible_targets.addAll(references.keySet());
         possible_targets.addAll(star_references);
       }
-      if (
-        showConflicts(
-          project,
-          findDefinitions(top_name, possible_targets, Arrays.asList(info.myFromImportStatement.getImportElements())),
-          top_name, info.myModuleName
-        )
-      ) {
+      final Set<PsiElement> ignored = Sets.<PsiElement>newHashSet(Arrays.asList(info.myFromImportStatement.getImportElements()));
+      if (top_name != null && showConflicts(project, findDefinitions(top_name, possible_targets, ignored),
+                                            top_name, info.myModuleName)) {
         return; // got conflicts
       }
 

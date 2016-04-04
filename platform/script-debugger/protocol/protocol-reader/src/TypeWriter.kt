@@ -147,7 +147,7 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
       return w
     }
 
-    for (loader in fieldLoaders.sortedWith(comparator {f1, f2 -> fieldWeight((f1.valueReader)) - fieldWeight((f2.valueReader))})) {
+    for (loader in fieldLoaders.sortedWith(Comparator<FieldLoader> { f1, f2 -> fieldWeight((f1.valueReader)) - fieldWeight((f2.valueReader))})) {
       out.append(" && ")
       out.appendName(loader).append(" == ").append("other.").appendName(loader)
     }

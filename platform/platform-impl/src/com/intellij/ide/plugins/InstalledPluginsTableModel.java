@@ -171,7 +171,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
                                             }
                                           }
         );
-        if (enabled == null && !myDependentToRequiredListMap.containsKey(pluginId) && !PluginManagerCore.isIncompatible(descriptor)) {
+        if (enabled == null && !myDependentToRequiredListMap.containsKey(pluginId) && PluginManagerCore.isCompatible(descriptor)) {
           myEnabled.put(pluginId, true);
         }
       }

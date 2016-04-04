@@ -16,10 +16,9 @@
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
-import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
-import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,9 +28,9 @@ import java.util.List;
 
 public class ComparisonMergeUtil {
   @NotNull
-  public static List<MergeLineFragment> buildFair(@NotNull FairDiffIterable fragments1,
-                                                  @NotNull FairDiffIterable fragments2,
-                                                  @NotNull ProgressIndicator indicator) {
+  public static List<MergeRange> buildFair(@NotNull FairDiffIterable fragments1,
+                                           @NotNull FairDiffIterable fragments2,
+                                           @NotNull ProgressIndicator indicator) {
     assert fragments1.getLength1() == fragments2.getLength1();
 
     FairMergeBuilder builder = new FairMergeBuilder();
@@ -70,7 +69,7 @@ public class ComparisonMergeUtil {
   }
 
   private static class FairMergeBuilder {
-    @NotNull private final ArrayList<MergeLineFragment> myResult = new ArrayList<MergeLineFragment>();
+    @NotNull private final ArrayList<MergeRange> myResult = new ArrayList<MergeRange>();
 
     @NotNull private final EqualPair[] myPairs = new EqualPair[2]; // LEFT, RIGHT
     @NotNull private final int[] myProcessed = new int[]{0, 0, 0}; // LEFT, RIGHT, BASE
@@ -90,7 +89,7 @@ public class ComparisonMergeUtil {
     }
 
     @NotNull
-    public List<MergeLineFragment> finish(int leftLength, int baseLength, int rightLength) {
+    public List<MergeRange> finish(int leftLength, int baseLength, int rightLength) {
       if (!compare(new int[]{leftLength, rightLength, baseLength}, myProcessed)) {
         processConflict(leftLength, baseLength, rightLength);
       }
@@ -133,10 +132,10 @@ public class ComparisonMergeUtil {
     }
 
     private void processConflict(int nextLeft, int nextBase, int nextRight) {
-      myResult.add(new MergeLineFragmentImpl(
-        new Interval(myProcessed[0], nextLeft),
-        new Interval(myProcessed[2], nextBase),
-        new Interval(myProcessed[1], nextRight)
+      myResult.add(new MergeRange(
+        myProcessed[0], nextLeft,
+        myProcessed[2], nextBase,
+        myProcessed[1], nextRight
       ));
 
       myProcessed[0] = nextLeft;
@@ -223,47 +222,6 @@ public class ComparisonMergeUtil {
 
     public void advance() {
       myValue = myIterator.hasNext() ? myIterator.next() : null;
-    }
-  }
-
-  private static class MergeLineFragmentImpl implements MergeLineFragment {
-    @NotNull private final Interval myLeft;
-    @NotNull private final Interval myBase;
-    @NotNull private final Interval myRight;
-
-    public MergeLineFragmentImpl(@NotNull Interval left,
-                                 @NotNull Interval base,
-                                 @NotNull Interval right) {
-      myLeft = left;
-      myBase = base;
-      myRight = right;
-    }
-
-    @NotNull
-    private Interval getRange(@NotNull ThreeSide side) {
-      return side.select(myLeft, myBase, myRight);
-    }
-
-    public int getStartLine(@NotNull ThreeSide side) {
-      return getRange(side).start;
-    }
-
-    public int getEndLine(@NotNull ThreeSide side) {
-      return getRange(side).end;
-    }
-  }
-
-  private static class Interval {
-    public final int start;
-    public final int end;
-
-    public Interval(int start, int end) {
-      this.start = start;
-      this.end = end;
-    }
-
-    public int getLength() {
-      return end - start;
     }
   }
 }

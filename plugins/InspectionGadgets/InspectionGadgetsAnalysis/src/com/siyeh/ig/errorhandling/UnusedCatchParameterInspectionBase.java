@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -93,16 +94,10 @@ public class UnusedCatchParameterInspectionBase extends BaseInspection {
       if (block == null) {
         return;
       }
-      if (m_ignoreCatchBlocksWithComments) {
-        final PsiElement[] children = block.getChildren();
-        for (final PsiElement child : children) {
-          if (child instanceof PsiComment) {
-            return;
-          }
-        }
+      if (m_ignoreCatchBlocksWithComments && PsiTreeUtil.getChildOfType(block, PsiComment.class) != null) {
+        return;
       }
-      final CatchParameterUsedVisitor visitor =
-        new CatchParameterUsedVisitor(parameter);
+      final CatchParameterUsedVisitor visitor = new CatchParameterUsedVisitor(parameter);
       block.accept(visitor);
       final boolean namedIgnore = PsiUtil.isIgnoredName(parameterName);
       if (visitor.isUsed()) {

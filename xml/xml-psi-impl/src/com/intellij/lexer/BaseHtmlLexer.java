@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageHtmlScriptContentProvider;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 
 /**
  * @author Maxim.Mossienko
@@ -45,20 +47,26 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   private static final int SEEN_SCRIPT = 0x100;
   private static final int SEEN_ATTRIBUTE = 0x200;
   private static final int SEEN_CONTENT_TYPE = 0x400;
+  private static final int SEEN_STYLESHEET_TYPE = 0x800;
   protected static final int BASE_STATE_SHIFT = 11;
   @Nullable
   protected static final Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
+  @Nullable
+  protected static final Language ourDefaultStyleLanguage = Language.findLanguageByID("CSS");
 
-  private boolean seenTag;
-  private boolean seenAttribute;
-  private boolean seenStyle;
-  private boolean seenScript;
+  protected boolean seenTag;
+  protected boolean seenAttribute;
+  protected boolean seenStyle;
+  protected boolean seenScript;
 
   @Nullable
   protected String scriptType = null;
+  @Nullable
+  protected String styleType = null;
 
   private final boolean caseInsensitive;
   private boolean seenContentType;
+  private boolean seenStylesheetType;
   private CharSequence cachedBufferSequence;
   private Lexer lexerOfCacheBufferSequence;
 
@@ -89,16 +97,17 @@ abstract class BaseHtmlLexer extends DelegateLexer {
 
       if (seenScript && !seenTag) {
         seenContentType = false;
-
         if (((firstCh == 'l' || firstCh == 't') || (caseInsensitive && (firstCh == 'L' || firstCh == 'T')))) {
           @NonNls String name = TreeUtil.getTokenText(lexer);
-          if (caseInsensitive) name = name.toLowerCase();
-
-          if ("language".equals(name) || "type".equals(name)) {
-            seenContentType = true;
-          }
+          seenContentType = Comparing.strEqual("language", name, !caseInsensitive) || Comparing.strEqual("type", name, !caseInsensitive);
         }
-
+        return;
+      }
+      if (seenStyle && !seenTag) {
+        seenStylesheetType = false;
+        if (firstCh == 'r' || caseInsensitive && firstCh == 'R') {
+          seenStylesheetType = Comparing.strEqual(TreeUtil.getTokenText(lexer), "rel", !caseInsensitive);
+        }
         return;
       }
 
@@ -145,20 +154,20 @@ abstract class BaseHtmlLexer extends DelegateLexer {
         seenAttribute = false;
       }
       seenContentType = false;
+      seenStylesheetType = false;
     }
   }
 
   class XmlAttributeValueHandler implements TokenHandler {
     @Override
     public void handleElement(Lexer lexer) {
-      if (seenContentType) {
-        if(!seenScript || seenAttribute) {
-          return; // something invalid
-        }
-
+      if (seenContentType && seenScript && !seenAttribute) {
         @NonNls String mimeType = TreeUtil.getTokenText(lexer);
-        if (caseInsensitive) mimeType = mimeType.toLowerCase();
-        scriptType = mimeType;
+        scriptType = caseInsensitive ? mimeType.toLowerCase(Locale.US) : mimeType;
+      }
+      if (seenStylesheetType && seenStyle && !seenAttribute) {
+        @NonNls String rel = TreeUtil.getTokenText(lexer).trim();
+        styleType = caseInsensitive ? rel.toLowerCase(Locale.US) : rel;
       }
     }
   }
@@ -168,11 +177,41 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(scriptType != null ? scriptType.trim() : null);
     return instancesByMimeType.isEmpty() ? null : instancesByMimeType.iterator().next();
   }
+  
+  @Nullable
+  protected Language getStyleLanguage() {
+    if (ourDefaultStyleLanguage != null && styleType != null) {
+      String stylesheetPrefix = "stylesheet/";
+      if (StringUtil.startsWith(styleType, stylesheetPrefix)) {
+        String languageName = styleType.substring(stylesheetPrefix.length()).trim();
+        for (Language language : ourDefaultStyleLanguage.getDialects()) {
+          if (languageName.equals(language.getID().toLowerCase(Locale.US))) {
+            return language;
+          }
+        }
+      }
+    }
+    return ourDefaultStyleLanguage;
+  }
 
   @Nullable
   protected IElementType getCurrentScriptElementType() {
     HtmlScriptContentProvider scriptContentProvider = findScriptContentProvider(scriptType);
     return scriptContentProvider == null ? null : scriptContentProvider.getScriptElementType();
+  }
+
+  @Nullable
+  protected IElementType getCurrentStylesheetElementType() {
+    Language language = getStyleLanguage();
+    if (language != null) {
+      for (EmbeddedTokenTypesProvider provider : EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.getExtensions()) {
+        IElementType elementType = provider.getElementType();
+        if (language.is(elementType.getLanguage())) {
+          return elementType;
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -216,7 +255,9 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       seenScript=false;
       seenAttribute=false;
       seenContentType=false;
+      seenStylesheetType=false;
       scriptType = null;
+      styleType = null;
     }
   }
 
@@ -265,6 +306,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     seenTag = (initialState & SEEN_TAG)!=0;
     seenAttribute = (initialState & SEEN_ATTRIBUTE)!=0;
     seenContentType = (initialState & SEEN_CONTENT_TYPE) != 0;
+    seenStylesheetType = (initialState & SEEN_STYLESHEET_TYPE) != 0;
     lexerOfCacheBufferSequence = null;
     cachedBufferSequence = null;
   }
@@ -376,6 +418,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     state |= ((seenStyle)?SEEN_STYLE:0);
     state |= ((seenAttribute)?SEEN_ATTRIBUTE:0);
     state |= ((seenContentType)?SEEN_CONTENT_TYPE:0);
+    state |= ((seenStylesheetType)?SEEN_STYLESHEET_TYPE:0);
 
     return state;
   }

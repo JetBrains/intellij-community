@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       if (name == null) {
         name = "";
       }
-      final String comment = getCommentText(variable);
+      final String comment = getCommentText(variable) + getCommentText(initializer);
       final PsiType type = variable.getType();
       @NonNls final String statementText;
       final String typeText = type.getCanonicalText();
@@ -182,13 +182,19 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       return newDeclaration;
     }
 
-    private String getCommentText(PsiVariable variable) {
-      final PsiDeclarationStatement parentDeclaration = (PsiDeclarationStatement)variable.getParent();
-      final PsiElement[] declaredElements = parentDeclaration.getDeclaredElements();
-      if (declaredElements.length != 1) {
+    private String getCommentText(PsiElement element) {
+      final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiStatement.class, true, PsiMember.class);
+      if (parent == null) {
         return "";
       }
-      final PsiElement lastChild = parentDeclaration.getLastChild();
+      if (parent instanceof PsiDeclarationStatement) {
+        final PsiDeclarationStatement parentDeclaration = (PsiDeclarationStatement)parent;
+        final PsiElement[] declaredElements = parentDeclaration.getDeclaredElements();
+        if (declaredElements.length != 1) {
+          return "";
+        }
+      }
+      final PsiElement lastChild = parent.getLastChild();
       if (!(lastChild instanceof PsiComment)) {
         return "";
       }

@@ -115,7 +115,7 @@ public interface Repository extends Disposable {
   @Nullable
   String getCurrentBranchName();
 
-  @Nullable
+  @NotNull
   AbstractVcs getVcs();
 
   /**

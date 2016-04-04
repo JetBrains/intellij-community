@@ -28,7 +28,7 @@ import java.nio.charset.Charset;
 /**
  * Allows to compare some text associated with document.
  */
-public class DocumentContentImpl implements DiffContent, DocumentContent {
+public class DocumentContentImpl extends DiffContentBase implements DocumentContent {
   @NotNull private final Document myDocument;
 
   @Nullable private final FileType myType;
@@ -93,9 +93,5 @@ public class DocumentContentImpl implements DiffContent, DocumentContent {
   @Override
   public Charset getCharset() {
     return myCharset;
-  }
-
-  @Override
-  public void onAssigned(boolean isAssigned) {
   }
 }

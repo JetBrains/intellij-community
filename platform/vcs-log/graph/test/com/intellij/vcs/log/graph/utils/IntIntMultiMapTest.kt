@@ -68,7 +68,7 @@ fun IntArray.sortR(): IntArray {
 
 fun <T> Iterable<T>.joinLines(f: (T) -> String): String = map(f).joinToString(separator = "\n")
 
-class IntIntMultiMapTest {
+internal class IntIntMultiMapTest {
 
   private fun runTest(test: MapTester.() -> Unit) = MapTester().test()
 

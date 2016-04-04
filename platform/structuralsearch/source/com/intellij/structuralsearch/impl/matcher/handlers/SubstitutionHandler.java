@@ -96,7 +96,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
     if (match!=null) {
       if (start==0 && end==-1 && result.getStart()==0 && result.getEnd()==-1) {
-        matchresult = matchContext.getMatcher().match(match,result.getMatchRef().getElement());
+        matchresult = matchContext.getMatcher().match(match,result.getMatch());
       } else {
         matchresult = StructuralSearchUtil.getProfileByPsiElement(match).getText(match, start, end).equals(
           result.getMatchImage()
@@ -167,7 +167,7 @@ public class SubstitutionHandler extends MatchingHandler {
   
         if (!substitution.isMultipleMatch()) {
           // adding intermediate node to contain all multiple matches
-          MatchResultImpl sonresult = new MatchResultImpl(
+          final MatchResultImpl sonresult = new MatchResultImpl(
             substitution.getName(),
             substitution.getMatchImage(),
             substitution.getMatchRef(),
@@ -176,7 +176,6 @@ public class SubstitutionHandler extends MatchingHandler {
             target
           );
 
-          sonresult.setParent(substitution);
           substitution.setMatchRef(
             new SmartPsiPointer(match == null ? null : match)
           );
@@ -193,7 +192,6 @@ public class SubstitutionHandler extends MatchingHandler {
           substitution.addSon( sonresult);
         } 
   
-        result.setParent(substitution);
         substitution.addSon( result );
       }
     }
@@ -247,7 +245,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
     if (minOccurs >= 1 &&
         ( substitution == null ||
-          StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType()).getElementContextByPsi(substitution.getMatchRef().getElement()) != elementContext
+          StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType()).getElementContextByPsi(substitution.getMatch()) != elementContext
         )
        ) {
       return false;

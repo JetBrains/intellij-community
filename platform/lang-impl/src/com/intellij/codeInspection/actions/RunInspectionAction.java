@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInspection.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -36,16 +38,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
-
+import java.util.Collections;
+import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
@@ -89,11 +96,16 @@ public class RunInspectionAction extends GotoActionBase {
     }, false);
   }
 
-  private static void runInspection(@NotNull Project project,
+  private static void runInspection(final @NotNull Project project,
                                     @NotNull String shortName,
                                     @Nullable VirtualFile virtualFile,
                                     PsiElement psiElement,
                                     PsiFile psiFile) {
+    final PsiElement element = psiFile == null ? psiElement : psiFile;
+    final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionToolWrapper toolWrapper = currentProfile.getInspectionTool(shortName, project);
+    LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);
+
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Module module = virtualFile != null ? ModuleUtilCore.findModuleForFile(virtualFile, project) : null;
 
@@ -119,8 +131,9 @@ public class RunInspectionAction extends GotoActionBase {
     final FileFilterPanel fileFilterPanel = new FileFilterPanel();
     fileFilterPanel.init();
 
+    final AnalysisScope initialAnalysisScope = analysisScope;
     final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
-      AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
+      "Run '" + toolWrapper.getDisplayName() + "'",
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project, analysisScope, module != null ? module.getName() : null,
       true, AnalysisUIOptions.getInstance(project), psiElement) {
@@ -137,24 +150,53 @@ public class RunInspectionAction extends GotoActionBase {
                                     @NotNull Project project,
                                     Module module) {
         final AnalysisScope scope = super.getScope(uiOptions, defaultScope, project, module);
-        final SearchScope filterScope = fileFilterPanel.getSearchScope();
+        final GlobalSearchScope filterScope = fileFilterPanel.getSearchScope();
         if (filterScope == null) {
           return scope;
         }
-        final SearchScope filteredScope = filterScope.intersectWith(scope.toSearchScope());
-        return new AnalysisScope(filteredScope, project);
+        scope.setFilter(filterScope);
+        return scope;
+      }
+
+      private AnalysisScope getScope() {
+        final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
+        return getScope(uiOptions, initialAnalysisScope, project, module);
+      }
+
+      @NotNull
+      @Override
+      protected Action[] createActions() {
+        final List<Action> actions = new ArrayList<Action>();
+        final boolean hasFixAll = toolWrapper.getTool() instanceof CleanupLocalInspectionTool;
+        actions.add(new AbstractAction(hasFixAll ? AnalysisScopeBundle.message("action.analyze.verb")
+                                                 : CommonBundle.getOkButtonText()) {
+          {
+            putValue(DEFAULT_ACTION, Boolean.TRUE);
+          }
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            RunInspectionIntention.rerunInspection(toolWrapper, managerEx, getScope(), element);
+            close(DialogWrapper.OK_EXIT_CODE);
+          }
+        });
+        if (hasFixAll) {
+          actions.add(new AbstractAction("Fix All") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              managerEx.createNewGlobalContext(false)
+                .codeCleanup(project, getScope(), currentProfile, "Cleanup by " + toolWrapper.getDisplayName(), null, false);
+              close(DialogWrapper.OK_EXIT_CODE);
+            }
+          });
+        }
+        actions.add(getCancelAction());
+        if (SystemInfo.isMac) {
+          Collections.reverse(actions);
+        }
+        return actions.toArray(new Action[actions.size()]);
       }
     };
 
-    if (!dialog.showAndGet()) {
-      return;
-    }
-    final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
-    AnalysisScope scope = dialog.getScope(uiOptions, analysisScope, project, module);
-    PsiElement element = psiFile == null ? psiElement : psiFile;
-    final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    final InspectionToolWrapper toolWrapper = currentProfile.getInspectionTool(shortName, project);
-    LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);
-    RunInspectionIntention.rerunInspection(toolWrapper, managerEx, scope, element);
+    dialog.showAndGet();
   }
 }

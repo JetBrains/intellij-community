@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -159,9 +158,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
       .setRemoveActionName(ProjectBundle.message("library.remove.action"))
       .disableRemoveAction();
-    if (Registry.is("ide.new.project.settings")) {
-      toolbarDecorator.setPanelBorder(new CustomLineBorder(1, 0, 0, 0));
-    }
+    toolbarDecorator.setPanelBorder(new CustomLineBorder(1, 0, 0, 0));
     final List<AttachRootButtonDescriptor> popupItems = new ArrayList<AttachRootButtonDescriptor>();
     for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
       Icon icon = descriptor.getToolbarIcon();

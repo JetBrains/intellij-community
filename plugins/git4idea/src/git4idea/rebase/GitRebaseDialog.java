@@ -26,14 +26,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
+import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitRebaseSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitReferenceValidator;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +46,17 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
  * The dialog that allows initiating git rebase activity
  */
 public class GitRebaseDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitRebaseDialog.class);
+
+  @NotNull private final GitRepositoryManager myRepositoryManager;
 
   /**
    * Git root selector
@@ -151,6 +156,7 @@ public class GitRebaseDialog extends DialogWrapper {
     init();
     myProject = project;
     mySettings = ServiceManager.getService(myProject, GitRebaseSettings.class);
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     final Runnable validateRunnable = new Runnable() {
       public void run() {
         validateFields();
@@ -210,39 +216,6 @@ public class GitRebaseDialog extends DialogWrapper {
     }
   }
 
-  public GitLineHandler handler() {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.REBASE);
-    h.setStdoutSuppressed(false);
-    if (myInteractiveCheckBox.isSelected() && myInteractiveCheckBox.isEnabled()) {
-      h.addParameters("-i");
-    }
-    h.addParameters("-v");
-    if (!myDoNotUseMergeCheckBox.isSelected()) {
-      if (myMergeStrategyComboBox.getSelectedItem().equals(GitMergeUtil.DEFAULT_STRATEGY)) {
-        h.addParameters("-m");
-      }
-      else {
-        h.addParameters("-s", myMergeStrategyComboBox.getSelectedItem().toString());
-      }
-    }
-    if (myPreserveMergesCheckBox.isSelected()) {
-      h.addParameters("-p");
-    }
-    String from = GitUIUtil.getTextField(myFromComboBox).getText();
-    String onto = GitUIUtil.getTextField(myOntoComboBox).getText();
-    if (from.length() == 0) {
-      h.addParameters(onto);
-    }
-    else {
-      h.addParameters("--onto", onto, from);
-    }
-    final String selectedBranch = (String)myBranchComboBox.getSelectedItem();
-    if (myCurrentBranch != null && !myCurrentBranch.getName().equals(selectedBranch)) {
-      h.addParameters(selectedBranch);
-    }
-    return h;
-  }
-
   @Override
   protected void doOKAction() {
     try {
@@ -299,7 +272,7 @@ public class GitRebaseDialog extends DialogWrapper {
       setOKActionEnabled(false);
       return;
     }
-    if (GitRebaseUtils.isRebaseInTheProgress(gitRoot())) {
+    if (GitRebaseUtils.isRebaseInTheProgress(myProject, gitRoot())) {
       setErrorText(GitBundle.getString("rebase.in.progress"));
       setOKActionEnabled(false);
       return;
@@ -427,12 +400,12 @@ public class GitRebaseDialog extends DialogWrapper {
         else {
           mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
           if (remote.equals(".")) {
-            trackedBranch = new GitSvnRemoteBranch(mergeBranch, GitBranch.DUMMY_HASH);
+            trackedBranch = new GitSvnRemoteBranch(mergeBranch);
           }
           else {
             GitRemote r = GitBranchUtil.findRemoteByNameOrLogError(myProject, root, remote);
             if (r != null) {
-              trackedBranch = new GitStandardRemoteBranch(r, mergeBranch, GitBranch.DUMMY_HASH);
+              trackedBranch = new GitStandardRemoteBranch(r, mergeBranch);
             }
           }
         }
@@ -457,6 +430,31 @@ public class GitRebaseDialog extends DialogWrapper {
     return (VirtualFile)myGitRootComboBox.getSelectedItem();
   }
 
+  @NotNull
+  public GitRepository getSelectedRepository() {
+    return assertNotNull(myRepositoryManager.getRepositoryForRoot(gitRoot()));
+  }
+
+  @NotNull
+  public GitRebaseParams getSelectedParams() {
+    String selectedBranch = (String)myBranchComboBox.getSelectedItem();
+    String branch = myCurrentBranch != null && !myCurrentBranch.getName().equals(selectedBranch) ? selectedBranch : null;
+
+    String from = GitUIUtil.getTextField(myFromComboBox).getText();
+    String onto = GitUIUtil.getTextField(myOntoComboBox).getText();
+    String upstream;
+    String newBase;
+    if (isEmptyOrSpaces(from)) {
+      upstream = onto;
+      newBase = null;
+    }
+    else {
+      upstream = from;
+      newBase = onto;
+    }
+
+    return new GitRebaseParams(branch, newBase, upstream, myInteractiveCheckBox.isSelected(), myPreserveMergesCheckBox.isSelected());
+  }
 
   /**
    * {@inheritDoc}

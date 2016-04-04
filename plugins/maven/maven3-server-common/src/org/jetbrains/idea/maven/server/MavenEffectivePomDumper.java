@@ -19,10 +19,7 @@ import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.rmi.RemoteException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -66,7 +63,8 @@ public class MavenEffectivePomDumper {
 
             MavenProject project = buildingResult.getProject();
 
-            XMLWriter writer = new PrettyPrintXMLWriter(w, StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE));
+            XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+                                                        "\n", null, null);
 
             writeHeader(writer);
 
@@ -172,7 +170,6 @@ public class MavenEffectivePomDumper {
         element.setContent(i + 1, new Text(((Text)c2).getText().replace("\n", "\n\n")));
       }
     }
-
   }
 
   private static void addLineBreaks(Document pomXml, Namespace pomNamespace) {

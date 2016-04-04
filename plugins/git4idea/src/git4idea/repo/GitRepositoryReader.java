@@ -61,42 +61,37 @@ class GitRepositoryReader {
   @NonNls private static final String REFS_HEADS_PREFIX = "refs/heads/";
   @NonNls private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
 
-  @NotNull private final File          myGitDir;         // .git/
   @NotNull private final File          myHeadFile;       // .git/HEAD
   @NotNull private final File          myRefsHeadsDir;   // .git/refs/heads/
   @NotNull private final File          myRefsRemotesDir; // .git/refs/remotes/
   @NotNull private final File          myPackedRefsFile; // .git/packed-refs
+  @NotNull private final GitRepositoryFiles myGitFiles;
 
-  GitRepositoryReader(@NotNull File gitDir) {
-    myGitDir = gitDir;
-    DvcsUtil.assertFileExists(myGitDir, ".git directory not found in " + gitDir);
-    myHeadFile = new File(myGitDir, GitUtil.GIT_HEAD);
-    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found in " + gitDir);
-    myRefsHeadsDir = new File(new File(myGitDir, "refs"), "heads");
-    myRefsRemotesDir = new File(new File(myGitDir, "refs"), "remotes");
-    myPackedRefsFile = new File(myGitDir, "packed-refs");
+  GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
+    myGitFiles = gitFiles;
+    myHeadFile = gitFiles.getHeadFile();
+    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found at " + myHeadFile);
+    myRefsHeadsDir = gitFiles.getRefsHeadsFile();
+    myRefsRemotesDir = gitFiles.getRefsRemotesFile();
+    myPackedRefsFile = gitFiles.getPackedRefsPath();
   }
 
   @NotNull
   GitBranchState readState(@NotNull Collection<GitRemote> remotes) {
-    Pair<Set<GitLocalBranch>, Set<GitRemoteBranch>> branches = readBranches(remotes);
-    Set<GitLocalBranch> localBranches = branches.first;
+    Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> branches = readBranches(remotes);
+    Map<GitLocalBranch, Hash> localBranches = branches.first;
 
     HeadInfo headInfo = readHead();
     Repository.State state = readRepositoryState(headInfo);
 
     GitLocalBranch currentBranch;
     String currentRevision;
-    if (!headInfo.isBranch) {
-      currentBranch = null;
-      currentRevision = headInfo.content;
-    }
-    else if (!localBranches.isEmpty()) {
-      currentBranch = findCurrentBranch(headInfo, state, localBranches);
-      currentRevision = getCurrentRevision(headInfo, currentBranch);
+    if (!headInfo.isBranch || !localBranches.isEmpty()) {
+      currentBranch = findCurrentBranch(headInfo, state, localBranches.keySet());
+      currentRevision = getCurrentRevision(headInfo, currentBranch == null ? null : localBranches.get(currentBranch));
     }
     else if (headInfo.content != null) {
-      currentBranch = new GitLocalBranch(headInfo.content, GitBranch.DUMMY_HASH);
+      currentBranch = new GitLocalBranch(headInfo.content);
       currentRevision = null;
     }
     else {
@@ -107,16 +102,16 @@ class GitRepositoryReader {
   }
 
   @Nullable
-  private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable GitLocalBranch currentBranch) {
+  private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable Hash currentBranchHash) {
     String currentRevision;
     if (!headInfo.isBranch) {
       currentRevision = headInfo.content;
     }
-    else if (currentBranch == null) {
+    else if (currentBranchHash == null) {
       currentRevision = null;
     }
     else {
-      currentRevision = currentBranch.getHash().asString();
+      currentRevision = currentBranchHash.asString();
     }
     return currentRevision;
   }
@@ -158,17 +153,16 @@ class GitRepositoryReader {
       currentBranch = headInfo.content;
     }
     else if (state == Repository.State.REBASING) {
-      currentBranch = readRebaseDirBranchFile("rebase-apply");
+      currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseApplyDir());
       if (currentBranch == null) {
-        currentBranch = readRebaseDirBranchFile("rebase-merge");
+        currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseMergeDir());
       }
     }
     return addRefsHeadsPrefixIfNeeded(currentBranch);
   }
 
   @Nullable
-  private String readRebaseDirBranchFile(@NonNls String rebaseDirName) {
-    File rebaseDir = new File(myGitDir, rebaseDirName);
+  private static String readRebaseDirBranchFile(@NonNls File rebaseDir) {
     if (rebaseDir.exists()) {
       File headName = new File(rebaseDir, "head-name");
       if (headName.exists()) {
@@ -187,17 +181,11 @@ class GitRepositoryReader {
   }
 
   private boolean isMergeInProgress() {
-    File mergeHead = new File(myGitDir, "MERGE_HEAD");
-    return mergeHead.exists();
+    return myGitFiles.getMergeHeadFile().exists();
   }
 
   private boolean isRebaseInProgress() {
-    File f = new File(myGitDir, "rebase-apply");
-    if (f.exists()) {
-      return true;
-    }
-    f = new File(myGitDir, "rebase-merge");
-    return f.exists();
+    return myGitFiles.getRebaseApplyDir().exists() || myGitFiles.getRebaseMergeDir().exists();
   }
 
   @NotNull
@@ -220,7 +208,7 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private Pair<Set<GitLocalBranch>, Set<GitRemoteBranch>> readBranches(@NotNull Collection<GitRemote> remotes) {
+  private Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> readBranches(@NotNull Collection<GitRemote> remotes) {
     Map<String, String> data = readBranchRefsFromFiles();
     Map<String, Hash> resolvedRefs = resolveRefs(data);
     return createBranchesFromData(remotes, resolvedRefs);
@@ -229,27 +217,27 @@ class GitRepositoryReader {
   @NotNull
   private Map<String, String> readBranchRefsFromFiles() {
     Map<String, String> result = ContainerUtil.newHashMap(readPackedBranches()); // reading from packed-refs first to overwrite values by values from unpacked refs
-    result.putAll(readFromBranchFiles(myRefsHeadsDir));
-    result.putAll(readFromBranchFiles(myRefsRemotesDir));
+    result.putAll(readFromBranchFiles(myRefsHeadsDir, REFS_HEADS_PREFIX));
+    result.putAll(readFromBranchFiles(myRefsRemotesDir, REFS_REMOTES_PREFIX));
     result.remove(REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD);
     return result;
   }
 
   @NotNull
-  private static Pair<Set<GitLocalBranch>, Set<GitRemoteBranch>> createBranchesFromData(@NotNull Collection<GitRemote> remotes,
-                                                                                        @NotNull Map<String, Hash> data) {
-    Set<GitLocalBranch> localBranches = ContainerUtil.newHashSet();
-    Set<GitRemoteBranch> remoteBranches = ContainerUtil.newHashSet();
+  private static Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> createBranchesFromData(@NotNull Collection<GitRemote> remotes,
+                                                                                                    @NotNull Map<String, Hash> data) {
+    Map<GitLocalBranch, Hash> localBranches = ContainerUtil.newHashMap();
+    Map<GitRemoteBranch, Hash> remoteBranches = ContainerUtil.newHashMap();
     for (Map.Entry<String, Hash> entry : data.entrySet()) {
       String refName = entry.getKey();
       Hash hash = entry.getValue();
       if (refName.startsWith(REFS_HEADS_PREFIX)) {
-        localBranches.add(new GitLocalBranch(refName, hash));
+        localBranches.put(new GitLocalBranch(refName), hash);
       }
       else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
-        GitRemoteBranch remoteBranch = parseRemoteBranch(refName, hash, remotes);
+        GitRemoteBranch remoteBranch = parseRemoteBranch(refName, remotes);
         if (remoteBranch != null) {
-          remoteBranches.add(remoteBranch);
+          remoteBranches.put(remoteBranch, hash);
         }
       }
       else {
@@ -265,18 +253,18 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private Map<String, String> readFromBranchFiles(@NotNull File rootDir) {
-    if (!rootDir.exists()) {
+  private static Map<String, String> readFromBranchFiles(@NotNull final File refsRootDir, @NotNull final String prefix) {
+    if (!refsRootDir.exists()) {
       return Collections.emptyMap();
     }
     final Map<String, String> result = new HashMap<String, String>();
-    FileUtil.processFilesRecursively(rootDir, new Processor<File>() {
+    FileUtil.processFilesRecursively(refsRootDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
         if (!file.isDirectory() && !isHidden(file)) {
-          String relativePath = FileUtil.getRelativePath(myGitDir, file);
+          String relativePath = FileUtil.getRelativePath(refsRootDir, file);
           if (relativePath != null) {
-            String branchName = FileUtil.toSystemIndependentName(relativePath);
+            String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
             if (hash != null) {
               result.put(branchName, hash);
@@ -295,13 +283,12 @@ class GitRepositoryReader {
 
   @Nullable
   private static GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName,
-                                                   @NotNull Hash hash,
                                                    @NotNull Collection<GitRemote> remotes) {
     String stdName = GitBranchUtil.stripRefsPrefix(fullBranchName);
 
     int slash = stdName.indexOf('/');
     if (slash == -1) { // .git/refs/remotes/my_branch => git-svn
-      return new GitSvnRemoteBranch(fullBranchName, hash);
+      return new GitSvnRemoteBranch(fullBranchName);
     }
     else {
       GitRemote remote;
@@ -319,9 +306,9 @@ class GitRepositoryReader {
         LOG.debug(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
         GitRemote fakeRemote = new GitRemote(remoteName, ContainerUtil.<String>emptyList(), Collections.<String>emptyList(),
                                              Collections.<String>emptyList(), Collections.<String>emptyList());
-        return new GitStandardRemoteBranch(fakeRemote, branchName, hash);
+        return new GitStandardRemoteBranch(fakeRemote, branchName);
       }
-      return new GitStandardRemoteBranch(remote, branchName, hash);
+      return new GitStandardRemoteBranch(remote, branchName);
     }
   }
 

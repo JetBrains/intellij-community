@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package org.jetbrains.annotations;
 import java.lang.annotation.*;
 
 /**
- * Specifies that an element of the program is a user-visible string which needs to be localized,
- * or does not contain such strings. The annotation is intended to be used by localization tools for
- * detecting strings which should be reported as requiring localization. Generally, this doesn't change
- * IDEA's behaviour - it's just a markup, showing that the string was verified is indeed localizable.
+ * Specifies that an element of the program is an user-visible string which needs to be localized.
+ * This annotation is intended to be used by localization tools for
+ * detecting strings which should be reported as requiring localization.
  *
  * @author mike
+ * @see NonNls
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
@@ -34,9 +34,13 @@ public @interface Nls {
   enum Capitalization {
 
     NotSpecified,
-    /** e.g. This Is a Title */
+    /**
+     * e.g. This Is a Title
+     */
     Title,
-    /** e.g. This is a sentence */
+    /**
+     * e.g. This is a sentence
+     */
     Sentence
   }
 

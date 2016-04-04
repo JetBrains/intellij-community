@@ -24,6 +24,7 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -328,24 +329,28 @@ public class JavaDocInfoGenerator {
     }
     if (targetElement == null) return null;
     
-    String rawFragment = null;
     if (fragment != null && targetElement instanceof PsiClass) {
       if (fragment.contains("-") || fragment.contains("(")) {
-        rawFragment = fragment;
-        fragment = null; // reference to a method
+        for (PsiMethod method : ((PsiClass)targetElement).getMethods()) {
+          Set<String> signatures = JavaDocumentationProvider.getHtmlMethodSignatures(method, true);
+          if (signatures.contains(fragment)) {
+            targetElement = method;
+            fragment = null;
+            break;
+          }
+        }
       }
       else  {
         for (PsiField field : ((PsiClass)targetElement).getFields()) {
           if (fragment.equals(field.getName())) {
-            rawFragment = fragment;
-            fragment = null; // reference to a field
+            targetElement = field;
+            fragment = null;
             break;
           }
         }
       }
     }
     return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(targetElement.getProject(), targetElement) +
-           (rawFragment == null ? "" : ('#' + rawFragment)) +
            (fragment == null ? "" : DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR + fragment);
   }
 
@@ -933,12 +938,13 @@ public class JavaDocInfoGenerator {
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
       boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
-
-      if (!(shownAnnotations.add(annotation.getQualifiedName()) || isRepeatableAnnotationType(resolved))) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (!(shownAnnotations.add(qualifiedName) || isRepeatableAnnotationType(resolved))) {
         continue;
       }
 
-      if (resolved instanceof PsiClass) {
+      if (resolved instanceof PsiClass && 
+          qualifiedName != null && JavaDocUtil.findReferenceTarget(owner.getManager(), qualifiedName, owner) != null) {
         final PsiClass annotationType = (PsiClass)resolved;
         if (isDocumentedAnnotationType(annotationType)) {
           if (inferred) buffer.append("<i>");
@@ -1259,7 +1265,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generatePrologue(StringBuilder buffer) {
+  protected void generatePrologue(StringBuilder buffer) {
     URL baseUrl = getBaseUrl();
     buffer.append("<html><head>");
     if (baseUrl != null) {
@@ -1289,7 +1295,7 @@ public class JavaDocInfoGenerator {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void generateEpilogue(StringBuilder buffer) {
+  protected void generateEpilogue(StringBuilder buffer) {
     while (true) {
       if (buffer.length() < BR_TAG.length()) break;
       char c = buffer.charAt(buffer.length() - 1);

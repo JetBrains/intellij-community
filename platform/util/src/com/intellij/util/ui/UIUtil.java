@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,11 @@ public class UIUtil {
     if (isUnderAquaBasedLookAndFeel()) {
       c.putClientProperty("JComponent.sizeVariant", StringUtil.toLowerCase(componentStyle.name()));
     }
-    FontSize fontSize = componentStyle == ComponentStyle.REGULAR ? FontSize.NORMAL : componentStyle == ComponentStyle.SMALL ? FontSize.SMALL : FontSize.MINI;
+    FontSize fontSize = componentStyle == ComponentStyle.MINI
+                        ? FontSize.MINI
+                        : componentStyle == ComponentStyle.SMALL
+                          ? FontSize.SMALL
+                          : FontSize.NORMAL;
     c.setFont(getFont(fontSize, c.getFont()));
     Container p = c.getParent();
     if (p != null) {
@@ -210,7 +214,7 @@ public class UIUtil {
 
   public enum FontSize {NORMAL, SMALL, MINI}
 
-  public enum ComponentStyle {REGULAR, SMALL, MINI}
+  public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}
 
   public enum FontColor {NORMAL, BRIGHTER}
 
@@ -231,8 +235,7 @@ public class UIUtil {
   private static final AbstractAction REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(ActionEvent e) {
-      Object source = e.getSource();
-      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
       if (manager != null && manager.canRedo()) {
         manager.redo();
       }
@@ -241,8 +244,7 @@ public class UIUtil {
   private static final AbstractAction UNDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(ActionEvent e) {
-      Object source = e.getSource();
-      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
       if (manager != null && manager.canUndo()) {
         manager.undo();
       }
@@ -459,7 +461,7 @@ public class UIUtil {
               return ourRetina.get();
             }
           }
-          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
+          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") /*&& !SystemInfo.isOracleJvm*/) {
             try {
               GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
               final GraphicsDevice device = env.getDefaultScreenDevice();
@@ -510,8 +512,41 @@ public class UIUtil {
     }
   }
 
-  public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
-    return (T)component.getClientProperty(key);
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @param key       the client property key
+   * @return {@code true} if the property of the specified component is set to {@code true}
+   */
+  public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
+    return Boolean.TRUE.equals(getClientProperty(component, key));
+  }
+
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @param key       the client property key that specifies a return type
+   * @return the property value from the specified component or {@code null}
+   */
+  public static Object getClientProperty(Object component, @NotNull Object key) {
+    return component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null;
+  }
+
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @param key       the client property key that specifies a return type
+   * @return the property value from the specified component or {@code null}
+   */
+  public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
+    return ObjectUtils.tryCast(getClientProperty(component, (Object)type), type);
+  }
+
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @param key       the client property key that specifies a return type
+   * @return the property value from the specified component or {@code null}
+   */
+  public static <T> T getClientProperty(Object component, @NotNull Key<T> key) {
+    //noinspection unchecked
+    return (T)getClientProperty(component, (Object)key);
   }
 
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
@@ -1671,6 +1706,9 @@ public class UIUtil {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
+      if (isRetina()) {
+        ((Graphics2D)g).setStroke(new BasicStroke(2f));
+      }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
@@ -1688,7 +1726,7 @@ public class UIUtil {
         g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : Gray.xFF.withAlpha(100));
       }
 
-      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+      g.drawLine(x, 0, width, 0);
     } finally {
       config.restore();
     }
@@ -1773,7 +1811,7 @@ public class UIUtil {
         img = image;
       }
       newG.drawImage(img, 0, 0, observer);
-      newG.scale(1, 1);
+      //newG.scale(1, 1);
       newG.dispose();
     } else {
       g.drawImage(image, x, y, observer);
@@ -1789,7 +1827,7 @@ public class UIUtil {
         img = image;
       }
       newG.drawImage((BufferedImage)img, op, 0, 0);
-      newG.scale(1, 1);
+      //newG.scale(1, 1);
       newG.dispose();
     } else {
       ((Graphics2D)g).drawImage(image, op, x, y);
@@ -1847,22 +1885,28 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
+    //noinspection StatementWithEmptyBody
+    while(dispatchInvocationEvent());
+  }
+
+  @TestOnly
+  public static boolean dispatchInvocationEvent() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    while (true) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      try {
-        AWTEvent event1 = eventQueue.getNextEvent();
-        if (event1 instanceof InvocationEvent) {
-          ((InvocationEvent)event1).dispatch();
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e); //?
+    AWTEvent event = eventQueue.peekEvent();
+    if (event == null) return false;
+    try {
+      AWTEvent event1 = eventQueue.getNextEvent();
+      if (event1 instanceof InvocationEvent) {
+        ((InvocationEvent)event1).dispatch();
       }
     }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return true;
   }
+
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
@@ -2119,7 +2163,7 @@ public class UIUtil {
     for (MouseWheelListener each : mouseWheelListeners) {
       c.removeMouseWheelListener(each);
     }
-    
+
     if (c instanceof AbstractButton) {
       final ActionListener[] listeners = ((AbstractButton)c).getActionListeners();
       for (ActionListener listener : listeners) {
@@ -2231,7 +2275,7 @@ public class UIUtil {
   public static HTMLEditorKit getHTMLEditorKit() {
     return getHTMLEditorKit(true);
   }
-  
+
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
@@ -2477,23 +2521,26 @@ public class UIUtil {
   public static void initDefaultLAF() {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
-      if (ourSystemFontData == null) {
-        Font font = getLabelFont();
-        if (SystemInfo.isWindows) {
-          //noinspection HardCodedStringLiteral
-          Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-          if (winFont != null) font = winFont;
-        }
-        else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
-          // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
-          // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
-          font = JBFont.create(font);
-        }
-        ourSystemFontData = Pair.create(font.getName(), font.getSize());
-      }
+      initSystemFontData();
     }
-    catch (Exception ignored) { }
+    catch (Exception ignore) {}
+  }
+
+  public static void initSystemFontData() {
+    if (ourSystemFontData != null) return;
+
+    Font font = getLabelFont();
+    if (SystemInfo.isWindows) {
+      //noinspection HardCodedStringLiteral
+      Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
+      if (winFont != null) font = winFont;
+    }
+    else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+      // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
+      // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
+      font = JBFont.create(font);
+    }
+    ourSystemFontData = Pair.create(font.getName(), font.getSize());
   }
 
   @Nullable
@@ -2517,7 +2564,7 @@ public class UIUtil {
   }
 
   public static void installComboBoxCopyAction(JComboBox comboBox) {
-    ComboBoxEditor editor = comboBox.getEditor();
+    final ComboBoxEditor editor = comboBox.getEditor();
     final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
     if (!(editorComponent instanceof JTextComponent)) return;
     final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
@@ -2928,7 +2975,7 @@ public class UIUtil {
           g.drawString(text, xOffset, yOffset[0]);
           if (!StringUtil.isEmpty(shortcut)) {
             Color oldColor = g.getColor();
-            g.setColor(new JBColor(new Color(82, 99, 155), 
+            g.setColor(new JBColor(new Color(82, 99, 155),
                                    new Color(88, 157, 246)));
             g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
             g.setColor(oldColor);
@@ -3004,8 +3051,18 @@ public class UIUtil {
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
+  @NotNull
   public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {
     return new Timer(delay, listener) {
+      @Override
+      public String toString() {
+        return name;
+      }
+    };
+  }
+  @NotNull
+  public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay) {
+    return new Timer(delay, null) {
       @Override
       public String toString() {
         return name;
@@ -3051,9 +3108,9 @@ public class UIUtil {
   public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
-    if (component.getBackground().equals(getPanelBackground()) 
-        || component instanceof JScrollPane 
-        || component instanceof JViewport 
+    if (component.getBackground().equals(getPanelBackground())
+        || component instanceof JScrollPane
+        || component instanceof JViewport
         || component instanceof JLayeredPane) {
       if (component instanceof JComponent) {
         ((JComponent)component).setOpaque(false);
@@ -3537,5 +3594,22 @@ public class UIUtil {
     }
     Component component = policy.getFirstComponent(container);
     return component instanceof JComponent ? (JComponent)component : null;
+  }
+
+  /**
+   * Calculates a component style from the corresponding client property.
+   * The key "JComponent.sizeVariant" is used by Apple's L&F to scale components.
+   *
+   * @param component a component to process
+   * @return a component style of the specified component
+   */
+  public static ComponentStyle getComponentStyle(Component component) {
+    if (component instanceof JComponent) {
+      Object property = ((JComponent)component).getClientProperty("JComponent.sizeVariant");
+      if ("large".equals(property)) return ComponentStyle.LARGE;
+      if ("small".equals(property)) return ComponentStyle.SMALL;
+      if ("mini".equals(property)) return ComponentStyle.MINI;
+    }
+    return ComponentStyle.REGULAR;
   }
 }

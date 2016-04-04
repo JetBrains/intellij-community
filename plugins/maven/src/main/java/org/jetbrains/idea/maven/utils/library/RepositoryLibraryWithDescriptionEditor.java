@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesDialog;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 import org.jetbrains.idea.maven.utils.library.remote.MavenDependenciesRemoteManager;
@@ -56,9 +57,11 @@ public class RepositoryLibraryWithDescriptionEditor
         RepositoryUtils.getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES), myEditorComponent.getProject()),
         new MavenRemoteTask.ResultProcessor<List<OrderRoot>>() {
           @Override
-          public void process(List<OrderRoot> roots) {
+          public void process(@Nullable List<OrderRoot> roots) {
             libraryEditor.removeAllRoots();
-            libraryEditor.addRoots(roots);
+            if (roots != null) {
+              libraryEditor.addRoots(roots);
+            }
           }
         }
       );

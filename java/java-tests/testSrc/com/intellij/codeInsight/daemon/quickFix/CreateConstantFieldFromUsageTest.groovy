@@ -25,6 +25,40 @@ class Test {
 '''
     assert !myFixture.lookup
   }
+  
+  public void "test inside annotation argument with braces"() {
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    myFixture.configureByText "a.java", '''
+interface A {}
+@SuppressWarnings({A.CON<caret>ST})
+class Test {}
+'''
+    myFixture.launchAction(myFixture.findSingleIntention("Create constant field"))
+    myFixture.checkResult '''
+interface A {
+    <selection>String</selection> CONST = ;
+}
+@SuppressWarnings({A.CONST})
+class Test {}
+'''
+  }  
+
+  public void "test inside annotation argument no braces"() {
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    myFixture.configureByText "a.java", '''
+interface A {}
+@SuppressWarnings(A.CON<caret>ST)
+class Test {}
+'''
+    myFixture.launchAction(myFixture.findSingleIntention("Create constant field"))
+    myFixture.checkResult '''
+interface A {
+    <selection>String</selection> CONST = ;
+}
+@SuppressWarnings(A.CONST)
+class Test {}
+'''
+  }
 
   public void "test insert presentable name when showing type lookup"() {
     TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)

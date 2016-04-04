@@ -38,6 +38,15 @@ public class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
   public void testIdentifierSeparator() throws Exception { doTest(); }
   public void testMethodFromAnonymousClass() throws Exception { doTest(); }
 
+  public void testSameClassNames() throws Exception {
+    myFixture.addClass("package p; public class Foo {}")
+    myFixture.configureByText("Foo.java", "package p1; public class Fo<caret>o {}")
+    performCopy()
+    myFixture.configureByText("a.java", "import p.Foo; class Bar { <caret>}")
+    performPaste()
+    myFixture.checkResult """import p.Foo; class Bar {p1.Foo}"""
+  }
+
   public void testAddImport() {
     myFixture.addClass("package foo; public class Foo {}")
     myFixture.configureByText "a.java", "import foo.F<caret>oo;"

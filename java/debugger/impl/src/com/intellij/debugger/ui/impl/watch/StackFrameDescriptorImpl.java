@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
@@ -79,33 +80,22 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       }
       myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, myLocation.method());
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          mySourcePosition = ContextUtil.getSourcePosition(StackFrameDescriptorImpl.this);
-          final PsiFile file = mySourcePosition != null? mySourcePosition.getFile() : null;
-          if (file == null) {
-            myIsInLibraryContent = true;
-          }
-          else {
-            myBackgroundColor = FileColorManager.getInstance(file.getProject()).getFileColor(file);
-            
-            final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getDebugProcess().getProject()).getFileIndex();
-            final VirtualFile vFile = file.getVirtualFile();
-            myIsInLibraryContent = vFile != null && (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile));
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        mySourcePosition = ContextUtil.getSourcePosition(this);
+        final PsiFile file = mySourcePosition != null? mySourcePosition.getFile() : null;
+        if (file == null) {
+          myIsInLibraryContent = true;
+        }
+        else {
+          myBackgroundColor = FileColorManager.getInstance(file.getProject()).getFileColor(file);
+
+          final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getDebugProcess().getProject()).getFileIndex();
+          final VirtualFile vFile = file.getVirtualFile();
+          myIsInLibraryContent = vFile != null && (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile));
         }
       });
     }
-    catch (InternalException e) {
-      LOG.info(e);
-      myLocation = null;
-      myDeclaringType = null;
-      myMethodOccurrence = tracker.getMethodOccurrence(0, null);
-      myIsSynthetic = false;
-      myIsInLibraryContent = false;
-    }
-    catch (EvaluateException e) {
+    catch (InternalException | EvaluateException e) {
       LOG.info(e);
       myLocation = null;
       myDeclaringType = null;
@@ -184,8 +174,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       Method method = myMethodOccurrence.getMethod();
       if (method != null) {
         myName = method.name();
-        label.append(myName);
-        label.append("()");
+        label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
       }
       if (settings.SHOW_LINE_NUMBER) {
         String lineNumber;

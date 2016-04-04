@@ -458,10 +458,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public AsyncResult<AbstractTreeNode> expandPathToElement(Object element) {
-    if (myAbstractTreeBuilder == null) return new AsyncResult.Rejected<AbstractTreeNode>();
+    if (myAbstractTreeBuilder == null) return AsyncResult.rejected();
 
     ArrayList<AbstractTreeNode> pathToElement = getPathToElement(element);
-    if (pathToElement.isEmpty()) return new AsyncResult.Rejected<AbstractTreeNode>();
+    if (pathToElement.isEmpty()) return AsyncResult.rejected();
 
     final AsyncResult<AbstractTreeNode> result = new AsyncResult<AbstractTreeNode>();
     final AbstractTreeNode toExpand = pathToElement.get(pathToElement.size() - 1);

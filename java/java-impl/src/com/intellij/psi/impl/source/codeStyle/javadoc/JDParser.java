@@ -45,11 +45,9 @@ public class JDParser {
   private static final char lineSeparator = '\n';
 
   private final CodeStyleSettings mySettings;
-  private final LanguageLevel myLanguageLevel;
 
-  public JDParser(@NotNull CodeStyleSettings settings, @NotNull LanguageLevel languageLevel) {
+  public JDParser(@NotNull CodeStyleSettings settings) {
     mySettings = settings;
-    myLanguageLevel = languageLevel;
   }
 
   public void formatCommentText(@NotNull PsiElement element, @NotNull CommentFormatter formatter) {
@@ -253,7 +251,7 @@ public class JDParser {
         first = true;
         if (p2nl) {
           if (isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
-            list.add("");
+            list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : "");
             markers.add(Boolean.valueOf(preCount > 0));
             continue;
           }
@@ -277,6 +275,11 @@ public class JDParser {
     String withoutWS = removeWhiteSpacesFrom(token).toLowerCase();
     return withoutWS.equals(SELF_CLOSED_P_TAG) || withoutWS.equals(P_START_TAG);
   }
+  
+  private static boolean isSelfClosedPTag(@NotNull final String token) {
+    return removeWhiteSpacesFrom(token).toLowerCase().equals(SELF_CLOSED_P_TAG);
+  }
+  
 
   @NotNull
   private static String removeWhiteSpacesFrom(@NotNull final String token) {
@@ -379,12 +382,12 @@ public class JDParser {
         result.add(Pair.create(s1, marks[i]));
       }
       else {
-        if (s1.isEmpty()) {
+        if (s1.isEmpty() || s1.equals(SELF_CLOSED_P_TAG)) {
           if (sb.length() != 0) {
             result.add(new Pair<String, Boolean>(sb.toString(), false));
             sb.setLength(0);
           }
-          result.add(Pair.create("", marks[i]));
+          result.add(Pair.create(s1, marks[i]));
         }
         else if (mySettings.JD_PRESERVE_LINE_FEEDS) {
           result.add(Pair.create(s1, marks[i]));
@@ -596,13 +599,7 @@ public class JDParser {
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(prefix);
         if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
-          if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-            //Self-closing elements are not allowed for javadoc tool from JDK8
-            sb.append(P_START_TAG);
-          }
-          else {
-            sb.append(SELF_CLOSED_P_TAG);
-          }
+          sb.append(P_START_TAG);
         }
         else {
           sb.append(line);

@@ -351,7 +351,7 @@ public class MavenIndex {
 
   private void handleUpdateException(Exception e) {
     myFailureMessage = e.getMessage();
-    MavenLog.LOG.warn("Failed to update Maven indices for: [" + myId + "] " + myRepositoryPathOrUrl, e);
+    MavenLog.LOG.warn("Failed to update Maven indices for: [" + myId.getValue() + "] " + myRepositoryPathOrUrl, e);
   }
 
   private int createContext(File contextDir, String suffix) throws MavenServerIndexerException {

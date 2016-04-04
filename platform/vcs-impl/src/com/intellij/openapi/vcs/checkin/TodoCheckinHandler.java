@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -174,9 +175,7 @@ public class TodoCheckinHandler extends CheckinHandler {
 
   private ReturnResult showResults(final TodoCheckinHandlerWorker worker, CommitExecutor executor) {
     String commitButtonText = executor != null ? executor.getActionText() : myCheckinProjectPanel.getCommitActionName();
-    if (commitButtonText.endsWith("...")) {
-      commitButtonText = commitButtonText.substring(0, commitButtonText.length()-3);
-    }
+    commitButtonText = StringUtil.trimEnd(commitButtonText, "...");
 
     final String text = createMessage(worker);
     final String[] buttons;

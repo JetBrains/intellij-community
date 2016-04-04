@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ThrowableComputable;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
   private static class ProgressManagerHolder {
@@ -31,6 +33,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   }
 
   @NotNull
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ProgressManager getInstance() {
     return ProgressManagerHolder.ourInstance;
   }
@@ -78,7 +81,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
 
   public abstract void setCancelButtonText(String cancelButtonText);
-
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
@@ -170,25 +172,43 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs a specified <code>task</code> in either background/foreground thread and shows a progress dialog.
    *
-   * @param task task to run (either {@link Task.Modal}
-   *             or {@link Task.Backgroundable}).
+   * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
    */
   public abstract void run(@NotNull Task task);
 
+  /**
+   * Runs a specified computation with a modal progress dialog.
+   */
+  public <T, E extends Exception> T run(@NotNull Task.WithResult<T, E> task) throws E {
+    run((Task)task);
+    return task.getResult();
+  }
+
   public abstract void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator);
 
-  protected void indicatorCanceled(@NotNull ProgressIndicator indicator) {
-  }
+  protected void indicatorCanceled(@NotNull ProgressIndicator indicator) { }
 
   public static void canceled(@NotNull ProgressIndicator indicator) {
     getInstance().indicatorCanceled(indicator);
   }
 
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static void checkCanceled() throws ProcessCanceledException {
     getInstance().doCheckCanceled();
   }
 
-  public abstract void executeProcessUnderProgress(@NotNull Runnable process,
-                                          @Nullable("null means reuse current progress") ProgressIndicator progress)
-    throws ProcessCanceledException;
+  /**
+   * @param progress an indicator to use, {@code null} means reuse current progress
+   */
+  public abstract void executeProcessUnderProgress(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
+
+  public static void assertNotCircular(@NotNull ProgressIndicator original) {
+    Set<ProgressIndicator> wrappedParents = null;
+    for (ProgressIndicator i = original; i instanceof WrappedProgressIndicator; i = ((WrappedProgressIndicator)i).getOriginalProgressIndicator()) {
+      if (wrappedParents == null) wrappedParents = new THashSet<ProgressIndicator>();
+      if (!wrappedParents.add(i)) {
+        throw new IllegalArgumentException(i + " wraps itself");
+      }
+    }
+  }
 }

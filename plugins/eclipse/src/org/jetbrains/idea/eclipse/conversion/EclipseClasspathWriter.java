@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -39,7 +40,6 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
-import java.util.Arrays;
 import java.util.Map;
 
 public class EclipseClasspathWriter {
@@ -90,7 +90,7 @@ public class EclipseClasspathWriter {
   private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, @NotNull final ModuleRootModel model) throws ConversionException {
     EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule());
     if (entry instanceof ModuleSourceOrderEntry) {
-      boolean shouldPlaceSeparately = eclipseModuleManager.isExpectedModuleSourcePlace(Arrays.binarySearch(model.getOrderEntries(), entry));
+      boolean shouldPlaceSeparately = eclipseModuleManager.isExpectedModuleSourcePlace(ArrayUtil.find(model.getOrderEntries(), entry));
       for (ContentEntry contentEntry : model.getContentEntries()) {
         VirtualFile contentRoot = contentEntry.getFile();
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
@@ -108,8 +108,12 @@ public class EclipseClasspathWriter {
       }
     }
     else if (entry instanceof ModuleOrderEntry) {
-      Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, '/' + ((ModuleOrderEntry)entry).getModuleName(), classpathRoot);
-      setAttributeIfAbsent(orderEntry, EclipseXml.COMBINEACCESSRULES_ATTR, EclipseXml.FALSE_VALUE);
+      final String path = '/' + ((ModuleOrderEntry)entry).getModuleName();
+      final Element oldElement = getOldElement(EclipseXml.SRC_KIND, path);
+      Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, path, classpathRoot);
+      if (oldElement == null) {
+        setAttributeIfAbsent(orderEntry, EclipseXml.COMBINEACCESSRULES_ATTR, EclipseXml.FALSE_VALUE);
+      }
       setExported(orderEntry, ((ExportableOrderEntry)entry));
     }
     else if (entry instanceof LibraryOrderEntry) {
@@ -246,7 +250,7 @@ public class EclipseClasspathWriter {
   }
 
   private Element addOrderEntry(@NotNull String kind, String path, Element classpathRoot, int index) {
-    Element element = myOldEntries.get(kind + getJREKey(path));
+    Element element = getOldElement(kind, path);
     if (element != null) {
       Element clonedElement = element.clone();
       if (index == -1 || index >= classpathRoot.getContentSize()) {
@@ -270,6 +274,10 @@ public class EclipseClasspathWriter {
       classpathRoot.addContent(index, orderEntry);
     }
     return orderEntry;
+  }
+
+  private Element getOldElement(@NotNull String kind, String path) {
+    return myOldEntries.get(kind + getJREKey(path));
   }
 
   private static String getJREKey(String path) {

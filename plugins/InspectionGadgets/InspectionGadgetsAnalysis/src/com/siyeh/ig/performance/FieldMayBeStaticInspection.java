@@ -77,11 +77,11 @@ public class FieldMayBeStaticInspection extends BaseInspection {
       if (containingClass != null
           && !containingClass.hasModifierProperty(PsiModifier.STATIC)
           && containingClass.getContainingClass() != null
-          && !PsiUtil.isCompileTimeConstant(field)) {
+          && !PsiUtil.isCompileTimeConstant((PsiVariable)field)) {
         // inner class cannot have static declarations
         return;
       }
-      if (containingClass instanceof PsiAnonymousClass && !PsiUtil.isCompileTimeConstant(field)) {
+      if (containingClass instanceof PsiAnonymousClass && !PsiUtil.isCompileTimeConstant((PsiVariable)field)) {
         return;
       }
       if (!canBeStatic(initializer)) {

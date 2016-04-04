@@ -124,7 +124,9 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     CharSequence docText = document.getCharsSequence();
     String textBeforeCaret = docText.subSequence(lineStartOffset, offset).toString();
     final String afterCaret = docText.subSequence(offset, document.getLineEndOffset(line)).toString();
-    if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) && !editor.getSelectionModel().hasSelection()) {
+    final PsiElement lBrace = aClass.getLBrace();
+    if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) &&
+        (lBrace == null || lBrace.getTextOffset() < offset) && !editor.getSelectionModel().hasSelection()) {
       EnterAction.insertNewLineAtCaret(editor);
       PsiDocumentManager.getInstance(project).commitDocument(document);
       offset = editor.getCaretModel().getOffset();
@@ -266,7 +268,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
                                                             boolean allowEmptySelection,
                                                             boolean copyJavadocCheckbox,
                                                             Project project) {
-    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project, false, getHeaderPanel(project)) {
+    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project, getHeaderPanel(project), getOptionControls()) {
       @Nullable
       @Override
       protected String getHelpId() {
@@ -280,6 +282,11 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   @Nullable
   protected JComponent getHeaderPanel(Project project) {
+    return null;
+  }
+
+  @Nullable
+  protected JComponent[] getOptionControls() {
     return null;
   }
 

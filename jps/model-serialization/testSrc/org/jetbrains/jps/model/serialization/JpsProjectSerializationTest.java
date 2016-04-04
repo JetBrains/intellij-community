@@ -101,6 +101,22 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals(getUrl("src"), root.getUrl());
   }
 
+  public void testTestModuleProperties() {
+    loadProject("/jps/model-serialization/testData/testModuleProperties/testModuleProperties.ipr");
+    List<JpsModule> modules = myProject.getModules();
+    assertEquals(2, modules.size());
+    JpsModule testModule = modules.get(0);
+    assertEquals("testModule", testModule.getName());
+    JpsModule productionModule = modules.get(1);
+    assertEquals("productionModule", productionModule.getName());
+
+    assertNull(JpsJavaExtensionService.getInstance().getTestModuleProperties(productionModule));
+    JpsTestModuleProperties testModuleProperties = JpsJavaExtensionService.getInstance().getTestModuleProperties(testModule);
+    assertNotNull(testModuleProperties);
+    assertEquals("productionModule", testModuleProperties.getProductionModuleReference().getModuleName());
+    assertSame(productionModule, testModuleProperties.getProductionModule());
+  }
+
   public void testProjectSdkWithoutType() {
     loadProject("/jps/model-serialization/testData/projectSdkWithoutType/projectSdkWithoutType.ipr");
     JpsSdkReference<JpsDummyElement> reference = myProject.getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);

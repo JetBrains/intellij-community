@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -26,12 +25,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 class ComboContentLayout extends ContentLayout {
 
   ContentComboLabel myComboLabel;
-  private BufferedImage myImage;
 
   ComboContentLayout(ToolWindowContentUi ui) {
     super(ui);
@@ -49,7 +46,6 @@ class ComboContentLayout extends ContentLayout {
   public void reset() {
     myIdLabel = null;
     myComboLabel = null;
-    myImage = null;
   }
 
   @Override
@@ -84,45 +80,14 @@ class ComboContentLayout extends ContentLayout {
     if (!isToDrawCombo()) return;
 
     Rectangle r = myComboLabel.getBounds();
-    if (UIUtil.isUnderDarcula()) {
-      g.setColor(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 20));
-      g.drawLine(r.width, 0, r.width, r.height);
-      g.setColor(ColorUtil.toAlpha(UIUtil.getBorderColor(), 50));
-      g.drawLine(r.width-1, 0, r.width-1, r.height);
-      return;
-    }
-    if (myImage == null || myImage.getHeight() != r.height || myImage.getWidth() != r.width) {
-      myImage = UIUtil.createImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
-      final Graphics2D g2d = myImage.createGraphics();
-      final GraphicsConfig c = new GraphicsConfig(g);
-      c.setAntialiasing(true);
-  
-      g2d.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
-      g2d.fillRect(0, 0, r.width, r.height);
-  
-      g2d.setColor(new Color(0, 0, 0, 60));
-      g2d.drawLine(0, 0, 0, r.height);
-      g2d.drawLine(r.width - 1, 0, r.width - 1, r.height);
-
-      g2d.setColor(new Color(255, 255, 255, 80));
-      g2d.drawRect(1, 0, r.width - 3, r.height - 1);
-      
-      g2d.dispose();
-    }
-    
-    UIUtil.drawImage(g, myImage, isIdVisible() ? r.x : r.x - 2, r.y, null);
+    g.setColor(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 20));
+    g.drawLine(r.width, 0, r.width, r.height);
+    g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
+    g.drawLine(r.width - 1, 0, r.width - 1, r.height);
   }
 
   @Override
-  public void paintChildren(Graphics g) {
-    if (!isToDrawCombo()) return;
-
-    final GraphicsConfig c = new GraphicsConfig(g);
-    c.setAntialiasing(true);
-
-    final Graphics2D g2d = (Graphics2D)g;
-    c.restore();
-  }
+  public void paintChildren(Graphics g) { }
 
   @Override
   public void update() {
@@ -135,10 +100,10 @@ class ComboContentLayout extends ContentLayout {
     myUi.removeAll();
 
     myUi.add(myIdLabel);
-    myUi.initMouseListeners(myIdLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi);
 
     myUi.add(myComboLabel);
-    myUi.initMouseListeners(myComboLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myComboLabel, myUi);
   }
 
   boolean isToDrawCombo() {

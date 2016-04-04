@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.repo;
 
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -23,11 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * RepositoryManager initializes and stores {@link Repository repositories} for Git or HgRoots defined in the project.
- *
- * @author Kirill Likhodedov
+ * The RepositoryManager stores and maintains the mapping between VCS roots (represented by {@link VirtualFile}s)
+ * and {@link Repository repositories} containing information and valuable methods specific for DVCS repositories.
  */
 public interface RepositoryManager<T extends Repository> {
+
+  @NotNull
+  AbstractVcs getVcs();
 
   /**
    * Returns the Repository instance which tracks the VCS repository located in the given root directory,

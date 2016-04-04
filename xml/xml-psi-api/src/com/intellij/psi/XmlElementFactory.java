@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -97,4 +98,16 @@ public abstract class XmlElementFactory {
    */
   @NotNull
   public abstract XmlAttribute createXmlAttribute(@NotNull @NonNls String name, @NotNull String value) throws IncorrectOperationException;
+
+  /**
+   * Creates an attribute with the specified name and value  with given context.
+   *
+   * @param name  the name of the attribute to create.
+   * @param value the value of the attribute to create.
+   * @param context element which can be used to determine created attribute file type.
+   * @return the created attribute instance.
+   * @throws IncorrectOperationException if either <code>name</code> or <code>value</code> are not valid.
+   */
+  @NotNull
+  public abstract XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context) throws IncorrectOperationException;
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectView.actions;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
@@ -40,25 +41,31 @@ public class UnmarkRootAction extends MarkRootActionBase {
     if (!Registry.is("ide.hide.excluded.files") && !selection.mySelectedExcludeRoots.isEmpty()
         && selection.mySelectedDirectories.isEmpty() && selection.mySelectedRoots.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(true);
-      e.getPresentation().setText("Cancel Exclusion");
+      e.getPresentation().setText(LangBundle.message("mark.as.unmark.excluded"));
       return;
     }
 
     super.doUpdate(e, module, selection);
 
+    String text = getActionText(e, module, selection);
+    if (text != null) e.getPresentation().setText(text);
+  }
+
+  @Nullable
+  protected String getActionText(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
     Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = getHandlersForSelectedRoots(selection);
 
     if (!selectedRootHandlers.isEmpty()) {
-      String text;
       if (selectedRootHandlers.size() == 1) {
         ModuleSourceRootEditHandler<?> handler = selectedRootHandlers.iterator().next();
-        text = "Unmark as " + handler.getRootTypeName() + " " + StringUtil.pluralize("Root", selection.mySelectedRoots.size());
+        return LangBundle.message("mark.as.unmark", 
+                                  StringUtil.pluralize(handler.getFullRootTypeName(), selection.mySelectedRoots.size()));
       }
       else {
-        text = "Unmark Roots";
+        return LangBundle.message("mark.as.unmark.several");
       }
-      e.getPresentation().setText(text);
     }
+    return null;
   }
 
   @NotNull
@@ -75,7 +82,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
     return selection.mySelectedDirectories.isEmpty() && !getHandlersForSelectedRoots(selection).isEmpty();
   }
 
-  protected void modifyRoots(VirtualFile file, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile file, @NotNull ContentEntry entry) {
     for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
       if (file.equals(excludeFolder.getFile())) {
         entry.removeExcludeFolder(excludeFolder);

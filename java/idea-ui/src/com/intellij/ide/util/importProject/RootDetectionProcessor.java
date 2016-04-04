@@ -137,7 +137,7 @@ public class RootDetectionProcessor {
       }
 
       final File parentToSkip = result.getParentToSkip();
-      if (parentToSkip != null && !parentToSkip.equals(dir)) {
+      if (parentToSkip != null && !FileUtil.filesEqual(parentToSkip, dir)) {
         parentsToSkip.add(Pair.create(parentToSkip, i));
       }
     }
@@ -153,7 +153,7 @@ public class RootDetectionProcessor {
             }
             for (Pair<File, Integer> pair : toSkip) {
               enabledForChildren.set(pair.getSecond(), false);
-              if (!pair.getFirst().equals(dir)) {
+              if (!FileUtil.filesEqual(pair.getFirst(), dir)) {
                 parentsToSkip.add(pair);
               }
             }

@@ -170,6 +170,7 @@ public class GitFileUtils {
     GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
     h.setSilent(true);
     h.addParameters(revisionOrBranch + ":" + relativePath);
+    h.endOptions();
     return h.run();
   }
 

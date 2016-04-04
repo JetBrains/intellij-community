@@ -28,7 +28,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 
-public class KeyboardModifierListener {
+public class KeyboardModifierListener implements Disposable {
   private boolean myShiftPressed;
   private boolean myCtrlPressed;
   private boolean myAltPressed;
@@ -50,12 +50,7 @@ public class KeyboardModifierListener {
   public void init(@NotNull JComponent component, @NotNull Disposable disposable) {
     assert myWindow == null;
 
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        destroy();
-      }
-    });
+    Disposer.register(disposable, this);
 
     // we can use KeyListener on Editors, but Ctrl+Click will not work with focus in other place.
     // ex: commit dialog with focus in commit message
@@ -75,7 +70,8 @@ public class KeyboardModifierListener {
     }
   }
 
-  public void destroy() {
+  @Override
+  public void dispose() {
     if (myWindow != null) {
       myWindow.removeWindowFocusListener(myWindowFocusListener);
       myWindow = null;

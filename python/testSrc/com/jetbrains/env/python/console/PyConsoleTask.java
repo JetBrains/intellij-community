@@ -93,6 +93,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         try {
           if (myConsoleView != null) {
             disposeConsole();
+            myCommunication.waitForTerminate();
           }
           PyConsoleTask.super.tearDown();
         }
@@ -324,9 +325,10 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       myLen = s.length();
     }
 
-    public void stop() {
+    public void stop() throws InterruptedException {
       printToConsole();
       myThread.interrupt();
+      myThread.join();
     }
   }
 

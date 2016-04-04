@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Functions;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
@@ -144,12 +145,13 @@ public class ExtractEnumProcessor {
         }
       }
 
-      final TypeMigrationRules rules = new TypeMigrationRules(myEnumConstants.get(0).getType());
+      final TypeMigrationRules rules = new TypeMigrationRules();
       rules.addConversionDescriptor(new EnumTypeConversionRule(myEnumConstants));
-      rules.setMigrationRootType(
-        JavaPsiFacade.getElementFactory(myProject).createType(myClass));
       rules.setBoundScope(GlobalSearchScope.projectScope(myProject));
-      myTypeMigrationProcessor = new TypeMigrationProcessor(myProject, PsiUtilCore.toPsiElementArray(myEnumConstants), rules);
+      myTypeMigrationProcessor = new TypeMigrationProcessor(myProject,
+                                                            PsiUtilCore.toPsiElementArray(myEnumConstants),
+                                                            Functions.<PsiElement, PsiType>constant(JavaPsiFacade.getElementFactory(myProject).createType(myClass)),
+                                                            rules);
       for (UsageInfo usageInfo : myTypeMigrationProcessor.findUsages()) {
         final PsiElement migrateElement = usageInfo.getElement();
         if (migrateElement instanceof PsiField) {

@@ -18,6 +18,7 @@ package com.intellij.psi.text;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -48,7 +49,7 @@ public abstract class BlockSupport {
   public static final Key<Boolean> DO_NOT_REPARSE_INCREMENTALLY = Key.create("DO_NOT_REPARSE_INCREMENTALLY");
   public static final Key<Pair<ASTNode, CharSequence>> TREE_TO_BE_REPARSED = Key.create("TREE_TO_BE_REPARSED");
 
-  public static class ReparsedSuccessfullyException extends RuntimeException {
+  public static class ReparsedSuccessfullyException extends RuntimeException implements ControlFlowException {
     private final DiffLog myDiffLog;
 
     public ReparsedSuccessfullyException(@NotNull DiffLog diffLog) {

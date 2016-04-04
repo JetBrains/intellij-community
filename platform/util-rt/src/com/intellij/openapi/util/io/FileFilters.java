@@ -24,15 +24,13 @@ import java.io.FileFilter;
  * @author nik
  */
 public class FileFilters {
-  private FileFilters() {
-  }
+  private FileFilters() { }
 
   /**
    * @return file filter which accepts files and directories with the given {@code extension}
    */
   public static FileFilter withExtension(@NotNull final String extension) {
     return new FileFilter() {
-      @Override
       public boolean accept(File pathname) {
         return FileUtilRt.extensionEquals(pathname.getPath(), extension);
       }
@@ -44,7 +42,6 @@ public class FileFilters {
    */
   public static FileFilter filesWithExtension(@NotNull final String extension) {
     return new FileFilter() {
-      @Override
       public boolean accept(File pathname) {
         return FileUtilRt.extensionEquals(pathname.getPath(), extension) && pathname.isFile();
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@State(
-  name = "NamedScopeManager",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
-)
+@State(name = "NamedScopeManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class NamedScopeManager extends NamedScopesHolder {
   public OrderState myOrderState = new OrderState();
 

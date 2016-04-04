@@ -143,7 +143,7 @@ public class RepositoryUtils {
         copyTo,
         new MavenRemoteTask.ResultProcessor<List<OrderRoot>>() {
           @Override
-          public void process(final List<OrderRoot> roots) {
+          public void process(final @Nullable List<OrderRoot> roots) {
             if (roots == null || roots.isEmpty()) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 @Override

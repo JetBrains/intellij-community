@@ -40,7 +40,12 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   void testCastQualifierForPrivateFieldReference() { doTest(); }
   void testOrAssignmentDfa() { doTest(); }
   void testFieldWithCastingCaret() { doTest(); }
-  
+
+  void testCastTwice() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'b', 'a'
+  }
+
   void testPublicMethodExtendsProtected() {
     myFixture.addClass '''
 package foo;
@@ -62,5 +67,8 @@ public class FooImpl extends Foo {
     configureByTestName()
     checkResultByFile(getTestName(false) + "_after.java")
   }
+
+  public void testCastInstanceofedQualifierInLambda() { doTest() }
+  public void testCastInstanceofedQualifierInLambda2() { doTest() }
 
 }

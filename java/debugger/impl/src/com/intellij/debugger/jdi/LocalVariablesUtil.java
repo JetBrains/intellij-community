@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -95,22 +96,27 @@ public class LocalVariablesUtil {
   private static final boolean ourInitializationOk;
   private static Class<?> ourSlotInfoClass;
   private static Constructor<?> slotInfoConstructor;
-  private static Class<?> ourGetValuesClass;
   private static Method ourEnqueueMethod;
   private static Method ourWaitForReplyMethod;
 
+  private static final boolean ourInitializationOkSet;
+  private static Class<?> ourSlotInfoClassSet;
+  private static Constructor<?> slotInfoConstructorSet;
+  private static Method ourEnqueueMethodSet;
+  private static Method ourWaitForReplyMethodSet;
+
   static {
+    // get values init
     boolean success = false;
     try {
-      ourSlotInfoClass = Class.forName("com.sun.tools.jdi.JDWP$StackFrame$GetValues$SlotInfo");
+      String GetValuesClassName = "com.sun.tools.jdi.JDWP$StackFrame$GetValues";
+      ourSlotInfoClass = Class.forName(GetValuesClassName + "$SlotInfo");
       slotInfoConstructor = ourSlotInfoClass.getDeclaredConstructor(int.class, byte.class);
       slotInfoConstructor.setAccessible(true);
 
-      ourGetValuesClass = Class.forName("com.sun.tools.jdi.JDWP$StackFrame$GetValues");
-      ourEnqueueMethod = findMethod(ourGetValuesClass, "enqueueCommand");
-      ourEnqueueMethod.setAccessible(true);
-      ourWaitForReplyMethod = findMethod(ourGetValuesClass, "waitForReply");
-      ourWaitForReplyMethod.setAccessible(true);
+      Class<?> ourGetValuesClass = Class.forName(GetValuesClassName);
+      ourEnqueueMethod = getDeclaredMethodByName(ourGetValuesClass, "enqueueCommand");
+      ourWaitForReplyMethod = getDeclaredMethodByName(ourGetValuesClass, "waitForReply");
 
       success = true;
     }
@@ -118,10 +124,29 @@ public class LocalVariablesUtil {
       LOG.info(e);
     }
     ourInitializationOk = success;
+
+    // set value init
+    success = false;
+    try {
+      String setValuesClassName = "com.sun.tools.jdi.JDWP$StackFrame$SetValues";
+      ourSlotInfoClassSet = Class.forName(setValuesClassName + "$SlotInfo");
+      slotInfoConstructorSet = ourSlotInfoClassSet.getDeclaredConstructors()[0];
+      slotInfoConstructorSet.setAccessible(true);
+
+      Class<?> ourGetValuesClassSet = Class.forName(setValuesClassName);
+      ourEnqueueMethodSet = getDeclaredMethodByName(ourGetValuesClassSet, "enqueueCommand");
+      ourWaitForReplyMethodSet = getDeclaredMethodByName(ourGetValuesClassSet, "waitForReply");
+
+      success = true;
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+    ourInitializationOkSet = success;
   }
 
   public static Map<DecompiledLocalVariable, Value> fetchValues(@NotNull StackFrameProxyImpl frameProxy, DebugProcess process) throws Exception {
-    Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<DecompiledLocalVariable, Value>(); // LinkedHashMap for correct order
+    Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<>(); // LinkedHashMap for correct order
 
     com.sun.jdi.Method method = frameProxy.location().method();
     final int firstLocalVariableSlot = getFirstLocalsSlot(method);
@@ -162,13 +187,9 @@ public class LocalVariablesUtil {
   private static Map<DecompiledLocalVariable, Value> fetchSlotValues(Map<DecompiledLocalVariable, Value> map,
                                                                      List<DecompiledLocalVariable> vars,
                                                                      StackFrame frame) throws Exception {
-    final Field frameIdField = frame.getClass().getDeclaredField("id");
-    frameIdField.setAccessible(true);
-    final Object frameId = frameIdField.get(frame);
-
+    final Long frameId = ReflectionUtil.getField(frame.getClass(), frame, long.class, "id");
     final VirtualMachine vm = frame.virtualMachine();
-    final Method stateMethod = vm.getClass().getDeclaredMethod("state");
-    stateMethod.setAccessible(true);
+    final Method stateMethod = ReflectionUtil.getDeclaredMethod(vm.getClass(), "state");
 
     Object slotInfoArray = createSlotInfoArray(vars);
 
@@ -179,9 +200,7 @@ public class LocalVariablesUtil {
     }
 
     final Object reply = ourWaitForReplyMethod.invoke(null, vm, ps);
-    final Field valuesField = reply.getClass().getDeclaredField("values");
-    valuesField.setAccessible(true);
-    final Value[] values = (Value[])valuesField.get(reply);
+    final Value[] values = ReflectionUtil.getField(reply.getClass(), reply, Value[].class, "values");
     if (vars.size() != values.length) {
       throw new InternalException("Wrong number of values returned from target VM");
     }
@@ -190,6 +209,38 @@ public class LocalVariablesUtil {
       map.put(var, values[idx++]);
     }
     return map;
+  }
+
+  public static boolean canSetValues() {
+    return ourInitializationOkSet;
+  }
+
+  public static void setValue(StackFrame frame, int slot, Value value) throws EvaluateException {
+    try {
+      final Long frameId = ReflectionUtil.getField(frame.getClass(), frame, long.class, "id");
+      final VirtualMachine vm = frame.virtualMachine();
+      final Method stateMethod = ReflectionUtil.getDeclaredMethod(vm.getClass(), "state");
+
+      Object slotInfoArray = createSlotInfoArraySet(slot, value);
+
+      Object ps;
+      final Object vmState = stateMethod.invoke(vm);
+      synchronized (vmState) {
+        ps = ourEnqueueMethodSet.invoke(null, vm, frame.thread(), frameId, slotInfoArray);
+      }
+
+      ourWaitForReplyMethodSet.invoke(null, vm, ps);
+    }
+    catch (Exception e) {
+      throw new EvaluateException("Unable to set value", e);
+    }
+  }
+
+  private static Object createSlotInfoArraySet(int slot, Value value)
+    throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    Object arrayInstance = Array.newInstance(ourSlotInfoClassSet, 1);
+    Array.set(arrayInstance, 0, slotInfoConstructorSet.newInstance(slot, value));
+    return arrayInstance;
   }
 
   private static Object createSlotInfoArray(Collection<DecompiledLocalVariable> vars) throws Exception {
@@ -204,9 +255,10 @@ public class LocalVariablesUtil {
     return arrayInstance;
   }
 
-  private static Method findMethod(Class aClass, String methodName) throws NoSuchMethodException {
+  private static Method getDeclaredMethodByName(Class aClass, String methodName) throws NoSuchMethodException {
     for (Method method : aClass.getDeclaredMethods()) {
       if (methodName.equals(method.getName())) {
+        method.setAccessible(true);
         return method;
       }
     }
@@ -215,7 +267,7 @@ public class LocalVariablesUtil {
 
   @NotNull
   private static List<DecompiledLocalVariable> collectVariablesFromBytecode(StackFrameProxyImpl frame,
-                                                                            final MultiMap<Integer, String> namesMap) throws EvaluateException {
+                                                                            final MultiMap<Integer, String> namesMap) {
     if (!frame.getVirtualMachine().canGetBytecodes()) {
       return Collections.emptyList();
     }
@@ -232,7 +284,7 @@ public class LocalVariablesUtil {
       final byte[] bytecodes = method.bytecodes();
       if (bytecodes != null && bytecodes.length > 0) {
         final int firstLocalVariableSlot = getFirstLocalsSlot(method);
-        final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<Integer, DecompiledLocalVariable>();
+        final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<>();
         new InstructionParser(bytecodes, location.codeIndex()) {
           @Override
           protected void localVariableInstructionFound(int opcode, int slot, String typeSignature) {
@@ -250,7 +302,7 @@ public class LocalVariablesUtil {
           return Collections.emptyList();
         }
 
-        List<DecompiledLocalVariable> vars = new ArrayList<DecompiledLocalVariable>(usedVars.values());
+        List<DecompiledLocalVariable> vars = new ArrayList<>(usedVars.values());
         Collections.sort(vars, DecompiledLocalVariable.COMPARATOR);
         return vars;
       }
@@ -273,27 +325,22 @@ public class LocalVariablesUtil {
           PsiElement element = position.getElementAt();
           PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
-            PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
-            if (params != null) {
-              MultiMap<Integer, String> res = new MultiMap<Integer, String>();
-              int psiFirstLocalsSlot = getFirstLocalsSlot(method);
-              int slot = Math.max(0, firstLocalsSlot - psiFirstLocalsSlot);
-              for (int i = 0; i < params.getParametersCount(); i++) {
-                PsiParameter parameter = params.getParameters()[i];
-                res.putValue(slot, parameter.getName());
-                slot += getTypeSlotSize(parameter.getType());
-              }
-              PsiElement body = DebuggerUtilsEx.getBody(method);
-              if (body != null) {
-                try {
-                  body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
-                }
-                catch (Exception e) {
-                  LOG.info(e);
-                }
-              }
-              return res;
+            MultiMap<Integer, String> res = new MultiMap<>();
+            int slot = Math.max(0, firstLocalsSlot - getFirstLocalsSlot(method));
+            for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
+              res.putValue(slot, parameter.getName());
+              slot += getTypeSlotSize(parameter.getType());
             }
+            PsiElement body = DebuggerUtilsEx.getBody(method);
+            if (body != null) {
+              try {
+                body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
+              }
+              catch (Exception e) {
+                LOG.info(e);
+              }
+            }
+            return res;
           }
         }
         return MultiMap.empty();
@@ -309,22 +356,37 @@ public class LocalVariablesUtil {
     private int myCurrentSlotIndex;
     private final PsiElement myElement;
     private final Stack<Integer> myIndexStack;
+    private boolean myReached = false;
 
     public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;
-      myIndexStack = new Stack<Integer>();
+      myIndexStack = new Stack<>();
+
     }
 
     private boolean shouldVisit(PsiElement scope) {
-      return PsiTreeUtil.isContextAncestor(scope, myElement, false);
+      return !myReached && PsiTreeUtil.isContextAncestor(scope, myElement, false);
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (element == myElement) {
+        myReached = true;
+      }
+      else {
+        super.visitElement(element);
+      }
     }
 
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
-      appendName(variable.getName());
-      myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+      super.visitLocalVariable(variable);
+      if (!myReached) {
+        appendName(variable.getName());
+        myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+      }
     }
 
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
@@ -421,11 +483,8 @@ public class LocalVariablesUtil {
     if (method instanceof PsiModifierListOwner) {
       startSlot = ((PsiModifierListOwner)method).hasModifierProperty(PsiModifier.STATIC) ? 0 : 1;
     }
-    PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
-    if (params != null) {
-      for (PsiParameter parameter : params.getParameters()) {
-        startSlot += getTypeSlotSize(parameter.getType());
-      }
+    for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
+      startSlot += getTypeSlotSize(parameter.getType());
     }
     return startSlot;
   }

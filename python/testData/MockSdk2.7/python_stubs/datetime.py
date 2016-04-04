@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module datetime
-# from /usr/lib/python2.7/lib-dynload/datetime.so
-# by generator 1.124
+# from /Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/lib-dynload/datetime.so
+# by generator 1.137
 """ Fast implementation of the datetime type. """
 # no imports
 
@@ -146,8 +146,14 @@ class date(object):
         pass
 
     day = property(lambda self: 0)
+    """:type: int"""
+
     month = property(lambda self: 0)
+    """:type: int"""
+
     year = property(lambda self: 0)
+    """:type: int"""
+
 
     max = None # (!) real value is ''
     min = None # (!) real value is ''
@@ -312,10 +318,19 @@ class datetime(date):
         pass
 
     hour = property(lambda self: 0)
+    """:type: int"""
+
     microsecond = property(lambda self: 0)
+    """:type: int"""
+
     minute = property(lambda self: 0)
+    """:type: int"""
+
     second = property(lambda self: 0)
-    tzinfo = property(lambda self: object()) # default
+    """:type: int"""
+
+    tzinfo = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
 
     max = None # (!) real value is ''
     min = None # (!) real value is ''
@@ -414,10 +429,19 @@ class time(object):
         pass
 
     hour = property(lambda self: 0)
+    """:type: int"""
+
     microsecond = property(lambda self: 0)
+    """:type: int"""
+
     minute = property(lambda self: 0)
+    """:type: int"""
+
     second = property(lambda self: 0)
-    tzinfo = property(lambda self: object()) # default
+    """:type: int"""
+
+    tzinfo = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
 
     max = None # (!) real value is ''
     min = None # (!) real value is ''
@@ -539,8 +563,23 @@ class timedelta(object):
         pass
 
     days = property(lambda self: 0)
+    """Number of days.
+
+    :type: int
+    """
+
     microseconds = property(lambda self: 0)
+    """Number of microseconds (>= 0 and less than 1 second).
+
+    :type: int
+    """
+
     seconds = property(lambda self: 0)
+    """Number of seconds (>= 0 and less than 1 day).
+
+    :type: int
+    """
+
 
     max = None # (!) real value is ''
     min = None # (!) real value is ''

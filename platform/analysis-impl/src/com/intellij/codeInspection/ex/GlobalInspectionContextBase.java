@@ -243,7 +243,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
       @Override
       public void onSuccess() {
-        notifyInspectionsFinished();
+        notifyInspectionsFinished(scope);
       }
     });
   }
@@ -263,7 +263,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     };
   }
 
-  protected void notifyInspectionsFinished() {
+  protected void notifyInspectionsFinished(AnalysisScope scope) {
   }
 
   public void performInspectionsWithProgress(@NotNull final AnalysisScope scope, final boolean runGlobalToolsOnly, final boolean isOfflineInspections) {

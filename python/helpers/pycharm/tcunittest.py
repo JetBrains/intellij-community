@@ -1,3 +1,4 @@
+import os
 import traceback, sys
 from unittest import TestResult
 import datetime
@@ -37,13 +38,18 @@ def smart_str(s):
 
 
 class TeamcityTestResult(TestResult):
+  """
+  Set ``_jb_do_not_call_enter_matrix`` to prevent it from runnig "enter matrix"
+  """
+
   def __init__(self, stream=sys.stdout, *args, **kwargs):
     TestResult.__init__(self)
     for arg, value in kwargs.items():
       setattr(self, arg, value)
     self.output = stream
     self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
-    self.messages.testMatrixEntered()
+    if not "_jb_do_not_call_enter_matrix" in os.environ:
+      self.messages.testMatrixEntered()
     self.current_failed = False
     self.current_suite = None
     self.subtest_suite = None

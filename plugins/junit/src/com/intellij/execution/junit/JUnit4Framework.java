@@ -96,6 +96,7 @@ public class JUnit4Framework extends JavaTestFramework {
     method = createSetUpPatternMethod(factory);
     PsiMethod existingMethod = clazz.findMethodBySignature(method, false);
     if (existingMethod != null) {
+      if (AnnotationUtil.isAnnotated(existingMethod, JUnitUtil.BEFORE_CLASS_ANNOTATION_NAME, false)) return existingMethod;
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
                        Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @Before. Annotate?",

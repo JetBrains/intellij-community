@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.animation;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ import java.awt.event.ActionListener;
  */
 public class ArrangementAnimationManager implements ArrangementAnimationPanel.Listener, ActionListener {
 
-  @NotNull private final Timer myTimer = new Timer(ArrangementConstants.ANIMATION_STEPS_TIME_GAP_MILLIS, this);
+  @NotNull private final Timer myTimer = UIUtil.createNamedTimer("ArrangementAnimation", ArrangementConstants.ANIMATION_STEPS_TIME_GAP_MILLIS, this);
 
   @NotNull private final ArrangementAnimationPanel myAnimationPanel;
   @NotNull private final Callback                  myCallback;

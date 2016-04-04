@@ -15,23 +15,20 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -93,59 +90,36 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final List<PsiExpressionStatement> statements = addFieldInitialization(constructors, myField, project);
-        final PsiExpressionStatement highestStatement = getHighestElement(statements);
-        if (highestStatement == null) return;
-
-        final PsiAssignmentExpression expression = (PsiAssignmentExpression)highestStatement.getExpression();
-        final PsiElement rightExpression = expression.getRExpression();
-
-        final TextRange expressionRange = rightExpression.getTextRange();
-        editor.getCaretModel().moveToOffset(expressionRange.getStartOffset());
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().setSelection(expressionRange.getStartOffset(), expressionRange.getEndOffset());
+        addFieldInitialization(constructors, myField, project, editor);
       }
     });
   }
 
-  @Nullable
-  private static <T extends PsiElement> T getHighestElement(@NotNull List<T> elements) {
-    T highest = null;
-    int highestTextOffset = Integer.MAX_VALUE;
-    for (T element : elements) {
-      final T forcedElem = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
-      final int startOffset = forcedElem.getTextOffset();
-      if (startOffset < highestTextOffset) {
-        highest = forcedElem;
-        highestTextOffset = startOffset;
-      }
-    }
-    return highest;
-  }
+  private static void addFieldInitialization(@NotNull List<PsiMethod> constructors,
+                                             @NotNull PsiField field,
+                                             @NotNull Project project,
+                                             @Nullable Editor editor) {
+    if (constructors.isEmpty()) return;
 
-  @NotNull
-  private static List<PsiExpressionStatement> addFieldInitialization(@NotNull List<PsiMethod> constructors,
-                                                                     @NotNull PsiField field,
-                                                                     @NotNull Project project) {
-    final List<PsiExpressionStatement> statements = new ArrayList<PsiExpressionStatement>();
+    final List<PsiExpression> rExpressions = new ArrayList<PsiExpression>(constructors.size());
+    final LookupElement[] suggestedInitializers = AddVariableInitializerFix.suggestInitializer(field);
+
     for (PsiMethod constructor : constructors) {
-      final PsiExpressionStatement statement = addFieldInitialization(constructor, field, project);
-      if (statement != null) {
-        statements.add(statement);
-      }
+      rExpressions.add(addFieldInitialization(constructor, suggestedInitializers, field, project));
     }
-    return statements;
+    AddVariableInitializerFix.runAssignmentTemplate(rExpressions, suggestedInitializers, editor);
   }
 
   @Nullable
-  private static PsiExpressionStatement addFieldInitialization(@NotNull PsiMethod constructor,
-                                                               @NotNull PsiField field,
-                                                               @NotNull Project project) {
+  private static PsiExpression addFieldInitialization(@NotNull PsiMethod constructor,
+                                                      @NotNull LookupElement[] suggestedInitializers,
+                                                      @NotNull PsiField field,
+                                                      @NotNull Project project) {
     PsiCodeBlock methodBody = constructor.getBody();
     if (methodBody == null) return null;
 
     final String fieldName = field.getName();
-    String stmtText = fieldName + " = " + suggestInitValue(field) + ";";
+    String stmtText = fieldName + " = " + suggestedInitializers[0].getPsiElement().getText() + ";";
     if (methodContainsParameterWithName(constructor, fieldName)) {
       stmtText = "this." + stmtText;
     }
@@ -154,7 +128,9 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
-    return (PsiExpressionStatement)methodBody.add(codeStyleManager.reformat(factory.createStatementFromText(stmtText, methodBody)));
+    final PsiExpressionStatement addedStatement = (PsiExpressionStatement)methodBody.add(codeStyleManager
+      .reformat(factory.createStatementFromText(stmtText, methodBody)));
+    return ((PsiAssignmentExpression)addedStatement.getExpression()).getRExpression();
   }
 
   private static boolean methodContainsParameterWithName(@NotNull PsiMethod constructor, @NotNull String name) {
@@ -226,11 +202,6 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
       }
     }
     return result.toArray(new PsiMethod[result.size()]);
-  }
-
-  private static String suggestInitValue(@NotNull PsiField field) {
-    PsiType type = field.getType();
-    return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
   @Override

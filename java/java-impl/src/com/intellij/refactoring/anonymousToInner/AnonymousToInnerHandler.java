@@ -37,6 +37,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +116,22 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<PsiVariable, VariableInfo>();
     collectUsedVariables(variableInfoMap, myAnonClass);
-    myVariableInfos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
+    final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
+    myVariableInfos = infos;
+    Arrays.sort(myVariableInfos, new Comparator<VariableInfo>() {
+      @Override
+      public int compare(VariableInfo o1, VariableInfo o2) {
+        final PsiType type1 = o1.variable.getType();
+        final PsiType type2 = o2.variable.getType();
+        if (type1 instanceof PsiEllipsisType) {
+          return 1;
+        }
+        if (type2 instanceof PsiEllipsisType) {
+          return -1;
+        }
+        return ArrayUtil.find(infos, o1) > ArrayUtil.find(infos, o2) ? 1 : -1;
+      }
+    });
     if (!showRefactoringDialog()) return;
 
     CommandProcessor.getInstance().executeCommand(

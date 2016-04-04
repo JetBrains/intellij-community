@@ -17,11 +17,11 @@ package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>Represents a Git branch, local or remote.</p>
@@ -44,30 +44,17 @@ public abstract class GitBranch extends GitReference {
   @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
   @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
 
+  private static final Logger LOG = Logger.getInstance(GitBranch.class);
+
   /**
    * @deprecated All usages should be reviewed and substituted with actual GitBranch objects with Hashes retrieved from the GitRepository.
    */
   @Deprecated
-  public static final Hash DUMMY_HASH = HashImpl.build("");
+  @Nullable
+  public static final Hash DUMMY_HASH = null;
 
-  private static final Logger LOG = Logger.getInstance(GitBranch.class);
-
-  @NotNull private final Hash myHash;
-
-  protected GitBranch(@NotNull String name, @NotNull Hash hash) {
+  protected GitBranch(@NotNull String name) {
     super(GitBranchUtil.stripRefsPrefix(name));
-    myHash = hash;
-  }
-
-  /**
-   * <p>Returns the hash on which this branch is reference to.</p>
-   *
-   * <p>In certain cases (which are to be eliminated in the future) it may be empty,
-   *    if this information wasn't supplied to the GitBranch constructor.</p>
-   */
-  @NotNull
-  public Hash getHash() {
-    return myHash;
   }
 
   /**
@@ -121,7 +108,7 @@ public abstract class GitBranch extends GitReference {
 
   @NotNull
   public String toLogString() {
-    return String.format("%s:%s:%s", getFullName(), getHash(), isRemote() ? "remote" : "local");
+    return String.format("%s:%s", getFullName(), isRemote() ? "remote" : "local");
   }
 
 }

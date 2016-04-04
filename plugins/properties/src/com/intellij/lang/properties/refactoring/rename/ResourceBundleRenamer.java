@@ -21,6 +21,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
+import com.intellij.refactoring.rename.naming.NameSuggester;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 public class ResourceBundleRenamer extends AutomaticRenamer {
 
   private final ResourceBundleManager myResourceBundleManager;
+  private final String myOldBaseName;
 
   public ResourceBundleRenamer(final PropertiesFile propertiesFile, final String newName) {
     myResourceBundleManager = ResourceBundleManager.getInstance(propertiesFile.getProject());
@@ -39,6 +41,7 @@ public class ResourceBundleRenamer extends AutomaticRenamer {
       final PsiFile containingFile = file.getContainingFile();
       myElements.add(containingFile);
     }
+    myOldBaseName = myResourceBundleManager.getBaseName(propertiesFile.getContainingFile());
     suggestAllNames(propertiesFile.getName(), newName);
   }
 
@@ -53,6 +56,17 @@ public class ResourceBundleRenamer extends AutomaticRenamer {
     final String oldName = element.getName();
     assert oldName != null;
     return canonicalName + oldName.substring(oldCanonicalName.length());
+  }
+
+  @Override
+  protected String suggestNameForElement(PsiNamedElement element, NameSuggester suggester, String newClassName, String oldClassName) {
+    final String elementName = element.getName();
+    if (elementName == null) {
+      return null;
+    }
+    final String baseClassNameSuffix = oldClassName.substring(myOldBaseName.length());
+    final String newBaseName = newClassName.substring(0, newClassName.length() - baseClassNameSuffix.length());
+    return newBaseName + elementName.substring(myOldBaseName.length());
   }
 
   @Override

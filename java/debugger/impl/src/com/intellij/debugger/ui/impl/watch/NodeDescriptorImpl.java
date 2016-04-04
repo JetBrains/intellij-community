@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
   private Map<Key, Object> myUserData;
 
-  private static final Key<Map<ObjectReference, ValueMarkup>> MARKUP_MAP_KEY = new Key<Map<ObjectReference, ValueMarkup>>("ValueMarkupMap");
+  private static final Key<Map<ObjectReference, ValueMarkup>> MARKUP_MAP_KEY = new Key<>("ValueMarkupMap");
 
   @Override
   public String getName() {
@@ -67,7 +67,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   @Override
   public <T> void putUserData(Key<T> key, T value) {
     if(myUserData == null) {
-      myUserData = new SmartHashMap<Key, Object>();
+      myUserData = new SmartHashMap<>();
     }
     myUserData.put(key, value);
   }
@@ -114,7 +114,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
       myIsExpanded = that.myIsExpanded;
       myIsSelected = that.myIsSelected;
       myIsVisible  = that.myIsVisible;
-      myUserData = that.myUserData != null ? new HashMap<Key, Object>(that.myUserData) : null;
+      myUserData = that.myUserData != null ? new HashMap<>(that.myUserData) : null;
     }
   }
 
@@ -162,7 +162,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     }
     Map<ObjectReference, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
     if (map == null) {
-      map = new java.util.HashMap<ObjectReference, ValueMarkup>();
+      map = new java.util.HashMap<>();
       process.putUserData(MARKUP_MAP_KEY, map);
     }
     return map;

@@ -41,7 +41,7 @@ public abstract class ExtensionsImpl implements Extensions {
     String prefix = getDefaultExtensionNs().getStringValue();
     if (prefix == null) {
       final IdeaPlugin ideaPlugin = getParentOfType(IdeaPlugin.class, true);
-      prefix = ideaPlugin == null ? null : StringUtil.notNullize(ideaPlugin.getPluginId(), "com.intellij");
+      prefix = ideaPlugin == null ? null : StringUtil.notNullize(ideaPlugin.getPluginId(), DEFAULT_PREFIX);
     }
     if (prefix == null) prefix = getXmlns().getStringValue();
     return prefix != null ? prefix + "." : "";
