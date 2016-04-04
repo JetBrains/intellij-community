@@ -17,7 +17,10 @@ package com.intellij.codeInsight.editorActions.moveLeftRight;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @NotNull
@@ -52,6 +55,21 @@ public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
     }
     else if (element instanceof PsiPolyadicExpression) {
       return ((PsiPolyadicExpression)element).getOperands();
+    }
+    else if (element instanceof PsiReferenceParameterList) {
+      return ((PsiReferenceParameterList)element).getTypeParameterElements();
+    }
+    else if (element instanceof PsiTypeParameterList) {
+      return ((PsiTypeParameterList)element).getTypeParameters();
+    }
+    else if (element instanceof PsiModifierList) {
+      final List<PsiElement> result = ContainerUtil.newSmartList();
+      for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiKeyword || child instanceof PsiAnnotation) {
+          result.add(child);
+        }
+      }
+      return result.toArray(PsiElement.EMPTY_ARRAY);
     }
     return PsiElement.EMPTY_ARRAY;
   }
