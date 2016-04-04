@@ -91,8 +91,6 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     text = addLeadingSpaces(text, NOT_INDENT_FILTER, indentSize, indentChar);
     final String indentText = getIndentText(file, document, caretOffset, lineNumber);
 
-    int toRemove = calculateIndentToRemove(text, NOT_INDENT_FILTER);
-
     final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
     if (StringUtil.isEmptyOrSpaces(indentText) && shouldPasteOnPreviousLine(file, text, caretOffset)) {
       caretModel.moveToOffset(lineStartOffset);
@@ -108,12 +106,9 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       }
     }
 
-    final List<String> strings = StringUtil.split(text, "\n", false);
-    String newText = "";
+    String newText;
     if (StringUtil.isEmptyOrSpaces(indentText)) {
-      for (String s : strings) {
-        newText += indentText + StringUtil.trimStart(s, StringUtil.repeat(indentChar, toRemove));
-      }
+      newText = PyIndentUtil.changeIndent(text, false, indentText);
     }
     else {
       newText = text;
@@ -175,17 +170,6 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       
     }
     return document.getText(TextRange.create(lineStartOffset, caretOffset));
-  }
-
-  private static int calculateIndentToRemove(@NotNull String text, @NotNull final CharFilter filter) {
-    final List<String> strings = StringUtil.split(text, "\n", false);
-    int minIndent = StringUtil.findFirst(text, filter);
-    for (String  s : strings) {
-      final int indent = StringUtil.findFirst(s, filter);
-      if (indent < minIndent && !StringUtil.isEmptyOrSpaces(s))
-        minIndent = indent;
-    }
-    return minIndent >= 0 ? minIndent : 0;
   }
 
   private static boolean shouldPasteOnPreviousLine(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {

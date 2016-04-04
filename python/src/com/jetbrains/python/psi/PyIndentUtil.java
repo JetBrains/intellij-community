@@ -154,13 +154,13 @@ public class PyIndentUtil {
 
   @NotNull
   public static String removeCommonIndent(@NotNull String s, boolean ignoreFirstLine) {
-    final List<String> trimmed = removeCommonIndent(LineTokenizer.tokenizeIntoList(s, false), ignoreFirstLine);
+    final List<String> trimmed = removeCommonIndent(LineTokenizer.tokenizeIntoList(s, false, false), ignoreFirstLine);
     return StringUtil.join(trimmed, "\n");
   }
 
   @NotNull
   public static String changeIndent(@NotNull String s, boolean ignoreFirstLine, String newIndent) {
-    final List<String> trimmed = changeIndent(LineTokenizer.tokenizeIntoList(s, false), ignoreFirstLine, newIndent);
+    final List<String> trimmed = changeIndent(LineTokenizer.tokenizeIntoList(s, false, false), ignoreFirstLine, newIndent);
     return StringUtil.join(trimmed, "\n");
   }
 
