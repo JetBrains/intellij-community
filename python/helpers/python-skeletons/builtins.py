@@ -980,7 +980,7 @@ class bytes(object):
         """y-th item of x, origin 0.
 
         :type y: numbers.Integral
-        :rtype: int
+        :rtype: int | bytes
         """
         return 0
 
