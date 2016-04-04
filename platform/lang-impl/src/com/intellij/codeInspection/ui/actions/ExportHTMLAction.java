@@ -53,7 +53,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.intellij.lang.annotations.Language;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -258,33 +257,40 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   private void exportHTML(HTMLExportFrameMaker frameMaker, InspectionNode node) {
     final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(node);
     final InspectionToolWrapper toolWrapper = node.getToolWrapper();
-
+    final Map<String, Set<RefEntity>> content = getExportContent(toolWrappers);
+    if (content.isEmpty()) {
+      return;
+    }
     final HTMLExporter exporter =
       new HTMLExporter(frameMaker.getRootFolder() + "/" + toolWrapper.getShortName(), myView.getGlobalInspectionContext().getPresentation(toolWrapper).getComposer());
     frameMaker.startInspection(toolWrapper);
     HTMLExportUtil.runExport(myView.getProject(), new ThrowableRunnable<IOException>() {
       @Override
       public void run() throws IOException {
-        exportHTML(toolWrappers, exporter);
+        exportHTML(toolWrappers, content, exporter);
         exporter.generateReferencedPages();
       }
     });
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void exportHTML(@NotNull Set<InspectionToolWrapper> toolWrappers, HTMLExporter exporter) throws IOException {
-    StringBuffer packageIndex = new StringBuffer();
-    packageIndex.append("<html><body>");
-
+  private Map<String, Set<RefEntity>> getExportContent(Set<InspectionToolWrapper> wrappers) {
     final Map<String, Set<RefEntity>> content = new HashMap<String, Set<RefEntity>>();
-
-    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+    for (InspectionToolWrapper toolWrapper : wrappers) {
       InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
       presentation.updateContent();
       Map<String, Set<RefEntity>> toolContent = presentation.getContent();
       toolContent = filterIgnoredElementsFromContent(toolContent, presentation.getIgnoredRefElements());
       content.putAll(toolContent);
     }
+    return content;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private void exportHTML(@NotNull Set<InspectionToolWrapper> toolWrappers,
+                          @NotNull Map<String, Set<RefEntity>> content,
+                          HTMLExporter exporter) throws IOException {
+    StringBuffer packageIndex = new StringBuffer();
+    packageIndex.append("<html><body>");
 
     final Set<RefEntity> defaultPackageEntities = content.remove(null);
     if (defaultPackageEntities != null) {
@@ -366,7 +372,9 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       final Set<RefEntity> currentElements = new HashSet<>(entry.getValue());
       currentElements.removeAll(ignored);
       final String currentPackage = entry.getKey();
-      resultMap.put(currentPackage, currentElements);
+      if (!currentElements.isEmpty()) {
+        resultMap.put(currentPackage, currentElements);
+      }
     }
     return resultMap;
   }
